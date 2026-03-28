@@ -78,8 +78,15 @@ with st.form("search_form"):
 
 st.session_state.inputs = new_inputs
 
-# ── Add Material + Clear all (same row below form) ──
-ac1, ac2 = st.columns([1, 1])
+# ── Remove buttons for Material 2+ (outside form) ──
+if len(st.session_state.inputs) > 1:
+    for i in range(1, len(st.session_state.inputs)):
+        if st.button(f"− Remove Material {i+1}", key=f"rm_{i}"):
+            st.session_state.inputs.pop(i)
+            st.rerun()
+
+# ── Add Material + Clear all (same row) ──
+ac1, ac2, _ = st.columns([1, 1, 2])
 with ac1:
     if st.button("＋ Add Material"):
         st.session_state.inputs.append("")
