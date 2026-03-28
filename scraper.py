@@ -347,8 +347,10 @@ def _get_properties(session, cid):
     flds = ("MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,"
             "IUPACName,XLogP,InChI,InChIKey,ExactMass,MonoisotopicMass,"
             "TPSA,Complexity,Charge,HBondDonorCount,HBondAcceptorCount,"
-            "RotatableBondCount,HeavyAtomCount,AtomStereoCount,BondStereoCount,"
-            "Volume3D,CovalentUnitCount")
+            "RotatableBondCount,HeavyAtomCount,IsotopeAtomCount,"
+            "AtomStereoCount,DefinedAtomStereoCount,UndefinedAtomStereoCount,"
+            "BondStereoCount,DefinedBondStereoCount,UndefinedBondStereoCount,"
+            "CovalentUnitCount")
     url = f"{PUBCHEM_REST}/compound/cid/{cid}/property/{flds}/JSON"
     data = _safe_get(session, url)
     if data:
@@ -357,7 +359,7 @@ def _get_properties(session, cid):
     return {}
 
 
-def _get_synonyms(session, cid, limit=15):
+def _get_synonyms(session, cid, limit=25):
     url = f"{PUBCHEM_REST}/compound/cid/{cid}/synonyms/JSON"
     data = _safe_get(session, url)
     if data:
@@ -379,28 +381,26 @@ def _extract_cas(synonyms):
 #  PUG View — extract ALL sections
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# Sections to skip (too noisy or not useful for perfumery)
+# Sections to skip (only truly useless noise)
 _SKIP_HEADINGS = {
-    "information sources", "depositor-supplied synonyms",
-    "removed synonyms", "depositor-supplied", "article count",
-    "patent count", "gene count", "protein count",
-    "associated disorders and diseases",
+    "information sources",
+    "removed synonyms",
 }
 
-# Max items per section to avoid huge outputs
-_MAX_ITEMS_PER_SECTION = 8
-# Max characters per item
-_MAX_CHARS_PER_ITEM = 500
+# Generous limits to capture everything
+_MAX_ITEMS_PER_SECTION = 25
+_MAX_CHARS_PER_ITEM = 1500
 
 
 def _extract_string_value(info_block):
-    """Pull text from a PUG View Information block."""
+    """Pull text from a PUG View Information block — handle ALL value types."""
     val = info_block.get("Value", {})
 
-    # String values
+    # String values (may have multiple)
     strs = val.get("StringWithMarkup", [])
     if strs:
-        return strs[0].get("String", "")
+        parts = [s.get("String", "") for s in strs if s.get("String")]
+        return "; ".join(parts) if parts else ""
 
     # Numeric values
     nums = val.get("Number", [])
@@ -413,15 +413,24 @@ def _extract_string_value(info_block):
     if bval is not None:
         return "Yes" if bval else "No"
 
+    # Binary/external data — just note it exists
+    if val.get("ExternalDataURL"):
+        return f"[External data: {val['ExternalDataURL']}]"
+
+    # Table reference
+    if val.get("ExternalTableName"):
+        return f"[Table: {val['ExternalTableName']}]"
+
     return ""
 
 
 def _walk_sections(sections, result, parent_path="", depth=0):
     """
-    Recursively walk the PUG View section tree.
+    Recursively walk the ENTIRE PUG View section tree.
     Collects heading → list of text values into result (OrderedDict).
+    No depth limit — walks everything.
     """
-    if depth > 5 or not sections:
+    if depth > 10 or not sections:
         return
 
     for sec in sections:
@@ -586,8 +595,13 @@ def scrape_material(name, session=None):
         "HBondAcceptorCount": "Hydrogen Bond Acceptor Count",
         "RotatableBondCount": "Rotatable Bond Count",
         "HeavyAtomCount": "Heavy Atom Count",
+        "IsotopeAtomCount": "Isotope Atom Count",
         "AtomStereoCount": "Atom Stereo Count",
+        "DefinedAtomStereoCount": "Defined Atom Stereo Count",
+        "UndefinedAtomStereoCount": "Undefined Atom Stereo Count",
         "BondStereoCount": "Bond Stereo Count",
+        "DefinedBondStereoCount": "Defined Bond Stereo Count",
+        "UndefinedBondStereoCount": "Undefined Bond Stereo Count",
         "CovalentUnitCount": "Covalent Unit Count",
     }
     comp_items = []
@@ -601,7 +615,7 @@ def scrape_material(name, session=None):
     # Synonyms & CAS
     syns = _get_synonyms(session, cid)
     mat.cas_number = _extract_cas(syns)
-    mat.synonyms = [s for s in syns if not re.match(r"^\d+-\d+-\d$", s)][:10]
+    mat.synonyms = [s for s in syns if not re.match(r"^\d+-\d+-\d$", s)][:20]
 
     # ALL PUG View sections
     pugview_sections, phys_known = _get_all_pugview(session, cid)
