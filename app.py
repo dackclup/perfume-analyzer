@@ -221,7 +221,9 @@ if len(typed) >= 1:
         sel = st.pills("suggestions", suggestions, label_visibility="collapsed",
                        key="suggest_pills")
         if sel and sel != typed:
+            # Just fill the search box — user clicks Search themselves
             st.session_state.query = sel
+            typed = sel
             st.rerun()
 
 # ── Search button ──
