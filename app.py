@@ -190,7 +190,7 @@ st.markdown("---")
 typed = st_keyup(
     "Search",
     value=st.session_state.query,
-    placeholder="Type material name — e.g. Linalool, Iso E Super, 78-70-6 …",
+    placeholder="",
     label_visibility="collapsed",
     debounce=300,
     key="keyup_input",
