@@ -1,12 +1,15 @@
 """
-app.py  v10.0 — Real-time dropdown + direct search
+app.py  v10.1 — text_input + pills autocomplete
     streamlit run app.py
+
+    พิมพ์แล้วกด Search ได้เลย
+    pills แนะนำขึ้นทุกครั้งที่ข้อความเปลี่ยน
+    กด pill → เติมคำในช่อง → กด Search
 """
 
 import re
 import streamlit as st
 import requests as req
-from streamlit_searchbox import st_searchbox
 from scraper import scrape_material, make_session, TRADE_NAMES, _NAME_TO_CAS
 from exporter import generate_human_report, generate_ai_report
 
@@ -64,6 +67,20 @@ button[data-testid="stDownloadButton"] button:hover p { color: #F0F0F5 !importan
 
 section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
 
+/* pills */
+div[data-testid="stPills"] { margin-top: -0.5rem; }
+div[data-testid="stPills"] button {
+    border: 1px solid #C9CCD5 !important; border-radius: 3px !important;
+    background: #F0F0F5 !important; font-size: 0.82em !important;
+}
+div[data-testid="stPills"] button p { color: #3D5A80 !important; }
+div[data-testid="stPills"] button:hover,
+div[data-testid="stPills"] button[aria-checked="true"] {
+    background: #3D5A80 !important; border-color: #3D5A80 !important;
+}
+div[data-testid="stPills"] button:hover p,
+div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !important; }
+
 @media (prefers-color-scheme: dark) {
     *, p, li, span, div { color: #E8ECF0; }
     h1,h2,h3,h4,h5 { color: #E8ECF0 !important; }
@@ -79,7 +96,6 @@ section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
     .sm { color: #9AACBF !important; }
     [data-testid="stCaptionContainer"] p { color: #8899AA !important; }
     div[data-testid="stExpander"] { border-color: #3D5A80; }
-    div[data-testid="stExpander"]:hover { border-color: #7E8EA6; }
     hr { border-color: #2a3a50 !important; }
     div[data-testid="stProgress"] > div > div { background: #7E8EA6 !important; }
     .n-top  { background: #422006; color: #fbbf24; }
@@ -92,6 +108,14 @@ section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
     }
     button[data-testid="stDownloadButton"] button:hover p { color: #F0F0F5 !important; }
     section[data-testid="stSidebar"] { border-right-color: #3D5A80; }
+    div[data-testid="stPills"] button {
+        border-color: #3D5A80 !important; background: #1a2332 !important;
+    }
+    div[data-testid="stPills"] button p { color: #C9CCD5 !important; }
+    div[data-testid="stPills"] button:hover,
+    div[data-testid="stPills"] button[aria-checked="true"] { background: #3D5A80 !important; }
+    div[data-testid="stPills"] button:hover p,
+    div[data-testid="stPills"] button[aria-checked="true"] p { color: #F0F0F5 !important; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -117,52 +141,29 @@ def _pubchem_autocomplete(query):
     return []
 
 
-def _search_fn(query):
-    """
-    Called on every keystroke by st_searchbox.
-    - Stores typed text in session_state so Search button can use it
-    - Returns typed text as first option + suggestions
-    """
-    if not query or not query.strip():
+def _get_suggestions(typed):
+    ql = typed.lower().strip()
+    if len(ql) < 1:
         return []
-
-    q = query.strip()
-    ql = q.lower()
-
-    # Remember what was typed (this is the key — persists even without dropdown selection)
-    st.session_state["_typed"] = q
-
-    # Always show typed text as first option (so user can "select" their own input)
-    results = [q]
-    seen = {ql}
-
-    if len(ql) >= 1:
-        for name in _ALL_NAMES:
-            if name.startswith(ql) and name not in seen:
-                results.append(name.title()); seen.add(name)
-            if len(results) >= 6:
-                break
-
-        if len(results) < 6:
-            for name in _ALL_NAMES:
-                if ql in name and name not in seen:
-                    results.append(name.title()); seen.add(name)
-                if len(results) >= 8:
-                    break
-
-    if len(results) < 4 and len(ql) >= 3:
+    starts, contains, seen = [], [], set()
+    for name in _ALL_NAMES:
+        if name.startswith(ql) and name not in seen:
+            starts.append(name.title()); seen.add(name)
+        elif ql in name and name not in seen:
+            contains.append(name.title()); seen.add(name)
+    results = starts + contains
+    if len(results) < 3 and len(ql) >= 3:
         for s in _pubchem_autocomplete(ql):
             if s.lower() not in seen:
                 results.append(s); seen.add(s.lower())
-            if len(results) >= 8:
-                break
-
-    return results[:8]
+    return results[:6]
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  State
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+if "query" not in st.session_state:
+    st.session_state.query = ""
 if "results" not in st.session_state:
     st.session_state.results = []
 if "searched" not in st.session_state:
@@ -175,7 +176,7 @@ if "done" not in st.session_state:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with st.sidebar:
     st.markdown("**Perfume Analyzer**")
-    st.caption("v10.0")
+    st.caption("v10.1")
     st.markdown("---")
     st.markdown("Data from **PubChem** (NIH)  \nPerfumery DB (CAS-validated)")
     st.markdown("---")
@@ -188,25 +189,28 @@ st.markdown("## Perfume Raw Materials Analyzer")
 st.caption("PubChem compound data + perfumery knowledge")
 st.markdown("---")
 
-# Real-time dropdown
-selected = st_searchbox(
-    _search_fn,
-    key="searchbox",
+# ── Text input ──
+query = st.text_input(
+    "Search",
+    value=st.session_state.query,
     placeholder="Type material name — e.g. Linalool, Iso E Super, 78-70-6 …",
-    clear_on_submit=False,
-    default=st.session_state.get("_last_search", None),
+    label_visibility="collapsed",
+    key="search_input",
 )
+st.session_state.query = query
+typed = query.strip()
 
-# Resolve what to search: dropdown selection > typed text > previous search
-if selected:
-    st.session_state["_last_search"] = selected
+# ── Suggestions (pills) ──
+if len(typed) >= 1:
+    suggestions = _get_suggestions(typed)
+    if suggestions:
+        sel = st.pills("suggestions", suggestions, label_visibility="collapsed",
+                       key="suggest_pills")
+        if sel:
+            st.session_state.query = sel
+            st.rerun()
 
-typed = (selected
-         or st.session_state.get("_typed", "")
-         or st.session_state.get("_last_search", "")
-         or "").strip()
-
-# Search button
+# ── Search button ──
 search_clicked = st.button("Search", type="primary",
                            disabled=len(typed) == 0,
                            use_container_width=True)
@@ -217,9 +221,6 @@ st.markdown("---")
 #  Search
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if search_clicked and typed:
-    # Save for restoring in searchbox after rerun
-    st.session_state["_last_search"] = typed
-
     names = [n.strip() for n in typed.split(",") if n.strip()]
     new_names = [n for n in names if n.lower() not in st.session_state.searched]
 
