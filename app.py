@@ -183,13 +183,15 @@ def search_materials(query):
 #  State
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if "materials" not in st.session_state:
-    st.session_state.materials = []   # list of selected material names
+    st.session_state.materials = []
 if "results" not in st.session_state:
     st.session_state.results = []
 if "done" not in st.session_state:
     st.session_state.done = False
 if "box_count" not in st.session_state:
     st.session_state.box_count = 1
+if "searched" not in st.session_state:
+    st.session_state.searched = set()  # queries already fetched
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Sidebar
@@ -246,6 +248,7 @@ with c3:
     if st.button("Clear", use_container_width=True):
         st.session_state.box_count = 1
         st.session_state.results = []
+        st.session_state.searched = set()
         st.session_state.done = False
         st.rerun()
 
@@ -255,14 +258,16 @@ st.markdown("---")
 #  Search
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if search_clicked and selected_names:
-    st.session_state.results = []
-    st.session_state.done = False
-    session = make_session()
-    bar = st.progress(0)
-    for idx, nm in enumerate(selected_names):
-        bar.progress(idx / len(selected_names), text=nm)
-        st.session_state.results.append(scrape_material(nm, session))
-    bar.progress(1.0, text="Done")
+    new_names = [n for n in selected_names if n.lower() not in st.session_state.searched]
+
+    if new_names:
+        session = make_session()
+        bar = st.progress(0)
+        for idx, nm in enumerate(new_names):
+            bar.progress(idx / len(new_names), text=nm)
+            st.session_state.results.append(scrape_material(nm, session))
+            st.session_state.searched.add(nm.lower())
+        bar.progress(1.0, text="Done")
     st.session_state.done = True
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
