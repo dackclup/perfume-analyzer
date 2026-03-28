@@ -5,8 +5,69 @@ app.py  v7.1 — Minimal · Navy & Gray palette
 
 import re
 import streamlit as st
-from scraper import scrape_material, make_session
+from scraper import scrape_material, make_session, TRADE_NAMES, PERFUMERY_DB, _NAME_TO_CAS
 from exporter import generate_human_report, generate_ai_report
+import requests as req
+
+
+@st.cache_data(ttl=300)
+def _pubchem_autocomplete(query):
+    """Fetch suggestions from PubChem autocomplete API."""
+    try:
+        url = f"https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/{req.utils.quote(query)}/JSON?limit=5"
+        r = req.get(url, timeout=5)
+        if r.status_code == 200:
+            data = r.json()
+            return data.get("dictionary_terms", {}).get("compound", [])
+    except Exception:
+        pass
+    return []
+
+
+def _get_suggestions(typed):
+    """
+    Get autocomplete suggestions from local DB + PubChem.
+    Priority: starts-with > contains. Shorter names first.
+    """
+    typed = typed.lower().strip()
+    starts = []
+    contains = []
+    seen = set()
+
+    # Search trade names
+    for name in sorted(TRADE_NAMES.keys(), key=len):
+        if name in seen:
+            continue
+        if name.startswith(typed):
+            starts.append(name.title())
+            seen.add(name)
+        elif typed in name:
+            contains.append(name.title())
+            seen.add(name)
+
+    # Search perfumery DB names
+    for name in sorted(_NAME_TO_CAS.keys(), key=len):
+        if name in seen:
+            continue
+        if name.startswith(typed):
+            starts.append(name.title())
+            seen.add(name)
+        elif typed in name:
+            contains.append(name.title())
+            seen.add(name)
+
+    results = starts + contains
+
+    # PubChem autocomplete (if local not enough)
+    if len(results) < 3 and len(typed) >= 3:
+        pubchem_sugg = _pubchem_autocomplete(typed)
+        for s in pubchem_sugg:
+            sl = s.lower()
+            if sl not in seen:
+                results.append(s)
+                seen.add(sl)
+
+    return results[:5]
 
 st.set_page_config(page_title="Perfume Analyzer", page_icon="⬡", layout="wide",
                    initial_sidebar_state="collapsed")
@@ -107,6 +168,35 @@ div[data-testid="stAlert"] { border-radius: 4px; }
 /* sidebar */
 section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
 
+/* suggestion pills */
+div[data-testid="stPills"] button {
+    border: 1px solid #C9CCD5 !important;
+    border-radius: 3px !important;
+    background: #F0F0F5 !important;
+    font-size: 0.82em !important;
+}
+div[data-testid="stPills"] button p { color: #3D5A80 !important; }
+div[data-testid="stPills"] button:hover,
+div[data-testid="stPills"] button[aria-checked="true"] {
+    background: #3D5A80 !important;
+    border-color: #3D5A80 !important;
+}
+div[data-testid="stPills"] button:hover p,
+div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !important; }
+@media (prefers-color-scheme: dark) {
+    div[data-testid="stPills"] button {
+        border-color: #3D5A80 !important;
+        background: #1a2332 !important;
+    }
+    div[data-testid="stPills"] button p { color: #C9CCD5 !important; }
+    div[data-testid="stPills"] button:hover,
+    div[data-testid="stPills"] button[aria-checked="true"] {
+        background: #3D5A80 !important;
+    }
+    div[data-testid="stPills"] button:hover p,
+    div[data-testid="stPills"] button[aria-checked="true"] p { color: #F0F0F5 !important; }
+}
+
 /* ── Dark mode overrides ── */
 @media (prefers-color-scheme: dark) {
     *, p, li, span, div { color: #E8ECF0; }
@@ -164,7 +254,7 @@ st.markdown("## Perfume Raw Materials Analyzer")
 st.caption("PubChem compound data + perfumery knowledge")
 st.markdown("---")
 
-# ── Inputs ──
+# ── Inputs with autocomplete suggestions ──
 new_inputs = []
 for i in range(len(st.session_state.inputs)):
     lc, rc = st.columns([14, 1])
@@ -178,6 +268,23 @@ for i in range(len(st.session_state.inputs)):
             else:
                 st.session_state.inputs = [""]
             st.rerun()
+
+    # ── Autocomplete suggestions ──
+    typed = v.strip()
+    if len(typed) >= 2:
+        suggestions = _get_suggestions(typed.lower())
+        # Don't show if exact match already
+        if suggestions and typed.lower() not in [s.lower() for s in suggestions[:1]]:
+            sel = st.pills(
+                "suggestions",
+                suggestions,
+                key=f"pills_{i}",
+                label_visibility="collapsed",
+            )
+            if sel:
+                st.session_state.inputs[i] = sel
+                st.rerun()
+
     new_inputs.append(v)
 st.session_state.inputs = new_inputs
 
