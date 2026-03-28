@@ -5,10 +5,12 @@ exporter.py  v5.1 — PDF (human) + JSON (AI) with PubChem link restored
 import io
 import re
 import json
+import logging
 from datetime import datetime
 from collections import OrderedDict
 from scraper import MaterialData
 
+import requests
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
@@ -16,8 +18,10 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, HRFlowable,
+    PageBreak, HRFlowable, Image,
 )
+
+logger = logging.getLogger(__name__)
 
 PRIMARY   = HexColor("#1e3a5f")
 ACCENT    = HexColor("#2c7be5")
@@ -108,6 +112,18 @@ def _page_tmpl(c, doc):
     c.restoreState()
 
 
+def _fetch_structure_image(url, width=55*mm, height=55*mm):
+    """Fetch molecular structure PNG from PubChem and return as ReportLab Image."""
+    try:
+        r = requests.get(url, timeout=15)
+        if r.status_code == 200 and r.headers.get("content-type", "").startswith("image"):
+            img_buf = io.BytesIO(r.content)
+            return Image(img_buf, width=width, height=height)
+    except Exception as e:
+        logger.warning("Failed to fetch structure image: %s", e)
+    return None
+
+
 def _build_material(mat):
     els = []
     if not mat.found:
@@ -117,7 +133,7 @@ def _build_material(mat):
 
     els.append(Paragraph(mat.name, _S["MName"]))
 
-    # PubChem link (clickable in PDF)
+    # PubChem link
     if mat.page_url:
         hex_a = ACCENT.hexval()[2:]
         els.append(Paragraph(
@@ -129,13 +145,36 @@ def _build_material(mat):
         els.append(Paragraph(mat.match_info, _S["Small"]))
         els.append(Spacer(1, 2*mm))
 
-    # Identifiers
-    t = _prop_table([("CAS Number", mat.cas_number), ("FEMA Number", mat.fema_number),
+    # ── Structure image + Identifiers side by side ──
+    struct_img = None
+    if mat.structure_image_url:
+        struct_img = _fetch_structure_image(mat.structure_image_url)
+
+    id_pairs = [("CAS Number", mat.cas_number), ("FEMA Number", mat.fema_number),
         ("IUPAC Name", mat.iupac_name), ("Molecular Formula", mat.molecular_formula),
-        ("Molecular Weight", mat.molecular_weight), ("SMILES", mat.smiles)])
-    if t:
+        ("Molecular Weight", mat.molecular_weight), ("SMILES", mat.smiles)]
+    id_table = _prop_table(id_pairs)
+
+    if struct_img and id_table:
+        # Image left, identifiers right
+        layout = Table(
+            [[struct_img, id_table]],
+            colWidths=[60*mm, 100*mm],
+            hAlign="LEFT",
+        )
+        layout.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (0, 0), 5*mm),
+        ]))
+        els.append(Paragraph("Structure & Identifiers", _S["SecH"]))
+        els.append(layout)
+    elif struct_img:
+        els.append(Paragraph("Molecular Structure", _S["SecH"]))
+        els.append(struct_img)
+    elif id_table:
         els.append(Paragraph("Identifiers & Molecular Data", _S["SecH"]))
-        els.append(t)
+        els.append(id_table)
     if mat.synonyms:
         els.append(Paragraph(f'<b>Synonyms:</b> {", ".join(mat.synonyms[:8])}', _S["Body9"]))
 
