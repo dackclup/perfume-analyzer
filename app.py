@@ -55,16 +55,8 @@ st.title("🧪 Perfume Raw Materials Analyzer")
 st.markdown("Extracts **complete PubChem compound data** + perfumery knowledge.")
 st.divider()
 
-# ── Header row: title + clear all ──
-h1, h2 = st.columns([4, 1])
-with h1:
-    st.subheader("📝 Materials to Analyze")
-with h2:
-    if st.button("Clear all", use_container_width=True, type="tertiary"):
-        st.session_state.inputs = [""]
-        st.session_state.results = []
-        st.session_state.done = False
-        st.rerun()
+# ── Header ──
+st.subheader("📝 Materials to Analyze")
 
 # ── Form: input fields + Search button ──
 with st.form("search_form"):
@@ -86,10 +78,18 @@ with st.form("search_form"):
 
 st.session_state.inputs = new_inputs
 
-# ── Add Material button (below form, adds new field at bottom) ──
-if st.button("＋ Add Material"):
-    st.session_state.inputs.append("")
-    st.rerun()
+# ── Add Material + Clear all (same row below form) ──
+ac1, ac2 = st.columns([1, 1])
+with ac1:
+    if st.button("＋ Add Material"):
+        st.session_state.inputs.append("")
+        st.rerun()
+with ac2:
+    if st.button("Clear all", type="tertiary"):
+        st.session_state.inputs = [""]
+        st.session_state.results = []
+        st.session_state.done = False
+        st.rerun()
 
 st.divider()
 
