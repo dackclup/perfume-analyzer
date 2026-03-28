@@ -36,10 +36,10 @@ iframe[title="st_keyup.st_keyup"] { height: 45px !important; }
 /* remove − buttons */
 button[kind="secondary"] {
     border: none !important; background: none !important;
-    box-shadow: none !important; padding: 0.2rem 0.4rem !important; min-height: 0 !important;
+    box-shadow: none !important; padding: 0.2rem 0.5rem !important; min-height: 0 !important;
 }
-button[kind="secondary"] p { color: #C9CCD5 !important; font-size: 1.1em !important; }
-button[kind="secondary"]:hover p { color: #c44 !important; }
+button[kind="secondary"] p { color: #ffffff !important; font-size: 1.2em !important; font-weight: 300 !important; }
+button[kind="secondary"]:hover p { color: #ff6b6b !important; }
 
 button[kind="primary"] {
     background: #3D5A80 !important; border: none !important;
@@ -269,22 +269,27 @@ if st.session_state.results:
 
     for idx, mat in enumerate(st.session_state.results):
         if not mat.found:
-            with st.expander(f"✗  {mat.name}", expanded=False):
+            ec1, ec2 = st.columns([11, 1])
+            with ec2:
+                st.markdown("<div style='margin-top:0.35rem'></div>", unsafe_allow_html=True)
                 if st.button("−", key=f"del_{idx}"):
                     st.session_state.searched.discard(mat.name.lower())
                     st.session_state.results.pop(idx)
                     st.rerun()
-                st.error(mat.error)
+            with ec1:
+                with st.expander(f"✗  {mat.name}", expanded=False):
+                    st.error(mat.error)
             continue
 
-        with st.expander(mat.name, expanded=True):
-            # ── Remove button (top-right) ──
-            _, del_col = st.columns([10, 1])
-            with del_col:
-                if st.button("−", key=f"del_{idx}"):
-                    st.session_state.searched.discard(mat.name.lower())
-                    st.session_state.results.pop(idx)
-                    st.rerun()
+        ec1, ec2 = st.columns([11, 1])
+        with ec2:
+            st.markdown("<div style='margin-top:0.35rem'></div>", unsafe_allow_html=True)
+            if st.button("−", key=f"del_{idx}"):
+                st.session_state.searched.discard(mat.name.lower())
+                st.session_state.results.pop(idx)
+                st.rerun()
+        with ec1:
+          with st.expander(mat.name, expanded=True):
             if mat.match_info:
                 st.caption(mat.match_info)
 
