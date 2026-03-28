@@ -386,12 +386,10 @@ def generate_human_report(materials):
             _styles["TOCEntry"],
         ))
     story.append(_hr())
-    story.append(Spacer(1, 4*mm))
 
     # ── Material sections (each on its own page) ──
-    for i, mat in enumerate(materials):
-        if i > 0:
-            story.append(PageBreak())
+    for mat in materials:
+        story.append(PageBreak())
         elems = _build_material(mat)
         story.extend(elems)
 
