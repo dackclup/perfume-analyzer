@@ -198,7 +198,7 @@ st.caption("PubChem compound data + perfumery knowledge")
 st.markdown("---")
 
 # ── Real-time text input (sends value on every keystroke, debounced 300ms) ──
-typed = st_keyup(
+keyup_val = st_keyup(
     "Search",
     value=st.session_state.query,
     placeholder="",
@@ -207,10 +207,12 @@ typed = st_keyup(
     key="keyup_input",
 )
 
-# Keep query in sync
-if typed is not None:
-    st.session_state.query = typed
-typed = (typed or "").strip()
+# Keep query in sync — keyup updates query, but pill selection takes priority
+if keyup_val is not None and keyup_val != st.session_state.query:
+    st.session_state.query = keyup_val
+
+# typed = definitive search term (always from session_state)
+typed = st.session_state.query.strip()
 
 # ── Pills suggestions (update real-time as you type) ──
 if len(typed) >= 1:
@@ -218,7 +220,7 @@ if len(typed) >= 1:
     if suggestions:
         sel = st.pills("suggestions", suggestions, label_visibility="collapsed",
                        key="suggest_pills")
-        if sel:
+        if sel and sel != typed:
             st.session_state.query = sel
             st.rerun()
 
