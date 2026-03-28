@@ -343,97 +343,208 @@ def _safe_get(session, url):
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 TRADE_NAMES = {
-    # Iso E Super variants
+    # ═══════ Iso E Super family ═══════
     "iso e super": "54464-57-2", "isoesuper": "54464-57-2",
     "iso-e-super": "54464-57-2", "molecule 01": "54464-57-2",
     "timbersilk": "54464-57-2", "isocyclemone e": "54464-57-2",
     "orbitone": "54464-57-2", "iso e": "54464-57-2",
     "boisvelone": "54464-57-2", "anthamber": "54464-57-2",
-    # Hedione
+    "patchouli ethanone": "54464-57-2", "arborone": "54464-57-2",
+    "ies": "54464-57-2",  # common abbreviation
+
+    # ═══════ Hedione family ═══════
     "hedione": "24851-98-7", "methyl dihydrojasmonate": "24851-98-7",
-    "hedione hc": "24851-98-7",
-    # Galaxolide
+    "hedione hc": "24851-98-7", "mdj": "24851-98-7",
+    "kharismal": "24851-98-7", "jasmal": "24851-98-7",
+
+    # ═══════ Galaxolide / Polycyclic musks ═══════
     "galaxolide": "1222-05-5", "abbalide": "1222-05-5",
-    "musk 50": "1222-05-5",
-    # Ambroxan
+    "musk 50": "1222-05-5", "galaxolide 50": "1222-05-5",
+    "hhcb": "1222-05-5",  # abbreviation
+    "tonalide": "21145-77-7", "ahtn": "21145-77-7",
+    "fixolide": "21145-77-7",
+    "phantolide": "15323-35-0", "ahdi": "15323-35-0",
+    "traseolide": "68140-48-7", "atii": "68140-48-7",
+    "cashmeran": "33704-61-9", "dp-45": "33704-61-9",
+    "cashmere musk": "33704-61-9", "dpmi": "33704-61-9",
+
+    # ═══════ Ambroxan / Amber ═══════
     "ambroxan": "6790-58-5", "ambrox": "6790-58-5",
     "ambrox dl": "6790-58-5", "ambrox super": "6790-58-5",
     "cetalox": "3738-00-9", "amberlyn": "6790-58-5",
-    "ambrofix": "6790-58-5",
-    # Cashmeran
-    "cashmeran": "33704-61-9", "dp-45": "33704-61-9",
-    "cashmere musk": "33704-61-9",
-    # Musks
-    "muscone": "541-91-3", "musk ketone": "81-14-1",
-    "galaxolide 50": "1222-05-5", "tonalide": "21145-77-7",
-    "habanolide": "34902-57-3", "exaltolide": "106-02-5",
+    "ambrofix": "6790-58-5", "ambroxide": "6790-58-5",
+    "ambergris": "6790-58-5",  # common search term
+    "norlabdane oxide": "6790-58-5",
+    "ambrinol": "6790-58-5",
+    "cetalox laevo": "3738-00-9",
+    "karanal": "103694-68-4", "amber xtreme": "103694-68-4",
+    "amber ketal": "103694-68-4",
+    "ambermax": "99610-64-3",
+    "labdanum": "8016-26-0",  # natural resin
+
+    # ═══════ Macrocyclic musks ═══════
+    "muscone": "541-91-3", "l-muscone": "541-91-3",
+    "musk ketone": "81-14-1", "mk": "81-14-1",
+    "musk xylene": "81-15-2", "mx": "81-15-2",
+    "musk ambrette": "83-66-9",
+    "habanolide": "34902-57-3", "globalide": "34902-57-3",
+    "exaltolide": "106-02-5", "thibetolide": "106-02-5",
     "ethylene brassylate": "105-95-3", "musk t": "105-95-3",
-    "helvetolide": "141773-73-1", "romandolide": "236391-76-7",
-    "cosmone": "542-46-1", "ambrettolide": "123-69-3",
-    "nirvanolide": "909478-55-1", "sylkolide": "63187-91-7",
-    "velvione": "63187-91-7",
-    # Florals
-    "hedione hc": "24851-98-7", "paradisone": "68901-22-4",
+    "helvetolide": "141773-73-1",
+    "romandolide": "236391-76-7",
+    "cosmone": "542-46-1", "civetone": "542-46-1",
+    "ambrettolide": "123-69-3",
+    "nirvanolide": "909478-55-1",
+    "sylkolide": "63187-91-7", "velvione": "63187-91-7",
+    "muscenone": "63314-79-4",
+    "exaltone": "502-72-7", "cyclopentadecanone": "502-72-7",
+
+    # ═══════ Florals ═══════
+    "paradisone": "68901-22-4",
     "phenylethyl alcohol": "60-12-8", "pea": "60-12-8",
-    "rose oxide": "16409-43-1", "damascone alpha": "43052-87-5",
-    "damascone beta": "23726-91-2", "damascone delta": "57378-68-4",
-    "damascenone": "23696-85-7",
+    "phenethyl alcohol": "60-12-8", "2-phenylethanol": "60-12-8",
+    "rose oxide": "16409-43-1", "rosenoxide": "16409-43-1",
+    "damascone alpha": "43052-87-5", "alpha damascone": "43052-87-5",
+    "damascone beta": "23726-91-2", "beta damascone": "23726-91-2",
+    "damascone delta": "57378-68-4",
+    "damascenone": "23696-85-7", "beta damascenone": "23696-85-7",
     "methyl ionone": "1335-46-2", "orris": "1335-46-2",
-    "ionone alpha": "127-41-3", "ionone beta": "14901-07-6",
+    "methyl ionone alpha": "127-42-4", "alpha isomethyl ionone": "127-51-5",
+    "ionone alpha": "127-41-3", "alpha ionone": "127-41-3",
+    "ionone beta": "14901-07-6", "beta ionone": "14901-07-6",
     "dihydro beta ionone": "17283-81-7",
     "floralozone": "67634-15-5", "ozone": "67634-15-5",
     "cyclamal": "103-95-7", "cyclamen aldehyde": "103-95-7",
-    "lilial": "80-54-6", "lyral": "31906-04-4",
+    "lilial": "80-54-6", "butylphenyl methylpropional": "80-54-6",
+    "lyral": "31906-04-4", "hydroxyisohexyl 3-cyclohexene carboxaldehyde": "31906-04-4",
     "hydroxycitronellal": "107-75-5", "muguet": "107-75-5",
     "bourgeonal": "18127-01-0",
-    "helional": "1205-17-0", "heliotropin": "120-57-0",
-    "piperonal": "120-57-0",
-    # Woody / Amber
+    "helional": "1205-17-0",
+    "heliotropin": "120-57-0", "piperonal": "120-57-0",
+    "linalool oxide": "60047-17-8",
+    "phenylacetaldehyde": "122-78-1", "hyacinth": "122-78-1",
+    "indole": "120-72-9",  # jasmine note
+    "methyl anthranilate": "134-20-3",  # orange blossom
+    "nerolidol": "7212-44-4",
+    "farnesol": "4602-84-0",
+    "hexyl cinnamic aldehyde": "101-86-0", "hca": "101-86-0",
+    "amyl cinnamic aldehyde": "122-40-7", "aca": "122-40-7",
+    "jasmine lactone": "25524-95-2",
+    "jasmonyl": "70-70-2",
+    "methyl jasmonate": "1211-29-6",
+    "jasmolactone": "18679-18-0",
+
+    # ═══════ Woody ═══════
     "javanol": "198404-98-7", "ebanol": "67801-20-1",
-    "santalol": "11031-45-1", "sandalore": "65113-99-7",
+    "santalol": "11031-45-1", "alpha santalol": "115-71-9",
+    "beta santalol": "77-42-9",
+    "sandalore": "65113-99-7", "sandalwood": "65113-99-7",
     "bacdanol": "28219-61-6", "polysantol": "107898-54-4",
     "hinoki": "19870-74-7", "hinokitiol": "499-44-5",
     "norlimbanol": "70788-30-6", "timberol": "70788-30-6",
     "firsantol": "155077-70-2",
-    "vertofix": "32388-55-9", "vetiver acetate": "62563-80-8",
+    "vertofix": "32388-55-9", "vertofix coeur": "32388-55-9",
+    "vetiver acetate": "62563-80-8",
+    "vetiveryl acetate": "62563-80-8",
     "georgywood": "155517-73-2",
     "clearwood": "28631-86-7", "patchoulol": "5986-55-0",
-    # Citrus / Fresh
+    "cedarwood": "8000-27-9",
+    "cedrol": "77-53-2", "cedryl acetate": "77-54-3",
+    "iso longifolanone": "23787-90-8",
+    "guaiacol": "90-05-1",
+    "guaiazulene": "489-84-9",
+    "vetiverol": "89-88-3",
+    "nootkatone": "4674-50-4",  # grapefruit woody
+    "eudesmol": "473-15-4",
+    "bisabolol": "515-69-5", "alpha bisabolol": "515-69-5",
+    "cabreuva": "54344-82-2",
+    "mysore sandalwood": "8006-87-9",
+
+    # ═══════ Citrus / Fresh ═══════
     "dihydromyrcenol": "18479-58-8", "dhm": "18479-58-8",
     "calone": "28940-11-6", "watermelon ketone": "28940-11-6",
-    "citral": "5392-40-5", "geranial": "141-27-5",
-    "neral": "106-26-3", "citronellal": "106-23-0",
+    "methyl pamplemousse": "89-80-5",
+    "citral": "5392-40-5", "geranial": "141-27-5", "neral": "106-26-3",
+    "citronellal": "106-23-0",
     "citronellol": "106-22-9", "rhodinol": "6812-78-8",
-    # Spicy
+    "beta citronellol": "106-22-9",
+    "linalool": "78-70-6", "linalol": "78-70-6",
+    "beta linalool": "78-70-6", "beta-linalool": "78-70-6",
+    "linalyl acetate": "115-95-7",
+    "geraniol": "106-24-1", "trans-geraniol": "106-24-1",
+    "geranyl acetate": "105-87-3",
+    "nerol": "106-25-2",
+    "neryl acetate": "141-12-8",
+    "citronellyl acetate": "150-84-5",
+    "limonene": "5989-27-5", "d-limonene": "5989-27-5",
+    "r-limonene": "5989-27-5", "l-limonene": "5989-54-0",
+    "orange terpenes": "5989-27-5",
+    "bergamotene": "17699-05-7",
+    "bergaptene": "484-20-8",
+    "octanal": "124-13-0", "aldehyde c-8": "124-13-0",
+    "nonanal": "124-19-6", "aldehyde c-9": "124-19-6",
+    "decanal": "112-31-2", "aldehyde c-10": "112-31-2",
+    "undecanal": "112-44-7", "aldehyde c-11": "112-44-7",
+    "dodecanal": "112-54-9", "aldehyde c-12": "112-54-9",
+    "undecylenic aldehyde": "112-45-8", "aldehyde c-11 moa": "112-45-8",
+    "triplal": "68039-49-6",
+    "undecavertol": "81782-77-6",
+    "acetaldehyde phenylethyl": "103-45-7",
+
+    # ═══════ Spicy ═══════
     "eugenol": "97-53-0", "isoeugenol": "97-54-1",
     "cinnamaldehyde": "104-55-2", "cinnamic aldehyde": "104-55-2",
-    "cinnamic alcohol": "104-54-1",
+    "cinnamon aldehyde": "104-55-2", "cinnamal": "104-55-2",
+    "cinnamic alcohol": "104-54-1", "cinnamyl alcohol": "104-54-1",
     "methyl eugenol": "93-15-2",
-    "safranal": "116-26-7",
-    # Vanilla / Sweet
-    "vanillin": "121-33-5", "ethyl vanillin": "121-32-4",
-    "ethylvanillin": "121-32-4", "coumarin": "91-64-5",
-    "heliotropin": "120-57-0", "benzoin": "579-44-2",
+    "safranal": "116-26-7", "saffron": "116-26-7",
+    "methyl cinnamate": "103-26-4",
+    "methyl chavicol": "140-67-0", "estragole": "140-67-0",
+    "anisaldehyde": "123-11-5", "para anisaldehyde": "123-11-5",
+    "anethole": "104-46-1", "trans anethole": "104-46-1",
+    "clove oil": "8000-34-8",
+    "cinnamon oil": "8015-91-6",
+    "cardamom": "8000-66-6",
+
+    # ═══════ Vanilla / Sweet / Balsamic ═══════
+    "vanillin": "121-33-5", "vanilla": "121-33-5",
+    "ethyl vanillin": "121-32-4", "ethylvanillin": "121-32-4",
+    "coumarin": "91-64-5", "cumarin": "91-64-5",
+    "tonka bean": "91-64-5",  # main component
+    "benzoin": "579-44-2", "benzoin resin": "9000-72-2",
     "maltol": "118-71-8", "ethyl maltol": "4940-11-8",
     "furaneol": "3658-77-3",
-    # Aldehydes
-    "aldehyde c-10": "112-31-2", "decanal": "112-31-2",
-    "aldehyde c-11": "112-44-7", "undecanal": "112-44-7",
-    "aldehyde c-12": "112-54-9", "dodecanal": "112-54-9",
-    "aldehyde c-11 moa": "112-45-8",
-    "triplal": "68039-49-6",
-    # Common materials
-    "linalool": "78-70-6", "linalol": "78-70-6",
-    "geraniol": "106-24-1", "nerol": "106-25-2",
+    "benzyl alcohol": "100-51-6",
+    "benzaldehyde": "100-52-7",  # almond note
+    "anisyl alcohol": "105-13-5",
+    "anisic aldehyde": "123-11-5",
+    "methyl salicylate": "119-36-8",  # wintergreen
+    "phenyl acetic acid": "103-82-2",
+    "tolu balsam": "9000-64-0",
+    "peru balsam": "8007-00-9",
+    "styrax": "8024-01-9",
+
+    # ═══════ Terpenes ═══════
     "terpineol": "98-55-5", "alpha terpineol": "98-55-5",
+    "terpinolene": "586-62-9",
+    "terpinen-4-ol": "562-74-3", "terpinen 4 ol": "562-74-3",
     "menthol": "89-78-1", "l-menthol": "2216-51-5",
+    "menthone": "89-80-5", "isomenthone": "491-07-6",
     "camphor": "76-22-2", "borneol": "507-70-0",
-    "carvone": "99-49-0", "thymol": "89-83-8",
-    "anethole": "104-46-1", "estragole": "140-67-0",
-    "limonene": "5989-27-5", "d-limonene": "5989-27-5",
+    "isoborneol": "124-76-5", "bornyl acetate": "76-49-3",
+    "carvone": "99-49-0", "l-carvone": "6485-40-1", "d-carvone": "2244-16-8",
+    "thymol": "89-83-8", "carvacrol": "499-75-2",
     "pinene": "80-56-8", "alpha pinene": "80-56-8",
-    "beta pinene": "127-91-3", "myrcene": "123-35-3",
-    "ocimene": "13877-91-3",
+    "beta pinene": "127-91-3",
+    "myrcene": "123-35-3", "beta myrcene": "123-35-3",
+    "ocimene": "13877-91-3", "beta ocimene": "3338-55-4",
+    "camphene": "79-92-5",
+    "fenchol": "1632-73-1", "fenchone": "1195-79-5",
+    "eucalyptol": "470-82-6", "1,8-cineole": "470-82-6", "cineole": "470-82-6",
+    "sabinene": "3387-41-5",
+    "phellandrene": "99-83-2", "alpha phellandrene": "99-83-2",
+
+    # ═══════ Solvents / Fixatives / Carriers ═══════
     "benzyl benzoate": "120-51-4", "bb": "120-51-4",
     "benzyl salicylate": "118-58-1",
     "benzyl acetate": "140-11-4",
@@ -441,13 +552,46 @@ TRADE_NAMES = {
     "isopropyl myristate": "110-27-0", "ipm": "110-27-0",
     "triethyl citrate": "77-93-0", "tec": "77-93-0",
     "deet": "134-62-3",
-    # Natural oils (map to main component)
-    "linalyl acetate": "115-95-7",
-    "geranyl acetate": "105-87-3",
-    "citronellyl acetate": "150-84-5",
+    "diethyl phthalate": "84-66-2", "dep": "84-66-2",
+    "isododecane": "31807-55-3",
+    "propylene glycol": "57-55-6", "pg": "57-55-6",
+    "triacetin": "102-76-1",
+    "mct oil": "73398-61-5",
+    "squalane": "111-01-3",
+
+    # ═══════ Green / Herbal ═══════
+    "cis-3-hexenol": "928-96-1", "leaf alcohol": "928-96-1",
+    "cis-3-hexenyl acetate": "3681-71-8",
+    "galbanum": "68916-96-1",
+    "stemone": "62015-37-8",
+    "violet leaf": "8024-08-6",
+    "2,6-nonadienal": "17587-33-6",  # cucumber
+    "hexyl acetate": "142-92-7",
+
+    # ═══════ Esters / Acetates ═══════
     "phenylethyl acetate": "103-45-7",
-    "vetiveryl acetate": "62563-80-8",
-    "cedryl acetate": "77-54-3",
+    "hexyl salicylate": "6259-76-3",
+    "methyl benzoate": "93-58-3",
+    "ethyl acetate": "141-78-6",
+    "amyl acetate": "628-63-7",
+    "isoamyl acetate": "123-92-2",  # banana
+    "methyl 2-octynoate": "111-12-6",  # violet leaf
+    "allyl caproate": "123-68-2",  # pineapple
+    "gamma decalactone": "706-14-9",  # peach
+    "gamma undecalactone": "104-67-6",  # peach/coconut
+    "gamma nonalactone": "104-61-0",  # coconut
+    "delta decalactone": "705-86-2",  # creamy
+    "coumarin lactone": "91-64-5",
+
+    # ═══════ Phenols / Leather ═══════
+    "birch tar": "8001-88-5",
+    "cade oil": "8013-10-3",
+    "castoreum": "8023-83-4",
+    "skatole": "83-34-1",
+    "para cresol": "106-44-5", "p-cresol": "106-44-5",
+    "isobutyl quinoline": "65442-31-1", "ibq": "65442-31-1",
+    "suederal": "67634-20-2",
+    "safraleine": "54440-17-4",
 }
 
 
@@ -456,18 +600,19 @@ TRADE_NAMES = {
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 def _normalize(name):
-    """Normalize input for matching: lowercase, strip, remove extra chars."""
+    """Normalize input: lowercase, strip, remove noise, fix common patterns."""
     s = name.lower().strip()
-    s = re.sub(r'[®™©]', '', s)          # remove trademark symbols
-    s = re.sub(r'\s+', ' ', s)            # collapse whitespace
-    return s
+    s = re.sub(r'[®™©\u200b\u00ad]', '', s)  # remove special chars
+    s = re.sub(r'\s+', ' ', s)                 # collapse whitespace
+    s = re.sub(r'[_]', ' ', s)                 # underscore → space
+    # Greek letters
+    s = s.replace('α', 'alpha').replace('β', 'beta')
+    s = s.replace('γ', 'gamma').replace('δ', 'delta')
+    return s.strip()
 
 
 def _generate_variants(name):
-    """
-    Generate search variants from user input.
-    Handles typos, spacing, hyphens, common patterns.
-    """
+    """Generate search variants — handles typos, spacing, prefixes, suffixes."""
     n = _normalize(name)
     variants = [n]
 
@@ -476,42 +621,70 @@ def _generate_variants(name):
     variants.append(n.replace(" ", "-"))
     variants.append(n.replace(" ", ""))
 
-    # With/without common suffixes/prefixes
-    for prefix in ["dl-", "d-", "l-", "r-", "s-", "alpha-", "beta-",
-                    "α-", "β-", "(+)-", "(-)-", "(r)-", "(s)-",
-                    "cis-", "trans-", "para-", "ortho-", "meta-"]:
+    # With/without common prefixes
+    prefixes = ["dl-", "d-", "l-", "r-", "s-", "n-",
+                "alpha-", "beta-", "gamma-", "delta-",
+                "alpha ", "beta ", "gamma ", "delta ",
+                "(+)-", "(-)-", "(r)-", "(s)-", "(±)-",
+                "cis-", "trans-", "para-", "ortho-", "meta-",
+                "iso", "nor"]
+    for prefix in prefixes:
         if n.startswith(prefix):
-            variants.append(n[len(prefix):])
-        else:
+            variants.append(n[len(prefix):].strip())
+        elif len(prefix) <= 2 or prefix.endswith("-") or prefix.endswith(" "):
             variants.append(prefix + n)
 
+    # Common suffixes: remove or add
+    for suffix in [" oil", " absolute", " concrete", " extract",
+                   " oxide", " acetate", " alcohol"]:
+        if n.endswith(suffix):
+            variants.append(n[:-len(suffix)].strip())
+        else:
+            variants.append(n + suffix)
+
     # Common perfumery misspellings
-    typo_map = {
-        "oo": "o", "o": "oo",           # linalol ↔ linalool
-        "ph": "f", "f": "ph",           # phenyl ↔ fenyl
-        "y": "i", "i": "y",             # myrcene ↔ mircene
-        "ae": "e", "e": "ae",           # aetone ↔ etone
-        "ck": "k", "k": "ck",
-        "cs": "x", "x": "cs",
-    }
-    for old, new in typo_map.items():
+    typo_pairs = [
+        ("oo", "o"), ("o", "oo"),
+        ("ph", "f"), ("f", "ph"),
+        ("y", "i"), ("i", "y"),
+        ("ae", "e"), ("e", "ae"),
+        ("ck", "k"), ("k", "ck"),
+        ("cs", "x"), ("x", "cs"),
+        ("ll", "l"), ("l", "ll"),
+        ("nn", "n"), ("n", "nn"),
+        ("ss", "s"), ("s", "ss"),
+        ("th", "t"), ("t", "th"),
+        ("yl", "il"), ("il", "yl"),
+        ("ene", "ine"), ("ine", "ene"),
+        ("ol", "ole"), ("ole", "ol"),
+        ("al", "ale"), ("ale", "al"),
+        ("one", "on"), ("on", "one"),
+    ]
+    for old, new in typo_pairs:
         if old in n:
             variants.append(n.replace(old, new, 1))
 
-    # Remove parentheses content: "linalool (natural)" → "linalool"
+    # Remove parentheses: "linalool (natural)" → "linalool"
     stripped = re.sub(r'\s*\(.*?\)\s*', '', n).strip()
     if stripped and stripped != n:
         variants.append(stripped)
 
-    # Remove brand: "iso e super (IFF)" → "iso e super"
-    for brand in ["iff", "firmenich", "givaudan", "symrise", "takasago",
-                  "ipc", "natural", "synthetic", "pure", "extra"]:
+    # Remove brand names
+    brands = ["iff", "firmenich", "givaudan", "symrise", "takasago",
+              "kao", "mane", "robertet", "drt", "pcw",
+              "ipc", "natural", "synthetic", "pure", "extra",
+              "grade", "bp", "fcc", "usp", "kosher"]
+    for brand in brands:
         cleaned = re.sub(rf'\b{brand}\b', '', n).strip()
         cleaned = re.sub(r'\s+', ' ', cleaned).strip()
         if cleaned and cleaned != n:
             variants.append(cleaned)
 
-    # Deduplicate preserving order
+    # Number cleanup: "c10" → "c-10", "c 10" → "c-10"
+    variants.append(re.sub(r'(\D)(\d)', r'\1-\2', n))
+    variants.append(re.sub(r'(\D)-(\d)', r'\1\2', n))
+
+    # Deduplicate
     seen = set()
     unique = []
     for v in variants:
