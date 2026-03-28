@@ -1,5 +1,5 @@
 """
-app.py  v5.1 — PubChem link restored + form-based input (no Enter needed)
+app.py  v5.2 — Clean UI layout
     streamlit run app.py
 """
 
@@ -19,6 +19,8 @@ st.markdown("""
 .note-mid{background:#dbeafe;color:#1e40af}
 .note-base{background:#e0e7ff;color:#3730a3}
 div[data-testid="stExpander"]{border:1px solid #e0e3e8;border-radius:8px}
+.clear-btn{color:white;cursor:pointer;font-size:0.85em;opacity:0.7}
+.clear-btn:hover{opacity:1}
 </style>
 """, unsafe_allow_html=True)
 
@@ -47,43 +49,34 @@ with st.sidebar:
     st.markdown("**Export:**")
     st.markdown("📄 PDF — ปริ้นกระดาษ A4 | 🤖 JSON — AI อ่าน")
     st.divider()
-    st.caption("v5.1 · Full PubChem extraction")
+    st.caption("v5.2 · Full PubChem extraction")
 
 st.title("🧪 Perfume Raw Materials Analyzer")
 st.markdown("Extracts **complete PubChem compound data** + perfumery knowledge.")
 st.divider()
 
-# ── Add / Clear buttons (outside form) ──
-st.subheader("📝 Materials to Analyze")
-
-c1, c2, _ = st.columns([1, 1, 4])
-with c1:
-    if st.button("➕ Add Material", use_container_width=True):
-        st.session_state.inputs.append("")
-        st.rerun()
-with c2:
-    if st.button("🗑️ Clear All", use_container_width=True):
+# ── Header row: title + clear all ──
+h1, h2 = st.columns([4, 1])
+with h1:
+    st.subheader("📝 Materials to Analyze")
+with h2:
+    if st.button("Clear all", use_container_width=True, type="tertiary"):
         st.session_state.inputs = [""]
         st.session_state.results = []
         st.session_state.done = False
         st.rerun()
 
-# ── Form: type names + click Search (no Enter needed) ──
+# ── Form: input fields + Search button ──
 with st.form("search_form"):
     new_inputs = []
     for i in range(len(st.session_state.inputs)):
-        cols = st.columns([10, 1])
-        with cols[0]:
-            v = st.text_input(
-                f"Material {i+1}",
-                value=st.session_state.inputs[i],
-                key=f"inp_{i}",
-                placeholder="e.g. Linalool, Iso E Super, Hedione …",
-                label_visibility="collapsed" if i > 0 else "visible",
-            )
-            new_inputs.append(v)
-        with cols[1]:
-            st.markdown(f"#{i+1}")
+        v = st.text_input(
+            f"Material {i+1}",
+            value=st.session_state.inputs[i],
+            key=f"inp_{i}",
+            placeholder="e.g. Linalool, Iso E Super, Hedione …",
+        )
+        new_inputs.append(v)
 
     search_clicked = st.form_submit_button(
         "🔍 Search & Analyze",
@@ -91,17 +84,12 @@ with st.form("search_form"):
         use_container_width=True,
     )
 
-# Update inputs after form
 st.session_state.inputs = new_inputs
 
-# ── Remove buttons (outside form) ──
-if len(st.session_state.inputs) > 1:
-    rm_cols = st.columns(len(st.session_state.inputs))
-    for i in range(1, len(st.session_state.inputs)):
-        with rm_cols[i]:
-            if st.button(f"✕ Remove #{i+1}", key=f"rm_{i}", use_container_width=True):
-                st.session_state.inputs.pop(i)
-                st.rerun()
+# ── Add Material button (below form, adds new field at bottom) ──
+if st.button("＋ Add Material"):
+    st.session_state.inputs.append("")
+    st.rerun()
 
 st.divider()
 
@@ -210,7 +198,6 @@ if st.session_state.results:
                         for item in mat.blends_well_with[:10]:
                             st.markdown(f"- {item}")
 
-            # ── ALL PubChem sections ──
             if mat.pubchem_sections:
                 st.markdown("---")
                 st.markdown("##### 📚 Complete PubChem Data")
