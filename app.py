@@ -19,8 +19,13 @@ st.markdown("""
 .note-mid{background:#dbeafe;color:#1e40af}
 .note-base{background:#e0e7ff;color:#3730a3}
 div[data-testid="stExpander"]{border:1px solid #e0e3e8;border-radius:8px}
-.clear-btn{color:white;cursor:pointer;font-size:0.85em;opacity:0.7}
-.clear-btn:hover{opacity:1}
+/* Red ✕ remove buttons */
+[data-testid="column"]:last-child button[kind="secondary"] p{color:#ef4444!important}
+[data-testid="column"]:last-child button[kind="secondary"]{
+    border-color:#ef4444!important;min-height:0;padding:0.25rem 0.5rem}
+[data-testid="column"]:last-child button[kind="secondary"]:hover{
+    background:#ef4444!important;border-color:#ef4444!important}
+[data-testid="column"]:last-child button[kind="secondary"]:hover p{color:white!important}
 </style>
 """, unsafe_allow_html=True)
 
@@ -61,29 +66,22 @@ st.subheader("📝 Materials to Analyze")
 # ── Input fields ──
 new_inputs = []
 for i in range(len(st.session_state.inputs)):
-    if i == 0:
-        # Material 1 — no remove
+    lc, rc = st.columns([10, 1])
+    with lc:
         v = st.text_input(
             f"Material {i+1}",
             value=st.session_state.inputs[i],
             key=f"inp_{i}",
             placeholder="e.g. Linalool, Iso E Super, Hedione …",
         )
-    else:
-        # Material 2+ — label with − remove
-        lc, rc = st.columns([6, 1])
-        with lc:
-            v = st.text_input(
-                f"Material {i+1}",
-                value=st.session_state.inputs[i],
-                key=f"inp_{i}",
-                placeholder="e.g. Linalool, Iso E Super, Hedione …",
-            )
-        with rc:
-            st.markdown("")  # spacer to align with input
-            if st.button("−", key=f"rm_{i}", help=f"Remove Material {i+1}"):
+    with rc:
+        st.markdown("")
+        if st.button("✕", key=f"rm_{i}", help=f"Remove Material {i+1}"):
+            if len(st.session_state.inputs) > 1:
                 st.session_state.inputs.pop(i)
-                st.rerun()
+            else:
+                st.session_state.inputs = [""]
+            st.rerun()
     new_inputs.append(v)
 
 st.session_state.inputs = new_inputs
