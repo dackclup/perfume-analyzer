@@ -33,16 +33,22 @@ input[type="text"]::placeholder { color: #8893A6 !important; }
 /* keyup input height */
 iframe[title="st_keyup.st_keyup"] { height: 45px !important; }
 
-/* remove − button — aligns with expander header */
+/* remove button — white minimal trash icon */
 button[kind="secondary"] {
     border: none !important; background: none !important;
     box-shadow: none !important; min-height: 0 !important;
     padding: 0.6rem 0.4rem !important;
 }
 button[kind="secondary"] p {
-    color: #ffffff !important; font-size: 1.2em !important; font-weight: 400 !important;
+    font-size: 1em !important;
+    filter: grayscale(1) brightness(3) !important;
+    opacity: 0.7;
+    transition: opacity 0.2s;
 }
-button[kind="secondary"]:hover p { color: #ff6b6b !important; }
+button[kind="secondary"]:hover p {
+    opacity: 1;
+    filter: grayscale(0) !important;
+}
 
 button[kind="primary"] {
     background: #3D5A80 !important; border: none !important;
