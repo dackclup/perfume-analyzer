@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
 PUBCHEM_VIEW = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound"
-TIMEOUT = 30
+TIMEOUT = 12
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -315,8 +315,16 @@ for _cas, _entry in PERFUMERY_DB.items():
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 def make_session():
+    from requests.adapters import HTTPAdapter
     s = requests.Session()
-    s.headers.update({"User-Agent": "PerfumeAnalyzer/5.0", "Accept": "application/json"})
+    s.headers.update({
+        "User-Agent": "PerfumeAnalyzer/8.0",
+        "Accept": "application/json",
+        "Connection": "keep-alive",
+    })
+    adapter = HTTPAdapter(pool_connections=5, pool_maxsize=10,
+                          max_retries=1)
+    s.mount("https://", adapter)
     return s
 
 
@@ -649,25 +657,25 @@ def _smart_search_cid(session, name):
         if cid:
             return cid, trade_cas
 
-    # ── Strategy 6: Try all generated variants ──
+    # ── Strategy 6: Try top 3 generated variants ──
     variants = _generate_variants(original)
-    for variant in variants[1:]:  # skip first (already tried)
+    for variant in variants[1:4]:  # max 3 tries
         logger.info("  → Trying variant: %s", variant)
         cid = _get_cid(session, variant)
         if cid:
             return cid, variant
 
-    # ── Strategy 7: PubChem autocomplete ──
+    # ── Strategy 7: PubChem autocomplete (first match only) ──
     logger.info("  → Trying PubChem autocomplete")
-    auto_url = (f"https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/{requests.utils.quote(n)}/JSON?limit=3")
+    auto_url = (f"https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/{requests.utils.quote(n)}/JSON?limit=1")
     data = _safe_get(session, auto_url)
     if data:
         suggestions = data.get("dictionary_terms", {}).get("compound", [])
-        for suggestion in suggestions:
-            cid = _get_cid(session, suggestion)
+        if suggestions:
+            cid = _get_cid(session, suggestions[0])
             if cid:
-                logger.info("  → Autocomplete found: %s", suggestion)
-                return cid, suggestion
+                logger.info("  → Autocomplete found: %s", suggestions[0])
+                return cid, suggestions[0]
 
     # ── Strategy 8: Perfumery DB fuzzy ──
     fuzzy_result = _fuzzy_lookup_perfumery(original)

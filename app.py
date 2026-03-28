@@ -145,7 +145,7 @@ _ALL_NAMES = sorted(set(
 def _pubchem_autocomplete(query):
     try:
         url = f"https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/{req.utils.quote(query)}/JSON?limit=5"
-        r = req.get(url, timeout=4)
+        r = req.get(url, timeout=3)
         if r.status_code == 200:
             return r.json().get("dictionary_terms", {}).get("compound", [])
     except Exception:
@@ -154,6 +154,7 @@ def _pubchem_autocomplete(query):
 
 
 def _get_suggestions(typed):
+    """Local-only suggestions — instant, no network call."""
     ql = typed.lower().strip()
     if len(ql) < 1:
         return []
@@ -161,14 +162,13 @@ def _get_suggestions(typed):
     for name in _ALL_NAMES:
         if name.startswith(ql) and name not in seen:
             starts.append(name.title()); seen.add(name)
-        elif ql in name and name not in seen:
-            contains.append(name.title()); seen.add(name)
-    results = starts + contains
-    if len(results) < 3 and len(ql) >= 3:
-        for s in _pubchem_autocomplete(ql):
-            if s.lower() not in seen:
-                results.append(s); seen.add(s.lower())
-    return results[:6]
+            if len(starts) >= 6: break
+    if len(starts) < 6:
+        for name in _ALL_NAMES:
+            if ql in name and name not in seen:
+                contains.append(name.title()); seen.add(name)
+                if len(starts) + len(contains) >= 6: break
+    return (starts + contains)[:6]
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -209,7 +209,7 @@ keyup_val = st_keyup(
     value=st.session_state.query,
     placeholder="",
     label_visibility="collapsed",
-    debounce=300,
+    debounce=150,
     key=f"keyup_{st.session_state.kv}",
 )
 

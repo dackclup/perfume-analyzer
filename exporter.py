@@ -115,7 +115,7 @@ def _page_tmpl(c, doc):
 def _fetch_structure_image(url, width=55*mm, height=55*mm):
     """Fetch molecular structure PNG from PubChem and return as ReportLab Image."""
     try:
-        r = requests.get(url, timeout=15)
+        r = requests.get(url, timeout=8)
         if r.status_code == 200 and r.headers.get("content-type", "").startswith("image"):
             img_buf = io.BytesIO(r.content)
             return Image(img_buf, width=width, height=height)
