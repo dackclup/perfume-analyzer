@@ -139,18 +139,25 @@ def search_materials(query):
     """
     Real-time autocomplete function for streamlit-searchbox.
     Called on every keystroke. Returns list of suggestions.
+    Always includes the exact typed text as first option.
     """
-    if not query or len(query) < 2:
+    if not query or len(query.strip()) < 1:
         return []
 
-    q = query.lower().strip()
+    q = query.strip()
+    ql = q.lower()
+    results = [q]  # Always include exact typed text first
+    seen = {ql}
+
+    if len(ql) < 2:
+        return results
+
     starts = []
     contains = []
-    seen = set()
 
     # Local: names starting with query (highest priority, shortest first)
     for name in _ALL_NAMES:
-        if name.startswith(q) and name not in seen:
+        if name.startswith(ql) and name not in seen:
             starts.append(name.title())
             seen.add(name)
             if len(starts) >= 5:
@@ -159,17 +166,17 @@ def search_materials(query):
     # Local: names containing query
     if len(starts) < 5:
         for name in _ALL_NAMES:
-            if q in name and name not in seen:
+            if ql in name and name not in seen:
                 contains.append(name.title())
                 seen.add(name)
-                if len(starts) + len(contains) >= 8:
+                if len(starts) + len(contains) >= 7:
                     break
 
-    results = starts + contains
+    results += starts + contains
 
     # PubChem autocomplete (if local < 3 and query >= 3 chars)
-    if len(results) < 3 and len(q) >= 3:
-        for s in _pubchem_autocomplete(q):
+    if len(results) < 4 and len(ql) >= 3:
+        for s in _pubchem_autocomplete(ql):
             if s.lower() not in seen:
                 results.append(s)
                 seen.add(s.lower())
