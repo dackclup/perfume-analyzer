@@ -2,3 +2,4 @@ streamlit>=1.37.0
 requests>=2.31.0
 Pillow>=10.0.0
 reportlab>=4.0.0
+streamlit-searchbox>=0.1.15
