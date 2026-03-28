@@ -1,5 +1,5 @@
 """
-app.py  v7.0 — Minimal
+app.py  v7.1 — Minimal · Navy & Gray palette
     streamlit run app.py
 """
 
@@ -11,75 +11,128 @@ from exporter import generate_human_report, generate_ai_report
 st.set_page_config(page_title="Perfume Analyzer", page_icon="⬡", layout="wide",
                    initial_sidebar_state="collapsed")
 
+# Palette: Navy #3D5A80 · Off-white #F0F0F5 · Light gray #C9CCD5 · Blue-gray #7E8EA6
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap');
 
 *, html, body, [class*="css"] { font-family: 'IBM Plex Sans', sans-serif; }
 code { font-family: 'IBM Plex Mono', monospace !important; font-size: 0.85em; }
-h1,h2,h3,h4,h5 { font-weight: 600 !important; }
-
-/* remove streamlit padding */
+h1,h2,h3,h4,h5 { font-weight: 600 !important; color: #3D5A80 !important; }
 .block-container { padding-top: 2rem; }
 
 /* inputs */
-input[type="text"] { border-radius: 4px !important; }
-input[type="text"]:focus { border-color: #111 !important; box-shadow: none !important; }
-@media (prefers-color-scheme:dark) {
-    input[type="text"]:focus { border-color: #ccc !important; }
+input[type="text"] {
+    border-radius: 4px !important;
+    border-color: #C9CCD5 !important;
+    background: #F0F0F5 !important;
+    color: #3D5A80 !important;
 }
+input[type="text"]:focus {
+    border-color: #3D5A80 !important;
+    box-shadow: none !important;
+}
+input[type="text"]::placeholder { color: #7E8EA6 !important; }
 
-/* primary button — flat black */
+/* primary button — navy */
 button[kind="primary"] {
-    background: #111 !important; border: none !important;
-    border-radius: 4px !important; box-shadow: none !important;
+    background: #3D5A80 !important;
+    border: none !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
 }
-button[kind="primary"] p { color: #fff !important; font-weight: 500 !important; }
-button[kind="primary"]:hover { background: #333 !important; }
-@media (prefers-color-scheme:dark) {
-    button[kind="primary"] { background: #eee !important; }
-    button[kind="primary"] p { color: #111 !important; }
-    button[kind="primary"]:hover { background: #fff !important; }
-}
+button[kind="primary"] p { color: #F0F0F5 !important; font-weight: 500 !important; }
+button[kind="primary"]:hover { background: #2C4A6E !important; }
 
 /* secondary buttons — ghost */
 button[kind="secondary"] {
     border: none !important; background: none !important;
     box-shadow: none !important; padding: 0.2rem 0.4rem !important; min-height: 0 !important;
 }
-button[kind="secondary"] p { color: #bbb !important; }
-button[kind="secondary"]:hover p { color: #e55 !important; }
+button[kind="secondary"] p { color: #C9CCD5 !important; }
+button[kind="secondary"]:hover p { color: #c44 !important; }
+
+/* tertiary / clear */
+button[kind="tertiary"] p { color: #7E8EA6 !important; }
+button[kind="tertiary"]:hover p { color: #3D5A80 !important; }
 
 /* expanders */
-div[data-testid="stExpander"] { border: 1px solid #e5e5e5; border-radius: 4px; }
-@media (prefers-color-scheme:dark) {
-    div[data-testid="stExpander"] { border-color: #333; }
+div[data-testid="stExpander"] {
+    border: 1px solid #C9CCD5;
+    border-radius: 4px;
+    background: transparent;
 }
+div[data-testid="stExpander"]:hover { border-color: #7E8EA6; }
 
 /* note badges */
-.n-badge { display:inline-block; padding:3px 12px; border-radius:3px;
-           font-size:0.8em; font-weight:500; margin:2px 4px; }
-.n-top  { background:#fef9c3; color:#854d0e; }
-.n-mid  { background:#dbeafe; color:#1e40af; }
-.n-base { background:#f3e8ff; color:#6b21a8; }
-@media (prefers-color-scheme:dark) {
-    .n-top  { background:#422006; color:#fbbf24; }
-    .n-mid  { background:#172554; color:#60a5fa; }
-    .n-base { background:#2e1065; color:#c4b5fd; }
+.n-badge {
+    display: inline-block; padding: 3px 12px; border-radius: 3px;
+    font-size: 0.8em; font-weight: 500; margin: 2px 4px;
 }
+.n-top  { background: #fef9c3; color: #854d0e; }
+.n-mid  { background: #dbeafe; color: #1e40af; }
+.n-base { background: #ede9fe; color: #5b21b6; }
 
 /* small label */
-.sm { font-size:0.7em; text-transform:uppercase; letter-spacing:0.08em;
-      color:#999; font-weight:500; margin-bottom:2px; }
+.sm {
+    font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.08em;
+    color: #7E8EA6; font-weight: 500; margin-bottom: 2px;
+}
 
 /* divider */
-hr { border-color: #eee !important; }
-@media (prefers-color-scheme:dark) { hr { border-color: #2a2a2a !important; } }
+hr { border-color: #C9CCD5 !important; }
 
-/* progress */
-div[data-testid="stProgress"] > div > div { background: #111 !important; border-radius: 2px; }
-@media (prefers-color-scheme:dark) {
-    div[data-testid="stProgress"] > div > div { background: #ccc !important; }
+/* progress bar */
+div[data-testid="stProgress"] > div > div {
+    background: #3D5A80 !important; border-radius: 2px;
+}
+
+/* captions & small text */
+[data-testid="stCaptionContainer"] p { color: #7E8EA6 !important; }
+
+/* download buttons */
+button[data-testid="stDownloadButton"] button {
+    border-color: #C9CCD5 !important; border-radius: 4px !important;
+}
+button[data-testid="stDownloadButton"] button p { color: #3D5A80 !important; }
+button[data-testid="stDownloadButton"] button:hover {
+    background: #3D5A80 !important; border-color: #3D5A80 !important;
+}
+button[data-testid="stDownloadButton"] button:hover p { color: #F0F0F5 !important; }
+
+/* success/info/warning */
+div[data-testid="stAlert"] { border-radius: 4px; }
+
+/* sidebar */
+section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
+
+/* ── Dark mode overrides ── */
+@media (prefers-color-scheme: dark) {
+    h1,h2,h3,h4,h5 { color: #C9CCD5 !important; }
+    input[type="text"] {
+        background: #1a2332 !important;
+        border-color: #3D5A80 !important;
+        color: #F0F0F5 !important;
+    }
+    input[type="text"]:focus { border-color: #7E8EA6 !important; }
+    input[type="text"]::placeholder { color: #7E8EA6 !important; }
+    button[kind="primary"] { background: #7E8EA6 !important; }
+    button[kind="primary"] p { color: #111 !important; }
+    button[kind="primary"]:hover { background: #C9CCD5 !important; }
+    div[data-testid="stExpander"] { border-color: #3D5A80; }
+    div[data-testid="stExpander"]:hover { border-color: #7E8EA6; }
+    hr { border-color: #2a3a50 !important; }
+    div[data-testid="stProgress"] > div > div { background: #7E8EA6 !important; }
+    .n-top  { background: #422006; color: #fbbf24; }
+    .n-mid  { background: #172554; color: #60a5fa; }
+    .n-base { background: #2e1065; color: #c4b5fd; }
+    button[data-testid="stDownloadButton"] button { border-color: #3D5A80 !important; }
+    button[data-testid="stDownloadButton"] button p { color: #C9CCD5 !important; }
+    button[data-testid="stDownloadButton"] button:hover {
+        background: #3D5A80 !important; border-color: #3D5A80 !important;
+    }
+    button[data-testid="stDownloadButton"] button:hover p { color: #F0F0F5 !important; }
+    section[data-testid="stSidebar"] { border-right-color: #3D5A80; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -92,7 +145,7 @@ if "done" not in st.session_state: st.session_state.done = False
 # ── Sidebar ──
 with st.sidebar:
     st.markdown("**Perfume Analyzer**")
-    st.caption("v7 · minimal")
+    st.caption("v7.1")
     st.markdown("---")
     st.markdown("Data from **PubChem** (NIH)  \nPerfumery DB (CAS-validated)")
     st.markdown("---")
@@ -122,7 +175,6 @@ st.session_state.inputs = new_inputs
 
 names = [n.strip() for n in st.session_state.inputs if n.strip()]
 
-# ── Actions ──
 c1, c2, c3 = st.columns([4, 1, 1])
 with c1:
     search_clicked = st.button("Search", type="primary", disabled=len(names)==0,
@@ -147,7 +199,7 @@ if search_clicked and names:
     session = make_session()
     bar = st.progress(0)
     for idx, nm in enumerate(names):
-        bar.progress((idx) / len(names), text=f"{nm}")
+        bar.progress(idx / len(names), text=nm)
         st.session_state.results.append(scrape_material(nm, session))
     bar.progress(1.0, text="Done")
     st.session_state.done = True
