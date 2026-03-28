@@ -269,25 +269,22 @@ if st.session_state.results:
 
     for idx, mat in enumerate(st.session_state.results):
         if not mat.found:
-            ec1, ec2 = st.columns([12, 1])
-            with ec1:
-                with st.expander(f"✗  {mat.name}", expanded=False):
-                    st.error(mat.error)
-            with ec2:
+            with st.expander(f"✗  {mat.name}", expanded=False):
                 if st.button("−", key=f"del_{idx}"):
                     st.session_state.searched.discard(mat.name.lower())
                     st.session_state.results.pop(idx)
                     st.rerun()
+                st.error(mat.error)
             continue
 
-        ec1, ec2 = st.columns([12, 1])
-        with ec2:
-            if st.button("−", key=f"del_{idx}"):
-                st.session_state.searched.discard(mat.name.lower())
-                st.session_state.results.pop(idx)
-                st.rerun()
-        with ec1:
-          with st.expander(mat.name, expanded=True):
+        with st.expander(mat.name, expanded=True):
+            # ── Remove button (top-right) ──
+            _, del_col = st.columns([10, 1])
+            with del_col:
+                if st.button("−", key=f"del_{idx}"):
+                    st.session_state.searched.discard(mat.name.lower())
+                    st.session_state.results.pop(idx)
+                    st.rerun()
             if mat.match_info:
                 st.caption(mat.match_info)
 
@@ -370,8 +367,8 @@ if st.session_state.results and st.session_state.done:
     st.markdown("---")
     d1, d2 = st.columns(2)
     with d1:
-        st.download_button("↓ PDF", data=generate_human_report(st.session_state.results),
+        st.download_button("Download.PDF", data=generate_human_report(st.session_state.results),
             file_name="perfume_report.pdf", mime="application/pdf", use_container_width=True)
     with d2:
-        st.download_button("↓ JSON", data=generate_ai_report(st.session_state.results),
+        st.download_button("Download.JSON", data=generate_ai_report(st.session_state.results),
             file_name="perfume_report_ai.json", mime="application/json", use_container_width=True)
