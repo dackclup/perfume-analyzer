@@ -45,6 +45,7 @@ def material_to_markdown(mat: MaterialData) -> str:
     ident_block = (
         _row("CAS Number", mat.cas_number)
         + _row("FEMA Number", mat.fema_number)
+        + _row("IUPAC Name", getattr(mat, 'iupac_name', ''))
         + _list_block("Synonyms / Trade Names", mat.synonyms)
     )
     if ident_block.strip():

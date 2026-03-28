@@ -1,19 +1,16 @@
 """
 app.py — Perfume Raw Materials Analyzer
 
-A Streamlit web application that searches The Good Scents Company database
-for aroma chemicals and displays comprehensive chemical/perfumery data.
+A Streamlit web application that fetches chemical data from PubChem
+and merges it with a curated perfumery knowledge base.
 
 Run with:
     streamlit run app.py
 """
 
 import streamlit as st
-import requests
-
 from scraper import scrape_material, MaterialData, _get_session
 from exporter import generate_full_report
-from molecule import smiles_to_image, RDKIT_AVAILABLE
 
 
 # ─────────────────────────────────────────────────
@@ -31,27 +28,6 @@ st.set_page_config(
 # ─────────────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Card-like containers */
-    .material-card {
-        background: linear-gradient(135deg, #f8f9fc 0%, #f0f2f6 100%);
-        border: 1px solid #e0e3e8;
-        border-radius: 12px;
-        padding: 24px;
-        margin-bottom: 20px;
-    }
-    .property-grid {
-        display: grid;
-        grid-template-columns: 160px 1fr;
-        gap: 6px 12px;
-        font-size: 0.92em;
-    }
-    .prop-label {
-        font-weight: 600;
-        color: #444;
-    }
-    .prop-value {
-        color: #222;
-    }
     .note-badge {
         display: inline-block;
         padding: 4px 14px;
@@ -72,7 +48,7 @@ st.markdown("""
 # Session state initialization
 # ─────────────────────────────────────────────────
 if "material_inputs" not in st.session_state:
-    st.session_state.material_inputs = [""]  # Start with one empty field
+    st.session_state.material_inputs = [""]
 if "results" not in st.session_state:
     st.session_state.results = []
 if "search_complete" not in st.session_state:
@@ -80,31 +56,25 @@ if "search_complete" not in st.session_state:
 
 
 # ─────────────────────────────────────────────────
-# Sidebar — About & instructions
+# Sidebar
 # ─────────────────────────────────────────────────
 with st.sidebar:
-    st.image("https://img.icons8.com/color/96/test-tube.png", width=64)
-    st.title("About")
+    st.title("🧪 About")
     st.markdown(
-        "This tool searches **The Good Scents Company** database and extracts "
-        "comprehensive chemical and perfumery data for aroma raw materials.\n\n"
+        "This tool fetches molecular data from **PubChem** (NIH) and combines it "
+        "with a curated **perfumery knowledge base** for aroma chemical analysis.\n\n"
         "**How to use:**\n"
-        "1. Add material names using the input fields\n"
+        "1. Add material names\n"
         "2. Click **Search & Analyze**\n"
-        "3. Review extracted data for each material\n"
-        "4. Download a Markdown report\n"
+        "3. Review extracted data\n"
+        "4. Download Markdown report\n"
     )
     st.divider()
-    st.markdown("**Data source:**")
-    st.markdown("[thegoodscentscompany.com](http://www.thegoodscentscompany.com/)")
-
-    if RDKIT_AVAILABLE:
-        st.success("✅ RDKit available — SMILES rendering enabled")
-    else:
-        st.warning("⚠️ RDKit not installed — using web images only")
-
+    st.markdown("**Data sources:**")
+    st.markdown("- [PubChem](https://pubchem.ncbi.nlm.nih.gov/) — molecular & physical data")
+    st.markdown("- Built-in perfumery database — odor, notes, blending")
     st.divider()
-    st.caption("Built with Streamlit • BeautifulSoup4 • RDKit")
+    st.caption("Built with Streamlit + PubChem API")
 
 
 # ─────────────────────────────────────────────────
@@ -112,9 +82,8 @@ with st.sidebar:
 # ─────────────────────────────────────────────────
 st.title("🧪 Perfume Raw Materials Analyzer")
 st.markdown(
-    "Enter one or more aroma chemicals below. The app will search "
-    "[The Good Scents Company](http://www.thegoodscentscompany.com/) "
-    "and extract molecular, olfactory, and safety data."
+    "Enter aroma chemicals below. The app will fetch molecular data from "
+    "**PubChem** and merge it with perfumery-specific knowledge."
 )
 st.divider()
 
@@ -124,7 +93,6 @@ st.divider()
 # ─────────────────────────────────────────────────
 st.subheader("📝 Materials to Analyze")
 
-# Render current input fields
 updated_inputs = []
 for i in range(len(st.session_state.material_inputs)):
     cols = st.columns([10, 1])
@@ -138,7 +106,6 @@ for i in range(len(st.session_state.material_inputs)):
         )
         updated_inputs.append(val)
     with cols[1]:
-        # Show remove button for all fields except the first
         if i > 0:
             if st.button("✕", key=f"remove_{i}", help="Remove this field"):
                 st.session_state.material_inputs.pop(i)
@@ -146,7 +113,6 @@ for i in range(len(st.session_state.material_inputs)):
 
 st.session_state.material_inputs = updated_inputs
 
-# Add / Clear buttons
 btn_cols = st.columns([1, 1, 4])
 with btn_cols[0]:
     if st.button("➕ Add Material", use_container_width=True):
@@ -165,12 +131,7 @@ st.divider()
 # ─────────────────────────────────────────────────
 # Search action
 # ─────────────────────────────────────────────────
-# Collect non-empty inputs
-names_to_search = [
-    name.strip()
-    for name in st.session_state.material_inputs
-    if name.strip()
-]
+names_to_search = [n.strip() for n in st.session_state.material_inputs if n.strip()]
 
 search_clicked = st.button(
     "🔍 Search & Analyze",
@@ -188,7 +149,7 @@ if search_clicked and names_to_search:
 
     for idx, name in enumerate(names_to_search):
         progress_bar.progress(
-            (idx) / len(names_to_search),
+            idx / len(names_to_search),
             text=f"Searching for **{name}** ({idx + 1}/{len(names_to_search)})…",
         )
         result = scrape_material(name, session=session)
@@ -205,10 +166,15 @@ if st.session_state.results:
     st.divider()
     st.subheader("📊 Results")
 
-    # Summary bar
     found_count = sum(1 for r in st.session_state.results if r.found)
     total = len(st.session_state.results)
-    st.info(f"**{found_count}** of **{total}** materials found successfully.")
+
+    if found_count == total:
+        st.success(f"**{found_count}** of **{total}** materials found successfully.")
+    elif found_count > 0:
+        st.warning(f"**{found_count}** of **{total}** materials found.")
+    else:
+        st.error(f"**0** of **{total}** materials found.")
 
     for mat in st.session_state.results:
         # ── Not-found materials ──
@@ -224,36 +190,27 @@ if st.session_state.results:
             img_col, info_col = st.columns([1, 2])
 
             with img_col:
-                # Try RDKit rendering first, then fall back to web image
-                rendered = False
-                if mat.smiles and RDKIT_AVAILABLE:
-                    img_bytes = smiles_to_image(mat.smiles)
-                    if img_bytes:
-                        st.image(img_bytes, caption="Molecular structure (RDKit)")
-                        rendered = True
-
-                if not rendered and mat.structure_image_url:
+                if mat.structure_image_url:
                     try:
                         st.image(
                             mat.structure_image_url,
-                            caption="Molecular structure",
+                            caption="Molecular structure (PubChem)",
                             use_container_width=True,
                         )
-                        rendered = True
                     except Exception:
-                        pass
-
-                if not rendered:
+                        st.caption("Could not load structure image.")
+                else:
                     st.caption("No structure image available.")
 
             with info_col:
                 st.markdown(f"#### {mat.name}")
                 if mat.page_url:
-                    st.markdown(f"[🔗 View source page]({mat.page_url})")
+                    st.markdown(f"[🔗 View on PubChem]({mat.page_url})")
 
                 id_data = {
                     "CAS Number": mat.cas_number,
                     "FEMA Number": mat.fema_number,
+                    "IUPAC Name": mat.iupac_name,
                     "Molecular Formula": mat.molecular_formula,
                     "Molecular Weight": mat.molecular_weight,
                     "SMILES": mat.smiles,
@@ -263,11 +220,7 @@ if st.session_state.results:
                         st.markdown(f"**{label}:** `{value}`")
 
                 if mat.synonyms:
-                    st.markdown(
-                        "**Synonyms:** " + ", ".join(mat.synonyms[:8])
-                    )
-                    if len(mat.synonyms) > 8:
-                        st.caption(f"…and {len(mat.synonyms) - 8} more")
+                    st.markdown("**Synonyms:** " + ", ".join(mat.synonyms[:8]))
 
             st.markdown("---")
 
@@ -283,7 +236,7 @@ if st.session_state.results:
                 if mat.odor_strength:
                     st.markdown(f"**Strength:** {mat.odor_strength}")
                 if not any([mat.odor_description, mat.odor_type, mat.odor_strength]):
-                    st.caption("No odor data found.")
+                    st.caption("No odor data in database — contribute to expand coverage!")
 
             with col_b:
                 st.markdown("##### 🎵 Note Classification")
@@ -305,7 +258,7 @@ if st.session_state.results:
                             unsafe_allow_html=True,
                         )
                 else:
-                    st.caption("No note classification found.")
+                    st.caption("No note classification in database.")
 
             with col_c:
                 st.markdown("##### ⏱️ Performance")
@@ -314,7 +267,7 @@ if st.session_state.results:
                 if mat.tenacity_hours:
                     st.markdown(f"**Duration:** {mat.tenacity_hours}")
                 if not mat.tenacity and not mat.tenacity_hours:
-                    st.caption("No tenacity data found.")
+                    st.caption("No tenacity data in database.")
 
             st.markdown("---")
 
@@ -344,7 +297,7 @@ if st.session_state.results:
 
             st.markdown("---")
 
-            # ── Safety & Formulation ──
+            # ── Safety & Blending ──
             safe_col, blend_col = st.columns(2)
 
             with safe_col:
@@ -354,17 +307,15 @@ if st.session_state.results:
                 if mat.usage_levels:
                     st.markdown(f"**Usage Levels:** {mat.usage_levels}")
                 if not mat.ifra_guidelines and not mat.usage_levels:
-                    st.caption("No safety/formulation data found.")
+                    st.caption("No safety/formulation data in database.")
 
             with blend_col:
                 st.markdown("##### 🌿 Blending Suggestions")
                 if mat.blends_well_with:
                     for item in mat.blends_well_with[:12]:
                         st.markdown(f"- {item}")
-                    if len(mat.blends_well_with) > 12:
-                        st.caption(f"…and {len(mat.blends_well_with) - 12} more")
                 else:
-                    st.caption("No blending data found.")
+                    st.caption("No blending data in database.")
 
 
 # ─────────────────────────────────────────────────
