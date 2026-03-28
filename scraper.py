@@ -393,14 +393,19 @@ _MAX_CHARS_PER_ITEM = 1500
 
 
 def _extract_string_value(info_block):
-    """Pull text from a PUG View Information block — handle ALL value types."""
+    """Pull text from a PUG View Information block — handle ALL value types.
+    Strips any embedded URLs — we only want data content."""
     val = info_block.get("Value", {})
 
     # String values (may have multiple)
     strs = val.get("StringWithMarkup", [])
     if strs:
         parts = [s.get("String", "") for s in strs if s.get("String")]
-        return "; ".join(parts) if parts else ""
+        text = "; ".join(parts) if parts else ""
+        # Strip URLs and clean up whitespace
+        text = re.sub(r'https?://\S+', '', text)
+        text = re.sub(r'\s{2,}', ' ', text).strip()
+        return text
 
     # Numeric values
     nums = val.get("Number", [])
@@ -413,8 +418,7 @@ def _extract_string_value(info_block):
     if bval is not None:
         return "Yes" if bval else "No"
 
-    # Binary/external data — skip (not user-accessible)
-    # Table references — skip (not displayable)
+    # Binary/external data and table references — skip
     return ""
 
 

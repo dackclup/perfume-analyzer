@@ -126,8 +126,6 @@ if st.session_state.results:
                         pass
             with tc:
                 st.markdown(f"#### {mat.name}")
-                if mat.page_url:
-                    st.markdown(f"[🔗 PubChem]({mat.page_url})")
                 for lab, val in [("CAS", mat.cas_number), ("FEMA", mat.fema_number),
                     ("IUPAC", mat.iupac_name), ("Formula", mat.molecular_formula),
                     ("MW", mat.molecular_weight), ("SMILES", mat.smiles)]:
@@ -200,19 +198,18 @@ if st.session_state.results:
                                 st.markdown(f"**{display}**")
 
                             for item in items:
-                                # Skip items that are just URLs or reference IDs
-                                if item.startswith("http") and " " not in item:
+                                # Skip items that are just URLs or contain URLs
+                                if item.startswith("http"):
+                                    continue
+                                # Remove embedded URLs from text
+                                import re
+                                clean = re.sub(r'https?://\S+', '', item).strip()
+                                if not clean or len(clean) < 3:
                                     continue
                                 # Truncate very long items
-                                display_item = item if len(item) <= 500 else item[:500] + "…"
-                                # Convert raw URLs in text to clickable links
-                                import re
-                                display_item = re.sub(
-                                    r'(https?://\S+)',
-                                    r'[\1](\1)',
-                                    display_item
-                                )
-                                st.markdown(f"- {display_item}")
+                                if len(clean) > 500:
+                                    clean = clean[:500] + "…"
+                                st.markdown(f"- {clean}")
                             st.markdown("")
 
 if st.session_state.results and st.session_state.done:

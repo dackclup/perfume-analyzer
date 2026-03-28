@@ -178,18 +178,17 @@ def _build_material(mat):
                 els.append(Paragraph(display_heading, _S["SubSecH"]))
 
             for item in items:
-                # Truncate very long items for PDF
-                text = item if len(item) <= 400 else item[:400] + "…"
+                # Skip URL-only items
+                if item.startswith("http"):
+                    continue
+                # Strip embedded URLs
+                import re
+                clean = re.sub(r'https?://\S+', '', item).strip()
+                if not clean or len(clean) < 3:
+                    continue
+                text = clean if len(clean) <= 400 else clean[:400] + "…"
                 els.append(Paragraph(text, _S["Body9"]))
             els.append(Spacer(1, 2*mm))
-
-    # Source
-    if mat.page_url:
-        els.append(Spacer(1, 2*mm))
-        hex_accent = ACCENT.hexval()[2:]
-        els.append(Paragraph(
-            f'<a href="{mat.page_url}" color="#{hex_accent}">'
-            f'PubChem: {mat.page_url}</a>', _S["Small"]))
 
     return els
 
@@ -244,7 +243,7 @@ def _material_to_dict(mat):
     if not mat.found:
         return {"name": mat.name, "found": False, "error": mat.error}
 
-    d = {"name": mat.name, "found": True, "source_url": mat.page_url,
+    d = {"name": mat.name, "found": True,
          "data_validation": {"perfumery_matched": mat.perfumery_matched,
                              "method": mat.match_info}}
 
@@ -282,9 +281,22 @@ def _material_to_dict(mat):
     if mat.blends_well_with:
         d["blending"] = mat.blends_well_with
 
-    # ALL PubChem sections
+    # ALL PubChem sections — strip URLs
     if mat.pubchem_sections:
-        d["pubchem_full_data"] = dict(mat.pubchem_sections)
+        import re
+        cleaned = {}
+        for heading, items in mat.pubchem_sections.items():
+            clean_items = []
+            for item in items:
+                if item.startswith("http"):
+                    continue
+                clean = re.sub(r'https?://\S+', '', item).strip()
+                if clean and len(clean) >= 3:
+                    clean_items.append(clean)
+            if clean_items:
+                cleaned[heading] = clean_items
+        if cleaned:
+            d["pubchem_full_data"] = cleaned
 
     return d
 
