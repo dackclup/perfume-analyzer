@@ -277,7 +277,7 @@ if st.session_state.results:
                 with st.expander(f"✗  {mat.name}", expanded=False):
                     st.error(mat.error)
             with btn_col:
-                if st.button("−", key=f"del_{idx}"):
+                if st.button("🗑", key=f"del_{idx}"):
                     st.session_state.searched.discard(mat.name.lower())
                     st.session_state.results.pop(idx)
                     st.rerun()
@@ -285,7 +285,7 @@ if st.session_state.results:
 
         ex_col, btn_col = st.columns([20, 1], gap="small")
         with btn_col:
-            if st.button("−", key=f"del_{idx}"):
+            if st.button("🗑", key=f"del_{idx}"):
                 st.session_state.searched.discard(mat.name.lower())
                 st.session_state.results.pop(idx)
                 st.rerun()
