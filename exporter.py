@@ -388,11 +388,12 @@ def generate_human_report(materials):
     story.append(_hr())
     story.append(Spacer(1, 4*mm))
 
-    # ── Material sections ──
-    for mat in materials:
+    # ── Material sections (each on its own page) ──
+    for i, mat in enumerate(materials):
+        if i > 0:
+            story.append(PageBreak())
         elems = _build_material(mat)
         story.extend(elems)
-        story.append(Spacer(1, 2*mm))
 
     # ── Final footer ──
     story.append(Spacer(1, 6*mm))
