@@ -1,8 +1,8 @@
 """
-app.py  v3.1
+app.py  v4.0
 ============
 Perfume Raw Materials Analyzer — Streamlit UI
-Two export formats: Human (.md) + AI (.json)
+Export: PDF (human) + JSON (AI)
 
     streamlit run app.py
 """
@@ -54,14 +54,10 @@ with st.sidebar:
     )
     st.divider()
     st.markdown("**Export formats:**")
-    st.markdown("- 📄 **Markdown** — สำหรับคนอ่าน")
+    st.markdown("- 📄 **PDF** — สำหรับคนอ่าน / ปริ้น")
     st.markdown("- 🤖 **JSON** — สำหรับ AI อ่าน")
     st.divider()
-    st.markdown("**Sources:**")
-    st.markdown("- [PubChem](https://pubchem.ncbi.nlm.nih.gov/) — chemistry")
-    st.markdown("- Built-in DB — perfumery (CAS-validated)")
-    st.divider()
-    st.caption("v3.1 · CAS-validated · dual export")
+    st.caption("v4.0 · CAS-validated · PDF + JSON")
 
 # ── Header ──
 st.title("🧪 Perfume Raw Materials Analyzer")
@@ -144,7 +140,6 @@ if st.session_state.results:
 
         with st.expander(f"✅  {mat.name}", expanded=True):
 
-            # ── Match status ──
             if mat.match_info:
                 if mat.perfumery_matched:
                     st.success(f"**Data source:** {mat.match_info}")
@@ -153,7 +148,6 @@ if st.session_state.results:
                 else:
                     st.info(f"**Data source:** {mat.match_info}")
 
-            # ── Image + identifiers ──
             ic, tc = st.columns([1, 2])
             with ic:
                 if mat.structure_image_url:
@@ -182,7 +176,6 @@ if st.session_state.results:
 
             st.markdown("---")
 
-            # ── Odor · Note · Performance ──
             a, b, c = st.columns(3)
             with a:
                 st.markdown("##### 👃 Odor Profile")
@@ -225,7 +218,6 @@ if st.session_state.results:
 
             st.markdown("---")
 
-            # ── Physical / chemical ──
             st.markdown("##### ⚗️ Physical & Chemical Properties")
             filled = {k: v for k, v in {
                 "Appearance": mat.appearance,
@@ -253,7 +245,6 @@ if st.session_state.results:
 
             st.markdown("---")
 
-            # ── Safety · Blending ──
             s1, s2 = st.columns(2)
             with s1:
                 st.markdown("##### 🛡️ Safety & Formulation")
@@ -279,19 +270,15 @@ if st.session_state.results and st.session_state.done:
     dl1, dl2 = st.columns(2)
 
     with dl1:
-        human_md = generate_human_report(st.session_state.results)
+        pdf_bytes = generate_human_report(st.session_state.results)
         st.download_button(
-            "📄 สำหรับคนอ่าน (.md)",
-            data=human_md,
-            file_name="perfume_report_human.md",
-            mime="text/markdown",
+            "📄 สำหรับคนอ่าน (.pdf)",
+            data=pdf_bytes,
+            file_name="perfume_report.pdf",
+            mime="application/pdf",
             use_container_width=True,
-            help="Markdown — อ่านง่าย มีหัวข้อ จัดรูปแบบสวย",
         )
-        st.caption(
-            "**Markdown** — เปิดอ่านได้ทุกที่ "
-            "จัดรูปแบบสวย มีหัวข้อ ลิงก์ รูปภาพ"
-        )
+        st.caption("**PDF** — จัดหน้าสวย พร้อมปริ้นลงกระดาษ A4")
 
     with dl2:
         ai_json = generate_ai_report(st.session_state.results)
@@ -301,9 +288,5 @@ if st.session_state.results and st.session_state.done:
             file_name="perfume_report_ai.json",
             mime="application/json",
             use_container_width=True,
-            help="JSON — โครงสร้างชัดเจน มี metadata สำหรับ AI/LLM",
         )
-        st.caption(
-            "**JSON** — โครงสร้างชัด มี schema version, "
-            "คำสั่งสำหรับ AI, และ validation status"
-        )
+        st.caption("**JSON** — โครงสร้างชัด มี metadata สำหรับ AI/LLM")
