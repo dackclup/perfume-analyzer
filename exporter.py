@@ -1,8 +1,9 @@
 """
-exporter.py  v5.0 — PDF (human) + JSON (AI) with ALL PubChem sections
+exporter.py  v5.1 — PDF (human) + JSON (AI) with PubChem link restored
 """
 
 import io
+import re
 import json
 from datetime import datetime
 from collections import OrderedDict
@@ -20,7 +21,6 @@ from reportlab.platypus import (
 
 PRIMARY   = HexColor("#1e3a5f")
 ACCENT    = HexColor("#2c7be5")
-LIGHT_BG  = HexColor("#f0f4f8")
 BORDER    = HexColor("#d1d9e6")
 TEXT_DARK = HexColor("#1a1a2e")
 TEXT_MID  = HexColor("#4a5568")
@@ -103,7 +103,7 @@ def _page_tmpl(c, doc):
     c.setStrokeColor(BORDER); c.setLineWidth(0.5)
     c.line(15*mm, 12*mm, w-15*mm, 12*mm)
     c.setFont("Helvetica", 7); c.setFillColor(TEXT_MID)
-    c.drawCentredString(w/2, 7*mm, f"Perfume Raw Materials Analyzer v5.0  |  Page {doc.page}")
+    c.drawCentredString(w/2, 7*mm, f"Perfume Raw Materials Analyzer v5.1  |  Page {doc.page}")
     c.drawRightString(w-15*mm, 7*mm, datetime.now().strftime("%Y-%m-%d"))
     c.restoreState()
 
@@ -116,6 +116,15 @@ def _build_material(mat):
         return els
 
     els.append(Paragraph(mat.name, _S["MName"]))
+
+    # PubChem link (clickable in PDF)
+    if mat.page_url:
+        hex_a = ACCENT.hexval()[2:]
+        els.append(Paragraph(
+            f'<a href="{mat.page_url}" color="#{hex_a}">'
+            f'PubChem: {mat.page_url}</a>', _S["Small"]))
+        els.append(Spacer(1, 2*mm))
+
     if mat.match_info:
         els.append(Paragraph(mat.match_info, _S["Small"]))
         els.append(Spacer(1, 2*mm))
@@ -168,7 +177,6 @@ def _build_material(mat):
         els.append(Spacer(1, 2*mm))
 
         for heading, items in mat.pubchem_sections.items():
-            # Use subsection style for nested headings
             display_heading = heading.split(" > ")[-1] if " > " in heading else heading
             parent = heading.split(" > ")[0] if " > " in heading else ""
 
@@ -178,11 +186,8 @@ def _build_material(mat):
                 els.append(Paragraph(display_heading, _S["SubSecH"]))
 
             for item in items:
-                # Skip URL-only items
                 if item.startswith("http"):
                     continue
-                # Strip embedded URLs
-                import re
                 clean = re.sub(r'https?://\S+', '', item).strip()
                 if not clean or len(clean) < 3:
                     continue
@@ -227,7 +232,7 @@ def generate_human_report(materials):
 
     story.append(Spacer(1, 6*mm))
     story.append(Paragraph(
-        "Report by Perfume Raw Materials Analyzer v5.0<br/>"
+        "Report by Perfume Raw Materials Analyzer v5.1<br/>"
         "Full PubChem compound record + CAS-validated perfumery database",
         _S["Foot"]))
 
@@ -244,6 +249,7 @@ def _material_to_dict(mat):
         return {"name": mat.name, "found": False, "error": mat.error}
 
     d = {"name": mat.name, "found": True,
+         "pubchem_url": mat.page_url,
          "data_validation": {"perfumery_matched": mat.perfumery_matched,
                              "method": mat.match_info}}
 
@@ -281,9 +287,8 @@ def _material_to_dict(mat):
     if mat.blends_well_with:
         d["blending"] = mat.blends_well_with
 
-    # ALL PubChem sections — strip URLs
+    # ALL PubChem sections — strip URLs from data content
     if mat.pubchem_sections:
-        import re
         cleaned = {}
         for heading, items in mat.pubchem_sections.items():
             clean_items = []
@@ -304,7 +309,7 @@ def _material_to_dict(mat):
 def generate_ai_report(materials):
     report = {
         "_meta": {
-            "schema": "5.0",
+            "schema": "5.1",
             "generated": datetime.now().isoformat(),
             "total": len(materials),
             "found": sum(1 for m in materials if m.found),
@@ -313,7 +318,8 @@ def generate_ai_report(materials):
                 "1) Check data_validation.perfumery_matched per material. "
                 "2) If true: odor/notes/blending are CAS-verified. "
                 "3) If false: only PubChem data — do NOT hallucinate perfumery data. "
-                "4) pubchem_full_data contains ALL sections from PubChem PUG View."
+                "4) pubchem_full_data contains ALL sections from PubChem PUG View. "
+                "5) pubchem_url links to the original compound page."
             ),
         },
         "materials": [_material_to_dict(m) for m in materials],
