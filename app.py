@@ -16,9 +16,10 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap');
 
-*, html, body, [class*="css"] { font-family: 'IBM Plex Sans', sans-serif; }
-code { font-family: 'IBM Plex Mono', monospace !important; font-size: 0.85em; }
-h1,h2,h3,h4,h5 { font-weight: 600 !important; color: #3D5A80 !important; }
+*, html, body, [class*="css"] { font-family: 'IBM Plex Sans', sans-serif; color: #1a1a2e; }
+code { font-family: 'IBM Plex Mono', monospace !important; font-size: 0.85em; color: #2C4A6E !important; }
+h1,h2,h3,h4,h5 { font-weight: 600 !important; color: #2C3E5A !important; }
+p, li, span, div { color: #1a1a2e; }
 .block-container { padding-top: 2rem; }
 
 /* inputs */
@@ -26,13 +27,13 @@ input[type="text"] {
     border-radius: 4px !important;
     border-color: #C9CCD5 !important;
     background: #F0F0F5 !important;
-    color: #3D5A80 !important;
+    color: #1a1a2e !important;
 }
 input[type="text"]:focus {
     border-color: #3D5A80 !important;
     box-shadow: none !important;
 }
-input[type="text"]::placeholder { color: #7E8EA6 !important; }
+input[type="text"]::placeholder { color: #8893A6 !important; }
 
 /* primary button — navy */
 button[kind="primary"] {
@@ -49,12 +50,12 @@ button[kind="secondary"] {
     border: none !important; background: none !important;
     box-shadow: none !important; padding: 0.2rem 0.4rem !important; min-height: 0 !important;
 }
-button[kind="secondary"] p { color: #C9CCD5 !important; }
+button[kind="secondary"] p { color: #8893A6 !important; }
 button[kind="secondary"]:hover p { color: #c44 !important; }
 
 /* tertiary / clear */
-button[kind="tertiary"] p { color: #7E8EA6 !important; }
-button[kind="tertiary"]:hover p { color: #3D5A80 !important; }
+button[kind="tertiary"] p { color: #4A5E78 !important; }
+button[kind="tertiary"]:hover p { color: #2C3E5A !important; }
 
 /* expanders */
 div[data-testid="stExpander"] {
@@ -76,7 +77,7 @@ div[data-testid="stExpander"]:hover { border-color: #7E8EA6; }
 /* small label */
 .sm {
     font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.08em;
-    color: #7E8EA6; font-weight: 500; margin-bottom: 2px;
+    color: #4A5E78; font-weight: 600; margin-bottom: 2px;
 }
 
 /* divider */
@@ -88,13 +89,13 @@ div[data-testid="stProgress"] > div > div {
 }
 
 /* captions & small text */
-[data-testid="stCaptionContainer"] p { color: #7E8EA6 !important; }
+[data-testid="stCaptionContainer"] p { color: #5A6B82 !important; }
 
 /* download buttons */
 button[data-testid="stDownloadButton"] button {
-    border-color: #C9CCD5 !important; border-radius: 4px !important;
+    border-color: #3D5A80 !important; border-radius: 4px !important;
 }
-button[data-testid="stDownloadButton"] button p { color: #3D5A80 !important; }
+button[data-testid="stDownloadButton"] button p { color: #2C3E5A !important; }
 button[data-testid="stDownloadButton"] button:hover {
     background: #3D5A80 !important; border-color: #3D5A80 !important;
 }
@@ -108,17 +109,21 @@ section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
 
 /* ── Dark mode overrides ── */
 @media (prefers-color-scheme: dark) {
-    h1,h2,h3,h4,h5 { color: #C9CCD5 !important; }
+    *, p, li, span, div { color: #E8ECF0; }
+    h1,h2,h3,h4,h5 { color: #E8ECF0 !important; }
+    code { color: #C9CCD5 !important; }
     input[type="text"] {
         background: #1a2332 !important;
         border-color: #3D5A80 !important;
-        color: #F0F0F5 !important;
+        color: #E8ECF0 !important;
     }
     input[type="text"]:focus { border-color: #7E8EA6 !important; }
     input[type="text"]::placeholder { color: #7E8EA6 !important; }
     button[kind="primary"] { background: #7E8EA6 !important; }
     button[kind="primary"] p { color: #111 !important; }
     button[kind="primary"]:hover { background: #C9CCD5 !important; }
+    .sm { color: #9AACBF !important; }
+    [data-testid="stCaptionContainer"] p { color: #8899AA !important; }
     div[data-testid="stExpander"] { border-color: #3D5A80; }
     div[data-testid="stExpander"]:hover { border-color: #7E8EA6; }
     hr { border-color: #2a3a50 !important; }
@@ -132,6 +137,9 @@ section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
         background: #3D5A80 !important; border-color: #3D5A80 !important;
     }
     button[data-testid="stDownloadButton"] button:hover p { color: #F0F0F5 !important; }
+    button[kind="secondary"] p { color: #667788 !important; }
+    button[kind="tertiary"] p { color: #8899AA !important; }
+    button[kind="tertiary"]:hover p { color: #E8ECF0 !important; }
     section[data-testid="stSidebar"] { border-right-color: #3D5A80; }
 }
 </style>
