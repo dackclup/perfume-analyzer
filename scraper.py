@@ -447,7 +447,10 @@ def _walk_sections(sections, result, parent_path="", depth=0):
         for info in infos:
             name = info.get("Name", "")
             text = _extract_string_value(info)
-            if text and len(text) <= _MAX_CHARS_PER_ITEM:
+            if text:
+                # Truncate very long items instead of dropping
+                if len(text) > _MAX_CHARS_PER_ITEM:
+                    text = text[:_MAX_CHARS_PER_ITEM] + "…"
                 if name and name != heading:
                     texts.append(f"{name}: {text}")
                 else:
