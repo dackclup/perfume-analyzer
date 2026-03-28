@@ -1,21 +1,16 @@
 """
-app.py
-======
+app.py  v3.0
+============
 Perfume Raw Materials Analyzer — Streamlit UI
 
-Fetches molecular data from PubChem and merges with a curated
-perfumery knowledge base.
-
     streamlit run app.py
-
-Version: 2.0
 """
 
 import streamlit as st
 from scraper import scrape_material, make_session
 from exporter import generate_full_report
 
-# ── Page config ──────────────────────────────────
+# ── Page config ──
 st.set_page_config(
     page_title="Perfume Raw Materials Analyzer",
     page_icon="🧪",
@@ -23,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── CSS ──────────────────────────────────────────
+# ── CSS ──
 st.markdown("""
 <style>
 .note-badge{display:inline-block;padding:4px 14px;border-radius:20px;
@@ -35,7 +30,7 @@ div[data-testid="stExpander"]{border:1px solid #e0e3e8;border-radius:8px}
 </style>
 """, unsafe_allow_html=True)
 
-# ── Session state ────────────────────────────────
+# ── Session state ──
 if "inputs" not in st.session_state:
     st.session_state.inputs = [""]
 if "results" not in st.session_state:
@@ -43,34 +38,36 @@ if "results" not in st.session_state:
 if "done" not in st.session_state:
     st.session_state.done = False
 
-# ── Sidebar ──────────────────────────────────────
+# ── Sidebar ──
 with st.sidebar:
     st.title("🧪 About")
     st.markdown(
-        "Fetches molecular data from **PubChem** (NIH) and combines it "
+        "Fetches molecular data from **PubChem** (NIH) and combines "
         "with a curated **perfumery knowledge base**.\n\n"
+        "Perfumery data (odor, notes, blending) is applied "
+        "**only when CAS numbers match** to prevent false data.\n\n"
         "**Steps:**\n"
         "1. Add material names\n"
         "2. Click **Search & Analyze**\n"
         "3. Review results\n"
-        "4. Download Markdown report"
+        "4. Download report"
     )
     st.divider()
-    st.markdown("**Data sources:**")
-    st.markdown("- [PubChem](https://pubchem.ncbi.nlm.nih.gov/) — molecular & physical data")
-    st.markdown("- Built-in DB — odor, notes, blending, IFRA")
+    st.markdown("**Sources:**")
+    st.markdown("- [PubChem](https://pubchem.ncbi.nlm.nih.gov/) — chemistry")
+    st.markdown("- Built-in DB — perfumery (CAS-validated)")
     st.divider()
-    st.caption("Streamlit · PubChem API · v2.0")
+    st.caption("v3.0 · CAS-validated matching")
 
-# ── Header ───────────────────────────────────────
+# ── Header ──
 st.title("🧪 Perfume Raw Materials Analyzer")
 st.markdown(
-    "Enter aroma chemicals below — the app fetches data from **PubChem** "
-    "and merges it with perfumery-specific knowledge."
+    "Enter aroma chemicals — the app fetches **verified** molecular data "
+    "from PubChem and overlays perfumery data only when CAS numbers match."
 )
 st.divider()
 
-# ── Dynamic inputs ───────────────────────────────
+# ── Dynamic inputs ──
 st.subheader("📝 Materials to Analyze")
 
 new_inputs = []
@@ -106,7 +103,7 @@ with c2:
 
 st.divider()
 
-# ── Search ───────────────────────────────────────
+# ── Search ──
 names = [n.strip() for n in st.session_state.inputs if n.strip()]
 
 if st.button("🔍 Search & Analyze", type="primary",
@@ -124,7 +121,7 @@ if st.button("🔍 Search & Analyze", type="primary",
     bar.progress(1.0, text="✅ Search complete!")
     st.session_state.done = True
 
-# ── Results ──────────────────────────────────────
+# ── Results ──
 if st.session_state.results:
     st.divider()
     st.subheader("📊 Results")
@@ -142,6 +139,16 @@ if st.session_state.results:
             continue
 
         with st.expander(f"✅  {mat.name}", expanded=True):
+
+            # ── Match status banner ──
+            if mat.match_info:
+                if mat.perfumery_matched:
+                    st.success(f"**Data source:** {mat.match_info}")
+                elif "mismatch" in mat.match_info.lower():
+                    st.warning(f"**Data source:** {mat.match_info}")
+                else:
+                    st.info(f"**Data source:** {mat.match_info}")
+
             # ── Image + identifiers ──
             ic, tc = st.columns([1, 2])
             with ic:
@@ -175,27 +182,31 @@ if st.session_state.results:
             a, b, c = st.columns(3)
             with a:
                 st.markdown("##### 👃 Odor Profile")
-                for lab, val in [("Description", mat.odor_description),
-                                 ("Type", mat.odor_type),
-                                 ("Strength", mat.odor_strength)]:
-                    if val:
-                        st.markdown(f"**{lab}:** {val}")
+                if mat.odor_description:
+                    st.markdown(f"**Description:** {mat.odor_description}")
+                if mat.odor_type:
+                    st.markdown(f"**Type:** {mat.odor_type}")
+                if mat.odor_strength:
+                    st.markdown(f"**Strength:** {mat.odor_strength}")
                 if not any([mat.odor_description, mat.odor_type, mat.odor_strength]):
-                    st.caption("Not in perfumery DB yet.")
+                    st.caption("Not in perfumery DB — PubChem data only.")
 
             with b:
                 st.markdown("##### 🎵 Note")
                 if mat.note_classification:
                     nl = mat.note_classification.lower()
                     if "top" in nl:
-                        st.markdown('<span class="note-badge note-top">🔝 Top</span>',
-                                    unsafe_allow_html=True)
+                        st.markdown(
+                            '<span class="note-badge note-top">🔝 Top</span>',
+                            unsafe_allow_html=True)
                     if "middle" in nl or "heart" in nl:
-                        st.markdown('<span class="note-badge note-mid">💜 Middle / Heart</span>',
-                                    unsafe_allow_html=True)
+                        st.markdown(
+                            '<span class="note-badge note-mid">💜 Middle / Heart</span>',
+                            unsafe_allow_html=True)
                     if "base" in nl:
-                        st.markdown('<span class="note-badge note-base">🪨 Base</span>',
-                                    unsafe_allow_html=True)
+                        st.markdown(
+                            '<span class="note-badge note-base">🪨 Base</span>',
+                            unsafe_allow_html=True)
                 else:
                     st.caption("No classification.")
 
@@ -256,7 +267,7 @@ if st.session_state.results:
                 else:
                     st.caption("No blending data.")
 
-# ── Export ────────────────────────────────────────
+# ── Export ──
 if st.session_state.results and st.session_state.done:
     st.divider()
     md = generate_full_report(st.session_state.results)
