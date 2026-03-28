@@ -225,23 +225,29 @@ selected_names = []
 for i in range(st.session_state.box_count):
     lc, rc = st.columns([14, 1])
     with lc:
+        # Restore previous value so text stays in the box after rerun
+        prev = st.session_state.get(f"_selected_{i}", None)
         selected = st_searchbox(
             _make_search_fn(i),
             key=f"searchbox_{i}",
             placeholder=f"Material {i+1} — type to search...",
             clear_on_submit=False,
-            default=None,
+            default=prev,
         )
-        # Use selected value from dropdown, OR fall back to typed text
-        name = selected or st.session_state.get(f"_typed_{i}", "")
+        # Store whatever was chosen or typed
+        if selected:
+            st.session_state[f"_selected_{i}"] = selected
+        name = selected or st.session_state.get(f"_typed_{i}", "") or prev or ""
         if name and name.strip():
             selected_names.append(name.strip())
+            # Always persist so text stays visible after rerun
+            st.session_state[f"_selected_{i}"] = name.strip()
     with rc:
         if st.button("✕", key=f"rm_{i}"):
             if st.session_state.box_count > 1:
                 st.session_state.box_count -= 1
-                # Clean up typed state
                 st.session_state.pop(f"_typed_{i}", None)
+                st.session_state.pop(f"_selected_{i}", None)
                 st.rerun()
 
 # ── Actions ──
@@ -262,7 +268,7 @@ with c3:
         st.session_state.done = False
         # Clean up all typed states
         for k in list(st.session_state.keys()):
-            if k.startswith("_typed_"):
+            if k.startswith("_typed_") or k.startswith("_selected_"):
                 del st.session_state[k]
         st.rerun()
 
