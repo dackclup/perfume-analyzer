@@ -30,6 +30,9 @@ input[type="text"] {
 input[type="text"]:focus { border-color: #3D5A80 !important; box-shadow: none !important; }
 input[type="text"]::placeholder { color: #8893A6 !important; }
 
+/* keyup input height */
+iframe[title="st_keyup.st_keyup"] { height: 45px !important; }
+
 button[kind="primary"] {
     background: #3D5A80 !important; border: none !important;
     border-radius: 4px !important; box-shadow: none !important;
