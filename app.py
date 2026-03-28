@@ -1,14 +1,15 @@
 """
-app.py  v3.0
+app.py  v3.1
 ============
 Perfume Raw Materials Analyzer — Streamlit UI
+Two export formats: Human (.md) + AI (.json)
 
     streamlit run app.py
 """
 
 import streamlit as st
 from scraper import scrape_material, make_session
-from exporter import generate_full_report
+from exporter import generate_human_report, generate_ai_report
 
 # ── Page config ──
 st.set_page_config(
@@ -44,8 +45,7 @@ with st.sidebar:
     st.markdown(
         "Fetches molecular data from **PubChem** (NIH) and combines "
         "with a curated **perfumery knowledge base**.\n\n"
-        "Perfumery data (odor, notes, blending) is applied "
-        "**only when CAS numbers match** to prevent false data.\n\n"
+        "Perfumery data is applied **only when CAS numbers match**.\n\n"
         "**Steps:**\n"
         "1. Add material names\n"
         "2. Click **Search & Analyze**\n"
@@ -53,11 +53,15 @@ with st.sidebar:
         "4. Download report"
     )
     st.divider()
+    st.markdown("**Export formats:**")
+    st.markdown("- 📄 **Markdown** — สำหรับคนอ่าน")
+    st.markdown("- 🤖 **JSON** — สำหรับ AI อ่าน")
+    st.divider()
     st.markdown("**Sources:**")
     st.markdown("- [PubChem](https://pubchem.ncbi.nlm.nih.gov/) — chemistry")
     st.markdown("- Built-in DB — perfumery (CAS-validated)")
     st.divider()
-    st.caption("v3.0 · CAS-validated matching")
+    st.caption("v3.1 · CAS-validated · dual export")
 
 # ── Header ──
 st.title("🧪 Perfume Raw Materials Analyzer")
@@ -140,7 +144,7 @@ if st.session_state.results:
 
         with st.expander(f"✅  {mat.name}", expanded=True):
 
-            # ── Match status banner ──
+            # ── Match status ──
             if mat.match_info:
                 if mat.perfumery_matched:
                     st.success(f"**Data source:** {mat.match_info}")
@@ -270,11 +274,36 @@ if st.session_state.results:
 # ── Export ──
 if st.session_state.results and st.session_state.done:
     st.divider()
-    md = generate_full_report(st.session_state.results)
-    st.download_button(
-        "📥 Download Report (.md)",
-        data=md,
-        file_name="perfume_materials_report.md",
-        mime="text/markdown",
-        use_container_width=True,
-    )
+    st.subheader("📥 Download Report")
+
+    dl1, dl2 = st.columns(2)
+
+    with dl1:
+        human_md = generate_human_report(st.session_state.results)
+        st.download_button(
+            "📄 สำหรับคนอ่าน (.md)",
+            data=human_md,
+            file_name="perfume_report_human.md",
+            mime="text/markdown",
+            use_container_width=True,
+            help="Markdown — อ่านง่าย มีหัวข้อ จัดรูปแบบสวย",
+        )
+        st.caption(
+            "**Markdown** — เปิดอ่านได้ทุกที่ "
+            "จัดรูปแบบสวย มีหัวข้อ ลิงก์ รูปภาพ"
+        )
+
+    with dl2:
+        ai_json = generate_ai_report(st.session_state.results)
+        st.download_button(
+            "🤖 สำหรับ AI อ่าน (.json)",
+            data=ai_json,
+            file_name="perfume_report_ai.json",
+            mime="application/json",
+            use_container_width=True,
+            help="JSON — โครงสร้างชัดเจน มี metadata สำหรับ AI/LLM",
+        )
+        st.caption(
+            "**JSON** — โครงสร้างชัด มี schema version, "
+            "คำสั่งสำหรับ AI, และ validation status"
+        )
