@@ -178,6 +178,8 @@ if "searched" not in st.session_state:
     st.session_state.searched = set()
 if "done" not in st.session_state:
     st.session_state.done = False
+if "kv" not in st.session_state:
+    st.session_state.kv = 0  # keyup version — changes key to force re-init
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Sidebar
@@ -204,7 +206,7 @@ keyup_val = st_keyup(
     placeholder="",
     label_visibility="collapsed",
     debounce=300,
-    key="keyup_input",
+    key=f"keyup_{st.session_state.kv}",
 )
 
 # Keep query in sync — keyup updates query, but pill selection takes priority
@@ -221,9 +223,8 @@ if len(typed) >= 1:
         sel = st.pills("suggestions", suggestions, label_visibility="collapsed",
                        key="suggest_pills")
         if sel and sel != typed:
-            # Just fill the search box — user clicks Search themselves
             st.session_state.query = sel
-            typed = sel
+            st.session_state.kv += 1  # force keyup to re-init with new value
             st.rerun()
 
 # ── Search button ──
