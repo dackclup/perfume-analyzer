@@ -135,55 +135,54 @@ def _pubchem_autocomplete(query):
     return []
 
 
-def search_materials(query):
-    """
-    Real-time autocomplete function for streamlit-searchbox.
-    Called on every keystroke. Returns list of suggestions.
-    Always includes the exact typed text as first option.
-    """
-    if not query or len(query.strip()) < 1:
-        return []
+def _make_search_fn(box_id):
+    """Create a search function that remembers what was typed for each box."""
+    def search_fn(query):
+        if not query or len(query.strip()) < 1:
+            return []
 
-    q = query.strip()
-    ql = q.lower()
-    results = [q]  # Always include exact typed text first
-    seen = {ql}
+        q = query.strip()
+        ql = q.lower()
 
-    if len(ql) < 2:
-        return results
+        # Remember what user typed (even without selecting from dropdown)
+        st.session_state[f"_typed_{box_id}"] = q
 
-    starts = []
-    contains = []
+        results = [q]  # Always include exact typed text first
+        seen = {ql}
 
-    # Local: names starting with query (highest priority, shortest first)
-    for name in _ALL_NAMES:
-        if name.startswith(ql) and name not in seen:
-            starts.append(name.title())
-            seen.add(name)
-            if len(starts) >= 5:
-                break
+        if len(ql) < 2:
+            return results
 
-    # Local: names containing query
-    if len(starts) < 5:
+        starts = []
+        contains = []
+
         for name in _ALL_NAMES:
-            if ql in name and name not in seen:
-                contains.append(name.title())
+            if name.startswith(ql) and name not in seen:
+                starts.append(name.title())
                 seen.add(name)
-                if len(starts) + len(contains) >= 7:
+                if len(starts) >= 5:
                     break
 
-    results += starts + contains
+        if len(starts) < 5:
+            for name in _ALL_NAMES:
+                if ql in name and name not in seen:
+                    contains.append(name.title())
+                    seen.add(name)
+                    if len(starts) + len(contains) >= 7:
+                        break
 
-    # PubChem autocomplete (if local < 3 and query >= 3 chars)
-    if len(results) < 4 and len(ql) >= 3:
-        for s in _pubchem_autocomplete(ql):
-            if s.lower() not in seen:
-                results.append(s)
-                seen.add(s.lower())
-                if len(results) >= 8:
-                    break
+        results += starts + contains
 
-    return results[:8]
+        if len(results) < 4 and len(ql) >= 3:
+            for s in _pubchem_autocomplete(ql):
+                if s.lower() not in seen:
+                    results.append(s)
+                    seen.add(s.lower())
+                    if len(results) >= 8:
+                        break
+
+        return results[:8]
+    return search_fn
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -227,18 +226,22 @@ for i in range(st.session_state.box_count):
     lc, rc = st.columns([14, 1])
     with lc:
         selected = st_searchbox(
-            search_materials,
+            _make_search_fn(i),
             key=f"searchbox_{i}",
             placeholder=f"Material {i+1} — type to search...",
             clear_on_submit=False,
             default=None,
         )
-        if selected:
-            selected_names.append(selected)
+        # Use selected value from dropdown, OR fall back to typed text
+        name = selected or st.session_state.get(f"_typed_{i}", "")
+        if name and name.strip():
+            selected_names.append(name.strip())
     with rc:
         if st.button("✕", key=f"rm_{i}"):
             if st.session_state.box_count > 1:
                 st.session_state.box_count -= 1
+                # Clean up typed state
+                st.session_state.pop(f"_typed_{i}", None)
                 st.rerun()
 
 # ── Actions ──
@@ -257,6 +260,10 @@ with c3:
         st.session_state.results = []
         st.session_state.searched = set()
         st.session_state.done = False
+        # Clean up all typed states
+        for k in list(st.session_state.keys()):
+            if k.startswith("_typed_"):
+                del st.session_state[k]
         st.rerun()
 
 st.markdown("---")
