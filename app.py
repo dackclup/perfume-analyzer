@@ -9,6 +9,7 @@ app.py  v10.1 — text_input + pills autocomplete
 
 import re
 import streamlit as st
+import streamlit.components.v1 as components
 import requests as req
 from scraper import scrape_material, make_session, TRADE_NAMES, _NAME_TO_CAS
 from exporter import generate_human_report, generate_ai_report
@@ -199,6 +200,40 @@ query = st.text_input(
 )
 st.session_state.query = query
 typed = query.strip()
+
+# ── Auto-submit on keystroke (debounced 400ms) → pills update real-time ──
+components.html("""
+<script>
+(function() {
+    const doc = window.parent.document;
+    let timer = null;
+    let attached = false;
+
+    function attach() {
+        const inputs = doc.querySelectorAll('input[type="text"]');
+        if (inputs.length === 0 || attached) return;
+        const input = inputs[0];
+        attached = true;
+
+        input.addEventListener('input', function() {
+            clearTimeout(timer);
+            timer = setTimeout(function() {
+                // Dispatch Enter key to submit the input value to Streamlit
+                input.dispatchEvent(new KeyboardEvent('keydown', {
+                    key: 'Enter', code: 'Enter', keyCode: 13,
+                    which: 13, bubbles: true
+                }));
+            }, 400);
+        });
+    }
+
+    // Try attaching immediately and retry
+    attach();
+    setTimeout(attach, 500);
+    setTimeout(attach, 1500);
+})();
+</script>
+""", height=0)
 
 # ── Suggestions (pills) ──
 if len(typed) >= 1:
