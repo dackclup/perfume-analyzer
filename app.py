@@ -33,12 +33,15 @@ input[type="text"]::placeholder { color: #8893A6 !important; }
 /* keyup input height */
 iframe[title="st_keyup.st_keyup"] { height: 45px !important; }
 
-/* remove − buttons */
+/* remove − button — aligns with expander header */
 button[kind="secondary"] {
     border: none !important; background: none !important;
-    box-shadow: none !important; padding: 0.2rem 0.5rem !important; min-height: 0 !important;
+    box-shadow: none !important; min-height: 0 !important;
+    padding: 0.6rem 0.4rem !important;
 }
-button[kind="secondary"] p { color: #ffffff !important; font-size: 1.2em !important; font-weight: 300 !important; }
+button[kind="secondary"] p {
+    color: #ffffff !important; font-size: 1.2em !important; font-weight: 400 !important;
+}
 button[kind="secondary"]:hover p { color: #ff6b6b !important; }
 
 button[kind="primary"] {
@@ -269,24 +272,25 @@ if st.session_state.results:
 
     for idx, mat in enumerate(st.session_state.results):
         if not mat.found:
-            with st.expander(f"✗  {mat.name}", expanded=False):
-                _, dc = st.columns([10, 1])
-                with dc:
-                    if st.button("−", key=f"del_{idx}"):
-                        st.session_state.searched.discard(mat.name.lower())
-                        st.session_state.results.pop(idx)
-                        st.rerun()
-                st.error(mat.error)
-            continue
-
-        with st.expander(mat.name, expanded=True):
-            # ── Remove button (inside box, top-right) ──
-            _, dc = st.columns([10, 1])
-            with dc:
+            ex_col, btn_col = st.columns([20, 1], gap="small")
+            with ex_col:
+                with st.expander(f"✗  {mat.name}", expanded=False):
+                    st.error(mat.error)
+            with btn_col:
                 if st.button("−", key=f"del_{idx}"):
                     st.session_state.searched.discard(mat.name.lower())
                     st.session_state.results.pop(idx)
                     st.rerun()
+            continue
+
+        ex_col, btn_col = st.columns([20, 1], gap="small")
+        with btn_col:
+            if st.button("−", key=f"del_{idx}"):
+                st.session_state.searched.discard(mat.name.lower())
+                st.session_state.results.pop(idx)
+                st.rerun()
+        with ex_col:
+         with st.expander(mat.name, expanded=True):
             if mat.match_info:
                 st.caption(mat.match_info)
 
