@@ -269,27 +269,24 @@ if st.session_state.results:
 
     for idx, mat in enumerate(st.session_state.results):
         if not mat.found:
-            ec1, ec2 = st.columns([11, 1])
-            with ec2:
-                st.markdown("<div style='margin-top:0.35rem'></div>", unsafe_allow_html=True)
+            with st.expander(f"✗  {mat.name}", expanded=False):
+                _, dc = st.columns([10, 1])
+                with dc:
+                    if st.button("−", key=f"del_{idx}"):
+                        st.session_state.searched.discard(mat.name.lower())
+                        st.session_state.results.pop(idx)
+                        st.rerun()
+                st.error(mat.error)
+            continue
+
+        with st.expander(mat.name, expanded=True):
+            # ── Remove button (inside box, top-right) ──
+            _, dc = st.columns([10, 1])
+            with dc:
                 if st.button("−", key=f"del_{idx}"):
                     st.session_state.searched.discard(mat.name.lower())
                     st.session_state.results.pop(idx)
                     st.rerun()
-            with ec1:
-                with st.expander(f"✗  {mat.name}", expanded=False):
-                    st.error(mat.error)
-            continue
-
-        ec1, ec2 = st.columns([11, 1])
-        with ec2:
-            st.markdown("<div style='margin-top:0.35rem'></div>", unsafe_allow_html=True)
-            if st.button("−", key=f"del_{idx}"):
-                st.session_state.searched.discard(mat.name.lower())
-                st.session_state.results.pop(idx)
-                st.rerun()
-        with ec1:
-          with st.expander(mat.name, expanded=True):
             if mat.match_info:
                 st.caption(mat.match_info)
 
