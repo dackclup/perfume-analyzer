@@ -1,16 +1,12 @@
 """
-app.py  v10.1 — text_input + pills autocomplete
+app.py  v11.0 — Real-time pills (st_keyup) + Search button
     streamlit run app.py
-
-    พิมพ์แล้วกด Search ได้เลย
-    pills แนะนำขึ้นทุกครั้งที่ข้อความเปลี่ยน
-    กด pill → เติมคำในช่อง → กด Search
 """
 
 import re
 import streamlit as st
-import streamlit.components.v1 as components
 import requests as req
+from st_keyup import st_keyup
 from scraper import scrape_material, make_session, TRADE_NAMES, _NAME_TO_CAS
 from exporter import generate_human_report, generate_ai_report
 
@@ -177,7 +173,7 @@ if "done" not in st.session_state:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with st.sidebar:
     st.markdown("**Perfume Analyzer**")
-    st.caption("v10.1")
+    st.caption("v11.0")
     st.markdown("---")
     st.markdown("Data from **PubChem** (NIH)  \nPerfumery DB (CAS-validated)")
     st.markdown("---")
@@ -190,52 +186,22 @@ st.markdown("## Perfume Raw Materials Analyzer")
 st.caption("PubChem compound data + perfumery knowledge")
 st.markdown("---")
 
-# ── Text input ──
-query = st.text_input(
+# ── Real-time text input (sends value on every keystroke, debounced 300ms) ──
+typed = st_keyup(
     "Search",
     value=st.session_state.query,
     placeholder="Type material name — e.g. Linalool, Iso E Super, 78-70-6 …",
     label_visibility="collapsed",
-    key="search_input",
+    debounce=300,
+    key="keyup_input",
 )
-st.session_state.query = query
-typed = query.strip()
 
-# ── Auto-submit on keystroke (debounced 400ms) → pills update real-time ──
-components.html("""
-<script>
-(function() {
-    const doc = window.parent.document;
-    let timer = null;
-    let attached = false;
+# Keep query in sync
+if typed is not None:
+    st.session_state.query = typed
+typed = (typed or "").strip()
 
-    function attach() {
-        const inputs = doc.querySelectorAll('input[type="text"]');
-        if (inputs.length === 0 || attached) return;
-        const input = inputs[0];
-        attached = true;
-
-        input.addEventListener('input', function() {
-            clearTimeout(timer);
-            timer = setTimeout(function() {
-                // Dispatch Enter key to submit the input value to Streamlit
-                input.dispatchEvent(new KeyboardEvent('keydown', {
-                    key: 'Enter', code: 'Enter', keyCode: 13,
-                    which: 13, bubbles: true
-                }));
-            }, 400);
-        });
-    }
-
-    // Try attaching immediately and retry
-    attach();
-    setTimeout(attach, 500);
-    setTimeout(attach, 1500);
-})();
-</script>
-""", height=0)
-
-# ── Suggestions (pills) ──
+# ── Pills suggestions (update real-time as you type) ──
 if len(typed) >= 1:
     suggestions = _get_suggestions(typed)
     if suggestions:
