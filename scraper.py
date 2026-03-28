@@ -331,7 +331,380 @@ def _safe_get(session, url):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  PubChem helpers
+#  Trade name → Chemical name mapping (perfumery industry)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TRADE_NAMES = {
+    # Iso E Super variants
+    "iso e super": "54464-57-2", "isoesuper": "54464-57-2",
+    "iso-e-super": "54464-57-2", "molecule 01": "54464-57-2",
+    "timbersilk": "54464-57-2", "isocyclemone e": "54464-57-2",
+    "orbitone": "54464-57-2", "iso e": "54464-57-2",
+    "boisvelone": "54464-57-2", "anthamber": "54464-57-2",
+    # Hedione
+    "hedione": "24851-98-7", "methyl dihydrojasmonate": "24851-98-7",
+    "hedione hc": "24851-98-7",
+    # Galaxolide
+    "galaxolide": "1222-05-5", "abbalide": "1222-05-5",
+    "musk 50": "1222-05-5",
+    # Ambroxan
+    "ambroxan": "6790-58-5", "ambrox": "6790-58-5",
+    "ambrox dl": "6790-58-5", "ambrox super": "6790-58-5",
+    "cetalox": "3738-00-9", "amberlyn": "6790-58-5",
+    "ambrofix": "6790-58-5",
+    # Cashmeran
+    "cashmeran": "33704-61-9", "dp-45": "33704-61-9",
+    "cashmere musk": "33704-61-9",
+    # Musks
+    "muscone": "541-91-3", "musk ketone": "81-14-1",
+    "galaxolide 50": "1222-05-5", "tonalide": "21145-77-7",
+    "habanolide": "34902-57-3", "exaltolide": "106-02-5",
+    "ethylene brassylate": "105-95-3", "musk t": "105-95-3",
+    "helvetolide": "141773-73-1", "romandolide": "236391-76-7",
+    "cosmone": "542-46-1", "ambrettolide": "123-69-3",
+    "nirvanolide": "909478-55-1", "sylkolide": "63187-91-7",
+    "velvione": "63187-91-7",
+    # Florals
+    "hedione hc": "24851-98-7", "paradisone": "68901-22-4",
+    "phenylethyl alcohol": "60-12-8", "pea": "60-12-8",
+    "rose oxide": "16409-43-1", "damascone alpha": "43052-87-5",
+    "damascone beta": "23726-91-2", "damascone delta": "57378-68-4",
+    "damascenone": "23696-85-7",
+    "methyl ionone": "1335-46-2", "orris": "1335-46-2",
+    "ionone alpha": "127-41-3", "ionone beta": "14901-07-6",
+    "dihydro beta ionone": "17283-81-7",
+    "floralozone": "67634-15-5", "ozone": "67634-15-5",
+    "cyclamal": "103-95-7", "cyclamen aldehyde": "103-95-7",
+    "lilial": "80-54-6", "lyral": "31906-04-4",
+    "hydroxycitronellal": "107-75-5", "muguet": "107-75-5",
+    "bourgeonal": "18127-01-0",
+    "helional": "1205-17-0", "heliotropin": "120-57-0",
+    "piperonal": "120-57-0",
+    # Woody / Amber
+    "javanol": "198404-98-7", "ebanol": "67801-20-1",
+    "santalol": "11031-45-1", "sandalore": "65113-99-7",
+    "bacdanol": "28219-61-6", "polysantol": "107898-54-4",
+    "hinoki": "19870-74-7", "hinokitiol": "499-44-5",
+    "norlimbanol": "70788-30-6", "timberol": "70788-30-6",
+    "firsantol": "155077-70-2",
+    "vertofix": "32388-55-9", "vetiver acetate": "62563-80-8",
+    "georgywood": "155517-73-2",
+    "clearwood": "28631-86-7", "patchoulol": "5986-55-0",
+    # Citrus / Fresh
+    "dihydromyrcenol": "18479-58-8", "dhm": "18479-58-8",
+    "calone": "28940-11-6", "watermelon ketone": "28940-11-6",
+    "citral": "5392-40-5", "geranial": "141-27-5",
+    "neral": "106-26-3", "citronellal": "106-23-0",
+    "citronellol": "106-22-9", "rhodinol": "6812-78-8",
+    # Spicy
+    "eugenol": "97-53-0", "isoeugenol": "97-54-1",
+    "cinnamaldehyde": "104-55-2", "cinnamic aldehyde": "104-55-2",
+    "cinnamic alcohol": "104-54-1",
+    "methyl eugenol": "93-15-2",
+    "safranal": "116-26-7",
+    # Vanilla / Sweet
+    "vanillin": "121-33-5", "ethyl vanillin": "121-32-4",
+    "ethylvanillin": "121-32-4", "coumarin": "91-64-5",
+    "heliotropin": "120-57-0", "benzoin": "579-44-2",
+    "maltol": "118-71-8", "ethyl maltol": "4940-11-8",
+    "furaneol": "3658-77-3",
+    # Aldehydes
+    "aldehyde c-10": "112-31-2", "decanal": "112-31-2",
+    "aldehyde c-11": "112-44-7", "undecanal": "112-44-7",
+    "aldehyde c-12": "112-54-9", "dodecanal": "112-54-9",
+    "aldehyde c-11 moa": "112-45-8",
+    "triplal": "68039-49-6",
+    # Common materials
+    "linalool": "78-70-6", "linalol": "78-70-6",
+    "geraniol": "106-24-1", "nerol": "106-25-2",
+    "terpineol": "98-55-5", "alpha terpineol": "98-55-5",
+    "menthol": "89-78-1", "l-menthol": "2216-51-5",
+    "camphor": "76-22-2", "borneol": "507-70-0",
+    "carvone": "99-49-0", "thymol": "89-83-8",
+    "anethole": "104-46-1", "estragole": "140-67-0",
+    "limonene": "5989-27-5", "d-limonene": "5989-27-5",
+    "pinene": "80-56-8", "alpha pinene": "80-56-8",
+    "beta pinene": "127-91-3", "myrcene": "123-35-3",
+    "ocimene": "13877-91-3",
+    "benzyl benzoate": "120-51-4", "bb": "120-51-4",
+    "benzyl salicylate": "118-58-1",
+    "benzyl acetate": "140-11-4",
+    "dipropylene glycol": "25265-71-8", "dpg": "25265-71-8",
+    "isopropyl myristate": "110-27-0", "ipm": "110-27-0",
+    "triethyl citrate": "77-93-0", "tec": "77-93-0",
+    "deet": "134-62-3",
+    # Natural oils (map to main component)
+    "linalyl acetate": "115-95-7",
+    "geranyl acetate": "105-87-3",
+    "citronellyl acetate": "150-84-5",
+    "phenylethyl acetate": "103-45-7",
+    "vetiveryl acetate": "62563-80-8",
+    "cedryl acetate": "77-54-3",
+}
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Smart Search Engine
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def _normalize(name):
+    """Normalize input for matching: lowercase, strip, remove extra chars."""
+    s = name.lower().strip()
+    s = re.sub(r'[®™©]', '', s)          # remove trademark symbols
+    s = re.sub(r'\s+', ' ', s)            # collapse whitespace
+    return s
+
+
+def _generate_variants(name):
+    """
+    Generate search variants from user input.
+    Handles typos, spacing, hyphens, common patterns.
+    """
+    n = _normalize(name)
+    variants = [n]
+
+    # With/without hyphens and spaces
+    variants.append(n.replace("-", " "))
+    variants.append(n.replace(" ", "-"))
+    variants.append(n.replace(" ", ""))
+
+    # With/without common suffixes/prefixes
+    for prefix in ["dl-", "d-", "l-", "r-", "s-", "alpha-", "beta-",
+                    "α-", "β-", "(+)-", "(-)-", "(r)-", "(s)-",
+                    "cis-", "trans-", "para-", "ortho-", "meta-"]:
+        if n.startswith(prefix):
+            variants.append(n[len(prefix):])
+        else:
+            variants.append(prefix + n)
+
+    # Common perfumery misspellings
+    typo_map = {
+        "oo": "o", "o": "oo",           # linalol ↔ linalool
+        "ph": "f", "f": "ph",           # phenyl ↔ fenyl
+        "y": "i", "i": "y",             # myrcene ↔ mircene
+        "ae": "e", "e": "ae",           # aetone ↔ etone
+        "ck": "k", "k": "ck",
+        "cs": "x", "x": "cs",
+    }
+    for old, new in typo_map.items():
+        if old in n:
+            variants.append(n.replace(old, new, 1))
+
+    # Remove parentheses content: "linalool (natural)" → "linalool"
+    stripped = re.sub(r'\s*\(.*?\)\s*', '', n).strip()
+    if stripped and stripped != n:
+        variants.append(stripped)
+
+    # Remove brand: "iso e super (IFF)" → "iso e super"
+    for brand in ["iff", "firmenich", "givaudan", "symrise", "takasago",
+                  "ipc", "natural", "synthetic", "pure", "extra"]:
+        cleaned = re.sub(rf'\b{brand}\b', '', n).strip()
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        if cleaned and cleaned != n:
+            variants.append(cleaned)
+
+    # Deduplicate preserving order
+    seen = set()
+    unique = []
+    for v in variants:
+        v = v.strip()
+        if v and v not in seen:
+            seen.add(v)
+            unique.append(v)
+    return unique
+
+
+def _fuzzy_match_tradenames(name):
+    """
+    Fuzzy match against TRADE_NAMES dict.
+    Returns CAS if found, None otherwise.
+    """
+    n = _normalize(name)
+
+    # 1. Exact match
+    if n in TRADE_NAMES:
+        return TRADE_NAMES[n]
+
+    # 2. Try all variants
+    for variant in _generate_variants(name):
+        if variant in TRADE_NAMES:
+            return TRADE_NAMES[variant]
+
+    # 3. Substring match: "iso e" should find "iso e super"
+    if len(n) >= 4:
+        for trade_name, cas in TRADE_NAMES.items():
+            if n in trade_name or trade_name in n:
+                return cas
+
+    # 4. Fuzzy: simple edit-distance-like matching for short names
+    if len(n) >= 5:
+        best_score = 0
+        best_cas = None
+        for trade_name, cas in TRADE_NAMES.items():
+            # Count matching characters in order
+            score = _similarity(n, trade_name)
+            if score > best_score and score > 0.8:
+                best_score = score
+                best_cas = cas
+        if best_cas:
+            return best_cas
+
+    return None
+
+
+def _similarity(a, b):
+    """Simple similarity ratio (0-1) based on longest common subsequence."""
+    if not a or not b:
+        return 0
+    m, n = len(a), len(b)
+    if m > 50 or n > 50:  # skip very long strings
+        return 0
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if a[i-1] == b[j-1]:
+                dp[i][j] = dp[i-1][j-1] + 1
+            else:
+                dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+    lcs = dp[m][n]
+    return (2.0 * lcs) / (m + n)
+
+
+def _is_cas(text):
+    """Check if input looks like a CAS number."""
+    return bool(re.match(r"^\d{2,7}-\d{2}-\d$", text.strip()))
+
+
+def _is_smiles(text):
+    """Check if input looks like a SMILES string."""
+    t = text.strip()
+    if len(t) < 3:
+        return False
+    smiles_chars = set("CNOSPFIBrcnos=()[]#+-/.@\\12345678%")
+    return len(t) > 5 and sum(1 for c in t if c in smiles_chars) / len(t) > 0.7
+
+
+def _is_inchi(text):
+    """Check if input looks like an InChI string."""
+    return text.strip().startswith("InChI=")
+
+
+def _smart_search_cid(session, name):
+    """
+    Multi-strategy search pipeline (like Google):
+    1. Detect CAS / SMILES / InChI → direct lookup
+    2. Try exact name on PubChem
+    3. Try trade name mapping → CAS → PubChem
+    4. Try all generated variants on PubChem
+    5. Try PubChem autocomplete API
+    Returns (cid, resolved_name) or (None, None)
+    """
+    original = name.strip()
+    n = _normalize(original)
+
+    # ── Strategy 1: Direct CAS lookup ──
+    if _is_cas(original):
+        logger.info("  → CAS detected: %s", original)
+        cid = _get_cid(session, original)
+        if cid:
+            return cid, original
+
+    # ── Strategy 2: Direct SMILES lookup ──
+    if _is_smiles(original):
+        logger.info("  → SMILES detected")
+        url = f"{PUBCHEM_REST}/compound/smiles/cids/JSON?smiles={requests.utils.quote(original)}"
+        data = _safe_get(session, url)
+        if data:
+            cids = data.get("IdentifierList", {}).get("CID", [])
+            if cids:
+                return cids[0], original
+
+    # ── Strategy 3: Direct InChI lookup ──
+    if _is_inchi(original):
+        logger.info("  → InChI detected")
+        try:
+            r = session.post(
+                f"{PUBCHEM_REST}/compound/inchi/cids/JSON",
+                data={"inchi": original}, timeout=TIMEOUT
+            )
+            if r.status_code == 200:
+                data = r.json()
+                cids = data.get("IdentifierList", {}).get("CID", [])
+                if cids:
+                    return cids[0], original
+        except Exception:
+            pass
+
+    # ── Strategy 4: Exact name on PubChem ──
+    logger.info("  → Trying exact name: %s", original)
+    cid = _get_cid(session, original)
+    if cid:
+        return cid, original
+
+    # ── Strategy 5: Trade name → CAS → PubChem ──
+    trade_cas = _fuzzy_match_tradenames(original)
+    if trade_cas:
+        logger.info("  → Trade name match → CAS %s", trade_cas)
+        cid = _get_cid(session, trade_cas)
+        if cid:
+            return cid, trade_cas
+
+    # ── Strategy 6: Try all generated variants ──
+    variants = _generate_variants(original)
+    for variant in variants[1:]:  # skip first (already tried)
+        logger.info("  → Trying variant: %s", variant)
+        cid = _get_cid(session, variant)
+        if cid:
+            return cid, variant
+
+    # ── Strategy 7: PubChem autocomplete ──
+    logger.info("  → Trying PubChem autocomplete")
+    auto_url = (f"https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/{requests.utils.quote(n)}/JSON?limit=3")
+    data = _safe_get(session, auto_url)
+    if data:
+        suggestions = data.get("dictionary_terms", {}).get("compound", [])
+        for suggestion in suggestions:
+            cid = _get_cid(session, suggestion)
+            if cid:
+                logger.info("  → Autocomplete found: %s", suggestion)
+                return cid, suggestion
+
+    # ── Strategy 8: Perfumery DB fuzzy ──
+    fuzzy_result = _fuzzy_lookup_perfumery(original)
+    if fuzzy_result:
+        cas, _ = fuzzy_result
+        logger.info("  → Fuzzy perfumery DB match → CAS %s", cas)
+        cid = _get_cid(session, cas)
+        if cid:
+            return cid, cas
+
+    return None, None
+
+
+def _suggest_similar(name):
+    """Generate suggestions for failed searches."""
+    n = _normalize(name)
+    suggestions = []
+
+    # Find close trade names
+    for trade_name in TRADE_NAMES:
+        score = _similarity(n, trade_name)
+        if score > 0.5:
+            suggestions.append((score, trade_name))
+
+    # Find close perfumery DB names
+    for cas, entry in PERFUMERY_DB.items():
+        for db_name in entry["names"]:
+            score = _similarity(n, db_name)
+            if score > 0.5:
+                suggestions.append((score, db_name))
+
+    suggestions.sort(key=lambda x: x[0], reverse=True)
+    return [s[1] for s in suggestions[:5]]
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  PubChem API helpers
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 def _get_cid(session, name):
@@ -536,6 +909,29 @@ def _lookup_by_name(name):
         return cas, PERFUMERY_DB[cas]
     return None
 
+def _fuzzy_lookup_perfumery(name):
+    """Fuzzy match against perfumery DB names."""
+    n = _normalize(name)
+    if len(n) < 4:
+        return None
+
+    # Try variants
+    for variant in _generate_variants(name):
+        if variant in _NAME_TO_CAS:
+            cas = _NAME_TO_CAS[variant]
+            return cas, PERFUMERY_DB[cas]
+
+    # Fuzzy similarity
+    best_score = 0
+    best_result = None
+    for cas, entry in PERFUMERY_DB.items():
+        for db_name in entry["names"]:
+            score = _similarity(n, db_name)
+            if score > best_score and score > 0.8:
+                best_score = score
+                best_result = (cas, entry)
+    return best_result
+
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Main function
@@ -549,15 +945,27 @@ def scrape_material(name, session=None):
     known = _lookup_by_name(name)
     known_cas = known[0] if known else None
 
-    # Resolve CID
+    # ── Smart Search ──
     logger.info("Searching: %s", name)
     cid = None
+    resolved_name = None
+
+    # First: known CAS from perfumery DB
     if known_cas:
         cid = _get_cid(session, known_cas)
+        if cid:
+            resolved_name = known_cas
+
+    # Second: smart multi-strategy search
     if cid is None:
-        cid = _get_cid(session, name)
+        cid, resolved_name = _smart_search_cid(session, name)
+
     if cid is None:
-        mat.error = f"'{name}' not found on PubChem. Try full name, IUPAC, or CAS."
+        suggestions = _suggest_similar(name)
+        hint = ""
+        if suggestions:
+            hint = "\n\nDid you mean: " + ", ".join(suggestions) + "?"
+        mat.error = f"'{name}' not found.{hint}"
         return mat
 
     mat.found = True
