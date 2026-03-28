@@ -1,25 +1,22 @@
 """
-exporter.py — Generates a well-formatted Markdown report from scraped material data.
+exporter.py
+===========
+Generates a well-formatted Markdown report from a list of MaterialData objects.
+
+Version: 2.0
 """
 
 from datetime import datetime
 from scraper import MaterialData
 
 
-def _section(title: str, level: int = 3) -> str:
-    """Create a markdown heading."""
-    return f"\n{'#' * level} {title}\n"
-
-
 def _row(label: str, value: str) -> str:
-    """Create a key-value line, skipping empty values."""
-    if value:
-        return f"- **{label}:** {value}\n"
-    return ""
+    """One key-value bullet line (skipped if value is empty)."""
+    return f"- **{label}:** {value}\n" if value else ""
 
 
-def _list_block(label: str, items: list) -> str:
-    """Render a list of items under a label."""
+def _list_items(label: str, items: list) -> str:
+    """Render a list under a label."""
     if not items:
         return ""
     lines = f"- **{label}:**\n"
@@ -28,132 +25,106 @@ def _list_block(label: str, items: list) -> str:
     return lines
 
 
-def material_to_markdown(mat: MaterialData) -> str:
-    """Convert a single MaterialData object to a Markdown section."""
+def _material_section(mat: MaterialData) -> str:
+    """Convert one MaterialData to a Markdown section."""
+
     if not mat.found:
-        return (
-            f"\n## {mat.name}\n\n"
-            f"> ⚠️ **Not Found:** {mat.error}\n"
-        )
+        return f"\n## {mat.name}\n\n> ⚠️ **Not Found:** {mat.error}\n\n---\n"
 
     md = f"\n## {mat.name}\n"
-
     if mat.page_url:
-        md += f"\n🔗 [View on The Good Scents Company]({mat.page_url})\n"
+        md += f"\n🔗 [View on PubChem]({mat.page_url})\n"
 
-    # ── Identifiers ──
-    ident_block = (
+    # Identifiers
+    block = (
         _row("CAS Number", mat.cas_number)
         + _row("FEMA Number", mat.fema_number)
-        + _row("IUPAC Name", getattr(mat, 'iupac_name', ''))
-        + _list_block("Synonyms / Trade Names", mat.synonyms)
+        + _row("IUPAC Name", mat.iupac_name)
+        + _list_items("Synonyms", mat.synonyms)
     )
-    if ident_block.strip():
-        md += _section("Identifiers") + ident_block
+    if block.strip():
+        md += "\n### Identifiers\n" + block
 
-    # ── Molecular Information ──
-    mol_block = (
+    # Molecular
+    block = (
         _row("SMILES", f"`{mat.smiles}`" if mat.smiles else "")
         + _row("Molecular Formula", mat.molecular_formula)
         + _row("Molecular Weight", mat.molecular_weight)
     )
     if mat.structure_image_url:
-        mol_block += f"- **Structure:** ![Molecular Structure]({mat.structure_image_url})\n"
-    if mol_block.strip():
-        md += _section("Molecular Information") + mol_block
+        block += f"- **Structure:** ![structure]({mat.structure_image_url})\n"
+    if block.strip():
+        md += "\n### Molecular Information\n" + block
 
-    # ── Odor Profile ──
-    odor_block = (
+    # Odor
+    block = (
         _row("Odor Description", mat.odor_description)
         + _row("Odor Type", mat.odor_type)
         + _row("Odor Strength", mat.odor_strength)
     )
-    if odor_block.strip():
-        md += _section("Odor Profile") + odor_block
+    if block.strip():
+        md += "\n### Odor Profile\n" + block
 
-    # ── Note Classification ──
+    # Note
     if mat.note_classification:
-        md += _section("Note Classification")
+        md += "\n### Note Classification\n"
         md += f"- **Perfume Note:** {mat.note_classification}\n"
 
-    # ── Performance ──
-    perf_block = _row("Tenacity / Substantivity", mat.tenacity) + _row(
-        "Duration", mat.tenacity_hours
-    )
-    if perf_block.strip():
-        md += _section("Performance") + perf_block
+    # Performance
+    block = _row("Tenacity", mat.tenacity) + _row("Duration", mat.tenacity_hours)
+    if block.strip():
+        md += "\n### Performance\n" + block
 
-    # ── Physical & Chemical Properties ──
-    phys_block = (
+    # Physical
+    block = (
         _row("Appearance", mat.appearance)
         + _row("Boiling Point", mat.boiling_point)
         + _row("Flash Point", mat.flash_point)
         + _row("Vapor Pressure", mat.vapor_pressure)
         + _row("Solubility", mat.solubility)
-        + _row("Specific Gravity", mat.specific_gravity)
+        + _row("Density", mat.density)
         + _row("Refractive Index", mat.refractive_index)
         + _row("LogP", mat.logp)
     )
-    if phys_block.strip():
-        md += _section("Physical & Chemical Properties") + phys_block
+    if block.strip():
+        md += "\n### Physical & Chemical Properties\n" + block
 
-    # ── Safety & Formulation ──
-    safety_block = (
-        _row("IFRA Guidelines", mat.ifra_guidelines)
-        + _row("Recommended Usage Levels", mat.usage_levels)
-    )
-    if safety_block.strip():
-        md += _section("Safety & Formulation") + safety_block
+    # Safety
+    block = _row("IFRA Guidelines", mat.ifra_guidelines) + _row("Usage Levels", mat.usage_levels)
+    if block.strip():
+        md += "\n### Safety & Formulation\n" + block
 
-    # ── Blending ──
+    # Blending
     if mat.blends_well_with:
-        md += _section("Blending Suggestions")
-        md += _list_block("Blends Well With", mat.blends_well_with)
+        md += "\n### Blending Suggestions\n"
+        md += _list_items("Blends Well With", mat.blends_well_with)
 
     md += "\n---\n"
     return md
 
 
-def generate_full_report(materials: list[MaterialData]) -> str:
-    """
-    Compile a complete Markdown report for all analyzed materials.
-
-    Parameters
-    ----------
-    materials : list[MaterialData]
-        List of scraped material data objects.
-
-    Returns
-    -------
-    str
-        Complete Markdown document.
-    """
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-
+def generate_full_report(materials: list) -> str:
+    """Compile a complete Markdown report for all materials."""
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M")
     header = (
         "# 🧪 Perfume Raw Materials Analysis Report\n\n"
-        f"**Generated:** {timestamp}  \n"
+        f"**Generated:** {ts}  \n"
         f"**Materials analyzed:** {len(materials)}  \n"
-        f"**Data source:** [The Good Scents Company](http://www.thegoodscentscompany.com/)  \n"
+        f"**Data source:** [PubChem](https://pubchem.ncbi.nlm.nih.gov/) + built-in perfumery DB  \n"
         "\n---\n"
     )
-
-    # Table of contents
     toc = "\n## Table of Contents\n\n"
-    for i, mat in enumerate(materials, 1):
-        status = "✅" if mat.found else "❌"
-        toc += f"{i}. {status} [{mat.name}](#{mat.name.lower().replace(' ', '-')})\n"
+    for i, m in enumerate(materials, 1):
+        icon = "✅" if m.found else "❌"
+        toc += f"{i}. {icon} {m.name}\n"
     toc += "\n---\n"
 
-    # Individual material sections
     body = ""
-    for mat in materials:
-        body += material_to_markdown(mat)
+    for m in materials:
+        body += _material_section(m)
 
     footer = (
-        "\n\n---\n"
-        "*Report generated by Perfume Raw Materials Analyzer.  \n"
-        "Data sourced from The Good Scents Company database.*\n"
+        "\n---\n*Report generated by Perfume Raw Materials Analyzer v2.0  \n"
+        "Molecular data: PubChem (NIH) · Perfumery data: built-in knowledge base*\n"
     )
-
     return header + toc + body + footer
