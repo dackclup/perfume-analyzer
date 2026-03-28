@@ -58,32 +58,44 @@ st.divider()
 # ── Header ──
 st.subheader("📝 Materials to Analyze")
 
-# ── Form: input fields + Search button ──
-with st.form("search_form"):
-    new_inputs = []
-    for i in range(len(st.session_state.inputs)):
+# ── Input fields ──
+new_inputs = []
+for i in range(len(st.session_state.inputs)):
+    if i == 0:
+        # Material 1 — no remove
         v = st.text_input(
             f"Material {i+1}",
             value=st.session_state.inputs[i],
             key=f"inp_{i}",
             placeholder="e.g. Linalool, Iso E Super, Hedione …",
         )
-        new_inputs.append(v)
-
-    search_clicked = st.form_submit_button(
-        "🔍 Search & Analyze",
-        type="primary",
-        use_container_width=True,
-    )
+    else:
+        # Material 2+ — label with − remove
+        lc, rc = st.columns([6, 1])
+        with lc:
+            v = st.text_input(
+                f"Material {i+1}",
+                value=st.session_state.inputs[i],
+                key=f"inp_{i}",
+                placeholder="e.g. Linalool, Iso E Super, Hedione …",
+            )
+        with rc:
+            st.markdown("")  # spacer to align with input
+            if st.button("−", key=f"rm_{i}", help=f"Remove Material {i+1}"):
+                st.session_state.inputs.pop(i)
+                st.rerun()
+    new_inputs.append(v)
 
 st.session_state.inputs = new_inputs
 
-# ── Remove buttons for Material 2+ (outside form) ──
-if len(st.session_state.inputs) > 1:
-    for i in range(1, len(st.session_state.inputs)):
-        if st.button(f"− Remove Material {i+1}", key=f"rm_{i}"):
-            st.session_state.inputs.pop(i)
-            st.rerun()
+# ── Search button ──
+names = [n.strip() for n in st.session_state.inputs if n.strip()]
+search_clicked = st.button(
+    "🔍 Search & Analyze",
+    type="primary",
+    disabled=len(names) == 0,
+    use_container_width=True,
+)
 
 # ── Add Material + Clear all (same row) ──
 ac1, ac2, _ = st.columns([1, 1, 2])
@@ -101,8 +113,6 @@ with ac2:
 st.divider()
 
 # ── Search ──
-names = [n.strip() for n in st.session_state.inputs if n.strip()]
-
 if search_clicked and names:
     st.session_state.results = []
     st.session_state.done = False
