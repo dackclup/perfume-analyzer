@@ -33,6 +33,14 @@ input[type="text"]::placeholder { color: #8893A6 !important; }
 /* keyup input height */
 iframe[title="st_keyup.st_keyup"] { height: 45px !important; }
 
+/* remove − buttons */
+button[kind="secondary"] {
+    border: none !important; background: none !important;
+    box-shadow: none !important; padding: 0.2rem 0.4rem !important; min-height: 0 !important;
+}
+button[kind="secondary"] p { color: #C9CCD5 !important; font-size: 1.1em !important; }
+button[kind="secondary"]:hover p { color: #c44 !important; }
+
 button[kind="primary"] {
     background: #3D5A80 !important; border: none !important;
     border-radius: 4px !important; box-shadow: none !important;
@@ -242,17 +250,39 @@ if search_clicked and typed:
 #  Results
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if st.session_state.results:
-    ok = sum(1 for r in st.session_state.results if r.found)
-    tot = len(st.session_state.results)
-    st.caption(f"{ok}/{tot} found")
+    rc1, rc2 = st.columns([6, 1])
+    with rc1:
+        ok = sum(1 for r in st.session_state.results if r.found)
+        tot = len(st.session_state.results)
+        st.caption(f"{ok}/{tot} found")
+    with rc2:
+        if st.button("Clear all", key="clear_all"):
+            st.session_state.results = []
+            st.session_state.searched = set()
+            st.session_state.done = False
+            st.rerun()
 
-    for mat in st.session_state.results:
+    for idx, mat in enumerate(st.session_state.results):
         if not mat.found:
-            with st.expander(f"✗  {mat.name}", expanded=False):
-                st.error(mat.error)
+            ec1, ec2 = st.columns([12, 1])
+            with ec1:
+                with st.expander(f"✗  {mat.name}", expanded=False):
+                    st.error(mat.error)
+            with ec2:
+                if st.button("−", key=f"del_{idx}"):
+                    st.session_state.searched.discard(mat.name.lower())
+                    st.session_state.results.pop(idx)
+                    st.rerun()
             continue
 
-        with st.expander(mat.name, expanded=True):
+        ec1, ec2 = st.columns([12, 1])
+        with ec2:
+            if st.button("−", key=f"del_{idx}"):
+                st.session_state.searched.discard(mat.name.lower())
+                st.session_state.results.pop(idx)
+                st.rerun()
+        with ec1:
+          with st.expander(mat.name, expanded=True):
             if mat.match_info:
                 st.caption(mat.match_info)
 
