@@ -1,73 +1,14 @@
 """
-app.py  v7.1 — Minimal · Navy & Gray palette
+app.py  v8.0 — Real-time autocomplete (streamlit-searchbox)
     streamlit run app.py
 """
 
 import re
 import streamlit as st
+import requests as req
+from streamlit_searchbox import st_searchbox
 from scraper import scrape_material, make_session, TRADE_NAMES, PERFUMERY_DB, _NAME_TO_CAS
 from exporter import generate_human_report, generate_ai_report
-import requests as req
-
-
-@st.cache_data(ttl=300)
-def _pubchem_autocomplete(query):
-    """Fetch suggestions from PubChem autocomplete API."""
-    try:
-        url = f"https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/{req.utils.quote(query)}/JSON?limit=5"
-        r = req.get(url, timeout=5)
-        if r.status_code == 200:
-            data = r.json()
-            return data.get("dictionary_terms", {}).get("compound", [])
-    except Exception:
-        pass
-    return []
-
-
-def _get_suggestions(typed):
-    """
-    Get autocomplete suggestions from local DB + PubChem.
-    Priority: starts-with > contains. Shorter names first.
-    """
-    typed = typed.lower().strip()
-    starts = []
-    contains = []
-    seen = set()
-
-    # Search trade names
-    for name in sorted(TRADE_NAMES.keys(), key=len):
-        if name in seen:
-            continue
-        if name.startswith(typed):
-            starts.append(name.title())
-            seen.add(name)
-        elif typed in name:
-            contains.append(name.title())
-            seen.add(name)
-
-    # Search perfumery DB names
-    for name in sorted(_NAME_TO_CAS.keys(), key=len):
-        if name in seen:
-            continue
-        if name.startswith(typed):
-            starts.append(name.title())
-            seen.add(name)
-        elif typed in name:
-            contains.append(name.title())
-            seen.add(name)
-
-    results = starts + contains
-
-    # PubChem autocomplete (if local not enough)
-    if len(results) < 3 and len(typed) >= 3:
-        pubchem_sugg = _pubchem_autocomplete(typed)
-        for s in pubchem_sugg:
-            sl = s.lower()
-            if sl not in seen:
-                results.append(s)
-                seen.add(sl)
-
-    return results[:5]
 
 st.set_page_config(page_title="Perfume Analyzer", page_icon="⬡", layout="wide",
                    initial_sidebar_state="collapsed")
@@ -83,30 +24,20 @@ h1,h2,h3,h4,h5 { font-weight: 600 !important; color: #2C3E5A !important; }
 p, li, span, div { color: #1a1a2e; }
 .block-container { padding-top: 2rem; }
 
-/* inputs */
 input[type="text"] {
-    border-radius: 4px !important;
-    border-color: #C9CCD5 !important;
-    background: #F0F0F5 !important;
-    color: #1a1a2e !important;
+    border-radius: 4px !important; border-color: #C9CCD5 !important;
+    background: #F0F0F5 !important; color: #1a1a2e !important;
 }
-input[type="text"]:focus {
-    border-color: #3D5A80 !important;
-    box-shadow: none !important;
-}
+input[type="text"]:focus { border-color: #3D5A80 !important; box-shadow: none !important; }
 input[type="text"]::placeholder { color: #8893A6 !important; }
 
-/* primary button — navy */
 button[kind="primary"] {
-    background: #3D5A80 !important;
-    border: none !important;
-    border-radius: 4px !important;
-    box-shadow: none !important;
+    background: #3D5A80 !important; border: none !important;
+    border-radius: 4px !important; box-shadow: none !important;
 }
 button[kind="primary"] p { color: #F0F0F5 !important; font-weight: 500 !important; }
 button[kind="primary"]:hover { background: #2C4A6E !important; }
 
-/* secondary buttons — ghost */
 button[kind="secondary"] {
     border: none !important; background: none !important;
     box-shadow: none !important; padding: 0.2rem 0.4rem !important; min-height: 0 !important;
@@ -114,45 +45,25 @@ button[kind="secondary"] {
 button[kind="secondary"] p { color: #8893A6 !important; }
 button[kind="secondary"]:hover p { color: #c44 !important; }
 
-/* tertiary / clear */
 button[kind="tertiary"] p { color: #4A5E78 !important; }
 button[kind="tertiary"]:hover p { color: #2C3E5A !important; }
 
-/* expanders */
-div[data-testid="stExpander"] {
-    border: 1px solid #C9CCD5;
-    border-radius: 4px;
-    background: transparent;
-}
+div[data-testid="stExpander"] { border: 1px solid #e5e5e5; border-radius: 4px; }
 div[data-testid="stExpander"]:hover { border-color: #7E8EA6; }
 
-/* note badges */
-.n-badge {
-    display: inline-block; padding: 3px 12px; border-radius: 3px;
-    font-size: 0.8em; font-weight: 500; margin: 2px 4px;
-}
-.n-top  { background: #fef9c3; color: #854d0e; }
-.n-mid  { background: #dbeafe; color: #1e40af; }
-.n-base { background: #ede9fe; color: #5b21b6; }
+.n-badge { display:inline-block; padding:3px 12px; border-radius:3px;
+           font-size:0.8em; font-weight:500; margin:2px 4px; }
+.n-top  { background:#fef9c3; color:#854d0e; }
+.n-mid  { background:#dbeafe; color:#1e40af; }
+.n-base { background:#ede9fe; color:#5b21b6; }
 
-/* small label */
-.sm {
-    font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.08em;
-    color: #4A5E78; font-weight: 600; margin-bottom: 2px;
-}
+.sm { font-size:0.7em; text-transform:uppercase; letter-spacing:0.08em;
+      color:#4A5E78; font-weight:600; margin-bottom:2px; }
 
-/* divider */
 hr { border-color: #C9CCD5 !important; }
-
-/* progress bar */
-div[data-testid="stProgress"] > div > div {
-    background: #3D5A80 !important; border-radius: 2px;
-}
-
-/* captions & small text */
+div[data-testid="stProgress"] > div > div { background: #3D5A80 !important; border-radius: 2px; }
 [data-testid="stCaptionContainer"] p { color: #5A6B82 !important; }
 
-/* download buttons */
 button[data-testid="stDownloadButton"] button {
     border-color: #3D5A80 !important; border-radius: 4px !important;
 }
@@ -162,50 +73,15 @@ button[data-testid="stDownloadButton"] button:hover {
 }
 button[data-testid="stDownloadButton"] button:hover p { color: #F0F0F5 !important; }
 
-/* success/info/warning */
-div[data-testid="stAlert"] { border-radius: 4px; }
-
-/* sidebar */
 section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
 
-/* suggestion pills */
-div[data-testid="stPills"] button {
-    border: 1px solid #C9CCD5 !important;
-    border-radius: 3px !important;
-    background: #F0F0F5 !important;
-    font-size: 0.82em !important;
-}
-div[data-testid="stPills"] button p { color: #3D5A80 !important; }
-div[data-testid="stPills"] button:hover,
-div[data-testid="stPills"] button[aria-checked="true"] {
-    background: #3D5A80 !important;
-    border-color: #3D5A80 !important;
-}
-div[data-testid="stPills"] button:hover p,
-div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !important; }
-@media (prefers-color-scheme: dark) {
-    div[data-testid="stPills"] button {
-        border-color: #3D5A80 !important;
-        background: #1a2332 !important;
-    }
-    div[data-testid="stPills"] button p { color: #C9CCD5 !important; }
-    div[data-testid="stPills"] button:hover,
-    div[data-testid="stPills"] button[aria-checked="true"] {
-        background: #3D5A80 !important;
-    }
-    div[data-testid="stPills"] button:hover p,
-    div[data-testid="stPills"] button[aria-checked="true"] p { color: #F0F0F5 !important; }
-}
-
-/* ── Dark mode overrides ── */
+/* ── Dark mode ── */
 @media (prefers-color-scheme: dark) {
     *, p, li, span, div { color: #E8ECF0; }
     h1,h2,h3,h4,h5 { color: #E8ECF0 !important; }
     code { color: #C9CCD5 !important; }
     input[type="text"] {
-        background: #1a2332 !important;
-        border-color: #3D5A80 !important;
-        color: #E8ECF0 !important;
+        background: #1a2332 !important; border-color: #3D5A80 !important; color: #E8ECF0 !important;
     }
     input[type="text"]:focus { border-color: #7E8EA6 !important; }
     input[type="text"]::placeholder { color: #7E8EA6 !important; }
@@ -235,91 +111,163 @@ div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !importan
 </style>
 """, unsafe_allow_html=True)
 
-# ── State ──
-if "inputs" not in st.session_state: st.session_state.inputs = [""]
-if "results" not in st.session_state: st.session_state.results = []
-if "done" not in st.session_state: st.session_state.done = False
 
-# ── Sidebar ──
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Autocomplete search function
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Build sorted name list for fast lookup
+_ALL_NAMES = sorted(set(
+    list(TRADE_NAMES.keys()) + list(_NAME_TO_CAS.keys())
+), key=len)
+
+
+@st.cache_data(ttl=600)
+def _pubchem_autocomplete(query):
+    """Fetch suggestions from PubChem autocomplete API."""
+    try:
+        url = f"https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/{req.utils.quote(query)}/JSON?limit=5"
+        r = req.get(url, timeout=4)
+        if r.status_code == 200:
+            return r.json().get("dictionary_terms", {}).get("compound", [])
+    except Exception:
+        pass
+    return []
+
+
+def search_materials(query):
+    """
+    Real-time autocomplete function for streamlit-searchbox.
+    Called on every keystroke. Returns list of suggestions.
+    """
+    if not query or len(query) < 2:
+        return []
+
+    q = query.lower().strip()
+    starts = []
+    contains = []
+    seen = set()
+
+    # Local: names starting with query (highest priority, shortest first)
+    for name in _ALL_NAMES:
+        if name.startswith(q) and name not in seen:
+            starts.append(name.title())
+            seen.add(name)
+            if len(starts) >= 5:
+                break
+
+    # Local: names containing query
+    if len(starts) < 5:
+        for name in _ALL_NAMES:
+            if q in name and name not in seen:
+                contains.append(name.title())
+                seen.add(name)
+                if len(starts) + len(contains) >= 8:
+                    break
+
+    results = starts + contains
+
+    # PubChem autocomplete (if local < 3 and query >= 3 chars)
+    if len(results) < 3 and len(q) >= 3:
+        for s in _pubchem_autocomplete(q):
+            if s.lower() not in seen:
+                results.append(s)
+                seen.add(s.lower())
+                if len(results) >= 8:
+                    break
+
+    return results[:8]
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  State
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+if "materials" not in st.session_state:
+    st.session_state.materials = []   # list of selected material names
+if "results" not in st.session_state:
+    st.session_state.results = []
+if "done" not in st.session_state:
+    st.session_state.done = False
+if "box_count" not in st.session_state:
+    st.session_state.box_count = 1
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Sidebar
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with st.sidebar:
     st.markdown("**Perfume Analyzer**")
-    st.caption("v7.1")
+    st.caption("v8.0")
     st.markdown("---")
     st.markdown("Data from **PubChem** (NIH)  \nPerfumery DB (CAS-validated)")
     st.markdown("---")
     st.markdown("Export: PDF · JSON")
 
-# ── Title ──
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Title
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 st.markdown("## Perfume Raw Materials Analyzer")
 st.caption("PubChem compound data + perfumery knowledge")
 st.markdown("---")
 
-# ── Inputs with autocomplete suggestions ──
-new_inputs = []
-for i in range(len(st.session_state.inputs)):
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Search boxes with real-time autocomplete
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+selected_names = []
+
+for i in range(st.session_state.box_count):
     lc, rc = st.columns([14, 1])
     with lc:
-        v = st.text_input(f"Material {i+1}", value=st.session_state.inputs[i],
-            key=f"inp_{i}", placeholder=f"Material {i+1}", label_visibility="collapsed")
+        selected = st_searchbox(
+            search_materials,
+            key=f"searchbox_{i}",
+            placeholder=f"Material {i+1} — type to search...",
+            clear_on_submit=False,
+            default=None,
+        )
+        if selected:
+            selected_names.append(selected)
     with rc:
         if st.button("✕", key=f"rm_{i}"):
-            if len(st.session_state.inputs) > 1:
-                st.session_state.inputs.pop(i)
-            else:
-                st.session_state.inputs = [""]
-            st.rerun()
-
-    # ── Autocomplete suggestions ──
-    typed = v.strip()
-    if len(typed) >= 2:
-        suggestions = _get_suggestions(typed.lower())
-        # Don't show if exact match already
-        if suggestions and typed.lower() not in [s.lower() for s in suggestions[:1]]:
-            sel = st.pills(
-                "suggestions",
-                suggestions,
-                key=f"pills_{i}",
-                label_visibility="collapsed",
-            )
-            if sel:
-                st.session_state.inputs[i] = sel
+            if st.session_state.box_count > 1:
+                st.session_state.box_count -= 1
                 st.rerun()
 
-    new_inputs.append(v)
-st.session_state.inputs = new_inputs
-
-names = [n.strip() for n in st.session_state.inputs if n.strip()]
-
+# ── Actions ──
 c1, c2, c3 = st.columns([4, 1, 1])
 with c1:
-    search_clicked = st.button("Search", type="primary", disabled=len(names)==0,
+    search_clicked = st.button("Search", type="primary",
+                               disabled=len(selected_names) == 0,
                                use_container_width=True)
 with c2:
     if st.button("+ Add", use_container_width=True):
-        st.session_state.inputs.append("")
+        st.session_state.box_count += 1
         st.rerun()
 with c3:
     if st.button("Clear", use_container_width=True):
-        st.session_state.inputs = [""]
+        st.session_state.box_count = 1
         st.session_state.results = []
         st.session_state.done = False
         st.rerun()
 
 st.markdown("---")
 
-# ── Search ──
-if search_clicked and names:
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Search
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+if search_clicked and selected_names:
     st.session_state.results = []
     st.session_state.done = False
     session = make_session()
     bar = st.progress(0)
-    for idx, nm in enumerate(names):
-        bar.progress(idx / len(names), text=nm)
+    for idx, nm in enumerate(selected_names):
+        bar.progress(idx / len(selected_names), text=nm)
         st.session_state.results.append(scrape_material(nm, session))
     bar.progress(1.0, text="Done")
     st.session_state.done = True
 
-# ── Results ──
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Results
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if st.session_state.results:
     ok = sum(1 for r in st.session_state.results if r.found)
     tot = len(st.session_state.results)
@@ -407,7 +355,9 @@ if st.session_state.results:
                                 if len(clean) > 500: clean = clean[:500] + "…"
                                 st.markdown(f"- {clean}")
 
-# ── Export ──
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Export
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if st.session_state.results and st.session_state.done:
     st.markdown("---")
     d1, d2 = st.columns(2)
