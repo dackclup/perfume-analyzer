@@ -33,22 +33,17 @@ input[type="text"]::placeholder { color: #8893A6 !important; }
 /* keyup input height */
 iframe[title="st_keyup.st_keyup"] { height: 45px !important; }
 
-/* remove button — white minimal trash icon */
+/* remove button — white ✕ */
 button[kind="secondary"] {
     border: none !important; background: none !important;
     box-shadow: none !important; min-height: 0 !important;
     padding: 0.6rem 0.4rem !important;
 }
 button[kind="secondary"] p {
-    font-size: 1em !important;
-    filter: grayscale(1) brightness(3) !important;
-    opacity: 0.7;
-    transition: opacity 0.2s;
+    color: #ffffff !important; font-size: 1.1em !important;
+    opacity: 0.6; transition: opacity 0.2s;
 }
-button[kind="secondary"]:hover p {
-    opacity: 1;
-    filter: grayscale(0) !important;
-}
+button[kind="secondary"]:hover p { opacity: 1; }
 
 button[kind="primary"] {
     background: #3D5A80 !important; border: none !important;
@@ -283,7 +278,7 @@ if st.session_state.results:
                 with st.expander(f"✗  {mat.name}", expanded=False):
                     st.error(mat.error)
             with btn_col:
-                if st.button("🗑", key=f"del_{idx}"):
+                if st.button("✕", key=f"del_{idx}"):
                     st.session_state.searched.discard(mat.name.lower())
                     st.session_state.results.pop(idx)
                     st.rerun()
@@ -291,7 +286,7 @@ if st.session_state.results:
 
         ex_col, btn_col = st.columns([20, 1], gap="small")
         with btn_col:
-            if st.button("🗑", key=f"del_{idx}"):
+            if st.button("✕", key=f"del_{idx}"):
                 st.session_state.searched.discard(mat.name.lower())
                 st.session_state.results.pop(idx)
                 st.rerun()
