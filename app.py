@@ -200,11 +200,19 @@ if st.session_state.results:
                                 st.markdown(f"**{display}**")
 
                             for item in items:
+                                # Skip items that are just URLs or reference IDs
+                                if item.startswith("http") and " " not in item:
+                                    continue
                                 # Truncate very long items
-                                if len(item) > 500:
-                                    st.markdown(f"- {item[:500]}…")
-                                else:
-                                    st.markdown(f"- {item}")
+                                display_item = item if len(item) <= 500 else item[:500] + "…"
+                                # Convert raw URLs in text to clickable links
+                                import re
+                                display_item = re.sub(
+                                    r'(https?://\S+)',
+                                    r'[\1](\1)',
+                                    display_item
+                                )
+                                st.markdown(f"- {display_item}")
                             st.markdown("")
 
 if st.session_state.results and st.session_state.done:

@@ -413,14 +413,8 @@ def _extract_string_value(info_block):
     if bval is not None:
         return "Yes" if bval else "No"
 
-    # Binary/external data — just note it exists
-    if val.get("ExternalDataURL"):
-        return f"[External data: {val['ExternalDataURL']}]"
-
-    # Table reference
-    if val.get("ExternalTableName"):
-        return f"[Table: {val['ExternalTableName']}]"
-
+    # Binary/external data — skip (not user-accessible)
+    # Table references — skip (not displayable)
     return ""
 
 
@@ -565,8 +559,8 @@ def scrape_material(name, session=None):
     mat.found = True
     mat.page_url = f"https://pubchem.ncbi.nlm.nih.gov/compound/{cid}"
     mat.structure_image_url = (
-        f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/PNG"
-        f"?image_size=300x200"
+        f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/record/PNG"
+        f"?image_size=300x300"
     )
 
     # Molecular properties (extended list)

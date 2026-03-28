@@ -188,7 +188,8 @@ def _build_material(mat):
         els.append(Spacer(1, 2*mm))
         hex_accent = ACCENT.hexval()[2:]
         els.append(Paragraph(
-            f'<font color="#{hex_accent}">Source: {mat.page_url}</font>', _S["Small"]))
+            f'<a href="{mat.page_url}" color="#{hex_accent}">'
+            f'PubChem: {mat.page_url}</a>', _S["Small"]))
 
     return els
 
