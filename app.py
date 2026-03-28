@@ -1,19 +1,17 @@
 """
-app.py  v9.0 — Simple input + autocomplete pills
+app.py  v9.1 — text_input + pills autocomplete
     streamlit run app.py
 """
 
 import re
 import streamlit as st
 import requests as req
-from streamlit_searchbox import st_searchbox
 from scraper import scrape_material, make_session, TRADE_NAMES, _NAME_TO_CAS
 from exporter import generate_human_report, generate_ai_report
 
 st.set_page_config(page_title="Perfume Analyzer", page_icon="⬡", layout="wide",
                    initial_sidebar_state="collapsed")
 
-# Palette: Navy #3D5A80 · Off-white #F0F0F5 · Light gray #C9CCD5 · Blue-gray #7E8EA6
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap');
@@ -65,6 +63,19 @@ button[data-testid="stDownloadButton"] button:hover p { color: #F0F0F5 !importan
 
 section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
 
+/* pills */
+div[data-testid="stPills"] button {
+    border: 1px solid #C9CCD5 !important; border-radius: 3px !important;
+    background: #F0F0F5 !important; font-size: 0.82em !important;
+}
+div[data-testid="stPills"] button p { color: #3D5A80 !important; }
+div[data-testid="stPills"] button:hover,
+div[data-testid="stPills"] button[aria-checked="true"] {
+    background: #3D5A80 !important; border-color: #3D5A80 !important;
+}
+div[data-testid="stPills"] button:hover p,
+div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !important; }
+
 /* ── Dark mode ── */
 @media (prefers-color-scheme: dark) {
     *, p, li, span, div { color: #E8ECF0; }
@@ -94,6 +105,16 @@ section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
     }
     button[data-testid="stDownloadButton"] button:hover p { color: #F0F0F5 !important; }
     section[data-testid="stSidebar"] { border-right-color: #3D5A80; }
+    div[data-testid="stPills"] button {
+        border-color: #3D5A80 !important; background: #1a2332 !important;
+    }
+    div[data-testid="stPills"] button p { color: #C9CCD5 !important; }
+    div[data-testid="stPills"] button:hover,
+    div[data-testid="stPills"] button[aria-checked="true"] {
+        background: #3D5A80 !important;
+    }
+    div[data-testid="stPills"] button:hover p,
+    div[data-testid="stPills"] button[aria-checked="true"] p { color: #F0F0F5 !important; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -102,7 +123,6 @@ section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Autocomplete
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 _ALL_NAMES = sorted(set(
     list(TRADE_NAMES.keys()) + list(_NAME_TO_CAS.keys())
 ), key=len)
@@ -121,27 +141,19 @@ def _pubchem_autocomplete(query):
 
 
 def _get_suggestions(typed):
-    """Real-time autocomplete for st_searchbox. Returns list of suggestions including typed text."""
-    if not typed or len(typed.strip()) < 1:
-        return []
-    q = typed.strip()
-    ql = q.lower()
-    results = [q]  # Always include typed text as first option
-    seen = {ql}
-    if len(ql) < 2:
-        return results
-    starts, contains = [], []
+    ql = typed.lower().strip()
+    starts, contains, seen = [], [], set()
     for name in _ALL_NAMES:
         if name.startswith(ql) and name not in seen:
             starts.append(name.title()); seen.add(name)
         elif ql in name and name not in seen:
             contains.append(name.title()); seen.add(name)
-    results += starts + contains
-    if len(results) < 4 and len(ql) >= 3:
+    results = starts + contains
+    if len(results) < 3 and len(ql) >= 3:
         for s in _pubchem_autocomplete(ql):
             if s.lower() not in seen:
                 results.append(s); seen.add(s.lower())
-    return results[:8]
+    return results[:6]
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -161,37 +173,38 @@ if "done" not in st.session_state:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with st.sidebar:
     st.markdown("**Perfume Analyzer**")
-    st.caption("v9.0")
+    st.caption("v9.1")
     st.markdown("---")
     st.markdown("Data from **PubChem** (NIH)  \nPerfumery DB (CAS-validated)")
     st.markdown("---")
     st.markdown("Export: PDF · JSON")
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Title
+#  Title + Search
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 st.markdown("## Perfume Raw Materials Analyzer")
 st.caption("PubChem compound data + perfumery knowledge")
 st.markdown("---")
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Search input (dropdown autocomplete)
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-selected = st_searchbox(
-    _get_suggestions,
-    key="searchbox",
+query = st.text_input(
+    "Search",
+    value=st.session_state.query,
     placeholder="Type material name — e.g. Linalool, Iso E Super, 78-70-6 …",
-    clear_on_submit=False,
-    default=st.session_state.get("query", None),
+    label_visibility="collapsed",
 )
+st.session_state.query = query
+typed = query.strip()
 
-# Store selected value
-if selected:
-    st.session_state.query = selected
+# ── Pills suggestions (1 char+) ──
+if len(typed) >= 1:
+    suggestions = _get_suggestions(typed)
+    if suggestions:
+        sel = st.pills("suggestions", suggestions, label_visibility="collapsed")
+        if sel:
+            st.session_state.query = sel
+            st.rerun()
 
-typed = (selected or st.session_state.get("query", "") or "").strip()
-
-# Search button
+# ── Search button ──
 search_clicked = st.button("Search", type="primary",
                            disabled=len(typed) == 0,
                            use_container_width=True)
@@ -202,7 +215,6 @@ st.markdown("---")
 #  Search
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if search_clicked and typed:
-    # Split by comma for multiple materials
     names = [n.strip() for n in typed.split(",") if n.strip()]
     new_names = [n for n in names if n.lower() not in st.session_state.searched]
 
