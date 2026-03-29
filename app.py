@@ -300,11 +300,24 @@ typed = st_keyup("Search", placeholder="e.g. linalool, hedione, iso e super",
                  label_visibility="collapsed", debounce=300,
                  key=f"keyup_{st.session_state.kv}") or ""
 
-# Pills — update in real-time as user types (from 1st character)
+# Pills — update in real-time, exclude names/CAS already in results
 pill_search = None
 if len(typed.strip()) >= 1:
     suggestions = _get_suggestions(typed)
-    suggestions = [s for s in suggestions if s.lower() != typed.strip().lower()]
+    existing_names = {r.name.lower() for r in st.session_state.results}
+    existing_cas = {r.cas_number for r in st.session_state.results if r.cas_number}
+    filtered = []
+    for s in suggestions:
+        if s.lower() == typed.strip().lower():
+            continue  # skip exact match of typed text
+        if s.lower() in existing_names:
+            continue  # already in results by name
+        # Check if this suggestion's CAS is already in results
+        cas = TRADE_NAMES.get(s.lower(), "")
+        if cas and cas in existing_cas:
+            continue  # same compound already in results
+        filtered.append(s)
+    suggestions = filtered
     if suggestions:
         sel = st.pills("suggestions", suggestions, label_visibility="collapsed",
                        key=f"pills_{st.session_state.pv}", default=None)
