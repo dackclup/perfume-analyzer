@@ -448,6 +448,7 @@ TRADE_NAMES = {
     "vetiveryl acetate": "62563-80-8",
     "georgywood": "155517-73-2",
     "clearwood": "28631-86-7", "patchoulol": "5986-55-0",
+    "patchouli": "5986-55-0",  # main component of patchouli oil
     "cedarwood": "8000-27-9",
     "cedrol": "77-53-2", "cedryl acetate": "77-54-3",
     "iso longifolanone": "23787-90-8",
@@ -481,6 +482,8 @@ TRADE_NAMES = {
     "orange terpenes": "5989-27-5",
     "bergamotene": "17699-05-7",
     "bergaptene": "484-20-8",
+    "bergamot": "8007-75-8",  # bergamot essential oil
+    "bergamot oil": "8007-75-8",
     "octanal": "124-13-0", "aldehyde c-8": "124-13-0",
     "nonanal": "124-19-6", "aldehyde c-9": "124-19-6",
     "decanal": "112-31-2", "aldehyde c-10": "112-31-2",
@@ -712,19 +715,26 @@ def _fuzzy_match_tradenames(name):
             return TRADE_NAMES[variant]
 
     # 3. Substring match: "iso e" should find "iso e super"
+    #    But "patchouli" should NOT match "patchouli ethanone" (= Iso E Super)
+    #    Rule: query must match start of trade name, or be a distinct word prefix
     if len(n) >= 4:
         for trade_name, cas in TRADE_NAMES.items():
-            if n in trade_name or trade_name in n:
+            # Query is start of trade name: "iso e" → "iso e super" ✅
+            if trade_name.startswith(n + " ") or trade_name.startswith(n + "-"):
+                return cas
+            # Trade name is start of query: "cinnamon oil extra" → "cinnamon oil" ✅
+            if n.startswith(trade_name + " ") or n.startswith(trade_name + "-"):
                 return cas
 
-    # 4. Fuzzy: simple edit-distance-like matching for short names
+    # 4. Fuzzy: similarity matching for typos
     if len(n) >= 5:
         best_score = 0
         best_cas = None
         for trade_name, cas in TRADE_NAMES.items():
-            # Count matching characters in order
             score = _similarity(n, trade_name)
-            if score > best_score and score > 0.8:
+            # Require high similarity AND similar length (prevent partial matches)
+            len_ratio = min(len(n), len(trade_name)) / max(len(n), len(trade_name))
+            if score > best_score and score > 0.85 and len_ratio > 0.7:
                 best_score = score
                 best_cas = cas
         if best_cas:
@@ -823,6 +833,12 @@ def _smart_search_cid(session, name):
         cid = _get_cid(session, trade_cas)
         if cid:
             return cid, trade_cas
+        # CAS not found in PubChem — check if it's a known mixture CAS (8xxx or 9xxx)
+        if re.match(r"^8\d{3}-\d{2}-\d$", trade_cas) or re.match(r"^9\d{3}-\d{2}-\d$", trade_cas):
+            logger.info("  → Mixture CAS %s not in PubChem (natural product)", trade_cas)
+            return "MIXTURE", trade_cas
+        # Single compound CAS but PubChem failed — continue to other strategies
+        logger.info("  → CAS %s not found, trying other strategies", trade_cas)
 
     # ── Strategy 5: Exact name on PubChem ──
     logger.info("  → Trying exact name: %s", original)
@@ -1227,6 +1243,29 @@ def scrape_material(name, session=None):
     # Second: smart multi-strategy search
     if cid is None:
         cid, resolved_name = _smart_search_cid(session, name)
+
+    if cid == "MIXTURE":
+        # Known trade name with correct CAS, but PubChem has no compound
+        # (natural mixture / essential oil)
+        mat.found = True
+        mat.cas_number = resolved_name  # resolved_name holds the CAS
+        mat.match_info = f"ℹ️ Natural mixture (CAS {resolved_name}) — not a single compound in PubChem"
+
+        # Try perfumery overlay
+        pdb = _lookup_by_cas(resolved_name)
+        if pdb:
+            mat.perfumery_matched = True
+            mat.match_info = f"✅ CAS match ({resolved_name}) — natural mixture"
+            if pdb.get("odor"): mat.odor_description = pdb["odor"]
+            if pdb.get("odor_type"): mat.odor_type = pdb["odor_type"]
+            if pdb.get("strength"): mat.odor_strength = pdb["strength"]
+            if pdb.get("note"): mat.note_classification = pdb["note"]
+            if pdb.get("tenacity"): mat.tenacity = pdb["tenacity"]
+            if pdb.get("tenacity_hours"): mat.tenacity_hours = pdb["tenacity_hours"]
+            if pdb.get("ifra"): mat.ifra_guidelines = pdb["ifra"]
+            if pdb.get("usage"): mat.usage_levels = pdb["usage"]
+            if pdb.get("blends"): mat.blends_well_with = pdb["blends"]
+        return mat
 
     if cid is None:
         suggestions = _suggest_similar(name)
