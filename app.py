@@ -16,10 +16,11 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap');
 *, html, body, [class*="css"] { font-family: 'IBM Plex Sans', sans-serif; color: #1a1a2e; }
-code { font-family: 'IBM Plex Mono', monospace !important; font-size: 0.85em; color: #2C4A6E !important; }
+code { font-family: 'IBM Plex Mono', monospace !important; font-size: 0.85em; color: #2C4A6E !important;
+       word-break: break-all !important; }
 h1,h2,h3,h4,h5 { font-weight: 600 !important; color: #2C3E5A !important; }
-p, li, span, div { color: #1a1a2e; }
-.block-container { padding-top: 2rem; }
+p, li, span, div { color: #1a1a2e; word-wrap: break-word; overflow-wrap: break-word; }
+.block-container { padding-top: 2rem; max-width: 100%; overflow-x: hidden; }
 input[type="text"] {
     border-radius: 4px !important; border-color: #C9CCD5 !important;
     background: #F0F0F5 !important; color: #1a1a2e !important;
