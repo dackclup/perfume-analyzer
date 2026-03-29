@@ -261,23 +261,28 @@ if search_clicked and typed:
     if new_names:
         session = make_session()
         bar = st.progress(0)
-        # Track CAS already in results to avoid duplicates
-        existing_cas = {}  # CAS → index in results
-        for i, r in enumerate(st.session_state.results):
-            if r.cas_number:
-                existing_cas[r.cas_number] = i
         for idx, nm in enumerate(new_names):
             bar.progress(idx / len(new_names), text=nm)
             st.session_state.searched.add(nm.lower())
             result = scrape_material(nm, session)
-            # If same CAS already exists → replace name with new search term, skip adding
-            if result.cas_number and result.cas_number in existing_cas:
-                old_idx = existing_cas[result.cas_number]
-                st.session_state.results[old_idx].name = nm  # update display name
-                continue
             st.session_state.results.append(result)
-            if result.cas_number:
-                existing_cas[result.cas_number] = len(st.session_state.results) - 1
+        bar.progress(1.0, text="Done")
+        # Deduplicate by CAS — keep LAST occurrence (newest search)
+        seen_cas = {}
+        deduped = []
+        for r in st.session_state.results:
+            if r.cas_number and r.cas_number in seen_cas:
+                # Remove previous entry with same CAS
+                deduped = [x for i, x in enumerate(deduped) if i != seen_cas[r.cas_number]]
+                # Rebuild index
+                seen_cas = {}
+                for i, x in enumerate(deduped):
+                    if x.cas_number:
+                        seen_cas[x.cas_number] = i
+            deduped.append(r)
+            if r.cas_number:
+                seen_cas[r.cas_number] = len(deduped) - 1
+        st.session_state.results = deduped
         bar.progress(1.0, text="Done")
     st.session_state.done = True
 
