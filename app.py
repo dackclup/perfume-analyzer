@@ -33,7 +33,7 @@ button[kind="secondary"] {
     padding: 0.6rem 0.4rem !important;
 }
 button[kind="secondary"] p {
-    color: #ffffff !important; font-size: 1.1em !important;
+    color: #3D5A80 !important; font-size: 1.1em !important;
     opacity: 0.6; transition: opacity 0.2s;
 }
 button[kind="secondary"]:hover p { opacity: 1; }
@@ -114,6 +114,7 @@ div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !importan
     button[data-testid="stDownloadButton"] button:hover p,
     div[data-testid="stDownloadButton"] button:hover p { color: #FFFFFF !important; }
     section[data-testid="stSidebar"] { border-right-color: #3D5A80; }
+    button[kind="secondary"] p { color: #C9CCD5 !important; }
     div[data-testid="stPills"] button {
         border-color: #3D5A80 !important; background: #1a2332 !important;
     }
