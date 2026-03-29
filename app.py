@@ -192,7 +192,9 @@ if "searched" not in st.session_state:
 if "done" not in st.session_state:
     st.session_state.done = False
 if "kv" not in st.session_state:
-    st.session_state.kv = 0  # keyup version — changes key to force re-init
+    st.session_state.kv = 0
+if "pv" not in st.session_state:
+    st.session_state.pv = 0
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Sidebar
@@ -206,56 +208,61 @@ with st.sidebar:
     st.markdown("Export: PDF · JSON")
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Title + Search
+#  Title + Search (isolated fragment — won't re-render results)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 st.markdown("## Perfume Raw Materials Analyzer")
 st.caption("PubChem compound data + perfumery knowledge")
 st.markdown("---")
 
-# ── Real-time text input (sends value on every keystroke, debounced 300ms) ──
-keyup_val = st_keyup(
-    "Search",
-    value=st.session_state.query,
-    placeholder="",
-    label_visibility="collapsed",
-    debounce=150,
-    key=f"keyup_{st.session_state.kv}",
-)
+search_container = st.container()
 
-# Keep query in sync — keyup updates query, but pill selection takes priority
-if keyup_val is not None and keyup_val != st.session_state.query:
-    st.session_state.query = keyup_val
+# ── Search fragment: keyup + pills run independently from results ──
+@st.fragment
+def search_fragment():
+    keyup_val = st_keyup(
+        "Search",
+        value=st.session_state.query,
+        placeholder="",
+        label_visibility="collapsed",
+        debounce=300,
+        key=f"keyup_{st.session_state.kv}",
+    )
 
-# typed = definitive search term (always from session_state)
-typed = st.session_state.query.strip()
+    if keyup_val is not None and keyup_val != st.session_state.query:
+        st.session_state.query = keyup_val
 
-# ── Pills suggestions (update real-time as you type) ──
-if "pv" not in st.session_state:
-    st.session_state.pv = 0
-if len(typed) >= 1:
-    suggestions = _get_suggestions(typed)
-    # Remove exact match
-    suggestions = [s for s in suggestions if s.lower() != typed.lower()]
-    if suggestions:
-        sel = st.pills("suggestions", suggestions, label_visibility="collapsed",
-                       key=f"pills_{st.session_state.pv}", default=None)
-        if sel and sel != typed:
-            st.session_state.query = sel
-            st.session_state.kv += 1
-            st.session_state.pv += 1  # reset pills selection
-            st.rerun()
+    typed = st.session_state.query.strip()
 
-# ── Search button ──
-search_clicked = st.button("Search", type="primary",
-                           disabled=len(typed) == 0,
-                           use_container_width=True)
+    # Pills suggestions
+    if len(typed) >= 2:
+        suggestions = _get_suggestions(typed)
+        suggestions = [s for s in suggestions if s.lower() != typed.lower()]
+        if suggestions:
+            sel = st.pills("suggestions", suggestions[:4], label_visibility="collapsed",
+                           key=f"pills_{st.session_state.pv}", default=None)
+            if sel and sel != typed:
+                st.session_state.query = sel
+                st.session_state.kv += 1
+                st.session_state.pv += 1
+                st.rerun()
+
+    # Search button — triggers full page rerun to fetch data
+    if st.button("Search", type="primary", disabled=len(typed) == 0, use_container_width=True):
+        st.session_state._trigger_search = True
+        st.rerun(scope="full")
+
+with search_container:
+    search_fragment()
 
 st.markdown("---")
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Search
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-if search_clicked and typed:
+typed = st.session_state.query.strip()
+search_triggered = st.session_state.pop("_trigger_search", False)
+
+if search_triggered and typed:
     names = [n.strip() for n in typed.split(",") if n.strip()]
     # Allow re-search if term was searched before but result was deleted
     existing_names = {r.name.lower() for r in st.session_state.results}
