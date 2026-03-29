@@ -22,6 +22,10 @@ code { font-family: 'IBM Plex Mono', monospace !important; font-size: 0.85em; co
 h1,h2,h3,h4,h5 { font-weight: 600 !important; color: #2C3E5A !important; word-break: normal !important; }
 p, li, span, div { color: #1a1a2e; }
 .block-container { padding-top: 2rem; }
+html { scroll-behavior: smooth; }
+.scroll-top { text-align:right; margin-top:4px; }
+.scroll-top a { color:#3D5A80; font-size:0.8em; text-decoration:none; }
+.scroll-top a:hover { text-decoration:underline; }
 
 /* Force text wrapping on mobile — prevents overflow */
 [data-testid="stMarkdownContainer"] p,
@@ -141,6 +145,7 @@ div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !importan
     div[data-testid="stPills"] button[aria-checked="true"] { background: #3D5A80 !important; }
     div[data-testid="stPills"] button:hover p,
     div[data-testid="stPills"] button[aria-checked="true"] p { color: #F0F0F5 !important; }
+    .scroll-top a { color: #7E8EA6 !important; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -287,6 +292,7 @@ with st.sidebar:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 st.markdown("## Perfume Raw Materials Analyzer")
 st.caption("PubChem compound data + perfumery knowledge")
+st.markdown('<div id="top"></div>', unsafe_allow_html=True)
 st.markdown("---")
 
 # st_keyup — sends value on every keystroke (debounced), no fragment needed
@@ -370,7 +376,6 @@ if st.session_state.results:
             st.session_state.pop("export_cache_key", None)
             st.rerun()
 
-    last_idx = len(st.session_state.results) - 1
     for idx, mat in enumerate(st.session_state.results):
         if not mat.found:
             ex_col, btn_col = st.columns([20, 1], gap="small")
@@ -395,8 +400,7 @@ if st.session_state.results:
                 st.session_state.searched = {r.name.lower() for r in st.session_state.results}
                 st.rerun()
         with ex_col:
-            is_expanded = (idx == last_idx)
-            with st.expander(mat.name, expanded=is_expanded):
+            with st.expander(mat.name, expanded=False):
                 if mat.match_info:
                     st.caption(mat.match_info)
 
@@ -481,6 +485,9 @@ if st.session_state.results:
                                     lines.append(f"- {clean}")
                                 if lines:
                                     st.markdown("\n".join(lines))
+
+                # ▲ Scroll to top
+                st.markdown('<p class="scroll-top"><a href="#top">▲ กลับด้านบน</a></p>', unsafe_allow_html=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Export (cached)
