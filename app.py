@@ -163,7 +163,7 @@ def _get_suggestions(typed):
             continue
         results.append(name.title())
         if cas: seen_cas.add(cas)
-        if len(results) >= 4:
+        if len(results) >= 10:
             break
 
     # 2. If no results AND query has space → try prefix before last space
@@ -176,7 +176,7 @@ def _get_suggestions(typed):
                     continue
                 results.append(name.title())
                 if cas: seen_cas.add(cas)
-                if len(results) >= 4:
+                if len(results) >= 10:
                     break
 
     # 3. Substring fallback
@@ -188,11 +188,11 @@ def _get_suggestions(typed):
                     continue
                 results.append(name.title())
                 if cas: seen_cas.add(cas)
-                if len(results) >= 4:
+                if len(results) >= 10:
                     break
 
-    _suggestion_cache[ql] = results[:4]
-    return results[:4]
+    _suggestion_cache[ql] = results[:10]
+    return results[:10]
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
