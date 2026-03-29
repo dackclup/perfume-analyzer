@@ -539,10 +539,10 @@ PERFUMERY_DB = {
     "28219-61-6": {"names": ["bacdanol"], "odor_description": "Soft, creamy, mild sandalwood — excellent blender and extender", "odor_type": "Woody / Sandalwood", "odor_strength": "Medium", "note_classification": "Base", "tenacity": "High", "tenacity_hours": "~150 hours", "ifra_guidelines": "No restriction", "usage_levels": "5–20 %", "blends_well_with": ["Javanol", "Polysantol", "Sandalore", "Ebanol"], "fema_number": ""},
     "104864-90-6": {"names": ["firsantol"], "odor_description": "Very powerful, natural sandalwood with exceptional radiance and diffusion", "odor_type": "Woody / Sandalwood", "odor_strength": "Very High", "note_classification": "Base", "tenacity": "Very high — exceptional radiance", "tenacity_hours": "~280 hours", "ifra_guidelines": "No restriction", "usage_levels": "1–10 %", "blends_well_with": ["Polysantol", "Javanol", "Bacdanol", "Ebanol"], "fema_number": ""},
     "67801-20-1": {"names": ["ebanol"], "odor_description": "Rich, powerful, musky sandalwood with tropical and slightly anisic character", "odor_type": "Woody / Sandalwood", "odor_strength": "High", "note_classification": "Base", "tenacity": "Very high", "tenacity_hours": "~250 hours", "ifra_guidelines": "Restricted — allergen", "usage_levels": "2–10 %", "blends_well_with": ["Bacdanol", "Javanol", "Polysantol"], "fema_number": ""},
-    "155517-73-2": {"names": ["georgywood"], "odor_description": "Woody, ambery with vetiver and slight citrus facets", "odor_type": "Woody / Amber", "odor_strength": "Medium", "note_classification": "Base", "tenacity": "High", "tenacity_hours": "~150 hours", "ifra_guidelines": "No restriction", "usage_levels": "5–20 %", "blends_well_with": ["Iso E Super", "Vetiver", "Patchouli", "Cedarwood"], "fema_number": ""},
+    "155517-73-0": {"names": ["georgywood"], "odor_description": "Woody, ambery with vetiver and slight citrus facets", "odor_type": "Woody / Amber", "odor_strength": "Medium", "note_classification": "Base", "tenacity": "High", "tenacity_hours": "~150 hours", "ifra_guidelines": "No restriction", "usage_levels": "5–20 %", "blends_well_with": ["Iso E Super", "Vetiver", "Patchouli", "Cedarwood"], "fema_number": ""},
     "32388-55-9": {"names": ["vertofix", "vertofix coeur"], "odor_description": "Powerful, dry, woody-amber with vetiver-like and slightly smoky facets", "odor_type": "Woody / Amber", "odor_strength": "High", "note_classification": "Base", "tenacity": "Very high", "tenacity_hours": "~400 hours", "ifra_guidelines": "No restriction", "usage_levels": "5–25 %", "blends_well_with": ["Cedarwood", "Vetiver", "Iso E Super", "Patchouli"], "fema_number": ""},
     "70788-30-6": {"names": ["norlimbanol", "timberol"], "odor_description": "Powerful, dry, woody-cedar with smoky and slightly camphoraceous facets", "odor_type": "Woody / Cedar", "odor_strength": "Very High", "note_classification": "Base", "tenacity": "Very high", "tenacity_hours": "~300 hours", "ifra_guidelines": "No restriction", "usage_levels": "1–10 %", "blends_well_with": ["Cedarwood", "Vetiver", "Iso E Super", "Patchouli"], "fema_number": ""},
-    "28631-86-7": {"names": ["clearwood"], "odor_description": "Clean, modern patchouli — woody, earthy with reduced camphor facets", "odor_type": "Woody / Earthy", "odor_strength": "High", "note_classification": "Base", "tenacity": "Very high", "tenacity_hours": "~300 hours", "ifra_guidelines": "No restriction", "usage_levels": "5–25 %", "blends_well_with": ["Patchouli", "Vetiver", "Iso E Super", "Ambroxan"], "fema_number": ""},
+    "28631-86-9": {"names": ["clearwood"], "odor_description": "Clean, modern patchouli — woody, earthy with reduced camphor facets", "odor_type": "Woody / Earthy", "odor_strength": "High", "note_classification": "Base", "tenacity": "Very high", "tenacity_hours": "~300 hours", "ifra_guidelines": "No restriction", "usage_levels": "5–25 %", "blends_well_with": ["Patchouli", "Vetiver", "Iso E Super", "Ambroxan"], "fema_number": ""},
     # ═══════ Amber / Ambergris ═══════
     "3738-00-9": {"names": ["cetalox", "cetalox laevo"], "odor_description": "Warm, dry, ambery-woody with ambergris-like musky drydown", "odor_type": "Amber / Ambergris", "odor_strength": "Medium", "note_classification": "Base", "tenacity": "Extremely high", "tenacity_hours": "~600 hours", "ifra_guidelines": "No restriction", "usage_levels": "3–15 %", "blends_well_with": ["Ambroxan", "Iso E Super", "Labdanum", "Sandalwood"], "fema_number": ""},
     "103694-68-4": {"names": ["karanal", "amber xtreme", "amber ketal"], "odor_description": "Powerful, clean, amber with dry, mineral and woody character", "odor_type": "Amber / Mineral", "odor_strength": "Very High", "note_classification": "Base", "tenacity": "Extremely high", "tenacity_hours": "~700 hours", "ifra_guidelines": "No restriction", "usage_levels": "1–10 %", "blends_well_with": ["Ambroxan", "Cetalox", "Iso E Super", "Sandalwood"], "fema_number": ""},
@@ -647,15 +647,15 @@ PERFUMERY_DB = {
     "499-44-5": {"names": ["hinokitiol"], "odor_description": "Fresh, woody, cypress with slightly spicy and antibacterial character", "odor_type": "Woody / Fresh", "odor_strength": "Medium", "note_classification": "Middle", "tenacity": "Moderate to high", "tenacity_hours": "~36 hours", "ifra_guidelines": "No restriction", "usage_levels": "0.5–3 %", "blends_well_with": ["Cypress", "Cedarwood", "Hinoki"], "fema_number": ""},
     "502-72-7": {"names": ["exaltone", "cyclopentadecanone"], "odor_description": "Clean, musky, slightly metallic with woody and subtle animalic facets", "odor_type": "Musk", "odor_strength": "Medium", "note_classification": "Base", "tenacity": "Very high", "tenacity_hours": "~400 hours", "ifra_guidelines": "No restriction", "usage_levels": "2–10 %", "blends_well_with": ["Muscone", "Galaxolide", "Ambroxan"], "fema_number": "3623"},
     "542-46-1": {"names": ["civetone", "cosmone"], "odor_description": "Powerful, animalic-musky with warm, sensual and slightly fecal character", "odor_type": "Musk / Animalic", "odor_strength": "Very High", "note_classification": "Base", "tenacity": "Extremely high", "tenacity_hours": "~700 hours", "ifra_guidelines": "No restriction for synthetic", "usage_levels": "0.05–1 %", "blends_well_with": ["Muscone", "Castoreum", "Ambroxan", "Civet"], "fema_number": ""},
-    "54344-82-2": {"names": ["cabreuva"], "odor_description": "Soft, woody, slightly balsamic with faint floral and tea-like character", "odor_type": "Woody / Balsamic", "odor_strength": "Low to Medium", "note_classification": "Base", "tenacity": "High", "tenacity_hours": "~100 hours", "ifra_guidelines": "No restriction", "usage_levels": "5–20 %", "blends_well_with": ["Sandalwood", "Cedarwood", "Rose", "Vetiver"], "fema_number": ""},
+    "54344-82-0": {"names": ["cabreuva"], "odor_description": "Soft, woody, slightly balsamic with faint floral and tea-like character", "odor_type": "Woody / Balsamic", "odor_strength": "Low to Medium", "note_classification": "Base", "tenacity": "High", "tenacity_hours": "~100 hours", "ifra_guidelines": "No restriction", "usage_levels": "5–20 %", "blends_well_with": ["Sandalwood", "Cedarwood", "Rose", "Vetiver"], "fema_number": ""},
     "54440-17-4": {"names": ["safraleine"], "odor_description": "Warm, spicy, saffron-like with leathery, woody and slightly sweet character", "odor_type": "Spicy / Leather", "odor_strength": "High", "note_classification": "Middle / Heart", "tenacity": "Moderate to high", "tenacity_hours": "~36 hours", "ifra_guidelines": "No restriction", "usage_levels": "0.5–5 %", "blends_well_with": ["Saffron", "Rose", "Oud", "Leather"], "fema_number": ""},
     "562-74-3": {"names": ["terpinen-4-ol", "terpinen 4 ol"], "odor_description": "Fresh, earthy, peppery with slight woody-herbaceous character", "odor_type": "Herbal / Earthy", "odor_strength": "Medium", "note_classification": "Top / Middle", "tenacity": "Moderate", "tenacity_hours": "~8 hours", "ifra_guidelines": "No restriction", "usage_levels": "1–10 %", "blends_well_with": ["Tea Tree", "Lavender", "Eucalyptol", "Pine"], "fema_number": "2248"},
     "57-55-6": {"names": ["propylene glycol", "pg"], "odor_description": "Virtually odorless — standard fragrance solvent/humectant", "odor_type": "Solvent / Carrier", "odor_strength": "None", "note_classification": "N/A — solvent", "tenacity": "N/A", "tenacity_hours": "N/A", "ifra_guidelines": "No restriction", "usage_levels": "As solvent", "blends_well_with": [], "fema_number": ""},
     "57378-68-4": {"names": ["damascone delta"], "odor_description": "Fruity, plum-like with green, slightly woody character", "odor_type": "Fruity / Green", "odor_strength": "High", "note_classification": "Top / Middle", "tenacity": "Moderate", "tenacity_hours": "~18 hours", "ifra_guidelines": "Restricted", "usage_levels": "0.1–2 %", "blends_well_with": ["Damascone Alpha/Beta", "Rose", "Plum"], "fema_number": ""},
     "586-62-9": {"names": ["terpinolene"], "odor_description": "Fresh, pine-like, herbal with slightly sweet, citrus and floral character", "odor_type": "Fresh / Herbal", "odor_strength": "Medium", "note_classification": "Top", "tenacity": "Low", "tenacity_hours": "~3 hours", "ifra_guidelines": "No restriction", "usage_levels": "1–5 %", "blends_well_with": ["Pine", "Citrus", "Lavender", "Tea Tree"], "fema_number": "3046"},
-    "5989-54-0": {"names": ["l-limonene"], "odor_description": "Fresh, citrus, piney — slightly more turpentine-like than d-limonene", "odor_type": "Citrus / Pine", "odor_strength": "Medium to High", "note_classification": "Top", "tenacity": "Low", "tenacity_hours": "~3 hours", "ifra_guidelines": "Restricted — oxidized limonene is allergen", "usage_levels": "1–10 %", "blends_well_with": ["Pine", "Citrus", "Linalool", "Mint"], "fema_number": "2633"},
+    "5989-54-8": {"names": ["l-limonene"], "odor_description": "Fresh, citrus, piney — slightly more turpentine-like than d-limonene", "odor_type": "Citrus / Pine", "odor_strength": "Medium to High", "note_classification": "Top", "tenacity": "Low", "tenacity_hours": "~3 hours", "ifra_guidelines": "Restricted — oxidized limonene is allergen", "usage_levels": "1–10 %", "blends_well_with": ["Pine", "Citrus", "Linalool", "Mint"], "fema_number": "2633"},
     "1365-19-1": {"names": ["linalool oxide"], "odor_description": "Fresh, sweet, floral with earthy, slightly woody and creamy facets", "odor_type": "Floral / Woody", "odor_strength": "Medium", "note_classification": "Top / Middle", "tenacity": "Low to moderate", "tenacity_hours": "~8 hours", "ifra_guidelines": "No restriction", "usage_levels": "1–5 %", "blends_well_with": ["Linalool", "Lavender", "Tea", "Rose"], "fema_number": ""},
-    "62015-37-8": {"names": ["stemone"], "odor_description": "Green, watery, slightly floral with ozone-like freshness", "odor_type": "Green / Aquatic", "odor_strength": "Medium to High", "note_classification": "Top / Middle", "tenacity": "Moderate", "tenacity_hours": "~12 hours", "ifra_guidelines": "No restriction", "usage_levels": "1–5 %", "blends_well_with": ["Calone", "Floralozone", "Green notes"], "fema_number": ""},
+    "62015-37-6": {"names": ["stemone"], "odor_description": "Green, watery, slightly floral with ozone-like freshness", "odor_type": "Green / Aquatic", "odor_strength": "Medium to High", "note_classification": "Top / Middle", "tenacity": "Moderate", "tenacity_hours": "~12 hours", "ifra_guidelines": "No restriction", "usage_levels": "1–5 %", "blends_well_with": ["Calone", "Floralozone", "Green notes"], "fema_number": ""},
     "62563-80-8": {"names": ["vetiver acetate", "vetiveryl acetate"], "odor_description": "Warm, woody, slightly smoky vetiver with smooth, rounded character", "odor_type": "Woody / Smoky", "odor_strength": "Medium to High", "note_classification": "Base", "tenacity": "Very high", "tenacity_hours": "~200 hours", "ifra_guidelines": "No restriction", "usage_levels": "5–20 %", "blends_well_with": ["Vetiver", "Patchouli", "Cedarwood", "Iso E Super"], "fema_number": ""},
     "6259-76-3": {"names": ["hexyl salicylate"], "odor_description": "Fresh, green, slightly floral with orchid-like and powdery character", "odor_type": "Green / Floral", "odor_strength": "Medium", "note_classification": "Middle / Heart", "tenacity": "Moderate to high", "tenacity_hours": "~36 hours", "ifra_guidelines": "No restriction", "usage_levels": "2–15 %", "blends_well_with": ["Benzyl Salicylate", "Orchid", "Rose"], "fema_number": "3681"},
     "628-63-7": {"names": ["amyl acetate"], "odor_description": "Strong, sweet, fruity with banana and pear-like character", "odor_type": "Fruity / Banana", "odor_strength": "High", "note_classification": "Top", "tenacity": "Low", "tenacity_hours": "~2 hours", "ifra_guidelines": "No restriction", "usage_levels": "0.5–5 %", "blends_well_with": ["Banana", "Pear", "Apple", "Tropical fruits"], "fema_number": "2055"},
@@ -679,11 +679,11 @@ PERFUMERY_DB = {
     "89-80-5": {"names": ["menthone", "methyl pamplemousse"], "odor_description": "Minty, green, slightly woody with dry, herbaceous character", "odor_type": "Mint / Green", "odor_strength": "Medium to High", "note_classification": "Top", "tenacity": "Low to moderate", "tenacity_hours": "~6 hours", "ifra_guidelines": "No restriction", "usage_levels": "1–5 %", "blends_well_with": ["Menthol", "Peppermint", "Lavender", "Rosemary"], "fema_number": "2667"},
     "89-88-3": {"names": ["vetiverol"], "odor_description": "Warm, earthy, woody with smoky, slightly sweet vetiver character", "odor_type": "Woody / Earthy", "odor_strength": "Medium to High", "note_classification": "Base", "tenacity": "Very high", "tenacity_hours": "~200 hours", "ifra_guidelines": "No restriction", "usage_levels": "3–15 %", "blends_well_with": ["Vetiver", "Patchouli", "Sandalwood", "Cedarwood"], "fema_number": ""},
     "90-05-1": {"names": ["guaiacol"], "odor_description": "Smoky, phenolic, woody with slightly sweet, medicinal character", "odor_type": "Smoky / Phenolic", "odor_strength": "High", "note_classification": "Middle / Base", "tenacity": "Moderate", "tenacity_hours": "~24 hours", "ifra_guidelines": "Restricted", "usage_levels": "0.1–2 %", "blends_well_with": ["Smoke", "Leather", "Whisky", "Cade Oil"], "fema_number": "2532"},
-    "909478-55-1": {"names": ["nirvanolide"], "odor_description": "Clean, creamy, musky with skin-like and slightly coconut facets", "odor_type": "Musk / Creamy", "odor_strength": "Medium", "note_classification": "Base", "tenacity": "Very high", "tenacity_hours": "~350 hours", "ifra_guidelines": "No restriction", "usage_levels": "3–15 %", "blends_well_with": ["Habanolide", "Helvetolide", "Galaxolide"], "fema_number": ""},
+    "909478-55-3": {"names": ["nirvanolide"], "odor_description": "Clean, creamy, musky with skin-like and slightly coconut facets", "odor_type": "Musk / Creamy", "odor_strength": "Medium", "note_classification": "Base", "tenacity": "Very high", "tenacity_hours": "~350 hours", "ifra_guidelines": "No restriction", "usage_levels": "3–15 %", "blends_well_with": ["Habanolide", "Helvetolide", "Galaxolide"], "fema_number": ""},
     "93-15-2": {"names": ["methyl eugenol"], "odor_description": "Warm, spicy, clove-like with sweet, carnation and slightly woody character", "odor_type": "Spicy / Warm", "odor_strength": "Medium to High", "note_classification": "Middle / Heart", "tenacity": "Moderate", "tenacity_hours": "~24 hours", "ifra_guidelines": "RESTRICTED — potential carcinogen; very low limits", "usage_levels": "< 0.01 %", "blends_well_with": ["Eugenol", "Clove", "Carnation"], "fema_number": "2475"},
     "93-58-3": {"names": ["methyl benzoate"], "odor_description": "Sweet, fruity, ylang-like with slightly floral and feijoa character", "odor_type": "Fruity / Floral", "odor_strength": "Medium", "note_classification": "Top / Middle", "tenacity": "Low to moderate", "tenacity_hours": "~8 hours", "ifra_guidelines": "No restriction", "usage_levels": "1–10 %", "blends_well_with": ["Ylang Ylang", "Feijoa", "Jasmine"], "fema_number": "2683"},
     "99-83-2": {"names": ["phellandrene", "alpha phellandrene"], "odor_description": "Fresh, citrus-peppery with slight mint and woody character", "odor_type": "Fresh / Spicy", "odor_strength": "Medium", "note_classification": "Top", "tenacity": "Low", "tenacity_hours": "~2 hours", "ifra_guidelines": "No restriction", "usage_levels": "1–5 %", "blends_well_with": ["Pepper", "Eucalyptol", "Lemon", "Dill"], "fema_number": "2856"},
-    "99610-64-3": {"names": ["ambermax"], "odor_description": "Warm, powerful, amber with dry, woody and slightly animalic character", "odor_type": "Amber / Woody", "odor_strength": "Very High", "note_classification": "Base", "tenacity": "Extremely high", "tenacity_hours": "~500 hours", "ifra_guidelines": "No restriction", "usage_levels": "1–10 %", "blends_well_with": ["Ambroxan", "Cetalox", "Karanal", "Labdanum"], "fema_number": ""},
+    "99610-64-7": {"names": ["ambermax"], "odor_description": "Warm, powerful, amber with dry, woody and slightly animalic character", "odor_type": "Amber / Woody", "odor_strength": "Very High", "note_classification": "Base", "tenacity": "Extremely high", "tenacity_hours": "~500 hours", "ifra_guidelines": "No restriction", "usage_levels": "1–10 %", "blends_well_with": ["Ambroxan", "Cetalox", "Karanal", "Labdanum"], "fema_number": ""},
     # ═══════ Natural Mixtures / Essential Oils ═══════
     "8001-88-5": {
         "names": ["birch tar", "birch tar oil"],
@@ -839,7 +839,7 @@ PERFUMERY_DB = {
         "blends_well_with": ["Peru Balsam", "Benzoin", "Vanilla", "Styrax", "Labdanum", "Frankincense"],
         "fema_number": "",
     },
-    "9000-72-2": {
+    "9000-72-0": {
         "names": ["benzoin resin", "gum benzoin"],
         "odor_description": "Sweet, warm, vanilla-balsamic with almond and slightly powdery notes",
         "odor_type": "Balsamic / Vanilla", "odor_strength": "Medium",
@@ -937,7 +937,7 @@ TRADE_NAMES = {
     "cetalox laevo": "3738-00-9",
     "karanal": "103694-68-4", "amber xtreme": "103694-68-4",
     "amber ketal": "103694-68-4",
-    "ambermax": "99610-64-3",
+    "ambermax": "99610-64-7",
     "labdanum": "8016-26-0",  # natural resin
 
     # ═══════ Macrocyclic musks ═══════
@@ -952,7 +952,7 @@ TRADE_NAMES = {
     "romandolide": "236391-76-7",
     "cosmone": "542-46-1", "civetone": "542-46-1",
     "ambrettolide": "123-69-3",
-    "nirvanolide": "909478-55-1",
+    "nirvanolide": "909478-55-3",
     "sylkolide": "63187-91-7", "velvione": "63187-91-7",
     "muscenone": "63314-79-4",
     "exaltone": "502-72-7", "cyclopentadecanone": "502-72-7",
@@ -1004,8 +1004,8 @@ TRADE_NAMES = {
     "vertofix": "32388-55-9", "vertofix coeur": "32388-55-9",
     "vetiver acetate": "62563-80-8",
     "vetiveryl acetate": "62563-80-8",
-    "georgywood": "155517-73-2",
-    "clearwood": "28631-86-7", "patchoulol": "5986-55-0",
+    "georgywood": "155517-73-0",
+    "clearwood": "28631-86-9", "patchoulol": "5986-55-0",
     "patchouli": "5986-55-0",  # main component of patchouli oil
     "cedarwood": "8000-27-9",
     "cedrol": "77-53-2", "cedryl acetate": "77-54-3",
@@ -1016,7 +1016,7 @@ TRADE_NAMES = {
     "nootkatone": "4674-50-4",  # grapefruit woody
     "eudesmol": "473-15-4",
     "bisabolol": "515-69-5", "alpha bisabolol": "515-69-5",
-    "cabreuva": "54344-82-2",
+    "cabreuva": "54344-82-0",
     "mysore sandalwood": "8006-87-9",
 
     # ═══════ Citrus / Fresh ═══════
@@ -1036,7 +1036,7 @@ TRADE_NAMES = {
     "neryl acetate": "141-12-8",
     "citronellyl acetate": "150-84-5",
     "limonene": "5989-27-5", "d-limonene": "5989-27-5",
-    "r-limonene": "5989-27-5", "l-limonene": "5989-54-0",
+    "r-limonene": "5989-27-5", "l-limonene": "5989-54-8",
     "orange terpenes": "5989-27-5",
     "bergamotene": "17699-05-7",
     "bergaptene": "484-20-8",
@@ -1072,7 +1072,7 @@ TRADE_NAMES = {
     "ethyl vanillin": "121-32-4", "ethylvanillin": "121-32-4",
     "coumarin": "91-64-5", "cumarin": "91-64-5",
     "tonka bean": "91-64-5",  # main component
-    "benzoin": "579-44-2", "benzoin resin": "9000-72-2",
+    "benzoin": "579-44-2", "benzoin resin": "9000-72-0",
     "maltol": "118-71-8", "ethyl maltol": "4940-11-8",
     "furaneol": "3658-77-3",
     "benzyl alcohol": "100-51-6",
@@ -1124,7 +1124,7 @@ TRADE_NAMES = {
     "cis-3-hexenol": "928-96-1", "leaf alcohol": "928-96-1",
     "cis-3-hexenyl acetate": "3681-71-8",
     "galbanum": "68916-96-1",
-    "stemone": "62015-37-8",
+    "stemone": "62015-37-6",
     "violet leaf": "8024-08-6",
     "2,6-nonadienal": "17587-33-6",  # cucumber
     "hexyl acetate": "142-92-7",
