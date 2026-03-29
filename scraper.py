@@ -442,7 +442,7 @@ TRADE_NAMES = {
     "bacdanol": "28219-61-6", "polysantol": "107898-54-4",
     "hinoki": "19870-74-7", "hinokitiol": "499-44-5",
     "norlimbanol": "70788-30-6", "timberol": "70788-30-6",
-    "firsantol": "155077-70-2",
+    "firsantol": "104864-90-6",
     "vertofix": "32388-55-9", "vertofix coeur": "32388-55-9",
     "vetiver acetate": "62563-80-8",
     "vetiveryl acetate": "62563-80-8",
@@ -1263,6 +1263,29 @@ def scrape_material(name, session=None):
 
     # Use PUG View sections directly (computed props already included)
     mat.pubchem_sections = pugview_sections
+
+    # ── SMILES fallback: extract from PUG View if PUG REST missed it ──
+    if not mat.smiles:
+        for key, items in pugview_sections.items():
+            if "smiles" in key.lower():
+                for item in items:
+                    s = item.strip().split(":")[-1].strip() if ":" in item else item.strip()
+                    if s and len(s) > 3 and not s.startswith("http"):
+                        mat.smiles = s
+                        break
+                if mat.smiles:
+                    break
+
+    # ── InChI fallback ──
+    if not mat.inchi:
+        for key, items in pugview_sections.items():
+            if "inchi" in key.lower() and "inchikey" not in key.lower():
+                for item in items:
+                    if item.strip().startswith("InChI="):
+                        mat.inchi = item.strip()
+                        break
+                if mat.inchi:
+                    break
 
     # Populate known fields
     mat.boiling_point = phys_known.get("boiling_point", "")
