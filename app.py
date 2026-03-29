@@ -19,7 +19,7 @@ st.markdown("""
 *, html, body, [class*="css"] { font-family: 'IBM Plex Sans', sans-serif; color: #1a1a2e; }
 code { font-family: 'IBM Plex Mono', monospace !important; font-size: 0.85em; color: #2C4A6E !important;
        word-break: break-all !important; overflow-wrap: anywhere !important; }
-h1,h2,h3,h4,h5 { font-weight: 600 !important; color: #2C3E5A !important; }
+h1,h2,h3,h4,h5 { font-weight: 600 !important; color: #2C3E5A !important; word-break: normal !important; }
 p, li, span, div { color: #1a1a2e; }
 .block-container { padding-top: 2rem; }
 
@@ -30,7 +30,6 @@ p, li, span, div { color: #1a1a2e; }
 [data-testid="stMarkdownContainer"] span,
 div[data-testid="stExpander"] p,
 div[data-testid="stExpander"] li {
-    word-break: break-all !important;
     overflow-wrap: anywhere !important;
     white-space: normal !important;
     max-width: 100% !important;
@@ -168,6 +167,10 @@ _pubchem_ac_cache = {}  # query → [names]
 
 def _pubchem_autocomplete(query):
     """PubChem autocomplete API — cached, for names not in local DB."""
+    # Need at least 3 alphabetic chars to avoid junk results (e.g. "C.I" → CI → wrong)
+    alpha_chars = sum(1 for c in query if c.isalpha())
+    if alpha_chars < 3:
+        return []
     if query in _pubchem_ac_cache:
         return _pubchem_ac_cache[query]
     try:
@@ -238,11 +241,14 @@ def _get_suggestions(typed):
                     break
 
     # 5. PubChem autocomplete fallback — for names not in local DB
-    #    Only when 3+ chars typed AND local results < 3
+    #    Only when 3+ alpha chars AND local results < 3
     if len(results) < 3 and len(ql_stripped) >= 3:
         pc_names = _pubchem_autocomplete(ql_stripped)
+        # Also try without dots (e.g. "c.i. solvent" → "ci solvent")
+        if not pc_names and '.' in ql_stripped:
+            pc_names = _pubchem_autocomplete(ql_stripped.replace('.', ''))
         for pc in pc_names:
-            if pc.title() not in results and pc.lower() not in results:
+            if pc.title() not in results and pc.lower() != ql_stripped:
                 results.append(pc)
                 if len(results) >= 10:
                     break
