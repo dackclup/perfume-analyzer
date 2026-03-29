@@ -152,7 +152,8 @@ def _build_material(mat):
 
     id_pairs = [("CAS Number", mat.cas_number), ("FEMA Number", mat.fema_number),
         ("IUPAC Name", mat.iupac_name), ("Molecular Formula", mat.molecular_formula),
-        ("Molecular Weight", mat.molecular_weight), ("SMILES", mat.smiles)]
+        ("Molecular Weight", mat.molecular_weight), ("SMILES", mat.smiles),
+        ("InChI", mat.inchi)]
     id_table = _prop_table(id_pairs)
 
     if struct_img and id_table:
@@ -176,7 +177,7 @@ def _build_material(mat):
         els.append(Paragraph("Identifiers & Molecular Data", _S["SecH"]))
         els.append(id_table)
     if mat.synonyms:
-        els.append(Paragraph(f'<b>Synonyms:</b> {", ".join(mat.synonyms[:8])}', _S["Body9"]))
+        els.append(Paragraph(f'<b>Synonyms:</b> {", ".join(mat.synonyms[:20])}', _S["Body9"]))
 
     # Odor
     if any([mat.odor_description, mat.odor_type, mat.odor_strength]):
@@ -239,7 +240,7 @@ def _build_material(mat):
                 clean = re.sub(r'https?://\S+', '', item).strip()
                 if not clean or len(clean) < 3:
                     continue
-                text = clean if len(clean) <= 400 else clean[:400] + "…"
+                text = clean if len(clean) <= 800 else clean[:800] + "…"
                 group.append(Paragraph(text, _S["Body9"]))
 
             group.append(Spacer(1, 2*mm))
@@ -322,6 +323,7 @@ def _material_to_dict(mat):
     if mat.molecular_formula: mol["formula"] = mat.molecular_formula
     if mat.molecular_weight:  mol["weight"] = mat.molecular_weight
     if mat.inchi:             mol["inchi"] = mat.inchi
+    if mat.structure_image_url: mol["structure_image_url"] = mat.structure_image_url
     if mol: d["molecular"] = mol
 
     odor = {}
@@ -343,6 +345,19 @@ def _material_to_dict(mat):
     if safe: d["safety"] = safe
     if mat.blends_well_with:
         d["blending"] = mat.blends_well_with
+
+    # Physical / chemical properties as dedicated fields
+    phys = {}
+    if mat.appearance:       phys["appearance"] = mat.appearance
+    if mat.boiling_point:    phys["boiling_point"] = mat.boiling_point
+    if mat.melting_point:    phys["melting_point"] = mat.melting_point
+    if mat.flash_point:      phys["flash_point"] = mat.flash_point
+    if mat.density:          phys["density"] = mat.density
+    if mat.vapor_pressure:   phys["vapor_pressure"] = mat.vapor_pressure
+    if mat.solubility:       phys["solubility"] = mat.solubility
+    if mat.refractive_index: phys["refractive_index"] = mat.refractive_index
+    if mat.logp:             phys["logp"] = mat.logp
+    if phys: d["physical_properties"] = phys
 
     # ALL PubChem sections — strip URLs from data content
     if mat.pubchem_sections:

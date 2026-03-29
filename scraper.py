@@ -957,7 +957,6 @@ _SKIP_HEADINGS = {
     "entrez crosslinks",        # just counts
     "pubchem reference collection sid",
     "nlm curated pubmed citations",
-    "nature journal references",
     "ongoing test status",
     "depositor-supplied synonyms",  # already in synonyms field
 }
