@@ -302,8 +302,184 @@ PERFUMERY_DB = {
         "blends_well_with": ["Galaxolide", "Ambroxan", "Hedione", "Coumarin", "Vanillin", "Rose"],
         "fema_number": "",
     },
+    # ═══════ Natural Mixtures / Essential Oils ═══════
+    "8001-88-5": {
+        "names": ["birch tar", "birch tar oil"],
+        "odor_description": "Smoky, leathery, tar-like with phenolic and woody-balsamic facets",
+        "odor_type": "Leather / Smoky", "odor_strength": "High",
+        "note_classification": "Base",
+        "tenacity": "Very high — persistent smoky leather", "tenacity_hours": "~200 hours",
+        "ifra_guidelines": "Restricted — contains PAHs; limited use in fine fragrance",
+        "usage_levels": "0.1–2 % in fragrance concentrate",
+        "blends_well_with": ["Castoreum", "Labdanum", "Cade Oil", "Vetiver", "Patchouli", "Birch Tar Rectified"],
+        "fema_number": "",
+    },
+    "8000-27-9": {
+        "names": ["cedarwood", "cedarwood oil", "cedar"],
+        "odor_description": "Warm, dry, woody-balsamic with pencil-shaving and soft smoky facets",
+        "odor_type": "Woody", "odor_strength": "Medium",
+        "note_classification": "Base",
+        "tenacity": "High — long-lasting dry wood", "tenacity_hours": "~100 hours",
+        "ifra_guidelines": "No restriction for most types",
+        "usage_levels": "5–30 % in fragrance concentrate",
+        "blends_well_with": ["Vetiver", "Patchouli", "Sandalwood", "Iso E Super", "Bergamot", "Lavender"],
+        "fema_number": "2041",
+    },
+    "8000-34-8": {
+        "names": ["clove oil", "clove bud oil"],
+        "odor_description": "Warm, spicy, sweet with eugenol-dominant character and slight fruity undertone",
+        "odor_type": "Spicy", "odor_strength": "High",
+        "note_classification": "Middle / Heart",
+        "tenacity": "Moderate to high", "tenacity_hours": "~48 hours",
+        "ifra_guidelines": "Restricted — eugenol content limited per IFRA",
+        "usage_levels": "0.5–5 % in fragrance concentrate",
+        "blends_well_with": ["Cinnamon", "Vanilla", "Orange", "Rose", "Ylang Ylang", "Nutmeg"],
+        "fema_number": "2323",
+    },
+    "8015-91-6": {
+        "names": ["cinnamon oil", "cinnamon bark oil"],
+        "odor_description": "Warm, sweet, spicy with characteristic cinnamon-aldehyde note",
+        "odor_type": "Spicy / Sweet", "odor_strength": "High",
+        "note_classification": "Middle / Heart",
+        "tenacity": "Moderate", "tenacity_hours": "~24 hours",
+        "ifra_guidelines": "Restricted — cinnamaldehyde is a strong sensitizer",
+        "usage_levels": "0.1–1 % in fragrance concentrate",
+        "blends_well_with": ["Clove", "Orange", "Vanilla", "Frankincense", "Benzoin", "Cardamom"],
+        "fema_number": "2291",
+    },
+    "8000-66-6": {
+        "names": ["cardamom", "cardamom oil"],
+        "odor_description": "Fresh, aromatic, spicy-sweet with eucalyptol and camphoraceous facets",
+        "odor_type": "Spicy / Fresh", "odor_strength": "Medium to High",
+        "note_classification": "Top / Middle",
+        "tenacity": "Moderate", "tenacity_hours": "~12 hours",
+        "ifra_guidelines": "No restriction",
+        "usage_levels": "1–5 % in fragrance concentrate",
+        "blends_well_with": ["Bergamot", "Rose", "Frankincense", "Cinnamon", "Cedarwood", "Orange"],
+        "fema_number": "2241",
+    },
+    "8007-75-8": {
+        "names": ["bergamot", "bergamot oil"],
+        "odor_description": "Fresh, citrus-fruity with sweet, slightly floral and tea-like nuances",
+        "odor_type": "Citrus / Fresh", "odor_strength": "Medium",
+        "note_classification": "Top",
+        "tenacity": "Low to moderate", "tenacity_hours": "~4 hours",
+        "ifra_guidelines": "Restricted — contains bergaptene (phototoxic); FCF grade recommended",
+        "usage_levels": "5–20 % in fragrance concentrate",
+        "blends_well_with": ["Lavender", "Neroli", "Jasmine", "Rose", "Vetiver", "Cedarwood", "Linalool"],
+        "fema_number": "2153",
+    },
+    "8006-87-9": {
+        "names": ["mysore sandalwood", "sandalwood oil", "east indian sandalwood"],
+        "odor_description": "Creamy, soft, warm woody with milky, sweet and balsamic facets",
+        "odor_type": "Woody / Creamy", "odor_strength": "Medium",
+        "note_classification": "Base",
+        "tenacity": "Extremely high", "tenacity_hours": "~500 hours",
+        "ifra_guidelines": "No restriction — but supply is scarce (CITES regulated)",
+        "usage_levels": "5–20 % in fragrance concentrate",
+        "blends_well_with": ["Rose", "Jasmine", "Vetiver", "Vanilla", "Patchouli", "Ambroxan"],
+        "fema_number": "",
+    },
+    "8016-26-0": {
+        "names": ["labdanum", "labdanum resin", "cistus"],
+        "odor_description": "Rich, warm, amber-resinous with leather, animalic and honeyed facets",
+        "odor_type": "Amber / Resinous", "odor_strength": "High",
+        "note_classification": "Base",
+        "tenacity": "Very high", "tenacity_hours": "~300 hours",
+        "ifra_guidelines": "No restriction for absolute; resinoid may have limits",
+        "usage_levels": "1–10 % in fragrance concentrate",
+        "blends_well_with": ["Ambroxan", "Castoreum", "Vanilla", "Patchouli", "Frankincense", "Oud"],
+        "fema_number": "",
+    },
+    "8013-10-3": {
+        "names": ["cade oil", "juniper tar oil"],
+        "odor_description": "Smoky, tarry, leathery with medicinal and phenolic notes",
+        "odor_type": "Smoky / Leather", "odor_strength": "High",
+        "note_classification": "Base",
+        "tenacity": "Very high", "tenacity_hours": "~200 hours",
+        "ifra_guidelines": "Restricted — limited use; rectified grade preferred",
+        "usage_levels": "0.1–1 % in fragrance concentrate",
+        "blends_well_with": ["Birch Tar", "Vetiver", "Labdanum", "Castoreum", "Leather Bases"],
+        "fema_number": "",
+    },
+    "8023-83-4": {
+        "names": ["castoreum", "castor tincture"],
+        "odor_description": "Warm, leathery, animalic with sweet, woody-balsamic and birch-like facets",
+        "odor_type": "Animalic / Leather", "odor_strength": "High",
+        "note_classification": "Base",
+        "tenacity": "Extremely high", "tenacity_hours": "~500 hours",
+        "ifra_guidelines": "No restriction for synthetic reconstructions",
+        "usage_levels": "0.5–5 % in fragrance concentrate",
+        "blends_well_with": ["Labdanum", "Oud", "Birch Tar", "Vanilla", "Ambroxan", "Civet"],
+        "fema_number": "",
+    },
+    "8024-08-6": {
+        "names": ["violet leaf", "violet leaf absolute"],
+        "odor_description": "Intensely green, waxy, slightly floral with earthy cucumber-like facets",
+        "odor_type": "Green / Leafy", "odor_strength": "High",
+        "note_classification": "Top / Middle",
+        "tenacity": "Moderate", "tenacity_hours": "~24 hours",
+        "ifra_guidelines": "No restriction",
+        "usage_levels": "0.5–3 % in fragrance concentrate",
+        "blends_well_with": ["Rose", "Iris", "Tarragon", "Galbanum", "Bergamot", "Clary Sage"],
+        "fema_number": "",
+    },
+    "8024-01-9": {
+        "names": ["styrax", "storax", "styrax resin"],
+        "odor_description": "Sweet, balsamic, cinnamic with floral and slightly animalic character",
+        "odor_type": "Balsamic / Sweet", "odor_strength": "Medium to High",
+        "note_classification": "Base",
+        "tenacity": "High", "tenacity_hours": "~150 hours",
+        "ifra_guidelines": "Restricted — contains cinnamate esters",
+        "usage_levels": "1–5 % in fragrance concentrate",
+        "blends_well_with": ["Benzoin", "Peru Balsam", "Vanilla", "Labdanum", "Rose", "Frankincense"],
+        "fema_number": "",
+    },
+    "8007-00-9": {
+        "names": ["peru balsam", "balsam of peru"],
+        "odor_description": "Rich, sweet, warm balsamic with vanilla, cinnamon and slightly smoky notes",
+        "odor_type": "Balsamic / Vanilla", "odor_strength": "Medium to High",
+        "note_classification": "Base",
+        "tenacity": "Very high", "tenacity_hours": "~200 hours",
+        "ifra_guidelines": "Restricted — known sensitizer; limited in fine fragrance",
+        "usage_levels": "0.5–3 % in fragrance concentrate",
+        "blends_well_with": ["Vanilla", "Benzoin", "Styrax", "Tolu Balsam", "Coumarin", "Patchouli"],
+        "fema_number": "",
+    },
+    "9000-64-0": {
+        "names": ["tolu balsam", "balsam tolu"],
+        "odor_description": "Sweet, warm, balsamic-resinous with cinnamic and slightly vanilla character",
+        "odor_type": "Balsamic / Sweet", "odor_strength": "Medium",
+        "note_classification": "Base",
+        "tenacity": "High", "tenacity_hours": "~150 hours",
+        "ifra_guidelines": "Restricted — contains cinnamic acid derivatives",
+        "usage_levels": "1–5 % in fragrance concentrate",
+        "blends_well_with": ["Peru Balsam", "Benzoin", "Vanilla", "Styrax", "Labdanum", "Frankincense"],
+        "fema_number": "",
+    },
+    "9000-72-2": {
+        "names": ["benzoin resin", "gum benzoin"],
+        "odor_description": "Sweet, warm, vanilla-balsamic with almond and slightly powdery notes",
+        "odor_type": "Balsamic / Vanilla", "odor_strength": "Medium",
+        "note_classification": "Base",
+        "tenacity": "High", "tenacity_hours": "~100 hours",
+        "ifra_guidelines": "No restriction for Siam benzoin; Sumatra may have limits",
+        "usage_levels": "2–10 % in fragrance concentrate",
+        "blends_well_with": ["Vanilla", "Styrax", "Peru Balsam", "Coumarin", "Sandalwood", "Rose"],
+        "fema_number": "",
+    },
+    "68916-96-1": {
+        "names": ["galbanum", "galbanum oil", "galbanum resin"],
+        "odor_description": "Intensely green, sharp, leafy with earthy, balsamic and slightly musky facets",
+        "odor_type": "Green / Herbal", "odor_strength": "High",
+        "note_classification": "Top",
+        "tenacity": "Moderate", "tenacity_hours": "~12 hours",
+        "ifra_guidelines": "No restriction",
+        "usage_levels": "0.5–5 % in fragrance concentrate",
+        "blends_well_with": ["Violet Leaf", "Hyacinth", "Rose", "Narcissus", "Frankincense", "Oakmoss"],
+        "fema_number": "",
+    },
 }
-
 _NAME_TO_CAS = {}
 for _cas, _entry in PERFUMERY_DB.items():
     for _n in _entry["names"]:
@@ -1256,15 +1432,16 @@ def scrape_material(name, session=None):
         if pdb:
             mat.perfumery_matched = True
             mat.match_info = f"✅ CAS match ({resolved_name}) — natural mixture"
-            if pdb.get("odor"): mat.odor_description = pdb["odor"]
+            if pdb.get("odor_description"): mat.odor_description = pdb["odor_description"]
             if pdb.get("odor_type"): mat.odor_type = pdb["odor_type"]
-            if pdb.get("strength"): mat.odor_strength = pdb["strength"]
-            if pdb.get("note"): mat.note_classification = pdb["note"]
+            if pdb.get("odor_strength"): mat.odor_strength = pdb["odor_strength"]
+            if pdb.get("note_classification"): mat.note_classification = pdb["note_classification"]
             if pdb.get("tenacity"): mat.tenacity = pdb["tenacity"]
             if pdb.get("tenacity_hours"): mat.tenacity_hours = pdb["tenacity_hours"]
-            if pdb.get("ifra"): mat.ifra_guidelines = pdb["ifra"]
-            if pdb.get("usage"): mat.usage_levels = pdb["usage"]
-            if pdb.get("blends"): mat.blends_well_with = pdb["blends"]
+            if pdb.get("ifra_guidelines"): mat.ifra_guidelines = pdb["ifra_guidelines"]
+            if pdb.get("usage_levels"): mat.usage_levels = pdb["usage_levels"]
+            if pdb.get("blends_well_with"): mat.blends_well_with = pdb["blends_well_with"]
+            if pdb.get("fema_number"): mat.fema_number = pdb["fema_number"]
         return mat
 
     if cid is None:
