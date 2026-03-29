@@ -310,9 +310,11 @@ if st.session_state.results:
             st.session_state.searched = set()
             st.session_state.done = False
             st.session_state.query = ""
-            st.session_state.kv += 1  # force keyup re-init with empty
+            st.session_state.kv += 1
+            st.session_state.pop("export_cache_key", None)
             st.rerun()
 
+    last_idx = len(st.session_state.results) - 1
     for idx, mat in enumerate(st.session_state.results):
         if not mat.found:
             ex_col, btn_col = st.columns([20, 1], gap="small")
@@ -323,8 +325,8 @@ if st.session_state.results:
                 if st.button("✕", key=f"del_{idx}"):
                     st.session_state.searched.discard(mat.name.lower())
                     st.session_state.results.pop(idx)
+                    st.session_state.pop("export_cache_key", None)
                     st.session_state.done = False
-                    # Sync searched with remaining results
                     st.session_state.searched = {r.name.lower() for r in st.session_state.results}
                     st.rerun()
             continue
@@ -334,12 +336,14 @@ if st.session_state.results:
             if st.button("✕", key=f"del_{idx}"):
                 st.session_state.searched.discard(mat.name.lower())
                 st.session_state.results.pop(idx)
+                st.session_state.pop("export_cache_key", None)
                 st.session_state.done = False
-                # Sync searched with remaining results
                 st.session_state.searched = {r.name.lower() for r in st.session_state.results}
                 st.rerun()
         with ex_col:
-            with st.expander(mat.name, expanded=True):
+            # Only expand the latest result — older ones collapsed for speed
+            is_expanded = (idx == last_idx)
+            with st.expander(mat.name, expanded=is_expanded):
                 if mat.match_info:
                     st.caption(mat.match_info)
 
@@ -349,14 +353,19 @@ if st.session_state.results:
                         try: st.image(mat.structure_image_url, use_container_width=True)
                         except Exception: pass
                 with tc:
-                    st.markdown(f"**{mat.name}**")
+                    # Combine identifiers into fewer markdown calls
+                    id_parts = [f"**{mat.name}**"]
                     if mat.page_url:
-                        st.caption(f"[PubChem ↗]({mat.page_url})")
+                        id_parts.append(f"[PubChem ↗]({mat.page_url})")
+                    st.markdown("  \n".join(id_parts))
+                    id_labels = []
                     for lab, val in [("CAS", mat.cas_number), ("FEMA", mat.fema_number),
                         ("IUPAC", mat.iupac_name), ("Formula", mat.molecular_formula),
                         ("MW", mat.molecular_weight), ("SMILES", mat.smiles)]:
                         if val:
-                            st.markdown(f"`{lab}` {val}")
+                            id_labels.append(f"`{lab}` {val}")
+                    if id_labels:
+                        st.markdown("  \n".join(id_labels))
                     if mat.synonyms:
                         st.caption(", ".join(mat.synonyms[:6]))
 
@@ -373,9 +382,11 @@ if st.session_state.results:
                     st.markdown('<p class="sm">Note</p>', unsafe_allow_html=True)
                     if mat.note_classification:
                         nl = mat.note_classification.lower()
-                        if "top" in nl: st.markdown('<span class="n-badge n-top">Top</span>', unsafe_allow_html=True)
-                        if "middle" in nl or "heart" in nl: st.markdown('<span class="n-badge n-mid">Heart</span>', unsafe_allow_html=True)
-                        if "base" in nl: st.markdown('<span class="n-badge n-base">Base</span>', unsafe_allow_html=True)
+                        badges = []
+                        if "top" in nl: badges.append('<span class="n-badge n-top">Top</span>')
+                        if "middle" in nl or "heart" in nl: badges.append('<span class="n-badge n-mid">Heart</span>')
+                        if "base" in nl: badges.append('<span class="n-badge n-base">Base</span>')
+                        st.markdown(" ".join(badges), unsafe_allow_html=True)
                     else: st.caption("—")
                 with c:
                     st.markdown('<p class="sm">Performance</p>', unsafe_allow_html=True)
@@ -397,33 +408,45 @@ if st.session_state.results:
 
                 if mat.pubchem_sections:
                     st.markdown("---")
-                    st.markdown('<p class="sm">PubChem data</p>', unsafe_allow_html=True)
-                    grouped = {}
-                    for heading, items in mat.pubchem_sections.items():
-                        top = heading.split(" > ")[0] if " > " in heading else heading
-                        if top not in grouped: grouped[top] = []
-                        grouped[top].append((heading, items))
-                    for top_heading, sub_list in grouped.items():
-                        with st.expander(top_heading, expanded=False):
+                    with st.expander("📋 Complete PubChem Data", expanded=False):
+                        grouped = {}
+                        for heading, items in mat.pubchem_sections.items():
+                            top = heading.split(" > ")[0] if " > " in heading else heading
+                            if top not in grouped: grouped[top] = []
+                            grouped[top].append((heading, items))
+                        for top_heading, sub_list in grouped.items():
+                            st.markdown(f"**{top_heading}**")
                             for heading, items in sub_list:
                                 display = heading.split(" > ")[-1] if " > " in heading else heading
-                                if display != top_heading: st.markdown(f"**{display}**")
-                                for item in items:
+                                if display != top_heading:
+                                    st.markdown(f"*{display}*")
+                                # Batch items into single markdown call
+                                lines = []
+                                for item in items[:30]:  # limit items per section
                                     if item.startswith("http"): continue
                                     clean = re.sub(r'https?://\S+', '', item).strip()
                                     if not clean or len(clean) < 3: continue
-                                    if len(clean) > 500: clean = clean[:500] + "…"
-                                    st.markdown(f"- {clean}")
+                                    if len(clean) > 300: clean = clean[:300] + "…"
+                                    lines.append(f"- {clean}")
+                                if lines:
+                                    st.markdown("\n".join(lines))
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Export
+#  Export (cached — only regenerate when results change)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if st.session_state.results and st.session_state.done:
     st.markdown("---")
+    # Cache key: tuple of (name, cas) for each result
+    cache_key = tuple((r.name, r.cas_number) for r in st.session_state.results)
+    if "export_cache_key" not in st.session_state or st.session_state.export_cache_key != cache_key:
+        st.session_state.export_pdf = generate_human_report(st.session_state.results)
+        st.session_state.export_json = generate_ai_report(st.session_state.results)
+        st.session_state.export_cache_key = cache_key
+
     d1, d2 = st.columns(2)
     with d1:
-        st.download_button("Download.PDF", data=generate_human_report(st.session_state.results),
+        st.download_button("Download.PDF", data=st.session_state.export_pdf,
             file_name="perfume_report.pdf", mime="application/pdf", use_container_width=True)
     with d2:
-        st.download_button("Download.JSON", data=generate_ai_report(st.session_state.results),
+        st.download_button("Download.JSON", data=st.session_state.export_json,
             file_name="perfume_report_ai.json", mime="application/json", use_container_width=True)
