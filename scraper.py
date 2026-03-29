@@ -1389,13 +1389,14 @@ def _smart_search_cid(session, name):
     if trade_cas:
         logger.info("  → Trade name match → CAS %s", trade_cas)
         is_mixture_cas = bool(re.match(r"^8\d{3}-\d{2}-\d$", trade_cas) or re.match(r"^9\d{3}-\d{2}-\d$", trade_cas))
+        # Mixture CAS → IMMEDIATELY return MIXTURE (don't even try _get_cid — PubChem returns wrong compounds)
+        if is_mixture_cas:
+            logger.info("  → Mixture CAS %s → MIXTURE marker (skip PubChem)", trade_cas)
+            return "MIXTURE", trade_cas
+        # Single compound CAS → try PubChem
         cid = _get_cid(session, trade_cas)
         if cid:
             return cid, trade_cas
-        # Mixture CAS → go straight to MIXTURE marker (don't try SID→CID, it returns wrong compounds)
-        if is_mixture_cas:
-            logger.info("  → Mixture CAS %s → MIXTURE marker", trade_cas)
-            return "MIXTURE", trade_cas
         # Non-mixture CAS: try SID→CID as fallback
         sid_cid, sid = _get_cid_via_substance(session, trade_cas)
         if sid_cid:
