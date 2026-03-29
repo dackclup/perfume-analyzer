@@ -146,23 +146,43 @@ for _name in _ALL_NAMES:
 _suggestion_cache = {}
 
 def _get_suggestions(typed):
-    ql = typed.lower().strip()
+    ql = re.sub(r'\s+', ' ', typed.lower().strip())  # normalize all whitespace
     if len(ql) < 1:
         return []
     if ql in _suggestion_cache:
         return _suggestion_cache[ql]
     seen_cas = set()
     results = []
-    # For single char, only prefix match (fast)
-    for name, cas in _PREFIX_INDEX.get(ql, []):
+
+    # 1. Exact prefix match — prefer names LONGER than query (more useful as suggestion)
+    candidates = _PREFIX_INDEX.get(ql, [])
+    # Sort: longer names first (so "iso e super" beats "iso e")
+    candidates_sorted = sorted(candidates, key=lambda x: -len(x[0]))
+    for name, cas in candidates_sorted:
         if cas and cas in seen_cas:
             continue
         results.append(name.title())
         if cas: seen_cas.add(cas)
         if len(results) >= 4:
             break
+
+    # 2. If no results AND query has space → try prefix before last space
+    if not results and ' ' in ql:
+        shorter = ql.rsplit(' ', 1)[0]
+        longer_first = sorted(_PREFIX_INDEX.get(shorter, []), key=lambda x: -len(x[0]))
+        for name, cas in longer_first:
+            if name.startswith(ql) or ql in name:
+                if cas and cas in seen_cas:
+                    continue
+                results.append(name.title())
+                if cas: seen_cas.add(cas)
+                if len(results) >= 4:
+                    break
+
+    # 3. Substring fallback
     if len(results) < 4 and len(ql) >= 2:
-        for name, cas in _PREFIX_INDEX.get(ql[:2], []):
+        first2 = ql[:2]
+        for name, cas in _PREFIX_INDEX.get(first2, []):
             if ql in name and name.title() not in results:
                 if cas and cas in seen_cas:
                     continue
@@ -170,6 +190,7 @@ def _get_suggestions(typed):
                 if cas: seen_cas.add(cas)
                 if len(results) >= 4:
                     break
+
     _suggestion_cache[ql] = results[:4]
     return results[:4]
 
@@ -212,6 +233,7 @@ typed = st_keyup("Search", placeholder="e.g. linalool, hedione, iso e super",
                  key=f"keyup_{st.session_state.kv}") or ""
 
 # Pills — update in real-time as user types (from 1st character)
+pill_search = None
 if len(typed.strip()) >= 1:
     suggestions = _get_suggestions(typed)
     suggestions = [s for s in suggestions if s.lower() != typed.strip().lower()]
@@ -219,9 +241,8 @@ if len(typed.strip()) >= 1:
         sel = st.pills("suggestions", suggestions, label_visibility="collapsed",
                        key=f"pills_{st.session_state.pv}", default=None)
         if sel:
-            st.session_state._pill_search = sel
+            pill_search = sel
             st.session_state.pv += 1
-            st.rerun()
 
 # Search button
 search_clicked = st.button("Search", type="primary",
@@ -230,9 +251,9 @@ search_clicked = st.button("Search", type="primary",
 st.markdown("---")
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Search execution
+#  Search execution — pill click OR Search button (same page cycle)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-search_term = st.session_state.pop("_pill_search", None) or (typed.strip() if search_clicked else None)
+search_term = pill_search or (typed.strip() if search_clicked else None)
 
 if search_term:
     names = [n.strip() for n in search_term.split(",") if n.strip()]
