@@ -272,7 +272,16 @@ st.markdown("---")
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if search_clicked and typed:
     names = [n.strip() for n in typed.split(",") if n.strip()]
-    new_names = [n for n in names if n.lower() not in st.session_state.searched]
+    # Allow re-search if term was searched before but result was deleted
+    existing_names = {r.name.lower() for r in st.session_state.results}
+    # Deduplicate within batch too
+    seen_in_batch = set()
+    new_names = []
+    for n in names:
+        nl = n.lower()
+        if nl not in existing_names and nl not in seen_in_batch:
+            new_names.append(n)
+            seen_in_batch.add(nl)
 
     if new_names:
         session = make_session()
@@ -299,6 +308,8 @@ if search_clicked and typed:
             if r.cas_number:
                 seen_cas[r.cas_number] = len(deduped) - 1
         st.session_state.results = deduped
+        # Sync searched set with actual results
+        st.session_state.searched = {r.name.lower() for r in deduped}
         bar.progress(1.0, text="Done")
     st.session_state.done = True
 
@@ -316,6 +327,8 @@ if st.session_state.results:
             st.session_state.results = []
             st.session_state.searched = set()
             st.session_state.done = False
+            st.session_state.query = ""
+            st.session_state.kv += 1  # force keyup re-init with empty
             st.rerun()
 
     for idx, mat in enumerate(st.session_state.results):
@@ -328,6 +341,9 @@ if st.session_state.results:
                 if st.button("✕", key=f"del_{idx}"):
                     st.session_state.searched.discard(mat.name.lower())
                     st.session_state.results.pop(idx)
+                    st.session_state.done = False
+                    # Sync searched with remaining results
+                    st.session_state.searched = {r.name.lower() for r in st.session_state.results}
                     st.rerun()
             continue
 
@@ -336,6 +352,9 @@ if st.session_state.results:
             if st.button("✕", key=f"del_{idx}"):
                 st.session_state.searched.discard(mat.name.lower())
                 st.session_state.results.pop(idx)
+                st.session_state.done = False
+                # Sync searched with remaining results
+                st.session_state.searched = {r.name.lower() for r in st.session_state.results}
                 st.rerun()
         with ex_col:
          with st.expander(mat.name, expanded=True):
