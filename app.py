@@ -229,9 +229,10 @@ def _get_suggestions(typed):
                 if len(results) >= 10:
                     break
 
-    # 4. Substring fallback (local DB)
+    # 4. Substring fallback (local DB) — try [:2] then [:1]
     if len(results) < 10 and len(ql_stripped) >= 2:
-        for name, cas in _PREFIX_INDEX.get(ql_stripped[:2], []):
+        bucket = _PREFIX_INDEX.get(ql_stripped[:2], []) or _PREFIX_INDEX.get(ql_stripped[:1], [])
+        for name, cas in bucket:
             if ql_stripped in name and name.title() not in results:
                 if cas and cas in seen_cas:
                     continue
@@ -240,9 +241,8 @@ def _get_suggestions(typed):
                 if len(results) >= 10:
                     break
 
-    # 5. PubChem autocomplete fallback — for names not in local DB
-    #    Only when 2+ chars AND local results < 3
-    if len(results) < 3 and len(ql_stripped) >= 2:
+    # 5. PubChem autocomplete — always supplement when room available
+    if len(results) < 10 and len(ql_stripped) >= 2:
         pc_names = _pubchem_autocomplete(ql_stripped)
         # Also try without dots (e.g. "c.i. solvent" → "ci solvent")
         if not pc_names and '.' in ql_stripped:
