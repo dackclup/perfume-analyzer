@@ -270,7 +270,7 @@ def search_fragment():
     # Search button — triggers full page rerun to fetch data
     if st.button("Search", type="primary", disabled=len(typed) == 0, use_container_width=True):
         st.session_state._trigger_search = True
-        st.rerun(scope="full")
+        st.rerun(scope="app")
 
 with search_container:
     search_fragment()
