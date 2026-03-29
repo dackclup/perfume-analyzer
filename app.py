@@ -241,8 +241,8 @@ def _get_suggestions(typed):
                     break
 
     # 5. PubChem autocomplete fallback — for names not in local DB
-    #    Only when 3+ alpha chars AND local results < 3
-    if len(results) < 3 and len(ql_stripped) >= 3:
+    #    Only when 2+ chars AND local results < 3
+    if len(results) < 3 and len(ql_stripped) >= 2:
         pc_names = _pubchem_autocomplete(ql_stripped)
         # Also try without dots (e.g. "c.i. solvent" → "ci solvent")
         if not pc_names and '.' in ql_stripped:
