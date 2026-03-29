@@ -18,7 +18,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, HRFlowable, Image,
+    PageBreak, HRFlowable, Image, KeepTogether,
 )
 
 logger = logging.getLogger(__name__)
@@ -180,33 +180,40 @@ def _build_material(mat):
 
     # Odor
     if any([mat.odor_description, mat.odor_type, mat.odor_strength]):
-        els.append(Paragraph("Odor Profile", _S["SecH"]))
+        group = [Paragraph("Odor Profile", _S["SecH"])]
         t = _prop_table([("Description", mat.odor_description),
             ("Type", mat.odor_type), ("Strength", mat.odor_strength)])
-        if t: els.append(t)
+        if t: group.append(t)
+        els.append(KeepTogether(group))
 
     # Note
     if mat.note_classification:
-        els.append(Paragraph("Note Classification", _S["SecH"]))
-        els.append(_note_badges(mat.note_classification))
+        els.append(KeepTogether([
+            Paragraph("Note Classification", _S["SecH"]),
+            _note_badges(mat.note_classification),
+        ]))
 
     # Performance
     if mat.tenacity or mat.tenacity_hours:
-        els.append(Paragraph("Performance", _S["SecH"]))
+        group = [Paragraph("Performance", _S["SecH"])]
         t = _prop_table([("Tenacity", mat.tenacity), ("Duration", mat.tenacity_hours)])
-        if t: els.append(t)
+        if t: group.append(t)
+        els.append(KeepTogether(group))
 
     # Safety
     if mat.ifra_guidelines or mat.usage_levels:
-        els.append(Paragraph("Safety & Formulation", _S["SecH"]))
+        group = [Paragraph("Safety & Formulation", _S["SecH"])]
         t = _prop_table([("IFRA Guidelines", mat.ifra_guidelines),
                          ("Usage Levels", mat.usage_levels)])
-        if t: els.append(t)
+        if t: group.append(t)
+        els.append(KeepTogether(group))
 
     # Blending
     if mat.blends_well_with:
-        els.append(Paragraph("Blending Suggestions", _S["SecH"]))
-        els.append(Paragraph(f'<b>Blends well with:</b> {", ".join(mat.blends_well_with)}', _S["Body9"]))
+        els.append(KeepTogether([
+            Paragraph("Blending Suggestions", _S["SecH"]),
+            Paragraph(f'<b>Blends well with:</b> {", ".join(mat.blends_well_with)}', _S["Body9"]),
+        ]))
 
     els.append(_hr())
 
@@ -219,10 +226,12 @@ def _build_material(mat):
             display_heading = heading.split(" > ")[-1] if " > " in heading else heading
             parent = heading.split(" > ")[0] if " > " in heading else ""
 
+            # Build heading + items as a group
+            group = []
             if parent:
-                els.append(Paragraph(f"{parent} &gt; {display_heading}", _S["SubSecH"]))
+                group.append(Paragraph(f"{parent} &gt; {display_heading}", _S["SubSecH"]))
             else:
-                els.append(Paragraph(display_heading, _S["SubSecH"]))
+                group.append(Paragraph(display_heading, _S["SubSecH"]))
 
             for item in items:
                 if item.startswith("http"):
@@ -231,8 +240,17 @@ def _build_material(mat):
                 if not clean or len(clean) < 3:
                     continue
                 text = clean if len(clean) <= 400 else clean[:400] + "…"
-                els.append(Paragraph(text, _S["Body9"]))
-            els.append(Spacer(1, 2*mm))
+                group.append(Paragraph(text, _S["Body9"]))
+
+            group.append(Spacer(1, 2*mm))
+
+            # Keep heading + first few items together (max ~6 items to avoid overflow)
+            if len(group) <= 8:
+                els.append(KeepTogether(group))
+            else:
+                # Keep heading + first 3 items together, rest flows normally
+                els.append(KeepTogether(group[:4]))
+                els.extend(group[4:])
 
     return els
 
