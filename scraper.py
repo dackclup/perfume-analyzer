@@ -1388,19 +1388,20 @@ def _smart_search_cid(session, name):
     trade_cas = _fuzzy_match_tradenames(original)
     if trade_cas:
         logger.info("  → Trade name match → CAS %s", trade_cas)
+        is_mixture_cas = bool(re.match(r"^8\d{3}-\d{2}-\d$", trade_cas) or re.match(r"^9\d{3}-\d{2}-\d$", trade_cas))
         cid = _get_cid(session, trade_cas)
         if cid:
             return cid, trade_cas
-        # CAS not found in PubChem CID — try Substance DB (SID→CID)
+        # Mixture CAS → go straight to MIXTURE marker (don't try SID→CID, it returns wrong compounds)
+        if is_mixture_cas:
+            logger.info("  → Mixture CAS %s → MIXTURE marker", trade_cas)
+            return "MIXTURE", trade_cas
+        # Non-mixture CAS: try SID→CID as fallback
         sid_cid, sid = _get_cid_via_substance(session, trade_cas)
         if sid_cid:
             logger.info("  → Trade CAS %s found via SID %s → CID %s", trade_cas, sid, sid_cid)
             return sid_cid, trade_cas
-        # Still not found — check if it's a known mixture CAS (8xxx or 9xxx)
-        if re.match(r"^8\d{3}-\d{2}-\d$", trade_cas) or re.match(r"^9\d{3}-\d{2}-\d$", trade_cas):
-            logger.info("  → Mixture CAS %s not in PubChem (natural product)", trade_cas)
-            return "MIXTURE", trade_cas
-        # Single compound CAS but PubChem failed — continue to other strategies
+        # Still not found — continue to other strategies
         logger.info("  → CAS %s not found, trying other strategies", trade_cas)
 
     # ── Strategy 5: Exact name on PubChem Compound DB ──
