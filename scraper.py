@@ -7,7 +7,6 @@ Walks the entire JSON tree and organizes by section heading.
 
 import re
 import logging
-from typing import Optional
 from dataclasses import dataclass, field
 from collections import OrderedDict
 

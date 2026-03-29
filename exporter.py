@@ -7,8 +7,7 @@ import re
 import json
 import logging
 from datetime import datetime
-from collections import OrderedDict
-from scraper import MaterialData
+from scraper import MaterialData  # type reference for mat objects
 
 import requests
 from reportlab.lib.pagesizes import A4
