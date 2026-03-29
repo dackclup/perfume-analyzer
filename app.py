@@ -341,7 +341,7 @@ if search_term:
             bar.progress(idx / len(new_names), text=nm)
             st.session_state.searched.add(nm.lower())
             result = scrape_material(nm, session)
-            st.session_state.results.append(result)
+            st.session_state.results.insert(0, result)  # newest on top
         bar.progress(1.0, text="Done")
         # Deduplicate by CAS — O(n)
         seen_cas = {}
@@ -351,7 +351,7 @@ if search_term:
         remove = set()
         for cas, indices in seen_cas.items():
             if len(indices) > 1:
-                remove.update(indices[:-1])
+                remove.update(indices[1:])  # keep first (newest at top)
         if remove:
             st.session_state.results = [r for i, r in enumerate(st.session_state.results) if i not in remove]
         st.session_state.searched = {r.name.lower() for r in st.session_state.results}
