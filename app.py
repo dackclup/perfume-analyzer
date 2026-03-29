@@ -5,7 +5,6 @@ app.py  v11.0 — Real-time pills (st_keyup) + Search button
 
 import re
 import streamlit as st
-import requests as req
 from st_keyup import st_keyup
 from scraper import scrape_material, make_session, TRADE_NAMES, _NAME_TO_CAS
 from exporter import generate_human_report, generate_ai_report
@@ -131,10 +130,8 @@ div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !importan
     div[data-testid="stDownloadButton"] button:hover {
         background: #6B8FC5 !important; border-color: #6B8FC5 !important;
     }
-    button[data-testid="stDownloadButton"] button:hover {
-        background: #3D5A80 !important; border-color: #3D5A80 !important;
-    }
-    button[data-testid="stDownloadButton"] button:hover p { color: #F0F0F5 !important; }
+    button[data-testid="stDownloadButton"] button:hover p,
+    div[data-testid="stDownloadButton"] button:hover p { color: #FFFFFF !important; }
     section[data-testid="stSidebar"] { border-right-color: #3D5A80; }
     div[data-testid="stPills"] button {
         border-color: #3D5A80 !important; background: #1a2332 !important;
@@ -155,18 +152,6 @@ div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !importan
 _ALL_NAMES = sorted(set(
     list(TRADE_NAMES.keys()) + list(_NAME_TO_CAS.keys())
 ), key=len)
-
-
-@st.cache_data(ttl=600)
-def _pubchem_autocomplete(query):
-    try:
-        url = f"https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/{req.utils.quote(query)}/JSON?limit=5"
-        r = req.get(url, timeout=3)
-        if r.status_code == 200:
-            return r.json().get("dictionary_terms", {}).get("compound", [])
-    except Exception:
-        pass
-    return []
 
 
 def _get_suggestions(typed):
@@ -292,25 +277,19 @@ if search_clicked and typed:
             result = scrape_material(nm, session)
             st.session_state.results.append(result)
         bar.progress(1.0, text="Done")
-        # Deduplicate by CAS — keep LAST occurrence (newest search)
+        # Deduplicate by CAS — keep LAST occurrence (newest search) — O(n)
         seen_cas = {}
-        deduped = []
-        for r in st.session_state.results:
-            if r.cas_number and r.cas_number in seen_cas:
-                # Remove previous entry with same CAS
-                deduped = [x for i, x in enumerate(deduped) if i != seen_cas[r.cas_number]]
-                # Rebuild index
-                seen_cas = {}
-                for i, x in enumerate(deduped):
-                    if x.cas_number:
-                        seen_cas[x.cas_number] = i
-            deduped.append(r)
+        for i, r in enumerate(st.session_state.results):
             if r.cas_number:
-                seen_cas[r.cas_number] = len(deduped) - 1
-        st.session_state.results = deduped
+                seen_cas.setdefault(r.cas_number, []).append(i)
+        remove = set()
+        for cas, indices in seen_cas.items():
+            if len(indices) > 1:
+                remove.update(indices[:-1])  # keep last only
+        if remove:
+            st.session_state.results = [r for i, r in enumerate(st.session_state.results) if i not in remove]
         # Sync searched set with actual results
-        st.session_state.searched = {r.name.lower() for r in deduped}
-        bar.progress(1.0, text="Done")
+        st.session_state.searched = {r.name.lower() for r in st.session_state.results}
     st.session_state.done = True
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -357,81 +336,81 @@ if st.session_state.results:
                 st.session_state.searched = {r.name.lower() for r in st.session_state.results}
                 st.rerun()
         with ex_col:
-         with st.expander(mat.name, expanded=True):
-            if mat.match_info:
-                st.caption(mat.match_info)
+            with st.expander(mat.name, expanded=True):
+                if mat.match_info:
+                    st.caption(mat.match_info)
 
-            ic, tc = st.columns([1, 3])
-            with ic:
-                if mat.structure_image_url:
-                    try: st.image(mat.structure_image_url, use_container_width=True)
-                    except: pass
-            with tc:
-                st.markdown(f"**{mat.name}**")
-                if mat.page_url:
-                    st.caption(f"[PubChem ↗]({mat.page_url})")
-                for lab, val in [("CAS", mat.cas_number), ("FEMA", mat.fema_number),
-                    ("IUPAC", mat.iupac_name), ("Formula", mat.molecular_formula),
-                    ("MW", mat.molecular_weight), ("SMILES", mat.smiles)]:
-                    if val:
-                        st.markdown(f"`{lab}` {val}")
-                if mat.synonyms:
-                    st.caption(", ".join(mat.synonyms[:6]))
+                ic, tc = st.columns([1, 3])
+                with ic:
+                    if mat.structure_image_url:
+                        try: st.image(mat.structure_image_url, use_container_width=True)
+                        except Exception: pass
+                with tc:
+                    st.markdown(f"**{mat.name}**")
+                    if mat.page_url:
+                        st.caption(f"[PubChem ↗]({mat.page_url})")
+                    for lab, val in [("CAS", mat.cas_number), ("FEMA", mat.fema_number),
+                        ("IUPAC", mat.iupac_name), ("Formula", mat.molecular_formula),
+                        ("MW", mat.molecular_weight), ("SMILES", mat.smiles)]:
+                        if val:
+                            st.markdown(f"`{lab}` {val}")
+                    if mat.synonyms:
+                        st.caption(", ".join(mat.synonyms[:6]))
 
-            st.markdown("---")
-
-            a, b, c = st.columns(3)
-            with a:
-                st.markdown('<p class="sm">Odor</p>', unsafe_allow_html=True)
-                if mat.odor_description: st.markdown(f"_{mat.odor_description}_")
-                if mat.odor_type: st.markdown(mat.odor_type)
-                if mat.odor_strength: st.caption(mat.odor_strength)
-                if not any([mat.odor_description, mat.odor_type]): st.caption("—")
-            with b:
-                st.markdown('<p class="sm">Note</p>', unsafe_allow_html=True)
-                if mat.note_classification:
-                    nl = mat.note_classification.lower()
-                    if "top" in nl: st.markdown('<span class="n-badge n-top">Top</span>', unsafe_allow_html=True)
-                    if "middle" in nl or "heart" in nl: st.markdown('<span class="n-badge n-mid">Heart</span>', unsafe_allow_html=True)
-                    if "base" in nl: st.markdown('<span class="n-badge n-base">Base</span>', unsafe_allow_html=True)
-                else: st.caption("—")
-            with c:
-                st.markdown('<p class="sm">Performance</p>', unsafe_allow_html=True)
-                if mat.tenacity: st.markdown(mat.tenacity)
-                if mat.tenacity_hours: st.caption(mat.tenacity_hours)
-                if not mat.tenacity: st.caption("—")
-
-            if any([mat.ifra_guidelines, mat.usage_levels, mat.blends_well_with]):
                 st.markdown("---")
-                s1, s2 = st.columns(2)
-                with s1:
-                    st.markdown('<p class="sm">Safety</p>', unsafe_allow_html=True)
-                    if mat.ifra_guidelines: st.markdown(mat.ifra_guidelines)
-                    if mat.usage_levels: st.caption(mat.usage_levels)
-                with s2:
-                    st.markdown('<p class="sm">Blends with</p>', unsafe_allow_html=True)
-                    if mat.blends_well_with:
-                        st.markdown(", ".join(mat.blends_well_with[:10]))
 
-            if mat.pubchem_sections:
-                st.markdown("---")
-                st.markdown('<p class="sm">PubChem data</p>', unsafe_allow_html=True)
-                grouped = {}
-                for heading, items in mat.pubchem_sections.items():
-                    top = heading.split(" > ")[0] if " > " in heading else heading
-                    if top not in grouped: grouped[top] = []
-                    grouped[top].append((heading, items))
-                for top_heading, sub_list in grouped.items():
-                    with st.expander(top_heading, expanded=False):
-                        for heading, items in sub_list:
-                            display = heading.split(" > ")[-1] if " > " in heading else heading
-                            if display != top_heading: st.markdown(f"**{display}**")
-                            for item in items:
-                                if item.startswith("http"): continue
-                                clean = re.sub(r'https?://\S+', '', item).strip()
-                                if not clean or len(clean) < 3: continue
-                                if len(clean) > 500: clean = clean[:500] + "…"
-                                st.markdown(f"- {clean}")
+                a, b, c = st.columns(3)
+                with a:
+                    st.markdown('<p class="sm">Odor</p>', unsafe_allow_html=True)
+                    if mat.odor_description: st.markdown(f"_{mat.odor_description}_")
+                    if mat.odor_type: st.markdown(mat.odor_type)
+                    if mat.odor_strength: st.caption(mat.odor_strength)
+                    if not any([mat.odor_description, mat.odor_type]): st.caption("—")
+                with b:
+                    st.markdown('<p class="sm">Note</p>', unsafe_allow_html=True)
+                    if mat.note_classification:
+                        nl = mat.note_classification.lower()
+                        if "top" in nl: st.markdown('<span class="n-badge n-top">Top</span>', unsafe_allow_html=True)
+                        if "middle" in nl or "heart" in nl: st.markdown('<span class="n-badge n-mid">Heart</span>', unsafe_allow_html=True)
+                        if "base" in nl: st.markdown('<span class="n-badge n-base">Base</span>', unsafe_allow_html=True)
+                    else: st.caption("—")
+                with c:
+                    st.markdown('<p class="sm">Performance</p>', unsafe_allow_html=True)
+                    if mat.tenacity: st.markdown(mat.tenacity)
+                    if mat.tenacity_hours: st.caption(mat.tenacity_hours)
+                    if not mat.tenacity: st.caption("—")
+
+                if any([mat.ifra_guidelines, mat.usage_levels, mat.blends_well_with]):
+                    st.markdown("---")
+                    s1, s2 = st.columns(2)
+                    with s1:
+                        st.markdown('<p class="sm">Safety</p>', unsafe_allow_html=True)
+                        if mat.ifra_guidelines: st.markdown(mat.ifra_guidelines)
+                        if mat.usage_levels: st.caption(mat.usage_levels)
+                    with s2:
+                        st.markdown('<p class="sm">Blends with</p>', unsafe_allow_html=True)
+                        if mat.blends_well_with:
+                            st.markdown(", ".join(mat.blends_well_with[:10]))
+
+                if mat.pubchem_sections:
+                    st.markdown("---")
+                    st.markdown('<p class="sm">PubChem data</p>', unsafe_allow_html=True)
+                    grouped = {}
+                    for heading, items in mat.pubchem_sections.items():
+                        top = heading.split(" > ")[0] if " > " in heading else heading
+                        if top not in grouped: grouped[top] = []
+                        grouped[top].append((heading, items))
+                    for top_heading, sub_list in grouped.items():
+                        with st.expander(top_heading, expanded=False):
+                            for heading, items in sub_list:
+                                display = heading.split(" > ")[-1] if " > " in heading else heading
+                                if display != top_heading: st.markdown(f"**{display}**")
+                                for item in items:
+                                    if item.startswith("http"): continue
+                                    clean = re.sub(r'https?://\S+', '', item).strip()
+                                    if not clean or len(clean) < 3: continue
+                                    if len(clean) > 500: clean = clean[:500] + "…"
+                                    st.markdown(f"- {clean}")
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Export

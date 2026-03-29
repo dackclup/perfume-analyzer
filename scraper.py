@@ -1272,29 +1272,24 @@ def _fuzzy_match_tradenames(name):
         if variant in TRADE_NAMES:
             return TRADE_NAMES[variant]
 
-    # 3. Substring match: "iso e" should find "iso e super"
-    #    But "patchouli" should NOT match "patchouli ethanone" (= Iso E Super)
-    #    Rule: query must match start of trade name, or be a distinct word prefix
+    # 3+4 combined: prefix match + fuzzy similarity in single pass
     if len(n) >= 4:
-        for trade_name, cas in TRADE_NAMES.items():
-            # Query is start of trade name: "iso e" → "iso e super" ✅
-            if trade_name.startswith(n + " ") or trade_name.startswith(n + "-"):
-                return cas
-            # Trade name is start of query: "cinnamon oil extra" → "cinnamon oil" ✅
-            if n.startswith(trade_name + " ") or n.startswith(trade_name + "-"):
-                return cas
-
-    # 4. Fuzzy: similarity matching for typos
-    if len(n) >= 5:
         best_score = 0
         best_cas = None
         for trade_name, cas in TRADE_NAMES.items():
-            score = _similarity(n, trade_name)
-            # Require high similarity AND similar length (prevent partial matches)
-            len_ratio = min(len(n), len(trade_name)) / max(len(n), len(trade_name))
-            if score > best_score and score > 0.85 and len_ratio > 0.7:
-                best_score = score
-                best_cas = cas
+            # Prefix match (instant)
+            if trade_name.startswith(n + " ") or trade_name.startswith(n + "-"):
+                return cas
+            if n.startswith(trade_name + " ") or n.startswith(trade_name + "-"):
+                return cas
+            # Fuzzy match (only for len >= 5)
+            if len(n) >= 5:
+                len_ratio = min(len(n), len(trade_name)) / max(len(n), len(trade_name))
+                if len_ratio > 0.7:
+                    score = _similarity(n, trade_name)
+                    if score > best_score and score > 0.85:
+                        best_score = score
+                        best_cas = cas
         if best_cas:
             return best_cas
 
@@ -1566,30 +1561,20 @@ def _verify_cid_matches(session, cid, search_name):
     return False
 
 
-def _get_properties(session, cid):
-    flds = ("MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,"
-            "IUPACName,XLogP,InChI,InChIKey,ExactMass,MonoisotopicMass,"
-            "TPSA,Complexity,Charge,HBondDonorCount,HBondAcceptorCount,"
-            "RotatableBondCount,HeavyAtomCount,IsotopeAtomCount,"
-            "AtomStereoCount,DefinedAtomStereoCount,UndefinedAtomStereoCount,"
-            "BondStereoCount,DefinedBondStereoCount,UndefinedBondStereoCount,"
-            "CovalentUnitCount")
-    url = f"{PUBCHEM_REST}/compound/cid/{cid}/property/{flds}/JSON"
-    data = _safe_get(session, url)
-    if data:
-        rows = data.get("PropertyTable", {}).get("Properties", [])
-        return rows[0] if rows else {}
-    return {}
-
+_synonym_cache = {}  # CID → synonym list
 
 def _get_synonyms(session, cid, limit=25):
+    if cid in _synonym_cache:
+        return _synonym_cache[cid][:limit]
     url = f"{PUBCHEM_REST}/compound/cid/{cid}/synonyms/JSON"
     data = _safe_get(session, url)
+    result = []
     if data:
         info = data.get("InformationList", {}).get("Information", [])
         if info:
-            return info[0].get("Synonym", [])[:limit]
-    return []
+            result = info[0].get("Synonym", [])[:50]  # cache more, return limit
+    _synonym_cache[cid] = result
+    return result[:limit]
 
 
 def _extract_cas(synonyms):
