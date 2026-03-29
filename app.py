@@ -1,11 +1,10 @@
 """
-app.py  v11.0 — Real-time pills (st_keyup) + Search button
+app.py  v12.0 — Native text_input + pills (no iframe, no fragment)
     streamlit run app.py
 """
 
 import re
 import streamlit as st
-from st_keyup import st_keyup
 from scraper import scrape_material, make_session, TRADE_NAMES, _NAME_TO_CAS
 from exporter import generate_human_report, generate_ai_report
 
@@ -15,24 +14,17 @@ st.set_page_config(page_title="Perfume Analyzer", page_icon="⬡", layout="wide"
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap');
-
 *, html, body, [class*="css"] { font-family: 'IBM Plex Sans', sans-serif; color: #1a1a2e; }
 code { font-family: 'IBM Plex Mono', monospace !important; font-size: 0.85em; color: #2C4A6E !important; }
 h1,h2,h3,h4,h5 { font-weight: 600 !important; color: #2C3E5A !important; }
 p, li, span, div { color: #1a1a2e; }
 .block-container { padding-top: 2rem; }
-
 input[type="text"] {
     border-radius: 4px !important; border-color: #C9CCD5 !important;
     background: #F0F0F5 !important; color: #1a1a2e !important;
 }
 input[type="text"]:focus { border-color: #3D5A80 !important; box-shadow: none !important; }
 input[type="text"]::placeholder { color: #8893A6 !important; }
-
-/* keyup input height */
-iframe[title="st_keyup.st_keyup"] { height: 45px !important; }
-
-/* remove button — white ✕ */
 button[kind="secondary"] {
     border: none !important; background: none !important;
     box-shadow: none !important; min-height: 0 !important;
@@ -43,37 +35,28 @@ button[kind="secondary"] p {
     opacity: 0.6; transition: opacity 0.2s;
 }
 button[kind="secondary"]:hover p { opacity: 1; }
-
 button[kind="primary"] {
     background: #3D5A80 !important; border: none !important;
     border-radius: 4px !important; box-shadow: none !important;
 }
 button[kind="primary"] p { color: #F0F0F5 !important; font-weight: 500 !important; }
 button[kind="primary"]:hover { background: #2C4A6E !important; }
-
 div[data-testid="stExpander"] { border: 1px solid #e5e5e5; border-radius: 4px; }
 div[data-testid="stExpander"]:hover { border-color: #7E8EA6; }
-
 .n-badge { display:inline-block; padding:3px 12px; border-radius:3px;
            font-size:0.8em; font-weight:500; margin:2px 4px; }
 .n-top  { background:#fef9c3; color:#854d0e; }
 .n-mid  { background:#dbeafe; color:#1e40af; }
 .n-base { background:#ede9fe; color:#5b21b6; }
-
 .sm { font-size:0.7em; text-transform:uppercase; letter-spacing:0.08em;
       color:#4A5E78; font-weight:600; margin-bottom:2px; }
-
 hr { border-color: #C9CCD5 !important; }
 div[data-testid="stProgress"] > div > div { background: #3D5A80 !important; border-radius: 2px; }
 [data-testid="stCaptionContainer"] p { color: #5A6B82 !important; }
-
 button[data-testid="stDownloadButton"] button,
 div[data-testid="stDownloadButton"] button {
-    background: #3D5A80 !important;
-    border-color: #3D5A80 !important;
-    border-radius: 6px !important;
-    color: #FFFFFF !important;
-    padding: 0.5rem 1rem !important;
+    background: #3D5A80 !important; border-color: #3D5A80 !important;
+    border-radius: 6px !important; color: #FFFFFF !important; padding: 0.5rem 1rem !important;
 }
 button[data-testid="stDownloadButton"] button p,
 div[data-testid="stDownloadButton"] button p { color: #FFFFFF !important; font-weight: 600 !important; }
@@ -83,10 +66,7 @@ div[data-testid="stDownloadButton"] button:hover {
 }
 button[data-testid="stDownloadButton"] button:hover p,
 div[data-testid="stDownloadButton"] button:hover p { color: #FFFFFF !important; }
-
 section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
-
-/* pills */
 div[data-testid="stPills"] { margin-top: -0.5rem; }
 div[data-testid="stPills"] button {
     border: 1px solid #C9CCD5 !important; border-radius: 3px !important;
@@ -99,7 +79,6 @@ div[data-testid="stPills"] button[aria-checked="true"] {
 }
 div[data-testid="stPills"] button:hover p,
 div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !important; }
-
 @media (prefers-color-scheme: dark) {
     *, p, li, span, div { color: #E8ECF0; }
     h1,h2,h3,h4,h5 { color: #E8ECF0 !important; }
@@ -147,73 +126,60 @@ div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !importan
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Autocomplete — prefix index for O(1) lookup
+#  Autocomplete — prefix index (O(1) lookup)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 _ALL_NAMES = sorted(set(
     list(TRADE_NAMES.keys()) + list(_NAME_TO_CAS.keys())
 ), key=len)
 
-# Build prefix index at startup — O(1) lookup instead of O(n) loop
-_PREFIX_INDEX = {}  # prefix → [(name, cas), ...]
+_PREFIX_INDEX = {}
 for _name in _ALL_NAMES:
     _cas = TRADE_NAMES.get(_name, "")
-    for _plen in range(2, min(len(_name) + 1, 12)):  # prefixes length 2-11
+    for _plen in range(2, min(len(_name) + 1, 12)):
         _prefix = _name[:_plen]
         if _prefix not in _PREFIX_INDEX:
             _PREFIX_INDEX[_prefix] = []
         _PREFIX_INDEX[_prefix].append((_name, _cas))
 
-_suggestion_cache = {}  # query → [suggestions]
+_suggestion_cache = {}
 
 def _get_suggestions(typed):
-    """Instant suggestions via prefix index. Dedup by CAS."""
     ql = typed.lower().strip()
     if len(ql) < 2:
         return []
     if ql in _suggestion_cache:
         return _suggestion_cache[ql]
-
     seen_cas = set()
     results = []
-
-    # Prefix match — O(1) dict lookup
-    candidates = _PREFIX_INDEX.get(ql, [])
-    for name, cas in candidates:
+    for name, cas in _PREFIX_INDEX.get(ql, []):
         if cas and cas in seen_cas:
             continue
         results.append(name.title())
         if cas: seen_cas.add(cas)
-        if len(results) >= 3:
+        if len(results) >= 4:
             break
-
-    # Substring match only if few prefix results
-    if len(results) < 3:
+    if len(results) < 4:
         for name, cas in _PREFIX_INDEX.get(ql[:2], []):
             if ql in name and name.title() not in results:
                 if cas and cas in seen_cas:
                     continue
                 results.append(name.title())
                 if cas: seen_cas.add(cas)
-                if len(results) >= 3:
+                if len(results) >= 4:
                     break
-
-    _suggestion_cache[ql] = results[:3]
-    return results[:3]
+    _suggestion_cache[ql] = results[:4]
+    return results[:4]
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  State
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-if "query" not in st.session_state:
-    st.session_state.query = ""
 if "results" not in st.session_state:
     st.session_state.results = []
 if "searched" not in st.session_state:
     st.session_state.searched = set()
 if "done" not in st.session_state:
     st.session_state.done = False
-if "kv" not in st.session_state:
-    st.session_state.kv = 0
 if "pv" not in st.session_state:
     st.session_state.pv = 0
 
@@ -222,72 +188,49 @@ if "pv" not in st.session_state:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with st.sidebar:
     st.markdown("**Perfume Analyzer**")
-    st.caption("v11.0")
+    st.caption("v12.0")
     st.markdown("---")
     st.markdown("Data from **PubChem** (NIH)  \nPerfumery DB (CAS-validated)")
     st.markdown("---")
     st.markdown("Export: PDF · JSON")
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Title + Search (isolated fragment — won't re-render results)
+#  Title + Search
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 st.markdown("## Perfume Raw Materials Analyzer")
 st.caption("PubChem compound data + perfumery knowledge")
 st.markdown("---")
 
-search_container = st.container()
+# Native text_input — no iframe, no debounce delay
+typed = st.text_input("Search", placeholder="e.g. linalool, hedione, iso e super",
+                      label_visibility="collapsed", key="search_input")
 
-# ── Search fragment: keyup + pills run independently from results ──
-@st.fragment
-def search_fragment():
-    keyup_val = st_keyup(
-        "Search",
-        value=st.session_state.query,
-        placeholder="",
-        label_visibility="collapsed",
-        debounce=500,
-        key=f"keyup_{st.session_state.kv}",
-    )
+# Pills — only rendered once per page load, no fragment overhead
+if typed and len(typed.strip()) >= 2:
+    suggestions = _get_suggestions(typed)
+    suggestions = [s for s in suggestions if s.lower() != typed.strip().lower()]
+    if suggestions:
+        sel = st.pills("suggestions", suggestions, label_visibility="collapsed",
+                       key=f"pills_{st.session_state.pv}", default=None)
+        if sel:
+            st.session_state._pill_search = sel
+            st.session_state.pv += 1
+            st.rerun()
 
-    if keyup_val is not None and keyup_val != st.session_state.query:
-        st.session_state.query = keyup_val
-
-    typed = st.session_state.query.strip()
-
-    # Pills suggestions — only with 2+ chars, max 3 pills
-    if len(typed) >= 2:
-        suggestions = _get_suggestions(typed)
-        suggestions = [s for s in suggestions if s.lower() != typed.lower()]
-        if suggestions:
-            sel = st.pills("suggestions", suggestions, label_visibility="collapsed",
-                           key=f"pills_{st.session_state.pv}", default=None)
-            if sel and sel != typed:
-                st.session_state.query = sel
-                st.session_state.kv += 1
-                st.session_state.pv += 1
-                st.rerun()  # fragment-scoped — only re-renders search area, not results
-
-    # Search button — triggers full page rerun to fetch data
-    if st.button("Search", type="primary", disabled=len(typed) == 0, use_container_width=True):
-        st.session_state._trigger_search = True
-        st.rerun(scope="app")
-
-with search_container:
-    search_fragment()
-
+# Search button
+search_clicked = st.button("Search", type="primary",
+                           disabled=len(typed.strip()) == 0,
+                           use_container_width=True)
 st.markdown("---")
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Search
+#  Search execution
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-typed = st.session_state.query.strip()
-search_triggered = st.session_state.pop("_trigger_search", False)
+search_term = st.session_state.pop("_pill_search", None) or (typed.strip() if search_clicked else None)
 
-if search_triggered and typed:
-    names = [n.strip() for n in typed.split(",") if n.strip()]
-    # Allow re-search if term was searched before but result was deleted
+if search_term:
+    names = [n.strip() for n in search_term.split(",") if n.strip()]
     existing_names = {r.name.lower() for r in st.session_state.results}
-    # Deduplicate within batch too
     seen_in_batch = set()
     new_names = []
     for n in names:
@@ -305,7 +248,7 @@ if search_triggered and typed:
             result = scrape_material(nm, session)
             st.session_state.results.append(result)
         bar.progress(1.0, text="Done")
-        # Deduplicate by CAS — keep LAST occurrence (newest search) — O(n)
+        # Deduplicate by CAS — O(n)
         seen_cas = {}
         for i, r in enumerate(st.session_state.results):
             if r.cas_number:
@@ -313,14 +256,11 @@ if search_triggered and typed:
         remove = set()
         for cas, indices in seen_cas.items():
             if len(indices) > 1:
-                remove.update(indices[:-1])  # keep last only
+                remove.update(indices[:-1])
         if remove:
             st.session_state.results = [r for i, r in enumerate(st.session_state.results) if i not in remove]
-        # Sync searched set with actual results
         st.session_state.searched = {r.name.lower() for r in st.session_state.results}
     st.session_state.done = True
-    st.session_state.query = ""
-    st.session_state.kv += 1
     st.rerun()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -337,8 +277,6 @@ if st.session_state.results:
             st.session_state.results = []
             st.session_state.searched = set()
             st.session_state.done = False
-            st.session_state.query = ""
-            st.session_state.kv += 1
             st.session_state.pop("export_cache_key", None)
             st.rerun()
 
@@ -351,7 +289,6 @@ if st.session_state.results:
                     st.error(mat.error)
             with btn_col:
                 if st.button("✕", key=f"del_{idx}"):
-                    st.session_state.searched.discard(mat.name.lower())
                     st.session_state.results.pop(idx)
                     st.session_state.pop("export_cache_key", None)
                     st.session_state.done = False
@@ -362,14 +299,12 @@ if st.session_state.results:
         ex_col, btn_col = st.columns([20, 1], gap="small")
         with btn_col:
             if st.button("✕", key=f"del_{idx}"):
-                st.session_state.searched.discard(mat.name.lower())
                 st.session_state.results.pop(idx)
                 st.session_state.pop("export_cache_key", None)
                 st.session_state.done = False
                 st.session_state.searched = {r.name.lower() for r in st.session_state.results}
                 st.rerun()
         with ex_col:
-            # Only expand the latest result — older ones collapsed for speed
             is_expanded = (idx == last_idx)
             with st.expander(mat.name, expanded=is_expanded):
                 if mat.match_info:
@@ -381,7 +316,6 @@ if st.session_state.results:
                         try: st.image(mat.structure_image_url, use_container_width=True)
                         except Exception: pass
                 with tc:
-                    # Combine identifiers into fewer markdown calls
                     id_parts = [f"**{mat.name}**"]
                     if mat.page_url:
                         id_parts.append(f"[PubChem ↗]({mat.page_url})")
@@ -448,9 +382,8 @@ if st.session_state.results:
                                 display = heading.split(" > ")[-1] if " > " in heading else heading
                                 if display != top_heading:
                                     st.markdown(f"*{display}*")
-                                # Batch items into single markdown call
                                 lines = []
-                                for item in items[:30]:  # limit items per section
+                                for item in items[:30]:
                                     if item.startswith("http"): continue
                                     clean = re.sub(r'https?://\S+', '', item).strip()
                                     if not clean or len(clean) < 3: continue
@@ -460,11 +393,10 @@ if st.session_state.results:
                                     st.markdown("\n".join(lines))
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Export (cached — only regenerate when results change)
+#  Export (cached)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if st.session_state.results and st.session_state.done:
     st.markdown("---")
-    # Cache key: tuple of (name, cas) for each result
     cache_key = tuple((r.name, r.cas_number) for r in st.session_state.results)
     if "export_cache_key" not in st.session_state or st.session_state.export_cache_key != cache_key:
         st.session_state.export_pdf = generate_human_report(st.session_state.results)
