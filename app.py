@@ -4,6 +4,7 @@ app.py  v12.1 — Real-time pills from 1st char (st_keyup, no fragment)
 """
 
 import re
+import requests as req
 import streamlit as st
 from st_keyup import st_keyup
 from scraper import scrape_material, make_session, TRADE_NAMES, _NAME_TO_CAS
@@ -163,6 +164,23 @@ for _name in _ALL_NAMES:
         _PREFIX_INDEX[_prefix].append((_name, _cas))
 
 _suggestion_cache = {}
+_pubchem_ac_cache = {}  # query → [names]
+
+def _pubchem_autocomplete(query):
+    """PubChem autocomplete API — cached, for names not in local DB."""
+    if query in _pubchem_ac_cache:
+        return _pubchem_ac_cache[query]
+    try:
+        url = f"https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/{req.utils.quote(query)}/JSON?limit=5"
+        r = req.get(url, timeout=3)
+        if r.status_code == 200:
+            names = r.json().get("dictionary_terms", {}).get("compound", [])
+            _pubchem_ac_cache[query] = names
+            return names
+    except Exception:
+        pass
+    _pubchem_ac_cache[query] = []
+    return []
 
 def _get_suggestions(typed):
     # Normalize whitespace but KEEP trailing space (user typed space to narrow)
@@ -208,7 +226,7 @@ def _get_suggestions(typed):
                 if len(results) >= 10:
                     break
 
-    # 4. Substring fallback
+    # 4. Substring fallback (local DB)
     if len(results) < 10 and len(ql_stripped) >= 2:
         for name, cas in _PREFIX_INDEX.get(ql_stripped[:2], []):
             if ql_stripped in name and name.title() not in results:
@@ -216,6 +234,16 @@ def _get_suggestions(typed):
                     continue
                 results.append(name.title())
                 if cas: seen_cas.add(cas)
+                if len(results) >= 10:
+                    break
+
+    # 5. PubChem autocomplete fallback — for names not in local DB
+    #    Only when 3+ chars typed AND local results < 3
+    if len(results) < 3 and len(ql_stripped) >= 3:
+        pc_names = _pubchem_autocomplete(ql_stripped)
+        for pc in pc_names:
+            if pc.title() not in results and pc.lower() not in results:
+                results.append(pc)
                 if len(results) >= 10:
                     break
 
