@@ -154,19 +154,27 @@ def _pubchem_autocomplete(query):
 
 
 def _get_suggestions(typed):
-    """Local-only suggestions — instant, no network call."""
+    """Local-only suggestions — instant, no network call. Dedup by CAS."""
     ql = typed.lower().strip()
     if len(ql) < 1:
         return []
-    starts, contains, seen = [], [], set()
+    starts, contains, seen_names, seen_cas = [], [], set(), set()
     for name in _ALL_NAMES:
-        if name.startswith(ql) and name not in seen:
-            starts.append(name.title()); seen.add(name)
+        cas = TRADE_NAMES.get(name, "")
+        if name.startswith(ql) and name not in seen_names:
+            if cas and cas in seen_cas:
+                continue  # same compound already suggested
+            starts.append(name.title()); seen_names.add(name)
+            if cas: seen_cas.add(cas)
             if len(starts) >= 6: break
     if len(starts) < 6:
         for name in _ALL_NAMES:
-            if ql in name and name not in seen:
-                contains.append(name.title()); seen.add(name)
+            cas = TRADE_NAMES.get(name, "")
+            if ql in name and name not in seen_names:
+                if cas and cas in seen_cas:
+                    continue
+                contains.append(name.title()); seen_names.add(name)
+                if cas: seen_cas.add(cas)
                 if len(starts) + len(contains) >= 6: break
     return (starts + contains)[:6]
 
@@ -253,10 +261,18 @@ if search_clicked and typed:
     if new_names:
         session = make_session()
         bar = st.progress(0)
+        # Track CAS already in results to avoid duplicates
+        existing_cas = {r.cas_number for r in st.session_state.results if r.cas_number}
         for idx, nm in enumerate(new_names):
             bar.progress(idx / len(new_names), text=nm)
-            st.session_state.results.append(scrape_material(nm, session))
             st.session_state.searched.add(nm.lower())
+            result = scrape_material(nm, session)
+            # Skip if same CAS already exists (e.g. "bergamot" = "bergamot oil")
+            if result.cas_number and result.cas_number in existing_cas:
+                continue
+            st.session_state.results.append(result)
+            if result.cas_number:
+                existing_cas.add(result.cas_number)
         bar.progress(1.0, text="Done")
     st.session_state.done = True
 
