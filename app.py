@@ -1,10 +1,11 @@
 """
-app.py  v12.0 — Native text_input + pills (no iframe, no fragment)
+app.py  v12.1 — Real-time pills from 1st char (st_keyup, no fragment)
     streamlit run app.py
 """
 
 import re
 import streamlit as st
+from st_keyup import st_keyup
 from scraper import scrape_material, make_session, TRADE_NAMES, _NAME_TO_CAS
 from exporter import generate_human_report, generate_ai_report
 
@@ -25,6 +26,7 @@ input[type="text"] {
 }
 input[type="text"]:focus { border-color: #3D5A80 !important; box-shadow: none !important; }
 input[type="text"]::placeholder { color: #8893A6 !important; }
+iframe[title="st_keyup.st_keyup"] { height: 45px !important; }
 button[kind="secondary"] {
     border: none !important; background: none !important;
     box-shadow: none !important; min-height: 0 !important;
@@ -135,7 +137,7 @@ _ALL_NAMES = sorted(set(
 _PREFIX_INDEX = {}
 for _name in _ALL_NAMES:
     _cas = TRADE_NAMES.get(_name, "")
-    for _plen in range(2, min(len(_name) + 1, 12)):
+    for _plen in range(1, min(len(_name) + 1, 12)):
         _prefix = _name[:_plen]
         if _prefix not in _PREFIX_INDEX:
             _PREFIX_INDEX[_prefix] = []
@@ -145,12 +147,13 @@ _suggestion_cache = {}
 
 def _get_suggestions(typed):
     ql = typed.lower().strip()
-    if len(ql) < 2:
+    if len(ql) < 1:
         return []
     if ql in _suggestion_cache:
         return _suggestion_cache[ql]
     seen_cas = set()
     results = []
+    # For single char, only prefix match (fast)
     for name, cas in _PREFIX_INDEX.get(ql, []):
         if cas and cas in seen_cas:
             continue
@@ -158,7 +161,7 @@ def _get_suggestions(typed):
         if cas: seen_cas.add(cas)
         if len(results) >= 4:
             break
-    if len(results) < 4:
+    if len(results) < 4 and len(ql) >= 2:
         for name, cas in _PREFIX_INDEX.get(ql[:2], []):
             if ql in name and name.title() not in results:
                 if cas and cas in seen_cas:
@@ -182,13 +185,15 @@ if "done" not in st.session_state:
     st.session_state.done = False
 if "pv" not in st.session_state:
     st.session_state.pv = 0
+if "kv" not in st.session_state:
+    st.session_state.kv = 0
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Sidebar
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with st.sidebar:
     st.markdown("**Perfume Analyzer**")
-    st.caption("v12.0")
+    st.caption("v12.1")
     st.markdown("---")
     st.markdown("Data from **PubChem** (NIH)  \nPerfumery DB (CAS-validated)")
     st.markdown("---")
@@ -201,12 +206,13 @@ st.markdown("## Perfume Raw Materials Analyzer")
 st.caption("PubChem compound data + perfumery knowledge")
 st.markdown("---")
 
-# Native text_input — no iframe, no debounce delay
-typed = st.text_input("Search", placeholder="e.g. linalool, hedione, iso e super",
-                      label_visibility="collapsed", key="search_input")
+# st_keyup — sends value on every keystroke (debounced), no fragment needed
+typed = st_keyup("Search", placeholder="e.g. linalool, hedione, iso e super",
+                 label_visibility="collapsed", debounce=300,
+                 key=f"keyup_{st.session_state.kv}") or ""
 
-# Pills — only rendered once per page load, no fragment overhead
-if typed and len(typed.strip()) >= 2:
+# Pills — update in real-time as user types (from 1st character)
+if len(typed.strip()) >= 1:
     suggestions = _get_suggestions(typed)
     suggestions = [s for s in suggestions if s.lower() != typed.strip().lower()]
     if suggestions:
@@ -261,6 +267,7 @@ if search_term:
             st.session_state.results = [r for i, r in enumerate(st.session_state.results) if i not in remove]
         st.session_state.searched = {r.name.lower() for r in st.session_state.results}
     st.session_state.done = True
+    st.session_state.kv += 1  # reset keyup with empty value
     st.rerun()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
