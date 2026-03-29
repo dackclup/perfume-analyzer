@@ -70,6 +70,7 @@ class MaterialData:
 
     # ALL PubChem sections — OrderedDict of heading → list of strings
     pubchem_sections: OrderedDict = field(default_factory=OrderedDict)
+    pubchem_sid: str = ""  # Substance ID (for mixtures/trade names)
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1390,20 +1391,33 @@ def _smart_search_cid(session, name):
         cid = _get_cid(session, trade_cas)
         if cid:
             return cid, trade_cas
-        # CAS not found in PubChem — check if it's a known mixture CAS (8xxx or 9xxx)
+        # CAS not found in PubChem CID — try Substance DB (SID→CID)
+        sid_cid, sid = _get_cid_via_substance(session, trade_cas)
+        if sid_cid:
+            logger.info("  → Trade CAS %s found via SID %s → CID %s", trade_cas, sid, sid_cid)
+            return sid_cid, trade_cas
+        # Still not found — check if it's a known mixture CAS (8xxx or 9xxx)
         if re.match(r"^8\d{3}-\d{2}-\d$", trade_cas) or re.match(r"^9\d{3}-\d{2}-\d$", trade_cas):
             logger.info("  → Mixture CAS %s not in PubChem (natural product)", trade_cas)
             return "MIXTURE", trade_cas
         # Single compound CAS but PubChem failed — continue to other strategies
         logger.info("  → CAS %s not found, trying other strategies", trade_cas)
 
-    # ── Strategy 5: Exact name on PubChem ──
-    logger.info("  → Trying exact name: %s", original)
+    # ── Strategy 5: Exact name on PubChem Compound DB ──
+    logger.info("  → Trying exact name (Compound DB): %s", original)
     cid = _get_cid(session, original)
     if cid:
         return cid, original
 
-    # ── Strategy 6: Try top 3 generated variants ──
+    # ── Strategy 6: PubChem Substance DB (SID → CID) ──
+    # Substance DB has depositor-supplied trade names that Compound DB misses
+    logger.info("  → Trying Substance DB (SID→CID): %s", original)
+    sid_cid, sid = _get_cid_via_substance(session, original)
+    if sid_cid:
+        logger.info("  → Substance DB found: CID %s via SID %s", sid_cid, sid)
+        return sid_cid, original
+
+    # ── Strategy 7: Try top 3 generated variants ──
     variants = _generate_variants(original)
     for variant in variants[1:4]:  # max 3 tries
         logger.info("  → Trying variant: %s", variant)
@@ -1411,19 +1425,23 @@ def _smart_search_cid(session, name):
         if cid:
             return cid, variant
 
-    # ── Strategy 7: PubChem autocomplete (first match only) ──
+    # ── Strategy 8: PubChem autocomplete + verify ──
     logger.info("  → Trying PubChem autocomplete")
-    auto_url = (f"https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/{requests.utils.quote(n)}/JSON?limit=1")
+    auto_url = (f"https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/{requests.utils.quote(n)}/JSON?limit=3")
     data = _safe_get(session, auto_url)
     if data:
         suggestions = data.get("dictionary_terms", {}).get("compound", [])
-        if suggestions:
-            cid = _get_cid(session, suggestions[0])
+        for suggestion in suggestions[:3]:
+            cid = _get_cid(session, suggestion)
             if cid:
-                logger.info("  → Autocomplete found: %s", suggestions[0])
-                return cid, suggestions[0]
+                # Verify the autocomplete suggestion actually matches
+                if _verify_cid_matches(session, cid, original):
+                    logger.info("  → Autocomplete verified: %s", suggestion)
+                    return cid, suggestion
+                else:
+                    logger.info("  → Autocomplete '%s' didn't match '%s', skipping", suggestion, original)
 
-    # ── Strategy 8: Perfumery DB fuzzy ──
+    # ── Strategy 9: Perfumery DB fuzzy ──
     fuzzy_result = _fuzzy_lookup_perfumery(original)
     if fuzzy_result:
         cas, _ = fuzzy_result
@@ -1462,12 +1480,88 @@ def _suggest_similar(name):
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 def _get_cid(session, name):
+    """Strategy A: PubChem Compound DB — name → CID"""
     url = f"{PUBCHEM_REST}/compound/name/{requests.utils.quote(name)}/cids/JSON"
     data = _safe_get(session, url)
     if data:
         cids = data.get("IdentifierList", {}).get("CID", [])
         return cids[0] if cids else None
     return None
+
+
+def _get_cid_via_substance(session, name):
+    """Strategy B: PubChem Substance DB — name → SID → CID.
+    Substance DB has depositor-supplied names (trade names, supplier codes)
+    that Compound DB may not index. Returns (cid, sid) or (None, None)."""
+    url = (f"{PUBCHEM_REST}/substance/name/{requests.utils.quote(name)}"
+           f"/cids/JSON?cids_type=standardized")
+    data = _safe_get(session, url)
+    if data:
+        info_list = data.get("InformationList", {}).get("Information", [])
+        for info in info_list:
+            cids = info.get("CID", [])
+            sid = info.get("SID", None)
+            if cids:
+                return cids[0], sid
+    return None, None
+
+
+def _get_sids_by_cas(session, cas):
+    """Get SIDs for a CAS number from PubChem Substance DB.
+    Returns list of (sid, source_name) tuples."""
+    url = (f"{PUBCHEM_REST}/substance/name/{requests.utils.quote(cas)}"
+           f"/sids/JSON")
+    data = _safe_get(session, url)
+    if data:
+        info_list = data.get("InformationList", {}).get("Information", [])
+        sids = []
+        for info in info_list:
+            sid_list = info.get("SID", [])
+            if isinstance(sid_list, list):
+                sids.extend(sid_list)
+            elif sid_list:
+                sids.append(sid_list)
+        return sids[:5]  # limit to first 5
+    return []
+
+
+def _get_substance_pugview(session, sid):
+    """Fetch PUG View data for a substance (SID).
+    Returns OrderedDict of section → items, similar to compound PUG View."""
+    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/substance/{sid}/JSON"
+    sections_data = OrderedDict()
+    try:
+        r = session.get(url, timeout=TIMEOUT)
+        if r.status_code != 200:
+            return sections_data
+        blob = r.json()
+        top_sections = blob.get("Record", {}).get("Section", [])
+        _walk_sections(top_sections, sections_data)
+    except Exception as exc:
+        logger.warning("PUG View SID %s → %s", sid, exc)
+    return sections_data
+
+
+def _verify_cid_matches(session, cid, search_name):
+    """Verify that a CID actually corresponds to the search name.
+    Checks synonyms for the CID — if search name appears, it's a match.
+    Returns True if verified, False if suspicious mismatch."""
+    if not cid or not search_name:
+        return True  # can't verify, assume OK
+    n = search_name.lower().strip()
+    if len(n) < 3:
+        return True
+    # CAS numbers always match
+    if re.match(r"^\d+-\d+-\d$", n):
+        return True
+    syns = _get_synonyms(session, cid, limit=50)
+    for syn in syns:
+        sl = syn.lower().strip()
+        if n == sl or n in sl or sl in n:
+            return True
+    # Not found in synonyms — might be wrong compound
+    logger.warning("CID %s synonyms don't contain '%s'", cid, search_name)
+    return False
 
 
 def _get_properties(session, cid):
@@ -1802,17 +1896,40 @@ def scrape_material(name, session=None):
         cid, resolved_name = _smart_search_cid(session, name)
 
     if cid == "MIXTURE":
-        # Known trade name with correct CAS, but PubChem has no compound
-        # (natural mixture / essential oil)
+        # Known trade name with correct CAS, but PubChem has no compound (CID)
+        # Try Substance DB (SID) — PubChem may have substance records for mixtures
         mat.found = True
         mat.cas_number = resolved_name  # resolved_name holds the CAS
         mat.match_info = f"ℹ️ Natural mixture (CAS {resolved_name}) — not a single compound in PubChem"
 
-        # Try perfumery overlay
+        # ── Try PubChem Substance DB for mixture data ──
+        sids = _get_sids_by_cas(session, resolved_name)
+        if sids:
+            sid = sids[0]
+            mat.pubchem_sid = str(sid)
+            mat.page_url = f"https://pubchem.ncbi.nlm.nih.gov/substance/{sid}"
+            # Fetch substance PUG View
+            sid_sections = _get_substance_pugview(session, sid)
+            if sid_sections:
+                mat.pubchem_sections = sid_sections
+                mat.match_info = f"ℹ️ Natural mixture (CAS {resolved_name}) — PubChem SID {sid}"
+                # Extract synonyms from substance data
+                for k, items in sid_sections.items():
+                    if "synonym" in k.lower() and items:
+                        mat.synonyms = [s for s in items if not re.match(r"^\d+-\d+-\d$", s)][:20]
+                        break
+                # Extract any description
+                for k, items in sid_sections.items():
+                    kl = k.lower()
+                    if ("description" in kl or "record description" in kl) and items:
+                        mat.iupac_name = items[0][:200]
+                        break
+
+        # Try perfumery overlay (our DB)
         pdb = _lookup_by_cas(resolved_name)
         if pdb:
             mat.perfumery_matched = True
-            mat.match_info = f"✅ CAS match ({resolved_name}) — natural mixture"
+            mat.match_info = f"✅ CAS match ({resolved_name}) — natural mixture" + (f" (SID {sids[0]})" if sids else "")
             if pdb.get("odor_description"): mat.odor_description = pdb["odor_description"]
             if pdb.get("odor_type"): mat.odor_type = pdb["odor_type"]
             if pdb.get("odor_strength"): mat.odor_strength = pdb["odor_strength"]
@@ -2014,6 +2131,28 @@ def scrape_material(name, session=None):
             mat.fema_number = pdb["fema_number"]
     else:
         info = info or "ℹ️ Not in perfumery DB — showing PubChem data only"
+        # ── Fallback: extract odor from PubChem sections ──
+        for k, items in pugview_sections.items():
+            kl = k.lower()
+            if ("odor" in kl or "smell" in kl) and "threshold" not in kl and items:
+                # Found odor data in PubChem
+                odor_texts = [it for it in items if len(it) > 3 and "http" not in it]
+                if odor_texts:
+                    mat.odor_description = odor_texts[0][:500]
+                    info = "ℹ️ Odor from PubChem — not in perfumery DB"
+                    break
+        # Also check Physical Description for odor mentions
+        if not mat.odor_description:
+            for k, items in pugview_sections.items():
+                if "physical description" in k.lower() and items:
+                    for it in items:
+                        itl = it.lower()
+                        if any(w in itl for w in ["odor", "smell", "scent", "aroma", "fragran"]):
+                            mat.odor_description = it[:500]
+                            info = "ℹ️ Odor from PubChem physical description"
+                            break
+                    if mat.odor_description:
+                        break
 
     mat.match_info = info
     logger.info("Done: %s (CID %s) — %d sections [%s]",

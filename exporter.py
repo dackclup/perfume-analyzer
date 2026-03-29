@@ -314,6 +314,7 @@ def _material_to_dict(mat):
     ids = {}
     if mat.cas_number:  ids["cas_number"] = mat.cas_number
     if mat.fema_number: ids["fema_number"] = mat.fema_number
+    if mat.pubchem_sid: ids["pubchem_sid"] = mat.pubchem_sid
     if mat.iupac_name:  ids["iupac_name"] = mat.iupac_name
     if mat.synonyms:    ids["synonyms"] = mat.synonyms
     if ids: d["identifiers"] = ids
