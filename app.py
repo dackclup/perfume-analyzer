@@ -203,7 +203,7 @@ if "results" not in st.session_state:
 if "searched" not in st.session_state:
     st.session_state.searched = set()
 if "done" not in st.session_state:
-    st.session_state.done = False
+    st.session_state.done = bool(st.session_state.results)
 if "pv" not in st.session_state:
     st.session_state.pv = 0
 if "kv" not in st.session_state:
@@ -304,7 +304,7 @@ if st.session_state.results:
         if st.button("Clear all", key="clear_all"):
             st.session_state.results = []
             st.session_state.searched = set()
-            st.session_state.done = False
+            st.session_state.done = bool(st.session_state.results)
             st.session_state.pop("export_cache_key", None)
             st.rerun()
 
@@ -319,7 +319,7 @@ if st.session_state.results:
                 if st.button("✕", key=f"del_{idx}"):
                     st.session_state.results.pop(idx)
                     st.session_state.pop("export_cache_key", None)
-                    st.session_state.done = False
+                    st.session_state.done = bool(st.session_state.results)
                     st.session_state.searched = {r.name.lower() for r in st.session_state.results}
                     st.rerun()
             continue
@@ -329,7 +329,7 @@ if st.session_state.results:
             if st.button("✕", key=f"del_{idx}"):
                 st.session_state.results.pop(idx)
                 st.session_state.pop("export_cache_key", None)
-                st.session_state.done = False
+                st.session_state.done = bool(st.session_state.results)
                 st.session_state.searched = {r.name.lower() for r in st.session_state.results}
                 st.rerun()
         with ex_col:
