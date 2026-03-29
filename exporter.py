@@ -62,14 +62,27 @@ def _hr():
     return HRFlowable(width="100%", thickness=0.5, color=BORDER,
                       spaceBefore=3*mm, spaceAfter=3*mm)
 
+def _break_long(text, max_len=60):
+    """Insert zero-width spaces into long strings without spaces for PDF wrapping."""
+    if not text or len(text) <= max_len:
+        return text
+    # If text has spaces, it wraps naturally
+    if ' ' in text[:max_len]:
+        return text
+    # Insert soft hyphens every max_len chars for wrapping
+    parts = []
+    for i in range(0, len(text), max_len):
+        parts.append(text[i:i+max_len])
+    return '&#8203;'.join(parts)  # zero-width space
+
 def _prop_table(pairs, cw=None):
     filtered = [(l, v) for l, v in pairs if v]
     if not filtered:
         return None
     if cw is None:
-        cw = [45*mm, 110*mm]
+        cw = [40*mm, 125*mm]
     data = [[Paragraph(f"<b>{l}</b>", _S["PLabel"]),
-             Paragraph(str(v), _S["PValue"])] for l, v in filtered]
+             Paragraph(_break_long(str(v)), _S["PValue"])] for l, v in filtered]
     t = Table(data, colWidths=cw, hAlign="LEFT")
     t.setStyle(TableStyle([
         ("VALIGN", (0,0), (-1,-1), "TOP"),
@@ -153,30 +166,32 @@ def _build_material(mat):
         ("IUPAC Name", mat.iupac_name), ("Molecular Formula", mat.molecular_formula),
         ("Molecular Weight", mat.molecular_weight), ("SMILES", mat.smiles),
         ("InChI", mat.inchi)]
-    id_table = _prop_table(id_pairs)
 
-    if struct_img and id_table:
-        # Image left, identifiers right
+    if struct_img:
+        # Image left (55mm), identifiers right (105mm) — total 160mm fits A4
+        id_table = _prop_table(id_pairs, cw=[30*mm, 73*mm])  # fits in 105mm column
         layout = Table(
-            [[struct_img, id_table]],
-            colWidths=[60*mm, 100*mm],
+            [[struct_img, id_table or Spacer(1,1)]],
+            colWidths=[57*mm, 105*mm],
             hAlign="LEFT",
         )
         layout.setStyle(TableStyle([
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ("LEFTPADDING", (0, 0), (-1, -1), 0),
-            ("RIGHTPADDING", (0, 0), (0, 0), 5*mm),
+            ("RIGHTPADDING", (0, 0), (0, 0), 3*mm),
         ]))
         els.append(Paragraph("Structure & Identifiers", _S["SecH"]))
         els.append(layout)
-    elif struct_img:
-        els.append(Paragraph("Molecular Structure", _S["SecH"]))
-        els.append(struct_img)
-    elif id_table:
-        els.append(Paragraph("Identifiers & Molecular Data", _S["SecH"]))
-        els.append(id_table)
+    else:
+        id_table = _prop_table(id_pairs, cw=[40*mm, 125*mm])  # full width
+        if id_table:
+            els.append(Paragraph("Identifiers & Molecular Data", _S["SecH"]))
+            els.append(id_table)
     if mat.synonyms:
-        els.append(Paragraph(f'<b>Synonyms:</b> {", ".join(mat.synonyms[:20])}', _S["Body9"]))
+        syn_text = ", ".join(mat.synonyms[:20])
+        if len(syn_text) > 300:
+            syn_text = syn_text[:300] + "…"
+        els.append(Paragraph(f'<b>Synonyms:</b> {syn_text}', _S["Body9"]))
 
     # Odor
     if any([mat.odor_description, mat.odor_type, mat.odor_strength]):
@@ -240,7 +255,7 @@ def _build_material(mat):
                 if not clean or len(clean) < 3:
                     continue
                 text = clean if len(clean) <= 800 else clean[:800] + "…"
-                group.append(Paragraph(text, _S["Body9"]))
+                group.append(Paragraph(_break_long(text), _S["Body9"]))
 
             group.append(Spacer(1, 2*mm))
 
