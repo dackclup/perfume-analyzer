@@ -225,6 +225,8 @@ if "pv" not in st.session_state:
     st.session_state.pv = 0
 if len(typed) >= 1:
     suggestions = _get_suggestions(typed)
+    # Remove exact match
+    suggestions = [s for s in suggestions if s.lower() != typed.lower()]
     if suggestions:
         sel = st.pills("suggestions", suggestions, label_visibility="collapsed",
                        key=f"pills_{st.session_state.pv}", default=None)
