@@ -168,8 +168,8 @@ _pubchem_ac_cache = {}  # query → [names]
 def _pubchem_autocomplete(query):
     """PubChem autocomplete API — cached, for names not in local DB."""
     # Need at least 3 alphabetic chars to avoid junk results (e.g. "C.I" → CI → wrong)
-    alpha_chars = sum(1 for c in query if c.isalpha())
-    if alpha_chars < 3:
+    useful_chars = sum(1 for c in query if not c.isspace())
+    if useful_chars < 1:
         return []
     if query in _pubchem_ac_cache:
         return _pubchem_ac_cache[query]
