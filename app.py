@@ -221,14 +221,17 @@ if keyup_val is not None and keyup_val != st.session_state.query:
 typed = st.session_state.query.strip()
 
 # ── Pills suggestions (update real-time as you type) ──
+if "pv" not in st.session_state:
+    st.session_state.pv = 0
 if len(typed) >= 1:
     suggestions = _get_suggestions(typed)
     if suggestions:
         sel = st.pills("suggestions", suggestions, label_visibility="collapsed",
-                       key="suggest_pills")
+                       key=f"pills_{st.session_state.pv}", default=None)
         if sel and sel != typed:
             st.session_state.query = sel
-            st.session_state.kv += 1  # force keyup to re-init with new value
+            st.session_state.kv += 1
+            st.session_state.pv += 1  # reset pills selection
             st.rerun()
 
 # ── Search button ──
