@@ -262,17 +262,22 @@ if search_clicked and typed:
         session = make_session()
         bar = st.progress(0)
         # Track CAS already in results to avoid duplicates
-        existing_cas = {r.cas_number for r in st.session_state.results if r.cas_number}
+        existing_cas = {}  # CAS → index in results
+        for i, r in enumerate(st.session_state.results):
+            if r.cas_number:
+                existing_cas[r.cas_number] = i
         for idx, nm in enumerate(new_names):
             bar.progress(idx / len(new_names), text=nm)
             st.session_state.searched.add(nm.lower())
             result = scrape_material(nm, session)
-            # Skip if same CAS already exists (e.g. "bergamot" = "bergamot oil")
+            # If same CAS already exists → replace name with new search term, skip adding
             if result.cas_number and result.cas_number in existing_cas:
+                old_idx = existing_cas[result.cas_number]
+                st.session_state.results[old_idx].name = nm  # update display name
                 continue
             st.session_state.results.append(result)
             if result.cas_number:
-                existing_cas.add(result.cas_number)
+                existing_cas[result.cas_number] = len(st.session_state.results) - 1
         bar.progress(1.0, text="Done")
     st.session_state.done = True
 
