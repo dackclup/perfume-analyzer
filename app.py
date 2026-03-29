@@ -1,5 +1,5 @@
 """
-app.py  v12.1 — Real-time pills from 1st char (st_keyup, no fragment)
+app.py  v13.0 — st_keyup + pills + text-only download
     streamlit run app.py
 """
 
@@ -48,20 +48,7 @@ input[type="text"] {
 }
 input[type="text"]:focus { border-color: #3D5A80 !important; box-shadow: none !important; outline: none !important; }
 input[type="text"]::placeholder { color: #8893A6 !important; }
-iframe[title="st_keyup.st_keyup"] { height: 45px !important; border: none !important; outline: none !important; }
-/* Hide iframe red focus border — wrap with rounded border */
-[data-testid="stCustomComponentV1"] {
-    border: 2px solid #3D5A80 !important;
-    border-radius: 6px !important;
-    overflow: hidden !important;
-    padding: 0 !important;
-}
-[data-testid="stCustomComponentV1"] iframe {
-    border: none !important;
-    outline: none !important;
-    margin: -2px !important;
-    width: calc(100% + 4px) !important;
-}
+iframe[title="st_keyup.st_keyup"] { height: 45px !important; }
 button[kind="secondary"] {
     border: none !important; background: none !important;
     box-shadow: none !important; min-height: 0 !important;
@@ -92,17 +79,16 @@ div[data-testid="stProgress"] > div > div { background: #3D5A80 !important; bord
 [data-testid="stCaptionContainer"] p { color: #5A6B82 !important; }
 button[data-testid="stDownloadButton"] button,
 div[data-testid="stDownloadButton"] button {
-    background: #3D5A80 !important; border-color: #3D5A80 !important;
-    border-radius: 6px !important; color: #FFFFFF !important; padding: 0.5rem 1rem !important;
+    background: none !important; border: none !important;
+    box-shadow: none !important; padding: 0 !important;
 }
 button[data-testid="stDownloadButton"] button p,
-div[data-testid="stDownloadButton"] button p { color: #FFFFFF !important; font-weight: 600 !important; }
-button[data-testid="stDownloadButton"] button:hover,
-div[data-testid="stDownloadButton"] button:hover {
-    background: #2C4A6E !important; border-color: #2C4A6E !important;
+div[data-testid="stDownloadButton"] button p {
+    color: #1a1a2e !important; font-weight: 500 !important;
+    text-decoration: underline !important;
 }
 button[data-testid="stDownloadButton"] button:hover p,
-div[data-testid="stDownloadButton"] button:hover p { color: #FFFFFF !important; }
+div[data-testid="stDownloadButton"] button:hover p { opacity: 0.6; }
 section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
 div[data-testid="stPills"] { margin-top: -0.5rem; }
 div[data-testid="stPills"] button {
@@ -138,16 +124,12 @@ div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !importan
     .n-base { background: #2e1065; color: #c4b5fd; }
     button[data-testid="stDownloadButton"] button,
     div[data-testid="stDownloadButton"] button {
-        background: #4A6FA5 !important; border-color: #4A6FA5 !important;
+        background: none !important; border: none !important;
     }
     button[data-testid="stDownloadButton"] button p,
-    div[data-testid="stDownloadButton"] button p { color: #FFFFFF !important; }
-    button[data-testid="stDownloadButton"] button:hover,
-    div[data-testid="stDownloadButton"] button:hover {
-        background: #6B8FC5 !important; border-color: #6B8FC5 !important;
-    }
+    div[data-testid="stDownloadButton"] button p { color: #E8ECF0 !important; }
     button[data-testid="stDownloadButton"] button:hover p,
-    div[data-testid="stDownloadButton"] button:hover p { color: #FFFFFF !important; }
+    div[data-testid="stDownloadButton"] button:hover p { color: #E8ECF0 !important; opacity: 0.6; }
     section[data-testid="stSidebar"] { border-right-color: #3D5A80; }
     button[kind="secondary"] p { color: #C9CCD5 !important; }
     div[data-testid="stPills"] button {
@@ -294,7 +276,7 @@ if "kv" not in st.session_state:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with st.sidebar:
     st.markdown("**Perfume Analyzer**")
-    st.caption("v12.1")
+    st.caption("v13.0")
     st.markdown("---")
     st.markdown("Data from **PubChem** (NIH)  \nPerfumery DB (CAS-validated)")
     st.markdown("---")
@@ -308,7 +290,7 @@ st.caption("PubChem compound data + perfumery knowledge")
 st.markdown('<div id="top"></div>', unsafe_allow_html=True)
 st.markdown("---")
 
-# st_keyup — sends value on every keystroke (debounced), no fragment needed
+# st_keyup — real-time input for instant pills
 typed = st_keyup("Search", placeholder="e.g. linalool, hedione, iso e super",
                  label_visibility="collapsed", debounce=300,
                  key=f"keyup_{st.session_state.kv}") or ""
@@ -382,7 +364,7 @@ if search_term:
             st.session_state.results = [r for i, r in enumerate(st.session_state.results) if i not in remove]
         st.session_state.searched = {r.name.lower() for r in st.session_state.results}
     st.session_state.done = True
-    st.session_state.kv += 1  # reset keyup with empty value
+    st.session_state.kv += 1
     st.rerun()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
