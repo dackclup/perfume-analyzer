@@ -1207,85 +1207,117 @@ def scrape_material(name, session=None):
         f"?image_size=300x300"
     )
 
-    # Molecular properties (extended list)
-    props = _get_properties(session, cid)
-    mat.smiles = props.get("CanonicalSMILES", "")
-    mat.molecular_formula = props.get("MolecularFormula", "")
-    mat.molecular_weight = str(props.get("MolecularWeight", ""))
-    mat.iupac_name = props.get("IUPACName", "")
-    mat.inchi = props.get("InChI", "")
-    xlogp = props.get("XLogP")
-    mat.logp = str(xlogp) if xlogp is not None else ""
-
-    # Store all computed properties as a section
-    computed = OrderedDict()
-    prop_labels = {
-        "MolecularFormula": "Molecular Formula",
-        "MolecularWeight": "Molecular Weight",
-        "ExactMass": "Exact Mass",
-        "MonoisotopicMass": "Monoisotopic Mass",
-        "CanonicalSMILES": "Canonical SMILES",
-        "IsomericSMILES": "Isomeric SMILES",
-        "InChI": "InChI",
-        "InChIKey": "InChIKey",
-        "XLogP": "XLogP",
-        "TPSA": "Topological Polar Surface Area",
-        "Complexity": "Complexity",
-        "Charge": "Formal Charge",
-        "HBondDonorCount": "Hydrogen Bond Donor Count",
-        "HBondAcceptorCount": "Hydrogen Bond Acceptor Count",
-        "RotatableBondCount": "Rotatable Bond Count",
-        "HeavyAtomCount": "Heavy Atom Count",
-        "IsotopeAtomCount": "Isotope Atom Count",
-        "AtomStereoCount": "Atom Stereo Count",
-        "DefinedAtomStereoCount": "Defined Atom Stereo Count",
-        "UndefinedAtomStereoCount": "Undefined Atom Stereo Count",
-        "BondStereoCount": "Bond Stereo Count",
-        "DefinedBondStereoCount": "Defined Bond Stereo Count",
-        "UndefinedBondStereoCount": "Undefined Bond Stereo Count",
-        "CovalentUnitCount": "Covalent Unit Count",
-    }
-    comp_items = []
-    for key, label in prop_labels.items():
-        v = props.get(key)
-        if v is not None and str(v):
-            comp_items.append(f"{label}: {v}")
-    if comp_items:
-        computed["Computed Properties"] = comp_items
-
-    # Synonyms & CAS
-    syns = _get_synonyms(session, cid)
-    mat.cas_number = _extract_cas(syns)
-    mat.synonyms = [s for s in syns if not re.match(r"^\d+-\d+-\d$", s)][:20]
-
-    # ALL PUG View sections
+    # ═══════════════════════════════════════════════════
+    #  Single source: PUG View JSON ("display page data")
+    #  — contains everything: identifiers, properties,
+    #    physical data, safety, spectral, etc.
+    # ═══════════════════════════════════════════════════
     pugview_sections, phys_known = _get_all_pugview(session, cid)
-
-    # Use PUG View sections directly (computed props already included)
     mat.pubchem_sections = pugview_sections
 
-    # ── SMILES fallback: extract from PUG View if PUG REST missed it ──
+    # ── Extract identifiers from PUG View sections ──
+    def _find_first(sections, key_fragment, default=""):
+        """Find first value from section key containing fragment."""
+        kl = key_fragment.lower()
+        for k, items in sections.items():
+            if kl in k.lower() and items:
+                return items[0].split(": ", 1)[-1] if ": " in items[0] else items[0]
+        return default
+
+    def _find_all(sections, key_fragment):
+        """Find all values from section key containing fragment."""
+        kl = key_fragment.lower()
+        for k, items in sections.items():
+            if kl in k.lower() and items:
+                return items
+        return []
+
+    # SMILES
+    mat.smiles = ""
+    for k, items in pugview_sections.items():
+        if "smiles" in k.lower() and "canonical" not in k.lower():
+            # Prefer Computed Descriptors > SMILES
+            pass
+        if "computed descriptors" in k.lower() and "smiles" in k.lower():
+            for item in items:
+                s = item.strip()
+                if len(s) > 2 and not s.startswith("http"):
+                    mat.smiles = s
+                    break
     if not mat.smiles:
-        for key, items in pugview_sections.items():
-            if "smiles" in key.lower():
+        for k, items in pugview_sections.items():
+            if "smiles" in k.lower():
                 for item in items:
-                    s = item.strip().split(":")[-1].strip() if ":" in item else item.strip()
-                    if s and len(s) > 3 and not s.startswith("http"):
+                    s = item.strip()
+                    if len(s) > 2 and not s.startswith("http") and not s.startswith("Canonical"):
                         mat.smiles = s
                         break
                 if mat.smiles:
                     break
 
-    # ── InChI fallback ──
-    if not mat.inchi:
-        for key, items in pugview_sections.items():
-            if "inchi" in key.lower() and "inchikey" not in key.lower():
-                for item in items:
-                    if item.strip().startswith("InChI="):
-                        mat.inchi = item.strip()
-                        break
-                if mat.inchi:
+    # IUPAC Name
+    mat.iupac_name = ""
+    for k, items in pugview_sections.items():
+        if "iupac name" in k.lower() and items:
+            mat.iupac_name = items[0].strip()
+            break
+
+    # InChI
+    mat.inchi = ""
+    for k, items in pugview_sections.items():
+        if "inchi" in k.lower() and "inchikey" not in k.lower() and items:
+            for item in items:
+                if item.strip().startswith("InChI="):
+                    mat.inchi = item.strip()
                     break
+            if mat.inchi:
+                break
+
+    # Molecular Formula
+    mat.molecular_formula = ""
+    for k, items in pugview_sections.items():
+        if "molecular formula" in k.lower() and items:
+            mat.molecular_formula = items[0].strip()
+            break
+
+    # Molecular Weight
+    mat.molecular_weight = ""
+    for k, items in pugview_sections.items():
+        if "molecular weight" in k.lower() and items:
+            val = items[0].strip()
+            # Remove "Molecular Weight: " prefix if present
+            if ": " in val:
+                val = val.split(": ", 1)[-1]
+            mat.molecular_weight = val
+            break
+
+    # XLogP
+    mat.logp = ""
+    for k, items in pugview_sections.items():
+        if "xlogp" in k.lower() and items:
+            val = items[0].strip()
+            if ":" in val:
+                val = val.split(":")[-1].strip()
+            mat.logp = val
+            break
+
+    # CAS & Synonyms — from PUG View + fallback to PUG REST
+    mat.cas_number = ""
+    for k, items in pugview_sections.items():
+        if k.lower().endswith("> cas") or k.lower() == "cas":
+            for item in items:
+                s = item.strip()
+                if re.match(r"^\d{2,7}-\d{2}-\d$", s):
+                    mat.cas_number = s
+                    break
+            if mat.cas_number:
+                break
+
+    # Synonyms: try PUG REST (more complete) — single small API call
+    syns = _get_synonyms(session, cid)
+    if not mat.cas_number:
+        mat.cas_number = _extract_cas(syns)
+    mat.synonyms = [s for s in syns if not re.match(r"^\d+-\d+-\d$", s)][:20]
 
     # Populate known fields
     mat.boiling_point = phys_known.get("boiling_point", "")
