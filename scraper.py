@@ -981,7 +981,7 @@ _NOISE_PATTERNS = [
 _NOISE_RE = [re.compile(p, re.IGNORECASE) for p in _NOISE_PATTERNS]
 
 # Generous limits to capture everything
-_MAX_ITEMS_PER_SECTION = 25
+_MAX_ITEMS_PER_SECTION = 50   # was 25 — some safety/toxicity sections have 30+ items
 _MAX_CHARS_PER_ITEM = 1500
 
 
@@ -1006,7 +1006,6 @@ def _extract_string_value(info_block):
     if strs:
         parts = [s.get("String", "") for s in strs if s.get("String")]
         text = "; ".join(parts) if parts else ""
-        # Strip URLs and clean up whitespace
         text = re.sub(r'https?://\S+', '', text)
         text = re.sub(r'\s{2,}', ' ', text).strip()
         return text
@@ -1022,7 +1021,37 @@ def _extract_string_value(info_block):
     if bval is not None:
         return "Yes" if bval else "No"
 
-    # Binary/external data and table references — skip
+    # Table values (used by some computed property sections)
+    table = val.get("Table", {})
+    if table:
+        rows = table.get("Row", [])
+        cols = table.get("Column", [])
+        if rows and cols:
+            parts = []
+            col_names = [c.get("Name", "") for c in cols]
+            for row in rows[:10]:  # limit table rows
+                cells = row.get("Cell", [])
+                row_parts = []
+                for i, cell in enumerate(cells):
+                    cv = cell.get("Value", "")
+                    if isinstance(cv, dict):
+                        sv = cv.get("StringWithMarkup", [])
+                        if sv:
+                            cv = sv[0].get("String", "")
+                        else:
+                            cv = str(cv.get("Number", [""])[0]) if cv.get("Number") else ""
+                    if cv and str(cv).strip():
+                        label = col_names[i] if i < len(col_names) else ""
+                        if label:
+                            row_parts.append(f"{label}: {cv}")
+                        else:
+                            row_parts.append(str(cv))
+                if row_parts:
+                    parts.append("; ".join(row_parts))
+            return "\n".join(parts) if parts else ""
+
+    # ExternalTableURL — reference link (skip)
+    # Binary — images/3D (skip, not text-representable)
     return ""
 
 
@@ -1057,6 +1086,14 @@ def _walk_sections(sections, result, parent_path="", depth=0):
                 else:
                     entry = text
                 if not _is_noise(entry):
+                    texts.append(entry)
+            elif text and _is_noise(text):
+                # Rescue bare numbers in identifier sections (FEMA, JECFA, etc.)
+                hl = heading.lower()
+                if re.match(r"^\d+$", text.strip()) and any(
+                    kw in hl for kw in ["fema", "jecfa", "aids", "nsc", "number", "id"]
+                ):
+                    entry = f"{name}: {text}" if name and name != heading else text
                     texts.append(entry)
 
         if texts:
@@ -1318,6 +1355,28 @@ def scrape_material(name, session=None):
     if not mat.cas_number:
         mat.cas_number = _extract_cas(syns)
     mat.synonyms = [s for s in syns if not re.match(r"^\d+-\d+-\d$", s)][:20]
+
+    # FEMA Number — from PUG View sections
+    mat.fema_number = ""
+    for k, items in pugview_sections.items():
+        if "fema number" in k.lower() and items:
+            for item in items:
+                val = item.strip()
+                if ": " in val:
+                    val = val.split(": ", 1)[-1]
+                digits = re.search(r"\d{3,5}", val)
+                if digits:
+                    mat.fema_number = digits.group()
+                    break
+            if mat.fema_number:
+                break
+    # Fallback: check synonyms for FEMA
+    if not mat.fema_number:
+        for s in syns:
+            m = re.match(r"FEMA\s*(?:No\.?\s*)?(\d{3,5})", s, re.IGNORECASE)
+            if m:
+                mat.fema_number = m.group(1)
+                break
 
     # Populate known fields
     mat.boiling_point = phys_known.get("boiling_point", "")
