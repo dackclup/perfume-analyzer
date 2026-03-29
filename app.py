@@ -147,37 +147,58 @@ div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !importan
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Autocomplete
+#  Autocomplete — prefix index for O(1) lookup
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 _ALL_NAMES = sorted(set(
     list(TRADE_NAMES.keys()) + list(_NAME_TO_CAS.keys())
 ), key=len)
 
+# Build prefix index at startup — O(1) lookup instead of O(n) loop
+_PREFIX_INDEX = {}  # prefix → [(name, cas), ...]
+for _name in _ALL_NAMES:
+    _cas = TRADE_NAMES.get(_name, "")
+    for _plen in range(2, min(len(_name) + 1, 12)):  # prefixes length 2-11
+        _prefix = _name[:_plen]
+        if _prefix not in _PREFIX_INDEX:
+            _PREFIX_INDEX[_prefix] = []
+        _PREFIX_INDEX[_prefix].append((_name, _cas))
+
+_suggestion_cache = {}  # query → [suggestions]
 
 def _get_suggestions(typed):
-    """Local-only suggestions — instant, no network call. Dedup by CAS."""
+    """Instant suggestions via prefix index. Dedup by CAS."""
     ql = typed.lower().strip()
-    if len(ql) < 1:
+    if len(ql) < 2:
         return []
-    starts, contains, seen_names, seen_cas = [], [], set(), set()
-    for name in _ALL_NAMES:
-        cas = TRADE_NAMES.get(name, "")
-        if name.startswith(ql) and name not in seen_names:
-            if cas and cas in seen_cas:
-                continue  # same compound already suggested
-            starts.append(name.title()); seen_names.add(name)
-            if cas: seen_cas.add(cas)
-            if len(starts) >= 6: break
-    if len(starts) < 6:
-        for name in _ALL_NAMES:
-            cas = TRADE_NAMES.get(name, "")
-            if ql in name and name not in seen_names:
+    if ql in _suggestion_cache:
+        return _suggestion_cache[ql]
+
+    seen_cas = set()
+    results = []
+
+    # Prefix match — O(1) dict lookup
+    candidates = _PREFIX_INDEX.get(ql, [])
+    for name, cas in candidates:
+        if cas and cas in seen_cas:
+            continue
+        results.append(name.title())
+        if cas: seen_cas.add(cas)
+        if len(results) >= 3:
+            break
+
+    # Substring match only if few prefix results
+    if len(results) < 3:
+        for name, cas in _PREFIX_INDEX.get(ql[:2], []):
+            if ql in name and name.title() not in results:
                 if cas and cas in seen_cas:
                     continue
-                contains.append(name.title()); seen_names.add(name)
+                results.append(name.title())
                 if cas: seen_cas.add(cas)
-                if len(starts) + len(contains) >= 6: break
-    return (starts + contains)[:6]
+                if len(results) >= 3:
+                    break
+
+    _suggestion_cache[ql] = results[:3]
+    return results[:3]
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -224,7 +245,7 @@ def search_fragment():
         value=st.session_state.query,
         placeholder="",
         label_visibility="collapsed",
-        debounce=300,
+        debounce=500,
         key=f"keyup_{st.session_state.kv}",
     )
 
@@ -233,18 +254,18 @@ def search_fragment():
 
     typed = st.session_state.query.strip()
 
-    # Pills suggestions
+    # Pills suggestions — only with 2+ chars, max 3 pills
     if len(typed) >= 2:
         suggestions = _get_suggestions(typed)
         suggestions = [s for s in suggestions if s.lower() != typed.lower()]
         if suggestions:
-            sel = st.pills("suggestions", suggestions[:4], label_visibility="collapsed",
+            sel = st.pills("suggestions", suggestions, label_visibility="collapsed",
                            key=f"pills_{st.session_state.pv}", default=None)
             if sel and sel != typed:
                 st.session_state.query = sel
                 st.session_state.kv += 1
                 st.session_state.pv += 1
-                st.rerun()
+                st.rerun()  # fragment-scoped — only re-renders search area, not results
 
     # Search button — triggers full page rerun to fetch data
     if st.button("Search", type="primary", disabled=len(typed) == 0, use_container_width=True):
