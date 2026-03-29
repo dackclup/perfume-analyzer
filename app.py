@@ -68,14 +68,22 @@ hr { border-color: #C9CCD5 !important; }
 div[data-testid="stProgress"] > div > div { background: #3D5A80 !important; border-radius: 2px; }
 [data-testid="stCaptionContainer"] p { color: #5A6B82 !important; }
 
-button[data-testid="stDownloadButton"] button {
-    border-color: #3D5A80 !important; border-radius: 4px !important;
+button[data-testid="stDownloadButton"] button,
+div[data-testid="stDownloadButton"] button {
+    background: #3D5A80 !important;
+    border-color: #3D5A80 !important;
+    border-radius: 6px !important;
+    color: #FFFFFF !important;
+    padding: 0.5rem 1rem !important;
 }
-button[data-testid="stDownloadButton"] button p { color: #2C3E5A !important; }
-button[data-testid="stDownloadButton"] button:hover {
-    background: #3D5A80 !important; border-color: #3D5A80 !important;
+button[data-testid="stDownloadButton"] button p,
+div[data-testid="stDownloadButton"] button p { color: #FFFFFF !important; font-weight: 600 !important; }
+button[data-testid="stDownloadButton"] button:hover,
+div[data-testid="stDownloadButton"] button:hover {
+    background: #2C4A6E !important; border-color: #2C4A6E !important;
 }
-button[data-testid="stDownloadButton"] button:hover p { color: #F0F0F5 !important; }
+button[data-testid="stDownloadButton"] button:hover p,
+div[data-testid="stDownloadButton"] button:hover p { color: #FFFFFF !important; }
 
 section[data-testid="stSidebar"] { border-right: 1px solid #C9CCD5; }
 
@@ -113,8 +121,16 @@ div[data-testid="stPills"] button[aria-checked="true"] p { color: #fff !importan
     .n-top  { background: #422006; color: #fbbf24; }
     .n-mid  { background: #172554; color: #60a5fa; }
     .n-base { background: #2e1065; color: #c4b5fd; }
-    button[data-testid="stDownloadButton"] button { border-color: #3D5A80 !important; }
-    button[data-testid="stDownloadButton"] button p { color: #C9CCD5 !important; }
+    button[data-testid="stDownloadButton"] button,
+    div[data-testid="stDownloadButton"] button {
+        background: #4A6FA5 !important; border-color: #4A6FA5 !important;
+    }
+    button[data-testid="stDownloadButton"] button p,
+    div[data-testid="stDownloadButton"] button p { color: #FFFFFF !important; }
+    button[data-testid="stDownloadButton"] button:hover,
+    div[data-testid="stDownloadButton"] button:hover {
+        background: #6B8FC5 !important; border-color: #6B8FC5 !important;
+    }
     button[data-testid="stDownloadButton"] button:hover {
         background: #3D5A80 !important; border-color: #3D5A80 !important;
     }
