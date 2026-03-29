@@ -816,19 +816,19 @@ def _smart_search_cid(session, name):
         except Exception:
             pass
 
-    # ── Strategy 4: Exact name on PubChem ──
-    logger.info("  → Trying exact name: %s", original)
-    cid = _get_cid(session, original)
-    if cid:
-        return cid, original
-
-    # ── Strategy 5: Trade name → CAS → PubChem ──
+    # ── Strategy 4: Trade name → CAS → PubChem (BEFORE PubChem name) ──
     trade_cas = _fuzzy_match_tradenames(original)
     if trade_cas:
         logger.info("  → Trade name match → CAS %s", trade_cas)
         cid = _get_cid(session, trade_cas)
         if cid:
             return cid, trade_cas
+
+    # ── Strategy 5: Exact name on PubChem ──
+    logger.info("  → Trying exact name: %s", original)
+    cid = _get_cid(session, original)
+    if cid:
+        return cid, original
 
     # ── Strategy 6: Try top 3 generated variants ──
     variants = _generate_variants(original)
@@ -935,15 +935,65 @@ def _extract_cas(synonyms):
 #  PUG View — extract ALL sections
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# Sections to skip (only truly useless noise)
+# Sections to skip (noise, metadata, or non-useful)
 _SKIP_HEADINGS = {
     "information sources",
     "removed synonyms",
+    "structures",               # "2D Structure: Yes" — useless
+    "chemical vendors",         # just "Yes"
+    "depositor-supplied patent identifiers",
+    "wipo patentscope",
+    "chemical co-occurrences in patents",
+    "chemical-disease co-occurrences in patents",
+    "chemical-gene co-occurrences in patents",
+    "chemical-organism co-occurrences in patents",
+    "chemical co-occurrences in literature",
+    "chemical-gene co-occurrences in literature",
+    "chemical-disease co-occurrences in literature",
+    "chemical-organism co-occurrences in literature",
+    "related compounds",        # just counts
+    "related substances",       # just counts
+    "substances by category",   # just category names
+    "entrez crosslinks",        # just counts
+    "pubchem reference collection sid",
+    "nlm curated pubmed citations",
+    "nature journal references",
+    "ongoing test status",
+    "depositor-supplied synonyms",  # already in synonyms field
 }
+
+# Content patterns to filter out (noise items)
+_NOISE_PATTERNS = [
+    r"^Yes$",                              # bare boolean
+    r"^No$",
+    r"^HID:\s*\d+$",                       # classification IDs
+    r"^Co-Occurrence Panel:",              # metadata templates
+    r"^Link to all",                        # action text
+    r"^Follow these links",                 # instruction text
+    r"^View in PubChem",                    # action text
+    r"^Same \w+ Count:",                    # relation counts
+    r"^All Count:",
+    r"^Mixture Count:",
+    r"^\d+$",                              # bare numbers (CIDs, counts)
+    r"^Patents are available",             # placeholder text
+    r"^This section is deprecated",
+]
+_NOISE_RE = [re.compile(p, re.IGNORECASE) for p in _NOISE_PATTERNS]
 
 # Generous limits to capture everything
 _MAX_ITEMS_PER_SECTION = 25
 _MAX_CHARS_PER_ITEM = 1500
+
+
+def _is_noise(text):
+    """Check if text is noise/junk that should be filtered out."""
+    t = text.strip()
+    if len(t) < 2:
+        return True
+    for pat in _NOISE_RE:
+        if pat.search(t):
+            return True
+    return False
 
 
 def _extract_string_value(info_block):
@@ -999,14 +1049,15 @@ def _walk_sections(sections, result, parent_path="", depth=0):
         for info in infos:
             name = info.get("Name", "")
             text = _extract_string_value(info)
-            if text:
-                # Truncate very long items instead of dropping
+            if text and not _is_noise(text):
                 if len(text) > _MAX_CHARS_PER_ITEM:
                     text = text[:_MAX_CHARS_PER_ITEM] + "…"
                 if name and name != heading:
-                    texts.append(f"{name}: {text}")
+                    entry = f"{name}: {text}"
                 else:
-                    texts.append(text)
+                    entry = text
+                if not _is_noise(entry):
+                    texts.append(entry)
 
         if texts:
             # Deduplicate while preserving order
@@ -1210,13 +1261,8 @@ def scrape_material(name, session=None):
     # ALL PUG View sections
     pugview_sections, phys_known = _get_all_pugview(session, cid)
 
-    # Merge computed properties at the beginning
-    all_sections = OrderedDict()
-    for k, v in computed.items():
-        all_sections[k] = v
-    for k, v in pugview_sections.items():
-        all_sections[k] = v
-    mat.pubchem_sections = all_sections
+    # Use PUG View sections directly (computed props already included)
+    mat.pubchem_sections = pugview_sections
 
     # Populate known fields
     mat.boiling_point = phys_known.get("boiling_point", "")
