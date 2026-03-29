@@ -48,13 +48,20 @@ input[type="text"] {
 }
 input[type="text"]:focus { border-color: #3D5A80 !important; box-shadow: none !important; outline: none !important; }
 input[type="text"]::placeholder { color: #8893A6 !important; }
-iframe[title="st_keyup.st_keyup"] { height: 45px !important; border: none !important; }
-/* Remove red/orange focus border from search input */
-input, input:focus, input:active, input:focus-visible {
-    outline: none !important; box-shadow: none !important;
-    border-color: #C9CCD5 !important;
+iframe[title="st_keyup.st_keyup"] { height: 45px !important; border: none !important; outline: none !important; }
+/* Hide iframe red focus border — wrap with rounded border */
+[data-testid="stCustomComponentV1"] {
+    border: 2px solid #3D5A80 !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    padding: 0 !important;
 }
-input:focus { border-color: #3D5A80 !important; }
+[data-testid="stCustomComponentV1"] iframe {
+    border: none !important;
+    outline: none !important;
+    margin: -2px !important;
+    width: calc(100% + 4px) !important;
+}
 button[kind="secondary"] {
     border: none !important; background: none !important;
     box-shadow: none !important; min-height: 0 !important;
