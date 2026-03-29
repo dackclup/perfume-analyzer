@@ -1332,6 +1332,28 @@ def _is_inchi(text):
     return text.strip().startswith("InChI=")
 
 
+# Known natural mixture CAS — PubChem has no single compound for these
+# Must bypass PubChem CID lookup entirely
+_KNOWN_MIXTURE_CAS = {
+    "8001-88-5",   # birch tar
+    "8000-27-9",   # cedarwood oil
+    "8000-34-8",   # clove oil
+    "8015-91-6",   # cinnamon oil
+    "8000-66-6",   # cardamom oil
+    "8007-75-8",   # bergamot oil
+    "8006-87-9",   # mysore sandalwood oil
+    "8016-26-0",   # labdanum
+    "8013-10-3",   # cade oil
+    "8023-83-4",   # castoreum
+    "8024-08-6",   # violet leaf absolute
+    "8024-01-9",   # styrax
+    "8007-00-9",   # peru balsam
+    "9000-64-0",   # tolu balsam
+    "9000-72-0",   # benzoin resin
+    "68916-96-1",  # galbanum oil/resin
+}
+
+
 def _smart_search_cid(session, name):
     """
     Multi-strategy search pipeline (like Google):
@@ -1382,7 +1404,7 @@ def _smart_search_cid(session, name):
     trade_cas = _fuzzy_match_tradenames(original)
     if trade_cas:
         logger.info("  → Trade name match → CAS %s", trade_cas)
-        is_mixture_cas = bool(re.match(r"^8\d{3}-\d{2}-\d$", trade_cas) or re.match(r"^9\d{3}-\d{2}-\d$", trade_cas))
+        is_mixture_cas = trade_cas in _KNOWN_MIXTURE_CAS
         # Mixture CAS → IMMEDIATELY return MIXTURE (don't even try _get_cid — PubChem returns wrong compounds)
         if is_mixture_cas:
             logger.info("  → Mixture CAS %s → MIXTURE marker (skip PubChem)", trade_cas)

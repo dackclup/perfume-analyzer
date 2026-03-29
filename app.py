@@ -291,6 +291,8 @@ if search_clicked and typed:
         # Sync searched set with actual results
         st.session_state.searched = {r.name.lower() for r in st.session_state.results}
     st.session_state.done = True
+    st.session_state.query = ""
+    st.session_state.kv += 1  # force keyup re-init with empty
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Results
