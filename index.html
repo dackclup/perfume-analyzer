@@ -140,12 +140,14 @@ html { scroll-behavior:smooth; }
 <script src="perfumery_data.js"></script>
 <script>
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
-const DB = PERFUMERY_DATA.perfumery_db;
+// Build CAS-keyed lookup from array
+const DB = {};
+PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 const TRADES = PERFUMERY_DATA.trade_names;
 const MIXTURES = new Set(PERFUMERY_DATA.mixture_cas);
 
 // Build prefix index
-const ALL_NAMES = [...new Set([...Object.keys(TRADES), ...Object.keys(DB).flatMap(c=>DB[c].names)])].sort((a,b)=>a.length-b.length);
+const ALL_NAMES = [...new Set([...Object.keys(TRADES), ...Object.values(DB).flatMap(e=>e.synonyms||[])])].sort((a,b)=>a.length-b.length);
 const PREFIX_IX = {};
 ALL_NAMES.forEach(name => {
   const cas = TRADES[name] || "";
@@ -478,7 +480,7 @@ async function getCidViaSid(name) {
 function fuzzyMatchDB(query) {
   let bestScore = 0, bestMatch = null;
   for (const [cas, entry] of Object.entries(DB)) {
-    for (const name of entry.names || []) {
+    for (const name of entry.synonyms || []) {
       const nl = name.toLowerCase();
       if (nl === query) return {cas, name};
       // Simple fuzzy: check if query is substring or vice versa
@@ -518,16 +520,16 @@ function extractAllSections(sections, prefix="") {
 function applyPerfumery(mat, cas) {
   const pdb = DB[cas];
   if (!pdb) return;
-  mat.odor_description = pdb.odor_description || "";
-  mat.odor_type = pdb.odor_type || "";
-  mat.odor_strength = pdb.odor_strength || "";
-  mat.note_classification = pdb.note_classification || "";
-  mat.tenacity = pdb.tenacity || "";
-  mat.tenacity_hours = pdb.tenacity_hours || "";
-  mat.ifra_guidelines = pdb.ifra_guidelines || "";
-  mat.usage_levels = pdb.usage_levels || "";
-  mat.blends_well_with = pdb.blends_well_with || [];
-  if (pdb.fema_number) mat.fema_number = pdb.fema_number;
+  mat.odor_description = (pdb.odor && pdb.odor.description) || "";
+  mat.odor_type = (pdb.odor && pdb.odor.type) || "";
+  mat.odor_strength = (pdb.odor && pdb.odor.strength) || "";
+  mat.note_classification = pdb.note || "";
+  mat.tenacity = (pdb.performance && pdb.performance.tenacity) || "";
+  mat.tenacity_hours = (pdb.performance && pdb.performance.duration) || "";
+  mat.ifra_guidelines = (pdb.safety && pdb.safety.ifra) || "";
+  mat.usage_levels = (pdb.safety && pdb.safety.usage) || "";
+  mat.blends_well_with = pdb.blends_with || [];
+  if (pdb.fema) mat.fema_number = pdb.fema;
   if (!mat.match_info) mat.match_info = "✅ CAS match (" + cas + ")";
 }
 
