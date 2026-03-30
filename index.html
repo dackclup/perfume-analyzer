@@ -502,20 +502,35 @@ function fuzzyMatchDB(query) {
   return bestMatch;
 }
 
+// Sections to skip entirely (not useful for perfumery users)
+const SKIP_SECTIONS = new Set([
+  "Structures", "2D Structure", "3D Conformer",
+  "Record Description", "Summary Information",
+  "Crystal Structures", "Related Records",
+  "Classification", "Information Sources",
+  "Taxonomy", "Patents", "Literature",
+  "Biomolecular Interactions and Pathways",
+  "Biological Test Results",
+  "Associated Disorders and Diseases",
+  "Gene Regulation",
+  "Wikipedia", "Evidence Based PubChem Summary"
+]);
+
 // Extract all PUG View sections recursively
 function extractAllSections(sections, prefix="") {
   const result = {};
   for (const sec of sections) {
+    if (SKIP_SECTIONS.has(sec.TOCHeading)) continue;
     const heading = prefix ? `${prefix} > ${sec.TOCHeading}` : sec.TOCHeading;
     if (sec.Information) {
       const items = [];
       for (const info of sec.Information) {
         if (info.Value?.StringWithMarkup) {
           for (const sm of info.Value.StringWithMarkup) {
-            if (sm.String && sm.String.length > 2) items.push(sm.String);
+            if (sm.String && sm.String.length > 5) items.push(sm.String);
           }
         }
-        if (info.Value?.Number) items.push(String(info.Value.Number[0]));
+        // Skip bare numbers (e.g. CID references, conformer IDs)
       }
       if (items.length) result[heading] = items;
     }
