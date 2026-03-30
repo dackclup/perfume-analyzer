@@ -504,16 +504,10 @@ function fuzzyMatchDB(query) {
 
 // Sections to skip entirely (not useful for perfumery users)
 const SKIP_SECTIONS = new Set([
-  "Structures", "2D Structure", "3D Conformer",
+  "3D Conformer",
   "Record Description", "Summary Information",
-  "Crystal Structures", "Related Records",
-  "Classification", "Information Sources",
-  "Taxonomy", "Patents", "Literature",
-  "Biomolecular Interactions and Pathways",
-  "Biological Test Results",
-  "Associated Disorders and Diseases",
-  "Gene Regulation",
-  "Wikipedia", "Evidence Based PubChem Summary"
+  "Crystal Structures", "Information Sources",
+  "Taxonomy", "Gene Regulation"
 ]);
 
 // Extract all PUG View sections recursively
