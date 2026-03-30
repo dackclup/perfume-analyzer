@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perfume Raw Materials Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #ffffff; --bg2: #f5f5fa; --text: #1a1a2e; --text2: #4a5e78;
+  --accent: #3D5A80; --border: #d1d9e6; --card-bg: #ffffff;
+  --badge-top-bg: #fef9c3; --badge-top-fg: #854d0e;
+  --badge-mid-bg: #dbeafe; --badge-mid-fg: #1e40af;
+  --badge-base-bg: #ede9fe; --badge-base-fg: #5b21b6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1117; --bg2: #1a2332; --text: #e8ecf0; --text2: #8899aa;
+    --accent: #7E8EA6; --border: #2a3a50; --card-bg: #1a2332;
+    --badge-top-bg: #422006; --badge-top-fg: #fbbf24;
+    --badge-mid-bg: #172554; --badge-mid-fg: #60a5fa;
+    --badge-base-bg: #2e1065; --badge-base-fg: #c4b5fd;
+  }
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); padding:16px; max-width:900px; margin:0 auto; }
+h1 { font-size:1.8em; font-weight:600; margin-bottom:4px; }
+.subtitle { color:var(--text2); font-size:0.9em; margin-bottom:16px; }
+hr { border:none; border-top:1px solid var(--border); margin:16px 0; }
+code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--accent); background:var(--bg2); padding:1px 6px; border-radius:3px; overflow-wrap:anywhere; }
+
+/* Search */
+.search-box { display:flex; gap:8px; margin-bottom:8px; }
+#searchInput { flex:1; padding:10px 14px; border:2px solid var(--border); border-radius:6px; font-size:1em; background:var(--bg2); color:var(--text); outline:none; font-family:inherit; }
+#searchInput:focus { border-color:var(--accent); }
+#searchBtn { padding:10px 24px; background:var(--accent); color:#fff; border:none; border-radius:6px; font-size:1em; cursor:pointer; font-family:inherit; font-weight:500; white-space:nowrap; }
+#searchBtn:hover { opacity:0.85; }
+#searchBtn:disabled { opacity:0.4; cursor:default; }
+
+/* Pills */
+.pills { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; min-height:0; }
+.pill { padding:5px 14px; border:1px solid var(--border); border-radius:16px; font-size:0.82em; cursor:pointer; background:var(--bg2); color:var(--text); transition:all 0.15s; }
+.pill:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+/* Status */
+.status { color:var(--text2); font-size:0.85em; margin-bottom:8px; }
+.clear-btn { color:var(--text2); font-size:0.85em; cursor:pointer; text-decoration:underline; margin-left:12px; }
+
+/* Cards */
+.card { border:1px solid var(--border); border-radius:6px; margin-bottom:12px; overflow:hidden; }
+.card-header { padding:12px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); }
+.card-header:hover { background:var(--bg2); }
+.card-header h3 { font-size:1em; font-weight:500; }
+.card-arrow { transition:transform 0.2s; font-size:0.8em; color:var(--text2); }
+.card-arrow.open { transform:rotate(90deg); }
+.card-body { padding:0 16px 16px; display:none; }
+.card-body.open { display:block; }
+.card-del { color:var(--text2); font-size:1.1em; cursor:pointer; opacity:0.5; padding:4px 8px; }
+.card-del:hover { opacity:1; }
+.card-match { color:var(--text2); font-size:0.8em; margin-bottom:10px; }
+
+/* Layout */
+.row { display:flex; gap:16px; flex-wrap:wrap; }
+.col-img { flex:0 0 120px; }
+.col-img img { width:100%; border-radius:4px; background:#fff; }
+.col-info { flex:1; min-width:200px; }
+.col-info p { margin:3px 0; font-size:0.9em; overflow-wrap:anywhere; }
+
+/* Sections */
+.sec-title { font-size:0.7em; text-transform:uppercase; letter-spacing:0.08em; color:var(--text2); font-weight:600; margin:12px 0 4px; }
+.odor-desc { font-style:italic; }
+.badge { display:inline-block; padding:3px 12px; border-radius:3px; font-size:0.8em; font-weight:500; margin:2px 4px; }
+.badge-top { background:var(--badge-top-bg); color:var(--badge-top-fg); }
+.badge-mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
+.badge-base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
+
+/* PubChem data */
+.pubchem-toggle { cursor:pointer; color:var(--accent); font-size:0.9em; margin-top:8px; }
+.pubchem-data { display:none; font-size:0.85em; margin-top:8px; }
+.pubchem-data.open { display:block; }
+.pubchem-data h4 { font-size:0.85em; font-weight:600; color:var(--accent); margin:8px 0 2px; }
+.pubchem-data li { margin:2px 0; overflow-wrap:anywhere; }
+
+/* Download */
+.downloads { margin-top:16px; }
+.downloads a { color:var(--text); text-decoration:underline; margin-right:20px; font-size:0.9em; cursor:pointer; }
+.downloads a:hover { opacity:0.6; }
+
+/* Progress */
+.progress { display:none; height:4px; background:var(--border); border-radius:2px; margin:8px 0; overflow:hidden; }
+.progress-bar { height:100%; background:var(--accent); transition:width 0.3s; }
+.progress-text { font-size:0.8em; color:var(--text2); }
+
+/* Back to top */
+.back-top { text-align:right; margin-top:4px; }
+.back-top a { color:var(--text2); font-size:0.8em; text-decoration:none; }
+.back-top a:hover { text-decoration:underline; }
+
+/* Loading */
+.spinner { display:inline-block; width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.6s linear infinite; vertical-align:middle; margin-right:6px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* Error */
+.error-card { border-color:#e74c3c; }
+.error-text { color:#e74c3c; font-size:0.85em; }
+
+html { scroll-behavior:smooth; }
+@media (max-width:600px) {
+  .col-img { flex:0 0 80px; }
+  h1 { font-size:1.4em; }
+  .row { gap:10px; }
+}
+</style>
+</head>
+<body>
+<div id="top"></div>
+<h1>Perfume Raw Materials Analyzer</h1>
+<p class="subtitle">PubChem compound data + perfumery knowledge</p>
+<hr>
+
+<div class="search-box">
+  <input type="text" id="searchInput" placeholder="e.g. linalool, hedione, iso e super" autocomplete="off">
+  <button id="searchBtn" disabled>Search</button>
+</div>
+<div class="pills" id="pills"></div>
+<div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
+<p class="progress-text" id="progressText"></p>
+<hr>
+
+<div id="statusBar" style="display:none">
+  <span class="status" id="statusText"></span>
+  <span class="clear-btn" onclick="clearAll()">Clear all</span>
+</div>
+<div id="results"></div>
+<div class="downloads" id="downloads" style="display:none">
+  <hr>
+  <a onclick="downloadJSON()">Download.JSON</a>
+</div>
+
+<script src="perfumery_data.js"></script>
+<script>
+const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
+const DB = PERFUMERY_DATA.perfumery_db;
+const TRADES = PERFUMERY_DATA.trade_names;
+const MIXTURES = new Set(PERFUMERY_DATA.mixture_cas);
+
+// Build prefix index
+const ALL_NAMES = [...new Set([...Object.keys(TRADES), ...Object.keys(DB).flatMap(c=>DB[c].names)])].sort((a,b)=>a.length-b.length);
+const PREFIX_IX = {};
+ALL_NAMES.forEach(name => {
+  const cas = TRADES[name] || "";
+  for (let i=1; i<=Math.min(name.length,11); i++) {
+    const p = name.substring(0,i);
+    if (!PREFIX_IX[p]) PREFIX_IX[p] = [];
+    PREFIX_IX[p].push({name, cas});
+  }
+});
+
+let results = [];
+let pcCache = {};
+
+// ── Search input ──
+const input = document.getElementById("searchInput");
+const btn = document.getElementById("searchBtn");
+const pillsDiv = document.getElementById("pills");
+
+input.addEventListener("input", () => {
+  btn.disabled = !input.value.trim();
+  showPills(input.value);
+});
+input.addEventListener("keydown", e => { if (e.key==="Enter" && input.value.trim()) doSearch(input.value.trim()); });
+btn.addEventListener("click", () => { if (input.value.trim()) doSearch(input.value.trim()); });
+
+function showPills(typed) {
+  const ql = typed.toLowerCase().replace(/\s+/g,' ').replace(/^\s/,'');
+  const qs = ql.trim();
+  if (qs.length < 1) { pillsDiv.innerHTML = ""; return; }
+  
+  const existingCas = new Set(results.map(r=>r.cas_number).filter(Boolean));
+  const existingNames = new Set(results.map(r=>r.name.toLowerCase()));
+  
+  let suggestions = [];
+  const seenCas = new Set();
+  
+  // Prefix match (with trailing space)
+  (PREFIX_IX[ql]||[]).sort((a,b)=>b.name.length-a.name.length).forEach(({name,cas}) => {
+    if (suggestions.length>=10) return;
+    if (cas && seenCas.has(cas)) return;
+    suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
+  });
+  
+  // Without space fallback
+  if (!suggestions.length && ql!==qs) {
+    (PREFIX_IX[qs]||[]).sort((a,b)=>b.name.length-a.name.length).forEach(({name,cas}) => {
+      if (suggestions.length>=10) return;
+      if (cas && seenCas.has(cas)) return;
+      suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
+    });
+  }
+  
+  // Space fallback
+  if (!suggestions.length && qs.includes(' ')) {
+    const shorter = qs.split(' ').slice(0,-1).join(' ');
+    (PREFIX_IX[shorter]||[]).sort((a,b)=>b.name.length-a.name.length).forEach(({name,cas}) => {
+      if (suggestions.length>=10) return;
+      if (!name.startsWith(qs) && !name.includes(qs)) return;
+      if (cas && seenCas.has(cas)) return;
+      suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
+    });
+  }
+  
+  // Substring
+  if (suggestions.length<10 && qs.length>=2) {
+    (PREFIX_IX[qs.substring(0,2)]||PREFIX_IX[qs[0]]||[]).forEach(({name,cas}) => {
+      if (suggestions.length>=10) return;
+      if (!name.includes(qs)) return;
+      if (suggestions.find(s=>s.name===toTitle(name))) return;
+      if (cas && seenCas.has(cas)) return;
+      suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
+    });
+  }
+  
+  // Filter out already in results
+  suggestions = suggestions.filter(s => {
+    if (s.name.toLowerCase()===qs) return false;
+    if (existingNames.has(s.name.toLowerCase())) return false;
+    if (s.cas && existingCas.has(s.cas)) return false;
+    return true;
+  });
+
+  // PubChem autocomplete fallback
+  if (suggestions.length < 3 && qs.length >= 2) {
+    pubchemAutocomplete(qs).then(names => {
+      if (!names.length && qs.includes('.')) {
+        // Dot removal fallback (e.g. c.i. → ci)
+        return pubchemAutocomplete(qs.replace(/\./g,''));
+      }
+      return names;
+    }).then(names => {
+      if (!names) return;
+      names.forEach(n => {
+        if (suggestions.length >= 10) return;
+        if (suggestions.find(s=>s.name===n)) return;
+        if (existingNames.has(n.toLowerCase())) return;
+        suggestions.push({name:n, cas:""});
+      });
+      renderPills(suggestions);
+    });
+  }
+  
+  renderPills(suggestions);
+}
+
+function renderPills(suggestions) {
+  pillsDiv.innerHTML = suggestions.slice(0,10).map(s =>
+    `<span class="pill" onclick="doSearch('${s.name.replace(/'/g,"\\'")}')">${s.name}</span>`
+  ).join('');
+}
+
+async function pubchemAutocomplete(q) {
+  if (pcCache['ac_'+q]) return pcCache['ac_'+q];
+  try {
+    const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(q)}/JSON?limit=5`);
+    const d = await r.json();
+    const names = d.dictionary_terms?.compound || [];
+    pcCache['ac_'+q] = names;
+    return names;
+  } catch(e) { return []; }
+}
+
+// ── Search ──
+async function doSearch(term) {
+  const names = term.split(',').map(s=>s.trim()).filter(Boolean);
+  const existingNames = new Set(results.map(r=>r.name.toLowerCase()));
+  const newNames = names.filter(n=>!existingNames.has(n.toLowerCase()));
+  if (!newNames.length) return;
+  
+  const prog = document.getElementById("progress");
+  const progBar = document.getElementById("progressBar");
+  const progText = document.getElementById("progressText");
+  prog.style.display = "block";
+  
+  for (let i=0; i<newNames.length; i++) {
+    progBar.style.width = ((i/newNames.length)*100)+"%";
+    progText.textContent = newNames[i];
+    const mat = await scrapeMaterial(newNames[i]);
+    results.unshift(mat); // newest on top
+  }
+  
+  // Dedup by CAS — keep first (newest)
+  const seen = new Set();
+  results = results.filter(r => {
+    if (!r.cas_number) return true;
+    if (seen.has(r.cas_number)) return false;
+    seen.add(r.cas_number); return true;
+  });
+  
+  progBar.style.width = "100%";
+  prog.style.display = "none";
+  progText.textContent = "";
+  input.value = "";
+  pillsDiv.innerHTML = "";
+  btn.disabled = true;
+  renderResults();
+}
+
+async function scrapeMaterial(name) {
+  const mat = {name, found:false, cas_number:"", fema_number:"", iupac_name:"",
+    molecular_formula:"", molecular_weight:"", smiles:"", inchi:"",
+    synonyms:[], structure_image_url:"", page_url:"", match_info:"",
+    odor_description:"", odor_type:"", odor_strength:"", note_classification:"",
+    tenacity:"", tenacity_hours:"", ifra_guidelines:"", usage_levels:"",
+    blends_well_with:[], pubchem_sections:{}};
+  
+  const n = name.toLowerCase().replace(/[®™]/g,'').trim();
+  const CAS_RE = /^\d{2,7}-\d{2}-\d$/;
+  const SMILES_RE = /^[A-Za-z0-9@+\-\[\]\(\)\\\/=#$.%]+$/;
+  let cid = null;
+
+  // ── Strategy 1: CAS detection ──
+  if (CAS_RE.test(n)) {
+    cid = await getCid(n);
+    if (cid) { mat.cas_number = n; mat.match_info = "✅ CAS direct lookup (" + n + ")"; }
+  }
+
+  // ── Strategy 2: SMILES detection ──
+  if (!cid && SMILES_RE.test(n) && n.length > 5 && /[=#\(\)]/.test(n)) {
+    try {
+      const r = await fetch(`${PUBCHEM_REST}/compound/smiles/cids/JSON?smiles=${encodeURIComponent(name.trim())}`);
+      const d = await r.json();
+      cid = d.IdentifierList?.CID?.[0] || null;
+      if (cid) mat.match_info = "✅ SMILES lookup";
+    } catch(e) {}
+  }
+
+  // ── Strategy 3: InChI detection ──
+  if (!cid && n.startsWith("inchi=")) {
+    try {
+      const r = await fetch(`${PUBCHEM_REST}/compound/inchi/cids/JSON`, {
+        method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        body:"inchi="+encodeURIComponent(name.trim())
+      });
+      const d = await r.json();
+      cid = d.IdentifierList?.CID?.[0] || null;
+      if (cid) mat.match_info = "✅ InChI lookup";
+    } catch(e) {}
+  }
+
+  // ── Strategy 4: Trade name → CAS → CID ──
+  if (!cid) {
+    let tradeCas = TRADES[n];
+    // Fuzzy variants
+    if (!tradeCas) {
+      const variants = [
+        n.replace(/ol$/, 'ool'), n.replace(/ool$/, 'ol'),
+        n.replace(/ /g, '-'), n.replace(/-/g, ' '),
+        n.replace(/ene$/, 'en'), n.replace(/en$/, 'ene'),
+        n.replace(/yl /, 'yl'), n.replace(/ic /, 'ic '),
+      ];
+      for (const v of variants) { if (TRADES[v]) { tradeCas = TRADES[v]; break; } }
+    }
+    if (tradeCas) {
+      if (MIXTURES.has(tradeCas)) {
+        mat.found = true; mat.cas_number = tradeCas;
+        mat.match_info = "✅ Natural mixture (CAS " + tradeCas + ")";
+        applyPerfumery(mat, tradeCas);
+        return mat;
+      }
+      cid = await getCid(tradeCas);
+      if (cid) { mat.cas_number = tradeCas; mat.match_info = "✅ CAS match (" + tradeCas + ")"; }
+      // SID fallback for trade CAS
+      if (!cid) {
+        cid = await getCidViaSid(tradeCas);
+        if (cid) { mat.cas_number = tradeCas; mat.match_info = "✅ CAS via Substance DB (" + tradeCas + ")"; }
+      }
+    }
+  }
+
+  // ── Strategy 5: Exact name on PubChem ──
+  if (!cid) {
+    cid = await getCid(name);
+  }
+
+  // ── Strategy 6: SID→CID (Substance DB) ──
+  if (!cid) {
+    cid = await getCidViaSid(name);
+    if (cid) mat.match_info = "ℹ️ Found via Substance DB";
+  }
+
+  // ── Strategy 7: PubChem autocomplete + verify ──
+  if (!cid) {
+    try {
+      const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(n)}/JSON?limit=3`);
+      const d = await r.json();
+      const suggestions = d.dictionary_terms?.compound || [];
+      for (const sug of suggestions) {
+        const testCid = await getCid(sug);
+        if (testCid) { cid = testCid; mat.match_info = "ℹ️ Autocomplete: " + sug; break; }
+      }
+    } catch(e) {}
+    // Also try without dots
+    if (!cid && n.includes('.')) {
+      try {
+        const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(n.replace(/\./g,''))}/JSON?limit=1`);
+        const d = await r.json();
+        const suggestions = d.dictionary_terms?.compound || [];
+        for (const sug of suggestions) {
+          const testCid = await getCid(sug);
+          if (testCid) { cid = testCid; mat.match_info = "ℹ️ Autocomplete: " + sug; break; }
+        }
+      } catch(e) {}
+    }
+  }
+
+  // ── Strategy 8: Fuzzy perfumery DB match ──
+  if (!cid) {
+    const fuzzy = fuzzyMatchDB(n);
+    if (fuzzy) {
+      cid = await getCid(fuzzy.cas);
+      if (cid) { mat.cas_number = fuzzy.cas; mat.match_info = "ℹ️ Fuzzy match: " + fuzzy.name; }
+    }
+  }
+
+  if (!cid) return mat; // not found after all strategies
+  
+  mat.found = true;
+  mat.page_url = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
+  mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=200x200`;
+  
+  // ── Fetch properties + synonyms in PARALLEL ──
+  const [propsRes, synsRes] = await Promise.allSettled([
+    fetch(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName,InChI/JSON`).then(r=>r.json()).catch(()=>null),
+    fetch(`${PUBCHEM_REST}/compound/cid/${cid}/synonyms/JSON`).then(r=>r.json()).catch(()=>null),
+  ]);
+  
+  const propsData = propsRes.status==='fulfilled' ? propsRes.value : null;
+  if (propsData) {
+    const p = propsData.PropertyTable?.Properties?.[0] || {};
+    mat.molecular_formula = p.MolecularFormula || "";
+    mat.molecular_weight = String(p.MolecularWeight || "");
+    mat.smiles = p.CanonicalSMILES || "";
+    mat.iupac_name = p.IUPACName || "";
+    mat.inchi = p.InChI || "";
+  }
+  
+  const synsData = synsRes.status==='fulfilled' ? synsRes.value : null;
+  if (synsData) {
+    const syns = synsData.InformationList?.Information?.[0]?.Synonym || [];
+    mat.synonyms = syns.slice(0,15);
+    if (!mat.cas_number) {
+      const cas = syns.find(s => CAS_RE.test(s));
+      if (cas) mat.cas_number = cas;
+    }
+  }
+  
+  // ── Apply perfumery overlay ──
+  if (mat.cas_number) applyPerfumery(mat, mat.cas_number);
+  
+  // Store CID for lazy PUG View loading (fetched only when user opens section)
+  mat._cid = cid;
+  
+  return mat;
+}
+
+// SID→CID lookup
+async function getCidViaSid(name) {
+  const key = 'sid_'+name;
+  if (pcCache[key] !== undefined) return pcCache[key];
+  try {
+    const r = await fetch(`${PUBCHEM_REST}/substance/name/${encodeURIComponent(name)}/cids/JSON?cids_type=standardized`);
+    const d = await r.json();
+    const cid = d.InformationList?.Information?.[0]?.CID?.[0] || null;
+    pcCache[key] = cid; return cid;
+  } catch(e) { pcCache[key]=null; return null; }
+}
+
+// Fuzzy perfumery DB match
+function fuzzyMatchDB(query) {
+  let bestScore = 0, bestMatch = null;
+  for (const [cas, entry] of Object.entries(DB)) {
+    for (const name of entry.names || []) {
+      const nl = name.toLowerCase();
+      if (nl === query) return {cas, name};
+      // Simple fuzzy: check if query is substring or vice versa
+      if (nl.includes(query) || query.includes(nl)) {
+        const score = Math.min(query.length, nl.length) / Math.max(query.length, nl.length);
+        if (score > bestScore && score > 0.6) { bestScore = score; bestMatch = {cas, name}; }
+      }
+    }
+  }
+  return bestMatch;
+}
+
+// Extract all PUG View sections recursively
+function extractAllSections(sections, prefix="") {
+  const result = {};
+  for (const sec of sections) {
+    const heading = prefix ? `${prefix} > ${sec.TOCHeading}` : sec.TOCHeading;
+    if (sec.Information) {
+      const items = [];
+      for (const info of sec.Information) {
+        if (info.Value?.StringWithMarkup) {
+          for (const sm of info.Value.StringWithMarkup) {
+            if (sm.String && sm.String.length > 2) items.push(sm.String);
+          }
+        }
+        if (info.Value?.Number) items.push(String(info.Value.Number[0]));
+      }
+      if (items.length) result[heading] = items;
+    }
+    if (sec.Section) {
+      Object.assign(result, extractAllSections(sec.Section, heading));
+    }
+  }
+  return result;
+}
+
+function applyPerfumery(mat, cas) {
+  const pdb = DB[cas];
+  if (!pdb) return;
+  mat.odor_description = pdb.odor_description || "";
+  mat.odor_type = pdb.odor_type || "";
+  mat.odor_strength = pdb.odor_strength || "";
+  mat.note_classification = pdb.note_classification || "";
+  mat.tenacity = pdb.tenacity || "";
+  mat.tenacity_hours = pdb.tenacity_hours || "";
+  mat.ifra_guidelines = pdb.ifra_guidelines || "";
+  mat.usage_levels = pdb.usage_levels || "";
+  mat.blends_well_with = pdb.blends_well_with || [];
+  if (pdb.fema_number) mat.fema_number = pdb.fema_number;
+  if (!mat.match_info) mat.match_info = "✅ CAS match (" + cas + ")";
+}
+
+async function getCid(name) {
+  const key = 'cid_'+name;
+  if (pcCache[key] !== undefined) return pcCache[key];
+  try {
+    const r = await fetch(`${PUBCHEM_REST}/compound/name/${encodeURIComponent(name)}/cids/JSON`);
+    const d = await r.json();
+    const cid = d.IdentifierList?.CID?.[0] || null;
+    pcCache[key] = cid; return cid;
+  } catch(e) { pcCache[key]=null; return null; }
+}
+
+function renderPubchemSections(sections) {
+  // Group by top-level heading
+  const grouped = {};
+  for (const [heading, items] of Object.entries(sections)) {
+    const top = heading.includes(' > ') ? heading.split(' > ')[0] : heading;
+    if (!grouped[top]) grouped[top] = [];
+    grouped[top].push({heading, items});
+  }
+  let html = '';
+  for (const [topH, subs] of Object.entries(grouped)) {
+    html += `<h4>${esc(topH)}</h4>`;
+    for (const {heading, items} of subs) {
+      const display = heading.includes(' > ') ? heading.split(' > ').pop() : heading;
+      if (display !== topH) html += `<p style="font-weight:500;font-size:0.85em;margin-top:4px"><em>${esc(display)}</em></p>`;
+      html += '<ul>';
+      for (const item of items.slice(0,30)) {
+        if (item.startsWith('http')) continue;
+        const clean = item.replace(/https?:\/\/\S+/g,'').trim();
+        if (!clean || clean.length < 3) continue;
+        html += `<li>${esc(clean.length>300?clean.substring(0,300)+'…':clean)}</li>`;
+      }
+      html += '</ul>';
+    }
+  }
+  return html;
+}
+
+// ── Render ──
+function renderResults() {
+  const div = document.getElementById("results");
+  const found = results.filter(r=>r.found).length;
+  document.getElementById("statusBar").style.display = results.length?"block":"none";
+  document.getElementById("statusText").textContent = `${found}/${results.length} found`;
+  document.getElementById("downloads").style.display = (results.length && found)?"block":"none";
+  
+  div.innerHTML = results.map((mat,idx) => {
+    if (!mat.found) return `
+      <div class="card error-card">
+        <div class="card-header" onclick="toggleCard(${idx})">
+          <h3>✗ ${esc(mat.name)}</h3>
+          <span><span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span></span>
+        </div>
+        <div class="card-body"><p class="error-text">'${esc(mat.name)}' not found</p></div>
+      </div>`;
+    
+    const nl = (mat.note_classification||"").toLowerCase();
+    let badges = "";
+    if (nl.includes("top")) badges += `<span class="badge badge-top">Top</span>`;
+    if (nl.includes("middle")||nl.includes("heart")) badges += `<span class="badge badge-mid">Heart</span>`;
+    if (nl.includes("base")) badges += `<span class="badge badge-base">Base</span>`;
+    
+    const ids = [
+      mat.cas_number?`<p><code>CAS</code> ${esc(mat.cas_number)}</p>`:"",
+      mat.fema_number?`<p><code>FEMA</code> ${esc(mat.fema_number)}</p>`:"",
+      mat.iupac_name?`<p><code>IUPAC</code> ${esc(mat.iupac_name)}</p>`:"",
+      mat.molecular_formula?`<p><code>Formula</code> ${esc(mat.molecular_formula)}</p>`:"",
+      mat.molecular_weight?`<p><code>MW</code> ${esc(mat.molecular_weight)}</p>`:"",
+      mat.smiles?`<p><code>SMILES</code> ${esc(mat.smiles)}</p>`:"",
+      mat.inchi?`<p><code>InChI</code> ${esc(mat.inchi)}</p>`:"",
+    ].join('');
+    
+    const syns = mat.synonyms.length?`<p style="color:var(--text2);font-size:0.8em;margin-top:6px">${esc(mat.synonyms.slice(0,8).join(', '))}</p>`:"";
+    
+    return `
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(${idx})">
+          <h3><span class="card-arrow" id="arrow${idx}">▶</span> ${esc(mat.name)}</h3>
+          <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
+        </div>
+        <div class="card-body" id="body${idx}">
+          ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
+          <div class="row">
+            ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
+            <div class="col-info">
+              <p><strong>${esc(mat.name)}</strong></p>
+              ${mat.page_url?`<p><a href="${mat.page_url}" target="_blank" style="color:var(--accent);font-size:0.85em">PubChem ↗</a></p>`:""}
+              ${ids}${syns}
+            </div>
+          </div>
+          <hr>
+          <div class="row">
+            <div style="flex:1">
+              <p class="sec-title">Odor</p>
+              ${mat.odor_description?`<p class="odor-desc">${esc(mat.odor_description)}</p>`:""}
+              ${mat.odor_type?`<p>${esc(mat.odor_type)}</p>`:""}
+              ${mat.odor_strength?`<p style="color:var(--text2);font-size:0.85em">${esc(mat.odor_strength)}</p>`:""}
+              ${!mat.odor_description&&!mat.odor_type?`<p style="color:var(--text2)">—</p>`:""}
+            </div>
+            <div style="flex:1">
+              <p class="sec-title">Note</p>
+              ${badges||`<p style="color:var(--text2)">—</p>`}
+            </div>
+            <div style="flex:1">
+              <p class="sec-title">Performance</p>
+              ${mat.tenacity?`<p>${esc(mat.tenacity)}</p>`:""}
+              ${mat.tenacity_hours?`<p style="color:var(--text2);font-size:0.85em">${esc(mat.tenacity_hours)}</p>`:""}
+              ${!mat.tenacity?`<p style="color:var(--text2)">—</p>`:""}
+            </div>
+          </div>
+          ${mat.ifra_guidelines||mat.usage_levels||mat.blends_well_with.length?`
+          <hr>
+          <div class="row">
+            <div style="flex:1">
+              <p class="sec-title">Safety</p>
+              ${mat.ifra_guidelines?`<p>${esc(mat.ifra_guidelines)}</p>`:""}
+              ${mat.usage_levels?`<p style="color:var(--text2);font-size:0.85em">${esc(mat.usage_levels)}</p>`:""}
+            </div>
+            <div style="flex:1">
+              <p class="sec-title">Blends with</p>
+              ${mat.blends_well_with.length?`<p>${esc(mat.blends_well_with.join(', '))}</p>`:""}
+            </div>
+          </div>`:""}
+          ${mat._cid?`
+          <hr>
+          <div class="pubchem-toggle" id="pcToggle${idx}" onclick="loadPubchemData(${idx})">▶ Complete PubChem Data</div>
+          <div class="pubchem-data" id="pcData${idx}"></div>`:""}
+          <div class="back-top"><a href="#top">▲ Back to top</a></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleCard(idx) {
+  const body = document.getElementById("body"+idx);
+  const arrow = document.getElementById("arrow"+idx);
+  body.classList.toggle("open");
+  arrow.classList.toggle("open");
+}
+
+async function loadPubchemData(idx) {
+  const toggle = document.getElementById("pcToggle"+idx);
+  const dataDiv = document.getElementById("pcData"+idx);
+  
+  // Toggle open/close if already loaded
+  if (dataDiv.dataset.loaded) {
+    dataDiv.classList.toggle("open");
+    toggle.textContent = dataDiv.classList.contains("open") ? "▼ Complete PubChem Data" : "▶ Complete PubChem Data";
+    return;
+  }
+  
+  const mat = results[idx];
+  if (!mat._cid) return;
+  
+  toggle.textContent = "⏳ Loading...";
+  try {
+    const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`);
+    const d = await r.json();
+    const sections = d.Record?.Section || [];
+    mat.pubchem_sections = extractAllSections(sections);
+    
+    // Extract FEMA if missing
+    if (!mat.fema_number) {
+      for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
+        if (heading.toLowerCase().includes('fema') && items.length) {
+          mat.fema_number = items[0]; break;
+        }
+      }
+    }
+    
+    dataDiv.innerHTML = renderPubchemSections(mat.pubchem_sections);
+    dataDiv.dataset.loaded = "1";
+    dataDiv.classList.add("open");
+    toggle.textContent = "▼ Complete PubChem Data";
+  } catch(e) {
+    toggle.textContent = "❌ Failed to load — click to retry";
+    dataDiv.dataset.loaded = "";
+  }
+}
+
+function delResult(idx) {
+  results.splice(idx,1);
+  renderResults();
+  showPills(input.value);
+}
+
+function clearAll() {
+  results = [];
+  renderResults();
+  showPills(input.value);
+}
+
+async function downloadJSON() {
+  // Auto-fetch PubChem data for results not yet loaded
+  for (const mat of results) {
+    if (mat.found && mat._cid && (!mat.pubchem_sections || !Object.keys(mat.pubchem_sections).length)) {
+      try {
+        const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`);
+        const d = await r.json();
+        mat.pubchem_sections = extractAllSections(d.Record?.Section || []);
+      } catch(e) {}
+    }
+  }
+  const data = results.filter(r=>r.found).map(mat => ({
+    Record: {
+      RecordType: "CID",
+      RecordNumber: mat._cid || null,
+      RecordTitle: mat.name,
+      Section: [
+        { TOCHeading: "Names and Identifiers", Section: [
+          { TOCHeading: "Record Title", Information: [{ Value: { StringWithMarkup: [{ String: mat.name }] } }] },
+          ...(mat.cas_number ? [{ TOCHeading: "CAS", Information: [{ Value: { StringWithMarkup: [{ String: mat.cas_number }] } }] }] : []),
+          ...(mat.fema_number ? [{ TOCHeading: "FEMA Number", Information: [{ Value: { StringWithMarkup: [{ String: mat.fema_number }] } }] }] : []),
+          ...(mat.iupac_name ? [{ TOCHeading: "IUPAC Name", Information: [{ Value: { StringWithMarkup: [{ String: mat.iupac_name }] } }] }] : []),
+          ...(mat.molecular_formula ? [{ TOCHeading: "Molecular Formula", Information: [{ Value: { StringWithMarkup: [{ String: mat.molecular_formula }] } }] }] : []),
+          ...(mat.molecular_weight ? [{ TOCHeading: "Molecular Weight", Information: [{ Value: { Number: [parseFloat(mat.molecular_weight)] } }] }] : []),
+          ...(mat.smiles ? [{ TOCHeading: "Canonical SMILES", Information: [{ Value: { StringWithMarkup: [{ String: mat.smiles }] } }] }] : []),
+          ...(mat.inchi ? [{ TOCHeading: "InChI", Information: [{ Value: { StringWithMarkup: [{ String: mat.inchi }] } }] }] : []),
+          ...(mat.synonyms.length ? [{ TOCHeading: "Synonyms", Information: mat.synonyms.map(s => ({ Value: { StringWithMarkup: [{ String: s }] } })) }] : []),
+        ]},
+        ...(mat.odor_description || mat.odor_type || mat.odor_strength ? [{ TOCHeading: "Odor Profile", Information: [
+          ...(mat.odor_description ? [{ Name: "Description", Value: { StringWithMarkup: [{ String: mat.odor_description }] } }] : []),
+          ...(mat.odor_type ? [{ Name: "Type", Value: { StringWithMarkup: [{ String: mat.odor_type }] } }] : []),
+          ...(mat.odor_strength ? [{ Name: "Strength", Value: { StringWithMarkup: [{ String: mat.odor_strength }] } }] : []),
+        ]}] : []),
+        ...(mat.note_classification ? [{ TOCHeading: "Note Classification", Information: [{ Value: { StringWithMarkup: [{ String: mat.note_classification }] } }] }] : []),
+        ...(mat.tenacity || mat.tenacity_hours ? [{ TOCHeading: "Performance", Information: [
+          ...(mat.tenacity ? [{ Name: "Tenacity", Value: { StringWithMarkup: [{ String: mat.tenacity }] } }] : []),
+          ...(mat.tenacity_hours ? [{ Name: "Duration", Value: { StringWithMarkup: [{ String: mat.tenacity_hours }] } }] : []),
+        ]}] : []),
+        ...(mat.ifra_guidelines || mat.usage_levels ? [{ TOCHeading: "Safety and Formulation", Information: [
+          ...(mat.ifra_guidelines ? [{ Name: "IFRA Guidelines", Value: { StringWithMarkup: [{ String: mat.ifra_guidelines }] } }] : []),
+          ...(mat.usage_levels ? [{ Name: "Usage Levels", Value: { StringWithMarkup: [{ String: mat.usage_levels }] } }] : []),
+        ]}] : []),
+        ...(mat.blends_well_with.length ? [{ TOCHeading: "Blending Suggestions", Information: [{ Name: "Blends well with", Value: { StringWithMarkup: [{ String: mat.blends_well_with.join(", ") }] } }] }] : []),
+        ...(mat.pubchem_sections && Object.keys(mat.pubchem_sections).length ? [{ TOCHeading: "Complete PubChem Data", Section:
+          Object.entries(mat.pubchem_sections).map(([heading, items]) => ({
+            TOCHeading: heading,
+            Information: items.map(item => ({ Value: { StringWithMarkup: [{ String: item }] } }))
+          }))
+        }] : []),
+      ],
+    },
+    PubChem_URL: mat.page_url || null,
+    Match_Info: mat.match_info || null,
+  }));
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+  const a = document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="perfume_report.json"; a.click();
+}
+
+function esc(s) { const d=document.createElement('div'); d.textContent=s||""; return d.innerHTML; }
+function toTitle(s) { return s.replace(/\b\w/g, c=>c.toUpperCase()); }
+</script>
+</body>
+</html>
