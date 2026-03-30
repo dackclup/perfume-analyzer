@@ -221,7 +221,7 @@ function showPills(typed) {
   // Space fallback
   if (!suggestions.length && qs.includes(' ')) {
     const shorter = qs.split(' ').slice(0,-1).join(' ');
-    (PREFIX_IX[shorter]||[]).sort((a,b)=>b.name.length-a.name.length).forEach(({name,cas}) => {
+    (PREFIX_IX[shorter]||[]).forEach(({name,cas}) => {
       if (suggestions.length>=10) return;
       if (!name.startsWith(qs) && !name.includes(qs)) return;
       if (cas && seenCas.has(cas)) return;
@@ -311,14 +311,14 @@ async function doSearch(term) {
   const progText = document.getElementById("progressText");
   prog.style.display = "block";
   
-  // Parallel scraping (max 3 concurrent)
-  const BATCH = 3;
+  // Parallel scraping (max 5 concurrent, fault-tolerant)
+  const BATCH = 5;
   for (let i=0; i<newNames.length; i+=BATCH) {
     const batch = newNames.slice(i, i+BATCH);
     progBar.style.width = ((i/newNames.length)*100)+"%";
     progText.textContent = batch.join(', ');
-    const mats = await Promise.all(batch.map(n => scrapeMaterial(n)));
-    mats.forEach(m => results.unshift(m));
+    const settled = await Promise.allSettled(batch.map(n => scrapeMaterial(n)));
+    settled.forEach(r => { if (r.status==='fulfilled') results.unshift(r.value); });
   }
   
   // Dedup by CAS — keep first (newest)
@@ -360,7 +360,7 @@ async function scrapeMaterial(name) {
   // ── Strategy 2: SMILES detection ──
   if (!cid && SMILES_RE.test(n) && n.length > 5 && /[=#\(\)]/.test(n)) {
     try {
-      const r = await fetch(`${PUBCHEM_REST}/compound/smiles/cids/JSON?smiles=${encodeURIComponent(name.trim())}`);
+      const r = await fetchWithTimeout(`${PUBCHEM_REST}/compound/smiles/cids/JSON?smiles=${encodeURIComponent(name.trim())}`);
       const d = await r.json();
       cid = d.IdentifierList?.CID?.[0] || null;
       if (cid) mat.match_info = "✅ SMILES lookup";
@@ -370,7 +370,7 @@ async function scrapeMaterial(name) {
   // ── Strategy 3: InChI detection ──
   if (!cid && n.startsWith("inchi=")) {
     try {
-      const r = await fetch(`${PUBCHEM_REST}/compound/inchi/cids/JSON`, {
+      const r = await fetchWithTimeout(`${PUBCHEM_REST}/compound/inchi/cids/JSON`, {
         method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"},
         body:"inchi="+encodeURIComponent(name.trim())
       });
@@ -421,32 +421,7 @@ async function scrapeMaterial(name) {
     if (cid) mat.match_info = "ℹ️ Found via Substance DB";
   }
 
-  // ── Strategy 7: PubChem autocomplete + verify ──
-  if (!cid) {
-    try {
-      const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(n)}/JSON?limit=3`);
-      const d = await r.json();
-      const suggestions = d.dictionary_terms?.compound || [];
-      for (const sug of suggestions) {
-        const testCid = await getCid(sug);
-        if (testCid) { cid = testCid; mat.match_info = "ℹ️ Autocomplete: " + sug; break; }
-      }
-    } catch(e) {}
-    // Also try without dots
-    if (!cid && n.includes('.')) {
-      try {
-        const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(n.replace(/\./g,''))}/JSON?limit=1`);
-        const d = await r.json();
-        const suggestions = d.dictionary_terms?.compound || [];
-        for (const sug of suggestions) {
-          const testCid = await getCid(sug);
-          if (testCid) { cid = testCid; mat.match_info = "ℹ️ Autocomplete: " + sug; break; }
-        }
-      } catch(e) {}
-    }
-  }
-
-  // ── Strategy 8: Fuzzy perfumery DB match ──
+  // ── Strategy 7: Fuzzy perfumery DB match ──
   if (!cid) {
     const fuzzy = fuzzyMatchDB(n);
     if (fuzzy) {
@@ -463,8 +438,8 @@ async function scrapeMaterial(name) {
   
   // ── Fetch properties + synonyms in PARALLEL ──
   const [propsRes, synsRes] = await Promise.allSettled([
-    fetch(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName,InChI/JSON`).then(r=>r.json()).catch(()=>null),
-    fetch(`${PUBCHEM_REST}/compound/cid/${cid}/synonyms/JSON`).then(r=>r.json()).catch(()=>null),
+    fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName,InChI/JSON`).then(r=>r.json()).catch(()=>null),
+    fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/synonyms/JSON`).then(r=>r.json()).catch(()=>null),
   ]);
   
   const propsData = propsRes.status==='fulfilled' ? propsRes.value : null;
@@ -532,7 +507,8 @@ const SKIP_SECTIONS = new Set([
 ]);
 
 // Extract all PUG View sections recursively
-function extractAllSections(sections, prefix="") {
+function extractAllSections(sections, prefix="", depth=0) {
+  if (depth > 4) return {}; // Limit recursion depth
   const result = {};
   for (const sec of sections) {
     if (SKIP_SECTIONS.has(sec.TOCHeading)) continue;
@@ -540,17 +516,17 @@ function extractAllSections(sections, prefix="") {
     if (sec.Information) {
       const items = [];
       for (const info of sec.Information) {
+        if (items.length >= 30) break; // Cap items per section
         if (info.Value?.StringWithMarkup) {
           for (const sm of info.Value.StringWithMarkup) {
-            if (sm.String && sm.String.length > 5) items.push(sm.String);
+            if (sm.String && sm.String.length > 5 && items.length < 30) items.push(sm.String);
           }
         }
-        // Skip bare numbers (e.g. CID references, conformer IDs)
       }
       if (items.length) result[heading] = items;
     }
     if (sec.Section) {
-      Object.assign(result, extractAllSections(sec.Section, heading));
+      Object.assign(result, extractAllSections(sec.Section, heading, depth+1));
     }
   }
   return result;
@@ -747,7 +723,7 @@ async function loadPubchemData(idx) {
   
   toggle.textContent = "⏳ Loading...";
   try {
-    const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`);
+    const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`, {}, 10000);
     const d = await r.json();
     const sections = d.Record?.Section || [];
     mat.pubchem_sections = extractAllSections(sections);
@@ -868,17 +844,10 @@ async function downloadJSON() {
   btn.style.pointerEvents = "none";
   btn.style.opacity = "0.4";
 
-  const data = [];
-  for (let i = 0; i < found.length; i++) {
-    const mat = found[i];
-    btn.textContent = `⏳ ${i+1}/${found.length}...`;
-
-    let record = null;
-
-    // Try fetching full PubChem data
+  async function fetchRecord(mat) {
     if (mat._cid) {
       try {
-        const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`);
+        const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`, {}, 10000);
         if (r.ok) {
           const d = await r.json();
           if (d.Record && d.Record.Section) {
@@ -886,16 +855,21 @@ async function downloadJSON() {
             if (perfSections.length) {
               d.Record.Section.push({TOCHeading:"Perfumery Data",Description:"Perfumery-specific data from local fragrance database.",Section:perfSections});
             }
-            record = d;
+            return d;
           }
         }
       } catch(e) {}
     }
+    return buildLocalRecord(mat);
+  }
 
-    // Fallback: build PubChem-style Record from local data
-    if (!record) record = buildLocalRecord(mat);
-
-    data.push(record);
+  const data = [];
+  const BATCH = 4;
+  for (let i = 0; i < found.length; i += BATCH) {
+    const batch = found.slice(i, i + BATCH);
+    btn.textContent = `⏳ ${i+1}/${found.length}...`;
+    const settled = await Promise.allSettled(batch.map(m => fetchRecord(m)));
+    settled.forEach(r => { if (r.status==='fulfilled') data.push(r.value); });
   }
 
   if (data.length) {
