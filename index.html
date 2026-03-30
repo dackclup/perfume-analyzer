@@ -61,8 +61,8 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 
 /* Layout */
 .row { display:flex; gap:16px; flex-wrap:wrap; }
-.col-img { flex:0 0 200px; }
-.col-img img { width:100%; border-radius:6px; background:#fff; padding:8px; }
+.col-img { width:100%; max-width:400px; aspect-ratio:1/1; margin:0 auto 12px; }
+.col-img img { width:100%; height:100%; object-fit:contain; border-radius:6px; background:#fff; padding:12px; }
 .col-info { flex:1; min-width:200px; }
 .col-info p { margin:3px 0; font-size:0.9em; overflow-wrap:anywhere; }
 
@@ -655,13 +655,11 @@ function renderResults() {
         </div>
         <div class="card-body" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
-          <div class="row">
-            ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
-            <div class="col-info">
-              <p><strong>${esc(mat.name)}</strong></p>
-              ${mat.page_url?`<p><a href="${mat.page_url}" target="_blank" style="color:var(--accent);font-size:0.85em">PubChem ↗</a></p>`:""}
-              ${ids}${syns}
-            </div>
+          ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
+          <div class="col-info">
+            <p><strong>${esc(mat.name)}</strong></p>
+            ${mat.page_url?`<p><a href="${mat.page_url}" target="_blank" style="color:var(--accent);font-size:0.85em">PubChem ↗</a></p>`:""}
+            ${ids}${syns}
           </div>
           <hr>
           <div class="row">
