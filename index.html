@@ -74,12 +74,18 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .badge-mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
 .badge-base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
 
-/* PubChem data */
-.pubchem-toggle { cursor:pointer; color:var(--accent); font-size:0.9em; margin-top:8px; }
-.pubchem-data { display:none; font-size:0.85em; margin-top:8px; }
+/* PubChem data — grouped card layout */
+.pubchem-toggle { cursor:pointer; color:var(--accent); font-size:0.9em; margin-top:8px; padding:8px 0; }
+.pubchem-data { display:none; font-size:0.85em; margin-top:4px; }
 .pubchem-data.open { display:block; }
-.pubchem-data h4 { font-size:0.85em; font-weight:600; color:var(--accent); margin:8px 0 2px; }
-.pubchem-data li { margin:2px 0; overflow-wrap:anywhere; }
+.pc-group { background:var(--bg2); border-radius:6px; padding:12px 14px; margin-bottom:10px; border:1px solid var(--border); }
+.pc-group-title { font-weight:600; font-size:0.9em; color:var(--accent); margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+.pc-row { display:flex; gap:8px; padding:4px 0; border-bottom:1px solid var(--border); align-items:baseline; }
+.pc-row:last-child { border-bottom:none; }
+.pc-key { font-weight:500; color:var(--text2); font-size:0.82em; min-width:100px; flex-shrink:0; }
+.pc-val { color:var(--text); font-size:0.85em; overflow-wrap:anywhere; }
+.pc-sub { font-weight:500; font-size:0.85em; color:var(--accent); margin:8px 0 4px; }
+.pc-item { color:var(--text); font-size:0.82em; margin:2px 0 2px 8px; padding:3px 0; overflow-wrap:anywhere; line-height:1.4; }
 
 /* Download — sticky bottom bar */
 .downloads { position:fixed; bottom:0; left:0; right:0; background:var(--bg); border-top:1px solid var(--border); padding:10px 16px; display:none; z-index:100; text-align:center; }
@@ -105,6 +111,362 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 @keyframes spin { to { transform:rotate(360deg); } }
 
 /* Error */
+.error-card { border-color:#e74c3c; }
+.error-text { color:#e74c3c; font-size:0.85em; }
+
+html { scroll-behavior:smooth; }
+@media (max-width:600px) {
+  .col-img { flex:0 0 80px; }
+  h1 { font-size:1.4em; }
+  .row { gap:10px; }
+}
+@media print {
+  body { background:#fff !important; color:#000 !important; padding:0; max-width:100%; }
+  .search-box, .pills, .progress, .progress-text, .downloads, .clear-btn,
+  .card-del, .back-top, #statusBar, hr { display:none !important; }
+  h1 { font-size:18pt; color:#1e3a5f !important; margin-bottom:4px; }
+  .subtitle { color:#666 !important; }
+  .card { border:1px solid #ccc !important; break-inside:avoid; margin-bottom:12px; page-break-inside:avoid; }
+  .card-header { background:#f5f5fa !important; }
+  .card-header h3 { color:#000 !important; }
+  .card-body { display:block !important; } /* force open all cards */
+  .card-arrow { display:none; }
+  .col-img img { max-width:100px; }
+  code { background:#eee !important; color:#333 !important; }
+  .badge { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+  .badge-top { background:#fef9c3 !important; color:#854d0e !important; }
+  .badge-mid { background:#dbeafe !important; color:#1e40af !important; }
+  .badge-base { background:#ede9fe !important; color:#5b21b6 !important; }
+  .sec-title { color:#666 !important; }
+  .pubchem-data { display:block !important; } /* show PubChem data */
+  .pubchem-toggle { display:none !important; }
+  .pc-group { background:#f8f8fc !important; border:1px solid #ddd !important; break-inside:avoid; page-break-inside:avoid; }
+  .pc-group-title { color:#2c7be5 !important; }
+  .pc-key { color:#666 !important; }
+  .pc-val { color:#000 !important; }
+  .pc-sub { color:#2c7be5 !important; }
+  .pc-item { color:#000 !important; }
+  a { color:#2c7be5 !important; }
+  @page { margin:15mm; }
+}
+</style>
+</head>
+<body>
+<div id="top"></div>
+<h1>Perfume Raw Materials Analyzer</h1>
+<p class="subtitle">PubChem compound data + perfumery knowledge</p>
+<hr>
+
+<div class="search-box">
+  <input type="text" id="searchInput" placeholder="e.g. linalool, hedione, iso e super" autocomplete="off">
+  <button id="searchBtn" disabled>Search</button>
+</div>
+<div class="pills" id="pills"></div>
+<div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
+<p class="progress-text" id="progressText"></p>
+<hr>
+
+<div id="statusBar" style="display:none">
+  <span class="status" id="statusText"></span>
+  <span class="clear-btn" onclick="clearAll()">Clear all</span>
+</div>
+<div id="results"></div>
+<div class="downloads" id="downloads" style="display:none">
+  <button id="pdfLink" class="dl-btn" onclick="genPDF()">Download.PDF</button>
+  <button class="dl-btn" onclick="downloadJSON()">Download.JSON</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
+<script src="perfumery_data.js"></script>
+<script>
+const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
+const DB = PERFUMERY_DATA.perfumery_db;
+const TRADES = PERFUMERY_DATA.trade_names;
+const MIXTURES = new Set(PERFUMERY_DATA.mixture_cas);
+
+// Build prefix index
+const ALL_NAMES = [...new Set([...Object.keys(TRADES), ...Object.keys(DB).flatMap(c=>DB[c].names)])].sort((a,b)=>a.length-b.length);
+const PREFIX_IX = {};
+ALL_NAMES.forEach(name => {
+  const cas = TRADES[name] || "";
+  for (let i=1; i<=Math.min(name.length,11); i++) {
+    const p = name.substring(0,i);
+    if (!PREFIX_IX[p]) PREFIX_IX[p] = [];
+    PREFIX_IX[p].push({name, cas});
+  }
+});
+
+let results = [];
+let pcCache = {};
+
+// ── Search input ──
+const input = document.getElementById("searchInput");
+const btn = document.getElementById("searchBtn");
+const pillsDiv = document.getElementById("pills");
+
+input.addEventListener("input", () => {
+  btn.disabled = !input.value.trim();
+  showPills(input.value);
+});
+input.addEventListener("keydown", e => { if (e.key==="Enter" && input.value.trim()) doSearch(input.value.trim()); });
+btn.addEventListener("click", () => { if (input.value.trim()) doSearch(input.value.trim()); });
+
+function showPills(typed) {
+  const ql = typed.toLowerCase().replace(/\s+/g,' ').replace(/^\s/,'');
+  const qs = ql.trim();
+  if (qs.length < 1) { pillsDiv.innerHTML = ""; return; }
+  
+  const existingCas = new Set(results.map(r=>r.cas_number).filter(Boolean));
+  const existingNames = new Set(results.map(r=>r.name.toLowerCase()));
+  
+  let suggestions = [];
+  const seenCas = new Set();
+  
+  // Prefix match (with trailing space)
+  (PREFIX_IX[ql]||[]).sort((a,b)=>b.name.length-a.name.length).forEach(({name,cas}) => {
+    if (suggestions.length>=10) return;
+    if (cas && seenCas.has(cas)) return;
+    suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
+  });
+  
+  // Without space fallback
+  if (!suggestions.length && ql!==qs) {
+    (PREFIX_IX[qs]||[]).sort((a,b)=>b.name.length-a.name.length).forEach(({name,cas}) => {
+      if (suggestions.length>=10) return;
+      if (cas && seenCas.has(cas)) return;
+      suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
+    });
+  }
+  
+  // Space fallback
+  if (!suggestions.length && qs.includes(' ')) {
+    const shorter = qs.split(' ').slice(0,-1).join(' ');
+    (PREFIX_IX[shorter]||[]).sort((a,b)=>b.name.length-a.name.length).forEach(({name,cas}) => {
+      if (suggestions.length>=10) return;
+      if (!name.startsWith(qs) && !name.includes(qs)) return;
+      if (cas && seenCas.has(cas)) return;
+      suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
+    });
+  }
+  
+  // Substring
+  if (suggestions.length<10 && qs.length>=2) {
+    (PREFIX_IX[qs.substring(0,2)]||PREFIX_IX[qs[0]]||[]).forEach(({name,cas}) => {
+      if (suggestions.length>=10) return;
+      if (!name.includes(qs)) return;
+      if (suggestions.find(s=>s.name===toTitle(name))) return;
+      if (cas && seenCas.has(cas)) return;
+      suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
+    });
+  }
+  
+  // Filter out already in results
+  suggestions = suggestions.filter(s => {
+    if (s.name.toLowerCase()===qs) return false;
+    if (existingNames.has(s.name.toLowerCase())) return false;
+    if (s.cas && existingCas.has(s.cas)) return false;
+    return true;
+  });
+
+  // PubChem autocomplete fallback
+  if (suggestions.length < 3 && qs.length >= 2) {
+    pubchemAutocomplete(qs).then(names => {
+      if (!names.length && qs.includes('.')) {
+        // Dot removal fallback (e.g. c.i. → ci)
+        return pubchemAutocomplete(qs.replace(/\./g,''));
+      }
+      return names;
+    }).then(names => {
+      if (!names) return;
+      names.forEach(n => {
+        if (suggestions.length >= 10) return;
+        if (suggestions.find(s=>s.name===n)) return;
+        if (existingNames.has(n.toLowerCase())) return;
+        suggestions.push({name:n, cas:""});
+      });
+      renderPills(suggestions);
+    });
+  }
+  
+  renderPills(suggestions);
+}
+
+function renderPills(suggestions) {
+  pillsDiv.innerHTML = suggestions.slice(0,10).map(s =>
+    `<span class="pill" onclick="doSearch('${s.name.replace(/'/g,"\\'")}')">${s.name}</span>`
+  ).join('');
+}
+
+async function pubchemAutocomplete(q) {
+  if (pcCache['ac_'+q]) return pcCache['ac_'+q];
+  try {
+    const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(q)}/JSON?limit=5`);
+    const d = await r.json();
+    const names = d.dictionary_terms?.compound || [];
+    pcCache['ac_'+q] = names;
+    return names;
+  } catch(e) { return []; }
+}
+
+// ── Search ──
+async function doSearch(term) {
+  const names = term.split(',').map(s=>s.trim()).filter(Boolean);
+  const existingNames = new Set(results.map(r=>r.name.toLowerCase()));
+  const newNames = names.filter(n=>!existingNames.has(n.toLowerCase()));
+  if (!newNames.length) return;
+  
+  const prog = document.getElementById("progress");
+  const progBar = document.getElementById("progressBar");
+  const progText = document.getElementById("progressText");
+  prog.style.display = "block";
+  
+  for (let i=0; i<newNames.length; i++) {
+    progBar.style.width = ((i/newNames.length)*100)+"%";
+    progText.textContent = newNames[i];
+    const mat = await scrapeMaterial(newNames[i]);
+    results.unshift(mat); // newest on top
+  }
+  
+  // Dedup by CAS — keep first (newest)
+  const seen = new Set();
+  results = results.filter(r => {
+    if (!r.cas_number) return true;
+    if (seen.has(r.cas_number)) return false;
+    seen.add(r.cas_number); return true;
+  });
+  
+  progBar.style.width = "100%";
+  prog.style.display = "none";
+  progText.textContent = "";
+  input.value = "";
+  pillsDiv.innerHTML = "";
+  btn.disabled = true;
+  renderResults();
+}
+
+async function scrapeMaterial(name) {
+  const mat = {name, found:false, cas_number:"", fema_number:"", iupac_name:"",
+    molecular_formula:"", molecular_weight:"", smiles:"", inchi:"",
+    synonyms:[], structure_image_url:"", page_url:"", match_info:"",
+    odor_description:"", odor_type:"", odor_strength:"", note_classification:"",
+    tenacity:"", tenacity_hours:"", ifra_guidelines:"", usage_levels:"",
+    blends_well_with:[], pubchem_sections:{}};
+  
+  const n = name.toLowerCase().replace(/[®™]/g,'').trim();
+  const CAS_RE = /^\d{2,7}-\d{2}-\d$/;
+  const SMILES_RE = /^[A-Za-z0-9@+\-\[\]\(\)\\\/=#$.%]+$/;
+  let cid = null;
+
+  // ── Strategy 1: CAS detection ──
+  if (CAS_RE.test(n)) {
+    cid = await getCid(n);
+    if (cid) { mat.cas_number = n; mat.match_info = "✅ CAS direct lookup (" + n + ")"; }
+  }
+
+  // ── Strategy 2: SMILES detection ──
+  if (!cid && SMILES_RE.test(n) && n.length > 5 && /[=#\(\)]/.test(n)) {
+    try {
+      const r = await fetch(`${PUBCHEM_REST}/compound/smiles/cids/JSON?smiles=${encodeURIComponent(name.trim())}`);
+      const d = await r.json();
+      cid = d.IdentifierList?.CID?.[0] || null;
+      if (cid) mat.match_info = "✅ SMILES lookup";
+    } catch(e) {}
+  }
+
+  // ── Strategy 3: InChI detection ──
+  if (!cid && n.startsWith("inchi=")) {
+    try {
+      const r = await fetch(`${PUBCHEM_REST}/compound/inchi/cids/JSON`, {
+        method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        body:"inchi="+encodeURIComponent(name.trim())
+      });
+      const d = await r.json();
+      cid = d.IdentifierList?.CID?.[0] || null;
+      if (cid) mat.match_info = "✅ InChI lookup";
+    } catch(e) {}
+  }
+
+  // ── Strategy 4: Trade name → CAS → CID ──
+  if (!cid) {
+    let tradeCas = TRADES[n];
+    // Fuzzy variants
+    if (!tradeCas) {
+      const variants = [
+        n.replace(/ol$/, 'ool'), n.replace(/ool$/, 'ol'),
+        n.replace(/ /g, '-'), n.replace(/-/g, ' '),
+        n.replace(/ene$/, 'en'), n.replace(/en$/, 'ene'),
+        n.replace(/yl /, 'yl'), n.replace(/ic /, 'ic '),
+      ];
+      for (const v of variants) { if (TRADES[v]) { tradeCas = TRADES[v]; break; } }
+    }
+    if (tradeCas) {
+      if (MIXTURES.has(tradeCas)) {
+        mat.found = true; mat.cas_number = tradeCas;
+        mat.match_info = "✅ Natural mixture (CAS " + tradeCas + ")";
+        applyPerfumery(mat, tradeCas);
+        return mat;
+      }
+      cid = await getCid(tradeCas);
+      if (cid) { mat.cas_number = tradeCas; mat.match_info = "✅ CAS match (" + tradeCas + ")"; }
+      // SID fallback for trade CAS
+      if (!cid) {
+        cid = await getCidViaSid(tradeCas);
+        if (cid) { mat.cas_number = tradeCas; mat.match_info = "✅ CAS via Substance DB (" + tradeCas + ")"; }
+      }
+    }
+  }
+
+  // ── Strategy 5: Exact name on PubChem ──
+  if (!cid) {
+    cid = await getCid(name);
+  }
+
+  // ── Strategy 6: SID→CID (Substance DB) ──
+  if (!cid) {
+    cid = await getCidViaSid(name);
+    if (cid) mat.match_info = "ℹ️ Found via Substance DB";
+  }
+
+  // ── Strategy 7: PubChem autocomplete + verify ──
+  if (!cid) {
+    try {
+      const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(n)}/JSON?limit=3`);
+      const d = await r.json();
+      const suggestions = d.dictionary_terms?.compound || [];
+      for (const sug of suggestions) {
+        const testCid = await getCid(sug);
+        if (testCid) { cid = testCid; mat.match_info = "ℹ️ Autocomplete: " + sug; break; }
+      }
+    } catch(e) {}
+    // Also try without dots
+    if (!cid && n.includes('.')) {
+      try {
+        const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(n.replace(/\./g,''))}/JSON?limit=1`);
+        const d = await r.json();
+        const suggestions = d.dictionary_terms?.compound || [];
+        for (const sug of suggestions) {
+          const testCid = await getCid(sug);
+          if (testCid) { cid = testCid; mat.match_info = "ℹ️ Autocomplete: " + sug; break; }
+        }
+      } catch(e) {}
+    }
+  }
+
+  // ── Strategy 8: Fuzzy perfumery DB match ──
+  if (!cid) {
+    const fuzzy = fuzzyMatchDB(n);
+    if (fuzzy) {
+      cid = await getCid(fuzzy.cas);
+      if (cid) { mat.cas_number = fuzzy.cas; mat.match_info = "ℹ️ Fuzzy match: " + fuzzy.name; }
+    }
+  }
+
+  if (!cid) return mat; // not found after all strategies
+  
+  mat.found = true;
+  mat.page_url = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
+  mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=200/* Error */
 .error-card { border-color:#e74c3c; }
 .error-text { color:#e74c3c; font-size:0.85em; }
 
