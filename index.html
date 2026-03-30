@@ -725,8 +725,83 @@ function clearAll() {
   showPills(input.value);
 }
 
+function buildPerfumerySections(mat) {
+  const sections = [];
+  if (mat.odor_description || mat.odor_type || mat.odor_strength) {
+    const info = [];
+    if (mat.odor_description) info.push({ReferenceNumber:0,Description:"Odor Description",Value:{StringWithMarkup:[{String:mat.odor_description}]}});
+    if (mat.odor_type) info.push({ReferenceNumber:0,Description:"Odor Type",Value:{StringWithMarkup:[{String:mat.odor_type}]}});
+    if (mat.odor_strength) info.push({ReferenceNumber:0,Description:"Odor Strength",Value:{StringWithMarkup:[{String:mat.odor_strength}]}});
+    sections.push({TOCHeading:"Odor Profile",Description:"Olfactory characteristics from perfumery database.",Information:info});
+  }
+  if (mat.note_classification) {
+    sections.push({TOCHeading:"Note Classification",Description:"Fragrance pyramid classification.",Information:[
+      {ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.note_classification}]}}
+    ]});
+  }
+  if (mat.tenacity || mat.tenacity_hours) {
+    const info = [];
+    if (mat.tenacity) info.push({ReferenceNumber:0,Description:"Tenacity",Value:{StringWithMarkup:[{String:mat.tenacity}]}});
+    if (mat.tenacity_hours) info.push({ReferenceNumber:0,Description:"Duration",Value:{StringWithMarkup:[{String:mat.tenacity_hours}]}});
+    sections.push({TOCHeading:"Performance",Description:"Longevity and projection characteristics.",Information:info});
+  }
+  if (mat.ifra_guidelines || mat.usage_levels) {
+    const info = [];
+    if (mat.ifra_guidelines) info.push({ReferenceNumber:0,Description:"IFRA Guidelines",Value:{StringWithMarkup:[{String:mat.ifra_guidelines}]}});
+    if (mat.usage_levels) info.push({ReferenceNumber:0,Description:"Usage Levels",Value:{StringWithMarkup:[{String:mat.usage_levels}]}});
+    sections.push({TOCHeading:"Perfumery Safety",Description:"IFRA restrictions and recommended usage levels.",Information:info});
+  }
+  if (mat.blends_well_with && mat.blends_well_with.length) {
+    sections.push({TOCHeading:"Blending",Description:"Compatible fragrance materials.",Information:[
+      {ReferenceNumber:0,Description:"Blends Well With",Value:{StringWithMarkup:mat.blends_well_with.map(s=>({String:s}))}}
+    ]});
+  }
+  return sections;
+}
+
+function buildLocalRecord(mat) {
+  const sections = [];
+
+  // Names and Identifiers
+  const namesSec = [];
+  if (mat.cas_number) namesSec.push({TOCHeading:"CAS",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.cas_number}]}}]});
+  if (mat.fema_number) namesSec.push({TOCHeading:"FEMA Number",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.fema_number}]}}]});
+  if (mat.iupac_name) namesSec.push({TOCHeading:"IUPAC Name",Description:"Chemical name computed from structure based on IUPAC nomenclature standards.",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.iupac_name}]}}]});
+  if (mat.synonyms.length) namesSec.push({TOCHeading:"Synonyms",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:mat.synonyms.map(s=>({String:s}))}}]});
+  if (namesSec.length) sections.push({TOCHeading:"Names and Identifiers",Description:"Chemical names, synonyms, identifiers, and descriptors.",Section:namesSec});
+
+  // Chemical and Physical Properties
+  const chemSec = [];
+  if (mat.molecular_formula) chemSec.push({TOCHeading:"Molecular Formula",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.molecular_formula}]}}]});
+  if (mat.molecular_weight) chemSec.push({TOCHeading:"Molecular Weight",Information:[{ReferenceNumber:0,Value:{Number:[parseFloat(mat.molecular_weight)]}}]});
+  if (mat.smiles) chemSec.push({TOCHeading:"Canonical SMILES",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.smiles}]}}]});
+  if (mat.inchi) chemSec.push({TOCHeading:"InChI",Description:"International Chemical Identifier.",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.inchi}]}}]});
+  if (chemSec.length) sections.push({TOCHeading:"Chemical and Physical Properties",Description:"Structural descriptors and computed properties.",Section:chemSec});
+
+  // Structures (image link)
+  if (mat._cid) {
+    sections.push({TOCHeading:"Structures",Description:"Structure depictions of this compound.",Section:[
+      {TOCHeading:"2D Structure",Information:[{ReferenceNumber:0,Value:{Boolean:[true]}}],
+        URL:`https://pubchem.ncbi.nlm.nih.gov/image/imgsrv.fcgi?cid=${mat._cid}&t=l`}
+    ]});
+  }
+
+  // Perfumery Data
+  const perfSections = buildPerfumerySections(mat);
+  if (perfSections.length) sections.push({TOCHeading:"Perfumery Data",Description:"Perfumery-specific data from local fragrance database.",Section:perfSections});
+
+  return {
+    Record: {
+      RecordType: "CID",
+      RecordNumber: mat._cid || null,
+      RecordTitle: mat.name,
+      Section: sections
+    }
+  };
+}
+
 async function downloadJSON() {
-  const found = results.filter(r=>r.found && r._cid);
+  const found = results.filter(r=>r.found);
   if (!found.length) return;
 
   const btn = document.querySelector('[onclick="downloadJSON()"]');
@@ -736,62 +811,31 @@ async function downloadJSON() {
   const data = [];
   for (let i = 0; i < found.length; i++) {
     const mat = found[i];
-    btn.textContent = `⏳ Fetching ${i+1}/${found.length}...`;
-    try {
-      const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`);
-      const d = await r.json();
+    btn.textContent = `⏳ ${i+1}/${found.length}...`;
 
-      // Inject perfumery data as additional Sections into PubChem Record
-      if (d.Record && d.Record.Section) {
-        const perfSections = [];
+    let record = null;
 
-        if (mat.odor_description || mat.odor_type || mat.odor_strength) {
-          const odorInfo = [];
-          if (mat.odor_description) odorInfo.push({ReferenceNumber:0,Description:"Odor Description",Value:{StringWithMarkup:[{String:mat.odor_description}]}});
-          if (mat.odor_type) odorInfo.push({ReferenceNumber:0,Description:"Odor Type",Value:{StringWithMarkup:[{String:mat.odor_type}]}});
-          if (mat.odor_strength) odorInfo.push({ReferenceNumber:0,Description:"Odor Strength",Value:{StringWithMarkup:[{String:mat.odor_strength}]}});
-          perfSections.push({TOCHeading:"Odor Profile",Description:"Olfactory characteristics from perfumery database.",Information:odorInfo});
+    // Try fetching full PubChem data
+    if (mat._cid) {
+      try {
+        const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`);
+        if (r.ok) {
+          const d = await r.json();
+          if (d.Record && d.Record.Section) {
+            const perfSections = buildPerfumerySections(mat);
+            if (perfSections.length) {
+              d.Record.Section.push({TOCHeading:"Perfumery Data",Description:"Perfumery-specific data from local fragrance database.",Section:perfSections});
+            }
+            record = d;
+          }
         }
-
-        if (mat.note_classification) {
-          perfSections.push({TOCHeading:"Note Classification",Description:"Fragrance pyramid classification.",Information:[
-            {ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.note_classification}]}}
-          ]});
-        }
-
-        if (mat.tenacity || mat.tenacity_hours) {
-          const perfInfo = [];
-          if (mat.tenacity) perfInfo.push({ReferenceNumber:0,Description:"Tenacity",Value:{StringWithMarkup:[{String:mat.tenacity}]}});
-          if (mat.tenacity_hours) perfInfo.push({ReferenceNumber:0,Description:"Duration",Value:{StringWithMarkup:[{String:mat.tenacity_hours}]}});
-          perfSections.push({TOCHeading:"Performance",Description:"Longevity and projection characteristics.",Information:perfInfo});
-        }
-
-        if (mat.ifra_guidelines || mat.usage_levels) {
-          const safeInfo = [];
-          if (mat.ifra_guidelines) safeInfo.push({ReferenceNumber:0,Description:"IFRA Guidelines",Value:{StringWithMarkup:[{String:mat.ifra_guidelines}]}});
-          if (mat.usage_levels) safeInfo.push({ReferenceNumber:0,Description:"Usage Levels",Value:{StringWithMarkup:[{String:mat.usage_levels}]}});
-          perfSections.push({TOCHeading:"Perfumery Safety",Description:"IFRA restrictions and recommended usage levels.",Information:safeInfo});
-        }
-
-        if (mat.blends_well_with && mat.blends_well_with.length) {
-          perfSections.push({TOCHeading:"Blending",Description:"Compatible fragrance materials.",Information:[
-            {ReferenceNumber:0,Description:"Blends Well With",Value:{StringWithMarkup:mat.blends_well_with.map(s=>({String:s}))}}
-          ]});
-        }
-
-        if (perfSections.length) {
-          d.Record.Section.push({
-            TOCHeading:"Perfumery Data",
-            Description:"Perfumery-specific data from local fragrance database.",
-            Section:perfSections
-          });
-        }
-      }
-
-      data.push(d);
-    } catch(e) {
-      // If PubChem fetch fails, skip this compound
+      } catch(e) {}
     }
+
+    // Fallback: build PubChem-style Record from local data
+    if (!record) record = buildLocalRecord(mat);
+
+    data.push(record);
   }
 
   if (data.length) {
