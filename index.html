@@ -726,15 +726,72 @@ function clearAll() {
 }
 
 function downloadJSON() {
-  const data = results.filter(r=>r.found).map(mat => ({
-    name:mat.name, cas:mat.cas_number, fema:mat.fema_number,
-    iupac:mat.iupac_name, formula:mat.molecular_formula, weight:mat.molecular_weight,
-    smiles:mat.smiles, inchi:mat.inchi, synonyms:mat.synonyms, pubchem_url:mat.page_url,
-    odor:{description:mat.odor_description, type:mat.odor_type, strength:mat.odor_strength},
-    note:mat.note_classification, performance:{tenacity:mat.tenacity, duration:mat.tenacity_hours},
-    safety:{ifra:mat.ifra_guidelines, usage:mat.usage_levels},
-    blends_with:mat.blends_well_with
-  }));
+  const data = results.filter(r=>r.found).map(mat => {
+    const cid = mat._cid || null;
+    const sections = [];
+
+    // Names and Identifiers
+    const identifiers = [];
+    if (mat.cas_number) identifiers.push({TOCHeading:"CAS",Information:[{Value:{StringWithMarkup:[{String:mat.cas_number}]}}]});
+    if (mat.fema_number) identifiers.push({TOCHeading:"FEMA Number",Information:[{Value:{StringWithMarkup:[{String:mat.fema_number}]}}]});
+    if (mat.iupac_name) identifiers.push({TOCHeading:"IUPAC Name",Information:[{Value:{StringWithMarkup:[{String:mat.iupac_name}]}}]});
+    if (mat.synonyms.length) identifiers.push({TOCHeading:"Synonyms",Information:[{Value:{StringWithMarkup:mat.synonyms.map(s=>({String:s}))}}]});
+    if (identifiers.length) sections.push({TOCHeading:"Names and Identifiers",Section:identifiers});
+
+    // Molecular Properties
+    const molProps = [];
+    if (mat.molecular_formula) molProps.push({TOCHeading:"Molecular Formula",Information:[{Value:{StringWithMarkup:[{String:mat.molecular_formula}]}}]});
+    if (mat.molecular_weight) molProps.push({TOCHeading:"Molecular Weight",Information:[{Value:{Number:[parseFloat(mat.molecular_weight)]}}]});
+    if (mat.smiles) molProps.push({TOCHeading:"Canonical SMILES",Information:[{Value:{StringWithMarkup:[{String:mat.smiles}]}}]});
+    if (mat.inchi) molProps.push({TOCHeading:"InChI",Information:[{Value:{StringWithMarkup:[{String:mat.inchi}]}}]});
+    if (molProps.length) sections.push({TOCHeading:"Chemical and Physical Properties",Section:molProps});
+
+    // Odor Profile
+    const odorSec = [];
+    if (mat.odor_description) odorSec.push({TOCHeading:"Odor Description",Information:[{Value:{StringWithMarkup:[{String:mat.odor_description}]}}]});
+    if (mat.odor_type) odorSec.push({TOCHeading:"Odor Type",Information:[{Value:{StringWithMarkup:[{String:mat.odor_type}]}}]});
+    if (mat.odor_strength) odorSec.push({TOCHeading:"Odor Strength",Information:[{Value:{StringWithMarkup:[{String:mat.odor_strength}]}}]});
+    if (mat.note_classification) odorSec.push({TOCHeading:"Note Classification",Information:[{Value:{StringWithMarkup:[{String:mat.note_classification}]}}]});
+    if (odorSec.length) sections.push({TOCHeading:"Odor Profile",Section:odorSec});
+
+    // Performance
+    const perfSec = [];
+    if (mat.tenacity) perfSec.push({TOCHeading:"Tenacity",Information:[{Value:{StringWithMarkup:[{String:mat.tenacity}]}}]});
+    if (mat.tenacity_hours) perfSec.push({TOCHeading:"Duration",Information:[{Value:{StringWithMarkup:[{String:mat.tenacity_hours}]}}]});
+    if (perfSec.length) sections.push({TOCHeading:"Performance",Section:perfSec});
+
+    // Safety
+    const safeSec = [];
+    if (mat.ifra_guidelines) safeSec.push({TOCHeading:"IFRA Guidelines",Information:[{Value:{StringWithMarkup:[{String:mat.ifra_guidelines}]}}]});
+    if (mat.usage_levels) safeSec.push({TOCHeading:"Usage Levels",Information:[{Value:{StringWithMarkup:[{String:mat.usage_levels}]}}]});
+    if (safeSec.length) sections.push({TOCHeading:"Safety and Hazards",Section:safeSec});
+
+    // Blends
+    if (mat.blends_well_with.length) {
+      sections.push({TOCHeading:"Blending",Section:[
+        {TOCHeading:"Blends Well With",Information:[{Value:{StringWithMarkup:mat.blends_well_with.map(s=>({String:s}))}}]}
+      ]});
+    }
+
+    // PubChem extended data
+    if (mat.pubchem_sections && Object.keys(mat.pubchem_sections).length) {
+      const pcSubs = [];
+      for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
+        pcSubs.push({TOCHeading:heading,Information:[{Value:{StringWithMarkup:items.map(s=>({String:s}))}}]});
+      }
+      sections.push({TOCHeading:"PubChem Data",Section:pcSubs});
+    }
+
+    return {
+      Record: {
+        RecordType: "CID",
+        RecordNumber: cid,
+        RecordTitle: mat.name,
+        Section: sections
+      }
+    };
+  });
+
   const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
   const a = document.createElement("a"); a.href=URL.createObjectURL(blob);
   a.download="perfume_report.json"; a.click();
