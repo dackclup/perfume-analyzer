@@ -578,13 +578,8 @@ function renderPubchemSections(sections) {
   }
   let html = '';
   for (const [topH, subs] of Object.entries(grouped)) {
-    const gid = pcGroupId++;
-    html += `<div class="pc-group">`;
-    html += `<div class="pc-group-header" onclick="togglePcGroup(${gid})">
-      <span>${esc(topH)}</span>
-      <span class="pc-arrow" id="pcArrow${gid}">▶</span>
-    </div>`;
-    html += `<div class="pc-group-body" id="pcBody${gid}">`;
+    // Build body content first to check if it's empty
+    let bodyHtml = '';
     for (const {heading, items} of subs) {
       const display = heading.includes(' > ') ? heading.split(' > ').pop() : heading;
       const filtered = items.filter(item => {
@@ -593,16 +588,24 @@ function renderPubchemSections(sections) {
         return clean && clean.length >= 3;
       }).slice(0, 20);
       if (!filtered.length) continue;
-      html += `<div class="pc-sub">`;
-      if (display !== topH) html += `<div class="pc-sub-title">${esc(display)}</div>`;
-      html += `<div class="pc-sub-content">`;
+      bodyHtml += `<div class="pc-sub">`;
+      if (display !== topH) bodyHtml += `<div class="pc-sub-title">${esc(display)}</div>`;
+      bodyHtml += `<div class="pc-sub-content">`;
       for (const item of filtered) {
         const clean = item.replace(/https?:\/\/\S+/g,'').trim();
-        html += `<p>${esc(clean.length>400?clean.substring(0,400)+'…':clean)}</p>`;
+        bodyHtml += `<p>${esc(clean.length>400?clean.substring(0,400)+'…':clean)}</p>`;
       }
-      html += `</div></div>`;
+      bodyHtml += `</div></div>`;
     }
-    html += `</div></div>`;
+    // Skip entire group if body is empty
+    if (!bodyHtml) continue;
+    const gid = pcGroupId++;
+    html += `<div class="pc-group">`;
+    html += `<div class="pc-group-header" onclick="togglePcGroup(${gid})">
+      <span>${esc(topH)}</span>
+      <span class="pc-arrow" id="pcArrow${gid}">▶</span>
+    </div>`;
+    html += `<div class="pc-group-body" id="pcBody${gid}">${bodyHtml}</div></div>`;
   }
   return html;
 }
