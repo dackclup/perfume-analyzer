@@ -161,18 +161,21 @@ for (const [cas, entry] of Object.entries(DB)) {
 }
 
 // Build prefix index (pre-sorted by name length descending)
-const ALL_NAMES = [...new Set([...Object.keys(TRADES), ...Object.values(DB).flatMap(e=>e.synonyms||[])])];
+const _seen = new Set();
 const PREFIX_IX = {};
-ALL_NAMES.forEach(name => {
+function _addPrefix(name) {
+  if (_seen.has(name)) return;
+  _seen.add(name);
   const nl = name.toLowerCase();
-  const cas = TRADES[nl] || TRADES[name] || NAME_TO_CAS[nl] || "";
+  const cas = TRADES[nl] || NAME_TO_CAS[nl] || "";
   for (let i=1; i<=Math.min(name.length,11); i++) {
     const p = name.substring(0,i);
     if (!PREFIX_IX[p]) PREFIX_IX[p] = [];
     PREFIX_IX[p].push({name, cas});
   }
-});
-// Pre-sort once instead of sorting on every keystroke
+}
+Object.keys(TRADES).forEach(_addPrefix);
+Object.values(DB).forEach(e => (e.synonyms||[]).forEach(_addPrefix));
 for (const key in PREFIX_IX) PREFIX_IX[key].sort((a,b)=>b.name.length-a.name.length);
 
 // Build lowercase synonym→CAS index for fast fuzzy matching (keep first match per synonym)
@@ -198,16 +201,17 @@ input.addEventListener("input", () => {
   clearTimeout(_pillTimer);
   _pillTimer = setTimeout(() => showPills(input.value), 150);
 });
-input.addEventListener("keydown", e => { if (e.key==="Enter" && input.value.trim()) doSearch(input.value.trim()); });
-btn.addEventListener("click", () => { if (input.value.trim()) doSearch(input.value.trim()); });
+input.addEventListener("keydown", e => { const v=input.value.trim(); if (e.key==="Enter"&&v) doSearch(v); });
+btn.addEventListener("click", () => { const v=input.value.trim(); if (v) doSearch(v); });
 
 function showPills(typed) {
-  const ql = typed.toLowerCase().replace(/\s+/g,' ').replace(/^\s/,'');
-  const qs = ql.trim();
+  const ql = typed.toLowerCase().replace(/\s+/g,' ').trim();
+  const qs = ql;
   if (qs.length < 1) { pillsDiv.innerHTML = ""; return; }
   
-  const existingCas = new Set(results.map(r=>r.cas_number).filter(Boolean));
-  const existingNames = new Set(results.map(r=>r.name.toLowerCase()));
+  const existingCas = new Set();
+  const existingNames = new Set();
+  results.forEach(r => { if (r.cas_number) existingCas.add(r.cas_number); existingNames.add(r.name.toLowerCase()); });
   
   let suggestions = [];
   const seenCas = new Set();
@@ -230,7 +234,7 @@ function showPills(typed) {
   
   // Space fallback
   if (!suggestions.length && qs.includes(' ')) {
-    const shorter = qs.split(' ').slice(0,-1).join(' ');
+    const shorter = qs.substring(0, qs.lastIndexOf(' '));
     (PREFIX_IX[shorter]||[]).forEach(({name,cas}) => {
       if (suggestions.length>=10) return;
       if (!name.startsWith(qs) && !name.includes(qs)) return;
@@ -252,8 +256,8 @@ function showPills(typed) {
   
   // Filter out already in results
   suggestions = suggestions.filter(s => {
-    if (s.name.toLowerCase()===qs) return false;
-    if (existingNames.has(s.name.toLowerCase())) return false;
+    const sl = s.name.toLowerCase();
+    if (sl===qs || existingNames.has(sl)) return false;
     if (s.cas && existingCas.has(s.cas)) return false;
     return true;
   });
@@ -533,7 +537,7 @@ function extractAllSections(sections, prefix="", depth=0) {
         if (items.length >= 30) break; // Cap items per section
         if (info.Value?.StringWithMarkup) {
           for (const sm of info.Value.StringWithMarkup) {
-            if (sm.String && sm.String.length > 5 && items.length < 30) items.push(sm.String);
+            if (sm.String && sm.String.length > 5) items.push(sm.String);
           }
         }
       }
@@ -592,18 +596,19 @@ function renderPubchemSections(sections) {
     let bodyHtml = '';
     for (const {heading, items} of subs) {
       const display = heading.includes(' > ') ? heading.split(' > ').pop() : heading;
-      const filtered = items.filter(item => {
-        if (item.startsWith('http')) return false;
-        const clean = item.replace(/https?:\/\/\S+/g,'').trim();
-        return clean && clean.length >= 3;
-      }).slice(0, 20);
-      if (!filtered.length) continue;
+      const cleaned = [];
+      for (const item of items) {
+        if (cleaned.length >= 20) break;
+        if (item.startsWith('http')) continue;
+        const c = item.replace(/https?:\/\/\S+/g,'').trim();
+        if (c && c.length >= 3) cleaned.push(c);
+      }
+      if (!cleaned.length) continue;
       bodyHtml += `<div class="pc-sub">`;
       if (display !== topH) bodyHtml += `<div class="pc-sub-title">${esc(display)}</div>`;
       bodyHtml += `<div class="pc-sub-content">`;
-      for (const item of filtered) {
-        const clean = item.replace(/https?:\/\/\S+/g,'').trim();
-        bodyHtml += `<p>${esc(clean.length>400?clean.substring(0,400)+'…':clean)}</p>`;
+      for (const c of cleaned) {
+        bodyHtml += `<p>${esc(c.length>400?c.substring(0,400)+'…':c)}</p>`;
       }
       bodyHtml += `</div></div>`;
     }
