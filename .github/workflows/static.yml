@@ -2,7 +2,7 @@ name: Deploy static content to Pages
 
 on:
   push:
-    branches: ["claude/check-project-files-yudTX"]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
