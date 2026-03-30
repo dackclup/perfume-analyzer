@@ -1,0 +1,832 @@
+/* ============================================================
+   Perfume Analyzer — style.css
+   Mobile-first, responsive. Matches Streamlit design language.
+   Font: IBM Plex Sans (loaded via HTML <link>)
+   ============================================================ */
+
+/* --- Reset & Base ----------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #1a1a2e;
+  background: #F0F0F5;
+  min-height: 100vh;
+  padding: 0 16px;
+}
+
+code, pre {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85em;
+  color: #2C4A6E;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: #2C3E5A;
+  line-height: 1.3;
+}
+
+a {
+  color: #3D5A80;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #C9CCD5;
+  margin: 16px 0;
+}
+
+/* --- Layout wrapper --------------------------------------- */
+.app-container {
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* --- 1. Header -------------------------------------------- */
+.header {
+  padding: 24px 0 16px;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #2C3E5A;
+  margin-bottom: 4px;
+}
+
+.header .subtitle {
+  font-size: 0.85rem;
+  color: #5A6B82;
+  font-weight: 300;
+}
+
+/* --- 2. Search bar ---------------------------------------- */
+.search-container {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  margin-bottom: 8px;
+}
+
+.search-container input[type="text"] {
+  flex: 1;
+  min-height: 44px;
+  padding: 10px 14px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 1rem;
+  color: #1a1a2e;
+  background: #F0F0F5;
+  border: 1px solid #C9CCD5;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-container input[type="text"]:focus {
+  border-color: #3D5A80;
+  box-shadow: none;
+}
+
+.search-container input[type="text"]::placeholder {
+  color: #8893A6;
+}
+
+.search-container .search-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 18px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #F0F0F5;
+  background: #3D5A80;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.search-container .search-btn:hover {
+  background: #2C4A6E;
+}
+
+/* --- 3. Autocomplete -------------------------------------- */
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 56px; /* leave room for button */
+  background: #fff;
+  border: 1px solid #C9CCD5;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  list-style: none;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.autocomplete-item {
+  padding: 10px 14px;
+  font-size: 0.92rem;
+  color: #1a1a2e;
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active {
+  background: #E8EBF0;
+}
+
+/* --- 4. Pills --------------------------------------------- */
+.pills-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 16px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 14px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: #3D5A80;
+  background: #F0F0F5;
+  border: 1px solid #C9CCD5;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pill:hover,
+.pill.selected {
+  background: #3D5A80;
+  border-color: #3D5A80;
+  color: #fff;
+}
+
+/* --- 9. Status bar ---------------------------------------- */
+.status-bar {
+  font-size: 0.8rem;
+  color: #5A6B82;
+  margin-bottom: 8px;
+}
+
+/* --- 8. Progress bar -------------------------------------- */
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #C9CCD5;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #3D5A80;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* --- 5 & 6. Results & Cards ------------------------------- */
+.results-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.result-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  background: #fff;
+  transition: border-color 0.2s;
+  overflow: hidden;
+}
+
+.result-card:hover {
+  border-color: #7E8EA6;
+}
+
+/* Card header */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  min-height: 44px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.card-header .material-name {
+  flex: 1;
+  font-weight: 500;
+  font-size: 1rem;
+  color: #2C3E5A;
+  overflow-wrap: anywhere;
+}
+
+.card-header .expand-toggle {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #3D5A80;
+  opacity: 0.6;
+  transition: transform 0.25s, opacity 0.2s;
+}
+
+.result-card.expanded .card-header .expand-toggle {
+  transform: rotate(90deg);
+  opacity: 1;
+}
+
+.card-header .delete-btn {
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #3D5A80;
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  padding: 0;
+}
+
+.card-header .delete-btn:hover {
+  opacity: 1;
+}
+
+/* Card body — expand/collapse */
+.card-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.25s ease;
+  padding: 0 14px;
+}
+
+.result-card.expanded .card-body {
+  max-height: 2000px;
+  padding: 0 14px 16px;
+}
+
+/* Info grid: image + identifiers */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.info-grid .structure-img {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  border-radius: 4px;
+  background: #F0F0F5;
+}
+
+/* Properties table */
+.prop-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+.prop-table td {
+  padding: 6px 8px;
+  vertical-align: top;
+  border-bottom: 1px solid #F0F0F5;
+}
+
+.prop-table td:first-child {
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4A5E78;
+  font-weight: 600;
+  white-space: nowrap;
+  width: 1%;
+  padding-right: 16px;
+}
+
+.prop-table td:last-child {
+  overflow-wrap: anywhere;
+}
+
+/* Section headings */
+.section-heading {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2C3E5A;
+  margin: 16px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #C9CCD5;
+}
+
+.subsection-heading {
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4A5E78;
+  font-weight: 600;
+  margin: 12px 0 4px;
+}
+
+/* Note badges */
+.note-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 3px;
+  font-size: 0.8em;
+  font-weight: 500;
+  margin: 2px 4px;
+}
+
+.note-top {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.note-mid {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.note-base {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+/* --- 7. Export bar ----------------------------------------- */
+.export-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  align-items: center;
+}
+
+.export-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 16px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1a1a2e;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.export-btn:hover {
+  opacity: 0.6;
+}
+
+/* --- 10. Clear all button --------------------------------- */
+.clear-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 18px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #F0F0F5;
+  background: #3D5A80;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.clear-btn:hover {
+  background: #2C4A6E;
+}
+
+/* --- 11. Scroll to top ------------------------------------ */
+.scroll-top {
+  text-align: right;
+  margin-top: 4px;
+  margin-bottom: 20px;
+}
+
+.scroll-top a {
+  font-size: 0.8em;
+  color: #3D5A80;
+  text-decoration: none;
+}
+
+.scroll-top a:hover {
+  text-decoration: underline;
+}
+
+/* ============================================================
+   Responsive — tablet and up (>=600px)
+   ============================================================ */
+@media (min-width: 600px) {
+  body {
+    padding: 0 24px;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .info-grid {
+    grid-template-columns: auto 1fr;
+  }
+
+  .info-grid .structure-img {
+    max-width: 220px;
+  }
+
+  .card-header {
+    padding: 14px 18px;
+  }
+
+  .card-body {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .result-card.expanded .card-body {
+    padding: 0 18px 20px;
+  }
+}
+
+/* ============================================================
+   Dark mode — automatic (prefers-color-scheme)
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #0f1923;
+    color: #E8ECF0;
+  }
+
+  h1, h2, h3, h4, h5, h6,
+  .card-header .material-name,
+  .section-heading {
+    color: #E8ECF0;
+  }
+
+  code, pre {
+    color: #C9CCD5;
+  }
+
+  .header .subtitle {
+    color: #8899AA;
+  }
+
+  hr {
+    border-top-color: #2a3a50;
+  }
+
+  /* Search input */
+  .search-container input[type="text"] {
+    background: #1a2332;
+    border-color: #3D5A80;
+    color: #E8ECF0;
+  }
+
+  .search-container input[type="text"]:focus {
+    border-color: #7E8EA6;
+  }
+
+  .search-container input[type="text"]::placeholder {
+    color: #7E8EA6;
+  }
+
+  /* Search button */
+  .search-container .search-btn {
+    background: #7E8EA6;
+    color: #111;
+  }
+
+  .search-container .search-btn:hover {
+    background: #C9CCD5;
+  }
+
+  /* Autocomplete */
+  .autocomplete-list {
+    background: #1a2332;
+    border-color: #3D5A80;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .autocomplete-item {
+    color: #E8ECF0;
+  }
+
+  .autocomplete-item:hover,
+  .autocomplete-item.active {
+    background: #243040;
+  }
+
+  /* Pills */
+  .pill {
+    background: #1a2332;
+    border-color: #3D5A80;
+    color: #C9CCD5;
+  }
+
+  .pill:hover,
+  .pill.selected {
+    background: #3D5A80;
+    border-color: #3D5A80;
+    color: #F0F0F5;
+  }
+
+  /* Status bar */
+  .status-bar {
+    color: #8899AA;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    background: #2a3a50;
+  }
+
+  .progress-fill {
+    background: #7E8EA6;
+  }
+
+  /* Cards */
+  .result-card {
+    background: #1a2332;
+    border-color: #3D5A80;
+  }
+
+  .result-card:hover {
+    border-color: #7E8EA6;
+  }
+
+  .card-header .expand-toggle {
+    color: #C9CCD5;
+  }
+
+  .card-header .delete-btn {
+    color: #C9CCD5;
+  }
+
+  /* Prop table */
+  .prop-table td {
+    border-bottom-color: #243040;
+  }
+
+  .prop-table td:first-child,
+  .subsection-heading {
+    color: #9AACBF;
+  }
+
+  .section-heading {
+    border-bottom-color: #2a3a50;
+  }
+
+  /* Note badges — dark */
+  .note-top {
+    background: #422006;
+    color: #fbbf24;
+  }
+
+  .note-mid {
+    background: #172554;
+    color: #60a5fa;
+  }
+
+  .note-base {
+    background: #2e1065;
+    color: #c4b5fd;
+  }
+
+  /* Export */
+  .export-btn {
+    color: #E8ECF0;
+  }
+
+  /* Clear */
+  .clear-btn {
+    background: #7E8EA6;
+    color: #111;
+  }
+
+  .clear-btn:hover {
+    background: #C9CCD5;
+  }
+
+  /* Scroll top */
+  .scroll-top a {
+    color: #7E8EA6;
+  }
+}
+
+/* ============================================================
+   Dark mode — manual toggle via .dark on <body>
+   ============================================================ */
+body.dark {
+  background: #0f1923;
+  color: #E8ECF0;
+}
+
+body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark h4,
+body.dark h5,
+body.dark h6,
+body.dark .card-header .material-name,
+body.dark .section-heading {
+  color: #E8ECF0;
+}
+
+body.dark code,
+body.dark pre {
+  color: #C9CCD5;
+}
+
+body.dark .header .subtitle {
+  color: #8899AA;
+}
+
+body.dark hr {
+  border-top-color: #2a3a50;
+}
+
+body.dark .search-container input[type="text"] {
+  background: #1a2332;
+  border-color: #3D5A80;
+  color: #E8ECF0;
+}
+
+body.dark .search-container input[type="text"]:focus {
+  border-color: #7E8EA6;
+}
+
+body.dark .search-container input[type="text"]::placeholder {
+  color: #7E8EA6;
+}
+
+body.dark .search-container .search-btn {
+  background: #7E8EA6;
+  color: #111;
+}
+
+body.dark .search-container .search-btn:hover {
+  background: #C9CCD5;
+}
+
+body.dark .autocomplete-list {
+  background: #1a2332;
+  border-color: #3D5A80;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+body.dark .autocomplete-item {
+  color: #E8ECF0;
+}
+
+body.dark .autocomplete-item:hover,
+body.dark .autocomplete-item.active {
+  background: #243040;
+}
+
+body.dark .pill {
+  background: #1a2332;
+  border-color: #3D5A80;
+  color: #C9CCD5;
+}
+
+body.dark .pill:hover,
+body.dark .pill.selected {
+  background: #3D5A80;
+  border-color: #3D5A80;
+  color: #F0F0F5;
+}
+
+body.dark .status-bar {
+  color: #8899AA;
+}
+
+body.dark .progress-bar {
+  background: #2a3a50;
+}
+
+body.dark .progress-fill {
+  background: #7E8EA6;
+}
+
+body.dark .result-card {
+  background: #1a2332;
+  border-color: #3D5A80;
+}
+
+body.dark .result-card:hover {
+  border-color: #7E8EA6;
+}
+
+body.dark .card-header .expand-toggle {
+  color: #C9CCD5;
+}
+
+body.dark .card-header .delete-btn {
+  color: #C9CCD5;
+}
+
+body.dark .prop-table td {
+  border-bottom-color: #243040;
+}
+
+body.dark .prop-table td:first-child,
+body.dark .subsection-heading {
+  color: #9AACBF;
+}
+
+body.dark .section-heading {
+  border-bottom-color: #2a3a50;
+}
+
+body.dark .note-top {
+  background: #422006;
+  color: #fbbf24;
+}
+
+body.dark .note-mid {
+  background: #172554;
+  color: #60a5fa;
+}
+
+body.dark .note-base {
+  background: #2e1065;
+  color: #c4b5fd;
+}
+
+body.dark .export-btn {
+  color: #E8ECF0;
+}
+
+body.dark .clear-btn {
+  background: #7E8EA6;
+  color: #111;
+}
+
+body.dark .clear-btn:hover {
+  background: #C9CCD5;
+}
+
+body.dark .scroll-top a {
+  color: #7E8EA6;
+}
