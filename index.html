@@ -23,7 +23,7 @@
   }
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); padding:16px; max-width:900px; margin:0 auto; }
+body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); padding:16px; padding-bottom:60px; max-width:900px; margin:0 auto; }
 h1 { font-size:1.8em; font-weight:600; margin-bottom:4px; }
 .subtitle { color:var(--text2); font-size:0.9em; margin-bottom:16px; }
 hr { border:none; border-top:1px solid var(--border); margin:16px 0; }
@@ -248,15 +248,20 @@ function showPills(typed) {
     return true;
   });
 
-  // PubChem autocomplete fallback
+  // Render local suggestions immediately
+  renderPills(suggestions);
+
+  // PubChem autocomplete fallback (async, renders when done)
   if (suggestions.length < 3 && qs.length >= 2) {
+    const currentQuery = qs;
     pubchemAutocomplete(qs).then(names => {
       if (!names.length && qs.includes('.')) {
-        // Dot removal fallback (e.g. c.i. → ci)
         return pubchemAutocomplete(qs.replace(/\./g,''));
       }
       return names;
     }).then(names => {
+      // Abort if user has typed something else
+      if (input.value.toLowerCase().trim() !== currentQuery) return;
       if (!names) return;
       names.forEach(n => {
         if (suggestions.length >= 10) return;
@@ -267,8 +272,6 @@ function showPills(typed) {
       renderPills(suggestions);
     });
   }
-  
-  renderPills(suggestions);
 }
 
 function renderPills(suggestions) {
@@ -859,9 +862,11 @@ async function downloadJSON() {
   const found = results.filter(r=>r.found);
   if (!found.length) return;
 
-  const btn = document.querySelector('[onclick="downloadJSON()"]');
+  const btn = document.querySelector('.downloads a[onclick*="downloadJSON"]');
+  if (!btn) return;
   const origText = btn.textContent;
-  btn.disabled = true;
+  btn.style.pointerEvents = "none";
+  btn.style.opacity = "0.4";
 
   const data = [];
   for (let i = 0; i < found.length; i++) {
@@ -900,7 +905,8 @@ async function downloadJSON() {
   }
 
   btn.textContent = origText;
-  btn.disabled = false;
+  btn.style.pointerEvents = "";
+  btn.style.opacity = "";
 }
 
 function esc(s) { const d=document.createElement('div'); d.textContent=s||""; return d.innerHTML; }
