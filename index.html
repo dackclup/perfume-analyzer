@@ -367,20 +367,20 @@ async function scrapeMaterial(name) {
   const SMILES_RE = /^[A-Za-z0-9@+\-\[\]\(\)\\\/=#$.%]+$/;
   let cid = null;
 
-  // ── Fast path: direct DB match by name/synonym → skip all strategies ──
+  // ── Fast path: direct DB match by name/synonym → return instantly ──
   const fastCas = TRADES[n] || NAME_TO_CAS[n];
   if (fastCas && DB[fastCas]) {
     mat.cas_number = fastCas;
     mat.found = true;
+    mat.match_info = "✅ CAS match (" + fastCas + ")";
     applyPerfumery(mat, fastCas);
     if (MIXTURES.has(fastCas)) {
       mat.match_info = "✅ Natural mixture (CAS " + fastCas + ")";
-      return mat;
     }
-    // Try to get CID for structure image + PubChem link
-    cid = await getCid(fastCas);
-    if (cid) {
-      mat.match_info = "✅ CAS match (" + fastCas + ")";
+    // Load CID + image + properties in background (non-blocking)
+    mat._loadPubchem = getCid(fastCas).then(async cid => {
+      if (!cid) return;
+      mat._cid = cid;
       mat.page_url = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
       mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=400x400`;
       const [propsRes, synsRes] = await Promise.allSettled([
@@ -398,8 +398,9 @@ async function scrapeMaterial(name) {
       }
       const synsData = synsRes.status==='fulfilled' ? synsRes.value : null;
       if (synsData) mat.synonyms = (synsData.InformationList?.Information?.[0]?.Synonym || []).slice(0,15);
-      mat._cid = cid;
-    }
+      renderResults(); // Re-render to show image + chemical data
+      prefetchAll();
+    }).catch(()=>{});
     return mat;
   }
 
