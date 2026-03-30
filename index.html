@@ -78,8 +78,17 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .pubchem-toggle { cursor:pointer; color:var(--accent); font-size:0.9em; margin-top:8px; }
 .pubchem-data { display:none; font-size:0.85em; margin-top:8px; }
 .pubchem-data.open { display:block; }
-.pubchem-data h4 { font-size:0.85em; font-weight:600; color:var(--accent); margin:8px 0 2px; }
-.pubchem-data li { margin:2px 0; overflow-wrap:anywhere; }
+.pc-group { border:1px solid var(--border); border-radius:6px; margin-bottom:8px; overflow:hidden; }
+.pc-group-header { padding:8px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:var(--bg2); font-weight:500; font-size:0.9em; color:var(--text); }
+.pc-group-header:hover { opacity:0.8; }
+.pc-group-header .pc-arrow { font-size:0.7em; color:var(--text2); transition:transform 0.2s; }
+.pc-group-header .pc-arrow.open { transform:rotate(90deg); }
+.pc-group-body { display:none; padding:8px 12px; }
+.pc-group-body.open { display:block; }
+.pc-sub { margin-bottom:6px; }
+.pc-sub-title { font-size:0.8em; font-weight:600; color:var(--accent); margin-bottom:2px; }
+.pc-sub-content { font-size:0.88em; color:var(--text); line-height:1.5; padding:4px 0 4px 8px; border-left:2px solid var(--border); margin-left:2px; }
+.pc-sub-content p { margin:2px 0; overflow-wrap:anywhere; }
 
 /* Download */
 .downloads { margin-top:16px; }
@@ -544,8 +553,8 @@ async function getCid(name) {
   } catch(e) { pcCache[key]=null; return null; }
 }
 
+let pcGroupId = 0;
 function renderPubchemSections(sections) {
-  // Group by top-level heading
   const grouped = {};
   for (const [heading, items] of Object.entries(sections)) {
     const top = heading.includes(' > ') ? heading.split(' > ')[0] : heading;
@@ -554,21 +563,40 @@ function renderPubchemSections(sections) {
   }
   let html = '';
   for (const [topH, subs] of Object.entries(grouped)) {
-    html += `<h4>${esc(topH)}</h4>`;
+    const gid = pcGroupId++;
+    html += `<div class="pc-group">`;
+    html += `<div class="pc-group-header" onclick="togglePcGroup(${gid})">
+      <span>${esc(topH)}</span>
+      <span class="pc-arrow" id="pcArrow${gid}">▶</span>
+    </div>`;
+    html += `<div class="pc-group-body" id="pcBody${gid}">`;
     for (const {heading, items} of subs) {
       const display = heading.includes(' > ') ? heading.split(' > ').pop() : heading;
-      if (display !== topH) html += `<p style="font-weight:500;font-size:0.85em;margin-top:4px"><em>${esc(display)}</em></p>`;
-      html += '<ul>';
-      for (const item of items.slice(0,30)) {
-        if (item.startsWith('http')) continue;
+      const filtered = items.filter(item => {
+        if (item.startsWith('http')) return false;
         const clean = item.replace(/https?:\/\/\S+/g,'').trim();
-        if (!clean || clean.length < 3) continue;
-        html += `<li>${esc(clean.length>300?clean.substring(0,300)+'…':clean)}</li>`;
+        return clean && clean.length >= 3;
+      }).slice(0, 20);
+      if (!filtered.length) continue;
+      html += `<div class="pc-sub">`;
+      if (display !== topH) html += `<div class="pc-sub-title">${esc(display)}</div>`;
+      html += `<div class="pc-sub-content">`;
+      for (const item of filtered) {
+        const clean = item.replace(/https?:\/\/\S+/g,'').trim();
+        html += `<p>${esc(clean.length>400?clean.substring(0,400)+'…':clean)}</p>`;
       }
-      html += '</ul>';
+      html += `</div></div>`;
     }
+    html += `</div></div>`;
   }
   return html;
+}
+
+function togglePcGroup(gid) {
+  const body = document.getElementById("pcBody"+gid);
+  const arrow = document.getElementById("pcArrow"+gid);
+  body.classList.toggle("open");
+  arrow.classList.toggle("open");
 }
 
 // ── Render ──
