@@ -350,6 +350,8 @@ async function doSearch(term) {
   pillsDiv.innerHTML = "";
   btn.disabled = true;
   renderResults();
+  // Prefetch images + PubChem data in background
+  prefetchAll();
 }
 
 async function scrapeMaterial(name) {
@@ -760,6 +762,35 @@ function renderResults() {
   }).join('');
 }
 
+function prefetchAll() {
+  results.forEach((mat, idx) => {
+    if (!mat.found) return;
+    // Prefetch structure image
+    if (mat.structure_image_url) {
+      const img = new Image();
+      img.src = mat.structure_image_url;
+    }
+    // Prefetch PubChem pug_view data in background
+    if (mat._cid && !mat._prefetched) {
+      mat._prefetched = true;
+      fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`, {}, 15000)
+        .then(r => r.json())
+        .then(d => {
+          const sections = d.Record?.Section || [];
+          mat.pubchem_sections = extractAllSections(sections);
+          if (!mat.fema_number) {
+            for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
+              if (heading.toLowerCase().includes('fema') && items.length) {
+                mat.fema_number = items[0]; break;
+              }
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  });
+}
+
 function toggleCard(idx) {
   const body = document.getElementById("body"+idx);
   const arrow = document.getElementById("arrow"+idx);
@@ -783,16 +814,17 @@ async function loadPubchemData(idx) {
   
   toggle.textContent = "⏳ Loading...";
   try {
-    const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`, {}, 10000);
-    const d = await r.json();
-    const sections = d.Record?.Section || [];
-    mat.pubchem_sections = extractAllSections(sections);
-    
-    // Extract FEMA if missing
-    if (!mat.fema_number) {
-      for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
-        if (heading.toLowerCase().includes('fema') && items.length) {
-          mat.fema_number = items[0]; break;
+    // Use prefetched data if available, otherwise fetch now
+    if (!mat.pubchem_sections || !Object.keys(mat.pubchem_sections).length) {
+      const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`, {}, 10000);
+      const d = await r.json();
+      const sections = d.Record?.Section || [];
+      mat.pubchem_sections = extractAllSections(sections);
+      if (!mat.fema_number) {
+        for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
+          if (heading.toLowerCase().includes('fema') && items.length) {
+            mat.fema_number = items[0]; break;
+          }
         }
       }
     }
