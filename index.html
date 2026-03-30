@@ -61,8 +61,8 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 
 /* Layout */
 .row { display:flex; gap:16px; flex-wrap:wrap; }
-.col-img { width:100%; max-width:400px; aspect-ratio:1/1; margin:0 auto 12px; }
-.col-img img { width:100%; height:100%; object-fit:cover; border-radius:6px; }
+.col-img { width:100%; max-width:400px; aspect-ratio:1/1; margin:0 auto 12px; background:#fff; border-radius:6px; border:1px solid var(--border); }
+.col-img img { width:100%; height:100%; object-fit:contain; border-radius:6px; padding:16px; }
 .col-info { flex:1; min-width:200px; }
 .col-info p { margin:3px 0; font-size:0.9em; overflow-wrap:anywhere; }
 
@@ -382,7 +382,7 @@ async function scrapeMaterial(name) {
       if (!cid) return;
       mat._cid = cid;
       mat.page_url = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
-      mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=400x400`;
+      mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=250x250`;
       const [propsRes, synsRes] = await Promise.allSettled([
         fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName,InChI/JSON`).then(r=>r.json()).catch(()=>null),
         fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/synonyms/JSON`).then(r=>r.json()).catch(()=>null),
@@ -491,7 +491,7 @@ async function scrapeMaterial(name) {
   
   mat.found = true;
   mat.page_url = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
-  mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=400x400`;
+  mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=250x250`;
   
   // ── Fetch properties + synonyms in PARALLEL ──
   const [propsRes, synsRes] = await Promise.allSettled([
