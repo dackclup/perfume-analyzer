@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#2C3E5A">
+    <title>Perfume Analyzer</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>⬡</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header" id="top">
+            <h1>Perfume Raw Materials Analyzer</h1>
+            <p class="subtitle">PubChem compound data + perfumery knowledge</p>
+        </header>
+
+        <hr>
+
+        <!-- Search -->
+        <div class="search-container">
+            <div class="search-input-wrap">
+                <input type="text" id="searchInput" placeholder="e.g. linalool, hedione, iso e super" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <div class="autocomplete-list" id="autocompleteList"></div>
+            </div>
+            <button class="btn-primary" id="searchBtn" disabled>Search</button>
+        </div>
+
+        <!-- Pills -->
+        <div class="pills-container" id="pillsContainer"></div>
+
+        <!-- Progress -->
+        <div class="progress-bar" id="progressBar" style="display:none">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="progress-text" id="progressText" style="display:none"></p>
+
+        <hr>
+
+        <!-- Status + Clear -->
+        <div class="status-row" id="statusRow" style="display:none">
+            <span class="status-bar" id="statusBar"></span>
+            <button class="clear-btn" id="clearBtn">Clear all</button>
+        </div>
+
+        <!-- Results -->
+        <div class="results-container" id="resultsContainer"></div>
+
+        <!-- Export -->
+        <div class="export-bar" id="exportBar" style="display:none">
+            <hr>
+            <div class="export-buttons">
+                <button class="export-btn" id="exportPdf">Download.PDF</button>
+                <button class="export-btn" id="exportJson">Download.JSON</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+    <script src="perfumery-db.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
