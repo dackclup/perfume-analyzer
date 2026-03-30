@@ -61,8 +61,8 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 
 /* Layout */
 .row { display:flex; gap:16px; flex-wrap:wrap; }
-.col-img { flex:0 0 120px; }
-.col-img img { width:100%; border-radius:4px; background:#fff; }
+.col-img { flex:0 0 200px; }
+.col-img img { width:100%; border-radius:6px; background:#fff; padding:8px; }
 .col-info { flex:1; min-width:200px; }
 .col-info p { margin:3px 0; font-size:0.9em; overflow-wrap:anywhere; }
 
@@ -436,7 +436,7 @@ async function scrapeMaterial(name) {
   
   mat.found = true;
   mat.page_url = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
-  mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=200x200`;
+  mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=400x400`;
   
   // ── Fetch properties + synonyms in PARALLEL ──
   const [propsRes, synsRes] = await Promise.allSettled([
