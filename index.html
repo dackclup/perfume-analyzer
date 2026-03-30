@@ -170,45 +170,14 @@ html { scroll-behavior:smooth; }
   /* Page setup */
   @page { margin:15mm; }
   
-  /* Header bar + title on every page — using table-header-group for cross-browser repeat */
-  .print-header {
-    display: table-header-group !important;
+  /* Header bar + title on every page */
+  body::before {
+    content:'Perfume Raw Materials Analyzer\APubChem compound data + perfumery knowledge';
+    white-space:pre-line; display:block; position:fixed; top:0; left:0; right:0;
+    background:#1e3a5f; color:#fff; padding:4mm 5mm 3mm;
+    font-size:10pt; font-weight:600; line-height:1.4;
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
   }
-  .print-header-inner {
-    display: block !important;
-    background: #1e3a5f !important;
-    color: #fff !important;
-    padding: 4mm 5mm 3mm !important;
-    font-size: 10pt !important;
-    font-weight: 600 !important;
-    line-height: 1.4 !important;
-    text-align: center !important;
-    print-color-adjust: exact !important;
-    -webkit-print-color-adjust: exact !important;
-  }
-  .print-header-inner .ph-title {
-    display: block !important;
-    font-size: 12pt !important;
-    font-weight: 700 !important;
-    color: #fff !important;
-  }
-  .print-header-inner .ph-sub {
-    display: block !important;
-    font-size: 8pt !important;
-    font-weight: 400 !important;
-    color: #c8d7eb !important;
-    margin-top: 1mm !important;
-  }
-  .print-wrap {
-    display: table !important;
-    width: 100% !important;
-  }
-  .print-body {
-    display: table-row-group !important;
-  }
-  
-  /* Hide the original body::before pseudo-element */
-  body::before { display: none !important; }
   
   /* Footer */
   body::after {
@@ -217,20 +186,12 @@ html { scroll-behavior:smooth; }
     font-size:7pt; color:#999;
   }
   
-  /* Push content below header */
-  body { padding-top:0 !important; }
+  /* Push content below fixed header */
+  body { padding-top:18mm !important; }
 }
 </style>
 </head>
 <body>
-<div class="print-wrap">
-<div class="print-header" style="display:none">
-  <div class="print-header-inner">
-    <span class="ph-title">Perfume Raw Materials Analyzer</span>
-    <span class="ph-sub">PubChem compound data + perfumery knowledge</span>
-  </div>
-</div>
-<div class="print-body">
 <div id="top"></div>
 <h1>Perfume Raw Materials Analyzer</h1>
 <p class="subtitle">PubChem compound data + perfumery knowledge</p>
@@ -480,4 +441,34 @@ async function scrapeMaterial(name) {
     if (tradeCas) {
       if (MIXTURES.has(tradeCas)) {
         mat.found = true; mat.cas_number = tradeCas;
-        mat.ma
+        mat.match_info = "✅ Natural mixture (CAS " + tradeCas + ")";
+        applyPerfumery(mat, tradeCas);
+        return mat;
+      }
+      cid = await getCid(tradeCas);
+      if (cid) { mat.cas_number = tradeCas; mat.match_info = "✅ CAS match (" + tradeCas + ")"; }
+      // SID fallback for trade CAS
+      if (!cid) {
+        cid = await getCidViaSid(tradeCas);
+        if (cid) { mat.cas_number = tradeCas; mat.match_info = "✅ CAS via Substance DB (" + tradeCas + ")"; }
+      }
+    }
+  }
+
+  // ── Strategy 5: Exact name on PubChem ──
+  if (!cid) {
+    cid = await getCid(name);
+  }
+
+  // ── Strategy 6: SID→CID (Substance DB) ──
+  if (!cid) {
+    cid = await getCidViaSid(name);
+    if (cid) mat.match_info = "ℹ️ Found via Substance DB";
+  }
+
+  // ── Strategy 7: PubChem autocomplete + verify ──
+  if (!cid) {
+    try {
+      const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(n)}/JSON?limit=3`);
+      const d = await r.json();
+      const suggestions = d.dictionary_
