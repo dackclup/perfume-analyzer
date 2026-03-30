@@ -154,11 +154,18 @@ PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 const TRADES = PERFUMERY_DATA.trade_names;
 const MIXTURES = new Set(PERFUMERY_DATA.mixture_cas);
 
+// Build synonym→CAS reverse lookup
+const NAME_TO_CAS = {};
+for (const [cas, entry] of Object.entries(DB)) {
+  for (const name of entry.synonyms || []) NAME_TO_CAS[name.toLowerCase()] = cas;
+}
+
 // Build prefix index (pre-sorted by name length descending)
 const ALL_NAMES = [...new Set([...Object.keys(TRADES), ...Object.values(DB).flatMap(e=>e.synonyms||[])])];
 const PREFIX_IX = {};
 ALL_NAMES.forEach(name => {
-  const cas = TRADES[name] || "";
+  const nl = name.toLowerCase();
+  const cas = TRADES[nl] || TRADES[name] || NAME_TO_CAS[nl] || "";
   for (let i=1; i<=Math.min(name.length,11); i++) {
     const p = name.substring(0,i);
     if (!PREFIX_IX[p]) PREFIX_IX[p] = [];
@@ -168,10 +175,13 @@ ALL_NAMES.forEach(name => {
 // Pre-sort once instead of sorting on every keystroke
 for (const key in PREFIX_IX) PREFIX_IX[key].sort((a,b)=>b.name.length-a.name.length);
 
-// Build lowercase synonym→CAS index for fast fuzzy matching
+// Build lowercase synonym→CAS index for fast fuzzy matching (keep first match per synonym)
 const SYN_IX = {};
 for (const [cas, entry] of Object.entries(DB)) {
-  for (const name of entry.synonyms || []) SYN_IX[name.toLowerCase()] = {cas, name};
+  for (const name of entry.synonyms || []) {
+    const nl = name.toLowerCase();
+    if (!SYN_IX[nl]) SYN_IX[nl] = {cas, name}; // First wins, no overwrite
+  }
 }
 
 let results = [];
@@ -386,12 +396,16 @@ async function scrapeMaterial(name) {
     // Fuzzy variants
     if (!tradeCas) {
       const variants = [
-        n.replace(/ol$/, 'ool'), n.replace(/ool$/, 'ol'),
         n.replace(/ /g, '-'), n.replace(/-/g, ' '),
-        n.replace(/ene$/, 'en'), n.replace(/en$/, 'ene'),
-        n.replace(/yl /, 'yl'), n.replace(/ic /, 'ic '),
       ];
-      for (const v of variants) { if (TRADES[v]) { tradeCas = TRADES[v]; break; } }
+      // Only apply chemical suffix swaps if input looks like a chemical name
+      if (n.length > 4) {
+        if (n.endsWith('ol') && !n.endsWith('ool')) variants.push(n.replace(/ol$/, 'ool'));
+        if (n.endsWith('ool')) variants.push(n.replace(/ool$/, 'ol'));
+        if (n.endsWith('ene') && !n.endsWith('en')) variants.push(n.replace(/ene$/, 'en'));
+        if (n.endsWith('en') && !n.endsWith('ene')) variants.push(n.replace(/en$/, 'ene'));
+      }
+      for (const v of variants) { if (v !== n && TRADES[v]) { tradeCas = TRADES[v]; break; } }
     }
     if (tradeCas) {
       if (MIXTURES.has(tradeCas)) {
@@ -533,7 +547,12 @@ function extractAllSections(sections, prefix="", depth=0) {
 }
 
 function applyPerfumery(mat, cas) {
-  const pdb = DB[cas];
+  let pdb = DB[cas];
+  // Fallback: try finding CAS via synonym match from mat.name
+  if (!pdb && mat.name) {
+    const fallbackCas = NAME_TO_CAS[mat.name.toLowerCase()];
+    if (fallbackCas) { pdb = DB[fallbackCas]; cas = fallbackCas; mat.cas_number = cas; }
+  }
   if (!pdb) return;
   mat.odor_description = (pdb.odor && pdb.odor.description) || "";
   mat.odor_type = (pdb.odor && pdb.odor.type) || "";
