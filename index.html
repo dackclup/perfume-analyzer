@@ -365,6 +365,42 @@ async function scrapeMaterial(name) {
   const SMILES_RE = /^[A-Za-z0-9@+\-\[\]\(\)\\\/=#$.%]+$/;
   let cid = null;
 
+  // ── Fast path: direct DB match by name/synonym → skip all strategies ──
+  const fastCas = TRADES[n] || NAME_TO_CAS[n];
+  if (fastCas && DB[fastCas]) {
+    mat.cas_number = fastCas;
+    mat.found = true;
+    applyPerfumery(mat, fastCas);
+    if (MIXTURES.has(fastCas)) {
+      mat.match_info = "✅ Natural mixture (CAS " + fastCas + ")";
+      return mat;
+    }
+    // Try to get CID for structure image + PubChem link
+    cid = await getCid(fastCas);
+    if (cid) {
+      mat.match_info = "✅ CAS match (" + fastCas + ")";
+      mat.page_url = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
+      mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=400x400`;
+      const [propsRes, synsRes] = await Promise.allSettled([
+        fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName,InChI/JSON`).then(r=>r.json()).catch(()=>null),
+        fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/synonyms/JSON`).then(r=>r.json()).catch(()=>null),
+      ]);
+      const propsData = propsRes.status==='fulfilled' ? propsRes.value : null;
+      if (propsData) {
+        const p = propsData.PropertyTable?.Properties?.[0] || {};
+        mat.molecular_formula = p.MolecularFormula || "";
+        mat.molecular_weight = String(p.MolecularWeight || "");
+        mat.smiles = p.CanonicalSMILES || "";
+        mat.iupac_name = p.IUPACName || "";
+        mat.inchi = p.InChI || "";
+      }
+      const synsData = synsRes.status==='fulfilled' ? synsRes.value : null;
+      if (synsData) mat.synonyms = (synsData.InformationList?.Information?.[0]?.Synonym || []).slice(0,15);
+      mat._cid = cid;
+    }
+    return mat;
+  }
+
   // ── Strategy 1: CAS detection ──
   if (CAS_RE.test(n)) {
     cid = await getCid(n);
