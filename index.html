@@ -154,8 +154,8 @@ PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 const TRADES = PERFUMERY_DATA.trade_names;
 const MIXTURES = new Set(PERFUMERY_DATA.mixture_cas);
 
-// Build prefix index
-const ALL_NAMES = [...new Set([...Object.keys(TRADES), ...Object.values(DB).flatMap(e=>e.synonyms||[])])].sort((a,b)=>a.length-b.length);
+// Build prefix index (pre-sorted by name length descending)
+const ALL_NAMES = [...new Set([...Object.keys(TRADES), ...Object.values(DB).flatMap(e=>e.synonyms||[])])];
 const PREFIX_IX = {};
 ALL_NAMES.forEach(name => {
   const cas = TRADES[name] || "";
@@ -165,6 +165,14 @@ ALL_NAMES.forEach(name => {
     PREFIX_IX[p].push({name, cas});
   }
 });
+// Pre-sort once instead of sorting on every keystroke
+for (const key in PREFIX_IX) PREFIX_IX[key].sort((a,b)=>b.name.length-a.name.length);
+
+// Build lowercase synonym→CAS index for fast fuzzy matching
+const SYN_IX = {};
+for (const [cas, entry] of Object.entries(DB)) {
+  for (const name of entry.synonyms || []) SYN_IX[name.toLowerCase()] = {cas, name};
+}
 
 let results = [];
 let pcCache = {};
@@ -174,9 +182,11 @@ const input = document.getElementById("searchInput");
 const btn = document.getElementById("searchBtn");
 const pillsDiv = document.getElementById("pills");
 
+let _pillTimer;
 input.addEventListener("input", () => {
   btn.disabled = !input.value.trim();
-  showPills(input.value);
+  clearTimeout(_pillTimer);
+  _pillTimer = setTimeout(() => showPills(input.value), 150);
 });
 input.addEventListener("keydown", e => { if (e.key==="Enter" && input.value.trim()) doSearch(input.value.trim()); });
 btn.addEventListener("click", () => { if (input.value.trim()) doSearch(input.value.trim()); });
@@ -193,15 +203,15 @@ function showPills(typed) {
   const seenCas = new Set();
   
   // Prefix match (with trailing space)
-  (PREFIX_IX[ql]||[]).sort((a,b)=>b.name.length-a.name.length).forEach(({name,cas}) => {
+  (PREFIX_IX[ql]||[]).forEach(({name,cas}) => {
     if (suggestions.length>=10) return;
     if (cas && seenCas.has(cas)) return;
     suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
   });
-  
+
   // Without space fallback
   if (!suggestions.length && ql!==qs) {
-    (PREFIX_IX[qs]||[]).sort((a,b)=>b.name.length-a.name.length).forEach(({name,cas}) => {
+    (PREFIX_IX[qs]||[]).forEach(({name,cas}) => {
       if (suggestions.length>=10) return;
       if (cas && seenCas.has(cas)) return;
       suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
@@ -267,13 +277,21 @@ function renderPills(suggestions) {
   ).join('');
 }
 
+// Fetch with timeout
+function fetchWithTimeout(url, opts={}, ms=8000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, {...opts, signal:ctrl.signal}).finally(() => clearTimeout(timer));
+}
+
 async function pubchemAutocomplete(q) {
-  if (pcCache['ac_'+q]) return pcCache['ac_'+q];
+  const key = 'ac_'+q.toLowerCase();
+  if (pcCache[key]) return pcCache[key];
   try {
-    const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(q)}/JSON?limit=5`);
+    const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(q)}/JSON?limit=5`);
     const d = await r.json();
     const names = d.dictionary_terms?.compound || [];
-    pcCache['ac_'+q] = names;
+    pcCache[key] = names;
     return names;
   } catch(e) { return []; }
 }
@@ -290,11 +308,14 @@ async function doSearch(term) {
   const progText = document.getElementById("progressText");
   prog.style.display = "block";
   
-  for (let i=0; i<newNames.length; i++) {
+  // Parallel scraping (max 3 concurrent)
+  const BATCH = 3;
+  for (let i=0; i<newNames.length; i+=BATCH) {
+    const batch = newNames.slice(i, i+BATCH);
     progBar.style.width = ((i/newNames.length)*100)+"%";
-    progText.textContent = newNames[i];
-    const mat = await scrapeMaterial(newNames[i]);
-    results.unshift(mat); // newest on top
+    progText.textContent = batch.join(', ');
+    const mats = await Promise.all(batch.map(n => scrapeMaterial(n)));
+    mats.forEach(m => results.unshift(m));
   }
   
   // Dedup by CAS — keep first (newest)
@@ -474,28 +495,26 @@ async function scrapeMaterial(name) {
 
 // SID→CID lookup
 async function getCidViaSid(name) {
-  const key = 'sid_'+name;
+  const key = 'sid_'+name.toLowerCase();
   if (pcCache[key] !== undefined) return pcCache[key];
   try {
-    const r = await fetch(`${PUBCHEM_REST}/substance/name/${encodeURIComponent(name)}/cids/JSON?cids_type=standardized`);
+    const r = await fetchWithTimeout(`${PUBCHEM_REST}/substance/name/${encodeURIComponent(name)}/cids/JSON?cids_type=standardized`);
     const d = await r.json();
     const cid = d.InformationList?.Information?.[0]?.CID?.[0] || null;
     pcCache[key] = cid; return cid;
   } catch(e) { pcCache[key]=null; return null; }
 }
 
-// Fuzzy perfumery DB match
+// Fuzzy perfumery DB match (uses pre-built SYN_IX)
 function fuzzyMatchDB(query) {
+  // Exact match first (O(1))
+  if (SYN_IX[query]) return SYN_IX[query];
+  // Substring match
   let bestScore = 0, bestMatch = null;
-  for (const [cas, entry] of Object.entries(DB)) {
-    for (const name of entry.synonyms || []) {
-      const nl = name.toLowerCase();
-      if (nl === query) return {cas, name};
-      // Simple fuzzy: check if query is substring or vice versa
-      if (nl.includes(query) || query.includes(nl)) {
-        const score = Math.min(query.length, nl.length) / Math.max(query.length, nl.length);
-        if (score > bestScore && score > 0.6) { bestScore = score; bestMatch = {cas, name}; }
-      }
+  for (const [nl, match] of Object.entries(SYN_IX)) {
+    if (nl.includes(query) || query.includes(nl)) {
+      const score = Math.min(query.length, nl.length) / Math.max(query.length, nl.length);
+      if (score > bestScore && score > 0.6) { bestScore = score; bestMatch = match; }
     }
   }
   return bestMatch;
@@ -551,10 +570,10 @@ function applyPerfumery(mat, cas) {
 }
 
 async function getCid(name) {
-  const key = 'cid_'+name;
+  const key = 'cid_'+name.toLowerCase();
   if (pcCache[key] !== undefined) return pcCache[key];
   try {
-    const r = await fetch(`${PUBCHEM_REST}/compound/name/${encodeURIComponent(name)}/cids/JSON`);
+    const r = await fetchWithTimeout(`${PUBCHEM_REST}/compound/name/${encodeURIComponent(name)}/cids/JSON`);
     const d = await r.json();
     const cid = d.IdentifierList?.CID?.[0] || null;
     pcCache[key] = cid; return cid;
