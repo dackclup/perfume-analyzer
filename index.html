@@ -769,13 +769,14 @@ function renderResults() {
     
     const syns = mat.synonyms.length?`<p style="color:var(--text2);font-size:0.8em;margin-top:6px">${esc(mat.synonyms.slice(0,8).join(', '))}</p>`:"";
     
+    const isOpen = openCards.has("body"+idx) || !openCards.size;
     return `
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
-          <h3><span class="card-arrow" id="arrow${idx}">▶</span> ${esc(mat.name)}</h3>
+          <h3><span class="card-arrow${isOpen?' open':''}" id="arrow${idx}">▶</span> ${esc(mat.name)}</h3>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
-        <div class="card-body" id="body${idx}">
+        <div class="card-body${isOpen?' open':''}" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
@@ -823,16 +824,6 @@ function renderResults() {
         </div>
       </div>`;
   }).join('');
-  // Restore open states after re-render
-  openCards.forEach(id => {
-    const body = document.getElementById(id);
-    if (body) {
-      body.classList.add("open");
-      const idx = id.replace("body","");
-      const arrow = document.getElementById("arrow"+idx);
-      if (arrow) arrow.classList.add("open");
-    }
-  });
 }
 
 function prefetchAll() {
