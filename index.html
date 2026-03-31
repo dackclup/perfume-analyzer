@@ -783,6 +783,7 @@ function renderPubchemSections(sections) {
 function togglePcGroup(gid) {
   const body = document.getElementById("pcBody"+gid);
   const arrow = document.getElementById("pcArrow"+gid);
+  const header = body.previousElementSibling;
   const isOpening = !body.classList.contains("open");
   if (isOpening) {
     const parent = body.closest('.pubchem-data');
@@ -797,6 +798,9 @@ function togglePcGroup(gid) {
   }
   body.classList.toggle("open");
   arrow.classList.toggle("open");
+  if (isOpening && header) {
+    setTimeout(() => header.scrollIntoView({behavior:'smooth', block:'start'}), 50);
+  }
 }
 
 // ── Render ──
@@ -949,6 +953,7 @@ function collapseSubSections(cardBody) {
 function toggleCard(idx) {
   const body = document.getElementById("body"+idx);
   const arrow = document.getElementById("arrow"+idx);
+  const card = body.closest('.card');
   const isOpening = !body.classList.contains("open");
   // Close all other cards and their sub-sections
   if (isOpening) {
@@ -965,6 +970,9 @@ function toggleCard(idx) {
   }
   body.classList.toggle("open");
   arrow.textContent = body.classList.contains("open") ? "▼" : "▶";
+  if (isOpening && card) {
+    setTimeout(() => card.scrollIntoView({behavior:'smooth', block:'start'}), 50);
+  }
 }
 
 async function loadPubchemData(idx) {
