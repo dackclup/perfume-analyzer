@@ -130,12 +130,17 @@ html { scroll-behavior:smooth; }
   h1, .subtitle, .search-box, .pills, .progress, .progress-text,
   .downloads, #statusBar, .card-del, .card-arrow,
   .pubchem-toggle, .back-top, #top, hr { display:none !important; }
-  .card { break-inside:avoid; page-break-inside:avoid; margin-bottom:16px; border:none; border-bottom:1px solid #e0e0e0; }
-  .card-header { cursor:default; }
+  .card { break-inside:auto; margin-bottom:16px; border:none; border-bottom:1px solid #e0e0e0; }
+  .card-header { cursor:default; break-after:avoid; page-break-after:avoid; }
   .card-body { display:block !important; }
   .pubchem-data { display:block !important; }
   .pc-group-body { display:block !important; }
-  .pc-group { border:none; }
+  .pc-group { border:none; break-inside:avoid; page-break-inside:avoid; }
+  .pc-group-header { break-after:avoid; page-break-after:avoid; }
+  .pc-sub { break-inside:avoid; page-break-inside:avoid; }
+  .pc-sub-title { break-after:avoid; page-break-after:avoid; }
+  .sec-title { break-after:avoid; page-break-after:avoid; }
+  .row { break-inside:avoid; page-break-inside:avoid; }
   .pc-arrow { display:none !important; }
   .error-card { display:none !important; }
   .col-img img { filter:none; }
