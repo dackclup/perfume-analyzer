@@ -43,9 +43,8 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .pill:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
 
 /* Status */
-.status-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-.status { color:var(--text2); font-size:0.85em; }
-.clear-btn { color:var(--text2); font-size:0.85em; cursor:pointer; text-decoration:none; }
+.status { color:var(--text2); font-size:0.85em; margin-bottom:8px; }
+.clear-btn { color:var(--text2); font-size:0.85em; cursor:pointer; text-decoration:underline; margin-left:12px; }
 
 /* Cards */
 .card { border:1px solid var(--border); border-radius:6px; margin-bottom:12px; overflow:hidden; }
@@ -176,9 +175,9 @@ html { scroll-behavior:smooth; }
 <p class="progress-text" id="progressText"></p>
 <hr>
 
-<div id="statusBar" class="status-bar" style="display:none">
+<div id="statusBar" style="display:none">
   <span class="status" id="statusText"></span>
-  <span class="clear-btn" onclick="clearAll()">− Clear all</span>
+  <span class="clear-btn" onclick="clearAll()">Clear all</span>
 </div>
 <div id="results"></div>
 <div class="downloads" id="downloads" style="display:none">
@@ -733,13 +732,8 @@ function togglePcGroup(gid) {
 // ── Render ──
 function renderResults() {
   const div = document.getElementById("results");
-  // Save open states to mat objects before re-render
-  results.forEach((mat, idx) => {
-    const body = document.getElementById("body"+idx);
-    if (body) mat._open = body.classList.contains("open");
-  });
   const found = results.filter(r=>r.found).length;
-  document.getElementById("statusBar").style.display = results.length?"flex":"none";
+  document.getElementById("statusBar").style.display = results.length?"block":"none";
   document.getElementById("statusText").textContent = `${found}/${results.length} found`;
   document.getElementById("downloads").style.display = (results.length && found)?"flex":"none";
   
@@ -774,10 +768,10 @@ function renderResults() {
     return `
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
-          <h3><span class="card-arrow${mat._open?' open':''}" id="arrow${idx}">▶</span> ${esc(mat.name)}</h3>
+          <h3><span class="card-arrow" id="arrow${idx}">▶</span> ${esc(mat.name)}</h3>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
-        <div class="card-body${mat._open?' open':''}" id="body${idx}">
+        <div class="card-body" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
