@@ -405,6 +405,8 @@ async function doSearch(term) {
 async function scrapeMaterial(name) {
   const mat = {name, found:false, cas_number:"", fema_number:"", iupac_name:"",
     molecular_formula:"", molecular_weight:"", smiles:"", inchi:"",
+    xlogp:"", tpsa:"", exact_mass:"", hbond_donor:"", hbond_acceptor:"",
+    rotatable_bond:"", heavy_atom:"",
     synonyms:[], structure_image_url:"", page_url:"", match_info:"",
     odor_description:"", odor_type:"", odor_strength:"", note_classification:"",
     tenacity:"", tenacity_hours:"", ifra_guidelines:"", usage_levels:"",
@@ -432,7 +434,7 @@ async function scrapeMaterial(name) {
       mat.page_url = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
       mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=500x500`;
       const [propsRes, synsRes] = await Promise.allSettled([
-        fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName,InChI/JSON`).then(r=>r.json()).catch(()=>null),
+        fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName,InChI,XLogP,ExactMass,TPSA,HBondDonorCount,HBondAcceptorCount,RotatableBondCount,HeavyAtomCount/JSON`).then(r=>r.json()).catch(()=>null),
         fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/synonyms/JSON`).then(r=>r.json()).catch(()=>null),
       ]);
       const propsData = propsRes.status==='fulfilled' ? propsRes.value : null;
@@ -443,6 +445,13 @@ async function scrapeMaterial(name) {
         mat.smiles = p.CanonicalSMILES || "";
         mat.iupac_name = p.IUPACName || "";
         mat.inchi = p.InChI || "";
+        mat.xlogp = p.XLogP != null ? String(p.XLogP) : "";
+        mat.exact_mass = p.ExactMass != null ? String(p.ExactMass) : "";
+        mat.tpsa = p.TPSA != null ? String(p.TPSA) : "";
+        mat.hbond_donor = p.HBondDonorCount != null ? String(p.HBondDonorCount) : "";
+        mat.hbond_acceptor = p.HBondAcceptorCount != null ? String(p.HBondAcceptorCount) : "";
+        mat.rotatable_bond = p.RotatableBondCount != null ? String(p.RotatableBondCount) : "";
+        mat.heavy_atom = p.HeavyAtomCount != null ? String(p.HeavyAtomCount) : "";
       }
       const synsData = synsRes.status==='fulfilled' ? synsRes.value : null;
       if (synsData) mat.synonyms = (synsData.InformationList?.Information?.[0]?.Synonym || []).slice(0,15);
@@ -543,7 +552,7 @@ async function scrapeMaterial(name) {
   
   // ── Fetch properties + synonyms in PARALLEL ──
   const [propsRes, synsRes] = await Promise.allSettled([
-    fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName,InChI/JSON`).then(r=>r.json()).catch(()=>null),
+    fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName,InChI,XLogP,ExactMass,TPSA,HBondDonorCount,HBondAcceptorCount,RotatableBondCount,HeavyAtomCount/JSON`).then(r=>r.json()).catch(()=>null),
     fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/synonyms/JSON`).then(r=>r.json()).catch(()=>null),
   ]);
   
@@ -775,6 +784,13 @@ function renderResults() {
       mat.iupac_name?`<p><code>IUPAC</code> ${esc(mat.iupac_name)}</p>`:"",
       mat.molecular_formula?`<p><code>Formula</code> ${esc(mat.molecular_formula)}</p>`:"",
       mat.molecular_weight?`<p><code>MW</code> ${esc(mat.molecular_weight)}</p>`:"",
+      mat.exact_mass?`<p><code>Exact Mass</code> ${esc(mat.exact_mass)}</p>`:"",
+      mat.xlogp?`<p><code>XLogP</code> ${esc(mat.xlogp)}</p>`:"",
+      mat.tpsa?`<p><code>TPSA</code> ${esc(mat.tpsa)} Å²</p>`:"",
+      mat.hbond_donor?`<p><code>H-Donor</code> ${esc(mat.hbond_donor)}</p>`:"",
+      mat.hbond_acceptor?`<p><code>H-Acceptor</code> ${esc(mat.hbond_acceptor)}</p>`:"",
+      mat.rotatable_bond?`<p><code>Rotatable</code> ${esc(mat.rotatable_bond)}</p>`:"",
+      mat.heavy_atom?`<p><code>Heavy Atoms</code> ${esc(mat.heavy_atom)}</p>`:"",
       mat.smiles?`<p><code>SMILES</code> ${esc(mat.smiles)}</p>`:"",
       mat.inchi?`<p><code>InChI</code> ${esc(mat.inchi)}</p>`:"",
     ].join('');
@@ -975,6 +991,13 @@ function buildLocalRecord(mat) {
   const chemSec = [];
   if (mat.molecular_formula) chemSec.push({TOCHeading:"Molecular Formula",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.molecular_formula}]}}]});
   if (mat.molecular_weight) chemSec.push({TOCHeading:"Molecular Weight",Information:[{ReferenceNumber:0,Value:{Number:[parseFloat(mat.molecular_weight)]}}]});
+  if (mat.exact_mass) chemSec.push({TOCHeading:"Exact Mass",Information:[{ReferenceNumber:0,Value:{Number:[parseFloat(mat.exact_mass)]}}]});
+  if (mat.xlogp) chemSec.push({TOCHeading:"XLogP",Information:[{ReferenceNumber:0,Value:{Number:[parseFloat(mat.xlogp)]}}]});
+  if (mat.tpsa) chemSec.push({TOCHeading:"TPSA",Information:[{ReferenceNumber:0,Value:{Number:[parseFloat(mat.tpsa)]}}]});
+  if (mat.hbond_donor) chemSec.push({TOCHeading:"H-Bond Donor Count",Information:[{ReferenceNumber:0,Value:{Number:[parseInt(mat.hbond_donor)]}}]});
+  if (mat.hbond_acceptor) chemSec.push({TOCHeading:"H-Bond Acceptor Count",Information:[{ReferenceNumber:0,Value:{Number:[parseInt(mat.hbond_acceptor)]}}]});
+  if (mat.rotatable_bond) chemSec.push({TOCHeading:"Rotatable Bond Count",Information:[{ReferenceNumber:0,Value:{Number:[parseInt(mat.rotatable_bond)]}}]});
+  if (mat.heavy_atom) chemSec.push({TOCHeading:"Heavy Atom Count",Information:[{ReferenceNumber:0,Value:{Number:[parseInt(mat.heavy_atom)]}}]});
   if (mat.smiles) chemSec.push({TOCHeading:"Canonical SMILES",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.smiles}]}}]});
   if (mat.inchi) chemSec.push({TOCHeading:"InChI",Description:"International Chemical Identifier.",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.inchi}]}}]});
   if (chemSec.length) sections.push({TOCHeading:"Chemical and Physical Properties",Description:"Structural descriptors and computed properties.",Section:chemSec});
