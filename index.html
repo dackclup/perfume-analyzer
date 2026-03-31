@@ -126,7 +126,8 @@ html { scroll-behavior:smooth; }
     --badge-mid-bg: #dbeafe; --badge-mid-fg: #1e40af;
     --badge-base-bg: #ede9fe; --badge-base-fg: #5b21b6;
   }
-  body { padding:0; padding-bottom:0; max-width:100%; }
+  body { padding:0; padding-bottom:0; max-width:100%; counter-reset:page; }
+  @page { margin:15mm 10mm; @bottom-center { content:counter(page); font-size:9pt; color:#999; } }
   h1, .subtitle, .search-box, .pills, .progress, .progress-text,
   .downloads, #statusBar, .card-del, .card-arrow,
   .pubchem-toggle, .back-top, #top, hr { display:none !important; }
