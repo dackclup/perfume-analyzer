@@ -600,11 +600,15 @@ function extractAllSections(sections, prefix="", depth=0) {
     const heading = prefix ? `${prefix} > ${sec.TOCHeading}` : sec.TOCHeading;
     if (sec.Information) {
       const items = [];
+      const seen = new Set();
       for (const info of sec.Information) {
-        if (items.length >= 30) break; // Cap items per section
+        if (items.length >= 30) break;
         if (info.Value?.StringWithMarkup) {
           for (const sm of info.Value.StringWithMarkup) {
-            if (sm.String && sm.String.length > 5) items.push(sm.String);
+            if (sm.String && sm.String.length > 5 && !seen.has(sm.String)) {
+              seen.add(sm.String);
+              items.push(sm.String);
+            }
           }
         }
       }
