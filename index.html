@@ -118,7 +118,28 @@ html { scroll-behavior:smooth; }
   h1 { font-size:1.4em; }
   .row { gap:10px; }
 }
-</style>
+@media print {
+  :root {
+    --bg: #ffffff; --bg2: #f5f5fa; --text: #1a1a2e; --text2: #4a5e78;
+    --accent: #3D5A80; --border: #d1d9e6; --card-bg: #ffffff;
+    --badge-top-bg: #fef9c3; --badge-top-fg: #854d0e;
+    --badge-mid-bg: #dbeafe; --badge-mid-fg: #1e40af;
+    --badge-base-bg: #ede9fe; --badge-base-fg: #5b21b6;
+  }
+  body { padding:0; padding-bottom:0; max-width:100%; }
+  .search-box, .pills, .progress, .progress-text,
+  .downloads, #statusBar, .card-del, .card-arrow,
+  .pubchem-toggle, .back-top { display:none !important; }
+  .card { break-inside:avoid; page-break-inside:avoid; margin-bottom:16px; border:1px solid #d1d9e6; }
+  .card-header { cursor:default; }
+  .card-body { display:block !important; }
+  .pubchem-data { display:block !important; }
+  .pc-group-body { display:block !important; }
+  .pc-arrow { display:none !important; }
+  .error-card { display:none !important; }
+  .col-img img { filter:none; }
+  hr { margin:8px 0; }
+}
 </head>
 <body>
 <div id="top"></div>
@@ -142,6 +163,7 @@ html { scroll-behavior:smooth; }
 <div id="results"></div>
 <div class="downloads" id="downloads" style="display:none">
   <a onclick="downloadJSON()">Download.JSON</a>
+  <a onclick="preparePrint()">Save.PDF</a>
   <span class="back-top"><a href="#top">▲ Back to top</a></span>
 </div>
 
@@ -974,6 +996,41 @@ async function downloadJSON() {
   btn.textContent = origText;
   btn.style.pointerEvents = "";
   btn.style.opacity = "";
+}
+
+function preparePrint() {
+  // Save current open/closed state
+  const cardStates = [];
+  document.querySelectorAll('.card-body').forEach(el => {
+    cardStates.push(el.classList.contains('open'));
+    el.classList.add('open');
+  });
+  const pcStates = [];
+  document.querySelectorAll('.pubchem-data').forEach(el => {
+    pcStates.push(el.classList.contains('open'));
+    if (el.dataset.loaded) el.classList.add('open');
+  });
+  const pcGroupStates = [];
+  document.querySelectorAll('.pc-group-body').forEach(el => {
+    pcGroupStates.push(el.classList.contains('open'));
+    el.classList.add('open');
+  });
+
+  window.print();
+
+  // Restore state after print
+  window.addEventListener('afterprint', function restore() {
+    document.querySelectorAll('.card-body').forEach((el, i) => {
+      if (!cardStates[i]) el.classList.remove('open');
+    });
+    document.querySelectorAll('.pubchem-data').forEach((el, i) => {
+      if (!pcStates[i]) el.classList.remove('open');
+    });
+    document.querySelectorAll('.pc-group-body').forEach((el, i) => {
+      if (!pcGroupStates[i]) el.classList.remove('open');
+    });
+    window.removeEventListener('afterprint', restore);
+  }, {once: true});
 }
 
 function esc(s) { const d=document.createElement('div'); d.textContent=s||""; return d.innerHTML; }
