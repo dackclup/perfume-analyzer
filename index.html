@@ -612,21 +612,21 @@ const SKIP_SECTIONS = new Set([
 ]);
 
 // Extract all PUG View sections recursively
-function extractAllSections(sections, prefix="", depth=0) {
+function extractAllSections(sections, prefix="", depth=0, globalSeen=null) {
   if (depth > 4) return {}; // Limit recursion depth
+  if (!globalSeen) globalSeen = new Set();
   const result = {};
   for (const sec of sections) {
     if (SKIP_SECTIONS.has(sec.TOCHeading)) continue;
     const heading = prefix ? `${prefix} > ${sec.TOCHeading}` : sec.TOCHeading;
     if (sec.Information) {
       const items = [];
-      const seen = new Set();
       for (const info of sec.Information) {
         if (items.length >= 30) break;
         if (info.Value?.StringWithMarkup) {
           for (const sm of info.Value.StringWithMarkup) {
-            if (sm.String && sm.String.length > 5 && !seen.has(sm.String)) {
-              seen.add(sm.String);
+            if (sm.String && sm.String.length > 5 && !globalSeen.has(sm.String)) {
+              globalSeen.add(sm.String);
               items.push(sm.String);
             }
           }
@@ -635,7 +635,7 @@ function extractAllSections(sections, prefix="", depth=0) {
       if (items.length) result[heading] = items;
     }
     if (sec.Section) {
-      Object.assign(result, extractAllSections(sec.Section, heading, depth+1));
+      Object.assign(result, extractAllSections(sec.Section, heading, depth+1, globalSeen));
     }
   }
   return result;
