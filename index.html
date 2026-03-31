@@ -622,6 +622,7 @@ const KEEP_KEYWORDS = [
   "density", "vapor pressure", "refractive index", "solubility",
   "logp", "xlogp", "log p", "surface tension", "viscosity",
   "optical rotation", "henry", "dissociation",
+  "ph", "pka", "auto-ignition", "flammab", "stability", "decompos",
   // Structure
   "structure", "2d",
   // Safety & Hazards
@@ -629,30 +630,38 @@ const KEEP_KEYWORDS = [
   "precaution", "toxicol", "toxicity", "lethal", "ld50", "lc50",
   "irritat", "sensitiz", "mutagen", "carcinog", "nfpa",
   "exposure", "threshold", "osha", "niosh", "acgih",
+  "acute effect", "chronic effect", "cleanup", "disposal",
   // Pharmacology (skin/fragrance relevant)
   "pharmacol", "absorption", "metabolism", "skin", "dermal",
   // Appearance & Odor
-  "color", "appearance", "odor", "smell", "physical description",
+  "color", "appearance", "odor", "smell", "taste", "physical description",
+  "identification",
   // Use & Manufacturing
-  "use", "manufacturing", "consumer product", "industrial",
+  "use", "manufacturing", "formulation", "preparation",
+  "consumer product", "industrial", "storage", "impurit",
   // Spectroscopy (analytical)
   "spectro", "spectrum", "spectra", "gc-ms", "nmr", "mass spec", "ir spec",
   // Environmental fate
   "environment", "biodegradation", "bioconcentration",
+  "soil adsorption", "atmospheric fate",
   // Food & Flavor
   "food", "flavor", "flavour", "fragrance", "aroma", "cosmetic"
 ];
 // Always skip these even if they match keep keywords
 const FORCE_SKIP = [
   "patent", "literature", "pubmed", "depositor", "vendor", "supplier",
-  "gene", "protein target", "bioassay", "biological test",
-  "taxonomy", "classification", "crystal structure", "3d conformer",
-  "record description", "summary information", "information source",
-  "disorder", "disease", "pathway", "related record", "wikipedia"
+  "protein target", "bioassay", "biological test",
+  "taxonomy", "crystal structure", "3d conformer",
+  "record description", "summary information",
+  "disorder", "disease", "pathway", "related record", "wikipedia",
+  "drug and medication"
 ];
+// Word-boundary skip patterns (to avoid "gene" matching "general")
+const FORCE_SKIP_REGEX = [/\bgene\b/, /\bgenes\b/];
 function shouldKeepSection(heading) {
   const h = heading.toLowerCase();
   if (FORCE_SKIP.some(k => h.includes(k))) return false;
+  if (FORCE_SKIP_REGEX.some(r => r.test(h))) return false;
   return KEEP_KEYWORDS.some(k => h.includes(k));
 }
 
