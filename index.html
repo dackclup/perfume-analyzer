@@ -783,6 +783,18 @@ function renderPubchemSections(sections) {
 function togglePcGroup(gid) {
   const body = document.getElementById("pcBody"+gid);
   const arrow = document.getElementById("pcArrow"+gid);
+  const isOpening = !body.classList.contains("open");
+  if (isOpening) {
+    const parent = body.closest('.pubchem-data');
+    if (parent) {
+      parent.querySelectorAll('.pc-group-body.open').forEach(el => {
+        el.classList.remove("open");
+        const otherId = el.id.replace("pcBody","");
+        const otherArrow = document.getElementById("pcArrow"+otherId);
+        if (otherArrow) otherArrow.classList.remove("open");
+      });
+    }
+  }
   body.classList.toggle("open");
   arrow.classList.toggle("open");
 }
