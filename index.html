@@ -612,31 +612,59 @@ function fuzzyMatchDB(query) {
   return bestMatch;
 }
 
-// Keywords to skip (matched against section heading, case-insensitive)
-const SKIP_KEYWORDS = [
-  "3d conformer", "crystal structure",
-  "record description", "summary information", "information source",
-  "taxonomy", "gene", "protein target",
-  "patent", "literature", "pubmed",
-  "regulatory", "classification",
-  "computational biology", "bioassay", "biological test",
-  "depositor", "vendor", "supplier",
-  "disorder", "disease", "pathway",
-  "related record"
+// Whitelist: only keep sections matching these keywords (case-insensitive)
+const KEEP_KEYWORDS = [
+  // Identifiers
+  "name", "identifier", "cas", "iupac", "inchi", "smiles", "synonym",
+  "molecular formula", "molecular weight", "fema",
+  // Physical & Chemical Properties
+  "propert", "boiling point", "melting point", "flash point",
+  "density", "vapor pressure", "refractive index", "solubility",
+  "logp", "xlogp", "log p", "surface tension", "viscosity",
+  "optical rotation", "henry", "dissociation",
+  // Structure
+  "structure", "2d",
+  // Safety & Hazards
+  "safety", "hazard", "ghs", "pictogram", "signal",
+  "precaution", "toxicol", "toxicity", "lethal", "ld50", "lc50",
+  "irritat", "sensitiz", "mutagen", "carcinog", "nfpa",
+  "exposure", "threshold", "osha", "niosh", "acgih",
+  // Pharmacology (skin/fragrance relevant)
+  "pharmacol", "absorption", "metabolism", "skin", "dermal",
+  // Appearance & Odor
+  "color", "appearance", "odor", "smell", "physical description",
+  // Use & Manufacturing
+  "use", "manufacturing", "consumer product", "industrial",
+  // Spectroscopy (analytical)
+  "spectro", "spectrum", "spectra", "gc-ms", "nmr", "mass spec", "ir spec",
+  // Environmental fate
+  "environment", "biodegradation", "bioconcentration",
+  // Food & Flavor
+  "food", "flavor", "flavour", "fragrance", "aroma", "cosmetic"
 ];
-function shouldSkipSection(heading) {
+// Always skip these even if they match keep keywords
+const FORCE_SKIP = [
+  "patent", "literature", "pubmed", "depositor", "vendor", "supplier",
+  "gene", "protein target", "bioassay", "biological test",
+  "taxonomy", "classification", "crystal structure", "3d conformer",
+  "record description", "summary information", "information source",
+  "disorder", "disease", "pathway", "related record", "wikipedia"
+];
+function shouldKeepSection(heading) {
   const h = heading.toLowerCase();
-  return SKIP_KEYWORDS.some(k => h.includes(k));
+  if (FORCE_SKIP.some(k => h.includes(k))) return false;
+  return KEEP_KEYWORDS.some(k => h.includes(k));
 }
 
-// Extract all PUG View sections recursively
+// Extract all PUG View sections recursively (whitelist approach)
 function extractAllSections(sections, prefix="", depth=0) {
-  if (depth > 4) return {}; // Limit recursion depth
+  if (depth > 4) return {};
   const result = {};
   for (const sec of sections) {
-    if (shouldSkipSection(sec.TOCHeading)) continue;
     const heading = prefix ? `${prefix} > ${sec.TOCHeading}` : sec.TOCHeading;
-    if (sec.Information) {
+    // Check both current heading and full path
+    const keepThis = shouldKeepSection(sec.TOCHeading) || shouldKeepSection(heading);
+    if (sec.Information && keepThis) {
       const items = [];
       const seen = new Set();
       for (const info of sec.Information) {
@@ -652,6 +680,7 @@ function extractAllSections(sections, prefix="", depth=0) {
       }
       if (items.length) result[heading] = items;
     }
+    // Always recurse into sub-sections (parent may not match but child might)
     if (sec.Section) {
       Object.assign(result, extractAllSections(sec.Section, heading, depth+1));
     }
