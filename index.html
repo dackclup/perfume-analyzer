@@ -685,7 +685,6 @@ function renderPubchemSections(sections) {
   for (const [topH, subs] of Object.entries(grouped)) {
     // Build body content first to check if it's empty
     let bodyHtml = '';
-    const groupSeen = new Set();
     for (const {heading, items} of subs) {
       const display = heading.includes(' > ') ? heading.split(' > ').pop() : heading;
       const cleaned = [];
@@ -693,7 +692,7 @@ function renderPubchemSections(sections) {
         if (cleaned.length >= 20) break;
         if (item.startsWith('http')) continue;
         const c = item.replace(/https?:\/\/\S+/g,'').trim();
-        if (c && c.length >= 3 && !groupSeen.has(c)) { groupSeen.add(c); cleaned.push(c); }
+        if (c && c.length >= 3) cleaned.push(c);
       }
       if (!cleaned.length) continue;
       bodyHtml += `<div class="pc-sub">`;
