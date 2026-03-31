@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Perfume Raw Materials Analyzer</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<title>เครื่องมือวิเคราะห์วัตถุดิบน้ำหอม</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #ffffff; --bg2: #f5f5fa; --text: #1a1a2e; --text2: #4a5e78;
@@ -23,7 +23,7 @@
   }
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); padding:16px; padding-bottom:60px; max-width:900px; margin:0 auto; }
+body { font-family:'IBM Plex Sans Thai','IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); padding:16px; padding-bottom:60px; max-width:900px; margin:0 auto; }
 h1 { font-size:1.8em; font-weight:600; margin-bottom:4px; }
 .subtitle { color:var(--text2); font-size:0.9em; margin-bottom:16px; }
 hr { border:none; border-top:1px solid var(--border); margin:16px 0; }
@@ -107,6 +107,11 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .progress-bar { height:100%; background:var(--accent); transition:width 0.3s; }
 .progress-text { font-size:0.8em; color:var(--text2); }
 
+/* Language toggle */
+.lang-toggle { position:fixed; top:12px; right:16px; z-index:101; background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:5px 12px; font-size:0.82em; cursor:pointer; color:var(--text); font-family:inherit; }
+.lang-toggle:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+@media print { .lang-toggle { display:none !important; } }
+
 /* Back to top */
 .back-top a { color:var(--text2); font-size:0.85em; text-decoration:none; }
 .back-top a:hover { text-decoration:underline; }
@@ -162,13 +167,14 @@ html { scroll-behavior:smooth; }
 </head>
 <body>
 <div id="top"></div>
-<h1>Perfume Raw Materials Analyzer</h1>
-<p class="subtitle">PubChem compound data + perfumery knowledge</p>
+<button class="lang-toggle" id="langToggle" onclick="toggleLang()">EN</button>
+<h1 id="mainTitle">เครื่องมือวิเคราะห์วัตถุดิบน้ำหอม</h1>
+<p class="subtitle" id="mainSubtitle">ข้อมูลสารเคมีจาก PubChem + ความรู้ด้านน้ำหอม</p>
 <hr>
 
 <div class="search-box">
-  <input type="text" id="searchInput" placeholder="e.g. linalool, hedione, iso e super" autocomplete="off">
-  <button id="searchBtn" disabled>Search</button>
+  <input type="text" id="searchInput" placeholder="เช่น linalool, hedione, iso e super" autocomplete="off">
+  <button id="searchBtn" disabled>ค้นหา</button>
 </div>
 <div class="pills" id="pills"></div>
 <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
@@ -177,22 +183,116 @@ html { scroll-behavior:smooth; }
 
 <div id="statusBar" style="display:none">
   <span class="status" id="statusText"></span>
-  <span class="clear-btn" onclick="clearAll()">Clear all</span>
+  <span class="clear-btn" onclick="clearAll()" id="clearAllBtn">ล้างทั้งหมด</span>
 </div>
 <div id="results"></div>
 <div class="downloads" id="downloads" style="display:none">
   <div class="dl-wrap">
-    <a onclick="toggleDlMenu()">▼ Download</a>
+    <a onclick="toggleDlMenu()" id="dlToggleBtn">▼ ดาวน์โหลด</a>
     <div class="dl-menu" id="dlMenu">
-      <a onclick="downloadJSON();closeDlMenu()">Save.JSON</a>
-      <a onclick="preparePrint();closeDlMenu()">Save.PDF</a>
+      <a onclick="downloadJSON();closeDlMenu()">บันทึก JSON</a>
+      <a onclick="preparePrint();closeDlMenu()">บันทึก PDF</a>
     </div>
   </div>
-  <span class="back-top"><a href="#top">▲ Back to top</a></span>
+  <span class="back-top"><a href="#top" id="backTopBtn">▲ กลับด้านบน</a></span>
 </div>
 
 <script src="perfumery_data.js"></script>
 <script>
+// ── i18n ──
+const I18N = {
+  th: {
+    title: "เครื่องมือวิเคราะห์วัตถุดิบน้ำหอม",
+    subtitle: "ข้อมูลสารเคมีจาก PubChem + ความรู้ด้านน้ำหอม",
+    placeholder: "เช่น linalool, hedione, iso e super",
+    search: "ค้นหา",
+    clearAll: "ล้างทั้งหมด",
+    download: "▼ ดาวน์โหลด",
+    saveJSON: "บันทึก JSON",
+    savePDF: "บันทึก PDF",
+    backTop: "▲ กลับด้านบน",
+    found: (f,t) => `${f}/${t} พบแล้ว`,
+    notFound: (n) => `ไม่พบ '${n}'`,
+    casMatch: (cas) => `✅ ตรงกับ CAS (${cas})`,
+    casDirect: (cas) => `✅ ค้นหา CAS โดยตรง (${cas})`,
+    smilesLookup: "✅ ค้นหาจาก SMILES",
+    inchiLookup: "✅ ค้นหาจาก InChI",
+    casViaSub: (cas) => `✅ CAS ผ่านฐานข้อมูลสาร (${cas})`,
+    viaSub: "ℹ️ พบผ่านฐานข้อมูลสาร",
+    fuzzy: (n) => `ℹ️ ใกล้เคียง: ${n}`,
+    mixture: (cas) => `✅ สารผสมธรรมชาติ (CAS ${cas})`,
+    top: "Top",
+    heart: "Heart",
+    base: "Base",
+    odor: "กลิ่น",
+    note: "โน้ต",
+    performance: "ประสิทธิภาพ",
+    safety: "ความปลอดภัย",
+    blendsWith: "เข้ากันดีกับ",
+    pubchemData: "▶ ข้อมูล PubChem ทั้งหมด",
+    pubchemDataOpen: "▼ ข้อมูล PubChem ทั้งหมด",
+    loading: "⏳ กำลังโหลด...",
+    loadFailed: "❌ โหลดไม่สำเร็จ — คลิกเพื่อลองใหม่",
+    loadingPubchem: (i,t) => `กำลังโหลดข้อมูล PubChem (${i}/${t})...`,
+    langToggle: "EN"
+  },
+  en: {
+    title: "Perfume Raw Materials Analyzer",
+    subtitle: "PubChem compound data + perfumery knowledge",
+    placeholder: "e.g. linalool, hedione, iso e super",
+    search: "Search",
+    clearAll: "Clear all",
+    download: "▼ Download",
+    saveJSON: "Save.JSON",
+    savePDF: "Save.PDF",
+    backTop: "▲ Back to top",
+    found: (f,t) => `${f}/${t} found`,
+    notFound: (n) => `'${n}' not found`,
+    casMatch: (cas) => `✅ CAS match (${cas})`,
+    casDirect: (cas) => `✅ CAS direct lookup (${cas})`,
+    smilesLookup: "✅ SMILES lookup",
+    inchiLookup: "✅ InChI lookup",
+    casViaSub: (cas) => `✅ CAS via Substance DB (${cas})`,
+    viaSub: "ℹ️ Found via Substance DB",
+    fuzzy: (n) => `ℹ️ Fuzzy match: ${n}`,
+    mixture: (cas) => `✅ Natural mixture (CAS ${cas})`,
+    top: "Top",
+    heart: "Heart",
+    base: "Base",
+    odor: "Odor",
+    note: "Note",
+    performance: "Performance",
+    safety: "Safety",
+    blendsWith: "Blends with",
+    pubchemData: "▶ Complete PubChem Data",
+    pubchemDataOpen: "▼ Complete PubChem Data",
+    loading: "⏳ Loading...",
+    loadFailed: "❌ Failed to load — click to retry",
+    loadingPubchem: (i,t) => `Loading PubChem data (${i}/${t})...`,
+    langToggle: "TH"
+  }
+};
+let LANG = 'th';
+function t(key) { return I18N[LANG][key]; }
+
+function toggleLang() {
+  LANG = LANG === 'th' ? 'en' : 'th';
+  document.documentElement.lang = LANG === 'th' ? 'th' : 'en';
+  document.getElementById('langToggle').textContent = t('langToggle');
+  document.getElementById('mainTitle').textContent = t('title');
+  document.getElementById('mainSubtitle').textContent = t('subtitle');
+  document.getElementById('searchInput').placeholder = t('placeholder');
+  document.getElementById('searchBtn').textContent = t('search');
+  document.getElementById('clearAllBtn').textContent = t('clearAll');
+  document.getElementById('dlToggleBtn').textContent = t('download');
+  document.getElementById('backTopBtn').textContent = t('backTop');
+  const dlLinks = document.querySelectorAll('#dlMenu a');
+  if (dlLinks[0]) dlLinks[0].textContent = t('saveJSON');
+  if (dlLinks[1]) dlLinks[1].textContent = t('savePDF');
+  document.title = t('title');
+  renderResults();
+}
+
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Build CAS-keyed lookup from array
 const DB = {};
@@ -418,10 +518,12 @@ async function scrapeMaterial(name) {
   if (fastCas && DB[fastCas]) {
     mat.cas_number = fastCas;
     mat.found = true;
-    mat.match_info = "✅ CAS match (" + fastCas + ")";
+    mat._matchType = "casMatch"; mat._matchArg = fastCas;
+    mat.match_info = t('casMatch')(fastCas);
     applyPerfumery(mat, fastCas);
     if (MIXTURES.has(fastCas)) {
-      mat.match_info = "✅ Natural mixture (CAS " + fastCas + ")";
+      mat._matchType = "mixture"; mat._matchArg = fastCas;
+      mat.match_info = t('mixture')(fastCas);
     }
     // Load CID + image + properties in background (non-blocking)
     mat._loadPubchem = getCid(fastCas).then(async cid => {
@@ -453,7 +555,7 @@ async function scrapeMaterial(name) {
   // ── Strategy 1: CAS detection ──
   if (CAS_RE.test(n)) {
     cid = await getCid(n);
-    if (cid) { mat.cas_number = n; mat.match_info = "✅ CAS direct lookup (" + n + ")"; }
+    if (cid) { mat.cas_number = n; mat._matchType = "casDirect"; mat._matchArg = n; mat.match_info = t('casDirect')(n); }
   }
 
   // ── Strategy 2: SMILES detection ──
@@ -462,7 +564,7 @@ async function scrapeMaterial(name) {
       const r = await fetchWithTimeout(`${PUBCHEM_REST}/compound/smiles/cids/JSON?smiles=${encodeURIComponent(name.trim())}`);
       const d = await r.json();
       cid = d.IdentifierList?.CID?.[0] || null;
-      if (cid) mat.match_info = "✅ SMILES lookup";
+      if (cid) { mat._matchType = "smilesLookup"; mat.match_info = t('smilesLookup'); }
     } catch(e) {}
   }
 
@@ -475,7 +577,7 @@ async function scrapeMaterial(name) {
       });
       const d = await r.json();
       cid = d.IdentifierList?.CID?.[0] || null;
-      if (cid) mat.match_info = "✅ InChI lookup";
+      if (cid) { mat._matchType = "inchiLookup"; mat.match_info = t('inchiLookup'); }
     } catch(e) {}
   }
 
@@ -499,16 +601,17 @@ async function scrapeMaterial(name) {
     if (tradeCas) {
       if (MIXTURES.has(tradeCas)) {
         mat.found = true; mat.cas_number = tradeCas;
-        mat.match_info = "✅ Natural mixture (CAS " + tradeCas + ")";
+        mat._matchType = "mixture"; mat._matchArg = tradeCas;
+        mat.match_info = t('mixture')(tradeCas);
         applyPerfumery(mat, tradeCas);
         return mat;
       }
       cid = await getCid(tradeCas);
-      if (cid) { mat.cas_number = tradeCas; mat.match_info = "✅ CAS match (" + tradeCas + ")"; }
+      if (cid) { mat.cas_number = tradeCas; mat._matchType = "casMatch"; mat._matchArg = tradeCas; mat.match_info = t('casMatch')(tradeCas); }
       // SID fallback for trade CAS
       if (!cid) {
         cid = await getCidViaSid(tradeCas);
-        if (cid) { mat.cas_number = tradeCas; mat.match_info = "✅ CAS via Substance DB (" + tradeCas + ")"; }
+        if (cid) { mat.cas_number = tradeCas; mat._matchType = "casViaSub"; mat._matchArg = tradeCas; mat.match_info = t('casViaSub')(tradeCas); }
       }
     }
   }
@@ -521,7 +624,7 @@ async function scrapeMaterial(name) {
   // ── Strategy 6: SID→CID (Substance DB) ──
   if (!cid) {
     cid = await getCidViaSid(name);
-    if (cid) mat.match_info = "ℹ️ Found via Substance DB";
+    if (cid) { mat._matchType = "viaSub"; mat.match_info = t('viaSub'); }
   }
 
   // ── Strategy 7: Fuzzy perfumery DB match ──
@@ -529,7 +632,7 @@ async function scrapeMaterial(name) {
     const fuzzy = fuzzyMatchDB(n);
     if (fuzzy) {
       cid = await getCid(fuzzy.cas);
-      if (cid) { mat.cas_number = fuzzy.cas; mat.match_info = "ℹ️ Fuzzy match: " + fuzzy.name; }
+      if (cid) { mat.cas_number = fuzzy.cas; mat._matchType = "fuzzy"; mat._matchArg = fuzzy.name; mat.match_info = t('fuzzy')(fuzzy.name); }
     }
   }
 
@@ -657,7 +760,7 @@ function applyPerfumery(mat, cas) {
   mat.usage_levels = (pdb.safety && pdb.safety.usage) || "";
   mat.blends_well_with = pdb.blends_with || [];
   if (pdb.fema) mat.fema_number = pdb.fema;
-  if (!mat.match_info) mat.match_info = "✅ CAS match (" + cas + ")";
+  if (!mat.match_info) { mat._matchType = "casMatch"; mat._matchArg = cas; mat.match_info = t('casMatch')(cas); }
 }
 
 async function getCid(name) {
@@ -734,7 +837,7 @@ function renderResults() {
   const div = document.getElementById("results");
   const found = results.filter(r=>r.found).length;
   document.getElementById("statusBar").style.display = results.length?"block":"none";
-  document.getElementById("statusText").textContent = `${found}/${results.length} found`;
+  document.getElementById("statusText").textContent = t('found')(found, results.length);
   document.getElementById("downloads").style.display = (results.length && found)?"flex":"none";
   
   div.innerHTML = results.map((mat,idx) => {
@@ -744,14 +847,14 @@ function renderResults() {
           <h3>✗ ${esc(mat.name)}</h3>
           <span><span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span></span>
         </div>
-        <div class="card-body"><p class="error-text">'${esc(mat.name)}' not found</p></div>
+        <div class="card-body"><p class="error-text">${esc(t('notFound')(mat.name))}</p></div>
       </div>`;
     
     const nl = (mat.note_classification||"").toLowerCase();
     let badges = "";
-    if (nl.includes("top")) badges += `<span class="badge badge-top">Top</span>`;
-    if (nl.includes("middle")||nl.includes("heart")) badges += `<span class="badge badge-mid">Heart</span>`;
-    if (nl.includes("base")) badges += `<span class="badge badge-base">Base</span>`;
+    if (nl.includes("top")) badges += `<span class="badge badge-top">${t('top')}</span>`;
+    if (nl.includes("middle")||nl.includes("heart")) badges += `<span class="badge badge-mid">${t('heart')}</span>`;
+    if (nl.includes("base")) badges += `<span class="badge badge-base">${t('base')}</span>`;
     
     const ids = [
       mat.cas_number?`<p><code>CAS</code> ${esc(mat.cas_number)}</p>`:"",
@@ -772,7 +875,7 @@ function renderResults() {
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body" id="body${idx}">
-          ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
+          ${mat._matchType?`<p class="card-match">${esc(typeof t(mat._matchType)==='function'?t(mat._matchType)(mat._matchArg):t(mat._matchType))}</p>`:mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(mat.name)}</strong></p>
@@ -782,18 +885,18 @@ function renderResults() {
           <hr>
           <div class="row">
             <div style="flex:1">
-              <p class="sec-title">Odor</p>
+              <p class="sec-title">${t('odor')}</p>
               ${mat.odor_description?`<p class="odor-desc">${esc(mat.odor_description)}</p>`:""}
               ${mat.odor_type?`<p>${esc(mat.odor_type)}</p>`:""}
               ${mat.odor_strength?`<p style="color:var(--text2);font-size:0.85em">${esc(mat.odor_strength)}</p>`:""}
               ${!mat.odor_description&&!mat.odor_type?`<p style="color:var(--text2)">—</p>`:""}
             </div>
             <div style="flex:1">
-              <p class="sec-title">Note</p>
+              <p class="sec-title">${t('note')}</p>
               ${badges||`<p style="color:var(--text2)">—</p>`}
             </div>
             <div style="flex:1">
-              <p class="sec-title">Performance</p>
+              <p class="sec-title">${t('performance')}</p>
               ${mat.tenacity?`<p>${esc(mat.tenacity)}</p>`:""}
               ${mat.tenacity_hours?`<p style="color:var(--text2);font-size:0.85em">${esc(mat.tenacity_hours)}</p>`:""}
               ${!mat.tenacity?`<p style="color:var(--text2)">—</p>`:""}
@@ -803,18 +906,18 @@ function renderResults() {
           <hr>
           <div class="row">
             <div style="flex:1">
-              <p class="sec-title">Safety</p>
+              <p class="sec-title">${t('safety')}</p>
               ${mat.ifra_guidelines?`<p>${esc(mat.ifra_guidelines)}</p>`:""}
               ${mat.usage_levels?`<p style="color:var(--text2);font-size:0.85em">${esc(mat.usage_levels)}</p>`:""}
             </div>
             <div style="flex:1">
-              <p class="sec-title">Blends with</p>
+              <p class="sec-title">${t('blendsWith')}</p>
               ${mat.blends_well_with.length?`<p>${esc(mat.blends_well_with.join(', '))}</p>`:""}
             </div>
           </div>`:""}
           ${mat._cid?`
           <hr>
-          <div class="pubchem-toggle" id="pcToggle${idx}" onclick="loadPubchemData(${idx})">▶ Complete PubChem Data</div>
+          <div class="pubchem-toggle" id="pcToggle${idx}" onclick="loadPubchemData(${idx})">${t('pubchemData')}</div>
           <div class="pubchem-data" id="pcData${idx}"></div>`:""}
         </div>
       </div>`;
@@ -864,14 +967,14 @@ async function loadPubchemData(idx) {
   // Toggle open/close if already loaded
   if (dataDiv.dataset.loaded) {
     dataDiv.classList.toggle("open");
-    toggle.textContent = dataDiv.classList.contains("open") ? "▼ Complete PubChem Data" : "▶ Complete PubChem Data";
+    toggle.textContent = dataDiv.classList.contains("open") ? t('pubchemDataOpen') : t('pubchemData');
     return;
   }
   
   const mat = results[idx];
   if (!mat._cid) return;
   
-  toggle.textContent = "⏳ Loading...";
+  toggle.textContent = t('loading');
   try {
     // Use prefetched data if available, otherwise fetch now
     if (!mat.pubchem_sections || !Object.keys(mat.pubchem_sections).length) {
@@ -891,9 +994,9 @@ async function loadPubchemData(idx) {
     dataDiv.innerHTML = renderPubchemSections(mat.pubchem_sections);
     dataDiv.dataset.loaded = "1";
     dataDiv.classList.add("open");
-    toggle.textContent = "▼ Complete PubChem Data";
+    toggle.textContent = t('pubchemDataOpen');
   } catch(e) {
-    toggle.textContent = "❌ Failed to load — click to retry";
+    toggle.textContent = t('loadFailed');
     dataDiv.dataset.loaded = "";
   }
 }
@@ -1047,11 +1150,11 @@ async function preparePrint() {
   if (unloaded.length) {
     const status = document.createElement('div');
     status.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:12px;background:#3D5A80;color:#fff;text-align:center;z-index:9999;font-size:0.9em;';
-    status.textContent = `Loading PubChem data (0/${unloaded.length})...`;
+    status.textContent = t('loadingPubchem')(0, unloaded.length);
     document.body.appendChild(status);
 
     for (let i = 0; i < unloaded.length; i++) {
-      status.textContent = `Loading PubChem data (${i+1}/${unloaded.length})...`;
+      status.textContent = t('loadingPubchem')(i+1, unloaded.length);
       await loadPubchemData(unloaded[i]);
     }
     document.body.removeChild(status);
