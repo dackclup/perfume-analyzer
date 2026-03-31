@@ -981,8 +981,21 @@ async function loadPubchemData(idx) {
   
   // Toggle open/close if already loaded
   if (dataDiv.dataset.loaded) {
+    const isOpening = !dataDiv.classList.contains("open");
+    if (!isOpening) {
+      // Closing — collapse all sub-sections inside
+      dataDiv.querySelectorAll('.pc-group-body.open').forEach(el => {
+        el.classList.remove("open");
+        const id = el.id.replace("pcBody","");
+        const a = document.getElementById("pcArrow"+id);
+        if (a) a.classList.remove("open");
+      });
+    }
     dataDiv.classList.toggle("open");
     toggle.textContent = dataDiv.classList.contains("open") ? "▼ Complete PubChem Data" : "▶ Complete PubChem Data";
+    if (isOpening) {
+      setTimeout(() => toggle.scrollIntoView({behavior:'smooth', block:'start'}), 50);
+    }
     return;
   }
   
@@ -1010,6 +1023,7 @@ async function loadPubchemData(idx) {
     dataDiv.dataset.loaded = "1";
     dataDiv.classList.add("open");
     toggle.textContent = "▼ Complete PubChem Data";
+    setTimeout(() => toggle.scrollIntoView({behavior:'smooth', block:'start'}), 50);
   } catch(e) {
     toggle.textContent = "❌ Failed to load — click to retry";
     dataDiv.dataset.loaded = "";
