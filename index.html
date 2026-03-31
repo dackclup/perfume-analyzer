@@ -603,34 +603,29 @@ function fuzzyMatchDB(query) {
   return bestMatch;
 }
 
-// Sections to skip entirely (not useful for perfumery users)
-const SKIP_SECTIONS = new Set([
-  "3D Conformer", "Crystal Structures",
-  "Record Description", "Summary Information", "Information Sources",
-  "Taxonomy", "Gene Regulation",
-  // Patents & Literature
-  "Patent", "Patent Literature", "Deposited Patent Literature",
-  "Literature", "Literature References", "Scientific Literature",
-  // Regulatory & Classification
-  "Regulatory Information", "Classification",
-  // Biology & Computational
-  "Computational Biology", "Protein Targets", "Gene Targets",
-  "Biological Test Results", "Bioassay Results",
-  // Depositor & Vendor
-  "Depositor-Supplied Information", "Depositor Provided PubMed Citations",
-  "Vendor", "Supplier Information",
-  // Other non-useful
-  "Associated Disorders and Diseases",
-  "Interactions and Pathways",
-  "Related Records"
-]);
+// Keywords to skip (matched against section heading, case-insensitive)
+const SKIP_KEYWORDS = [
+  "3d conformer", "crystal structure",
+  "record description", "summary information", "information source",
+  "taxonomy", "gene", "protein target",
+  "patent", "literature", "pubmed",
+  "regulatory", "classification",
+  "computational biology", "bioassay", "biological test",
+  "depositor", "vendor", "supplier",
+  "disorder", "disease", "pathway",
+  "related record"
+];
+function shouldSkipSection(heading) {
+  const h = heading.toLowerCase();
+  return SKIP_KEYWORDS.some(k => h.includes(k));
+}
 
 // Extract all PUG View sections recursively
 function extractAllSections(sections, prefix="", depth=0) {
   if (depth > 4) return {}; // Limit recursion depth
   const result = {};
   for (const sec of sections) {
-    if (SKIP_SECTIONS.has(sec.TOCHeading)) continue;
+    if (shouldSkipSection(sec.TOCHeading)) continue;
     const heading = prefix ? `${prefix} > ${sec.TOCHeading}` : sec.TOCHeading;
     if (sec.Information) {
       const items = [];
