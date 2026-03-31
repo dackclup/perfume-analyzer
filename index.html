@@ -51,8 +51,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .card-header { padding:12px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); }
 .card-header:hover { background:var(--bg2); }
 .card-header h3 { font-size:1em; font-weight:500; }
-.card-arrow { transition:transform 0.2s; font-size:0.8em; color:var(--text2); }
-.card-arrow.open { transform:rotate(90deg); }
+.card-arrow { font-size:0.8em; color:var(--text2); }
 .card-body { padding:0 16px 16px; display:none; }
 .card-body.open { display:block; }
 .card-del { color:var(--text2); font-size:1.1em; cursor:pointer; opacity:0.5; padding:4px 8px; }
@@ -733,6 +732,11 @@ function togglePcGroup(gid) {
 // ── Render ──
 function renderResults() {
   const div = document.getElementById("results");
+  // Save open states before re-render
+  results.forEach((mat, idx) => {
+    const body = document.getElementById("body"+idx);
+    if (body) mat._open = body.classList.contains("open");
+  });
   const found = results.filter(r=>r.found).length;
   document.getElementById("statusBar").style.display = results.length?"block":"none";
   document.getElementById("statusText").textContent = `${found}/${results.length} found`;
@@ -769,10 +773,10 @@ function renderResults() {
     return `
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
-          <h3><span class="card-arrow" id="arrow${idx}">▶</span> ${esc(mat.name)}</h3>
+          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(mat.name)}</h3>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
-        <div class="card-body" id="body${idx}">
+        <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
@@ -855,7 +859,7 @@ function toggleCard(idx) {
   const body = document.getElementById("body"+idx);
   const arrow = document.getElementById("arrow"+idx);
   body.classList.toggle("open");
-  arrow.classList.toggle("open");
+  arrow.textContent = body.classList.contains("open") ? "▼" : "▶";
 }
 
 async function loadPubchemData(idx) {
