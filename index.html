@@ -678,8 +678,14 @@ function renderPubchemSections(sections) {
       bodyHtml += `<div class="pc-sub">`;
       if (display !== topH) bodyHtml += `<div class="pc-sub-title">${esc(display)}</div>`;
       bodyHtml += `<div class="pc-sub-content">`;
-      for (const c of cleaned) {
-        bodyHtml += `<p>${esc(c.length>400?c.substring(0,400)+'…':c)}</p>`;
+      // Short items (< 80 chars each, 2+ items) → inline comma-separated
+      const allShort = cleaned.length > 1 && cleaned.every(c => c.length < 80);
+      if (allShort) {
+        bodyHtml += `<p>${cleaned.map(c=>esc(c)).join(', ')}</p>`;
+      } else {
+        for (const c of cleaned) {
+          bodyHtml += `<p>${esc(c.length>400?c.substring(0,400)+'…':c)}</p>`;
+        }
       }
       bodyHtml += `</div></div>`;
     }
