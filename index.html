@@ -94,6 +94,12 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .downloads { position:fixed; bottom:0; left:0; right:0; z-index:100; background:var(--bg); border-top:1px solid var(--border); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
 .downloads a { color:var(--text); text-decoration:underline; font-size:0.9em; cursor:pointer; }
 .downloads a:hover { opacity:0.6; }
+.dl-wrap { position:relative; }
+.dl-wrap > a { text-decoration:underline; cursor:pointer; }
+.dl-menu { display:none; position:absolute; bottom:calc(100% + 8px); left:0; background:var(--card-bg); border:1px solid var(--border); border-radius:6px; min-width:140px; box-shadow:0 -4px 12px rgba(0,0,0,0.15); overflow:hidden; }
+.dl-menu.open { display:block; }
+.dl-menu a { display:block; padding:10px 16px; font-size:0.9em; text-decoration:none; color:var(--text); cursor:pointer; }
+.dl-menu a:hover { background:var(--bg2); opacity:1; }
 
 /* Progress */
 .progress { display:none; height:4px; background:var(--border); border-radius:2px; margin:8px 0; overflow:hidden; }
@@ -174,8 +180,13 @@ html { scroll-behavior:smooth; }
 </div>
 <div id="results"></div>
 <div class="downloads" id="downloads" style="display:none">
-  <a onclick="downloadJSON()">Download.JSON</a>
-  <a onclick="preparePrint()">Save.PDF</a>
+  <div class="dl-wrap">
+    <a onclick="toggleDlMenu()">Download</a>
+    <div class="dl-menu" id="dlMenu">
+      <a onclick="downloadJSON();closeDlMenu()">Save.JSON</a>
+      <a onclick="preparePrint();closeDlMenu()">Save.PDF</a>
+    </div>
+  </div>
   <span class="back-top"><a href="#top">▲ Back to top</a></span>
 </div>
 
@@ -977,7 +988,7 @@ async function downloadJSON() {
   const found = results.filter(r=>r.found);
   if (!found.length) return;
 
-  const btn = document.querySelector('.downloads a[onclick*="downloadJSON"]');
+  const btn = document.querySelector('.dl-menu a[onclick*="downloadJSON"]');
   if (!btn) return;
   const origText = btn.textContent;
   btn.style.pointerEvents = "none";
@@ -1078,6 +1089,16 @@ async function preparePrint() {
     window.removeEventListener('afterprint', restore);
   }, {once: true});
 }
+
+function toggleDlMenu() {
+  document.getElementById('dlMenu').classList.toggle('open');
+}
+function closeDlMenu() {
+  document.getElementById('dlMenu').classList.remove('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.dl-wrap')) closeDlMenu();
+});
 
 function esc(s) { const d=document.createElement('div'); d.textContent=s||""; return d.innerHTML; }
 function toTitle(s) { return s.replace(/\b\w/g, c=>c.toUpperCase()); }
