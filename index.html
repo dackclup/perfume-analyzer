@@ -44,7 +44,8 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 
 /* Status */
 .status { color:var(--text2); font-size:0.85em; }
-.clear-btn { color:var(--text2); font-size:0.85em; cursor:pointer; text-decoration:none; margin-left:auto; }
+.clear-btn { padding:6px 18px; background:var(--accent); color:#fff; border:none; border-radius:6px; font-size:0.85em; cursor:pointer; font-family:inherit; font-weight:500; text-decoration:none; margin-left:auto; }
+.clear-btn:hover { opacity:0.85; }
 #statusBar { align-items:center; margin-bottom:8px; }
 
 /* Cards */
@@ -178,7 +179,7 @@ html { scroll-behavior:smooth; }
 
 <div id="statusBar" style="display:none">
   <span class="status" id="statusText"></span>
-  <span class="clear-btn" onclick="clearAll()">− Clear all</span>
+  <button class="clear-btn" onclick="clearAll()">Clear all</button>
 </div>
 <div id="results"></div>
 <div class="downloads" id="downloads" style="display:none">
