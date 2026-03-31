@@ -121,24 +121,24 @@ html { scroll-behavior:smooth; }
 @media print {
   :root {
     --bg: #ffffff; --bg2: #f5f5fa; --text: #1a1a2e; --text2: #4a5e78;
-    --accent: #3D5A80; --border: #d1d9e6; --card-bg: #ffffff;
+    --accent: #3D5A80; --border: transparent; --card-bg: #ffffff;
     --badge-top-bg: #fef9c3; --badge-top-fg: #854d0e;
     --badge-mid-bg: #dbeafe; --badge-mid-fg: #1e40af;
     --badge-base-bg: #ede9fe; --badge-base-fg: #5b21b6;
   }
   body { padding:0; padding-bottom:0; max-width:100%; }
-  .search-box, .pills, .progress, .progress-text,
+  h1, .subtitle, .search-box, .pills, .progress, .progress-text,
   .downloads, #statusBar, .card-del, .card-arrow,
-  .pubchem-toggle, .back-top { display:none !important; }
-  .card { break-inside:avoid; page-break-inside:avoid; margin-bottom:16px; border:1px solid #d1d9e6; }
+  .pubchem-toggle, .back-top, #top, hr { display:none !important; }
+  .card { break-inside:avoid; page-break-inside:avoid; margin-bottom:16px; border:none; border-bottom:1px solid #e0e0e0; }
   .card-header { cursor:default; }
   .card-body { display:block !important; }
   .pubchem-data { display:block !important; }
   .pc-group-body { display:block !important; }
+  .pc-group { border:none; }
   .pc-arrow { display:none !important; }
   .error-card { display:none !important; }
   .col-img img { filter:none; }
-  hr { margin:8px 0; }
 }
 </style>
 </head>
