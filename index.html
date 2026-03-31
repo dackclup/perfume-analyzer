@@ -932,18 +932,36 @@ function prefetchAll() {
   });
 }
 
+function collapseSubSections(cardBody) {
+  cardBody.querySelectorAll('.pc-group-body.open').forEach(el => {
+    el.classList.remove("open");
+    const id = el.id.replace("pcBody","");
+    const a = document.getElementById("pcArrow"+id);
+    if (a) a.classList.remove("open");
+  });
+  const pcData = cardBody.querySelector('.pubchem-data.open');
+  if (pcData) {
+    pcData.classList.remove("open");
+    const toggle = cardBody.querySelector('.pubchem-toggle');
+    if (toggle) toggle.textContent = "▶ Complete PubChem Data";
+  }
+}
 function toggleCard(idx) {
   const body = document.getElementById("body"+idx);
   const arrow = document.getElementById("arrow"+idx);
   const isOpening = !body.classList.contains("open");
-  // Close all other cards first
+  // Close all other cards and their sub-sections
   if (isOpening) {
     document.querySelectorAll('.card-body.open').forEach(el => {
+      collapseSubSections(el);
       el.classList.remove("open");
       const otherId = el.id.replace("body","");
       const otherArrow = document.getElementById("arrow"+otherId);
       if (otherArrow) otherArrow.textContent = "▶";
     });
+  } else {
+    // Closing this card — collapse its sub-sections
+    collapseSubSections(body);
   }
   body.classList.toggle("open");
   arrow.textContent = body.classList.contains("open") ? "▼" : "▶";
