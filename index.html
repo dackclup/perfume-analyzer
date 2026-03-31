@@ -109,6 +109,11 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .progress-bar { height:100%; background:var(--accent); transition:width 0.3s; }
 .progress-text { font-size:0.8em; color:var(--text2); }
 
+/* Card back-to-header */
+.card-back { text-align:center; margin-top:12px; }
+.card-back a { color:var(--text2); font-size:0.8em; text-decoration:none; cursor:pointer; }
+.card-back a:hover { opacity:0.6; }
+
 /* Back to top */
 .back-top a { color:var(--text2); font-size:0.85em; text-decoration:none; }
 .back-top a:hover { text-decoration:underline; }
@@ -139,7 +144,7 @@ html { scroll-behavior:smooth; }
   @page { margin:15mm 10mm; @top-right { content:counter(page); font-size:9pt; color:#999; } }
   h1, .subtitle, .search-box, .pills, .progress, .progress-text,
   .downloads, #statusBar, .card-del, .card-arrow,
-  .pubchem-toggle, .back-top, #top, hr { display:none !important; }
+  .pubchem-toggle, .back-top, .card-back, #top, hr { display:none !important; }
   .card { break-inside:auto; margin-bottom:0; border:none; break-before:page; page-break-before:always; }
   .card:first-child { break-before:auto; page-break-before:auto; }
   .card-header { cursor:default; break-after:avoid; page-break-after:avoid; }
@@ -902,6 +907,7 @@ function renderResults() {
           <hr>
           <div class="pubchem-toggle" id="pcToggle${idx}" onclick="loadPubchemData(${idx})">▶ Complete PubChem Data</div>
           <div class="pubchem-data" id="pcData${idx}"></div>`:""}
+          <div class="card-back"><a onclick="document.getElementById('body${idx}').closest('.card').scrollIntoView({behavior:'smooth',block:'start'})">▲</a></div>
         </div>
       </div>`;
   }).join('');
