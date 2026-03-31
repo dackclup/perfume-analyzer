@@ -923,6 +923,16 @@ function prefetchAll() {
 function toggleCard(idx) {
   const body = document.getElementById("body"+idx);
   const arrow = document.getElementById("arrow"+idx);
+  const isOpening = !body.classList.contains("open");
+  // Close all other cards first
+  if (isOpening) {
+    document.querySelectorAll('.card-body.open').forEach(el => {
+      el.classList.remove("open");
+      const otherId = el.id.replace("body","");
+      const otherArrow = document.getElementById("arrow"+otherId);
+      if (otherArrow) otherArrow.textContent = "▶";
+    });
+  }
   body.classList.toggle("open");
   arrow.textContent = body.classList.contains("open") ? "▼" : "▶";
 }
