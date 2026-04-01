@@ -1167,6 +1167,9 @@ async function downloadJSON() {
   btn.style.opacity = "0.4";
 
   // Load PubChem data for all compounds
+  // Wait for any pending PubChem property loads (fast path)
+  await Promise.allSettled(found.map(mat => mat._loadPubchem).filter(Boolean));
+
   const BATCH = 4;
   for (let i = 0; i < found.length; i += BATCH) {
     const batch = found.slice(i, i + BATCH);
@@ -1182,6 +1185,9 @@ async function downloadJSON() {
       }
     }));
   }
+
+  // Sections to exclude from JSON (raw spectra data too verbose for AI)
+  const SKIP_JSON_HEADINGS = ["lc-ms", "gc-ms", "mass spectrum", "ms-ms", "nmr spectra", "ir spectrum", "uv spectrum", "raman spectrum"];
 
   // Build clean JSON for AI analysis
   const data = found.map(mat => {
@@ -1224,10 +1230,16 @@ async function downloadJSON() {
     };
     // Add filtered PubChem sections
     if (mat.pubchem_sections && Object.keys(mat.pubchem_sections).length) {
+      const globalSeen = new Set();
       for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
+        // Skip raw spectra sections
+        const hl = heading.toLowerCase();
+        if (SKIP_JSON_HEADINGS.some(k => hl.includes(k))) continue;
+        // Deduplicate across all sections
         const cleaned = items.filter(item => !item.startsWith('http'))
           .map(item => item.replace(/https?:\/\/\S+/g,'').trim())
-          .filter(c => c && c.length >= 3);
+          .filter(c => c && c.length >= 3 && !globalSeen.has(c));
+        cleaned.forEach(c => globalSeen.add(c));
         if (cleaned.length) record.pubchem_data[heading] = cleaned;
       }
     }
