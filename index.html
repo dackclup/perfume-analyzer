@@ -327,30 +327,8 @@ function showPills(typed) {
     return true;
   });
 
-  // Render local suggestions immediately
+  // Render local suggestions (perfumery DB only)
   renderPills(suggestions);
-
-  // PubChem autocomplete fallback (async, renders when done)
-  if (suggestions.length < 3 && qs.length >= 2) {
-    const currentQuery = qs;
-    pubchemAutocomplete(qs).then(names => {
-      if (!names.length && qs.includes('.')) {
-        return pubchemAutocomplete(qs.replace(/\./g,''));
-      }
-      return names;
-    }).then(names => {
-      // Abort if user has typed something else
-      if (input.value.toLowerCase().trim() !== currentQuery) return;
-      if (!names) return;
-      names.forEach(n => {
-        if (suggestions.length >= 10) return;
-        if (suggestions.find(s=>s.name===n)) return;
-        if (existingNames.has(n.toLowerCase())) return;
-        suggestions.push({name:n, cas:""});
-      });
-      renderPills(suggestions);
-    });
-  }
 }
 
 function renderPills(suggestions) {
@@ -366,17 +344,6 @@ function fetchWithTimeout(url, opts={}, ms=8000) {
   return fetch(url, {...opts, signal:ctrl.signal}).finally(() => clearTimeout(timer));
 }
 
-async function pubchemAutocomplete(q) {
-  const key = 'ac_'+q.toLowerCase();
-  if (pcCache[key]) return pcCache[key];
-  try {
-    const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(q)}/JSON?limit=5`);
-    const d = await r.json();
-    const names = d.dictionary_terms?.compound || [];
-    pcCache[key] = names;
-    return names;
-  } catch(e) { return []; }
-}
 
 // ── Search ──
 async function doSearch(term) {
