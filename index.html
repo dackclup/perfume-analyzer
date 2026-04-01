@@ -1203,13 +1203,64 @@ async function downloadJSON() {
     "molecular weight", "exact mass", "monoisotopic mass"
   ];
 
+  // === AI Preprocessing Helpers ===
+  const CAS_RE_SYN = /^\d{2,7}-\d{2}-\d$/;
+
+  // Parse numeric from text like "~36 hours", "~400 hours"
+  function parseHoursNumeric(s) {
+    if (!s) return null;
+    const m = s.match(/([\d.]+)\s*hour/i);
+    return m ? parseFloat(m[1]) : null;
+  }
+  // Parse usage range "0.1–2 %" → {min, max}
+  function parseUsageRange(s) {
+    if (!s) return {min:null, max:null};
+    const m = s.match(/([\d.]+)\s*[–\-]\s*([\d.]+)\s*%/);
+    return m ? {min:parseFloat(m[1]), max:parseFloat(m[2])} : {min:null, max:null};
+  }
+  // Ordinal scale for odor strength
+  function odorStrengthScale(s) {
+    if (!s) return null;
+    const sl = s.toLowerCase();
+    if (sl.includes('none')) return 0;
+    if (sl.includes('very high')) return 5;
+    if (sl.includes('high')) return 4;
+    if (sl.includes('medium to high')) return 3.5;
+    if (sl.includes('medium')) return 3;
+    if (sl.includes('low to medium')) return 2;
+    if (sl.includes('low')) return 1;
+    return null;
+  }
+  // One-hot note classification
+  function noteOneHot(s) {
+    if (!s) return {is_top:false, is_heart:false, is_base:false};
+    const sl = s.toLowerCase();
+    return {
+      is_top: sl.includes('top'),
+      is_heart: sl.includes('middle') || sl.includes('heart'),
+      is_base: sl.includes('base')
+    };
+  }
+  // Extract unique GHS H-codes from array
+  function extractGhsCodes(items) {
+    if (!items) return [];
+    const codes = new Set();
+    for (const item of items) {
+      const matches = item.match(/H\d{3}/g);
+      if (matches) matches.forEach(c => codes.add(c));
+    }
+    return [...codes].sort();
+  }
+
   // Build clean JSON for AI analysis
   const data = found.map(mat => {
+    const usageRange = parseUsageRange(mat.usage_levels);
+    const notes = noteOneHot(mat.note_classification);
     const record = {
       name: mat.name,
-      pubchem_name: (mat.synonyms.find(s => !/^\d{2,7}-\d{2}-\d$/.test(s)) || mat.iupac_name || mat.name),
+      pubchem_name: (mat.synonyms.find(s => !CAS_RE_SYN.test(s)) || mat.iupac_name || mat.name),
       cas_number: mat.cas_number || null,
-      fema_number: mat.fema_number || null,
+      fema_number: mat.fema_number || "Not Assigned",
       pubchem_url: mat.page_url || null,
       structure_image_url: mat.structure_image_url || null,
       identifiers: {
@@ -1232,15 +1283,21 @@ async function downloadJSON() {
         odor_description: mat.odor_description || null,
         odor_type: mat.odor_type || null,
         odor_strength: mat.odor_strength || null,
+        odor_strength_scale: odorStrengthScale(mat.odor_strength),
         note_classification: mat.note_classification || null,
+        ...notes,
         tenacity: mat.tenacity || null,
         tenacity_hours: mat.tenacity_hours || null,
+        tenacity_hours_numeric: parseHoursNumeric(mat.tenacity_hours),
         ifra_guidelines: mat.ifra_guidelines || null,
         usage_levels: mat.usage_levels || null,
-        blends_well_with: mat.blends_well_with.length ? mat.blends_well_with : null
+        usage_level_min_pct: usageRange.min,
+        usage_level_max_pct: usageRange.max,
+        blends_well_with: mat.blends_well_with.length ? mat.blends_well_with : []
       },
-      synonyms: mat.synonyms.length ? mat.synonyms : null,
-      pubchem_data: {}
+      synonyms: mat.synonyms.length ? mat.synonyms.filter(s => !CAS_RE_SYN.test(s)) : [],
+      pubchem_data: {},
+      ai_extracted: {}
     };
     // Fallback: if smiles still null, try from pubchem_data
     if (!record.identifiers.smiles && mat.pubchem_sections) {
@@ -1278,6 +1335,42 @@ async function downloadJSON() {
     }
     // Remove empty pubchem_data
     if (!Object.keys(record.pubchem_data).length) delete record.pubchem_data;
+
+    // === AI Extracted: parsed numeric values from pubchem_data ===
+    const pd = record.pubchem_data || {};
+    function findPdVal(...keys) {
+      for (const [h, items] of Object.entries(pd)) {
+        const hl = h.toLowerCase();
+        if (keys.some(k => hl.includes(k)) && items.length) return items;
+      }
+      return null;
+    }
+    function parseFirstNum(items) {
+      if (!items) return null;
+      for (const item of items) {
+        const m = item.match(/([\d.]+)/);
+        if (m) return parseFloat(m[1]);
+      }
+      return null;
+    }
+    // Extract GHS codes
+    const ghsItems = findPdVal('ghs classification');
+    if (ghsItems) record.ai_extracted.ghs_codes = extractGhsCodes(ghsItems);
+    // Parse key physical properties
+    const bp = parseFirstNum(findPdVal('boiling point'));
+    const mp = parseFirstNum(findPdVal('melting point'));
+    const fp = parseFirstNum(findPdVal('flash point'));
+    const dens = parseFirstNum(findPdVal('density'));
+    const vp = parseFirstNum(findPdVal('vapor pressure'));
+    const logp = parseFirstNum(findPdVal('logp'));
+    if (bp != null) record.ai_extracted.boiling_point_value = bp;
+    if (mp != null) record.ai_extracted.melting_point_value = mp;
+    if (fp != null) record.ai_extracted.flash_point_value = fp;
+    if (dens != null) record.ai_extracted.density_value = dens;
+    if (vp != null) record.ai_extracted.vapor_pressure_mmhg = vp;
+    if (logp != null) record.ai_extracted.logp_experimental = logp;
+    // Remove empty ai_extracted
+    if (!Object.keys(record.ai_extracted).length) delete record.ai_extracted;
     return record;
   });
 
