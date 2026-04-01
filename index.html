@@ -126,7 +126,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 @keyframes spin { to { transform:rotate(360deg); } }
 
 /* Error */
-.error-card { border-color:#e74c3c; }
+.error-card { border:none; background:none; margin-bottom:4px; }
 .error-text { color:#e74c3c; font-size:0.85em; }
 
 html { scroll-behavior:smooth; }
@@ -840,12 +840,9 @@ function renderResults() {
   
   div.innerHTML = results.map((mat,idx) => {
     if (!mat.found) return `
-      <div class="card error-card">
-        <div class="card-header" onclick="toggleCard(${idx})">
-          <h3>✗ ${esc(mat.name)}</h3>
-          <span><span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span></span>
-        </div>
-        <div class="card-body"><p class="error-text">${mat._notPerfumery?`'${esc(mat.name)}' — No data (not a perfumery material)`:`'${esc(mat.name)}' not found`}</p></div>
+      <div class="error-card" style="display:flex;align-items:center;gap:8px;padding:6px 0">
+        <span class="error-text">${mat._notPerfumery?`✗ ${esc(mat.name)} — No data`:`✗ ${esc(mat.name)} not found`}</span>
+        <span class="card-del" onclick="delResult(${idx})" style="cursor:pointer;opacity:0.5;font-size:0.9em">✕</span>
       </div>`;
     
     const nl = (mat.note_classification||"").toLowerCase();
