@@ -110,7 +110,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .progress-text { font-size:0.8em; color:var(--text2); }
 
 /* Card back-to-header */
-.card-back { text-align:center; margin-top:12px; }
+.card-back { text-align:right; margin-top:12px; }
 .card-back a { color:var(--text2); font-size:0.8em; text-decoration:none; cursor:pointer; }
 .card-back a:hover { opacity:0.6; }
 
@@ -907,7 +907,7 @@ function renderResults() {
           <hr>
           <div class="pubchem-toggle" id="pcToggle${idx}" onclick="loadPubchemData(${idx})">▶ Complete PubChem Data</div>
           <div class="pubchem-data" id="pcData${idx}"></div>`:""}
-          <div class="card-back"><a onclick="document.getElementById('body${idx}').closest('.card').scrollIntoView({behavior:'smooth',block:'start'})">▲</a></div>
+          <div class="card-back"><a onclick="document.getElementById('body${idx}').closest('.card').scrollIntoView({behavior:'smooth',block:'start'})">▲ Back to top</a></div>
         </div>
       </div>`;
   }).join('');
