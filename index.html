@@ -232,10 +232,11 @@ function _addPrefix(name) {
   _seen.add(name);
   const nl = name.toLowerCase();
   const cas = TRADES[nl] || NAME_TO_CAS[nl] || "";
+  const display = cas && DB[cas] ? DB[cas].name : toTitle(name);
   for (let i=1; i<=Math.min(name.length,11); i++) {
     const p = name.substring(0,i);
     if (!PREFIX_IX[p]) PREFIX_IX[p] = [];
-    PREFIX_IX[p].push({name, cas});
+    PREFIX_IX[p].push({name, cas, display});
   }
 }
 Object.keys(TRADES).forEach(_addPrefix);
@@ -281,40 +282,40 @@ function showPills(typed) {
   const seenCas = new Set();
   
   // Prefix match (with trailing space)
-  (PREFIX_IX[ql]||[]).forEach(({name,cas}) => {
+  (PREFIX_IX[ql]||[]).forEach(({name,cas,display}) => {
     if (suggestions.length>=10) return;
     if (cas && seenCas.has(cas)) return;
-    suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
+    suggestions.push({name:display,cas}); if(cas)seenCas.add(cas);
   });
 
   // Without space fallback
   if (!suggestions.length && ql!==qs) {
-    (PREFIX_IX[qs]||[]).forEach(({name,cas}) => {
+    (PREFIX_IX[qs]||[]).forEach(({name,cas,display}) => {
       if (suggestions.length>=10) return;
       if (cas && seenCas.has(cas)) return;
-      suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
+      suggestions.push({name:display,cas}); if(cas)seenCas.add(cas);
     });
   }
-  
+
   // Space fallback
   if (!suggestions.length && qs.includes(' ')) {
     const shorter = qs.substring(0, qs.lastIndexOf(' '));
-    (PREFIX_IX[shorter]||[]).forEach(({name,cas}) => {
+    (PREFIX_IX[shorter]||[]).forEach(({name,cas,display}) => {
       if (suggestions.length>=10) return;
       if (!name.startsWith(qs) && !name.includes(qs)) return;
       if (cas && seenCas.has(cas)) return;
-      suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
+      suggestions.push({name:display,cas}); if(cas)seenCas.add(cas);
     });
   }
-  
+
   // Substring
   if (suggestions.length<10 && qs.length>=2) {
-    (PREFIX_IX[qs.substring(0,2)]||PREFIX_IX[qs[0]]||[]).forEach(({name,cas}) => {
+    (PREFIX_IX[qs.substring(0,2)]||PREFIX_IX[qs[0]]||[]).forEach(({name,cas,display}) => {
       if (suggestions.length>=10) return;
       if (!name.includes(qs)) return;
-      if (suggestions.find(s=>s.name===toTitle(name))) return;
+      if (suggestions.find(s=>s.name===display)) return;
       if (cas && seenCas.has(cas)) return;
-      suggestions.push({name:toTitle(name),cas}); if(cas)seenCas.add(cas);
+      suggestions.push({name:display,cas}); if(cas)seenCas.add(cas);
     });
   }
   
@@ -438,6 +439,7 @@ async function scrapeMaterial(name) {
   // ── Fast path: direct DB match by name/synonym → return instantly ──
   const fastCas = TRADES[n] || NAME_TO_CAS[n];
   if (fastCas && DB[fastCas]) {
+    mat.name = DB[fastCas].name;
     mat.cas_number = fastCas;
     mat.found = true;
     mat.match_info = "✅ CAS match (" + fastCas + ")";
@@ -527,6 +529,7 @@ async function scrapeMaterial(name) {
       for (const v of variants) { if (v !== n && TRADES[v]) { tradeCas = TRADES[v]; break; } }
     }
     if (tradeCas) {
+      if (DB[tradeCas]) mat.name = DB[tradeCas].name;
       if (MIXTURES.has(tradeCas)) {
         mat.found = true; mat.cas_number = tradeCas;
         mat.match_info = "✅ Natural mixture (CAS " + tradeCas + ")";
@@ -559,7 +562,11 @@ async function scrapeMaterial(name) {
     const fuzzy = fuzzyMatchDB(n);
     if (fuzzy) {
       cid = await getCid(fuzzy.cas);
-      if (cid) { mat.cas_number = fuzzy.cas; mat.match_info = "ℹ️ Fuzzy match: " + fuzzy.name; }
+      if (cid) {
+        mat.cas_number = fuzzy.cas;
+        if (DB[fuzzy.cas]) mat.name = DB[fuzzy.cas].name;
+        mat.match_info = "ℹ️ Fuzzy match: " + fuzzy.name;
+      }
     }
   }
 
@@ -596,7 +603,10 @@ async function scrapeMaterial(name) {
   }
   
   // ── Apply perfumery overlay ──
-  if (mat.cas_number) applyPerfumery(mat, mat.cas_number);
+  if (mat.cas_number) {
+    if (DB[mat.cas_number]) mat.name = DB[mat.cas_number].name;
+    applyPerfumery(mat, mat.cas_number);
+  }
   
   // Store CID for lazy PUG View loading (fetched only when user opens section)
   mat._cid = cid;
