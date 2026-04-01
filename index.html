@@ -582,6 +582,16 @@ async function scrapeMaterial(name) {
     if (DB[mat.cas_number]) mat.name = DB[mat.cas_number].name;
     applyPerfumery(mat, mat.cas_number);
   }
+
+  // ── Reject non-perfumery compounds ──
+  const hasPerfumeryData = mat.odor_description || mat.odor_type || mat.note_classification
+    || mat.ifra_guidelines || mat.tenacity || MIXTURES.has(mat.cas_number)
+    || (mat.cas_number && DB[mat.cas_number]);
+  if (!hasPerfumeryData) {
+    mat.found = false;
+    mat._notPerfumery = true;
+    return mat;
+  }
   
   // Store CID for lazy PUG View loading (fetched only when user opens section)
   mat._cid = cid;
@@ -835,7 +845,7 @@ function renderResults() {
           <h3>✗ ${esc(mat.name)}</h3>
           <span><span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span></span>
         </div>
-        <div class="card-body"><p class="error-text">'${esc(mat.name)}' not found</p></div>
+        <div class="card-body"><p class="error-text">${mat._notPerfumery?`'${esc(mat.name)}' — No data (not a perfumery material)`:`'${esc(mat.name)}' not found`}</p></div>
       </div>`;
     
     const nl = (mat.note_classification||"").toLowerCase();
