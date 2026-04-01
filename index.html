@@ -143,6 +143,7 @@ html { scroll-behavior:smooth; }
     --badge-base-bg: #ede9fe; --badge-base-fg: #5b21b6;
   }
   body { padding:0; padding-bottom:0; max-width:100%; counter-reset:page; }
+  .badge { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   @page { margin:15mm 10mm; @top-right { content:counter(page); font-size:9pt; color:#999; } }
   h1, .subtitle, .search-box, .pills, .progress, .progress-text,
   .downloads, #statusBar, .card-del, .card-arrow,
