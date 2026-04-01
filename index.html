@@ -1382,6 +1382,14 @@ async function downloadJSON() {
         }
       }
     }
+    // Fallback: isomeric_smiles = canonical if not available (no stereocenters)
+    if (!record.identifiers.isomeric_smiles && record.identifiers.canonical_smiles) {
+      record.identifiers.isomeric_smiles = record.identifiers.canonical_smiles;
+      record.identifiers.has_stereocenters = false;
+    } else if (record.identifiers.isomeric_smiles) {
+      record.identifiers.has_stereocenters =
+        record.identifiers.isomeric_smiles !== record.identifiers.canonical_smiles;
+    }
     // Add filtered PubChem sections
     if (mat.pubchem_sections && Object.keys(mat.pubchem_sections).length) {
       const globalSeen = new Set();
