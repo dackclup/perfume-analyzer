@@ -406,6 +406,7 @@ async function doSearch(term) {
   input.value = "";
   pillsDiv.innerHTML = "";
   btn.disabled = true;
+  results.forEach(r => r._open = false);
   renderResults();
   // Prefetch images + PubChem data in background
   prefetchAll();
