@@ -419,7 +419,7 @@ async function doSearch(term) {
 
 async function scrapeMaterial(name) {
   const mat = {name, found:false, cas_number:"", fema_number:"", iupac_name:"",
-    molecular_formula:"", molecular_weight:"", smiles:"", inchi:"",
+    molecular_formula:"", molecular_weight:"", smiles:"", isomeric_smiles:"", inchi:"",
     xlogp:"", tpsa:"", exact_mass:"", hbond_donor:"", hbond_acceptor:"",
     rotatable_bond:"", heavy_atom:"",
     synonyms:[], structure_image_url:"", page_url:"", match_info:"",
@@ -449,7 +449,7 @@ async function scrapeMaterial(name) {
       mat.page_url = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
       mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=500x500`;
       const [propsRes, synsRes] = await Promise.allSettled([
-        fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName,InChI,XLogP,ExactMass,TPSA,HBondDonorCount,HBondAcceptorCount,RotatableBondCount,HeavyAtomCount/JSON`).then(r=>r.json()).catch(()=>null),
+        fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,IUPACName,InChI,XLogP,ExactMass,TPSA,HBondDonorCount,HBondAcceptorCount,RotatableBondCount,HeavyAtomCount/JSON`).then(r=>r.json()).catch(()=>null),
         fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/synonyms/JSON`).then(r=>r.json()).catch(()=>null),
       ]);
       const propsData = propsRes.status==='fulfilled' ? propsRes.value : null;
@@ -458,6 +458,7 @@ async function scrapeMaterial(name) {
         mat.molecular_formula = p.MolecularFormula || "";
         mat.molecular_weight = String(p.MolecularWeight || "");
         mat.smiles = p.CanonicalSMILES || "";
+        mat.isomeric_smiles = p.IsomericSMILES || "";
         mat.iupac_name = p.IUPACName || "";
         mat.inchi = p.InChI || "";
         mat.xlogp = p.XLogP != null ? String(p.XLogP) : "";
@@ -567,7 +568,7 @@ async function scrapeMaterial(name) {
   
   // ── Fetch properties + synonyms in PARALLEL ──
   const [propsRes, synsRes] = await Promise.allSettled([
-    fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName,InChI,XLogP,ExactMass,TPSA,HBondDonorCount,HBondAcceptorCount,RotatableBondCount,HeavyAtomCount/JSON`).then(r=>r.json()).catch(()=>null),
+    fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,IUPACName,InChI,XLogP,ExactMass,TPSA,HBondDonorCount,HBondAcceptorCount,RotatableBondCount,HeavyAtomCount/JSON`).then(r=>r.json()).catch(()=>null),
     fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/synonyms/JSON`).then(r=>r.json()).catch(()=>null),
   ]);
   
@@ -1252,6 +1253,79 @@ async function downloadJSON() {
     return [...codes].sort();
   }
 
+  // === Unit Conversion: standardize to °C and mmHg ===
+  function parseTempCelsius(text) {
+    // Try °C first, then °F, then K
+    const patterns = [
+      {re:/([-\d.]+)\s*°?\s*C\b/i, fn:v=>v},
+      {re:/([-\d.]+)\s*°?\s*F\b/i, fn:v=>(v-32)*5/9},
+      {re:/([-\d.]+)\s*K\b/i, fn:v=>v-273.15},
+    ];
+    for (const {re,fn} of patterns) {
+      const m = text.match(re);
+      if (m) return Math.round(fn(parseFloat(m[1]))*100)/100;
+    }
+    return null;
+  }
+  function parsePressureMmHg(text) {
+    const patterns = [
+      {re:/([\d.eE+\-]+)\s*mm\s*Hg/i, fn:v=>v},
+      {re:/([\d.eE+\-]+)\s*kPa/i, fn:v=>v*7.50062},
+      {re:/([\d.eE+\-]+)\s*atm/i, fn:v=>v*760},
+      {re:/([\d.eE+\-]+)\s*\[mmHg\]/i, fn:v=>v},
+    ];
+    for (const {re,fn} of patterns) {
+      const m = text.match(re);
+      if (m) return Math.round(fn(parseFloat(m[1]))*1e6)/1e6;
+    }
+    return null;
+  }
+  function parseDensity(text) {
+    const m = text.match(/([\d.]+)\s*(g\s*\/?\s*(cu\s*)?cm|g\s*\/?\s*mL)?/i);
+    return m ? parseFloat(m[1]) : null;
+  }
+
+  // === Aggregation: median of all parsed values from multiple entries ===
+  function parseAllValues(items, parseFn) {
+    if (!items) return [];
+    const vals = [];
+    for (const item of items) {
+      const v = parseFn(item);
+      if (v != null && isFinite(v)) vals.push(v);
+    }
+    return vals;
+  }
+  function median(arr) {
+    if (!arr.length) return null;
+    const s = [...arr].sort((a,b)=>a-b);
+    const mid = Math.floor(s.length/2);
+    return s.length%2 ? s[mid] : Math.round((s[mid-1]+s[mid])/2*100)/100;
+  }
+
+  // === Data Completeness Score ===
+  function calcCompleteness(record) {
+    const keyFields = [
+      record.cas_number,
+      record.identifiers?.iupac_name,
+      record.identifiers?.molecular_formula,
+      record.identifiers?.smiles,
+      record.properties?.molecular_weight,
+      record.properties?.xlogp,
+      record.perfumery?.odor_description,
+      record.perfumery?.odor_type,
+      record.perfumery?.note_classification,
+      record.perfumery?.tenacity_hours_numeric,
+      record.perfumery?.usage_level_min_pct,
+      record.ai_extracted?.boiling_point_celsius,
+      record.ai_extracted?.density_value,
+      record.ai_extracted?.vapor_pressure_mmhg,
+      record.ai_extracted?.logp_experimental,
+      record.ai_extracted?.ghs_codes?.length > 0 ? true : null,
+    ];
+    const filled = keyFields.filter(v => v != null && v !== "" && v !== false).length;
+    return Math.round(filled / keyFields.length * 100);
+  }
+
   // Build clean JSON for AI analysis
   const data = found.map(mat => {
     const usageRange = parseUsageRange(mat.usage_levels);
@@ -1266,7 +1340,8 @@ async function downloadJSON() {
       identifiers: {
         iupac_name: mat.iupac_name || null,
         molecular_formula: mat.molecular_formula || null,
-        smiles: mat.smiles || null,
+        canonical_smiles: mat.smiles || null,
+        isomeric_smiles: mat.isomeric_smiles || null,
         inchi: mat.inchi || null
       },
       properties: {
@@ -1300,10 +1375,10 @@ async function downloadJSON() {
       ai_extracted: {}
     };
     // Fallback: if smiles still null, try from pubchem_data
-    if (!record.identifiers.smiles && mat.pubchem_sections) {
+    if (!record.identifiers.canonical_smiles && mat.pubchem_sections) {
       for (const [h, items] of Object.entries(mat.pubchem_sections)) {
         if (h.toLowerCase().includes('smiles') && items.length) {
-          record.identifiers.smiles = items[0]; break;
+          record.identifiers.canonical_smiles = items[0]; break;
         }
       }
     }
@@ -1336,7 +1411,7 @@ async function downloadJSON() {
     // Remove empty pubchem_data
     if (!Object.keys(record.pubchem_data).length) delete record.pubchem_data;
 
-    // === AI Extracted: parsed numeric values from pubchem_data ===
+    // === AI Extracted: unit-standardized, aggregated values ===
     const pd = record.pubchem_data || {};
     function findPdVal(...keys) {
       for (const [h, items] of Object.entries(pd)) {
@@ -1345,32 +1420,53 @@ async function downloadJSON() {
       }
       return null;
     }
-    function parseFirstNum(items) {
-      if (!items) return null;
-      for (const item of items) {
-        const m = item.match(/([\d.]+)/);
-        if (m) return parseFloat(m[1]);
-      }
-      return null;
-    }
-    // Extract GHS codes
+
+    // GHS codes (deduplicated)
     const ghsItems = findPdVal('ghs classification');
     if (ghsItems) record.ai_extracted.ghs_codes = extractGhsCodes(ghsItems);
-    // Parse key physical properties
-    const bp = parseFirstNum(findPdVal('boiling point'));
-    const mp = parseFirstNum(findPdVal('melting point'));
-    const fp = parseFirstNum(findPdVal('flash point'));
-    const dens = parseFirstNum(findPdVal('density'));
-    const vp = parseFirstNum(findPdVal('vapor pressure'));
-    const logp = parseFirstNum(findPdVal('logp'));
-    if (bp != null) record.ai_extracted.boiling_point_value = bp;
-    if (mp != null) record.ai_extracted.melting_point_value = mp;
-    if (fp != null) record.ai_extracted.flash_point_value = fp;
-    if (dens != null) record.ai_extracted.density_value = dens;
-    if (vp != null) record.ai_extracted.vapor_pressure_mmhg = vp;
-    if (logp != null) record.ai_extracted.logp_experimental = logp;
+
+    // Physical properties: parse ALL values, convert units, take median
+    const bpVals = parseAllValues(findPdVal('boiling point'), parseTempCelsius);
+    const mpVals = parseAllValues(findPdVal('melting point'), parseTempCelsius);
+    const fpVals = parseAllValues(findPdVal('flash point'), parseTempCelsius);
+    const densVals = parseAllValues(findPdVal('density'), parseDensity);
+    const vpVals = parseAllValues(findPdVal('vapor pressure'), parsePressureMmHg);
+    const logpVals = parseAllValues(findPdVal('logp'), t => {
+      const m = t.match(/([\d.]+)/); return m ? parseFloat(m[1]) : null;
+    });
+
+    if (bpVals.length) {
+      record.ai_extracted.boiling_point_celsius = median(bpVals);
+      if (bpVals.length > 1) record.ai_extracted.boiling_point_n = bpVals.length;
+    }
+    if (mpVals.length) {
+      record.ai_extracted.melting_point_celsius = median(mpVals);
+      if (mpVals.length > 1) record.ai_extracted.melting_point_n = mpVals.length;
+    }
+    if (fpVals.length) {
+      record.ai_extracted.flash_point_celsius = median(fpVals);
+      if (fpVals.length > 1) record.ai_extracted.flash_point_n = fpVals.length;
+    }
+    if (densVals.length) {
+      record.ai_extracted.density_g_cm3 = median(densVals);
+    }
+    if (vpVals.length) {
+      record.ai_extracted.vapor_pressure_mmhg = median(vpVals);
+    }
+    if (logpVals.length) {
+      record.ai_extracted.logp_experimental = median(logpVals);
+    }
+
     // Remove empty ai_extracted
     if (!Object.keys(record.ai_extracted).length) delete record.ai_extracted;
+
+    // === Data Completeness Score (0-100%) ===
+    record.data_completeness_pct = calcCompleteness(record);
+    record.data_source = {
+      chemical_data: "PubChem (NIH/NCBI)",
+      perfumery_data: mat.odor_description ? "Local Perfumery Database" : "Not Available"
+    };
+
     return record;
   });
 
