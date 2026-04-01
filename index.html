@@ -160,13 +160,13 @@ html { scroll-behavior:smooth; }
   body.print-summary .pubchem-toggle { display:none !important; }
   .pc-group { border:none; }
   .pc-group-header { break-after:avoid; page-break-after:avoid; }
-  .pc-sub { break-inside:avoid; page-break-inside:avoid; }
+  .pc-sub { break-inside:auto; page-break-inside:auto; }
   .pc-sub-title { break-after:avoid; page-break-after:avoid; }
   .pc-sub-content { break-before:avoid; page-break-before:avoid; orphans:3; widows:3; }
   .sec-title { break-after:avoid; page-break-after:avoid; }
-  .row { break-inside:avoid; page-break-inside:avoid; }
+  .row { break-inside:auto; page-break-inside:auto; }
   .pc-arrow { display:none !important; }
-  .error-card { display:none !important; }
+  .error-card { display:none !important; break-before:auto !important; page-break-before:auto !important; }
   .col-img { max-width:200px; float:left; margin:0 16px 8px 0; }
   .col-info { overflow:visible; width:100%; }
   .col-img img { filter:none; image-rendering:crisp-edges; }
