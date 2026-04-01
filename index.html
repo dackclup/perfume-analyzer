@@ -601,11 +601,37 @@ async function scrapeMaterial(name) {
     applyPerfumery(mat, mat.cas_number);
   }
 
-  // ── Reject non-perfumery compounds (hybrid: local DB + PubChem classification + property filter) ──
+  // ── Reject non-perfumery compounds (hybrid: element filter + local DB + PubChem classification + property filter) ──
+
+  // Element filter: aroma molecules only contain C, H, O, N, S, F, Cl, Br
+  if (mat.molecular_formula) {
+    const formulaElements = mat.molecular_formula.replace(/[0-9+\-\(\)]/g, '').match(/[A-Z][a-z]?/g) || [];
+    const AROMA_ELEMENTS = new Set(['C','H','O','N','S','F','Cl','Br']);
+    const hasInvalidElement = formulaElements.some(el => !AROMA_ELEMENTS.has(el));
+    if (hasInvalidElement) {
+      mat.found = false;
+      mat._notPerfumery = true;
+      return mat;
+    }
+  }
+
   const hasPerfumeryData = mat.odor_description || mat.odor_type || mat.note_classification
     || mat.ifra_guidelines || mat.tenacity || MIXTURES.has(mat.cas_number)
     || (mat.cas_number && DB[mat.cas_number]);
   if (!hasPerfumeryData) {
+    // Property pre-check: MW and volatility range for aroma compounds
+    const mw = parseFloat(mat.molecular_weight);
+    const xlogp = parseFloat(mat.xlogp);
+    const tpsa = parseFloat(mat.tpsa);
+    const heavy = parseInt(mat.heavy_atom);
+    const propsValid = mw >= 80 && mw <= 400 && (!mat.tpsa || tpsa < 60);
+
+    if (!propsValid) {
+      mat.found = false;
+      mat._notPerfumery = true;
+      return mat;
+    }
+
     // Check PubChem annotations for fragrance/flavor classification
     let isPerfumeryByPubChem = false;
     try {
@@ -618,14 +644,9 @@ async function scrapeMaterial(name) {
       isPerfumeryByPubChem = /fragranc|perfum|flavor|flavour|aroma\s*chemical|odor\s*agent|ifra|rifm|fema\s*\d|jecfa|essential\s*oil|fragrance\s*ingredient/i.test(pvStr);
     } catch(e) {}
 
-    // Fallback: property-based heuristic for volatile aroma compounds
+    // Fallback: property heuristic + synonym keyword check
     if (!isPerfumeryByPubChem) {
-      const mw = parseFloat(mat.molecular_weight);
-      const xlogp = parseFloat(mat.xlogp);
-      const tpsa = parseFloat(mat.tpsa);
-      const heavy = parseInt(mat.heavy_atom);
       if (mw >= 80 && mw <= 400 && xlogp >= 0 && xlogp <= 6 && tpsa < 60 && heavy >= 5 && heavy <= 30) {
-        // Properties match aroma compound profile, check synonyms for hints
         const synStr = mat.synonyms.join(' ').toLowerCase();
         if (/fragranc|perfum|aroma|flavor|flavour|essential oil|fema|ifra|odor|scent/i.test(synStr)) {
           isPerfumeryByPubChem = true;
