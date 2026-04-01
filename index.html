@@ -126,8 +126,6 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 @keyframes spin { to { transform:rotate(360deg); } }
 
 /* Error */
-.error-card { border:none; background:none; margin-bottom:4px; }
-.error-text { color:#e74c3c; font-size:0.85em; }
 
 html { scroll-behavior:smooth; }
 @media (max-width:600px) {
@@ -166,7 +164,6 @@ html { scroll-behavior:smooth; }
   .sec-title { break-after:avoid; }
   .row { break-inside:auto; }
   .pc-arrow { display:none !important; }
-  .error-card { display:none !important; break-before:auto !important; }
   .col-img { max-width:200px; float:left; margin:0 16px 8px 0; }
   .col-info { overflow:visible; width:100%; }
   .col-info::after { content:''; display:block; clear:both; }
@@ -345,6 +342,15 @@ function fetchWithTimeout(url, opts={}, ms=8000) {
 }
 
 
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;font-size:0.85em;z-index:9999;opacity:0;transition:opacity 0.3s';
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.style.opacity = '1');
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
 // ── Search ──
 async function doSearch(term) {
   const names = term.split(',').map(s=>s.trim()).filter(Boolean);
@@ -364,7 +370,15 @@ async function doSearch(term) {
     progBar.style.width = ((i/newNames.length)*100)+"%";
     progText.textContent = batch.join(', ');
     const settled = await Promise.allSettled(batch.map(n => scrapeMaterial(n)));
-    settled.forEach(r => { if (r.status==='fulfilled') results.unshift(r.value); });
+    settled.forEach(r => {
+      if (r.status==='fulfilled') {
+        if (r.value.found) {
+          results.unshift(r.value);
+        } else {
+          showToast(`'${r.value.name}' — ${r.value._notPerfumery ? 'ไม่มีข้อมูล (ไม่ใช่สารน้ำหอม)' : 'ไม่พบข้อมูล'}`);
+        }
+      }
+    });
   }
   
   // Dedup by CAS — keep first (newest)
@@ -833,18 +847,11 @@ function renderResults() {
     });
   }
   renderResults._forceCollapse = false;
-  const found = results.filter(r=>r.found).length;
   document.getElementById("statusBar").style.display = results.length?"flex":"none";
-  document.getElementById("statusText").textContent = `${found}/${results.length} found`;
-  document.getElementById("downloads").style.display = (results.length && found)?"flex":"none";
+  document.getElementById("statusText").textContent = `${results.length} material${results.length!==1?'s':''}`;
+  document.getElementById("downloads").style.display = results.length?"flex":"none";
   
   div.innerHTML = results.map((mat,idx) => {
-    if (!mat.found) return `
-      <div class="error-card" style="display:flex;align-items:center;gap:8px;padding:6px 0">
-        <span class="error-text">${mat._notPerfumery?`✗ ${esc(mat.name)} — No data`:`✗ ${esc(mat.name)} not found`}</span>
-        <span class="card-del" onclick="delResult(${idx})" style="cursor:pointer;opacity:0.5;font-size:0.9em">✕</span>
-      </div>`;
-    
     const nl = (mat.note_classification||"").toLowerCase();
     let badges = "";
     if (nl.includes("top")) badges += `<span class="badge badge-top">Top</span>`;
@@ -1542,7 +1549,7 @@ async function preparePrint(full=true) {
 
   // Remove hidden elements from DOM to prevent browser page-break quirks
   const removed = [];
-  document.querySelectorAll('.error-card, .card-back, .pubchem-toggle, .card-body > hr').forEach(el => {
+  document.querySelectorAll('.card-back, .pubchem-toggle, .card-body > hr').forEach(el => {
     removed.push({el, parent: el.parentNode, next: el.nextSibling});
     el.parentNode.removeChild(el);
   });
