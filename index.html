@@ -1186,8 +1186,19 @@ async function downloadJSON() {
     }));
   }
 
-  // Sections to exclude from JSON (raw spectra data too verbose for AI)
-  const SKIP_JSON_HEADINGS = ["lc-ms", "gc-ms", "mass spectrum", "ms-ms", "nmr spectra", "ir spectrum", "uv spectrum", "raman spectrum"];
+  // Headings to exclude from JSON export
+  const SKIP_JSON = [
+    // Spectra (raw data too verbose)
+    "lc-ms", "gc-ms", "mass spec", "ms-ms", "nmr", "ir spec", "ftir",
+    "atr-ir", "near ir", "vapor phase ir", "uv spec", "raman",
+    // Verbose pharmacology not useful for perfumery
+    "mechanism of action",
+    // Noise
+    "removed synonym", "springermaterials",
+    // Already in card identifiers/properties — avoid duplication
+    "computed descriptor", "computed properties", "molecular formula",
+    "molecular weight", "exact mass", "monoisotopic mass"
+  ];
 
   // Build clean JSON for AI analysis
   const data = found.map(mat => {
@@ -1228,17 +1239,26 @@ async function downloadJSON() {
       synonyms: mat.synonyms.length ? mat.synonyms : null,
       pubchem_data: {}
     };
+    // Fallback: if smiles still null, try from pubchem_data
+    if (!record.identifiers.smiles && mat.pubchem_sections) {
+      for (const [h, items] of Object.entries(mat.pubchem_sections)) {
+        if (h.toLowerCase().includes('smiles') && items.length) {
+          record.identifiers.smiles = items[0]; break;
+        }
+      }
+    }
     // Add filtered PubChem sections
     if (mat.pubchem_sections && Object.keys(mat.pubchem_sections).length) {
       const globalSeen = new Set();
       for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
-        // Skip raw spectra sections
         const hl = heading.toLowerCase();
-        if (SKIP_JSON_HEADINGS.some(k => hl.includes(k))) continue;
-        // Deduplicate across all sections
+        // Skip excluded sections
+        if (SKIP_JSON.some(k => hl.includes(k))) continue;
+        // Deduplicate across all sections, truncate long items
         const cleaned = items.filter(item => !item.startsWith('http'))
           .map(item => item.replace(/https?:\/\/\S+/g,'').trim())
-          .filter(c => c && c.length >= 3 && !globalSeen.has(c));
+          .filter(c => c && c.length >= 3 && !globalSeen.has(c))
+          .map(c => c.length > 500 ? c.substring(0, 500) + '…' : c);
         cleaned.forEach(c => globalSeen.add(c));
         if (cleaned.length) record.pubchem_data[heading] = cleaned;
       }
