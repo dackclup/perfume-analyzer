@@ -1350,6 +1350,24 @@ async function downloadJSON() {
     return Math.round(filled / keyFields.length * 100);
   }
 
+  // === Material Type Classification ===
+  function classifyMaterialType(mat) {
+    const n = (mat.name || '').toLowerCase();
+    const syns = (mat.synonyms || []).join(' ').toLowerCase();
+    const desc = ((mat.odor_description || '') + ' ' + (mat.usage_levels || '')).toLowerCase();
+    const all = n + ' ' + syns + ' ' + desc;
+    // Natural extract / mixture
+    if (MIXTURES.has(mat.cas_number)) return 'natural_extract';
+    if (/\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i.test(all)) return 'natural_extract';
+    // Carrier / Solvent
+    if (/\b(solvent|carrier|diluent|emollient|virtually odorless|odorless)\b/i.test(all)) return 'solvent_carrier';
+    if (/\b(isododecane|dipropylene glycol|isopropyl myristate|triethyl citrate|benzyl benzoate)\b/i.test(n)) return 'solvent_carrier';
+    // Natural isolate (single molecule from natural source)
+    if (/\b(natural|isolate|from .* oil|occurs in)\b/i.test(all) && !MIXTURES.has(mat.cas_number)) return 'natural_isolate';
+    // Default: synthetic single molecule
+    return 'single_molecule';
+  }
+
   // Build clean JSON for AI analysis
   const data = found.map(mat => {
     const usageRange = parseUsageRange(mat.usage_levels);
@@ -1357,6 +1375,7 @@ async function downloadJSON() {
     const record = {
       name: mat.name,
       pubchem_name: (mat.synonyms.find(s => !CAS_RE_SYN.test(s)) || mat.iupac_name || mat.name),
+      material_type: classifyMaterialType(mat),
       cas_number: mat.cas_number || null,
       fema_number: mat.fema_number || "Not Assigned",
       pubchem_url: mat.page_url || null,
