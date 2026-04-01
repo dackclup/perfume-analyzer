@@ -911,7 +911,7 @@ function renderResults() {
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
-          <p style="margin:4px 0 8px">${classifyIndustryTags(mat).map(t=>`<span class="badge" style="${t==='banned_eu'?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
+          <p style="margin:4px 0 8px">${classifyIndustryTags(mat).map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(mat.synonyms.length ? mat.synonyms[0] : mat.name)}</strong></p>
@@ -945,7 +945,7 @@ function renderResults() {
           <div class="row">
             <div style="flex:1">
               <p class="sec-title">Safety</p>
-              ${mat.ifra_guidelines?(isBannedEU(mat)?`<p style="color:#b91c1c;font-weight:600">${esc(mat.ifra_guidelines)}</p><p style="color:#b91c1c;font-size:0.8em">Banned in EU cosmetics (EC No 2021/1902 — Omnibus II / CLP Annex VI)</p>`:`<p>${esc(mat.ifra_guidelines)}</p>`):""}
+              ${mat.ifra_guidelines?(()=>{const bs=getBanStatus(mat);return bs?`<p style="color:#b91c1c;font-weight:600">${esc(mat.ifra_guidelines)}</p><p style="color:#b91c1c;font-size:0.8em">${bs==='worldwide'?'Banned globally — IFRA prohibition; not permitted in any application':'Banned in EU cosmetics (EC No 2021/1902 — Omnibus II / CLP Annex VI)'}</p>`:`<p>${esc(mat.ifra_guidelines)}</p>`;})():""}
               ${mat.usage_levels?`<p style="color:var(--text2);font-size:0.85em">${esc(mat.usage_levels)}</p>`:""}
             </div>
             <div style="flex:1">
@@ -1626,11 +1626,17 @@ const MATERIAL_TYPE_LABELS = {
 };
 
 // Industry tags classification
-function isBannedEU(mat) {
+function getBanStatus(mat) {
   const ifra = (mat.ifra_guidelines || '').toLowerCase();
   const usage = (mat.usage_levels || '').toLowerCase();
-  return /\bbanned\b|prohibited\s*(in\s*eu|worldwide)/i.test(ifra + ' ' + usage);
+  const all = ifra + ' ' + usage;
+  if (/prohibited\s*worldwide|\bbanned\b(?!.*\beu\b)/i.test(all) && !/\beu\b/i.test(ifra))
+    return 'worldwide';
+  if (/\bbanned\b|prohibited\s*in\s*eu|banned\s*in\s*eu/i.test(all))
+    return 'eu';
+  return null;
 }
+function isBannedEU(mat) { return getBanStatus(mat) !== null; }
 
 function classifyIndustryTags(mat) {
   const tags = [];
@@ -1660,7 +1666,10 @@ function classifyIndustryTags(mat) {
       }
     }
     // Add banned tag
-    if (banned) tags.push('banned_eu');
+    if (banned) {
+      const scope = getBanStatus(mat);
+      tags.push(scope === 'worldwide' ? 'banned_global' : 'banned_eu');
+    }
   }
 
   // Pharmaceutical
@@ -1686,7 +1695,7 @@ function classifyIndustryTags(mat) {
 }
 const INDUSTRY_TAG_LABELS = {
   'perfumery': 'Perfumery', 'flavor': 'Flavor', 'cosmetics': 'Cosmetics',
-  'banned_eu': 'Banned (EU)',
+  'banned_eu': 'Banned (EU)', 'banned_global': 'Banned (Worldwide)',
   'pharmaceutical': 'Pharma', 'medicine': 'Medicine',
   'toxicology': 'Toxicology', 'research_only': 'Research',
   'chemical': 'Chemical', 'unclassified': 'Unclassified'
