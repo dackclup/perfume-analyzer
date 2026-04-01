@@ -901,7 +901,7 @@ function renderResults() {
           <div class="row">
             <div style="flex:1">
               <p class="sec-title">Odor</p>
-              ${mat.odor_description?`<p class="odor-desc">${esc(mat.odor_description)}</p>`:""}
+              ${mat.odor_description?`<p class="odor-desc">${esc(mat.odor_description)}${mat._odor_source?` <span style="font-size:0.7em;color:var(--text2);font-style:normal">[${mat._odor_source}]</span>`:''}</p>`:""}
               ${mat.odor_type?`<p>${esc(mat.odor_type)}</p>`:""}
               ${mat.odor_strength?`<p style="color:var(--text2);font-size:0.85em">${esc(mat.odor_strength)}</p>`:""}
               ${!mat.odor_description&&!mat.odor_type?`<p style="color:var(--text2)">—</p>`:""}
@@ -963,6 +963,30 @@ function prefetchAll() {
               }
             }
           }
+          // Merge PubChem odor/description for compounds without local perfumery data
+          if (!mat.odor_description) {
+            for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
+              const hl = heading.toLowerCase();
+              if (hl.includes('odor') && !hl.includes('threshold') && items.length) {
+                mat.odor_description = items[0];
+                mat._odor_source = 'PubChem'; break;
+              }
+            }
+          }
+          if (!mat.odor_description) {
+            for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
+              const hl = heading.toLowerCase();
+              if (hl.includes('physical description') && items.length) {
+                // Extract odor info from physical description
+                const odorItem = items.find(i => /odor|smell|aroma|scent/i.test(i));
+                if (odorItem) {
+                  mat.odor_description = odorItem;
+                  mat._odor_source = 'PubChem'; break;
+                }
+              }
+            }
+          }
+          if (mat._odor_source === 'PubChem') renderResults();
         })
         .catch(() => {});
     }
@@ -1472,7 +1496,7 @@ async function downloadJSON() {
     record.data_completeness_pct = calcCompleteness(record);
     record.data_source = {
       chemical_data: "PubChem (NIH/NCBI)",
-      perfumery_data: mat.odor_description ? "Local Perfumery Database" : "Not Available"
+      perfumery_data: mat._odor_source === 'PubChem' ? "PubChem (partial)" : mat.odor_description ? "Local Perfumery Database" : "Not Available"
     };
 
     return record;
