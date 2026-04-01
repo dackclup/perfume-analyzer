@@ -149,24 +149,24 @@ html { scroll-behavior:smooth; }
   h1, .subtitle, .search-box, .pills, .progress, .progress-text,
   .downloads, #statusBar, .card-del, .card-arrow,
   .pubchem-toggle, .back-top, .card-back, #top, hr { display:none !important; }
-  .card { break-inside:auto; margin-bottom:0; border:none; break-before:page; page-break-before:always; overflow:visible; }
-  .card:first-child { break-before:auto; page-break-before:auto; }
-  .card-header { cursor:default; break-after:avoid; page-break-after:avoid; }
-  .card-body { display:block !important; }
+  .card { break-inside:auto; margin-bottom:0; border:none; break-before:page; overflow:visible; }
+  .card:first-child { break-before:auto; }
+  .card-header { cursor:default; break-after:avoid; }
+  .card-body { display:block !important; padding-bottom:0 !important; }
   .pubchem-data { display:block !important; }
   .pubchem-data:empty { display:none !important; }
   .pc-group-body { display:block !important; }
   body.print-summary .pubchem-data { display:none !important; }
   body.print-summary .pubchem-toggle { display:none !important; }
-  .pc-group { border:none; overflow:visible; }
-  .pc-group-header { break-after:auto; page-break-after:auto; }
-  .pc-sub { break-inside:auto; page-break-inside:auto; }
-  .pc-sub-title { break-after:auto; page-break-after:auto; }
-  .pc-sub-content { break-before:auto; page-break-before:auto; orphans:3; widows:3; }
-  .sec-title { break-after:avoid; page-break-after:avoid; }
-  .row { break-inside:auto; page-break-inside:auto; }
+  .pc-group { border:none; overflow:visible; margin-bottom:0; }
+  .pc-group-header { break-after:auto; }
+  .pc-sub { break-inside:auto; margin-bottom:0; }
+  .pc-sub-title { break-after:auto; }
+  .pc-sub-content { break-before:auto; orphans:3; widows:3; }
+  .sec-title { break-after:avoid; }
+  .row { break-inside:auto; }
   .pc-arrow { display:none !important; }
-  .error-card { display:none !important; break-before:auto !important; page-break-before:auto !important; }
+  .error-card { display:none !important; break-before:auto !important; }
   .col-img { max-width:200px; float:left; margin:0 16px 8px 0; }
   .col-info { overflow:visible; width:100%; }
   .col-info::after { content:''; display:block; clear:both; }
@@ -1547,11 +1547,30 @@ async function preparePrint(full=true) {
   // Summary mode: add class to body to hide PubChem data via CSS
   if (!full) document.body.classList.add('print-summary');
 
+  // Remove hidden elements from DOM to prevent browser page-break quirks
+  const removed = [];
+  document.querySelectorAll('.error-card, .card-back, .pubchem-toggle, .card-body > hr').forEach(el => {
+    removed.push({el, parent: el.parentNode, next: el.nextSibling});
+    el.parentNode.removeChild(el);
+  });
+  // Remove empty pubchem-data divs
+  document.querySelectorAll('.pubchem-data').forEach(el => {
+    if (!el.innerHTML.trim()) {
+      removed.push({el, parent: el.parentNode, next: el.nextSibling});
+      el.parentNode.removeChild(el);
+    }
+  });
+
   window.print();
 
-  // Cleanup after print
+  // Cleanup after print - restore removed elements
   function cleanup() {
     document.body.classList.remove('print-summary');
+    for (let i = removed.length - 1; i >= 0; i--) {
+      const {el, parent, next} = removed[i];
+      if (next && next.parentNode === parent) parent.insertBefore(el, next);
+      else parent.appendChild(el);
+    }
   }
   window.addEventListener('afterprint', cleanup, {once: true});
   setTimeout(cleanup, 60000);
