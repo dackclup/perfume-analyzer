@@ -149,7 +149,7 @@ html { scroll-behavior:smooth; }
   h1, .subtitle, .search-box, .pills, .progress, .progress-text,
   .downloads, #statusBar, .card-del, .card-arrow,
   .pubchem-toggle, .back-top, .card-back, #top, hr { display:none !important; }
-  .card { break-inside:auto; margin-bottom:0; border:none; break-before:page; page-break-before:always; }
+  .card { break-inside:auto; margin-bottom:0; border:none; break-before:page; page-break-before:always; overflow:visible; }
   .card:first-child { break-before:auto; page-break-before:auto; }
   .card-header { cursor:default; break-after:avoid; page-break-after:avoid; }
   .card-body { display:block !important; }
@@ -158,7 +158,7 @@ html { scroll-behavior:smooth; }
   .pc-group-body { display:block !important; }
   body.print-summary .pubchem-data { display:none !important; }
   body.print-summary .pubchem-toggle { display:none !important; }
-  .pc-group { border:none; }
+  .pc-group { border:none; overflow:visible; }
   .pc-group-header { break-after:avoid; page-break-after:avoid; }
   .pc-sub { break-inside:auto; page-break-inside:auto; }
   .pc-sub-title { break-after:avoid; page-break-after:avoid; }
@@ -169,6 +169,8 @@ html { scroll-behavior:smooth; }
   .error-card { display:none !important; break-before:auto !important; page-break-before:auto !important; }
   .col-img { max-width:200px; float:left; margin:0 16px 8px 0; }
   .col-info { overflow:visible; width:100%; }
+  .col-info::after { content:''; display:block; clear:both; }
+  .row { clear:both; }
   .col-img img { filter:none; image-rendering:crisp-edges; }
   .props-grid { display:grid; grid-template-columns:1fr 1fr; gap:2px 16px; }
   .props-grid span { width:auto; }
