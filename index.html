@@ -77,6 +77,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .badge-top { background:var(--badge-top-bg); color:var(--badge-top-fg); }
 .badge-mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
 .badge-base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
+.badge-type { font-size:0.7em; padding:2px 8px; border-radius:3px; margin-left:8px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px solid var(--border); vertical-align:middle; }
 
 /* PubChem data */
 .pubchem-toggle { cursor:pointer; color:var(--accent); font-size:0.9em; margin-top:8px; }
@@ -884,7 +885,7 @@ function renderResults() {
     return `
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
-          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(mat.name)}</h3>
+          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(mat.name)} <span class="badge-type">${MATERIAL_TYPE_LABELS[classifyMaterialType(mat)]||''}</span></h3>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
@@ -1350,24 +1351,6 @@ async function downloadJSON() {
     return Math.round(filled / keyFields.length * 100);
   }
 
-  // === Material Type Classification ===
-  function classifyMaterialType(mat) {
-    const n = (mat.name || '').toLowerCase();
-    const syns = (mat.synonyms || []).join(' ').toLowerCase();
-    const desc = ((mat.odor_description || '') + ' ' + (mat.usage_levels || '')).toLowerCase();
-    const all = n + ' ' + syns + ' ' + desc;
-    // Natural extract / mixture
-    if (MIXTURES.has(mat.cas_number)) return 'natural_extract';
-    if (/\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i.test(all)) return 'natural_extract';
-    // Carrier / Solvent
-    if (/\b(solvent|carrier|diluent|emollient|virtually odorless|odorless)\b/i.test(all)) return 'solvent_carrier';
-    if (/\b(isododecane|dipropylene glycol|isopropyl myristate|triethyl citrate|benzyl benzoate)\b/i.test(n)) return 'solvent_carrier';
-    // Natural isolate (single molecule from natural source)
-    if (/\b(natural|isolate|from .* oil|occurs in)\b/i.test(all) && !MIXTURES.has(mat.cas_number)) return 'natural_isolate';
-    // Default: synthetic single molecule
-    return 'single_molecule';
-  }
-
   // Build clean JSON for AI analysis
   const data = found.map(mat => {
     const usageRange = parseUsageRange(mat.usage_levels);
@@ -1579,6 +1562,26 @@ function closeDlMenu() {
 document.addEventListener('click', e => {
   if (!e.target.closest('.dl-wrap')) closeDlMenu();
 });
+
+// Material type classification (used in app + JSON)
+function classifyMaterialType(mat) {
+  const n = (mat.name || '').toLowerCase();
+  const syns = (mat.synonyms || []).join(' ').toLowerCase();
+  const desc = ((mat.odor_description || '') + ' ' + (mat.usage_levels || '')).toLowerCase();
+  const all = n + ' ' + syns + ' ' + desc;
+  if (MIXTURES.has(mat.cas_number)) return 'natural_extract';
+  if (/\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i.test(all)) return 'natural_extract';
+  if (/\b(solvent|carrier|diluent|emollient|virtually odorless|odorless)\b/i.test(all)) return 'solvent_carrier';
+  if (/\b(isododecane|dipropylene glycol|isopropyl myristate|triethyl citrate|benzyl benzoate)\b/i.test(n)) return 'solvent_carrier';
+  if (/\b(natural|isolate|from .* oil|occurs in)\b/i.test(all) && !MIXTURES.has(mat.cas_number)) return 'natural_isolate';
+  return 'single_molecule';
+}
+const MATERIAL_TYPE_LABELS = {
+  'natural_extract': 'Natural Extract',
+  'natural_isolate': 'Natural Isolate',
+  'solvent_carrier': 'Solvent / Carrier',
+  'single_molecule': 'Aroma Chemical'
+};
 
 function esc(s) { const d=document.createElement('div'); d.textContent=s||""; return d.innerHTML; }
 function toTitle(s) { return s.replace(/\b\w/g, c=>c.toUpperCase()); }
