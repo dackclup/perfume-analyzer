@@ -152,11 +152,11 @@ html { scroll-behavior:smooth; }
   .card:first-child { break-before:auto; page-break-before:auto; }
   .card-header { cursor:default; break-after:avoid; page-break-after:avoid; }
   .card-body { display:block !important; }
-  .pubchem-data { display:none; }
-  .pubchem-data.open { display:block !important; }
+  .pubchem-data { display:block !important; }
   .pubchem-data:empty { display:none !important; }
-  .pc-group-body { display:none; }
-  .pc-group-body.open { display:block !important; }
+  .pc-group-body { display:block !important; }
+  body.print-summary .pubchem-data { display:none !important; }
+  body.print-summary .pubchem-toggle { display:none !important; }
   .pc-group { border:none; }
   .pc-group-header { break-after:avoid; page-break-after:avoid; }
   .pc-sub { break-inside:avoid; page-break-inside:avoid; }
@@ -1225,41 +1225,17 @@ async function preparePrint(full=true) {
     }
   }
 
-  // Inject print override styles (no race condition with afterprint)
-  const printStyle = document.createElement('style');
-  printStyle.id = 'print-override';
-  if (full) {
-    printStyle.textContent = `
-      @media print {
-        .card-body { display:block !important; }
-        .pubchem-data[data-loaded] { display:block !important; }
-        .pc-group-body { display:block !important; }
-      }`;
-  } else {
-    printStyle.textContent = `
-      @media print {
-        .card-body { display:block !important; }
-        .pubchem-data { display:none !important; }
-      }`;
-  }
-  document.head.appendChild(printStyle);
+  // Summary mode: add class to body to hide PubChem data via CSS
+  if (!full) document.body.classList.add('print-summary');
 
   window.print();
 
-  // Remove override after print (with delay for mobile)
+  // Cleanup after print
   function cleanup() {
-    setTimeout(() => {
-      const el = document.getElementById('print-override');
-      if (el) el.remove();
-    }, 1000);
+    document.body.classList.remove('print-summary');
   }
   window.addEventListener('afterprint', cleanup, {once: true});
-  // Fallback: remove after 60s in case afterprint doesn't fire
-  setTimeout(() => {
-    const el = document.getElementById('print-override');
-    if (el) el.remove();
-    window.removeEventListener('afterprint', cleanup);
-  }, 60000);
+  setTimeout(cleanup, 60000);
 }
 
 function toggleDlMenu() {
