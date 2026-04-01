@@ -197,7 +197,8 @@ html { scroll-behavior:smooth; }
     <a onclick="toggleDlMenu()">▼ Download</a>
     <div class="dl-menu" id="dlMenu">
       <a onclick="downloadJSON();closeDlMenu()">Save.JSON</a>
-      <a onclick="preparePrint();closeDlMenu()">Save.PDF</a>
+      <a onclick="preparePrint(true);closeDlMenu()">Save.PDF (Full)</a>
+      <a onclick="preparePrint(false);closeDlMenu()">Save.PDF (Summary)</a>
     </div>
   </div>
   <span class="back-top"><a href="#top">▲ Back to top</a></span>
@@ -1197,27 +1198,29 @@ async function downloadJSON() {
   btn.style.opacity = "";
 }
 
-async function preparePrint() {
-  // Load all PubChem data that hasn't been fetched yet
-  const unloaded = [];
-  results.forEach((mat, idx) => {
-    if (mat.found && mat._cid) {
-      const dataDiv = document.getElementById("pcData"+idx);
-      if (dataDiv && !dataDiv.dataset.loaded) unloaded.push(idx);
-    }
-  });
+async function preparePrint(full=true) {
+  if (full) {
+    // Load all PubChem data that hasn't been fetched yet
+    const unloaded = [];
+    results.forEach((mat, idx) => {
+      if (mat.found && mat._cid) {
+        const dataDiv = document.getElementById("pcData"+idx);
+        if (dataDiv && !dataDiv.dataset.loaded) unloaded.push(idx);
+      }
+    });
 
-  if (unloaded.length) {
-    const status = document.createElement('div');
-    status.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:12px;background:#3D5A80;color:#fff;text-align:center;z-index:9999;font-size:0.9em;';
-    status.textContent = `Loading PubChem data (0/${unloaded.length})...`;
-    document.body.appendChild(status);
+    if (unloaded.length) {
+      const status = document.createElement('div');
+      status.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:12px;background:#3D5A80;color:#fff;text-align:center;z-index:9999;font-size:0.9em;';
+      status.textContent = `Loading PubChem data (0/${unloaded.length})...`;
+      document.body.appendChild(status);
 
-    for (let i = 0; i < unloaded.length; i++) {
-      status.textContent = `Loading PubChem data (${i+1}/${unloaded.length})...`;
-      await loadPubchemData(unloaded[i]);
+      for (let i = 0; i < unloaded.length; i++) {
+        status.textContent = `Loading PubChem data (${i+1}/${unloaded.length})...`;
+        await loadPubchemData(unloaded[i]);
+      }
+      document.body.removeChild(status);
     }
-    document.body.removeChild(status);
   }
 
   // Save current open/closed state
@@ -1229,12 +1232,12 @@ async function preparePrint() {
   const pcStates = [];
   document.querySelectorAll('.pubchem-data').forEach(el => {
     pcStates.push(el.classList.contains('open'));
-    if (el.dataset.loaded) el.classList.add('open');
+    if (full && el.dataset.loaded) el.classList.add('open');
   });
   const pcGroupStates = [];
   document.querySelectorAll('.pc-group-body').forEach(el => {
     pcGroupStates.push(el.classList.contains('open'));
-    el.classList.add('open');
+    if (full) el.classList.add('open');
   });
 
   window.print();
