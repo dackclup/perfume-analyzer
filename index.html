@@ -1188,11 +1188,14 @@ async function downloadJSON() {
 
   // Headings to exclude from JSON export
   const SKIP_JSON = [
-    // Spectra (raw data too verbose)
-    "lc-ms", "gc-ms", "mass spec", "ms-ms", "nmr", "ir spec", "ftir",
-    "atr-ir", "near ir", "vapor phase ir", "uv spec", "raman",
-    // Verbose pharmacology not useful for perfumery
-    "mechanism of action",
+    // Spectra (raw data too verbose for AI)
+    "spectr", "lc-ms", "gc-ms", "mass spec", "ms-ms", "raman",
+    // Verbose sections not useful for perfumery AI analysis
+    "mechanism of action", "human toxicity excerpt", "non-human toxicity excerpt",
+    "national toxicology", "ongoing test", "antidote", "first aid",
+    "fire fighting", "accidental release", "transport information",
+    "nonfire spill", "spillage", "isolation and evacuation",
+    "respirator recommendation", "sampling procedure",
     // Noise
     "removed synonym", "springermaterials",
     // Already in card identifiers/properties — avoid duplication
@@ -1204,7 +1207,7 @@ async function downloadJSON() {
   const data = found.map(mat => {
     const record = {
       name: mat.name,
-      pubchem_name: mat.synonyms.length ? mat.synonyms[0] : mat.name,
+      pubchem_name: (mat.synonyms.find(s => !/^\d{2,7}-\d{2}-\d$/.test(s)) || mat.iupac_name || mat.name),
       cas_number: mat.cas_number || null,
       fema_number: mat.fema_number || null,
       pubchem_url: mat.page_url || null,
@@ -1254,10 +1257,20 @@ async function downloadJSON() {
         const hl = heading.toLowerCase();
         // Skip excluded sections
         if (SKIP_JSON.some(k => hl.includes(k))) continue;
-        // Deduplicate across all sections, truncate long items
-        const cleaned = items.filter(item => !item.startsWith('http'))
-          .map(item => item.replace(/https?:\/\/\S+/g,'').trim())
-          .filter(c => c && c.length >= 3 && !globalSeen.has(c))
+        // Flatten comma-separated lists (e.g. Deprecated CAS), dedup, truncate
+        const flat = [];
+        for (const item of items) {
+          if (item.startsWith('http')) continue;
+          const c = item.replace(/https?:\/\/\S+/g,'').trim();
+          if (!c || c.length < 3) continue;
+          // Split comma-separated values for dedup (e.g. "A, B, C")
+          if (/^\d[\d\-,\s]+$/.test(c)) {
+            c.split(',').map(s=>s.trim()).filter(s=>s.length>=3).forEach(s=>flat.push(s));
+          } else {
+            flat.push(c);
+          }
+        }
+        const cleaned = flat.filter(c => !globalSeen.has(c))
           .map(c => c.length > 500 ? c.substring(0, 500) + '…' : c);
         cleaned.forEach(c => globalSeen.add(c));
         if (cleaned.length) record.pubchem_data[heading] = cleaned;
