@@ -146,7 +146,7 @@ html { scroll-behavior:smooth; }
   @page { margin:15mm 10mm; @top-right { content:counter(page); font-size:9pt; color:#999; } }
   h1, .subtitle, .search-box, .pills, .progress, .progress-text,
   .downloads, #statusBar, .card-del, .card-arrow,
-  .pubchem-toggle, .back-top, .card-back, #top, hr { display:none !important; }
+  .pubchem-toggle, .back-top, .card-back, #top, #searchError, hr { display:none !important; }
   .card { break-inside:auto; margin-bottom:0; border:none; break-before:page; overflow:visible; }
   .card:first-child { break-before:auto; }
   .card-header { cursor:default; break-after:avoid; }
@@ -184,6 +184,7 @@ html { scroll-behavior:smooth; }
   <input type="text" id="searchInput" placeholder="e.g. linalool, hedione, iso e super" autocomplete="off">
   <button id="searchBtn" disabled>Search</button>
 </div>
+<p id="searchError" style="display:none;color:#e74c3c;font-size:0.85em;font-weight:500;margin:4px 0 0"></p>
 <div class="pills" id="pills"></div>
 <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
 <p class="progress-text" id="progressText"></p>
@@ -260,6 +261,7 @@ const pillsDiv = document.getElementById("pills");
 let _pillTimer;
 input.addEventListener("input", () => {
   btn.disabled = !input.value.trim();
+  clearSearchError();
   clearTimeout(_pillTimer);
   _pillTimer = setTimeout(() => showPills(input.value), 150);
 });
@@ -342,13 +344,15 @@ function fetchWithTimeout(url, opts={}, ms=8000) {
 }
 
 
-function showToast(msg) {
-  const el = document.createElement('div');
+function showSearchError(msg) {
+  const el = document.getElementById('searchError');
   el.textContent = msg;
-  el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;font-size:0.85em;z-index:9999;opacity:0;transition:opacity 0.3s';
-  document.body.appendChild(el);
-  requestAnimationFrame(() => el.style.opacity = '1');
-  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+  el.style.display = 'block';
+}
+function clearSearchError() {
+  const el = document.getElementById('searchError');
+  el.textContent = '';
+  el.style.display = 'none';
 }
 
 // ── Search ──
@@ -375,7 +379,7 @@ async function doSearch(term) {
         if (r.value.found) {
           results.unshift(r.value);
         } else {
-          showToast(`'${r.value.name}' — ${r.value._notPerfumery ? 'ไม่มีข้อมูล (ไม่ใช่สารน้ำหอม)' : 'ไม่พบข้อมูล'}`);
+          showSearchError(`'${r.value.name}' — ${r.value._notPerfumery ? 'No data (not a perfumery material)' : 'Not found'}`);
         }
       }
     });
