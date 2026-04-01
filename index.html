@@ -1235,11 +1235,13 @@ async function preparePrint(full=true) {
   document.querySelectorAll('.pubchem-data').forEach(el => {
     pcStates.push(el.classList.contains('open'));
     if (full && el.dataset.loaded) el.classList.add('open');
+    else if (!full) el.classList.remove('open');
   });
   const pcGroupStates = [];
   document.querySelectorAll('.pc-group-body').forEach(el => {
     pcGroupStates.push(el.classList.contains('open'));
     if (full) el.classList.add('open');
+    else if (!full) el.classList.remove('open');
   });
 
   window.print();
