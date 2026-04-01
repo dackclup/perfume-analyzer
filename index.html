@@ -890,6 +890,7 @@ function renderResults() {
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
+          <p style="margin:4px 0 8px">${classifyIndustryTags(mat).map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(mat.synonyms.length ? mat.synonyms[0] : mat.name)}</strong></p>
@@ -1359,6 +1360,7 @@ async function downloadJSON() {
       name: mat.name,
       pubchem_name: (mat.synonyms.find(s => !CAS_RE_SYN.test(s)) || mat.iupac_name || mat.name),
       material_type: classifyMaterialType(mat),
+      industry_tags: classifyIndustryTags(mat),
       cas_number: mat.cas_number || null,
       fema_number: mat.fema_number || "Not Assigned",
       pubchem_url: mat.page_url || null,
@@ -1581,6 +1583,61 @@ const MATERIAL_TYPE_LABELS = {
   'natural_isolate': 'Natural Isolate',
   'solvent_carrier': 'Solvent / Carrier',
   'single_molecule': 'Aroma Chemical'
+};
+
+// Industry tags classification
+function classifyIndustryTags(mat) {
+  const tags = [];
+  const n = (mat.name || '').toLowerCase();
+  const desc = (mat.odor_description || '').toLowerCase();
+  const odorType = (mat.odor_type || '').toLowerCase();
+  const syns = (mat.synonyms || []).join(' ').toLowerCase();
+  const allPerfumery = mat.odor_description || mat.odor_type || mat.odor_strength;
+  const pdStr = mat.pubchem_sections ? JSON.stringify(mat.pubchem_sections).toLowerCase() : '';
+
+  // Perfumery / Flavor / Cosmetics
+  if (allPerfumery || MIXTURES.has(mat.cas_number) ||
+      /fragrance|perfum|aroma|odor agent/i.test(pdStr) ||
+      /solvent.*carrier|carrier.*solvent|emollient/i.test(desc + ' ' + odorType)) {
+    tags.push('perfumery');
+    // Flavor: check FEMA, food additive, flavor keywords
+    if (mat.fema_number || /flavor|flavour|food additive|fema|jecfa/i.test(pdStr)) {
+      tags.push('flavor');
+    }
+    // Cosmetics
+    if (/cosmetic|skin|dermal|masking|emollient/i.test(pdStr)) {
+      tags.push('cosmetics');
+    } else {
+      tags.push('cosmetics'); // fragrance compounds are generally used in cosmetics
+    }
+  }
+
+  // Pharmaceutical
+  if (!allPerfumery && /pharma|drug|medicine|therapeutic|anesthetic|analgesic|antibiotic/i.test(pdStr + ' ' + syns)) {
+    tags.push('pharmaceutical', 'medicine');
+  }
+  // Also tag if ATC code present
+  if (/atc code/i.test(pdStr)) {
+    if (!tags.includes('pharmaceutical')) tags.push('pharmaceutical');
+  }
+
+  // Toxicology / Research
+  if (/toxin|mycotoxin|venom|research.only|highly.toxic|poison/i.test(n + ' ' + syns + ' ' + pdStr)) {
+    tags.push('toxicology', 'research_only');
+  }
+
+  // Fallback: if no tags assigned
+  if (!tags.length) {
+    tags.push('chemical', 'unclassified');
+  }
+
+  return tags;
+}
+const INDUSTRY_TAG_LABELS = {
+  'perfumery': 'Perfumery', 'flavor': 'Flavor', 'cosmetics': 'Cosmetics',
+  'pharmaceutical': 'Pharma', 'medicine': 'Medicine',
+  'toxicology': 'Toxicology', 'research_only': 'Research',
+  'chemical': 'Chemical', 'unclassified': 'Unclassified'
 };
 
 function esc(s) { const d=document.createElement('div'); d.textContent=s||""; return d.innerHTML; }
