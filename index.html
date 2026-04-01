@@ -831,7 +831,9 @@ function renderPubchemSections(sections) {
     // Build body content first to check if it's empty
     let bodyHtml = '';
     for (const {heading, items} of subs) {
-      const display = heading.includes(' > ') ? heading.split(' > ').pop() : heading;
+      let display = heading.includes(' > ') ? heading.split(' > ').pop() : heading;
+      // Rename "FEMA Flavor Profile" to "Flavor Profile" to avoid confusion with FEMA number
+      display = display.replace(/^FEMA\s+Flavor\s+Profile$/i, 'Flavor Profile');
       const cleaned = [];
       for (const item of items) {
         if (cleaned.length >= 20) break;
