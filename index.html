@@ -148,8 +148,8 @@ html { scroll-behavior:smooth; }
   h1, .subtitle, .search-box, .pills, .progress, .progress-text,
   .downloads, #statusBar, .card-del, .card-arrow,
   .pubchem-toggle, .back-top, .card-back, #top, hr { display:none !important; }
-  .card { break-inside:auto; margin-bottom:0; border:none; break-before:auto; page-break-before:auto; border-top:2px solid #ccc; padding-top:12px; margin-top:12px; }
-  .card:first-child { border-top:none; margin-top:0; padding-top:0; }
+  .card { break-inside:auto; margin-bottom:0; border:none; break-before:page; page-break-before:always; }
+  .card:first-child { break-before:auto; page-break-before:auto; }
   .card-header { cursor:default; break-after:avoid; page-break-after:avoid; }
   .card-body { display:block !important; }
   .pubchem-data { display:block !important; }
@@ -665,7 +665,7 @@ const KEEP_KEYWORDS = [
 // Always skip these even if they match keep keywords
 const FORCE_SKIP = [
   "patent", "literature", "pubmed", "depositor", "vendor", "supplier",
-  "protein target", "bioassay", "biological test",
+  "protein target", "protein bound", "bioassay", "biological test",
   "taxonomy", "crystal structure", "3d conformer",
   "record description", "summary information",
   "disorder", "disease", "pathway", "related record", "wikipedia",
@@ -673,11 +673,14 @@ const FORCE_SKIP = [
 ];
 // Word-boundary skip patterns (to avoid "gene" matching "general")
 const FORCE_SKIP_REGEX = [/\bgene\b/, /\bgenes\b/];
-function shouldKeepSection(heading) {
-  const h = heading.toLowerCase();
-  if (FORCE_SKIP.some(k => h.includes(k))) return false;
-  if (FORCE_SKIP_REGEX.some(r => r.test(h))) return false;
-  return KEEP_KEYWORDS.some(k => h.includes(k));
+function isForceSkipped(text) {
+  const h = text.toLowerCase();
+  if (FORCE_SKIP.some(k => h.includes(k))) return true;
+  if (FORCE_SKIP_REGEX.some(r => r.test(h))) return true;
+  return false;
+}
+function isKeepMatch(text) {
+  return KEEP_KEYWORDS.some(k => text.toLowerCase().includes(k));
 }
 
 // Extract all PUG View sections recursively (whitelist approach)
@@ -686,8 +689,10 @@ function extractAllSections(sections, prefix="", depth=0) {
   const result = {};
   for (const sec of sections) {
     const heading = prefix ? `${prefix} > ${sec.TOCHeading}` : sec.TOCHeading;
-    // Check both current heading and full path
-    const keepThis = shouldKeepSection(sec.TOCHeading) || shouldKeepSection(heading);
+    // Skip if heading OR full path matches force skip
+    const skipped = isForceSkipped(sec.TOCHeading) || isForceSkipped(heading);
+    // Keep if heading OR full path matches keep keywords (and not force skipped)
+    const keepThis = !skipped && (isKeepMatch(sec.TOCHeading) || isKeepMatch(heading));
     if (sec.Information && keepThis) {
       const items = [];
       const seen = new Set();
