@@ -1166,33 +1166,75 @@ async function downloadJSON() {
   btn.style.pointerEvents = "none";
   btn.style.opacity = "0.4";
 
-  async function fetchRecord(mat) {
-    if (mat._cid) {
-      try {
-        const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`, {}, 10000);
-        if (r.ok) {
-          const d = await r.json();
-          if (d.Record && d.Record.Section) {
-            const perfSections = buildPerfumerySections(mat);
-            if (perfSections.length) {
-              d.Record.Section.push({TOCHeading:"Perfumery Data",Description:"Perfumery-specific data from local fragrance database.",Section:perfSections});
-            }
-            return d;
-          }
-        }
-      } catch(e) {}
-    }
-    return buildLocalRecord(mat);
-  }
-
-  const data = [];
+  // Load PubChem data for all compounds
   const BATCH = 4;
   for (let i = 0; i < found.length; i += BATCH) {
     const batch = found.slice(i, i + BATCH);
     btn.textContent = `⏳ ${i+1}/${found.length}...`;
-    const settled = await Promise.allSettled(batch.map(m => fetchRecord(m)));
-    settled.forEach(r => { if (r.status==='fulfilled') data.push(r.value); });
+    await Promise.allSettled(batch.map(async mat => {
+      if (mat._cid && (!mat.pubchem_sections || !Object.keys(mat.pubchem_sections).length)) {
+        try {
+          const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`, {}, 10000);
+          const d = await r.json();
+          const sections = d.Record?.Section || [];
+          mat.pubchem_sections = extractAllSections(sections);
+        } catch(e) {}
+      }
+    }));
   }
+
+  // Build clean JSON for AI analysis
+  const data = found.map(mat => {
+    const record = {
+      name: mat.name,
+      pubchem_name: mat.synonyms.length ? mat.synonyms[0] : mat.name,
+      cas_number: mat.cas_number || null,
+      fema_number: mat.fema_number || null,
+      pubchem_url: mat.page_url || null,
+      structure_image_url: mat.structure_image_url || null,
+      identifiers: {
+        iupac_name: mat.iupac_name || null,
+        molecular_formula: mat.molecular_formula || null,
+        smiles: mat.smiles || null,
+        inchi: mat.inchi || null
+      },
+      properties: {
+        molecular_weight: mat.molecular_weight ? parseFloat(mat.molecular_weight) : null,
+        exact_mass: mat.exact_mass ? parseFloat(mat.exact_mass) : null,
+        xlogp: mat.xlogp ? parseFloat(mat.xlogp) : null,
+        tpsa: mat.tpsa ? parseFloat(mat.tpsa) : null,
+        hbond_donor_count: mat.hbond_donor ? parseInt(mat.hbond_donor) : null,
+        hbond_acceptor_count: mat.hbond_acceptor ? parseInt(mat.hbond_acceptor) : null,
+        rotatable_bond_count: mat.rotatable_bond ? parseInt(mat.rotatable_bond) : null,
+        heavy_atom_count: mat.heavy_atom ? parseInt(mat.heavy_atom) : null
+      },
+      perfumery: {
+        odor_description: mat.odor_description || null,
+        odor_type: mat.odor_type || null,
+        odor_strength: mat.odor_strength || null,
+        note_classification: mat.note_classification || null,
+        tenacity: mat.tenacity || null,
+        tenacity_hours: mat.tenacity_hours || null,
+        ifra_guidelines: mat.ifra_guidelines || null,
+        usage_levels: mat.usage_levels || null,
+        blends_well_with: mat.blends_well_with.length ? mat.blends_well_with : null
+      },
+      synonyms: mat.synonyms.length ? mat.synonyms : null,
+      pubchem_data: {}
+    };
+    // Add filtered PubChem sections
+    if (mat.pubchem_sections && Object.keys(mat.pubchem_sections).length) {
+      for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
+        const cleaned = items.filter(item => !item.startsWith('http'))
+          .map(item => item.replace(/https?:\/\/\S+/g,'').trim())
+          .filter(c => c && c.length >= 3);
+        if (cleaned.length) record.pubchem_data[heading] = cleaned;
+      }
+    }
+    // Remove empty pubchem_data
+    if (!Object.keys(record.pubchem_data).length) delete record.pubchem_data;
+    return record;
+  });
 
   if (data.length) {
     const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
