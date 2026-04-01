@@ -199,8 +199,8 @@ html { scroll-behavior:smooth; }
     <a onclick="toggleDlMenu()">▼ Download</a>
     <div class="dl-menu" id="dlMenu">
       <a onclick="downloadJSON();closeDlMenu()">Save.JSON</a>
+      <a onclick="preparePrint(false);closeDlMenu()">Save.PDF</a>
       <a onclick="preparePrint(true);closeDlMenu()">Save.PDF (Full)</a>
-      <a onclick="preparePrint(false);closeDlMenu()">Save.PDF (Summary)</a>
     </div>
   </div>
   <span class="back-top"><a href="#top">▲ Back to top</a></span>
