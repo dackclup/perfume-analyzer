@@ -881,7 +881,7 @@ function renderResults() {
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
-            <p><strong>${esc(mat.name)}</strong></p>
+            <p><strong>${esc(mat.synonyms.length ? mat.synonyms[0] : mat.name)}</strong></p>
             ${mat.page_url?`<p><a href="${mat.page_url}" target="_blank" style="color:var(--accent);font-size:0.85em">PubChem ↗</a></p>`:""}
             ${ids}
             ${shortProps?`<div class="props-grid">${shortProps}</div>`:""}
