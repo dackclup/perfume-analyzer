@@ -588,8 +588,16 @@ async function scrapeMaterial(name) {
     mat.molecular_formula = p.MolecularFormula || "";
     mat.molecular_weight = String(p.MolecularWeight || "");
     mat.smiles = p.CanonicalSMILES || "";
+    mat.isomeric_smiles = p.IsomericSMILES || "";
     mat.iupac_name = p.IUPACName || "";
     mat.inchi = p.InChI || "";
+    mat.xlogp = p.XLogP != null ? String(p.XLogP) : "";
+    mat.exact_mass = p.ExactMass != null ? String(p.ExactMass) : "";
+    mat.tpsa = p.TPSA != null ? String(p.TPSA) : "";
+    mat.hbond_donor = p.HBondDonorCount != null ? String(p.HBondDonorCount) : "";
+    mat.hbond_acceptor = p.HBondAcceptorCount != null ? String(p.HBondAcceptorCount) : "";
+    mat.rotatable_bond = p.RotatableBondCount != null ? String(p.RotatableBondCount) : "";
+    mat.heavy_atom = p.HeavyAtomCount != null ? String(p.HeavyAtomCount) : "";
   }
   
   const synsData = synsRes.status==='fulfilled' ? synsRes.value : null;
@@ -889,6 +897,7 @@ function renderResults() {
 
     const longProps = [
       mat.smiles?`<p><code>SMILES</code> ${esc(mat.smiles)}</p>`:"",
+      mat.isomeric_smiles && mat.isomeric_smiles !== mat.smiles?`<p><code>Isomeric SMILES</code> ${esc(mat.isomeric_smiles)}</p>`:"",
       mat.inchi?`<p><code>InChI</code> ${esc(mat.inchi)}</p>`:"",
     ].join('');
     
