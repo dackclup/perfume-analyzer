@@ -955,7 +955,7 @@ function renderResults() {
           <p style="margin:4px 0 8px">${classifyIndustryTags(mat).map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
-            <p><strong>${esc(mat.synonyms.length ? mat.synonyms[0] : mat.name)}</strong></p>
+            <p><strong>${esc((mat.synonyms.find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || mat.name))}</strong></p>
             ${mat.page_url?`<p><a href="${mat.page_url}" target="_blank" style="color:var(--accent);font-size:0.85em">PubChem ↗</a></p>`:""}
             ${ids}
             ${shortProps?`<div class="props-grid">${shortProps}</div>`:""}
