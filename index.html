@@ -988,6 +988,7 @@ function renderResults() {
               <p class="sec-title">Safety</p>
               ${mat.ifra_guidelines?(()=>{const bs=getBanStatus(mat);return bs?`<p style="color:#b91c1c;font-weight:600">${esc(mat.ifra_guidelines)}</p><p style="color:#b91c1c;font-size:0.8em">${bs==='worldwide'?'Banned globally — IFRA prohibition; not permitted in any application':'Banned in EU cosmetics (EC No 2021/1902 — Omnibus II / CLP Annex VI)'}</p>`:`<p>${esc(mat.ifra_guidelines)}</p>`;})():""}
               ${mat.usage_levels?`<p style="color:var(--text2);font-size:0.85em">${esc(mat.usage_levels)}</p>`:""}
+              ${mat.ifra_guidelines||mat.usage_levels?`<p style="color:var(--text2);font-size:0.7em;font-style:italic;margin-top:4px">Usage % = guideline in fragrance concentrate, not IFRA max in finished product. Always verify per product category.</p>`:""}
             </div>
             <div style="flex:1">
               <p class="sec-title">Blends with</p>
