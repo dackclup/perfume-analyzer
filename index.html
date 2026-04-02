@@ -193,7 +193,7 @@ html { scroll-behavior:smooth; }
 <div class="note-filters" id="noteFilters">
   <button class="note-btn active" data-note="" onclick="setNoteFilter(this)">All</button>
   <button class="note-btn" data-note="top" onclick="setNoteFilter(this)">Top</button>
-  <button class="note-btn" data-note="heart" onclick="setNoteFilter(this)">Heart</button>
+  <button class="note-btn" data-note="middle" onclick="setNoteFilter(this)">Middle</button>
   <button class="note-btn" data-note="base" onclick="setNoteFilter(this)">Base</button>
 </div>
 <p id="searchError" style="display:none;color:#e74c3c;font-size:0.85em;font-weight:500;margin:4px 0 0"></p>
@@ -294,9 +294,7 @@ function matchesNoteFilter(cas) {
   if (!activeNoteFilter) return true;
   const entry = cas ? DB[cas] : null;
   if (!entry || !entry.note) return false;
-  const n = entry.note.toLowerCase();
-  if (activeNoteFilter === 'heart') return n.includes('heart') || n.includes('middle');
-  return n.includes(activeNoteFilter);
+  return entry.note.toLowerCase().includes(activeNoteFilter);
 }
 
 function showPills(typed) {
@@ -974,7 +972,7 @@ function renderResults() {
     const nl = (mat.note_classification||"").toLowerCase();
     let badges = "";
     if (nl.includes("top")) badges += `<span class="badge badge-top">Top</span>`;
-    if (nl.includes("middle")||nl.includes("heart")) badges += `<span class="badge badge-mid">Heart</span>`;
+    if (nl.includes("middle")) badges += `<span class="badge badge-mid">Middle</span>`;
     if (nl.includes("base")) badges += `<span class="badge badge-base">Base</span>`;
     
     const ids = [
