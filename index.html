@@ -220,6 +220,7 @@ html { scroll-behavior:smooth; }
   <button class="note-btn" data-func="additive" onclick="setFuncFilter(this)">Additive</button>
   <button class="note-btn" data-func="preservative" onclick="setFuncFilter(this)">Preservative</button>
   <button class="note-btn" data-func="repellent" onclick="setFuncFilter(this)">Repellent</button>
+  <button class="note-btn" data-func="_other" onclick="setFuncFilter(this)">Other</button>
 </div>
 <div class="note-filters" id="tagFilters">
   <span class="filter-label">Use</span>
@@ -232,6 +233,7 @@ html { scroll-behavior:smooth; }
   <span class="filter-label">Odor</span>
   <span class="odor-tag active" data-odor="" onclick="clearOdorFilters(this)">All</span>
   <div class="odor-tags" id="odorTags" style="display:contents"></div>
+  <span class="odor-tag" data-odor="_other" onclick="toggleOdorTag(this)">Other</span>
 </div>
 <p id="searchError" style="display:none;color:#e74c3c;font-size:0.85em;font-weight:500;margin:4px 0 0"></p>
 <div class="pills" id="pills"></div>
@@ -465,10 +467,18 @@ function matchesAllFilters(cas) {
     else if (type !== activeTypeFilter) return false;
   }
 
-  // Function filter (role: solvent, carrier, fixative, additive)
+  // Function filter (role: solvent, carrier, fixative, additive, other)
   if (activeFuncFilter) {
     const funcAll = odorType + ' ' + noteLow + ' ' + desc;
-    if (!funcAll.includes(activeFuncFilter)) return false;
+    if (activeFuncFilter === '_other') {
+      // "Other" = functional materials not matching specific buttons (colorant, antioxidant, emollient, phototoxic, etc.)
+      const specificFuncs = ['solvent','carrier','fixative','additive','preservative','repellent'];
+      const hasSpecific = specificFuncs.some(f => funcAll.includes(f));
+      const hasFunctional = /colorant|antioxidant|emollient|phototoxic|denaturant|plasticizer|biocide|functional/i.test(funcAll);
+      if (hasSpecific || !hasFunctional) return false;
+    } else {
+      if (!funcAll.includes(activeFuncFilter)) return false;
+    }
   }
 
   // Use/industry tag filter
@@ -482,7 +492,13 @@ function matchesAllFilters(cas) {
   // Odor character filter (multi-select AND logic)
   if (activeOdorFilters.size) {
     for (const f of activeOdorFilters) {
-      if (!odorType.includes(f)) return false;
+      if (f === '_other') {
+        // "Other" = no real odor type (functional/empty)
+        const hasRealOdor = odorType && !/functional|carrier|solvent|fixative|preservative|additive|repellent|n\/a/i.test(entry.odor?.type||'');
+        if (hasRealOdor) return false;
+      } else {
+        if (!odorType.includes(f)) return false;
+      }
     }
   }
   return true;
