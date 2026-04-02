@@ -37,7 +37,11 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 #searchBtn:hover { opacity:0.85; }
 #searchBtn:disabled { opacity:0.4; cursor:default; }
 
-/* Filters */
+/* Filter drawer */
+.filter-drawer { margin:8px 0; }
+.filter-toggle { cursor:pointer; font-size:0.85em; font-weight:500; color:var(--accent); padding:6px 0; user-select:none; }
+.filter-content { display:none; padding:4px 0; }
+.filter-content.open { display:block; }
 .note-filters { display:flex; gap:6px; margin:4px 0; align-items:center; flex-wrap:wrap; }
 .filter-label { font-size:0.75em; color:var(--text2); min-width:48px; font-weight:500; }
 .odor-tags { display:flex; flex-wrap:wrap; gap:4px; }
@@ -155,7 +159,7 @@ html { scroll-behavior:smooth; }
   body { padding:0; padding-bottom:0; max-width:100%; counter-reset:page; }
   .badge { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   @page { margin:15mm 10mm; @top-right { content:counter(page); font-size:9pt; color:#999; } }
-  h1, .subtitle, .search-box, .note-filters, .pills, .progress, .progress-text,
+  h1, .subtitle, .search-box, .filter-drawer, .pills, .progress, .progress-text,
   .downloads, #statusBar, .card-del, .card-arrow,
   .pubchem-toggle, .back-top, .card-back, #top, #searchError, hr { display:none !important; }
   .card { break-inside:auto; margin-bottom:0; border:none; break-before:page; overflow:visible; }
@@ -195,46 +199,50 @@ html { scroll-behavior:smooth; }
   <input type="text" id="searchInput" placeholder="e.g. linalool, hedione, iso e super" autocomplete="off">
   <button id="searchBtn" disabled>Search</button>
 </div>
-<div class="note-filters" id="noteFilters">
-  <span class="filter-label">Note</span>
-  <button class="note-btn active" data-note="" onclick="setNoteFilter(this)">All</button>
-  <button class="note-btn" data-note="top" onclick="setNoteFilter(this)">Top</button>
-  <button class="note-btn" data-note="middle" onclick="setNoteFilter(this)">Middle</button>
-  <button class="note-btn" data-note="base" onclick="setNoteFilter(this)">Base</button>
-  <button class="note-btn" data-note="_other" onclick="setNoteFilter(this)">Other</button>
-</div>
-<div class="note-filters" id="typeFilters">
-  <span class="filter-label">Type</span>
-  <button class="note-btn active" data-type="" onclick="setTypeFilter(this)">All</button>
-  <button class="note-btn" data-type="single_molecule" onclick="setTypeFilter(this)">Aroma Chemical</button>
-  <button class="note-btn" data-type="natural_extract" onclick="setTypeFilter(this)">Natural Extract</button>
-  <button class="note-btn" data-type="natural_isolate" onclick="setTypeFilter(this)">Natural Isolate</button>
-  <button class="note-btn" data-type="other" onclick="setTypeFilter(this)">Other</button>
-</div>
-<div class="note-filters" id="funcFilters">
-  <span class="filter-label">Function</span>
-  <button class="note-btn active" data-func="" onclick="setFuncFilter(this)">All</button>
-  <button class="note-btn" data-func="_aromatic" onclick="setFuncFilter(this)">Aromatic</button>
-  <button class="note-btn" data-func="solvent" onclick="setFuncFilter(this)">Solvent</button>
-  <button class="note-btn" data-func="carrier" onclick="setFuncFilter(this)">Carrier</button>
-  <button class="note-btn" data-func="fixative" onclick="setFuncFilter(this)">Fixative</button>
-  <button class="note-btn" data-func="additive" onclick="setFuncFilter(this)">Additive</button>
-  <button class="note-btn" data-func="preservative" onclick="setFuncFilter(this)">Preservative</button>
-  <button class="note-btn" data-func="repellent" onclick="setFuncFilter(this)">Repellent</button>
-  <button class="note-btn" data-func="_other" onclick="setFuncFilter(this)">Other</button>
-</div>
-<div class="note-filters" id="tagFilters">
-  <span class="filter-label">Use</span>
-  <button class="note-btn active" data-tag="" onclick="setTagFilter(this)">All</button>
-  <button class="note-btn" data-tag="perfumery" onclick="setTagFilter(this)">Perfumery</button>
-  <button class="note-btn" data-tag="flavor" onclick="setTagFilter(this)">Flavor</button>
-  <button class="note-btn" data-tag="cosmetics" onclick="setTagFilter(this)">Cosmetics</button>
-</div>
-<div class="note-filters" id="odorFilters">
-  <span class="filter-label">Odor</span>
-  <span class="odor-tag active" data-odor="" onclick="clearOdorFilters(this)">All</span>
-  <div class="odor-tags" id="odorTags" style="display:contents"></div>
-  <span class="odor-tag" data-odor="_other" onclick="toggleOdorTag(this)">Other</span>
+<div class="filter-drawer">
+  <div class="filter-toggle" onclick="document.getElementById('filterContent').classList.toggle('open');this.classList.toggle('open')">▶ Filter</div>
+  <div class="filter-content" id="filterContent">
+    <div class="note-filters" id="tagFilters">
+      <span class="filter-label">Use</span>
+      <button class="note-btn active" data-tag="" onclick="setTagFilter(this)">All</button>
+      <button class="note-btn" data-tag="perfumery" onclick="setTagFilter(this)">Perfumery</button>
+      <button class="note-btn" data-tag="flavor" onclick="setTagFilter(this)">Flavor</button>
+      <button class="note-btn" data-tag="cosmetics" onclick="setTagFilter(this)">Cosmetics</button>
+    </div>
+    <div class="note-filters" id="funcFilters">
+      <span class="filter-label">Function</span>
+      <button class="note-btn active" data-func="" onclick="setFuncFilter(this)">All</button>
+      <button class="note-btn" data-func="_aromatic" onclick="setFuncFilter(this)">Aromatic</button>
+      <button class="note-btn" data-func="fixative" onclick="setFuncFilter(this)">Fixative</button>
+      <button class="note-btn" data-func="solvent" onclick="setFuncFilter(this)">Solvent</button>
+      <button class="note-btn" data-func="carrier" onclick="setFuncFilter(this)">Carrier</button>
+      <button class="note-btn" data-func="additive" onclick="setFuncFilter(this)">Additive</button>
+      <button class="note-btn" data-func="preservative" onclick="setFuncFilter(this)">Preservative</button>
+      <button class="note-btn" data-func="_other" onclick="setFuncFilter(this)">Other</button>
+    </div>
+    <div class="note-filters" id="typeFilters">
+      <span class="filter-label">Type</span>
+      <button class="note-btn active" data-type="" onclick="setTypeFilter(this)">All</button>
+      <button class="note-btn" data-type="single_molecule" onclick="setTypeFilter(this)">Aroma Chemical</button>
+      <button class="note-btn" data-type="natural_extract" onclick="setTypeFilter(this)">Natural Extract</button>
+      <button class="note-btn" data-type="natural_isolate" onclick="setTypeFilter(this)">Natural Isolate</button>
+      <button class="note-btn" data-type="other" onclick="setTypeFilter(this)">Other</button>
+    </div>
+    <div class="note-filters" id="noteFilters">
+      <span class="filter-label">Note</span>
+      <button class="note-btn active" data-note="" onclick="setNoteFilter(this)">All</button>
+      <button class="note-btn" data-note="top" onclick="setNoteFilter(this)">Top</button>
+      <button class="note-btn" data-note="middle" onclick="setNoteFilter(this)">Middle</button>
+      <button class="note-btn" data-note="base" onclick="setNoteFilter(this)">Base</button>
+      <button class="note-btn" data-note="_other" onclick="setNoteFilter(this)">Other</button>
+    </div>
+    <div class="note-filters" id="odorFilters">
+      <span class="filter-label">Odor</span>
+      <span class="odor-tag active" data-odor="" onclick="clearOdorFilters(this)">All</span>
+      <div class="odor-tags" id="odorTags" style="display:contents"></div>
+      <span class="odor-tag" data-odor="_other" onclick="toggleOdorTag(this)">Other</span>
+    </div>
+  </div>
 </div>
 <p id="searchError" style="display:none;color:#e74c3c;font-size:0.85em;font-weight:500;margin:4px 0 0"></p>
 <div class="pills" id="pills"></div>
