@@ -312,7 +312,58 @@ let activeOdorFilters = new Set(); // multi-select
 // Non-odor terms (function/role) to exclude from Odor filter
 const FUNC_TERMS = new Set(['functional','carrier','fixative','solvent','additive','preservative','repellent','mild','colorant','n/a']);
 
-function _refreshPills() { showPills(input.value); }
+function _refreshPills() { showPills(input.value); _updateFilterVisibility(); }
+
+// Count how many DB entries match if we set a specific filter value (temporarily)
+function _countWithFilter(filterName, filterValue) {
+  // Save current
+  const saved = {note:activeNoteFilter, type:activeTypeFilter, func:activeFuncFilter, tag:activeTagFilter, odor:new Set(activeOdorFilters)};
+  // Set temp
+  if (filterName === 'note') activeNoteFilter = filterValue;
+  else if (filterName === 'type') activeTypeFilter = filterValue;
+  else if (filterName === 'func') activeFuncFilter = filterValue;
+  else if (filterName === 'tag') activeTagFilter = filterValue;
+  // Count
+  let count = 0;
+  for (const entry of Object.values(DB)) {
+    if (matchesAllFilters(entry.cas)) count++;
+  }
+  // Restore
+  activeNoteFilter = saved.note; activeTypeFilter = saved.type;
+  activeFuncFilter = saved.func; activeTagFilter = saved.tag;
+  activeOdorFilters = saved.odor;
+  return count;
+}
+
+function _updateFilterVisibility() {
+  // For each filter group, check each button's potential results
+  const groups = [
+    {sel:'#noteFilters .note-btn', attr:'note', filter:'note'},
+    {sel:'#typeFilters .note-btn', attr:'type', filter:'type'},
+    {sel:'#funcFilters .note-btn', attr:'func', filter:'func'},
+    {sel:'#tagFilters .note-btn', attr:'tag', filter:'tag'},
+  ];
+  groups.forEach(g => {
+    document.querySelectorAll(g.sel).forEach(btn => {
+      const val = btn.dataset[g.attr];
+      if (val === '' || val === undefined) { btn.style.display = ''; return; } // "All" always visible
+      const count = _countWithFilter(g.filter, val);
+      btn.style.display = count > 0 ? '' : 'none';
+    });
+  });
+  // Odor tags
+  document.querySelectorAll('#odorTags .odor-tag').forEach(btn => {
+    const val = btn.dataset.odor;
+    if (!val) return;
+    // Temporarily add this odor to check if any results
+    const hadIt = activeOdorFilters.has(val);
+    activeOdorFilters.add(val);
+    let count = 0;
+    for (const entry of Object.values(DB)) { if (matchesAllFilters(entry.cas)) { count++; break; } }
+    if (!hadIt) activeOdorFilters.delete(val);
+    btn.style.display = count > 0 ? '' : 'none';
+  });
+}
 
 function setNoteFilter(el) {
   document.querySelectorAll('#noteFilters .note-btn').forEach(b => b.classList.remove('active'));
@@ -375,6 +426,7 @@ function clearOdorFilters(el) {
     btn.onclick = function() { toggleOdorTag(this); };
     container.appendChild(btn);
   });
+  _updateFilterVisibility();
 }
 
 // ── Search input ──
