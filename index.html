@@ -37,8 +37,9 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 #searchBtn:hover { opacity:0.85; }
 #searchBtn:disabled { opacity:0.4; cursor:default; }
 
-/* Note filters */
-.note-filters { display:flex; gap:6px; margin:8px 0; }
+/* Filters */
+.note-filters { display:flex; gap:6px; margin:4px 0; align-items:center; flex-wrap:wrap; }
+.filter-label { font-size:0.75em; color:var(--text2); min-width:32px; font-weight:500; }
 .note-btn { padding:4px 16px; border:1px solid var(--border); border-radius:16px; font-size:0.8em; cursor:pointer; background:var(--bg2); color:var(--text2); font-family:inherit; transition:all 0.15s; }
 .note-btn:hover { border-color:var(--accent); color:var(--accent); }
 .note-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
@@ -150,7 +151,7 @@ html { scroll-behavior:smooth; }
   body { padding:0; padding-bottom:0; max-width:100%; counter-reset:page; }
   .badge { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   @page { margin:15mm 10mm; @top-right { content:counter(page); font-size:9pt; color:#999; } }
-  h1, .subtitle, .search-box, .note-filters, .pills, .progress, .progress-text,
+  h1, .subtitle, .search-box, .note-filters, #odorFilters, .pills, .progress, .progress-text,
   .downloads, #statusBar, .card-del, .card-arrow,
   .pubchem-toggle, .back-top, .card-back, #top, #searchError, hr { display:none !important; }
   .card { break-inside:auto; margin-bottom:0; border:none; break-before:page; overflow:visible; }
@@ -191,10 +192,32 @@ html { scroll-behavior:smooth; }
   <button id="searchBtn" disabled>Search</button>
 </div>
 <div class="note-filters" id="noteFilters">
+  <span class="filter-label">Note</span>
   <button class="note-btn active" data-note="" onclick="setNoteFilter(this)">All</button>
   <button class="note-btn" data-note="top" onclick="setNoteFilter(this)">Top</button>
   <button class="note-btn" data-note="middle" onclick="setNoteFilter(this)">Middle</button>
   <button class="note-btn" data-note="base" onclick="setNoteFilter(this)">Base</button>
+</div>
+<div class="note-filters" id="typeFilters">
+  <span class="filter-label">Type</span>
+  <button class="note-btn active" data-type="" onclick="setTypeFilter(this)">All</button>
+  <button class="note-btn" data-type="single_molecule" onclick="setTypeFilter(this)">Aroma Chemical</button>
+  <button class="note-btn" data-type="natural_extract" onclick="setTypeFilter(this)">Natural</button>
+  <button class="note-btn" data-type="solvent_carrier" onclick="setTypeFilter(this)">Solvent</button>
+  <button class="note-btn" data-type="additive" onclick="setTypeFilter(this)">Additive</button>
+</div>
+<div class="note-filters" id="tagFilters">
+  <span class="filter-label">Use</span>
+  <button class="note-btn active" data-tag="" onclick="setTagFilter(this)">All</button>
+  <button class="note-btn" data-tag="perfumery" onclick="setTagFilter(this)">Perfumery</button>
+  <button class="note-btn" data-tag="flavor" onclick="setTagFilter(this)">Flavor</button>
+  <button class="note-btn" data-tag="cosmetics" onclick="setTagFilter(this)">Cosmetics</button>
+</div>
+<div class="note-filters" id="odorFilters">
+  <span class="filter-label">Odor</span>
+  <select id="odorSelect" onchange="setOdorFilter(this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:16px;font-size:0.8em;background:var(--bg2);color:var(--text);font-family:inherit;cursor:pointer">
+    <option value="">All odors</option>
+  </select>
 </div>
 <p id="searchError" style="display:none;color:#e74c3c;font-size:0.85em;font-weight:500;margin:4px 0 0"></p>
 <div class="pills" id="pills"></div>
@@ -265,14 +288,50 @@ for (const [cas, entry] of Object.entries(DB)) {
 let results = [];
 let pcCache = {};
 
-// ── Note filter ──
+// ── Filters ──
 let activeNoteFilter = "";
+let activeTypeFilter = "";
+let activeTagFilter = "";
+let activeOdorFilter = "";
+
 function setNoteFilter(el) {
-  document.querySelectorAll('.note-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#noteFilters .note-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   activeNoteFilter = el.dataset.note || "";
-  // Re-trigger pill suggestions with current input
   showPills(input.value);
+}
+function setTypeFilter(el) {
+  document.querySelectorAll('#typeFilters .note-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  activeTypeFilter = el.dataset.type || "";
+  showPills(input.value);
+}
+function setTagFilter(el) {
+  document.querySelectorAll('#tagFilters .note-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  activeTagFilter = el.dataset.tag || "";
+  showPills(input.value);
+}
+function setOdorFilter(val) {
+  activeOdorFilter = val || "";
+  showPills(input.value);
+}
+
+// Build odor type options from DB
+{
+  const odorTypes = new Set();
+  Object.values(DB).forEach(e => {
+    if (e.odor && e.odor.type) {
+      e.odor.type.split(/\s*[\/,]\s*/).forEach(t => { if (t.trim()) odorTypes.add(t.trim()); });
+    }
+  });
+  const sel = document.getElementById('odorSelect');
+  [...odorTypes].sort().forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.toLowerCase();
+    opt.textContent = t;
+    sel.appendChild(opt);
+  });
 }
 
 // ── Search input ──
@@ -290,24 +349,53 @@ input.addEventListener("input", () => {
 input.addEventListener("keydown", e => { const v=input.value.trim(); if (e.key==="Enter"&&v) doSearch(v); });
 btn.addEventListener("click", () => { const v=input.value.trim(); if (v) doSearch(v); });
 
-function matchesNoteFilter(cas) {
-  if (!activeNoteFilter) return true;
+function matchesAllFilters(cas) {
   const entry = cas ? DB[cas] : null;
-  if (!entry || !entry.note) return false;
-  return entry.note.toLowerCase().includes(activeNoteFilter);
+  if (!entry) return !activeNoteFilter && !activeTypeFilter && !activeTagFilter && !activeOdorFilter;
+  // Note filter
+  if (activeNoteFilter && !(entry.note || '').toLowerCase().includes(activeNoteFilter)) return false;
+  // Type filter — simulate classifyMaterialType using DB fields
+  if (activeTypeFilter) {
+    const n = (entry.name||'').toLowerCase();
+    const syns = (entry.synonyms||[]).join(' ').toLowerCase();
+    const desc = ((entry.odor?.description||'') + ' ' + (entry.safety?.usage||'')).toLowerCase();
+    const odorType = (entry.odor?.type||'').toLowerCase();
+    const all = n + ' ' + syns + ' ' + desc + ' ' + odorType;
+    let type = 'single_molecule';
+    if (/preservative|biocide|antioxidant|functional|stabilizer/i.test(all) || /^(additive|base\/additive)$/i.test(entry.note||'')) type = 'additive';
+    else if (MIXTURES.has(cas) || /\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i.test(all)) type = 'natural_extract';
+    else if (/\b(solvent|carrier|diluent|emollient|odorless)\b/i.test(all)) type = 'solvent_carrier';
+    else if (/\b(natural|isolate|from .* oil|occurs in)\b/i.test(all)) type = 'natural_isolate';
+    if (activeTypeFilter === 'natural_extract' && type === 'natural_isolate') {} // natural_isolate matches natural filter
+    else if (type !== activeTypeFilter) return false;
+  }
+  // Tag filter
+  if (activeTagFilter) {
+    const hasPerfumery = entry.odor?.description || entry.odor?.type || MIXTURES.has(cas);
+    if (activeTagFilter === 'perfumery' && !hasPerfumery) return false;
+    if (activeTagFilter === 'flavor' && !entry.fema) return false;
+    if (activeTagFilter === 'cosmetics' && !hasPerfumery) return false;
+  }
+  // Odor type filter
+  if (activeOdorFilter) {
+    const odorType = (entry.odor?.type || '').toLowerCase();
+    if (!odorType.includes(activeOdorFilter)) return false;
+  }
+  return true;
 }
 
 function showPills(typed) {
   const ql = typed.toLowerCase().replace(/\s+/g,' ').trim();
   const qs = ql;
+  const hasAnyFilter = activeNoteFilter || activeTypeFilter || activeTagFilter || activeOdorFilter;
   if (qs.length < 1) {
-    // If note filter active but no text, show all matching note
-    if (activeNoteFilter) {
+    // If any filter active but no text, show matching materials
+    if (hasAnyFilter) {
       let suggestions = [];
       const seenCas = new Set();
       for (const entry of Object.values(DB)) {
         if (suggestions.length >= 10) break;
-        if (!matchesNoteFilter(entry.cas)) continue;
+        if (!matchesAllFilters(entry.cas)) continue;
         if (seenCas.has(entry.cas)) continue;
         suggestions.push({name: entry.name, cas: entry.cas});
         seenCas.add(entry.cas);
@@ -329,7 +417,7 @@ function showPills(typed) {
   (PREFIX_IX[ql]||[]).forEach(({name,cas,display}) => {
     if (suggestions.length>=10) return;
     if (cas && seenCas.has(cas)) return;
-    if (!matchesNoteFilter(cas)) return;
+    if (!matchesAllFilters(cas)) return;
     suggestions.push({name:display,cas}); if(cas)seenCas.add(cas);
   });
 
@@ -338,7 +426,7 @@ function showPills(typed) {
     (PREFIX_IX[qs]||[]).forEach(({name,cas,display}) => {
       if (suggestions.length>=10) return;
       if (cas && seenCas.has(cas)) return;
-      if (!matchesNoteFilter(cas)) return;
+      if (!matchesAllFilters(cas)) return;
       suggestions.push({name:display,cas}); if(cas)seenCas.add(cas);
     });
   }
@@ -350,7 +438,7 @@ function showPills(typed) {
       if (suggestions.length>=10) return;
       if (!name.startsWith(qs) && !name.includes(qs)) return;
       if (cas && seenCas.has(cas)) return;
-      if (!matchesNoteFilter(cas)) return;
+      if (!matchesAllFilters(cas)) return;
       suggestions.push({name:display,cas}); if(cas)seenCas.add(cas);
     });
   }
@@ -361,7 +449,7 @@ function showPills(typed) {
       if (suggestions.length>=10) return;
       if (!name.includes(qs)) return;
       if (suggestions.find(s=>s.name===display)) return;
-      if (!matchesNoteFilter(cas)) return;
+      if (!matchesAllFilters(cas)) return;
       if (cas && seenCas.has(cas)) return;
       suggestions.push({name:display,cas}); if(cas)seenCas.add(cas);
     });
