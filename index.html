@@ -406,34 +406,34 @@ function _updateFilterVisibility() {
 
 function _selectedLabel(name) {
   const radio = document.querySelector(`input[name="${name}"]:checked`);
-  if (!radio || !radio.value) return '';
+  if (!radio) return 'All';
   return radio.parentElement.textContent.trim();
 }
 function setTagFilter(val) {
   activeTagFilter = val || "";
-  document.getElementById('tagSelected').textContent = val ? _selectedLabel('tag') : '';
+  document.getElementById('tagSelected').textContent = _selectedLabel('tag');
   _refreshPills();
 }
 function setFuncFilter(val) {
   activeFuncFilter = val || "";
-  document.getElementById('funcSelected').textContent = val ? _selectedLabel('func') : '';
+  document.getElementById('funcSelected').textContent = _selectedLabel('func');
   _refreshPills();
 }
 function setTypeFilter(val) {
   activeTypeFilter = val || "";
-  document.getElementById('typeSelected').textContent = val ? _selectedLabel('type') : '';
+  document.getElementById('typeSelected').textContent = _selectedLabel('type');
   _refreshPills();
 }
 function setNoteFilter(val) {
   activeNoteFilter = val || "";
-  document.getElementById('noteSelected').textContent = val ? _selectedLabel('note') : '';
+  document.getElementById('noteSelected').textContent = _selectedLabel('note');
   _refreshPills();
 }
 function _updateOdorSelected() {
   const sel = document.getElementById('odorSelected');
   if (activeOdorFilters.size) {
     sel.textContent = [...activeOdorFilters].map(f => f === '_other' ? 'Other' : f.charAt(0).toUpperCase()+f.slice(1)).join(', ');
-  } else { sel.textContent = ''; }
+  } else { sel.textContent = 'All'; }
 }
 function toggleOdorTag(el) {
   const v = el.dataset.odor;
@@ -475,6 +475,10 @@ function clearOdorFilters(el) {
     container.appendChild(btn);
   });
   _updateFilterVisibility();
+  // Set initial "All" labels
+  ['tagSelected','funcSelected','typeSelected','noteSelected','odorSelected'].forEach(id => {
+    document.getElementById(id).textContent = 'All';
+  });
 }
 
 // ── Search input ──
