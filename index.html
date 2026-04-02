@@ -294,7 +294,9 @@ function matchesNoteFilter(cas) {
   if (!activeNoteFilter) return true;
   const entry = cas ? DB[cas] : null;
   if (!entry || !entry.note) return false;
-  return entry.note.toLowerCase().includes(activeNoteFilter);
+  const n = entry.note.toLowerCase();
+  if (activeNoteFilter === 'heart') return n.includes('heart') || n.includes('middle');
+  return n.includes(activeNoteFilter);
 }
 
 function showPills(typed) {
