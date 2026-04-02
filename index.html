@@ -214,6 +214,7 @@ html { scroll-behavior:smooth; }
 <div class="note-filters" id="funcFilters">
   <span class="filter-label">Function</span>
   <button class="note-btn active" data-func="" onclick="setFuncFilter(this)">All</button>
+  <button class="note-btn" data-func="_aromatic" onclick="setFuncFilter(this)">Aromatic</button>
   <button class="note-btn" data-func="solvent" onclick="setFuncFilter(this)">Solvent</button>
   <button class="note-btn" data-func="carrier" onclick="setFuncFilter(this)">Carrier</button>
   <button class="note-btn" data-func="fixative" onclick="setFuncFilter(this)">Fixative</button>
@@ -476,12 +477,17 @@ function matchesAllFilters(cas) {
   // Function filter (role: solvent, carrier, fixative, additive, other)
   if (activeFuncFilter) {
     const funcAll = odorType + ' ' + noteLow + ' ' + desc;
-    if (activeFuncFilter === '_other') {
-      // "Other" = functional materials not matching specific buttons (colorant, antioxidant, emollient, phototoxic, etc.)
+    if (activeFuncFilter === '_aromatic') {
+      // Aromatic = materials that provide scent (have real odor, not functional/solvent/additive)
+      const hasRealOdor = entry.odor?.description && !/odorless|virtually odorless|preservative|antioxidant/i.test(entry.odor.description);
+      const isFuncRole = /solvent|carrier|fixative|additive|preservative|repellent|biocide|colorant|antioxidant|emollient|denaturant|plasticizer/i.test(funcAll);
+      if (!hasRealOdor || isFuncRole) return false;
+    } else if (activeFuncFilter === '_other') {
       const specificFuncs = ['solvent','carrier','fixative','additive','preservative','repellent'];
       const hasSpecific = specificFuncs.some(f => funcAll.includes(f));
       const hasFunctional = /colorant|antioxidant|emollient|phototoxic|denaturant|plasticizer|biocide|functional/i.test(funcAll);
-      if (hasSpecific || !hasFunctional) return false;
+      const isAromatic = entry.odor?.description && !/odorless|virtually odorless|preservative|antioxidant/i.test(entry.odor.description) && !hasSpecific;
+      if (hasSpecific || isAromatic || !hasFunctional) return false;
     } else {
       if (!funcAll.includes(activeFuncFilter)) return false;
     }
