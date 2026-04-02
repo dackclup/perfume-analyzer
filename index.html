@@ -699,7 +699,7 @@ function fuzzyMatchDB(query) {
 // Whitelist: only keep sections matching these keywords (case-insensitive)
 const KEEP_KEYWORDS = [
   // Identifiers
-  "name", "identifier", "cas", "iupac", "inchi", "smiles", "synonym",
+  "name", "identifier", "cas", "iupac", "synonym",
   "molecular formula", "molecular weight", "fema",
   // Physical & Chemical Properties
   "propert", "boiling point", "melting point", "flash point",
@@ -738,7 +738,8 @@ const FORCE_SKIP = [
   "taxonomy", "crystal structure", "3d conformer",
   "record description", "summary information",
   "disorder", "disease", "pathway", "related record", "wikipedia",
-  "drug and medication"
+  "drug and medication",
+  "canonical smiles", "isomeric smiles", "inchi"
 ];
 // Word-boundary skip patterns (to avoid "gene" matching "general")
 const FORCE_SKIP_REGEX = [/\bgene\b/, /\bgenes\b/];
