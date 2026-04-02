@@ -1650,7 +1650,10 @@ function classifyMaterialType(mat) {
   const n = (mat.name || '').toLowerCase();
   const syns = (mat.synonyms || []).join(' ').toLowerCase();
   const desc = ((mat.odor_description || '') + ' ' + (mat.usage_levels || '')).toLowerCase();
-  const all = n + ' ' + syns + ' ' + desc;
+  const odorType = (mat.odor_type || '').toLowerCase();
+  const all = n + ' ' + syns + ' ' + desc + ' ' + odorType;
+  // Additives / Preservatives / Stabilizers (not aroma chemicals)
+  if (/\b(preservative|biocide|antioxidant|stabilizer|additive)\b/i.test(all) || /^(additive|base\/additive)$/i.test(mat.note||'')) return 'additive';
   if (MIXTURES.has(mat.cas_number)) return 'natural_extract';
   if (/\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i.test(all)) return 'natural_extract';
   if (/\b(solvent|carrier|diluent|emollient|virtually odorless|odorless)\b/i.test(all)) return 'solvent_carrier';
@@ -1659,6 +1662,7 @@ function classifyMaterialType(mat) {
   return 'single_molecule';
 }
 const MATERIAL_TYPE_LABELS = {
+  'additive': 'Preservative / Additive',
   'natural_extract': 'Natural Extract',
   'natural_isolate': 'Natural Isolate',
   'solvent_carrier': 'Solvent / Carrier',
