@@ -39,9 +39,14 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 
 /* Filter drawer */
 .filter-drawer { margin:8px 0; }
+.filter-header { display:flex; align-items:center; gap:8px; }
 .filter-toggle { cursor:pointer; font-size:0.85em; font-weight:500; color:var(--accent); padding:6px 0; user-select:none; }
+.filter-reset { font-size:0.75em; color:var(--text2); cursor:pointer; padding:2px 10px; border:1px solid var(--border); border-radius:10px; opacity:0.6; }
+.filter-reset:hover { opacity:1; color:var(--accent); border-color:var(--accent); }
 .filter-content { display:none; padding:0 0 0 4px; }
 .filter-content.open { display:block; }
+.arrow { display:inline-block; font-size:0.7em; transition:transform 0.2s; }
+.filter-toggle.open .arrow, .sub-toggle.open .arrow { transform:rotate(90deg); }
 .sub-drawer { border-bottom:1px solid var(--border); }
 .sub-drawer:last-child { border-bottom:none; }
 .sub-toggle { cursor:pointer; font-size:0.82em; font-weight:500; color:var(--text2); padding:6px 0; user-select:none; display:flex; align-items:center; gap:6px; }
@@ -207,10 +212,13 @@ html { scroll-behavior:smooth; }
   <button id="searchBtn" disabled>Search</button>
 </div>
 <div class="filter-drawer">
-  <div class="filter-toggle" onclick="document.getElementById('filterContent').classList.toggle('open');this.classList.toggle('open')">▶ Filter</div>
+  <div class="filter-header">
+    <span class="filter-toggle" onclick="document.getElementById('filterContent').classList.toggle('open');this.classList.toggle('open')"><span class="arrow">▶</span> Filter</span>
+    <span class="filter-reset" onclick="resetAllFilters()">Reset</span>
+  </div>
   <div class="filter-content" id="filterContent">
     <div class="sub-drawer">
-      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')">▸ Use <span class="sub-selected" id="tagSelected"></span></div>
+      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')"><span class="arrow">▶</span> Use <span class="sub-selected" id="tagSelected"></span></div>
       <div class="sub-body" id="tagFilters">
         <label class="filter-radio"><input type="radio" name="tag" value="" checked onchange="setTagFilter(this.value)"> All</label>
         <label class="filter-radio"><input type="radio" name="tag" value="perfumery" onchange="setTagFilter(this.value)"> Perfumery</label>
@@ -219,7 +227,7 @@ html { scroll-behavior:smooth; }
       </div>
     </div>
     <div class="sub-drawer">
-      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')">▸ Function <span class="sub-selected" id="funcSelected"></span></div>
+      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')"><span class="arrow">▶</span> Function <span class="sub-selected" id="funcSelected"></span></div>
       <div class="sub-body" id="funcFilters">
         <label class="filter-radio"><input type="radio" name="func" value="" checked onchange="setFuncFilter(this.value)"> All</label>
         <label class="filter-radio"><input type="radio" name="func" value="_aromatic" onchange="setFuncFilter(this.value)"> Aromatic</label>
@@ -232,7 +240,7 @@ html { scroll-behavior:smooth; }
       </div>
     </div>
     <div class="sub-drawer">
-      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')">▸ Type <span class="sub-selected" id="typeSelected"></span></div>
+      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')"><span class="arrow">▶</span> Type <span class="sub-selected" id="typeSelected"></span></div>
       <div class="sub-body" id="typeFilters">
         <label class="filter-radio"><input type="radio" name="type" value="" checked onchange="setTypeFilter(this.value)"> All</label>
         <label class="filter-radio"><input type="radio" name="type" value="single_molecule" onchange="setTypeFilter(this.value)"> Aroma Chemical</label>
@@ -242,7 +250,7 @@ html { scroll-behavior:smooth; }
       </div>
     </div>
     <div class="sub-drawer">
-      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')">▸ Note <span class="sub-selected" id="noteSelected"></span></div>
+      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')"><span class="arrow">▶</span> Note <span class="sub-selected" id="noteSelected"></span></div>
       <div class="sub-body" id="noteFilters">
         <label class="filter-radio"><input type="radio" name="note" value="" checked onchange="setNoteFilter(this.value)"> All</label>
         <label class="filter-radio"><input type="radio" name="note" value="top" onchange="setNoteFilter(this.value)"> Top</label>
@@ -252,7 +260,7 @@ html { scroll-behavior:smooth; }
       </div>
     </div>
     <div class="sub-drawer">
-      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')">▸ Odor <span class="sub-selected" id="odorSelected"></span></div>
+      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')"><span class="arrow">▶</span> Odor <span class="sub-selected" id="odorSelected"></span></div>
       <div class="sub-body" id="odorFilters">
         <div style="display:flex;flex-wrap:wrap;gap:4px">
           <span class="odor-tag active" data-odor="" onclick="clearOdorFilters(this)">All</span>
@@ -449,6 +457,25 @@ function clearOdorFilters(el) {
   document.querySelectorAll('.odor-tag').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   _updateOdorSelected();
+  _refreshPills();
+}
+
+function resetAllFilters() {
+  // Reset all radio filters to All
+  ['tag','func','type','note'].forEach(name => {
+    const allRadio = document.querySelector(`input[name="${name}"][value=""]`);
+    if (allRadio) allRadio.checked = true;
+  });
+  activeNoteFilter = ""; activeTypeFilter = ""; activeFuncFilter = ""; activeTagFilter = "";
+  // Reset odor
+  activeOdorFilters.clear();
+  document.querySelectorAll('.odor-tag').forEach(b => b.classList.remove('active'));
+  const allOdor = document.querySelector('#odorFilters .odor-tag[data-odor=""]');
+  if (allOdor) allOdor.classList.add('active');
+  // Update labels
+  ['tagSelected','funcSelected','typeSelected','noteSelected','odorSelected'].forEach(id => {
+    document.getElementById(id).textContent = 'All';
+  });
   _refreshPills();
 }
 
