@@ -438,9 +438,10 @@ async function scrapeMaterial(name) {
       mat._cid = cid;
       mat.page_url = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
       mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=500x500`;
-      const [propsRes, synsRes] = await Promise.allSettled([
+      const [propsRes, synsRes, descRes] = await Promise.allSettled([
         fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,IUPACName,InChI,XLogP,ExactMass,TPSA,HBondDonorCount,HBondAcceptorCount,RotatableBondCount,HeavyAtomCount/JSON`).then(r=>r.json()).catch(()=>null),
         fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/synonyms/JSON`).then(r=>r.json()).catch(()=>null),
+        fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/description/JSON`).then(r=>r.json()).catch(()=>null),
       ]);
       const propsData = propsRes.status==='fulfilled' ? propsRes.value : null;
       if (propsData) {
@@ -461,6 +462,8 @@ async function scrapeMaterial(name) {
       }
       const synsData = synsRes.status==='fulfilled' ? synsRes.value : null;
       if (synsData) mat.synonyms = (synsData.InformationList?.Information?.[0]?.Synonym || []).slice(0,15);
+      const descData = descRes.status==='fulfilled' ? descRes.value : null;
+      if (descData) mat._pubchemTitle = descData.InformationList?.Information?.[0]?.Title || "";
       renderResults(); // Re-render to show image + chemical data
       prefetchAll();
     }).catch(()=>{});
@@ -561,10 +564,11 @@ async function scrapeMaterial(name) {
   mat.page_url = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
   mat.structure_image_url = `${PUBCHEM_REST}/compound/cid/${cid}/record/PNG?image_size=500x500`;
   
-  // ── Fetch properties + synonyms in PARALLEL ──
-  const [propsRes, synsRes] = await Promise.allSettled([
+  // ── Fetch properties + synonyms + title in PARALLEL ──
+  const [propsRes, synsRes, descRes] = await Promise.allSettled([
     fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,IUPACName,InChI,XLogP,ExactMass,TPSA,HBondDonorCount,HBondAcceptorCount,RotatableBondCount,HeavyAtomCount/JSON`).then(r=>r.json()).catch(()=>null),
     fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/synonyms/JSON`).then(r=>r.json()).catch(()=>null),
+    fetchWithTimeout(`${PUBCHEM_REST}/compound/cid/${cid}/description/JSON`).then(r=>r.json()).catch(()=>null),
   ]);
   
   const propsData = propsRes.status==='fulfilled' ? propsRes.value : null;
@@ -593,6 +597,11 @@ async function scrapeMaterial(name) {
       const cas = syns.find(s => CAS_RE.test(s));
       if (cas) mat.cas_number = cas;
     }
+  }
+  // PubChem Record Title (the compound name shown on PubChem page)
+  const descData = descRes.status==='fulfilled' ? descRes.value : null;
+  if (descData) {
+    mat._pubchemTitle = descData.InformationList?.Information?.[0]?.Title || "";
   }
   
   // ── Apply perfumery overlay ──
@@ -955,7 +964,7 @@ function renderResults() {
           <p style="margin:4px 0 8px">${classifyIndustryTags(mat).map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
-            <p><strong>${esc((mat.synonyms.find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || mat.name))}</strong></p>
+            <p><strong>${esc(mat._pubchemTitle || mat.synonyms.find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || mat.name)}</strong></p>
             ${mat.page_url?`<p><a href="${mat.page_url}" target="_blank" style="color:var(--accent);font-size:0.85em">PubChem ↗</a></p>`:""}
             ${ids}
             ${shortProps?`<div class="props-grid">${shortProps}</div>`:""}
