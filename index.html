@@ -354,19 +354,21 @@ function matchesAllFilters(cas) {
   if (!entry) return !activeNoteFilter && !activeTypeFilter && !activeTagFilter && !activeOdorFilter;
   // Note filter
   if (activeNoteFilter && !(entry.note || '').toLowerCase().includes(activeNoteFilter)) return false;
-  // Type filter — simulate classifyMaterialType using DB fields
+  // Type filter — match classifyMaterialType logic
   if (activeTypeFilter) {
     const n = (entry.name||'').toLowerCase();
     const syns = (entry.synonyms||[]).join(' ').toLowerCase();
     const desc = ((entry.odor?.description||'') + ' ' + (entry.safety?.usage||'')).toLowerCase();
     const odorType = (entry.odor?.type||'').toLowerCase();
     const all = n + ' ' + syns + ' ' + desc + ' ' + odorType;
+    const noteLow = (entry.note||'').toLowerCase();
     let type = 'single_molecule';
-    if (/preservative|biocide|antioxidant|functional|stabilizer/i.test(all) || /^(additive|base\/additive)$/i.test(entry.note||'')) type = 'additive';
+    const hasSolvent = /\bsolvent\b/i.test(all + ' ' + noteLow);
+    if (!hasSolvent && (/preservative|biocide|antioxidant|stabilizer/i.test(all) || /^(additive|base\/additive)$/i.test(entry.note||''))) type = 'additive';
     else if (MIXTURES.has(cas) || /\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i.test(all)) type = 'natural_extract';
     else if (/\b(solvent|carrier|diluent|emollient|odorless)\b/i.test(all)) type = 'solvent_carrier';
     else if (/\b(natural|isolate|from .* oil|occurs in)\b/i.test(all)) type = 'natural_isolate';
-    if (activeTypeFilter === 'natural_extract' && type === 'natural_isolate') {} // natural_isolate matches natural filter
+    if (activeTypeFilter === 'natural_extract' && type === 'natural_isolate') {}
     else if (type !== activeTypeFilter) return false;
   }
   // Tag filter
@@ -1860,8 +1862,9 @@ function classifyIndustryTags(mat) {
   const pdStr = mat.pubchem_sections ? JSON.stringify(mat.pubchem_sections).toLowerCase() : '';
   const banned = isBannedEU(mat);
 
-  // Detect non-aroma functional materials (preservatives, antioxidants, stabilizers)
-  const isFunctional = /preservative|biocide|antioxidant|functional|stabilizer/i.test(odorType + ' ' + desc);
+  // Detect non-aroma functional materials (preservatives, antioxidants, stabilizers) — but NOT solvents
+  const isSolvent = /\bsolvent\b/i.test(odorType + ' ' + desc + ' ' + (mat.note_classification||''));
+  const isFunctional = !isSolvent && /preservative|biocide|antioxidant|stabilizer/i.test(odorType + ' ' + desc);
   const hasRealOdor = (mat.odor_description || mat.odor_type || mat.odor_strength)
     && !isFunctional
     && !/^odorless|^none$/i.test((mat.odor_strength||''));
