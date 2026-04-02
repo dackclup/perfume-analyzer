@@ -1381,11 +1381,11 @@ async function downloadJSON() {
   }
   // One-hot note classification
   function noteOneHot(s) {
-    if (!s) return {is_top:false, is_heart:false, is_base:false};
+    if (!s) return {is_top:false, is_middle:false, is_base:false};
     const sl = s.toLowerCase();
     return {
       is_top: sl.includes('top'),
-      is_heart: sl.includes('middle') || sl.includes('heart'),
+      is_middle: sl.includes('middle'),
       is_base: sl.includes('base')
     };
   }
