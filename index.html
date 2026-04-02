@@ -40,10 +40,13 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 /* Filter drawer */
 .filter-drawer { margin:8px 0; }
 .filter-toggle { cursor:pointer; font-size:0.85em; font-weight:500; color:var(--accent); padding:6px 0; user-select:none; }
-.filter-content { display:none; padding:4px 0; }
+.filter-content { display:none; padding:0 0 0 8px; }
 .filter-content.open { display:block; }
-.note-filters { display:flex; gap:6px; margin:4px 0; align-items:center; flex-wrap:wrap; }
-.filter-label { font-size:0.75em; color:var(--text2); min-width:48px; font-weight:500; }
+.sub-drawer { margin:2px 0; }
+.sub-toggle { cursor:pointer; font-size:0.8em; font-weight:500; color:var(--text2); padding:3px 0; user-select:none; }
+.sub-toggle:hover { color:var(--accent); }
+.sub-content { display:none; padding:2px 0 4px 12px; flex-wrap:wrap; gap:4px; align-items:center; }
+.sub-content.open { display:flex; }
 .odor-tags { display:flex; flex-wrap:wrap; gap:4px; }
 .odor-tag { padding:2px 10px; border:1px solid var(--border); border-radius:12px; font-size:0.72em; cursor:pointer; background:var(--bg2); color:var(--text2); font-family:inherit; transition:all 0.15s; }
 .odor-tag:hover { border-color:var(--accent); color:var(--accent); }
@@ -202,45 +205,55 @@ html { scroll-behavior:smooth; }
 <div class="filter-drawer">
   <div class="filter-toggle" onclick="document.getElementById('filterContent').classList.toggle('open');this.classList.toggle('open')">▶ Filter</div>
   <div class="filter-content" id="filterContent">
-    <div class="note-filters" id="tagFilters">
-      <span class="filter-label">Use</span>
-      <button class="note-btn active" data-tag="" onclick="setTagFilter(this)">All</button>
-      <button class="note-btn" data-tag="perfumery" onclick="setTagFilter(this)">Perfumery</button>
-      <button class="note-btn" data-tag="flavor" onclick="setTagFilter(this)">Flavor</button>
-      <button class="note-btn" data-tag="cosmetics" onclick="setTagFilter(this)">Cosmetics</button>
+    <div class="sub-drawer">
+      <div class="sub-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">▸ Use</div>
+      <div class="sub-content" id="tagFilters">
+        <button class="note-btn active" data-tag="" onclick="setTagFilter(this)">All</button>
+        <button class="note-btn" data-tag="perfumery" onclick="setTagFilter(this)">Perfumery</button>
+        <button class="note-btn" data-tag="flavor" onclick="setTagFilter(this)">Flavor</button>
+        <button class="note-btn" data-tag="cosmetics" onclick="setTagFilter(this)">Cosmetics</button>
+      </div>
     </div>
-    <div class="note-filters" id="funcFilters">
-      <span class="filter-label">Function</span>
-      <button class="note-btn active" data-func="" onclick="setFuncFilter(this)">All</button>
-      <button class="note-btn" data-func="_aromatic" onclick="setFuncFilter(this)">Aromatic</button>
-      <button class="note-btn" data-func="fixative" onclick="setFuncFilter(this)">Fixative</button>
-      <button class="note-btn" data-func="solvent" onclick="setFuncFilter(this)">Solvent</button>
-      <button class="note-btn" data-func="carrier" onclick="setFuncFilter(this)">Carrier</button>
-      <button class="note-btn" data-func="additive" onclick="setFuncFilter(this)">Additive</button>
-      <button class="note-btn" data-func="preservative" onclick="setFuncFilter(this)">Preservative</button>
-      <button class="note-btn" data-func="_other" onclick="setFuncFilter(this)">Other</button>
+    <div class="sub-drawer">
+      <div class="sub-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">▸ Function</div>
+      <div class="sub-content" id="funcFilters">
+        <button class="note-btn active" data-func="" onclick="setFuncFilter(this)">All</button>
+        <button class="note-btn" data-func="_aromatic" onclick="setFuncFilter(this)">Aromatic</button>
+        <button class="note-btn" data-func="fixative" onclick="setFuncFilter(this)">Fixative</button>
+        <button class="note-btn" data-func="solvent" onclick="setFuncFilter(this)">Solvent</button>
+        <button class="note-btn" data-func="carrier" onclick="setFuncFilter(this)">Carrier</button>
+        <button class="note-btn" data-func="additive" onclick="setFuncFilter(this)">Additive</button>
+        <button class="note-btn" data-func="preservative" onclick="setFuncFilter(this)">Preservative</button>
+        <button class="note-btn" data-func="_other" onclick="setFuncFilter(this)">Other</button>
+      </div>
     </div>
-    <div class="note-filters" id="typeFilters">
-      <span class="filter-label">Type</span>
-      <button class="note-btn active" data-type="" onclick="setTypeFilter(this)">All</button>
-      <button class="note-btn" data-type="single_molecule" onclick="setTypeFilter(this)">Aroma Chemical</button>
-      <button class="note-btn" data-type="natural_extract" onclick="setTypeFilter(this)">Natural Extract</button>
-      <button class="note-btn" data-type="natural_isolate" onclick="setTypeFilter(this)">Natural Isolate</button>
-      <button class="note-btn" data-type="other" onclick="setTypeFilter(this)">Other</button>
+    <div class="sub-drawer">
+      <div class="sub-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">▸ Type</div>
+      <div class="sub-content" id="typeFilters">
+        <button class="note-btn active" data-type="" onclick="setTypeFilter(this)">All</button>
+        <button class="note-btn" data-type="single_molecule" onclick="setTypeFilter(this)">Aroma Chemical</button>
+        <button class="note-btn" data-type="natural_extract" onclick="setTypeFilter(this)">Natural Extract</button>
+        <button class="note-btn" data-type="natural_isolate" onclick="setTypeFilter(this)">Natural Isolate</button>
+        <button class="note-btn" data-type="other" onclick="setTypeFilter(this)">Other</button>
+      </div>
     </div>
-    <div class="note-filters" id="noteFilters">
-      <span class="filter-label">Note</span>
-      <button class="note-btn active" data-note="" onclick="setNoteFilter(this)">All</button>
-      <button class="note-btn" data-note="top" onclick="setNoteFilter(this)">Top</button>
-      <button class="note-btn" data-note="middle" onclick="setNoteFilter(this)">Middle</button>
-      <button class="note-btn" data-note="base" onclick="setNoteFilter(this)">Base</button>
-      <button class="note-btn" data-note="_other" onclick="setNoteFilter(this)">Other</button>
+    <div class="sub-drawer">
+      <div class="sub-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">▸ Note</div>
+      <div class="sub-content" id="noteFilters">
+        <button class="note-btn active" data-note="" onclick="setNoteFilter(this)">All</button>
+        <button class="note-btn" data-note="top" onclick="setNoteFilter(this)">Top</button>
+        <button class="note-btn" data-note="middle" onclick="setNoteFilter(this)">Middle</button>
+        <button class="note-btn" data-note="base" onclick="setNoteFilter(this)">Base</button>
+        <button class="note-btn" data-note="_other" onclick="setNoteFilter(this)">Other</button>
+      </div>
     </div>
-    <div class="note-filters" id="odorFilters">
-      <span class="filter-label">Odor</span>
-      <span class="odor-tag active" data-odor="" onclick="clearOdorFilters(this)">All</span>
-      <div class="odor-tags" id="odorTags" style="display:contents"></div>
-      <span class="odor-tag" data-odor="_other" onclick="toggleOdorTag(this)">Other</span>
+    <div class="sub-drawer">
+      <div class="sub-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">▸ Odor</div>
+      <div class="sub-content" id="odorFilters">
+        <span class="odor-tag active" data-odor="" onclick="clearOdorFilters(this)">All</span>
+        <div class="odor-tags" id="odorTags" style="display:contents"></div>
+        <span class="odor-tag" data-odor="_other" onclick="toggleOdorTag(this)">Other</span>
+      </div>
     </div>
   </div>
 </div>
