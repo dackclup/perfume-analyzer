@@ -596,8 +596,14 @@ function showPills(typed) {
   const ql = typed.toLowerCase().replace(/\s+/g,' ').trim();
   const qs = ql;
   const hasAnyFilter = activeNoteFilter || activeTypeFilter || activeFuncFilter || activeTagFilter || activeOdorFilters.size;
+
+  // Existing results — exclude from pill suggestions
+  const existingCas = new Set();
+  const existingNames = new Set();
+  results.forEach(r => { if (r.cas_number) existingCas.add(r.cas_number); existingNames.add(r.name.toLowerCase()); });
+
   if (qs.length < 1) {
-    // If any filter active but no text, show matching materials
+    // If any filter active but no text, show matching materials (minus already searched)
     if (hasAnyFilter) {
       let suggestions = [];
       const seenCas = new Set();
@@ -605,6 +611,7 @@ function showPills(typed) {
         if (suggestions.length >= 10) break;
         if (!matchesAllFilters(entry.cas)) continue;
         if (seenCas.has(entry.cas)) continue;
+        if (existingCas.has(entry.cas) || existingNames.has(entry.name.toLowerCase())) continue;
         suggestions.push({name: entry.name, cas: entry.cas});
         seenCas.add(entry.cas);
       }
@@ -613,10 +620,6 @@ function showPills(typed) {
     }
     pillsDiv.innerHTML = ""; return;
   }
-  
-  const existingCas = new Set();
-  const existingNames = new Set();
-  results.forEach(r => { if (r.cas_number) existingCas.add(r.cas_number); existingNames.add(r.name.toLowerCase()); });
   
   let suggestions = [];
   const seenCas = new Set();
@@ -742,11 +745,12 @@ async function doSearch(term) {
   prog.style.display = "none";
   progText.textContent = "";
   input.value = "";
-  pillsDiv.innerHTML = "";
   btn.disabled = true;
   results.forEach(r => r._open = false);
   renderResults._forceCollapse = true;
   renderResults();
+  // Re-show filtered pills (minus the ones just searched)
+  showPills(input.value);
   // Prefetch images + PubChem data in background
   prefetchAll();
 }
