@@ -230,7 +230,8 @@ html { scroll-behavior:smooth; }
 </div>
 <div class="note-filters" id="odorFilters">
   <span class="filter-label">Odor</span>
-  <div class="odor-tags" id="odorTags"></div>
+  <span class="odor-tag active" data-odor="" onclick="clearOdorFilters(this)">All</span>
+  <div class="odor-tags" id="odorTags" style="display:contents"></div>
 </div>
 <p id="searchError" style="display:none;color:#e74c3c;font-size:0.85em;font-weight:500;margin:4px 0 0"></p>
 <div class="pills" id="pills"></div>
@@ -339,8 +340,16 @@ function setTagFilter(el) {
 }
 function toggleOdorTag(el) {
   const v = el.dataset.odor;
+  const allBtn = document.querySelector('#odorFilters > .odor-tag[data-odor=""]');
   if (activeOdorFilters.has(v)) { activeOdorFilters.delete(v); el.classList.remove('active'); }
   else { activeOdorFilters.add(v); el.classList.add('active'); }
+  if (allBtn) allBtn.classList.toggle('active', !activeOdorFilters.size);
+  _refreshPills();
+}
+function clearOdorFilters(el) {
+  activeOdorFilters.clear();
+  document.querySelectorAll('.odor-tag').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
   _refreshPills();
 }
 
