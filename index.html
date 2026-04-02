@@ -347,7 +347,7 @@ function toggleOdorTag(el) {
     if (e.odor && e.odor.type) {
       e.odor.type.split(/\s*[\/,]\s*/).forEach(t => {
         const clean = t.trim();
-        if (clean && !FUNC_TERMS.has(clean.toLowerCase()) && !/^N\/A/i.test(clean) && !clean.includes('—')) {
+        if (clean && clean.length > 2 && !FUNC_TERMS.has(clean.toLowerCase()) && !/^N\/A/i.test(clean) && !clean.includes('—')) {
           odorTypes.add(clean);
         }
       });
