@@ -201,7 +201,7 @@ html { scroll-behavior:smooth; }
   <button class="note-btn" data-note="top" onclick="setNoteFilter(this)">Top</button>
   <button class="note-btn" data-note="middle" onclick="setNoteFilter(this)">Middle</button>
   <button class="note-btn" data-note="base" onclick="setNoteFilter(this)">Base</button>
-  <button class="note-btn" data-note="n/a" onclick="setNoteFilter(this)">Odorless</button>
+  <button class="note-btn" data-note="_other" onclick="setNoteFilter(this)">Other</button>
 </div>
 <div class="note-filters" id="typeFilters">
   <span class="filter-label">Type</span>
@@ -455,7 +455,13 @@ function matchesAllFilters(cas) {
   const all = (entry.name||'').toLowerCase() + ' ' + (entry.synonyms||[]).join(' ').toLowerCase() + ' ' + desc + ' ' + odorType;
 
   // Note filter
-  if (activeNoteFilter && !noteLow.includes(activeNoteFilter)) return false;
+  if (activeNoteFilter) {
+    if (activeNoteFilter === '_other') {
+      if (/top|middle|base/i.test(noteLow)) return false;
+    } else {
+      if (!noteLow.includes(activeNoteFilter)) return false;
+    }
+  }
 
   // Type filter (material type: aroma, natural, isolate)
   if (activeTypeFilter) {
