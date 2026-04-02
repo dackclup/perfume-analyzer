@@ -1360,11 +1360,27 @@ async function downloadJSON() {
     const m = s.match(/([\d.]+)\s*hour/i);
     return m ? parseFloat(m[1]) : null;
   }
-  // Parse usage range "0.1–2 %" → {min, max}
+  // Parse usage range — supports "0.1–2 %" and "IFRA 51: 7.3% FF / 1.9% Body"
   function parseUsageRange(s) {
     if (!s) return {min:null, max:null};
-    const m = s.match(/([\d.]+)\s*[–\-]\s*([\d.]+)\s*%/);
-    return m ? {min:parseFloat(m[1]), max:parseFloat(m[2])} : {min:null, max:null};
+    // Old format: "0.1–2 %"
+    const mRange = s.match(/([\d.]+)\s*[–\-]\s*([\d.]+)\s*%/);
+    if (mRange) return {min:parseFloat(mRange[1]), max:parseFloat(mRange[2])};
+    // IFRA 51 format: extract all percentages, min/max
+    const allPcts = [...s.matchAll(/([\d.]+)\s*%/g)].map(m => parseFloat(m[1]));
+    if (allPcts.length) return {min:Math.min(...allPcts), max:Math.max(...allPcts)};
+    return {min:null, max:null};
+  }
+  // Parse IFRA 51 category limits into structured object
+  function parseIFRA51(s) {
+    if (!s || !s.includes('IFRA 51')) return null;
+    const limits = {};
+    const pairs = s.replace(/^IFRA 51:\s*/i, '').split('/').map(p => p.trim());
+    for (const p of pairs) {
+      const m = p.match(/([\d.]+)%\s+(.+)/);
+      if (m) limits[m[2].trim()] = parseFloat(m[1]);
+    }
+    return Object.keys(limits).length ? limits : null;
   }
   // Ordinal scale for odor strength
   function odorStrengthScale(s) {
@@ -1476,14 +1492,18 @@ async function downloadJSON() {
   // Build clean JSON for AI analysis
   const data = found.map(mat => {
     const usageRange = parseUsageRange(mat.usage_levels);
+    const ifra51 = parseIFRA51(mat.usage_levels);
     const notes = noteOneHot(mat.note_classification);
+    const banStatus = getBanStatus(mat);
     const record = {
       name: mat.name,
-      pubchem_name: (mat.synonyms.find(s => !CAS_RE_SYN.test(s)) || mat.iupac_name || mat.name),
+      pubchem_name: mat._pubchemTitle || mat.synonyms.find(s => !CAS_RE_SYN.test(s)) || mat.iupac_name || mat.name,
       material_type: classifyMaterialType(mat),
       industry_tags: classifyIndustryTags(mat),
+      ban_status: banStatus || null,
+      is_external_perfumery: mat._externalPerfumery || false,
       cas_number: mat.cas_number || null,
-      fema_number: mat.fema_number || "Not Assigned",
+      fema_number: mat.fema_number || null,
       pubchem_url: mat.page_url || null,
       structure_image_url: mat.structure_image_url || null,
       identifiers: {
@@ -1517,6 +1537,7 @@ async function downloadJSON() {
         usage_levels: mat.usage_levels || null,
         usage_level_min_pct: usageRange.min,
         usage_level_max_pct: usageRange.max,
+        ifra_51_limits: ifra51,
         blends_well_with: mat.blends_well_with.length ? mat.blends_well_with : []
       },
       synonyms: mat.synonyms.length ? mat.synonyms.filter(s => !CAS_RE_SYN.test(s)) : [],
