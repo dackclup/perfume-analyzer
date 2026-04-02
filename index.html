@@ -1688,12 +1688,23 @@ function classifyIndustryTags(mat) {
   const desc = (mat.odor_description || '').toLowerCase();
   const odorType = (mat.odor_type || '').toLowerCase();
   const syns = (mat.synonyms || []).join(' ').toLowerCase();
-  const allPerfumery = mat.odor_description || mat.odor_type || mat.odor_strength;
   const pdStr = mat.pubchem_sections ? JSON.stringify(mat.pubchem_sections).toLowerCase() : '';
   const banned = isBannedEU(mat);
 
+  // Detect non-aroma functional materials (preservatives, antioxidants, stabilizers)
+  const isFunctional = /preservative|biocide|antioxidant|functional|stabilizer/i.test(odorType + ' ' + desc);
+  const hasRealOdor = (mat.odor_description || mat.odor_type || mat.odor_strength)
+    && !isFunctional
+    && !/^odorless|^none$/i.test((mat.odor_strength||''));
+
+  // Functional additives — not perfumery
+  if (isFunctional) {
+    tags.push('additive');
+    return tags;
+  }
+
   // Perfumery / Flavor / Cosmetics
-  if (allPerfumery || MIXTURES.has(mat.cas_number) ||
+  if (hasRealOdor || MIXTURES.has(mat.cas_number) ||
       /fragrance|perfum|aroma|odor agent/i.test(pdStr) ||
       /solvent.*carrier|carrier.*solvent|emollient/i.test(desc + ' ' + odorType)) {
     tags.push('perfumery');
@@ -1717,7 +1728,7 @@ function classifyIndustryTags(mat) {
   }
 
   // Pharmaceutical
-  if (!allPerfumery && /pharma|drug|medicine|therapeutic|anesthetic|analgesic|antibiotic/i.test(pdStr + ' ' + syns)) {
+  if (!hasRealOdor && /pharma|drug|medicine|therapeutic|anesthetic|analgesic|antibiotic/i.test(pdStr + ' ' + syns)) {
     tags.push('pharmaceutical', 'medicine');
   }
   // Also tag if ATC code present
@@ -1739,6 +1750,7 @@ function classifyIndustryTags(mat) {
 }
 const INDUSTRY_TAG_LABELS = {
   'perfumery': 'Perfumery', 'flavor': 'Flavor', 'cosmetics': 'Cosmetics',
+  'additive': 'Additive / Preservative',
   'banned_eu': 'Banned (EU)', 'banned_global': 'Banned (Worldwide)',
   'pharmaceutical': 'Pharma', 'medicine': 'Medicine',
   'toxicology': 'Toxicology', 'research_only': 'Research',
