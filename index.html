@@ -37,6 +37,12 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 #searchBtn:hover { opacity:0.85; }
 #searchBtn:disabled { opacity:0.4; cursor:default; }
 
+/* Note filters */
+.note-filters { display:flex; gap:6px; margin:8px 0; }
+.note-btn { padding:4px 16px; border:1px solid var(--border); border-radius:16px; font-size:0.8em; cursor:pointer; background:var(--bg2); color:var(--text2); font-family:inherit; transition:all 0.15s; }
+.note-btn:hover { border-color:var(--accent); color:var(--accent); }
+.note-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
 /* Pills */
 .pills { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; min-height:0; }
 .pill { padding:5px 14px; border:1px solid var(--border); border-radius:16px; font-size:0.82em; cursor:pointer; background:var(--bg2); color:var(--text); transition:all 0.15s; }
@@ -144,7 +150,7 @@ html { scroll-behavior:smooth; }
   body { padding:0; padding-bottom:0; max-width:100%; counter-reset:page; }
   .badge { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   @page { margin:15mm 10mm; @top-right { content:counter(page); font-size:9pt; color:#999; } }
-  h1, .subtitle, .search-box, .pills, .progress, .progress-text,
+  h1, .subtitle, .search-box, .note-filters, .pills, .progress, .progress-text,
   .downloads, #statusBar, .card-del, .card-arrow,
   .pubchem-toggle, .back-top, .card-back, #top, #searchError, hr { display:none !important; }
   .card { break-inside:auto; margin-bottom:0; border:none; break-before:page; overflow:visible; }
@@ -183,6 +189,12 @@ html { scroll-behavior:smooth; }
 <div class="search-box">
   <input type="text" id="searchInput" placeholder="e.g. linalool, hedione, iso e super" autocomplete="off">
   <button id="searchBtn" disabled>Search</button>
+</div>
+<div class="note-filters" id="noteFilters">
+  <button class="note-btn active" data-note="" onclick="setNoteFilter(this)">All</button>
+  <button class="note-btn" data-note="top" onclick="setNoteFilter(this)">Top</button>
+  <button class="note-btn" data-note="heart" onclick="setNoteFilter(this)">Heart</button>
+  <button class="note-btn" data-note="base" onclick="setNoteFilter(this)">Base</button>
 </div>
 <p id="searchError" style="display:none;color:#e74c3c;font-size:0.85em;font-weight:500;margin:4px 0 0"></p>
 <div class="pills" id="pills"></div>
@@ -253,6 +265,16 @@ for (const [cas, entry] of Object.entries(DB)) {
 let results = [];
 let pcCache = {};
 
+// ── Note filter ──
+let activeNoteFilter = "";
+function setNoteFilter(el) {
+  document.querySelectorAll('.note-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  activeNoteFilter = el.dataset.note || "";
+  // Re-trigger pill suggestions with current input
+  showPills(input.value);
+}
+
 // ── Search input ──
 const input = document.getElementById("searchInput");
 const btn = document.getElementById("searchBtn");
@@ -268,10 +290,33 @@ input.addEventListener("input", () => {
 input.addEventListener("keydown", e => { const v=input.value.trim(); if (e.key==="Enter"&&v) doSearch(v); });
 btn.addEventListener("click", () => { const v=input.value.trim(); if (v) doSearch(v); });
 
+function matchesNoteFilter(cas) {
+  if (!activeNoteFilter) return true;
+  const entry = cas ? DB[cas] : null;
+  if (!entry || !entry.note) return false;
+  return entry.note.toLowerCase().includes(activeNoteFilter);
+}
+
 function showPills(typed) {
   const ql = typed.toLowerCase().replace(/\s+/g,' ').trim();
   const qs = ql;
-  if (qs.length < 1) { pillsDiv.innerHTML = ""; return; }
+  if (qs.length < 1) {
+    // If note filter active but no text, show all matching note
+    if (activeNoteFilter) {
+      let suggestions = [];
+      const seenCas = new Set();
+      for (const entry of Object.values(DB)) {
+        if (suggestions.length >= 10) break;
+        if (!matchesNoteFilter(entry.cas)) continue;
+        if (seenCas.has(entry.cas)) continue;
+        suggestions.push({name: entry.name, cas: entry.cas});
+        seenCas.add(entry.cas);
+      }
+      renderPills(suggestions);
+      return;
+    }
+    pillsDiv.innerHTML = ""; return;
+  }
   
   const existingCas = new Set();
   const existingNames = new Set();
@@ -284,6 +329,7 @@ function showPills(typed) {
   (PREFIX_IX[ql]||[]).forEach(({name,cas,display}) => {
     if (suggestions.length>=10) return;
     if (cas && seenCas.has(cas)) return;
+    if (!matchesNoteFilter(cas)) return;
     suggestions.push({name:display,cas}); if(cas)seenCas.add(cas);
   });
 
@@ -292,6 +338,7 @@ function showPills(typed) {
     (PREFIX_IX[qs]||[]).forEach(({name,cas,display}) => {
       if (suggestions.length>=10) return;
       if (cas && seenCas.has(cas)) return;
+      if (!matchesNoteFilter(cas)) return;
       suggestions.push({name:display,cas}); if(cas)seenCas.add(cas);
     });
   }
@@ -303,6 +350,7 @@ function showPills(typed) {
       if (suggestions.length>=10) return;
       if (!name.startsWith(qs) && !name.includes(qs)) return;
       if (cas && seenCas.has(cas)) return;
+      if (!matchesNoteFilter(cas)) return;
       suggestions.push({name:display,cas}); if(cas)seenCas.add(cas);
     });
   }
@@ -313,6 +361,7 @@ function showPills(typed) {
       if (suggestions.length>=10) return;
       if (!name.includes(qs)) return;
       if (suggestions.find(s=>s.name===display)) return;
+      if (!matchesNoteFilter(cas)) return;
       if (cas && seenCas.has(cas)) return;
       suggestions.push({name:display,cas}); if(cas)seenCas.add(cas);
     });
