@@ -61,7 +61,8 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .ghs-section-title { font-size:0.8em; font-weight:500; color:var(--text2); margin:0 0 8px; }
 .ghs-icons { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start; }
 .ghs-item { display:flex; flex-direction:column; align-items:center; gap:3px; }
-.ghs-icon { width:52px; height:52px; filter:drop-shadow(0 0 0 #fff); background:radial-gradient(circle, #fff 40%, transparent 41%); }
+.ghs-icon { width:52px; height:52px; position:relative; }
+.ghs-icon::before { content:''; position:absolute; top:12%; left:12%; width:76%; height:76%; background:#fff; transform:rotate(45deg); z-index:-1; }
 .ghs-label { font-size:0.65em; color:var(--text2); text-align:center; max-width:64px; line-height:1.2; }
 @media (max-width:600px) { .ghs-icon { width:44px; height:44px; } }
 
