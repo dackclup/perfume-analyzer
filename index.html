@@ -61,7 +61,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .ghs-section-title { font-size:0.8em; font-weight:500; color:var(--text2); margin:0 0 8px; }
 .ghs-icons { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start; }
 .ghs-item { display:flex; flex-direction:column; align-items:center; gap:3px; }
-.ghs-icon { width:52px; height:52px; background:#fff; border-radius:4px; padding:2px; }
+.ghs-icon { width:52px; height:52px; }
 .ghs-label { font-size:0.65em; color:var(--text2); text-align:center; max-width:64px; line-height:1.2; }
 @media (max-width:600px) { .ghs-icon { width:44px; height:44px; } }
 
@@ -179,7 +179,8 @@ html { scroll-behavior:smooth; }
   }
   body { padding:0; padding-bottom:0; max-width:100%; counter-reset:page; }
   .badge { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  .ghs-icon { width:28px; height:28px; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .ghs-icon { width:32px; height:32px; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .ghs-section { border:1px solid #ddd; background:#f9f9f9 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   @page { margin:15mm 10mm; @top-right { content:counter(page); font-size:9pt; color:#999; } }
   h1, .subtitle, .search-box, .filter-drawer, .pills, .progress, .progress-text,
   .downloads, #statusBar, .card-del, .card-arrow,
@@ -793,13 +794,22 @@ function getGHSPictograms(mat) {
   const codes = new Set();
   if (mat.pubchem_sections) {
     for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
-      // Only match GHS Classification heading specifically
       if (!/ghs\s*classif|pictogram/i.test(heading)) continue;
-      for (const item of items) {
-        const matches = item.match(/H\d{3}/g);
-        if (matches) matches.forEach(h => {
-          (_hCodeToGHS[h]||[]).forEach(g => codes.add(g));
-        });
+      const allText = items.join(' ');
+      // Look for GHS codes directly mentioned (most reliable)
+      const ghsMatches = allText.match(/GHS\d{2}/g);
+      if (ghsMatches) ghsMatches.forEach(g => { if (GHS_PICTOGRAMS[g]) codes.add(g); });
+      // Fallback: look for pictogram names
+      if (!ghsMatches || !ghsMatches.length) {
+        if (/\bexplosive\b/i.test(allText)) codes.add('GHS01');
+        if (/\bflammable\b|flame\b/i.test(allText)) codes.add('GHS02');
+        if (/\boxidiz/i.test(allText)) codes.add('GHS03');
+        if (/\bcompressed gas\b|gas cylinder/i.test(allText)) codes.add('GHS04');
+        if (/\bcorrosive?\b|corrosion/i.test(allText)) codes.add('GHS05');
+        if (/\btoxic\b|skull|acute toxicity/i.test(allText) && !/not classified/i.test(allText)) codes.add('GHS06');
+        if (/\birritant\b|exclamation|harmful/i.test(allText)) codes.add('GHS07');
+        if (/\bhealth hazard\b|carcinogen|mutagenic|CMR/i.test(allText)) codes.add('GHS08');
+        if (/\benvironment/i.test(allText)) codes.add('GHS09');
       }
     }
   }
@@ -807,8 +817,8 @@ function getGHSPictograms(mat) {
   if (/banned|prohibit/i.test(ifra)) codes.add('GHS08');
   if (/phototox/i.test(ifra)) codes.add('GHS07');
   // GHS supersession rules
-  if (codes.has('GHS06')) codes.delete('GHS07'); // Skull supersedes Irritant
-  if (codes.has('GHS05')) codes.delete('GHS07'); // Corrosive supersedes Irritant (for eye/skin)
+  if (codes.has('GHS06')) codes.delete('GHS07');
+  if (codes.has('GHS05')) codes.delete('GHS07');
   mat._ghsPictograms = [...codes].sort();
   return mat._ghsPictograms;
 }
