@@ -61,7 +61,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .ghs-section-title { font-size:0.8em; font-weight:500; color:var(--text2); margin:0 0 8px; }
 .ghs-icons { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start; }
 .ghs-item { display:flex; flex-direction:column; align-items:center; gap:3px; }
-.ghs-icon { width:52px; height:52px; }
+.ghs-icon { width:52px; height:52px; background:#fff; border-radius:4px; padding:2px; }
 .ghs-label { font-size:0.65em; color:var(--text2); text-align:center; max-width:64px; line-height:1.2; }
 @media (max-width:600px) { .ghs-icon { width:44px; height:44px; } }
 
@@ -791,23 +791,24 @@ for (const [ghs, info] of Object.entries(GHS_PICTOGRAMS)) {
 function getGHSPictograms(mat) {
   if (mat._ghsPictograms) return mat._ghsPictograms;
   const codes = new Set();
-  // Extract H-codes from pubchem_sections
   if (mat.pubchem_sections) {
     for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
-      if (/ghs|hazard|classif/i.test(heading)) {
-        for (const item of items) {
-          const matches = item.match(/H\d{3}/g);
-          if (matches) matches.forEach(h => {
-            (_hCodeToGHS[h]||[]).forEach(g => codes.add(g));
-          });
-        }
+      // Only match GHS Classification heading specifically
+      if (!/ghs\s*classif|pictogram/i.test(heading)) continue;
+      for (const item of items) {
+        const matches = item.match(/H\d{3}/g);
+        if (matches) matches.forEach(h => {
+          (_hCodeToGHS[h]||[]).forEach(g => codes.add(g));
+        });
       }
     }
   }
-  // Also check ifra_guidelines for known hazard keywords
   const ifra = (mat.ifra_guidelines||'').toLowerCase();
   if (/banned|prohibit/i.test(ifra)) codes.add('GHS08');
   if (/phototox/i.test(ifra)) codes.add('GHS07');
+  // GHS supersession rules
+  if (codes.has('GHS06')) codes.delete('GHS07'); // Skull supersedes Irritant
+  if (codes.has('GHS05')) codes.delete('GHS07'); // Corrosive supersedes Irritant (for eye/skin)
   mat._ghsPictograms = [...codes].sort();
   return mat._ghsPictograms;
 }
