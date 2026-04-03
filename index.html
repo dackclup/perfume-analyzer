@@ -792,36 +792,52 @@ const _hCodeToGHS = {};
 for (const [ghs, info] of Object.entries(GHS_PICTOGRAMS)) {
   info.codes.forEach(h => { if (!_hCodeToGHS[h]) _hCodeToGHS[h] = []; _hCodeToGHS[h].push(ghs); });
 }
-function getGHSPictograms(mat) {
-  if (mat._ghsPictograms) return mat._ghsPictograms;
+// Extract GHS codes from PUG View Markup (pictogram image URLs)
+function _extractGHSFromMarkup(sections) {
   const codes = new Set();
-  if (mat.pubchem_sections) {
-    for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
-      if (!/ghs\s*classif|pictogram/i.test(heading)) continue;
-      const allText = items.join(' ');
-      // Look for GHS codes directly mentioned (most reliable)
-      const ghsMatches = allText.match(/GHS\d{2}/g);
-      if (ghsMatches) ghsMatches.forEach(g => { if (GHS_PICTOGRAMS[g]) codes.add(g); });
-      // Fallback: look for pictogram names
-      if (!ghsMatches || !ghsMatches.length) {
-        if (/\bexplosive\b/i.test(allText)) codes.add('GHS01');
-        if (/\bflammable\b|flame\b/i.test(allText)) codes.add('GHS02');
-        if (/\boxidiz/i.test(allText)) codes.add('GHS03');
-        if (/\bcompressed gas\b|gas cylinder/i.test(allText)) codes.add('GHS04');
-        if (/\bcorrosive?\b|corrosion/i.test(allText)) codes.add('GHS05');
-        if (/\btoxic\b|skull|acute toxicity/i.test(allText) && !/not classified/i.test(allText)) codes.add('GHS06');
-        if (/\birritant\b|exclamation|harmful/i.test(allText)) codes.add('GHS07');
-        if (/\bhealth hazard\b|carcinogen|mutagenic|CMR/i.test(allText)) codes.add('GHS08');
-        if (/\benvironment/i.test(allText)) codes.add('GHS09');
+  function walk(secs) {
+    for (const sec of secs) {
+      if (sec.Information) {
+        for (const info of sec.Information) {
+          if (info.Value?.StringWithMarkup) {
+            for (const sm of info.Value.StringWithMarkup) {
+              if (sm.Markup) {
+                for (const m of sm.Markup) {
+                  // PubChem pictogram URLs contain GHSxx
+                  if (m.URL) {
+                    const match = m.URL.match(/GHS(\d{2})/);
+                    if (match) codes.add('GHS' + match[1]);
+                  }
+                  // Also check Extra field
+                  if (m.Extra) {
+                    const match = m.Extra.match(/GHS(\d{2})/);
+                    if (match) codes.add('GHS' + match[1]);
+                  }
+                }
+              }
+            }
+          }
+        }
       }
+      if (sec.Section) walk(sec.Section);
     }
   }
+  walk(sections);
+  return [...codes].sort();
+}
+
+function getGHSPictograms(mat) {
+  if (mat._ghsPictograms) return mat._ghsPictograms;
+  // Use pre-extracted codes from PUG View Markup (most reliable)
+  if (mat._ghsCodes && mat._ghsCodes.length) {
+    mat._ghsPictograms = mat._ghsCodes.filter(g => GHS_PICTOGRAMS[g]);
+    return mat._ghsPictograms;
+  }
+  // Fallback for banned/phototoxic from local DB
+  const codes = new Set();
   const ifra = (mat.ifra_guidelines||'').toLowerCase();
   if (/banned|prohibit/i.test(ifra)) codes.add('GHS08');
   if (/phototox/i.test(ifra)) codes.add('GHS07');
-  // GHS supersession rules
-  if (codes.has('GHS06')) codes.delete('GHS07');
-  if (codes.has('GHS05')) codes.delete('GHS07');
   mat._ghsPictograms = [...codes].sort();
   return mat._ghsPictograms;
 }
@@ -900,13 +916,11 @@ async function scrapeMaterial(name) {
       _applyPubchemProps(mat, propsRes.status==='fulfilled'?propsRes.value:null, synsRes.status==='fulfilled'?synsRes.value:null, descRes.status==='fulfilled'?descRes.value:null);
       renderResults();
       prefetchAll();
-      // Fetch GHS data in background
+      // Fetch GHS pictograms from PUG View Markup data
       fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${cid}/JSON?heading=GHS+Classification`, {}, 8000)
         .then(r=>r.json()).then(d => {
-          const secs = d.Record?.Section || [];
-          mat.pubchem_sections = mat.pubchem_sections || {};
-          Object.assign(mat.pubchem_sections, extractAllSections(secs));
-          mat._ghsPictograms = null; // clear cache to re-derive
+          mat._ghsCodes = _extractGHSFromMarkup(d.Record?.Section || []);
+          mat._ghsPictograms = null;
           renderResults();
         }).catch(()=>{});
     }).catch(()=>{});
