@@ -795,31 +795,30 @@ for (const [ghs, info] of Object.entries(GHS_PICTOGRAMS)) {
 // Extract GHS codes from PUG View Markup (pictogram image URLs)
 function _extractGHSFromMarkup(sections) {
   const codes = new Set();
+  let found = false;
   function walk(secs) {
     for (const sec of secs) {
       if (sec.Information) {
-        for (const info of sec.Information) {
-          if (info.Value?.StringWithMarkup) {
-            for (const sm of info.Value.StringWithMarkup) {
-              if (sm.Markup) {
-                for (const m of sm.Markup) {
-                  // PubChem pictogram URLs contain GHSxx
-                  if (m.URL) {
-                    const match = m.URL.match(/GHS(\d{2})/);
-                    if (match) codes.add('GHS' + match[1]);
-                  }
-                  // Also check Extra field
-                  if (m.Extra) {
-                    const match = m.Extra.match(/GHS(\d{2})/);
-                    if (match) codes.add('GHS' + match[1]);
-                  }
+        // Only use FIRST Information item (harmonized classification)
+        const info = sec.Information[0];
+        if (info?.Value?.StringWithMarkup) {
+          for (const sm of info.Value.StringWithMarkup) {
+            if (sm.Markup) {
+              for (const m of sm.Markup) {
+                if (m.URL) {
+                  const match = m.URL.match(/GHS(\d{2})/);
+                  if (match) { codes.add('GHS' + match[1]); found = true; }
+                }
+                if (m.Extra) {
+                  const match = m.Extra.match(/GHS(\d{2})/);
+                  if (match) { codes.add('GHS' + match[1]); found = true; }
                 }
               }
             }
           }
         }
       }
-      if (sec.Section) walk(sec.Section);
+      if (!found && sec.Section) walk(sec.Section);
     }
   }
   walk(sections);
