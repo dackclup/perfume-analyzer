@@ -213,12 +213,12 @@ html { scroll-behavior:smooth; }
 </div>
 <div class="filter-drawer">
   <div class="filter-header">
-    <span class="filter-toggle" onclick="document.getElementById('filterContent').classList.toggle('open');this.classList.toggle('open')"><span class="arrow">▶</span> Filter</span>
+    <span class="filter-toggle" onclick="toggleMainFilter()"><span class="arrow">▶</span> Filter</span>
     <span class="filter-reset" onclick="resetAllFilters()">Reset</span>
   </div>
   <div class="filter-content" id="filterContent">
     <div class="sub-drawer">
-      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')"><span class="arrow">▶</span> Use <span class="sub-selected" id="tagSelected"></span></div>
+      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Use <span class="sub-selected" id="tagSelected"></span></div>
       <div class="sub-body" id="tagFilters">
         <label class="filter-radio"><input type="radio" name="tag" value="" checked onchange="setTagFilter(this.value)"> All</label>
         <label class="filter-radio"><input type="radio" name="tag" value="perfumery" onchange="setTagFilter(this.value)"> Perfumery</label>
@@ -227,7 +227,7 @@ html { scroll-behavior:smooth; }
       </div>
     </div>
     <div class="sub-drawer">
-      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')"><span class="arrow">▶</span> Function <span class="sub-selected" id="funcSelected"></span></div>
+      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Function <span class="sub-selected" id="funcSelected"></span></div>
       <div class="sub-body" id="funcFilters">
         <label class="filter-radio"><input type="radio" name="func" value="" checked onchange="setFuncFilter(this.value)"> All</label>
         <label class="filter-radio"><input type="radio" name="func" value="_aromatic" onchange="setFuncFilter(this.value)"> Aromatic</label>
@@ -240,7 +240,7 @@ html { scroll-behavior:smooth; }
       </div>
     </div>
     <div class="sub-drawer">
-      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')"><span class="arrow">▶</span> Type <span class="sub-selected" id="typeSelected"></span></div>
+      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Type <span class="sub-selected" id="typeSelected"></span></div>
       <div class="sub-body" id="typeFilters">
         <label class="filter-radio"><input type="radio" name="type" value="" checked onchange="setTypeFilter(this.value)"> All</label>
         <label class="filter-radio"><input type="radio" name="type" value="single_molecule" onchange="setTypeFilter(this.value)"> Aroma Chemical</label>
@@ -250,7 +250,7 @@ html { scroll-behavior:smooth; }
       </div>
     </div>
     <div class="sub-drawer">
-      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')"><span class="arrow">▶</span> Note <span class="sub-selected" id="noteSelected"></span></div>
+      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Note <span class="sub-selected" id="noteSelected"></span></div>
       <div class="sub-body" id="noteFilters">
         <label class="filter-radio"><input type="radio" name="note" value="" checked onchange="setNoteFilter(this.value)"> All</label>
         <label class="filter-radio"><input type="radio" name="note" value="top" onchange="setNoteFilter(this.value)"> Top</label>
@@ -260,7 +260,7 @@ html { scroll-behavior:smooth; }
       </div>
     </div>
     <div class="sub-drawer">
-      <div class="sub-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.sub-body').classList.toggle('open')"><span class="arrow">▶</span> Odor <span class="sub-selected" id="odorSelected"></span></div>
+      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Odor <span class="sub-selected" id="odorSelected"></span></div>
       <div class="sub-body" id="odorFilters">
         <div style="display:flex;flex-wrap:wrap;gap:4px">
           <span class="odor-tag active" data-odor="" onclick="clearOdorFilters(this)">All</span>
@@ -458,6 +458,31 @@ function clearOdorFilters(el) {
   el.classList.add('active');
   _updateOdorSelected();
   _refreshPills();
+}
+
+function _collapseAllSubs() {
+  document.querySelectorAll('.sub-toggle.open').forEach(t => t.classList.remove('open'));
+  document.querySelectorAll('.sub-body.open').forEach(b => b.classList.remove('open'));
+}
+
+function toggleMainFilter() {
+  const content = document.getElementById('filterContent');
+  const toggle = document.querySelector('.filter-toggle');
+  const isOpening = !content.classList.contains('open');
+  content.classList.toggle('open');
+  toggle.classList.toggle('open');
+  // Collapse all sub-drawers when closing main
+  if (!isOpening) _collapseAllSubs();
+}
+
+function toggleSubDrawer(el) {
+  const body = el.parentElement.querySelector('.sub-body');
+  const isOpening = !el.classList.contains('open');
+  // Close all other sub-drawers first
+  if (isOpening) _collapseAllSubs();
+  // Toggle this one
+  el.classList.toggle('open');
+  body.classList.toggle('open');
 }
 
 function resetAllFilters() {
