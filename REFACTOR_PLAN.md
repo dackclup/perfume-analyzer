@@ -2,6 +2,36 @@
 
 ## CHANGELOG
 
+### 2026-04-05 — Canonical Record as Primary Source of Truth
+
+**Canonical record is now the runtime source of truth:**
+- `createResult(name)` builds `{record, found, ...ui}` where `record`
+  contains: identifiers, names, properties, perfumery, safety,
+  classification, match, metadata
+- All business data lives in `record.*` — the nested canonical shape
+- Flat accessors (`mat.cas_number`, `mat.odor_description`, etc.) are
+  `Object.defineProperties` getters/setters that delegate to `record.*`
+- Render templates read `mat.cas_number` which transparently reads
+  `record.identifiers.cas` — zero template changes needed
+- UI-only transient state (`_open`, `structure_image_url`, `page_url`,
+  `match_info`, `_loadPubchem`, `_ghsCodes`) remains outside `record`
+
+**Export reads from canonical record directly:**
+- `downloadJSON` now reads `mat.record` (aliased as `src`) instead of
+  rebuilding from flat mat.* fields
+- No more `parseFloat(mat.molecular_weight)` — values are already
+  numbers in `record.properties.*`
+- PubChem sections fallback reads `src.metadata.pubchem_sections`
+
+**Remaining flat accessor fields (by design, not debt):**
+These exist as thin getters/setters on the result object — they are NOT
+duplicate data, they are accessor proxies to record.*:
+- `mat.name` → `record.names.canonical`
+- `mat.cas_number` → `record.identifiers.cas`
+- `mat.molecular_weight` → `record.properties.molecular_weight`
+- `mat.odor_description` → `record.perfumery.odor_description`
+- (21 total accessors, all delegating to record)
+
 ### 2026-04-05 — In-Place Architecture Migration (Tasks 1-2)
 
 **Filter layer decoupled from raw DB shape:**

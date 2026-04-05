@@ -1060,20 +1060,76 @@ function _applyLocalMatch(mat, match) {
 }
 
 // ── Main search function ──
+// ═══ MODULE: Canonical Record Factory ═══
+// Creates result objects where record.* is the single source of truth.
+// Flat property accessors (mat.cas_number etc) delegate to record
+// for backward compatibility with render templates.
+function createResult(inputName) {
+  const record = {
+    identifiers: { cas:null, fema:null, pubchem_cid:null, iupac:null, molecular_formula:null,
+      canonical_smiles:null, isomeric_smiles:null, inchi:null },
+    names: { canonical:inputName, pubchem_title:null, synonyms:[], trade_names:[] },
+    properties: { molecular_weight:null, exact_mass:null, xlogp:null, tpsa:null,
+      hbond_donor:null, hbond_acceptor:null, rotatable_bonds:null, heavy_atoms:null },
+    perfumery: { odor_description:null, odor_type:null, odor_strength:null, odor_source:null,
+      note:null, tenacity:null, tenacity_hours:null, blends_with:[] },
+    safety: { ifra_guideline:null, usage_levels:null, ban_status:null, ghs_codes:[] },
+    classification: { material_type:null, industry_tags:null },
+    match: makeMatch(null, 0, inputName, null, null, null, null),
+    metadata: { source:null, is_external:false, pubchem_sections:{} }
+  };
+  // Result object: record is source of truth, flat accessors for render compatibility
+  const r = {
+    record,
+    found: false,
+    // UI-only transient state
+    _open: false, _loadPubchem: null, _ghsCodes:null, _ghsPictograms:null, _ambiguous:false, _notPerfumery:false,
+    structure_image_url: null, page_url: null, match_info: null,
+  };
+  // ── Flat accessors delegating to record ──
+  Object.defineProperties(r, {
+    name:               { get(){ return record.names.canonical; }, set(v){ record.names.canonical=v; }, enumerable:true },
+    cas_number:         { get(){ return record.identifiers.cas; }, set(v){ record.identifiers.cas=v; }, enumerable:true },
+    fema_number:        { get(){ return record.identifiers.fema; }, set(v){ record.identifiers.fema=v; }, enumerable:true },
+    iupac_name:         { get(){ return record.identifiers.iupac; }, set(v){ record.identifiers.iupac=v; }, enumerable:true },
+    molecular_formula:  { get(){ return record.identifiers.molecular_formula; }, set(v){ record.identifiers.molecular_formula=v; }, enumerable:true },
+    smiles:             { get(){ return record.identifiers.canonical_smiles; }, set(v){ record.identifiers.canonical_smiles=v; }, enumerable:true },
+    isomeric_smiles:    { get(){ return record.identifiers.isomeric_smiles; }, set(v){ record.identifiers.isomeric_smiles=v; }, enumerable:true },
+    inchi:              { get(){ return record.identifiers.inchi; }, set(v){ record.identifiers.inchi=v; }, enumerable:true },
+    molecular_weight:   { get(){ return record.properties.molecular_weight; }, set(v){ record.properties.molecular_weight=v; }, enumerable:true },
+    exact_mass:         { get(){ return record.properties.exact_mass; }, set(v){ record.properties.exact_mass=v; }, enumerable:true },
+    xlogp:              { get(){ return record.properties.xlogp; }, set(v){ record.properties.xlogp=v; }, enumerable:true },
+    tpsa:               { get(){ return record.properties.tpsa; }, set(v){ record.properties.tpsa=v; }, enumerable:true },
+    hbond_donor:        { get(){ return record.properties.hbond_donor; }, set(v){ record.properties.hbond_donor=v; }, enumerable:true },
+    hbond_acceptor:     { get(){ return record.properties.hbond_acceptor; }, set(v){ record.properties.hbond_acceptor=v; }, enumerable:true },
+    rotatable_bond:     { get(){ return record.properties.rotatable_bonds; }, set(v){ record.properties.rotatable_bonds=v; }, enumerable:true },
+    heavy_atom:         { get(){ return record.properties.heavy_atoms; }, set(v){ record.properties.heavy_atoms=v; }, enumerable:true },
+    synonyms:           { get(){ return record.names.synonyms; }, set(v){ record.names.synonyms=v; }, enumerable:true },
+    odor_description:   { get(){ return record.perfumery.odor_description; }, set(v){ record.perfumery.odor_description=v; }, enumerable:true },
+    odor_type:          { get(){ return record.perfumery.odor_type; }, set(v){ record.perfumery.odor_type=v; }, enumerable:true },
+    odor_strength:      { get(){ return record.perfumery.odor_strength; }, set(v){ record.perfumery.odor_strength=v; }, enumerable:true },
+    note_classification:{ get(){ return record.perfumery.note; }, set(v){ record.perfumery.note=v; }, enumerable:true },
+    tenacity:           { get(){ return record.perfumery.tenacity; }, set(v){ record.perfumery.tenacity=v; }, enumerable:true },
+    tenacity_hours:     { get(){ return record.perfumery.tenacity_hours; }, set(v){ record.perfumery.tenacity_hours=v; }, enumerable:true },
+    blends_well_with:   { get(){ return record.perfumery.blends_with; }, set(v){ record.perfumery.blends_with=v; }, enumerable:true },
+    ifra_guidelines:    { get(){ return record.safety.ifra_guideline; }, set(v){ record.safety.ifra_guideline=v; }, enumerable:true },
+    usage_levels:       { get(){ return record.safety.usage_levels; }, set(v){ record.safety.usage_levels=v; }, enumerable:true },
+    pubchem_sections:   { get(){ return record.metadata.pubchem_sections; }, set(v){ record.metadata.pubchem_sections=v; }, enumerable:true },
+    _cid:               { get(){ return record.identifiers.pubchem_cid; }, set(v){ record.identifiers.pubchem_cid=v; }, enumerable:false },
+    _pubchemTitle:      { get(){ return record.names.pubchem_title; }, set(v){ record.names.pubchem_title=v; }, enumerable:false },
+    _externalPerfumery: { get(){ return record.metadata.is_external; }, set(v){ record.metadata.is_external=v; }, enumerable:false },
+    _match:             { get(){ return record.match; }, set(v){ record.match=v; }, enumerable:false },
+    _material_type:     { get(){ return record.classification.material_type; }, set(v){ record.classification.material_type=v; }, enumerable:false },
+    _industry_tags:     { get(){ return record.classification.industry_tags; }, set(v){ record.classification.industry_tags=v; }, enumerable:false },
+    _odor_source:       { get(){ return record.perfumery.odor_source; }, set(v){ record.perfumery.odor_source=v; }, enumerable:false },
+  });
+  return r;
+}
+
 async function scrapeMaterial(name) {
-  const mat = {name:name, found:false, cas_number:null, fema_number:null, iupac_name:null,
-    molecular_formula:null, molecular_weight:null, smiles:null, isomeric_smiles:null, inchi:null,
-    xlogp:null, tpsa:null, exact_mass:null, hbond_donor:null, hbond_acceptor:null,
-    rotatable_bond:null, heavy_atom:null,
-    synonyms:[], structure_image_url:null, page_url:null, match_info:null,
-    odor_description:null, odor_type:null, odor_strength:null, note_classification:null,
-    tenacity:null, tenacity_hours:null, ifra_guidelines:null, usage_levels:null,
-    blends_well_with:[], pubchem_sections:{},
-    // Precomputed classification (set once after data finalized)
-    _material_type:null, _industry_tags:null, _function:null};
+  const mat = createResult(name);
 
   const n = normalizeInput(name);
-  mat._match = makeMatch(null, 0, name, null, null, null, null);
 
   // ── Local DB matchers (Steps 1-5, synchronous, high confidence) ──
   const localMatch = matchByCAS(n) || matchByCanonicalName(n) || matchBySynonym(n) || matchByTradeName(n) || matchByAlias(n);
@@ -1939,65 +1995,66 @@ async function downloadJSON() {
     return Math.round(filled / keyFields.length * 100);
   }
 
-  // Build clean JSON for AI analysis
+  // Build clean JSON — consumes canonical record directly
   const data = found.map(mat => {
-    const usageRange = parseUsageRange(mat.usage_levels);
-    const ifra51 = parseIFRA51(mat.usage_levels);
-    const notes = noteOneHot(mat.note_classification);
+    const src = mat.record; // canonical source of truth
+    const usageRange = parseUsageRange(src.safety.usage_levels);
+    const ifra51 = parseIFRA51(src.safety.usage_levels);
+    const notes = noteOneHot(src.perfumery.note);
     const banStatus = getBanStatus(mat);
     const record = {
-      name: mat.name,
-      pubchem_name: mat._pubchemTitle || mat.synonyms.find(s => !CAS_RE_SYN.test(s)) || mat.iupac_name || mat.name,
-      material_type: mat._material_type || classifyMaterialType(mat),
-      industry_tags: mat._industry_tags || classifyIndustryTags(mat),
+      name: src.names.canonical,
+      pubchem_name: src.names.pubchem_title || (src.names.synonyms||[]).find(s => !CAS_RE_SYN.test(s)) || src.identifiers.iupac || src.names.canonical,
+      material_type: src.classification.material_type || classifyMaterialType(mat),
+      industry_tags: src.classification.industry_tags || classifyIndustryTags(mat),
       ban_status: banStatus || null,
-      is_external_perfumery: mat._externalPerfumery || false,
-      match: mat._match || null,
-      cas_number: mat.cas_number || null,
-      fema_number: mat.fema_number || null,
+      is_external_perfumery: src.metadata.is_external || false,
+      match: src.match || null,
+      cas_number: src.identifiers.cas || null,
+      fema_number: src.identifiers.fema || null,
       pubchem_url: mat.page_url || null,
       structure_image_url: mat.structure_image_url || null,
       identifiers: {
-        iupac_name: mat.iupac_name || null,
-        molecular_formula: mat.molecular_formula || null,
-        canonical_smiles: mat.smiles || null,
-        isomeric_smiles: mat.isomeric_smiles || null,
-        inchi: mat.inchi || null
+        iupac_name: src.identifiers.iupac,
+        molecular_formula: src.identifiers.molecular_formula,
+        canonical_smiles: src.identifiers.canonical_smiles,
+        isomeric_smiles: src.identifiers.isomeric_smiles,
+        inchi: src.identifiers.inchi
       },
       properties: {
-        molecular_weight: mat.molecular_weight ?? null,
-        exact_mass: mat.exact_mass ?? null,
-        xlogp: mat.xlogp ?? null,
-        tpsa: mat.tpsa ?? null,
-        hbond_donor_count: mat.hbond_donor ?? null,
-        hbond_acceptor_count: mat.hbond_acceptor ?? null,
-        rotatable_bond_count: mat.rotatable_bond ?? null,
-        heavy_atom_count: mat.heavy_atom ?? null
+        molecular_weight: src.properties.molecular_weight,
+        exact_mass: src.properties.exact_mass,
+        xlogp: src.properties.xlogp,
+        tpsa: src.properties.tpsa,
+        hbond_donor_count: src.properties.hbond_donor,
+        hbond_acceptor_count: src.properties.hbond_acceptor,
+        rotatable_bond_count: src.properties.rotatable_bonds,
+        heavy_atom_count: src.properties.heavy_atoms
       },
       perfumery: {
-        odor_description: mat.odor_description || null,
-        odor_type: mat.odor_type || null,
-        odor_strength: mat.odor_strength || null,
-        odor_strength_scale: odorStrengthScale(mat.odor_strength),
-        note_classification: mat.note_classification || null,
+        odor_description: src.perfumery.odor_description,
+        odor_type: src.perfumery.odor_type,
+        odor_strength: src.perfumery.odor_strength,
+        odor_strength_scale: odorStrengthScale(src.perfumery.odor_strength),
+        note_classification: src.perfumery.note,
         ...notes,
-        tenacity: mat.tenacity || null,
-        tenacity_hours: mat.tenacity_hours || null,
-        tenacity_hours_numeric: parseHoursNumeric(mat.tenacity_hours),
-        ifra_guidelines: mat.ifra_guidelines || null,
-        usage_levels: mat.usage_levels || null,
+        tenacity: src.perfumery.tenacity,
+        tenacity_hours: src.perfumery.tenacity_hours,
+        tenacity_hours_numeric: parseHoursNumeric(src.perfumery.tenacity_hours),
+        ifra_guidelines: src.safety.ifra_guideline,
+        usage_levels: src.safety.usage_levels,
         usage_level_min_pct: usageRange.min,
         usage_level_max_pct: usageRange.max,
         ifra_51_limits: ifra51,
-        blends_well_with: mat.blends_well_with.length ? mat.blends_well_with : []
+        blends_well_with: (src.perfumery.blends_with||[]).length ? src.perfumery.blends_with : []
       },
-      synonyms: mat.synonyms.length ? mat.synonyms.filter(s => !CAS_RE_SYN.test(s)) : [],
+      synonyms: (src.names.synonyms||[]).length ? src.names.synonyms.filter(s => !CAS_RE_SYN.test(s)) : [],
       pubchem_data: {},
       ai_extracted: {}
     };
     // Fallback: if smiles still null, try from pubchem_data
-    if (!record.identifiers.canonical_smiles && mat.pubchem_sections) {
-      for (const [h, items] of Object.entries(mat.pubchem_sections)) {
+    if (!record.identifiers.canonical_smiles && src.metadata.pubchem_sections) {
+      for (const [h, items] of Object.entries(src.metadata.pubchem_sections)) {
         if (h.toLowerCase().includes('smiles') && items.length) {
           record.identifiers.canonical_smiles = items[0]; break;
         }
@@ -2012,7 +2069,7 @@ async function downloadJSON() {
         record.identifiers.isomeric_smiles !== record.identifiers.canonical_smiles;
     }
     // Add filtered PubChem sections
-    if (mat.pubchem_sections && Object.keys(mat.pubchem_sections).length) {
+    if (src.metadata.pubchem_sections && Object.keys(src.metadata.pubchem_sections).length) {
       const globalSeen = new Set();
       for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
         const hl = heading.toLowerCase();
