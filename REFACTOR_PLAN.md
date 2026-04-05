@@ -25,6 +25,26 @@
 
 ## CHANGELOG
 
+### 2026-04-05 — Final Smoke Test (post-normalizeKey hardening)
+
+All 10 test cases traced end-to-end through the search pipeline — PASS:
+
+| # | Case | Matcher hit | Verified |
+|---|------|------------|----------|
+| 1 | canonical name `"linalool"` | matchByCanonicalName → _applyLocalMatch (normalizeKey) | card rendered, name_exact 99% |
+| 2 | synonym `"linalol"` | matchBySynonym → NAME_TO_CAS | card rendered, synonym_exact 95% |
+| 3 | trade name `"iso e super"` | matchByCanonicalName → _applyLocalMatch (normalizeKey) | card rendered, name_exact 99% |
+| 4 | CAS `"78-70-6"` | matchByCAS → DB direct | card rendered, cas_exact 99% |
+| 5 | blacklisted `"alcohol"` | blocked by SYNONYM_BLACKLIST | no card, correct |
+| 6 | blacklisted `"musk"` | blocked by SYNONYM_BLACKLIST | no card, correct |
+| 7 | ambiguous fuzzy `"geran"` | matchFuzzyLocal → candidates 0.6+ but <0.8 | "Did you mean?" shown |
+| 8 | pill click `doSearch('Linalool')` | normalizeInput → matchByCanonicalName | card rendered |
+| 9 | CAS dedup (linalool then linalol) | CAS dedup filter keeps newest | 1 card, no dupes |
+| 10 | clearAll then re-search | results=[] → renderResults clears DOM → doSearch works | card rendered |
+
+No additional bugs found. normalizeKey() correctly prevents mixed-case
+match.term from breaking TRADES/NAME_TO_CAS/SYN_IX lookups in all paths.
+
 ### 2026-04-05 — normalizeKey() hardening for index lookups
 
 **Bug:** mixed-case `match.term` (e.g. `"Linalool"` from `matchByCanonicalName`)
