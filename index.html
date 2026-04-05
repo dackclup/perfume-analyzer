@@ -307,8 +307,8 @@ html { scroll-behavior:smooth; }
 
 <script src="perfumery_data.js"></script>
 <script>
+// ═══ MODULE: Data Layer — DB, Indexes, Constants ═══
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
-// Build CAS-keyed lookup from array
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 const TRADES = PERFUMERY_DATA.trade_names;
@@ -351,7 +351,7 @@ for (const [cas, entry] of Object.entries(DB)) {
 let results = [];
 let pcCache = {};
 
-// ── Filters ──
+// ═══ MODULE: Filter State ═══
 const _filters = {
   note: {active: "", elId: "noteSelected"},
   type: {active: "", elId: "typeSelected"},
@@ -373,16 +373,61 @@ const RE_ODOR_FUNC = /functional|carrier|solvent|fixative|preservative|additive|
 const RE_ODORLESS = /odorless|virtually odorless|preservative|antioxidant/i;
 const SPECIFIC_FUNCS = ['solvent','carrier','fixative','additive','preservative','repellent'];
 
-// Pre-compute searchable text per DB entry (avoids repeated string concat in hot loops)
-for (const [cas, entry] of Object.entries(DB)) {
+// ═══════════════════════════════════════════════════════════════
+// MODULE: Normalized Filter Cache
+// Precomputed per-CAS filter data derived from DB entries.
+// This is the ONLY data structure that matchesAllFilters and
+// _updateFilterVisibility should read from.
+// ═══════════════════════════════════════════════════════════════
+const FILTER_CACHE = new Map();
+
+function _buildFilterRecord(cas, entry) {
   const desc = ((entry.odor?.description||'') + ' ' + (entry.safety?.usage||'')).toLowerCase();
   const odorType = (entry.odor?.type || '').toLowerCase();
-  entry._allText = (entry.name||'').toLowerCase() + ' ' + (entry.synonyms||[]).join(' ').toLowerCase() + ' ' + desc + ' ' + odorType;
-  entry._desc = desc;
-  entry._odorTypeLow = odorType;
-  entry._noteLow = (entry.note||'').toLowerCase();
-  entry._funcAll = odorType + ' ' + entry._noteLow + ' ' + desc;
-  entry._hasRealOdor = !!(entry.odor?.description && !RE_ODORLESS.test(entry.odor.description));
+  const noteLow = (entry.note||'').toLowerCase();
+  const allText = (entry.name||'').toLowerCase() + ' ' + (entry.synonyms||[]).join(' ').toLowerCase() + ' ' + desc + ' ' + odorType;
+  const funcAll = odorType + ' ' + noteLow + ' ' + desc;
+  const hasRealOdor = !!(entry.odor?.description && !RE_ODORLESS.test(entry.odor.description));
+
+  // Precompute material type
+  let materialType = 'single_molecule';
+  if (MIXTURES.has(cas) || RE_NATURAL_EXT.test(allText)) materialType = 'natural_extract';
+  else if (RE_NATURAL_ISO.test(allText)) materialType = 'natural_isolate';
+  else if (RE_TYPE_OTHER.test(allText) || /additive/i.test(noteLow)) materialType = 'other';
+
+  // Precompute function role
+  let funcRole = null;
+  if (hasRealOdor && !RE_FUNC_AROMATIC_EXCLUDE.test(funcAll)) funcRole = '_aromatic';
+  else {
+    for (const f of SPECIFIC_FUNCS) { if (funcAll.includes(f)) { funcRole = f; break; } }
+    if (!funcRole) {
+      const hasSpec = SPECIFIC_FUNCS.some(f => funcAll.includes(f));
+      if (!hasSpec && !hasRealOdor && RE_FUNC_OTHER.test(funcAll)) funcRole = '_other';
+    }
+  }
+
+  // Precompute odor type tags
+  const odorTags = new Set();
+  if (odorType) {
+    odorType.split(/\s*[\/,]\s*/).forEach(term => {
+      const c = term.trim();
+      if (c && c.length > 2 && !FUNC_TERMS.has(c) && !c.includes('—')) odorTags.add(c);
+    });
+  }
+  const hasNoOdorType = !odorType || RE_ODOR_FUNC.test(entry.odor?.type||'');
+
+  // Precompute industry tags
+  const hasPerfumery = !!(entry.odor?.description || entry.odor?.type || MIXTURES.has(cas));
+  const hasFlavor = !!entry.fema;
+
+  return {
+    cas, noteLow, materialType, funcRole, funcAll, hasRealOdor,
+    odorTags, hasNoOdorType, hasPerfumery, hasFlavor, allText
+  };
+}
+
+for (const [cas, entry] of Object.entries(DB)) {
+  FILTER_CACHE.set(cas, _buildFilterRecord(cas, entry));
 }
 
 function setFilter(name, val) {
@@ -405,46 +450,32 @@ function _refreshPills() {
 }
 
 function _updateFilterVisibility() {
-  // Single pass: count matches for all filter options at once
+  // Single pass over FILTER_CACHE: count matches for all filter options at once
   const noteCounts = {}, typeCounts = {}, funcCounts = {}, tagCounts = {};
   const odorHas = {};
 
-  const dbEntries = Object.values(DB);
-  for (const entry of dbEntries) {
-    if (!matchesAllFilters(entry.cas)) continue;
+  for (const fc of FILTER_CACHE.values()) {
+    if (!matchesAllFilters(fc.cas)) continue;
     // Note
-    const nl = entry._noteLow;
-    if (nl.includes('top')) noteCounts['top'] = (noteCounts['top']||0)+1;
-    if (nl.includes('middle')) noteCounts['middle'] = (noteCounts['middle']||0)+1;
-    if (nl.includes('base')) noteCounts['base'] = (noteCounts['base']||0)+1;
-    if (!RE_NOTE_OTHER.test(nl)) noteCounts['_other'] = (noteCounts['_other']||0)+1;
-    // Type
-    const all = entry._allText;
-    let t = 'single_molecule';
-    if (MIXTURES.has(entry.cas) || RE_NATURAL_EXT.test(all)) t = 'natural_extract';
-    else if (RE_NATURAL_ISO.test(all)) t = 'natural_isolate';
-    else if (RE_TYPE_OTHER.test(all) || /additive/i.test(nl)) t = 'other';
-    typeCounts[t] = (typeCounts[t]||0)+1;
-    if (t === 'natural_isolate') typeCounts['natural_extract'] = (typeCounts['natural_extract']||0)+1;
-    // Func
-    const fa = entry._funcAll;
-    if (entry._hasRealOdor && !RE_FUNC_AROMATIC_EXCLUDE.test(fa)) funcCounts['_aromatic'] = (funcCounts['_aromatic']||0)+1;
-    SPECIFIC_FUNCS.forEach(f => { if (fa.includes(f)) funcCounts[f] = (funcCounts[f]||0)+1; });
-    const hasSpec = SPECIFIC_FUNCS.some(f => fa.includes(f));
-    if (!hasSpec && !entry._hasRealOdor && RE_FUNC_OTHER.test(fa)) funcCounts['_other'] = (funcCounts['_other']||0)+1;
-    // Tag
-    const hasPerfumery = entry.odor?.description || entry.odor?.type || MIXTURES.has(entry.cas);
-    if (hasPerfumery) { tagCounts['perfumery'] = (tagCounts['perfumery']||0)+1; tagCounts['cosmetics'] = (tagCounts['cosmetics']||0)+1; }
-    if (entry.fema) tagCounts['flavor'] = (tagCounts['flavor']||0)+1;
-    // Odor
-    const ot = entry._odorTypeLow;
-    if (ot) {
-      ot.split(/\s*[\/,]\s*/).forEach(term => {
-        const c = term.trim().toLowerCase();
-        if (c && c.length > 2 && !FUNC_TERMS.has(c) && !c.includes('—')) odorHas[c] = true;
-      });
+    if (fc.noteLow.includes('top')) noteCounts['top'] = (noteCounts['top']||0)+1;
+    if (fc.noteLow.includes('middle')) noteCounts['middle'] = (noteCounts['middle']||0)+1;
+    if (fc.noteLow.includes('base')) noteCounts['base'] = (noteCounts['base']||0)+1;
+    if (!RE_NOTE_OTHER.test(fc.noteLow)) noteCounts['_other'] = (noteCounts['_other']||0)+1;
+    // Type (precomputed)
+    typeCounts[fc.materialType] = (typeCounts[fc.materialType]||0)+1;
+    if (fc.materialType === 'natural_isolate') typeCounts['natural_extract'] = (typeCounts['natural_extract']||0)+1;
+    // Func (precomputed role)
+    if (fc.funcRole) funcCounts[fc.funcRole] = (funcCounts[fc.funcRole]||0)+1;
+    // Also count specific funcs for non-_aromatic entries
+    if (fc.funcRole !== '_aromatic' && fc.funcRole !== '_other') {
+      SPECIFIC_FUNCS.forEach(f => { if (fc.funcAll.includes(f)) funcCounts[f] = (funcCounts[f]||0)+1; });
     }
-    if (!ot || RE_ODOR_FUNC.test(entry.odor?.type||'')) odorHas['_other'] = true;
+    // Tag (precomputed flags)
+    if (fc.hasPerfumery) { tagCounts['perfumery'] = (tagCounts['perfumery']||0)+1; tagCounts['cosmetics'] = (tagCounts['cosmetics']||0)+1; }
+    if (fc.hasFlavor) tagCounts['flavor'] = (tagCounts['flavor']||0)+1;
+    // Odor (precomputed tags)
+    for (const tag of fc.odorTags) odorHas[tag] = true;
+    if (fc.hasNoOdorType) odorHas['_other'] = true;
   }
 
   // Apply visibility
@@ -556,7 +587,7 @@ function resetAllFilters() {
   });
 }
 
-// ── Search input ──
+// ═══ MODULE: UI Event Bindings ═══
 const input = document.getElementById("searchInput");
 const btn = document.getElementById("searchBtn");
 const pillsDiv = document.getElementById("pills");
@@ -571,51 +602,44 @@ input.addEventListener("input", () => {
 input.addEventListener("keydown", e => { const v=input.value.trim(); if (e.key==="Enter"&&v) doSearch(v); });
 btn.addEventListener("click", () => { const v=input.value.trim(); if (v) doSearch(v); });
 
+// ═══════════════════════════════════════════════════════════════
+// MODULE: Filter Matching
+// All filter logic reads from FILTER_CACHE only.
+// ═══════════════════════════════════════════════════════════════
 function matchesAllFilters(cas) {
-  const entry = cas ? DB[cas] : null;
-  if (!entry) return !_filters.note.active && !_filters.type.active && !_filters.func.active && !_filters.tag.active && !activeOdorFilters.size;
-  const {_allText: all, _desc: desc, _odorTypeLow: odorType, _noteLow: noteLow, _funcAll: funcAll, _hasRealOdor: hasRealOdor} = entry;
+  const fc = cas ? FILTER_CACHE.get(cas) : null;
+  if (!fc) return !_filters.note.active && !_filters.type.active && !_filters.func.active && !_filters.tag.active && !activeOdorFilters.size;
 
   // Note
   const noteF = _filters.note.active;
   if (noteF) {
-    if (noteF === '_other') { if (RE_NOTE_OTHER.test(noteLow)) return false; }
-    else { if (!noteLow.includes(noteF)) return false; }
+    if (noteF === '_other') { if (RE_NOTE_OTHER.test(fc.noteLow)) return false; }
+    else { if (!fc.noteLow.includes(noteF)) return false; }
   }
-  // Type
+  // Type (precomputed)
   const typeF = _filters.type.active;
   if (typeF) {
-    let t = 'single_molecule';
-    if (MIXTURES.has(cas) || RE_NATURAL_EXT.test(all)) t = 'natural_extract';
-    else if (RE_NATURAL_ISO.test(all)) t = 'natural_isolate';
-    else if (RE_TYPE_OTHER.test(all) || /additive/i.test(noteLow)) t = 'other';
-    if (!(t === typeF || (typeF === 'natural_extract' && t === 'natural_isolate'))) return false;
+    if (!(fc.materialType === typeF || (typeF === 'natural_extract' && fc.materialType === 'natural_isolate'))) return false;
   }
-  // Function
+  // Function (precomputed role)
   const funcF = _filters.func.active;
   if (funcF) {
-    if (funcF === '_aromatic') {
-      if (!hasRealOdor || RE_FUNC_AROMATIC_EXCLUDE.test(funcAll)) return false;
-    } else if (funcF === '_other') {
-      const hasSpec = SPECIFIC_FUNCS.some(f => funcAll.includes(f));
-      if (hasSpec || hasRealOdor || !RE_FUNC_OTHER.test(funcAll)) return false;
-    } else {
-      if (!funcAll.includes(funcF)) return false;
-    }
+    if (funcF === '_aromatic') { if (fc.funcRole !== '_aromatic') return false; }
+    else if (funcF === '_other') { if (fc.funcRole !== '_other') return false; }
+    else { if (!fc.funcAll.includes(funcF)) return false; }
   }
-  // Use/industry tag
+  // Use/industry tag (precomputed flags)
   const tagF = _filters.tag.active;
   if (tagF) {
-    const hasPerfumery = entry.odor?.description || entry.odor?.type || MIXTURES.has(cas);
-    if (tagF === 'perfumery' && !hasPerfumery) return false;
-    if (tagF === 'flavor' && !entry.fema) return false;
-    if (tagF === 'cosmetics' && !hasPerfumery) return false;
+    if (tagF === 'perfumery' && !fc.hasPerfumery) return false;
+    if (tagF === 'flavor' && !fc.hasFlavor) return false;
+    if (tagF === 'cosmetics' && !fc.hasPerfumery) return false;
   }
-  // Odor (multi-select AND)
+  // Odor (multi-select AND, precomputed tags)
   if (activeOdorFilters.size) {
     for (const f of activeOdorFilters) {
-      if (f === '_other') { if (odorType && !RE_ODOR_FUNC.test(entry.odor?.type||'')) return false; }
-      else { if (!odorType.includes(f)) return false; }
+      if (f === '_other') { if (!fc.hasNoOdorType) return false; }
+      else { if (!fc.odorTags.has(f)) return false; }
     }
   }
   return true;
@@ -730,7 +754,7 @@ function _showDidYouMean(input, candidates) {
     ).join(' ');
 }
 
-// ── Search ──
+// ═══ MODULE: Search Orchestration ═══
 async function doSearch(term) {
   const names = term.split(',').map(s=>s.trim()).filter(Boolean);
   const existingNames = new Set(results.map(r=>r.name.toLowerCase()));
@@ -883,7 +907,7 @@ function _applyPubchemProps(mat, propsData, synsData, descData) {
   }
 }
 
-// ── MODULE: Search Pipeline ──
+// ═══ MODULE: Search Matchers ═══
 
 // Synonym blacklist — terms too generic/ambiguous for reliable matching
 const SYNONYM_BLACKLIST = new Set(['pea','pg','alcohol','oil','musk','acid','ester','water','base','note','top']);
@@ -1377,7 +1401,7 @@ function togglePcGroup(gid) {
   }
 }
 
-// ── Render ──
+// ═══ MODULE: Rendering ═══
 function renderResults() {
   const div = document.getElementById("results");
   // Save open states before re-render (skip if just searched)
@@ -1729,6 +1753,7 @@ function buildLocalRecord(mat) {
   };
 }
 
+// ═══ MODULE: JSON Export ═══
 async function downloadJSON() {
   const found = results.filter(r=>r.found);
   if (!found.length) return;
@@ -1940,14 +1965,14 @@ async function downloadJSON() {
         inchi: mat.inchi || null
       },
       properties: {
-        molecular_weight: mat.molecular_weight ? parseFloat(mat.molecular_weight) : null,
-        exact_mass: mat.exact_mass ? parseFloat(mat.exact_mass) : null,
-        xlogp: mat.xlogp ? parseFloat(mat.xlogp) : null,
-        tpsa: mat.tpsa ? parseFloat(mat.tpsa) : null,
-        hbond_donor_count: mat.hbond_donor ? parseInt(mat.hbond_donor) : null,
-        hbond_acceptor_count: mat.hbond_acceptor ? parseInt(mat.hbond_acceptor) : null,
-        rotatable_bond_count: mat.rotatable_bond ? parseInt(mat.rotatable_bond) : null,
-        heavy_atom_count: mat.heavy_atom ? parseInt(mat.heavy_atom) : null
+        molecular_weight: mat.molecular_weight ?? null,
+        exact_mass: mat.exact_mass ?? null,
+        xlogp: mat.xlogp ?? null,
+        tpsa: mat.tpsa ?? null,
+        hbond_donor_count: mat.hbond_donor ?? null,
+        hbond_acceptor_count: mat.hbond_acceptor ?? null,
+        rotatable_bond_count: mat.rotatable_bond ?? null,
+        heavy_atom_count: mat.heavy_atom ?? null
       },
       perfumery: {
         odor_description: mat.odor_description || null,
@@ -2085,6 +2110,7 @@ async function downloadJSON() {
   btn.style.opacity = "";
 }
 
+// ═══ MODULE: Print / PDF ═══
 async function preparePrint(full=true) {
   if (full) {
     // Load all PubChem data that hasn't been fetched yet
@@ -2153,6 +2179,7 @@ document.addEventListener('click', e => {
 });
 
 // Material type classification (used in app + JSON)
+// ═══ MODULE: Classification ═══
 function classifyMaterialType(mat) {
   const n = (mat.name || '').toLowerCase();
   const syns = (mat.synonyms || []).join(' ').toLowerCase();

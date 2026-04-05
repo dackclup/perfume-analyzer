@@ -2,6 +2,51 @@
 
 ## CHANGELOG
 
+### 2026-04-05 — In-Place Architecture Migration (Tasks 1-2)
+
+**Filter layer decoupled from raw DB shape:**
+- Created `FILTER_CACHE` (Map<CAS, FilterRecord>) at startup
+- FilterRecord precomputes: noteLow, materialType, funcRole, odorTags,
+  hasNoOdorType, hasPerfumery, hasFlavor, funcAll, allText
+- `matchesAllFilters()` now reads exclusively from FILTER_CACHE
+- `_updateFilterVisibility()` iterates FILTER_CACHE, uses precomputed
+  materialType/funcRole/odorTags (no more regex in hot loops)
+- Removed all `entry._allText`, `entry._noteLow`, `entry._funcAll`,
+  `entry._odorTypeLow`, `entry._hasRealOdor`, `entry._desc` from DB entries
+- DB entries are now clean raw data, filter layer is fully decoupled
+
+**Schema normalization completed:**
+- mat init uses null for all structured fields (not empty string)
+- _applyPubchemProps stores numbers as native JS numbers
+- Synonyms cap raised from 15 → 30
+- Export uses `??` null-coalescing instead of parseFloat/parseInt
+  (properties are already numbers from PubChem)
+
+**Precomputed classification:**
+- _computeClassification(mat) sets _material_type and _industry_tags once
+- Called at: _applyLocalMatch, _enrichPubchem callback, PubChem path end
+- Render and export use cached values with fallback
+
+**Module organization (in-place):**
+- Added ═══ MODULE headers throughout index.html:
+  Data Layer, Normalized Filter Cache, Filter State, Filter Matching,
+  UI Event Bindings, Search Orchestration, Search Matchers,
+  Rendering, Classification, JSON Export, Print/PDF
+
+**Physical file split intentionally deferred:**
+- `<script type="module">` would break `file://` local usage
+- GitHub Pages serves .js correctly but local dev needs a server
+- Logical module separation achieved via headers; physical split
+  deferred until project moves to a dev server workflow
+
+**Remaining technical debt:**
+- Full nested record.identifiers/perfumery/safety shape not yet primary
+  internal shape (mat.* flat fields still used in render templates)
+- A view-model bridge would be needed to fully replace mat.* in render
+  without rewriting all template strings
+- buildLocalRecord still reconstructs from mat.* for JSON sections
+- PubChem section extraction (extractAllSections) still uses raw format
+
 ### 2026-04-05 — Search Pipeline Refactor (P0+P1)
 
 **Files changed:** `index.html`, `perfumery_data.js`, `REFACTOR_PLAN.md`
