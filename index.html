@@ -890,9 +890,13 @@ async function scrapeMaterial(name) {
   const SMILES_RE = /^[A-Za-z0-9@+\-\[\]\(\)\\\/=#$.%]+$/;
   let cid = null;
 
+  // Match metadata
+  mat._match = {type:null, confidence:0, input:name, term:null, reason:null};
+
   // ── Fast path: direct DB match by name/synonym → return instantly ──
   const fastCas = TRADES[n] || NAME_TO_CAS[n];
   if (fastCas && DB[fastCas]) {
+    mat._match = {type: TRADES[n] ? 'trade_exact' : 'synonym_exact', confidence:0.99, input:name, term:n, reason:'Exact match in local perfumery DB'};
     mat.name = DB[fastCas].name;
     mat.cas_number = fastCas;
     mat.found = true;
@@ -929,7 +933,7 @@ async function scrapeMaterial(name) {
   // ── Strategy 1: CAS detection ──
   if (CAS_RE.test(n)) {
     cid = await getCid(n);
-    if (cid) { mat.cas_number = n; mat.match_info = "✅ CAS direct lookup (" + n + ")"; }
+    if (cid) { mat.cas_number = n; mat.match_info = "✅ CAS direct lookup (" + n + ")"; mat._match={type:"cas_exact",confidence:0.98,input:name,term:n,reason:"CAS number lookup via PubChem"}; }
   }
 
   // ── Strategy 2: SMILES detection ──
@@ -938,7 +942,7 @@ async function scrapeMaterial(name) {
       const r = await fetchWithTimeout(`${PUBCHEM_REST}/compound/smiles/cids/JSON?smiles=${encodeURIComponent(name.trim())}`);
       const d = await r.json();
       cid = d.IdentifierList?.CID?.[0] || null;
-      if (cid) mat.match_info = "✅ SMILES lookup";
+      if (cid) { mat.match_info = "✅ SMILES lookup"; mat._match={type:"structure_lookup",confidence:0.90,input:name,term:name,reason:"SMILES structure lookup via PubChem"}; }
     } catch(e) {}
   }
 
@@ -951,7 +955,7 @@ async function scrapeMaterial(name) {
       });
       const d = await r.json();
       cid = d.IdentifierList?.CID?.[0] || null;
-      if (cid) mat.match_info = "✅ InChI lookup";
+      if (cid) { mat.match_info = "✅ InChI lookup"; mat._match={type:"structure_lookup",confidence:0.95,input:name,term:name,reason:"InChI structure lookup via PubChem"}; }
     } catch(e) {}
   }
 
@@ -998,7 +1002,7 @@ async function scrapeMaterial(name) {
   // ── Strategy 6: SID→CID (Substance DB) ──
   if (!cid) {
     cid = await getCidViaSid(name);
-    if (cid) mat.match_info = "ℹ️ Found via Substance DB";
+    if (cid) { mat.match_info = "ℹ️ Found via Substance DB"; mat._match={type:"sid_lookup",confidence:0.60,input:name,term:name,reason:"Substance DB lookup — verify compound identity"}; }
   }
 
   // ── Strategy 7: Fuzzy perfumery DB match ──
@@ -1009,7 +1013,7 @@ async function scrapeMaterial(name) {
       if (cid) {
         mat.cas_number = fuzzy.cas;
         if (DB[fuzzy.cas]) mat.name = DB[fuzzy.cas].name;
-        mat.match_info = "ℹ️ Fuzzy match: " + fuzzy.name;
+        mat.match_info = "ℹ️ Fuzzy match: " + fuzzy.name; mat._match={type:"fuzzy",confidence:bestScore*0.7,input:name,term:fuzzy.name,reason:"Fuzzy substring match — low confidence"};
       }
     }
   }
@@ -1137,7 +1141,7 @@ function fuzzyMatchDB(query) {
   for (const [nl, match] of Object.entries(SYN_IX)) {
     if (nl.includes(query) || query.includes(nl)) {
       const score = Math.min(query.length, nl.length) / Math.max(query.length, nl.length);
-      if (score > bestScore && score > 0.6) { bestScore = score; bestMatch = match; }
+      if (score > bestScore && score > 0.8) { bestScore = score; bestMatch = match; }
     }
   }
   return bestMatch;
@@ -1892,6 +1896,7 @@ async function downloadJSON() {
       industry_tags: classifyIndustryTags(mat),
       ban_status: banStatus || null,
       is_external_perfumery: mat._externalPerfumery || false,
+      match: mat._match || null,
       cas_number: mat.cas_number || null,
       fema_number: mat.fema_number || null,
       pubchem_url: mat.page_url || null,
