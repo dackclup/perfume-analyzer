@@ -861,26 +861,25 @@ function renderGHSIcons(mat) {
 function _applyPubchemProps(mat, propsData, synsData, descData) {
   if (propsData) {
     const p = propsData.PropertyTable?.Properties?.[0] || {};
-    mat.molecular_formula = p.MolecularFormula || "";
-    mat.molecular_weight = String(p.MolecularWeight || "");
-    mat.smiles = p.CanonicalSMILES || "";
-    mat.isomeric_smiles = p.IsomericSMILES || "";
-    mat.iupac_name = p.IUPACName || "";
-    mat.inchi = p.InChI || "";
-    mat.xlogp = p.XLogP != null ? String(p.XLogP) : "";
-    mat.exact_mass = p.ExactMass != null ? String(p.ExactMass) : "";
-    mat.tpsa = p.TPSA != null ? String(p.TPSA) : "";
-    mat.hbond_donor = p.HBondDonorCount != null ? String(p.HBondDonorCount) : "";
-    mat.hbond_acceptor = p.HBondAcceptorCount != null ? String(p.HBondAcceptorCount) : "";
-    mat.rotatable_bond = p.RotatableBondCount != null ? String(p.RotatableBondCount) : "";
-    mat.heavy_atom = p.HeavyAtomCount != null ? String(p.HeavyAtomCount) : "";
+    mat.molecular_formula = p.MolecularFormula || null;
+    mat.molecular_weight = p.MolecularWeight != null ? p.MolecularWeight : null;
+    mat.smiles = p.CanonicalSMILES || null;
+    mat.isomeric_smiles = p.IsomericSMILES || null;
+    mat.iupac_name = p.IUPACName || null;
+    mat.inchi = p.InChI || null;
+    mat.xlogp = p.XLogP != null ? p.XLogP : null;
+    mat.exact_mass = p.ExactMass != null ? p.ExactMass : null;
+    mat.tpsa = p.TPSA != null ? p.TPSA : null;
+    mat.hbond_donor = p.HBondDonorCount != null ? p.HBondDonorCount : null;
+    mat.hbond_acceptor = p.HBondAcceptorCount != null ? p.HBondAcceptorCount : null;
+    mat.rotatable_bond = p.RotatableBondCount != null ? p.RotatableBondCount : null;
+    mat.heavy_atom = p.HeavyAtomCount != null ? p.HeavyAtomCount : null;
   }
   if (synsData) {
-    const syns = synsData.InformationList?.Information?.[0]?.Synonym || [];
-    mat.synonyms = syns.slice(0,15);
+    mat.synonyms = (synsData.InformationList?.Information?.[0]?.Synonym || []).slice(0, 30);
   }
   if (descData) {
-    mat._pubchemTitle = descData.InformationList?.Information?.[0]?.Title || "";
+    mat._pubchemTitle = descData.InformationList?.Information?.[0]?.Title || null;
   }
 }
 
@@ -1003,6 +1002,7 @@ function _enrichPubchem(mat, cas) {
       fetchWithTimeout(PUBCHEM_REST+'/compound/cid/'+cid+'/description/JSON').then(r=>r.json()).catch(()=>null),
     ]);
     _applyPubchemProps(mat, propsRes.status==='fulfilled'?propsRes.value:null, synsRes.status==='fulfilled'?synsRes.value:null, descRes.status==='fulfilled'?descRes.value:null);
+    _computeClassification(mat);
     renderResults(); prefetchAll();
     fetchWithTimeout('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/'+cid+'/JSON?heading=GHS+Classification', {}, 8000)
       .then(r=>r.json()).then(d => { mat._ghsCodes = _extractGHSFromMarkup(d.Record?.Section||[]); mat._ghsPictograms=null; renderResults(); }).catch(()=>{});
@@ -1010,6 +1010,13 @@ function _enrichPubchem(mat, cas) {
 }
 
 // ── Helper: apply local DB match result to mat object ──
+function _computeClassification(mat) {
+  if (mat.found) {
+    mat._material_type = classifyMaterialType(mat);
+    mat._industry_tags = classifyIndustryTags(mat);
+  }
+}
+
 function _applyLocalMatch(mat, match) {
   const cas = (() => {
     if (match.type==='cas_exact' && DB[match.term]) return match.term;
@@ -1023,20 +1030,23 @@ function _applyLocalMatch(mat, match) {
   mat.match_info = (match.confidence >= 0.9 ? '\u2705 ' : '\u2139\uFE0F ') + match.reason + ' (' + cas + ')';
   applyPerfumery(mat, cas);
   if (MIXTURES.has(cas)) mat.match_info = '\u2705 Natural mixture (' + cas + ')';
+  _computeClassification(mat);
   _enrichPubchem(mat, cas);
   return true;
 }
 
 // ── Main search function ──
 async function scrapeMaterial(name) {
-  const mat = {name:name, found:false, cas_number:"", fema_number:"", iupac_name:"",
-    molecular_formula:"", molecular_weight:"", smiles:"", isomeric_smiles:"", inchi:"",
-    xlogp:"", tpsa:"", exact_mass:"", hbond_donor:"", hbond_acceptor:"",
-    rotatable_bond:"", heavy_atom:"",
-    synonyms:[], structure_image_url:"", page_url:"", match_info:"",
-    odor_description:"", odor_type:"", odor_strength:"", note_classification:"",
-    tenacity:"", tenacity_hours:"", ifra_guidelines:"", usage_levels:"",
-    blends_well_with:[], pubchem_sections:{}};
+  const mat = {name:name, found:false, cas_number:null, fema_number:null, iupac_name:null,
+    molecular_formula:null, molecular_weight:null, smiles:null, isomeric_smiles:null, inchi:null,
+    xlogp:null, tpsa:null, exact_mass:null, hbond_donor:null, hbond_acceptor:null,
+    rotatable_bond:null, heavy_atom:null,
+    synonyms:[], structure_image_url:null, page_url:null, match_info:null,
+    odor_description:null, odor_type:null, odor_strength:null, note_classification:null,
+    tenacity:null, tenacity_hours:null, ifra_guidelines:null, usage_levels:null,
+    blends_well_with:[], pubchem_sections:{},
+    // Precomputed classification (set once after data finalized)
+    _material_type:null, _industry_tags:null, _function:null};
 
   const n = normalizeInput(name);
   mat._match = makeMatch(null, 0, name, null, null, null, null);
@@ -1079,10 +1089,34 @@ async function scrapeMaterial(name) {
       if (cid) mat._match = makeMatch('structure_lookup', 0.95, name, name, null, 'InChI lookup via PubChem', 'pubchem');
     } catch(e) {}
   }
-  // Step 10: PubChem name
-  if (!cid) { cid = await getCid(name); if (cid) mat._match = makeMatch('pubchem_name', 0.80, name, name, null, 'PubChem name lookup', 'pubchem'); }
-  // Step 11: SID
-  if (!cid) { cid = await getCidViaSid(name); if (cid) mat._match = makeMatch('sid_lookup', 0.60, name, name, null, 'Substance DB — verify identity', 'pubchem'); }
+  // Step 10: PubChem name — validate that resolved compound actually relates to input
+  if (!cid) {
+    cid = await getCid(name);
+    if (cid) {
+      // Fetch title to verify the match is plausible
+      let pcTitle = null;
+      try {
+        const dr = await fetchWithTimeout(PUBCHEM_REST+'/compound/cid/'+cid+'/description/JSON', {}, 5000);
+        pcTitle = (await dr.json()).InformationList?.Information?.[0]?.Title || null;
+      } catch(e) {}
+      const titleNorm = (pcTitle||'').toLowerCase();
+      const inputNorm = n;
+      const isPlausible = titleNorm && (titleNorm.includes(inputNorm) || inputNorm.includes(titleNorm)
+        || titleNorm.split(/[\s\-,]/).some(w => w.length > 3 && inputNorm.includes(w)));
+      if (isPlausible) {
+        mat._match = makeMatch('pubchem_name', 0.80, name, pcTitle||name, pcTitle, 'PubChem name lookup', 'pubchem');
+      } else {
+        // Low confidence — PubChem returned something but name doesn't match well
+        mat._match = makeMatch('pubchem_name', 0.55, name, pcTitle||name, pcTitle,
+          'PubChem returned "' + (pcTitle||'unknown') + '" — may not match input', 'pubchem');
+      }
+    }
+  }
+  // Step 11: SID — lowest confidence, always flag for verification
+  if (!cid) {
+    cid = await getCidViaSid(name);
+    if (cid) mat._match = makeMatch('sid_lookup', 0.50, name, name, null, 'Substance DB — verify identity', 'pubchem');
+  }
 
   if (!cid) return mat;
 
@@ -1108,7 +1142,7 @@ async function scrapeMaterial(name) {
   }
   const hasPerfData = mat.odor_description || mat.odor_type || mat.note_classification || mat.ifra_guidelines || mat.tenacity || MIXTURES.has(mat.cas_number) || (mat.cas_number && DB[mat.cas_number]);
   if (!hasPerfData) {
-    const mw = parseFloat(mat.molecular_weight), tpsa = parseFloat(mat.tpsa), xlogp = parseFloat(mat.xlogp), heavy = parseInt(mat.heavy_atom);
+    const mw = +(mat.molecular_weight||0), tpsa = +(mat.tpsa||0), xlogp = +(mat.xlogp||0), heavy = +(mat.heavy_atom||0);
     if (!(mw >= 80 && mw <= 400 && (!mat.tpsa || tpsa < 60))) { mat.found = false; mat._notPerfumery = true; return mat; }
     let isPerfPC = false;
     try {
@@ -1121,6 +1155,8 @@ async function scrapeMaterial(name) {
     if (!isPerfPC) { mat.found = false; mat._notPerfumery = true; return mat; }
     mat._externalPerfumery = true;
   }
+
+  _computeClassification(mat);
 
   // Fetch GHS
   fetchWithTimeout('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/'+cid+'/JSON?heading=GHS+Classification', {}, 8000)
@@ -1141,7 +1177,6 @@ async function getCidViaSid(name) {
   } catch(e) { pcCache[key]=null; return null; }
 }
 
-// fuzzyMatchDB replaced by matchFuzzyLocal in search pipeline
 
 // Whitelist: only keep sections matching these keywords (case-insensitive)
 const KEEP_KEYWORDS = [
@@ -1393,13 +1428,13 @@ function renderResults() {
     return `
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
-          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(mat.name)} <span class="badge-type">${MATERIAL_TYPE_LABELS[classifyMaterialType(mat)]||''}</span></h3>
+          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(mat.name)} <span class="badge-type">${MATERIAL_TYPE_LABELS[mat._material_type || classifyMaterialType(mat)]||''}</span></h3>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}${mat._match?.confidence ? ` <span style="opacity:0.5;font-size:0.85em">[${mat._match.type}, ${Math.round(mat._match.confidence*100)}%]</span>` : ''}</p>`:""}
           ${mat._externalPerfumery?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
-          <p style="margin:4px 0 8px">${classifyIndustryTags(mat).map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
+          <p style="margin:4px 0 8px">${(mat._industry_tags || classifyIndustryTags(mat)).map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(mat._pubchemTitle || mat.synonyms.find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || mat.name)}</strong></p>
@@ -1888,8 +1923,8 @@ async function downloadJSON() {
     const record = {
       name: mat.name,
       pubchem_name: mat._pubchemTitle || mat.synonyms.find(s => !CAS_RE_SYN.test(s)) || mat.iupac_name || mat.name,
-      material_type: classifyMaterialType(mat),
-      industry_tags: classifyIndustryTags(mat),
+      material_type: mat._material_type || classifyMaterialType(mat),
+      industry_tags: mat._industry_tags || classifyIndustryTags(mat),
       ban_status: banStatus || null,
       is_external_perfumery: mat._externalPerfumery || false,
       match: mat._match || null,
