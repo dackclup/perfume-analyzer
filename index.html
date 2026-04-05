@@ -1443,8 +1443,10 @@ function renderResults() {
   document.getElementById("statusBar").style.display = results.length?"flex":"none";
   document.getElementById("statusText").textContent = `${results.length} material${results.length!==1?'s':''}`;
   document.getElementById("downloads").style.display = results.length?"flex":"none";
-  
-  div.innerHTML = results.map((mat,idx) => {
+
+  div.innerHTML = '';
+  results.forEach((mat,idx) => {
+   try {
     const rec = mat.record, id = rec.identifiers, nm = rec.names, pr = rec.properties, pf = rec.perfumery, sf = rec.safety, cls = rec.classification, mtch = rec.match;
     const nl = (pf.note||"").toLowerCase();
     let badges = "";
@@ -1478,7 +1480,7 @@ function renderResults() {
 
     const syns = nm.synonyms.length?`<p style="color:var(--text2);font-size:0.8em;margin-top:6px">${esc(nm.synonyms.slice(0,8).join(', '))}</p>`:"";
 
-    return `
+    const cardHtml = `
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
           <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${MATERIAL_TYPE_LABELS[cls.material_type || classifyMaterialType(mat)]||''}</span></h3>
@@ -1538,7 +1540,11 @@ function renderResults() {
           <div class="card-back"><a onclick="document.getElementById('body${idx}').closest('.card').scrollIntoView({behavior:'smooth',block:'start'})">▲ Back to title</a></div>
         </div>
       </div>`;
-  }).join('');
+    const frag = document.createElement('div');
+    frag.innerHTML = cardHtml;
+    while (frag.firstChild) div.appendChild(frag.firstChild);
+   } catch(e) { console.error('renderResults: card ' + idx + ' threw', e); }
+  });
 }
 
 function prefetchAll() {
