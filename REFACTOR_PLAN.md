@@ -25,6 +25,22 @@
 
 ## CHANGELOG
 
+### 2026-04-05 — normalizeKey() hardening for index lookups
+
+**Bug:** mixed-case `match.term` (e.g. `"Linalool"` from `matchByCanonicalName`)
+was used directly to look up in `TRADES`, `NAME_TO_CAS`, and `SYN_IX` — all
+keyed by lowercase strings. The lookup returned `undefined`, causing
+`_applyLocalMatch()` to discard valid local matches. Search results never
+rendered because no material was added to the `results` array.
+
+**Fix:**
+- Added `normalizeKey(v)` helper that lowercases and trims any lookup term.
+- Applied `normalizeKey()` consistently in all matcher functions and
+  `_applyLocalMatch()` for every `TRADES[…]`, `NAME_TO_CAS[…]`, `SYN_IX[…]`
+  lookup, ensuring no mixed-case term can ever break index resolution.
+- Functions updated: `matchByCAS`, `matchBySynonym`, `matchByTradeName`,
+  `matchByAlias`, `matchFuzzyLocal`, `_applyLocalMatch`, `applyPerfumery`.
+
 ### 2026-04-05 — Canonical Record as Primary Source of Truth
 
 **Canonical record is now the runtime source of truth:**

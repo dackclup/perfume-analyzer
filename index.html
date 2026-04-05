@@ -923,6 +923,10 @@ function normalizeInput(raw) {
   return (raw || '').toLowerCase().replace(/[\u00AE\u2122]/g, '').replace(/\s+/g, ' ').trim();
 }
 
+// All search indexes (TRADES, NAME_TO_CAS, SYN_IX) are keyed by lowercase strings.
+// Always use normalizeKey() when looking up a term in these indexes.
+function normalizeKey(v) { return (v || '').toLowerCase().trim(); }
+
 function makeMatch(type, confidence, input, term, canonical, reason, source) {
   return { type:type, confidence:confidence, input:input, term:term, canonical:canonical||null, reason:reason, source:source||'local_db', ambiguous_candidates:null };
 }
@@ -931,7 +935,7 @@ function makeMatch(type, confidence, input, term, canonical, reason, source) {
 function matchByCAS(n) {
   if (!CAS_RE_SEARCH.test(n)) return null;
   if (DB[n]) return makeMatch('cas_exact', 0.99, n, n, DB[n].name, 'CAS found in local DB', 'local_db');
-  const cas = TRADES[n];
+  const cas = TRADES[normalizeKey(n)];
   if (cas && DB[cas]) return makeMatch('cas_exact', 0.99, n, cas, DB[cas].name, 'CAS via trade index', 'local_db');
   return null;
 }
@@ -946,22 +950,24 @@ function matchByCanonicalName(n) {
 
 // ── Step 3: Exact synonym ──
 function matchBySynonym(n) {
-  if (SYNONYM_BLACKLIST.has(n)) return null;
-  const cas = NAME_TO_CAS[n];
+  const nk = normalizeKey(n);
+  if (SYNONYM_BLACKLIST.has(nk)) return null;
+  const cas = NAME_TO_CAS[nk];
   if (!cas || !DB[cas]) return null;
-  const conf = RISKY_SYNONYMS.has(n) ? 0.80 : 0.95;
-  return makeMatch('synonym_exact', conf, n, n, DB[cas].name,
-    RISKY_SYNONYMS.has(n) ? 'Risky abbreviation — verify' : 'Exact synonym match', 'local_db');
+  const conf = RISKY_SYNONYMS.has(nk) ? 0.80 : 0.95;
+  return makeMatch('synonym_exact', conf, n, nk, DB[cas].name,
+    RISKY_SYNONYMS.has(nk) ? 'Risky abbreviation — verify' : 'Exact synonym match', 'local_db');
 }
 
 // ── Step 4: Exact trade name ──
 function matchByTradeName(n) {
-  if (SYNONYM_BLACKLIST.has(n)) return null;
-  const cas = TRADES[n];
+  const nk = normalizeKey(n);
+  if (SYNONYM_BLACKLIST.has(nk)) return null;
+  const cas = TRADES[nk];
   if (!cas || !DB[cas]) return null;
-  const conf = RISKY_SYNONYMS.has(n) ? 0.80 : 0.95;
-  return makeMatch('trade_exact', conf, n, n, DB[cas].name,
-    RISKY_SYNONYMS.has(n) ? 'Risky trade abbreviation' : 'Exact trade name match', 'local_db');
+  const conf = RISKY_SYNONYMS.has(nk) ? 0.80 : 0.95;
+  return makeMatch('trade_exact', conf, n, nk, DB[cas].name,
+    RISKY_SYNONYMS.has(nk) ? 'Risky trade abbreviation' : 'Exact trade name match', 'local_db');
 }
 
 // ── Step 5: Normalized alias (dash/space swap + suffix mutation) ──
@@ -976,26 +982,28 @@ function matchByAlias(n) {
   }
   for (const v of variants) {
     if (v === n) continue;
-    const cas = TRADES[v] || NAME_TO_CAS[v];
-    if (cas && DB[cas]) return makeMatch('alias_normalized', 0.85, n, v, DB[cas].name, 'Matched via variant: "'+v+'"', 'local_db');
+    const vk = normalizeKey(v);
+    const cas = TRADES[vk] || NAME_TO_CAS[vk];
+    if (cas && DB[cas]) return makeMatch('alias_normalized', 0.85, n, vk, DB[cas].name, 'Matched via variant: "'+v+'"', 'local_db');
   }
   return null;
 }
 
 // ── Step 6: Fuzzy match (substring, threshold 0.8) ──
 function matchFuzzyLocal(n) {
-  if (n.length < 3) return null;
-  if (SYN_IX[n] && !SYNONYM_BLACKLIST.has(n)) {
-    const e = SYN_IX[n];
-    return makeMatch('synonym_exact', 0.95, n, n, DB[e.cas]?.name||e.name, 'Exact synonym match', 'local_db');
+  const nk = normalizeKey(n);
+  if (nk.length < 3) return null;
+  if (SYN_IX[nk] && !SYNONYM_BLACKLIST.has(nk)) {
+    const e = SYN_IX[nk];
+    return makeMatch('synonym_exact', 0.95, n, nk, DB[e.cas]?.name||e.name, 'Exact synonym match', 'local_db');
   }
   let bestScore = 0, bestMatch = null;
   const candidates = [];
   const seenCasCand = new Set();
   for (const [nl, match] of Object.entries(SYN_IX)) {
     if (SYNONYM_BLACKLIST.has(nl)) continue;
-    if (nl.includes(n) || n.includes(nl)) {
-      const score = Math.min(n.length, nl.length) / Math.max(n.length, nl.length);
+    if (nl.includes(nk) || nk.includes(nl)) {
+      const score = Math.min(nk.length, nl.length) / Math.max(nk.length, nl.length);
       if (score > bestScore) { bestScore = score; bestMatch = match; }
       if (score > 0.6 && candidates.length < 5 && !seenCasCand.has(match.cas)) {
         seenCasCand.add(match.cas);
@@ -1004,7 +1012,7 @@ function matchFuzzyLocal(n) {
     }
   }
   if (bestScore >= 0.8 && bestMatch) {
-    return makeMatch('fuzzy', Math.round(bestScore*70)/100, n, bestMatch.name, DB[bestMatch.cas]?.name||bestMatch.name,
+    return makeMatch('fuzzy', Math.round(bestScore*70)/100, n, normalizeKey(bestMatch.name), DB[bestMatch.cas]?.name||bestMatch.name,
       'Fuzzy match (score: '+Math.round(bestScore*100)+'%)', 'local_db');
   }
   if (candidates.length > 0) {
@@ -1046,7 +1054,7 @@ function _computeClassification(mat) {
 function _applyLocalMatch(mat, match) {
   const cas = (() => {
     if (match.type==='cas_exact' && DB[match.term]) return match.term;
-    const t = (match.term||'').toLowerCase();
+    const t = normalizeKey(match.term);
     return TRADES[t] || NAME_TO_CAS[t] || (SYN_IX[t]?.cas);
   })();
   if (!cas || !DB[cas]) return false;
@@ -1317,7 +1325,7 @@ function applyPerfumery(mat, cas) {
   const rec = mat.record, id = rec.identifiers, pf = rec.perfumery, sf = rec.safety;
   let pdb = DB[cas];
   if (!pdb && rec.names.canonical) {
-    const fallbackCas = NAME_TO_CAS[rec.names.canonical.toLowerCase()];
+    const fallbackCas = NAME_TO_CAS[normalizeKey(rec.names.canonical)];
     if (fallbackCas) { pdb = DB[fallbackCas]; cas = fallbackCas; id.cas = cas; }
   }
   if (!pdb) return;
