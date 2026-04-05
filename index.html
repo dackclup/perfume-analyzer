@@ -116,6 +116,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .badge-mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
 .badge-base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
 .badge-type { font-size:0.7em; padding:2px 8px; border-radius:3px; margin-left:8px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px solid var(--border); vertical-align:middle; }
+.match-tag { font-size:0.6em; padding:1px 6px; border-radius:3px; font-weight:400; background:var(--accent); color:#fff; vertical-align:middle; opacity:0.8; }
 
 /* PubChem data */
 .pubchem-toggle { cursor:pointer; color:var(--accent); font-size:0.9em; margin-top:8px; }
@@ -651,7 +652,7 @@ function showPills(typed) {
   // Existing results — exclude from pill suggestions
   const existingCas = new Set();
   const existingNames = new Set();
-  results.forEach(r => { if (r.cas_number) existingCas.add(r.cas_number); existingNames.add(r.name.toLowerCase()); });
+  results.forEach(r => { const cas=r.record?.identifiers?.cas; if(cas) existingCas.add(cas); existingNames.add((r.record?.names?.canonical||'').toLowerCase()); });
 
   if (ql.length < 1) {
     // If any filter active but no text, show matching materials (minus already searched)
@@ -756,7 +757,7 @@ function _showDidYouMean(input, candidates) {
 // ===== Search Orchestration =====
 async function doSearch(term) {
   const names = term.split(',').map(s=>s.trim()).filter(Boolean);
-  const existingNames = new Set(results.map(r=>r.name.toLowerCase()));
+  const existingNames = new Set(results.map(r=>(r.record?.names?.canonical||'').toLowerCase()));
   const newNames = names.filter(n=>!existingNames.has(n.toLowerCase()));
   if (!newNames.length) return;
   
@@ -789,9 +790,10 @@ async function doSearch(term) {
   // Dedup by CAS — keep first (newest)
   const seen = new Set();
   results = results.filter(r => {
-    if (!r.cas_number) return true;
-    if (seen.has(r.cas_number)) return false;
-    seen.add(r.cas_number); return true;
+    const cas = r.record?.identifiers?.cas;
+    if (!cas) return true;
+    if (seen.has(cas)) return false;
+    seen.add(cas); return true;
   });
   
   progBar.style.width = "100%";
@@ -1470,11 +1472,11 @@ function renderResults() {
     return `
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
-          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(nm.canonical)} <span class="badge-type">${MATERIAL_TYPE_LABELS[cls.material_type || classifyMaterialType(mat)]||''}</span></h3>
+          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${MATERIAL_TYPE_LABELS[cls.material_type || classifyMaterialType(mat)]||''}</span></h3>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
-          ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}${mtch?.confidence ? ` <span style="opacity:0.5;font-size:0.85em">[${mtch.type}, ${Math.round(mtch.confidence*100)}%]</span>` : ''}</p>`:""}
+          ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
           <p style="margin:4px 0 8px">${(cls.industry_tags || classifyIndustryTags(mat)).map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
