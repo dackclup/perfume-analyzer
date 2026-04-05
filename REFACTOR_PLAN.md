@@ -46,14 +46,9 @@
   numbers in `record.properties.*`
 - PubChem sections fallback reads `src.metadata.pubchem_sections`
 
-**Remaining flat accessor fields (by design, not debt):**
-These exist as thin getters/setters on the result object — they are NOT
-duplicate data, they are accessor proxies to record.*:
-- `mat.name` → `record.names.canonical`
-- `mat.cas_number` → `record.identifiers.cas`
-- `mat.molecular_weight` → `record.properties.molecular_weight`
-- `mat.odor_description` → `record.perfumery.odor_description`
-- (21 total accessors, all delegating to record)
+**Note:** Accessor proxies were introduced in this pass but subsequently
+removed entirely in the final hardening pass. All reads/writes now go
+through `mat.record.*` directly. See final architecture status above.
 
 ### 2026-04-05 — In-Place Architecture Migration (Tasks 1-2)
 
