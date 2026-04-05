@@ -1444,7 +1444,7 @@ function renderResults() {
   document.getElementById("statusText").textContent = `${results.length} material${results.length!==1?'s':''}`;
   document.getElementById("downloads").style.display = results.length?"flex":"none";
 
-  div.innerHTML = '';
+  const cards = [];
   results.forEach((mat,idx) => {
    try {
     const rec = mat.record, id = rec.identifiers, nm = rec.names, pr = rec.properties, pf = rec.perfumery, sf = rec.safety, cls = rec.classification, mtch = rec.match;
@@ -1478,9 +1478,12 @@ function renderResults() {
       id.inchi?`<p><code>InChI</code> ${esc(id.inchi)}</p>`:"",
     ].join('');
 
-    const syns = nm.synonyms.length?`<p style="color:var(--text2);font-size:0.8em;margin-top:6px">${esc(nm.synonyms.slice(0,8).join(', '))}</p>`:"";
+    const syns = (nm.synonyms||[]).length?`<p style="color:var(--text2);font-size:0.8em;margin-top:6px">${esc((nm.synonyms||[]).slice(0,8).join(', '))}</p>`:"";
 
-    const cardHtml = `
+    const industryTags = (cls.industry_tags || classifyIndustryTags(mat) || []);
+    const blendsArr = Array.isArray(pf.blends_with) ? pf.blends_with : [];
+
+    cards.push(`
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
           <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${MATERIAL_TYPE_LABELS[cls.material_type || classifyMaterialType(mat)]||''}</span></h3>
@@ -1489,10 +1492,10 @@ function renderResults() {
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
-          <p style="margin:4px 0 8px">${(cls.industry_tags || classifyIndustryTags(mat)).map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
+          <p style="margin:4px 0 8px">${industryTags.map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
-            <p><strong>${esc(nm.pubchem_title || nm.synonyms.find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
+            <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
             ${mat.page_url?`<p><a href="${mat.page_url}" target="_blank" style="color:var(--accent);font-size:0.85em">PubChem ↗</a></p>`:""}
             ${ids}
             ${shortProps?`<div class="props-grid">${shortProps}</div>`:""}
@@ -1518,7 +1521,7 @@ function renderResults() {
               ${!pf.tenacity?`<p style="color:var(--text2)">—</p>`:""}
             </div>
           </div>
-          ${sf.ifra_guideline||sf.usage_levels||(pf.blends_with||[]).length?`
+          ${sf.ifra_guideline||sf.usage_levels||blendsArr.length?`
           <hr>
           <div class="row">
             <div style="flex:1">
@@ -1529,7 +1532,7 @@ function renderResults() {
             </div>
             <div style="flex:1">
               <p class="sec-title">Blends with</p>
-              ${(pf.blends_with||[]).length?`<p>${esc(pf.blends_with.join(', '))}</p>`:""}
+              ${blendsArr.length?`<p>${esc(blendsArr.join(', '))}</p>`:""}
             </div>
           </div>`:""}
           ${renderGHSIcons(mat)}
@@ -1539,12 +1542,13 @@ function renderResults() {
           <div class="pubchem-data" id="pcData${idx}"></div>`:""}
           <div class="card-back"><a onclick="document.getElementById('body${idx}').closest('.card').scrollIntoView({behavior:'smooth',block:'start'})">▲ Back to title</a></div>
         </div>
-      </div>`;
-    const frag = document.createElement('div');
-    frag.innerHTML = cardHtml;
-    while (frag.firstChild) div.appendChild(frag.firstChild);
-   } catch(e) { console.error('renderResults: card ' + idx + ' threw', e); }
+      </div>`);
+   } catch(e) {
+    console.error('renderResults: card ' + idx + ' (' + (mat?.record?.names?.canonical||'?') + ') threw:', e);
+    cards.push(`<div class="card"><div class="card-header"><h3>${esc(mat?.record?.names?.canonical||'Unknown material')} <span style="color:#b91c1c;font-size:0.8em">(render error)</span></h3></div></div>`);
+   }
   });
+  div.innerHTML = cards.join('');
 }
 
 function prefetchAll() {
