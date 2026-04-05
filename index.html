@@ -2257,7 +2257,8 @@ function classifyIndustryTags(mat) {
   const odorType = (pf.odor_type || '').toLowerCase();
   const syns = (nm.synonyms || []).join(' ').toLowerCase();
   const pdStr = md.pubchem_sections ? JSON.stringify(md.pubchem_sections).toLowerCase() : '';
-  const cas = (r.identifiers || {}).cas || '';
+  const id = r.identifiers || {};
+  const cas = id.cas || '';
   const banned = isBannedEU(mat);
 
   const isSolvent = /\bsolvent\b/i.test(odorType + ' ' + desc + ' ' + (pf.note || ''));

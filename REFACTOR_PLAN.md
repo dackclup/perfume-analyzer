@@ -25,6 +25,23 @@
 
 ## CHANGELOG
 
+### 2026-04-05 — Fix ReferenceError in classifyIndustryTags crashing non-banned aromatic materials
+
+**Bug:** `classifyIndustryTags()` used `id.fema` on line 2281 but never declared
+an `id` variable (only `cas` was extracted from `r.identifiers`). This caused a
+`ReferenceError` that was silently swallowed by `Promise.allSettled` in `doSearch`,
+dropping the material from results entirely.
+
+**Why only some materials were affected:**
+- Hedione / Iso E Super: `hasRealOdor=true`, `banned=false` → entered the
+  perfumery block → hit `id.fema` → crash
+- Dipropylene Glycol: `isSolvent=true` → `hasRealOdor=false` → never entered
+  the perfumery block → no crash
+- Lilial: `banned=true` → `!banned` short-circuited before `id.fema` → no crash
+
+**Fix:** Added `const id = r.identifiers || {};` and derived `cas` from `id.cas`
+instead of a separate destructure.
+
 ### 2026-04-05 — Final Smoke Test (post-normalizeKey hardening)
 
 All 10 test cases traced end-to-end through the search pipeline — PASS:
