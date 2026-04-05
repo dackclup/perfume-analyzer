@@ -307,7 +307,7 @@ html { scroll-behavior:smooth; }
 
 <script src="perfumery_data.js"></script>
 <script>
-// ═══ MODULE: Data Layer — DB, Indexes, Constants ═══
+// ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
@@ -351,7 +351,7 @@ for (const [cas, entry] of Object.entries(DB)) {
 let results = [];
 let pcCache = {};
 
-// ═══ MODULE: Filter State ═══
+// ===== Filter State =====
 const _filters = {
   note: {active: "", elId: "noteSelected"},
   type: {active: "", elId: "typeSelected"},
@@ -436,7 +436,6 @@ function setFilter(name, val) {
   document.getElementById(_filters[name].elId).textContent = label ? label.parentElement.textContent.trim() : 'All';
   _refreshPills();
 }
-// Convenience aliases for HTML onchange
 function setTagFilter(v) { setFilter('tag', v); }
 function setFuncFilter(v) { setFilter('func', v); }
 function setTypeFilter(v) { setFilter('type', v); }
@@ -587,7 +586,7 @@ function resetAllFilters() {
   });
 }
 
-// ═══ MODULE: UI Event Bindings ═══
+// ===== UI Event Bindings =====
 const input = document.getElementById("searchInput");
 const btn = document.getElementById("searchBtn");
 const pillsDiv = document.getElementById("pills");
@@ -754,7 +753,7 @@ function _showDidYouMean(input, candidates) {
     ).join(' ');
 }
 
-// ═══ MODULE: Search Orchestration ═══
+// ===== Search Orchestration =====
 async function doSearch(term) {
   const names = term.split(',').map(s=>s.trim()).filter(Boolean);
   const existingNames = new Set(results.map(r=>r.name.toLowerCase()));
@@ -907,7 +906,7 @@ function _applyPubchemProps(mat, propsData, synsData, descData) {
   }
 }
 
-// ═══ MODULE: Search Matchers ═══
+// ===== Search Matchers =====
 
 // Synonym blacklist — terms too generic/ambiguous for reliable matching
 const SYNONYM_BLACKLIST = new Set(['pea','pg','alcohol','oil','musk','acid','ester','water','base','note','top']);
@@ -1060,10 +1059,11 @@ function _applyLocalMatch(mat, match) {
 }
 
 // ── Main search function ──
-// ═══ MODULE: Canonical Record Factory ═══
-// Creates result objects where record.* is the single source of truth.
-// Flat property accessors (mat.cas_number etc) delegate to record
-// for backward compatibility with render templates.
+// ===== Canonical Record =====
+// record.* is the single source of truth for all material data.
+// Flat accessors (mat.cas_number etc) delegate to record fields
+// so write-path code (applyPerfumery, PubChem enrichment) can
+// use simple assignment syntax.
 function createResult(inputName) {
   const record = {
     identifiers: { cas:null, fema:null, pubchem_cid:null, iupac:null, molecular_formula:null,
@@ -1457,7 +1457,7 @@ function togglePcGroup(gid) {
   }
 }
 
-// ═══ MODULE: Rendering ═══
+// ===== Rendering =====
 function renderResults() {
   const div = document.getElementById("results");
   // Save open states before re-render (skip if just searched)
@@ -1473,51 +1473,52 @@ function renderResults() {
   document.getElementById("downloads").style.display = results.length?"flex":"none";
   
   div.innerHTML = results.map((mat,idx) => {
-    const nl = (mat.note_classification||"").toLowerCase();
+    const rec = mat.record, id = rec.identifiers, nm = rec.names, pr = rec.properties, pf = rec.perfumery, sf = rec.safety, cls = rec.classification, mtch = rec.match;
+    const nl = (pf.note||"").toLowerCase();
     let badges = "";
     if (nl.includes("top")) badges += `<span class="badge badge-top">Top</span>`;
     if (nl.includes("middle")) badges += `<span class="badge badge-mid">Middle</span>`;
     if (nl.includes("base")) badges += `<span class="badge badge-base">Base</span>`;
-    
+
     const ids = [
-      mat.cas_number?`<p><code>CAS</code> ${esc(mat.cas_number)}</p>`:"",
-      mat.fema_number?`<p><code>FEMA</code> ${esc(mat.fema_number)}</p>`:"",
-      mat.iupac_name?`<p><code>IUPAC</code> ${esc(mat.iupac_name)}</p>`:"",
-      mat.molecular_formula?`<p><code>Formula</code> ${esc(mat.molecular_formula)}</p>`:"",
+      id.cas?`<p><code>CAS</code> ${esc(id.cas)}</p>`:"",
+      id.fema?`<p><code>FEMA</code> ${esc(id.fema)}</p>`:"",
+      id.iupac?`<p><code>IUPAC</code> ${esc(id.iupac)}</p>`:"",
+      id.molecular_formula?`<p><code>Formula</code> ${esc(id.molecular_formula)}</p>`:"",
     ].join('');
 
     const shortProps = [
-      mat.molecular_weight?`<span><code>MW</code> ${esc(mat.molecular_weight)}</span>`:"",
-      mat.exact_mass?`<span><code>Exact Mass</code> ${esc(mat.exact_mass)}</span>`:"",
-      mat.xlogp?`<span><code>XLogP</code> ${esc(mat.xlogp)}</span>`:"",
-      mat.tpsa?`<span><code>TPSA</code> ${esc(mat.tpsa)} Å²</span>`:"",
-      mat.hbond_donor?`<span><code>H-Donor</code> ${esc(mat.hbond_donor)}</span>`:"",
-      mat.hbond_acceptor?`<span><code>H-Acceptor</code> ${esc(mat.hbond_acceptor)}</span>`:"",
-      mat.rotatable_bond?`<span><code>Rotatable</code> ${esc(mat.rotatable_bond)}</span>`:"",
-      mat.heavy_atom?`<span><code>Heavy Atoms</code> ${esc(mat.heavy_atom)}</span>`:"",
+      pr.molecular_weight?`<span><code>MW</code> ${esc(pr.molecular_weight)}</span>`:"",
+      pr.exact_mass?`<span><code>Exact Mass</code> ${esc(pr.exact_mass)}</span>`:"",
+      pr.xlogp?`<span><code>XLogP</code> ${esc(pr.xlogp)}</span>`:"",
+      pr.tpsa?`<span><code>TPSA</code> ${esc(pr.tpsa)} Å²</span>`:"",
+      pr.hbond_donor?`<span><code>H-Donor</code> ${esc(pr.hbond_donor)}</span>`:"",
+      pr.hbond_acceptor?`<span><code>H-Acceptor</code> ${esc(pr.hbond_acceptor)}</span>`:"",
+      pr.rotatable_bonds?`<span><code>Rotatable</code> ${esc(pr.rotatable_bonds)}</span>`:"",
+      pr.heavy_atoms?`<span><code>Heavy Atoms</code> ${esc(pr.heavy_atoms)}</span>`:"",
     ].filter(Boolean).join('');
 
     const longProps = [
-      mat.smiles?`<p><code>SMILES</code> ${esc(mat.smiles)}</p>`:"",
-      mat.isomeric_smiles && mat.isomeric_smiles !== mat.smiles?`<p><code>Isomeric SMILES</code> ${esc(mat.isomeric_smiles)}</p>`:"",
-      mat.inchi?`<p><code>InChI</code> ${esc(mat.inchi)}</p>`:"",
+      id.canonical_smiles?`<p><code>SMILES</code> ${esc(id.canonical_smiles)}</p>`:"",
+      id.isomeric_smiles && id.isomeric_smiles !== id.canonical_smiles?`<p><code>Isomeric SMILES</code> ${esc(id.isomeric_smiles)}</p>`:"",
+      id.inchi?`<p><code>InChI</code> ${esc(id.inchi)}</p>`:"",
     ].join('');
-    
-    const syns = mat.synonyms.length?`<p style="color:var(--text2);font-size:0.8em;margin-top:6px">${esc(mat.synonyms.slice(0,8).join(', '))}</p>`:"";
-    
+
+    const syns = nm.synonyms.length?`<p style="color:var(--text2);font-size:0.8em;margin-top:6px">${esc(nm.synonyms.slice(0,8).join(', '))}</p>`:"";
+
     return `
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
-          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(mat.name)} <span class="badge-type">${MATERIAL_TYPE_LABELS[mat._material_type || classifyMaterialType(mat)]||''}</span></h3>
+          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(nm.canonical)} <span class="badge-type">${MATERIAL_TYPE_LABELS[cls.material_type || classifyMaterialType(mat)]||''}</span></h3>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
-          ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}${mat._match?.confidence ? ` <span style="opacity:0.5;font-size:0.85em">[${mat._match.type}, ${Math.round(mat._match.confidence*100)}%]</span>` : ''}</p>`:""}
-          ${mat._externalPerfumery?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
-          <p style="margin:4px 0 8px">${(mat._industry_tags || classifyIndustryTags(mat)).map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
+          ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}${mtch?.confidence ? ` <span style="opacity:0.5;font-size:0.85em">[${mtch.type}, ${Math.round(mtch.confidence*100)}%]</span>` : ''}</p>`:""}
+          ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
+          <p style="margin:4px 0 8px">${(cls.industry_tags || classifyIndustryTags(mat)).map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
-            <p><strong>${esc(mat._pubchemTitle || mat.synonyms.find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || mat.name)}</strong></p>
+            <p><strong>${esc(nm.pubchem_title || nm.synonyms.find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
             ${mat.page_url?`<p><a href="${mat.page_url}" target="_blank" style="color:var(--accent);font-size:0.85em">PubChem ↗</a></p>`:""}
             ${ids}
             ${shortProps?`<div class="props-grid">${shortProps}</div>`:""}
@@ -1527,10 +1528,10 @@ function renderResults() {
           <div class="row">
             <div style="flex:1">
               <p class="sec-title">Odor</p>
-              ${mat.odor_description?`<p class="odor-desc">${esc(mat.odor_description)}${mat._odor_source?` <span style="font-size:0.7em;color:var(--text2);font-style:normal">[${mat._odor_source}]</span>`:''}</p>`:""}
-              ${mat.odor_type?`<p>${esc(mat.odor_type)}</p>`:""}
-              ${mat.odor_strength?`<p style="color:var(--text2);font-size:0.85em">${esc(mat.odor_strength)}</p>`:""}
-              ${!mat.odor_description&&!mat.odor_type?`<p style="color:var(--text2)">—</p>`:""}
+              ${pf.odor_description?`<p class="odor-desc">${esc(pf.odor_description)}${pf.odor_source?` <span style="font-size:0.7em;color:var(--text2);font-style:normal">[${pf.odor_source}]</span>`:''}</p>`:""}
+              ${pf.odor_type?`<p>${esc(pf.odor_type)}</p>`:""}
+              ${pf.odor_strength?`<p style="color:var(--text2);font-size:0.85em">${esc(pf.odor_strength)}</p>`:""}
+              ${!pf.odor_description&&!pf.odor_type?`<p style="color:var(--text2)">—</p>`:""}
             </div>
             <div style="flex:1">
               <p class="sec-title">Note</p>
@@ -1538,27 +1539,27 @@ function renderResults() {
             </div>
             <div style="flex:1">
               <p class="sec-title">Performance</p>
-              ${mat.tenacity?`<p>${esc(mat.tenacity)}</p>`:""}
-              ${mat.tenacity_hours?`<p style="color:var(--text2);font-size:0.85em">${esc(mat.tenacity_hours)}</p>`:""}
-              ${!mat.tenacity?`<p style="color:var(--text2)">—</p>`:""}
+              ${pf.tenacity?`<p>${esc(pf.tenacity)}</p>`:""}
+              ${pf.tenacity_hours?`<p style="color:var(--text2);font-size:0.85em">${esc(pf.tenacity_hours)}</p>`:""}
+              ${!pf.tenacity?`<p style="color:var(--text2)">—</p>`:""}
             </div>
           </div>
-          ${mat.ifra_guidelines||mat.usage_levels||mat.blends_well_with.length?`
+          ${sf.ifra_guideline||sf.usage_levels||(pf.blends_with||[]).length?`
           <hr>
           <div class="row">
             <div style="flex:1">
               <p class="sec-title">Safety</p>
-              ${mat.ifra_guidelines?(()=>{const bs=getBanStatus(mat);return bs?`<p style="color:#b91c1c;font-weight:600">${esc(mat.ifra_guidelines)}</p><p style="color:#b91c1c;font-size:0.8em">${bs==='worldwide'?'Banned globally — IFRA prohibition; not permitted in any application':'Banned in EU cosmetics (EC No 2021/1902 — Omnibus II / CLP Annex VI)'}</p>`:`<p>${esc(mat.ifra_guidelines)}</p>`;})():""}
-              ${mat.usage_levels?`<p style="color:var(--text2);font-size:0.85em">${esc(mat.usage_levels)}</p>`:""}
-              ${mat.ifra_guidelines||mat.usage_levels?`<p style="color:var(--text2);font-size:0.7em;font-style:italic;margin-top:4px">Usage % = guideline in fragrance concentrate, not IFRA max in finished product. Always verify per product category.</p>`:""}
+              ${sf.ifra_guideline?(()=>{const bs=getBanStatus(mat);return bs?`<p style="color:#b91c1c;font-weight:600">${esc(sf.ifra_guideline)}</p><p style="color:#b91c1c;font-size:0.8em">${bs==='worldwide'?'Banned globally — IFRA prohibition; not permitted in any application':'Banned in EU cosmetics (EC No 2021/1902 — Omnibus II / CLP Annex VI)'}</p>`:`<p>${esc(sf.ifra_guideline)}</p>`;})():""}
+              ${sf.usage_levels?`<p style="color:var(--text2);font-size:0.85em">${esc(sf.usage_levels)}</p>`:""}
+              ${sf.ifra_guideline||sf.usage_levels?`<p style="color:var(--text2);font-size:0.7em;font-style:italic;margin-top:4px">Usage % = guideline in fragrance concentrate, not IFRA max in finished product. Always verify per product category.</p>`:""}
             </div>
             <div style="flex:1">
               <p class="sec-title">Blends with</p>
-              ${mat.blends_well_with.length?`<p>${esc(mat.blends_well_with.join(', '))}</p>`:""}
+              ${(pf.blends_with||[]).length?`<p>${esc(pf.blends_with.join(', '))}</p>`:""}
             </div>
           </div>`:""}
           ${renderGHSIcons(mat)}
-          ${mat._cid?`
+          ${id.pubchem_cid?`
           <hr>
           <div class="pubchem-toggle" id="pcToggle${idx}" onclick="loadPubchemData(${idx})">▶ Complete PubChem Data</div>
           <div class="pubchem-data" id="pcData${idx}"></div>`:""}
@@ -1728,70 +1729,69 @@ function clearAll() {
 }
 
 function buildPerfumerySections(mat) {
+  const pf = mat.record.perfumery, sf = mat.record.safety;
   const sections = [];
-  if (mat.odor_description || mat.odor_type || mat.odor_strength) {
+  if (pf.odor_description || pf.odor_type || pf.odor_strength) {
     const info = [];
-    if (mat.odor_description) info.push({ReferenceNumber:0,Description:"Odor Description",Value:{StringWithMarkup:[{String:mat.odor_description}]}});
-    if (mat.odor_type) info.push({ReferenceNumber:0,Description:"Odor Type",Value:{StringWithMarkup:[{String:mat.odor_type}]}});
-    if (mat.odor_strength) info.push({ReferenceNumber:0,Description:"Odor Strength",Value:{StringWithMarkup:[{String:mat.odor_strength}]}});
+    if (pf.odor_description) info.push({ReferenceNumber:0,Description:"Odor Description",Value:{StringWithMarkup:[{String:pf.odor_description}]}});
+    if (pf.odor_type) info.push({ReferenceNumber:0,Description:"Odor Type",Value:{StringWithMarkup:[{String:pf.odor_type}]}});
+    if (pf.odor_strength) info.push({ReferenceNumber:0,Description:"Odor Strength",Value:{StringWithMarkup:[{String:pf.odor_strength}]}});
     sections.push({TOCHeading:"Odor Profile",Description:"Olfactory characteristics from perfumery database.",Information:info});
   }
-  if (mat.note_classification) {
+  if (pf.note) {
     sections.push({TOCHeading:"Note Classification",Description:"Fragrance pyramid classification.",Information:[
-      {ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.note_classification}]}}
+      {ReferenceNumber:0,Value:{StringWithMarkup:[{String:pf.note}]}}
     ]});
   }
-  if (mat.tenacity || mat.tenacity_hours) {
+  if (pf.tenacity || pf.tenacity_hours) {
     const info = [];
-    if (mat.tenacity) info.push({ReferenceNumber:0,Description:"Tenacity",Value:{StringWithMarkup:[{String:mat.tenacity}]}});
-    if (mat.tenacity_hours) info.push({ReferenceNumber:0,Description:"Duration",Value:{StringWithMarkup:[{String:mat.tenacity_hours}]}});
+    if (pf.tenacity) info.push({ReferenceNumber:0,Description:"Tenacity",Value:{StringWithMarkup:[{String:pf.tenacity}]}});
+    if (pf.tenacity_hours) info.push({ReferenceNumber:0,Description:"Duration",Value:{StringWithMarkup:[{String:pf.tenacity_hours}]}});
     sections.push({TOCHeading:"Performance",Description:"Longevity and projection characteristics.",Information:info});
   }
-  if (mat.ifra_guidelines || mat.usage_levels) {
+  if (sf.ifra_guideline || sf.usage_levels) {
     const info = [];
-    if (mat.ifra_guidelines) info.push({ReferenceNumber:0,Description:"IFRA Guidelines",Value:{StringWithMarkup:[{String:mat.ifra_guidelines}]}});
-    if (mat.usage_levels) info.push({ReferenceNumber:0,Description:"Usage Levels",Value:{StringWithMarkup:[{String:mat.usage_levels}]}});
+    if (sf.ifra_guideline) info.push({ReferenceNumber:0,Description:"IFRA Guidelines",Value:{StringWithMarkup:[{String:sf.ifra_guideline}]}});
+    if (sf.usage_levels) info.push({ReferenceNumber:0,Description:"Usage Levels",Value:{StringWithMarkup:[{String:sf.usage_levels}]}});
     sections.push({TOCHeading:"Perfumery Safety",Description:"IFRA restrictions and recommended usage levels.",Information:info});
   }
-  if (mat.blends_well_with && mat.blends_well_with.length) {
+  if (pf.blends_with && pf.blends_with.length) {
     sections.push({TOCHeading:"Blending",Description:"Compatible fragrance materials.",Information:[
-      {ReferenceNumber:0,Description:"Blends Well With",Value:{StringWithMarkup:mat.blends_well_with.map(s=>({String:s}))}}
+      {ReferenceNumber:0,Description:"Blends Well With",Value:{StringWithMarkup:pf.blends_with.map(s=>({String:s}))}}
     ]});
   }
   return sections;
 }
 
 function buildLocalRecord(mat) {
+  const rec = mat.record, id = rec.identifiers, nm = rec.names, pr = rec.properties;
   const sections = [];
 
-  // Names and Identifiers
   const namesSec = [];
-  if (mat.cas_number) namesSec.push({TOCHeading:"CAS",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.cas_number}]}}]});
-  if (mat.fema_number) namesSec.push({TOCHeading:"FEMA Number",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.fema_number}]}}]});
-  if (mat.iupac_name) namesSec.push({TOCHeading:"IUPAC Name",Description:"Chemical name computed from structure based on IUPAC nomenclature standards.",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.iupac_name}]}}]});
-  if (mat.synonyms.length) namesSec.push({TOCHeading:"Synonyms",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:mat.synonyms.map(s=>({String:s}))}}]});
-  if (namesSec.length) sections.push({TOCHeading:"Names and Identifiers",Description:"Chemical names, synonyms, identifiers, and descriptors.",Section:namesSec});
+  if (id.cas) namesSec.push({TOCHeading:"CAS",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:id.cas}]}}]});
+  if (id.fema) namesSec.push({TOCHeading:"FEMA Number",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:String(id.fema)}]}}]});
+  if (id.iupac) namesSec.push({TOCHeading:"IUPAC Name",Description:"Chemical name.",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:id.iupac}]}}]});
+  if (nm.synonyms.length) namesSec.push({TOCHeading:"Synonyms",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:nm.synonyms.map(s=>({String:s}))}}]});
+  if (namesSec.length) sections.push({TOCHeading:"Names and Identifiers",Description:"Chemical names, synonyms, identifiers.",Section:namesSec});
 
-  // Chemical and Physical Properties
   const chemSec = [];
-  if (mat.molecular_formula) chemSec.push({TOCHeading:"Molecular Formula",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.molecular_formula}]}}]});
-  if (mat.molecular_weight) chemSec.push({TOCHeading:"Molecular Weight",Information:[{ReferenceNumber:0,Value:{Number:[parseFloat(mat.molecular_weight)]}}]});
-  if (mat.exact_mass) chemSec.push({TOCHeading:"Exact Mass",Information:[{ReferenceNumber:0,Value:{Number:[parseFloat(mat.exact_mass)]}}]});
-  if (mat.xlogp) chemSec.push({TOCHeading:"XLogP",Information:[{ReferenceNumber:0,Value:{Number:[parseFloat(mat.xlogp)]}}]});
-  if (mat.tpsa) chemSec.push({TOCHeading:"TPSA",Information:[{ReferenceNumber:0,Value:{Number:[parseFloat(mat.tpsa)]}}]});
-  if (mat.hbond_donor) chemSec.push({TOCHeading:"H-Bond Donor Count",Information:[{ReferenceNumber:0,Value:{Number:[parseInt(mat.hbond_donor)]}}]});
-  if (mat.hbond_acceptor) chemSec.push({TOCHeading:"H-Bond Acceptor Count",Information:[{ReferenceNumber:0,Value:{Number:[parseInt(mat.hbond_acceptor)]}}]});
-  if (mat.rotatable_bond) chemSec.push({TOCHeading:"Rotatable Bond Count",Information:[{ReferenceNumber:0,Value:{Number:[parseInt(mat.rotatable_bond)]}}]});
-  if (mat.heavy_atom) chemSec.push({TOCHeading:"Heavy Atom Count",Information:[{ReferenceNumber:0,Value:{Number:[parseInt(mat.heavy_atom)]}}]});
-  if (mat.smiles) chemSec.push({TOCHeading:"Canonical SMILES",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.smiles}]}}]});
-  if (mat.inchi) chemSec.push({TOCHeading:"InChI",Description:"International Chemical Identifier.",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:mat.inchi}]}}]});
+  if (id.molecular_formula) chemSec.push({TOCHeading:"Molecular Formula",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:id.molecular_formula}]}}]});
+  if (pr.molecular_weight) chemSec.push({TOCHeading:"Molecular Weight",Information:[{ReferenceNumber:0,Value:{Number:[pr.molecular_weight]}}]});
+  if (pr.exact_mass) chemSec.push({TOCHeading:"Exact Mass",Information:[{ReferenceNumber:0,Value:{Number:[pr.exact_mass]}}]});
+  if (pr.xlogp!=null) chemSec.push({TOCHeading:"XLogP",Information:[{ReferenceNumber:0,Value:{Number:[pr.xlogp]}}]});
+  if (pr.tpsa!=null) chemSec.push({TOCHeading:"TPSA",Information:[{ReferenceNumber:0,Value:{Number:[pr.tpsa]}}]});
+  if (pr.hbond_donor!=null) chemSec.push({TOCHeading:"H-Bond Donor Count",Information:[{ReferenceNumber:0,Value:{Number:[pr.hbond_donor]}}]});
+  if (pr.hbond_acceptor!=null) chemSec.push({TOCHeading:"H-Bond Acceptor Count",Information:[{ReferenceNumber:0,Value:{Number:[pr.hbond_acceptor]}}]});
+  if (pr.rotatable_bonds!=null) chemSec.push({TOCHeading:"Rotatable Bond Count",Information:[{ReferenceNumber:0,Value:{Number:[pr.rotatable_bonds]}}]});
+  if (pr.heavy_atoms!=null) chemSec.push({TOCHeading:"Heavy Atom Count",Information:[{ReferenceNumber:0,Value:{Number:[pr.heavy_atoms]}}]});
+  if (id.canonical_smiles) chemSec.push({TOCHeading:"Canonical SMILES",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:id.canonical_smiles}]}}]});
+  if (id.inchi) chemSec.push({TOCHeading:"InChI",Description:"International Chemical Identifier.",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:id.inchi}]}}]});
   if (chemSec.length) sections.push({TOCHeading:"Chemical and Physical Properties",Description:"Structural descriptors and computed properties.",Section:chemSec});
 
-  // Structures (image link)
-  if (mat._cid) {
-    sections.push({TOCHeading:"Structures",Description:"Structure depictions of this compound.",Section:[
+  if (id.pubchem_cid) {
+    sections.push({TOCHeading:"Structures",Description:"Structure depictions.",Section:[
       {TOCHeading:"2D Structure",Information:[{ReferenceNumber:0,Value:{Boolean:[true]}}],
-        URL:`https://pubchem.ncbi.nlm.nih.gov/image/imgsrv.fcgi?cid=${mat._cid}&t=l`}
+        URL:`https://pubchem.ncbi.nlm.nih.gov/image/imgsrv.fcgi?cid=${id.pubchem_cid}&t=l`}
     ]});
   }
 
@@ -1802,14 +1802,14 @@ function buildLocalRecord(mat) {
   return {
     Record: {
       RecordType: "CID",
-      RecordNumber: mat._cid || null,
-      RecordTitle: mat.name,
+      RecordNumber: id.pubchem_cid || null,
+      RecordTitle: nm.canonical,
       Section: sections
     }
   };
 }
 
-// ═══ MODULE: JSON Export ═══
+// ===== JSON Export =====
 async function downloadJSON() {
   const found = results.filter(r=>r.found);
   if (!found.length) return;
@@ -2167,7 +2167,7 @@ async function downloadJSON() {
   btn.style.opacity = "";
 }
 
-// ═══ MODULE: Print / PDF ═══
+// ===== Print / PDF =====
 async function preparePrint(full=true) {
   if (full) {
     // Load all PubChem data that hasn't been fetched yet
@@ -2235,21 +2235,23 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.dl-wrap')) closeDlMenu();
 });
 
-// Material type classification (used in app + JSON)
-// ═══ MODULE: Classification ═══
+// ===== Classification =====
 function classifyMaterialType(mat) {
-  const n = (mat.name || '').toLowerCase();
-  const syns = (mat.synonyms || []).join(' ').toLowerCase();
-  const desc = ((mat.odor_description || '') + ' ' + (mat.usage_levels || '')).toLowerCase();
-  const odorType = (mat.odor_type || '').toLowerCase();
+  const r = mat.record || mat; // support both result objects and raw DB entries
+  const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, id = r.identifiers || {};
+  const n = (nm.canonical || mat.name || '').toLowerCase();
+  const syns = (nm.synonyms || mat.synonyms || []).join(' ').toLowerCase();
+  const desc = ((pf.odor_description || mat.odor_description || '') + ' ' + (sf.usage_levels || mat.usage_levels || '')).toLowerCase();
+  const odorType = (pf.odor_type || mat.odor_type || '').toLowerCase();
+  const note = (pf.note || mat.note_classification || mat.note || '').toLowerCase();
+  const cas = id.cas || mat.cas_number || mat.cas || '';
   const all = n + ' ' + syns + ' ' + desc + ' ' + odorType;
-  // Additives / Preservatives / Stabilizers (not aroma chemicals)
-  if (/\b(preservative|biocide|antioxidant|stabilizer|additive)\b/i.test(all) || /^(additive|base\/additive)$/i.test(mat.note||'')) return 'additive';
-  if (MIXTURES.has(mat.cas_number)) return 'natural_extract';
+  if (/\b(preservative|biocide|antioxidant|stabilizer|additive)\b/i.test(all) || /^(additive|base\/additive)$/i.test(note)) return 'additive';
+  if (MIXTURES.has(cas)) return 'natural_extract';
   if (/\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i.test(all)) return 'natural_extract';
   if (/\b(solvent|carrier|diluent|emollient|virtually odorless|odorless)\b/i.test(all)) return 'solvent_carrier';
   if (/\b(isododecane|dipropylene glycol|isopropyl myristate|triethyl citrate|benzyl benzoate)\b/i.test(n)) return 'solvent_carrier';
-  if (/\b(natural|isolate|from .* oil|occurs in)\b/i.test(all) && !MIXTURES.has(mat.cas_number)) return 'natural_isolate';
+  if (/\b(natural|isolate|from .* oil|occurs in)\b/i.test(all) && !MIXTURES.has(cas)) return 'natural_isolate';
   return 'single_molecule';
 }
 const MATERIAL_TYPE_LABELS = {
@@ -2260,10 +2262,11 @@ const MATERIAL_TYPE_LABELS = {
   'single_molecule': 'Aroma Chemical'
 };
 
-// Industry tags classification
 function getBanStatus(mat) {
-  const ifra = (mat.ifra_guidelines || '').toLowerCase();
-  const usage = (mat.usage_levels || '').toLowerCase();
+  const r = mat.record || mat;
+  const sf = r.safety || {};
+  const ifra = (sf.ifra_guideline || mat.ifra_guidelines || '').toLowerCase();
+  const usage = (sf.usage_levels || mat.usage_levels || '').toLowerCase();
   const all = ifra + ' ' + usage;
   if (/prohibited\s*worldwide|\bbanned\b(?!.*\beu\b)/i.test(all) && !/\beu\b/i.test(ifra))
     return 'worldwide';
@@ -2274,16 +2277,18 @@ function getBanStatus(mat) {
 function isBannedEU(mat) { return getBanStatus(mat) !== null; }
 
 function classifyIndustryTags(mat) {
+  const r = mat.record || mat;
+  const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, md = r.metadata || {};
   const tags = [];
-  const n = (mat.name || '').toLowerCase();
-  const desc = (mat.odor_description || '').toLowerCase();
-  const odorType = (mat.odor_type || '').toLowerCase();
-  const syns = (mat.synonyms || []).join(' ').toLowerCase();
-  const pdStr = mat.pubchem_sections ? JSON.stringify(mat.pubchem_sections).toLowerCase() : '';
+  const n = (nm.canonical || mat.name || '').toLowerCase();
+  const desc = (pf.odor_description || mat.odor_description || '').toLowerCase();
+  const odorType = (pf.odor_type || mat.odor_type || '').toLowerCase();
+  const syns = (nm.synonyms || mat.synonyms || []).join(' ').toLowerCase();
+  const pdStr = (md.pubchem_sections || mat.pubchem_sections) ? JSON.stringify(md.pubchem_sections || mat.pubchem_sections).toLowerCase() : '';
+  const cas = (r.identifiers || {}).cas || mat.cas_number || mat.cas || '';
   const banned = isBannedEU(mat);
 
-  // Detect non-aroma functional materials (preservatives, antioxidants, stabilizers) — but NOT solvents
-  const isSolvent = /\bsolvent\b/i.test(odorType + ' ' + desc + ' ' + (mat.note_classification||''));
+  const isSolvent = /\bsolvent\b/i.test(odorType + ' ' + desc + ' ' + (pf.note || mat.note_classification || mat.note || ''));
   const isFunctional = !isSolvent && /preservative|biocide|antioxidant|stabilizer/i.test(odorType + ' ' + desc);
   const hasRealOdor = (mat.odor_description || mat.odor_type || mat.odor_strength)
     && !isFunctional
