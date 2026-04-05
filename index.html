@@ -1046,7 +1046,8 @@ function _computeClassification(mat) {
 function _applyLocalMatch(mat, match) {
   const cas = (() => {
     if (match.type==='cas_exact' && DB[match.term]) return match.term;
-    return TRADES[match.term] || NAME_TO_CAS[match.term] || (SYN_IX[match.term]?.cas);
+    const t = (match.term||'').toLowerCase();
+    return TRADES[t] || NAME_TO_CAS[t] || (SYN_IX[t]?.cas);
   })();
   if (!cas || !DB[cas]) return false;
   mat.record.match = match;
