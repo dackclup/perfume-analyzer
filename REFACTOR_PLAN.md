@@ -1,5 +1,43 @@
 # Perfume Analyzer — Refactor Plan
 
+## CHANGELOG
+
+### 2026-04-05 — Search Pipeline Refactor (P0+P1)
+
+**Files changed:** `index.html`, `perfumery_data.js`, `REFACTOR_PLAN.md`
+
+**Search accuracy improvements:**
+1. Replaced monolithic `scrapeMaterial()` with modular matcher pipeline:
+   - `matchByCAS()` → `matchByCanonicalName()` → `matchBySynonym()` → `matchByTradeName()` → `matchByAlias()` → `matchFuzzyLocal()` → PubChem fallbacks
+2. Each matcher returns structured `MatchResult` with `{type, confidence, input, term, canonical, reason, source, ambiguous_candidates}`
+3. Fuzzy threshold raised from 0.6 → 0.8 (prevents false positives)
+4. Synonym blacklist blocks generic terms: "pea", "pg", "alcohol", "oil", "musk", "acid", "ester", "water", "base", "note", "top"
+5. Risky synonyms ("ipm", "dpg", "mdj", "ies", "oud") get reduced confidence (0.80 vs 0.95)
+6. Ambiguous matches (below threshold) return candidates instead of silently picking wrong compound
+7. "Did you mean?" UI shows clickable suggestions for ambiguous results
+8. Match type + confidence % shown on each result card: `[trade_exact, 99%]`
+9. Fixed `bestScore` undefined bug in old fuzzy match confidence calculation
+10. Deduplication by CAS in fuzzy candidate list
+
+**Data cleanup:**
+- Removed DEET (insecticide), Hyraceum (empty CAS), Benzisothiazolinone, Phenoxyethanol from DB
+- Removed blacklisted synonyms from trade_names index
+- DB: 403 entries, 916 trade names
+
+**Bugs fixed:**
+- `bestScore` variable referenced outside `fuzzyMatchDB()` scope → now returned from matcher
+- Empty CAS entries could crash indexing → removed
+- Generic synonyms like "alcohol" matched Ethanol instead of showing error → blacklisted
+
+**What remains for later:**
+- Full schema migration (Section B) to typed record with null instead of ""
+- Numeric fields stored as strings → should be numbers
+- Precomputed classification caching
+- File structure separation
+- `ambiguous_candidates` in JSON export
+
+---
+
 ## A. สรุปปัญหา
 
 ### Data Schema
