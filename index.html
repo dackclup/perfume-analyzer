@@ -777,10 +777,10 @@ async function doSearch(term) {
         const mat = r.value;
         if (mat.found) {
           results.unshift(mat);
-        } else if (mat._ambiguous && mat._match?.ambiguous_candidates?.length) {
-          _showDidYouMean(mat.name, mat._match.ambiguous_candidates);
+        } else if (mat._ambiguous && mat.record.match?.ambiguous_candidates?.length) {
+          _showDidYouMean(mat.record.names.canonical, mat.record.match.ambiguous_candidates);
         } else {
-          showSearchError(`'${mat.name}' — ${mat._notPerfumery ? 'No data (not a perfumery material)' : 'Not found'}`);
+          showSearchError(`'${mat.record.names.canonical}' — ${mat._notPerfumery ? 'No data (not a perfumery material)' : 'Not found'}`);
         }
       }
     });
@@ -866,7 +866,7 @@ function getGHSPictograms(mat) {
   }
   // Fallback for banned/phototoxic from local DB
   const codes = new Set();
-  const ifra = (mat.ifra_guidelines||'').toLowerCase();
+  const ifra = (mat.record?.safety?.ifra_guideline||'').toLowerCase();
   if (/banned|prohibit/i.test(ifra)) codes.add('GHS08');
   if (/phototox/i.test(ifra)) codes.add('GHS07');
   mat._ghsPictograms = [...codes].sort();
@@ -882,27 +882,28 @@ function renderGHSIcons(mat) {
 }
 
 function _applyPubchemProps(mat, propsData, synsData, descData) {
+  const id = mat.record.identifiers, pr = mat.record.properties, nm = mat.record.names;
   if (propsData) {
     const p = propsData.PropertyTable?.Properties?.[0] || {};
-    mat.molecular_formula = p.MolecularFormula || null;
-    mat.molecular_weight = p.MolecularWeight != null ? p.MolecularWeight : null;
-    mat.smiles = p.CanonicalSMILES || null;
-    mat.isomeric_smiles = p.IsomericSMILES || null;
-    mat.iupac_name = p.IUPACName || null;
-    mat.inchi = p.InChI || null;
-    mat.xlogp = p.XLogP != null ? p.XLogP : null;
-    mat.exact_mass = p.ExactMass != null ? p.ExactMass : null;
-    mat.tpsa = p.TPSA != null ? p.TPSA : null;
-    mat.hbond_donor = p.HBondDonorCount != null ? p.HBondDonorCount : null;
-    mat.hbond_acceptor = p.HBondAcceptorCount != null ? p.HBondAcceptorCount : null;
-    mat.rotatable_bond = p.RotatableBondCount != null ? p.RotatableBondCount : null;
-    mat.heavy_atom = p.HeavyAtomCount != null ? p.HeavyAtomCount : null;
+    id.molecular_formula = p.MolecularFormula || null;
+    pr.molecular_weight = p.MolecularWeight ?? null;
+    id.canonical_smiles = p.CanonicalSMILES || null;
+    id.isomeric_smiles = p.IsomericSMILES || null;
+    id.iupac = p.IUPACName || null;
+    id.inchi = p.InChI || null;
+    pr.xlogp = p.XLogP ?? null;
+    pr.exact_mass = p.ExactMass ?? null;
+    pr.tpsa = p.TPSA ?? null;
+    pr.hbond_donor = p.HBondDonorCount ?? null;
+    pr.hbond_acceptor = p.HBondAcceptorCount ?? null;
+    pr.rotatable_bonds = p.RotatableBondCount ?? null;
+    pr.heavy_atoms = p.HeavyAtomCount ?? null;
   }
   if (synsData) {
-    mat.synonyms = (synsData.InformationList?.Information?.[0]?.Synonym || []).slice(0, 30);
+    nm.synonyms = (synsData.InformationList?.Information?.[0]?.Synonym || []).slice(0, 30);
   }
   if (descData) {
-    mat._pubchemTitle = descData.InformationList?.Information?.[0]?.Title || null;
+    nm.pubchem_title = descData.InformationList?.Information?.[0]?.Title || null;
   }
 }
 
@@ -1016,7 +1017,7 @@ function matchFuzzyLocal(n) {
 function _enrichPubchem(mat, cas) {
   mat._loadPubchem = getCid(cas).then(async cid => {
     if (!cid) return;
-    mat._cid = cid;
+    mat.record.identifiers.pubchem_cid = cid;
     mat.page_url = 'https://pubchem.ncbi.nlm.nih.gov/compound/'+cid;
     mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/record/PNG?image_size=500x500';
     const [propsRes, synsRes, descRes] = await Promise.allSettled([
@@ -1035,8 +1036,8 @@ function _enrichPubchem(mat, cas) {
 // ── Helper: apply local DB match result to mat object ──
 function _computeClassification(mat) {
   if (mat.found) {
-    mat._material_type = classifyMaterialType(mat);
-    mat._industry_tags = classifyIndustryTags(mat);
+    mat.record.classification.material_type = classifyMaterialType(mat);
+    mat.record.classification.industry_tags = classifyIndustryTags(mat);
   }
 }
 
@@ -1046,9 +1047,9 @@ function _applyLocalMatch(mat, match) {
     return TRADES[match.term] || NAME_TO_CAS[match.term] || (SYN_IX[match.term]?.cas);
   })();
   if (!cas || !DB[cas]) return false;
-  mat._match = match;
-  mat.name = DB[cas].name;
-  mat.cas_number = cas;
+  mat.record.match = match;
+  mat.record.names.canonical = DB[cas].name;
+  mat.record.identifiers.cas = cas;
   mat.found = true;
   mat.match_info = (match.confidence >= 0.9 ? '\u2705 ' : '\u2139\uFE0F ') + match.reason + ' (' + cas + ')';
   applyPerfumery(mat, cas);
@@ -1061,9 +1062,7 @@ function _applyLocalMatch(mat, match) {
 // ── Main search function ──
 // ===== Canonical Record =====
 // record.* is the single source of truth for all material data.
-// Flat accessors (mat.cas_number etc) delegate to record fields
-// so write-path code (applyPerfumery, PubChem enrichment) can
-// use simple assignment syntax.
+// All read/write paths use mat.record.* directly.
 function createResult(inputName) {
   const record = {
     identifiers: { cas:null, fema:null, pubchem_cid:null, iupac:null, molecular_formula:null,
@@ -1078,52 +1077,14 @@ function createResult(inputName) {
     match: makeMatch(null, 0, inputName, null, null, null, null),
     metadata: { source:null, is_external:false, pubchem_sections:{} }
   };
-  // Result object: record is source of truth, flat accessors for render compatibility
-  const r = {
+  return {
     record,
     found: false,
-    // UI-only transient state
-    _open: false, _loadPubchem: null, _ghsCodes:null, _ghsPictograms:null, _ambiguous:false, _notPerfumery:false,
+    // UI-only transient state (not in record)
+    _open: false, _loadPubchem: null, _ghsCodes:null, _ghsPictograms:null,
+    _ambiguous:false, _notPerfumery:false,
     structure_image_url: null, page_url: null, match_info: null,
   };
-  // ── Flat accessors delegating to record ──
-  Object.defineProperties(r, {
-    name:               { get(){ return record.names.canonical; }, set(v){ record.names.canonical=v; }, enumerable:true },
-    cas_number:         { get(){ return record.identifiers.cas; }, set(v){ record.identifiers.cas=v; }, enumerable:true },
-    fema_number:        { get(){ return record.identifiers.fema; }, set(v){ record.identifiers.fema=v; }, enumerable:true },
-    iupac_name:         { get(){ return record.identifiers.iupac; }, set(v){ record.identifiers.iupac=v; }, enumerable:true },
-    molecular_formula:  { get(){ return record.identifiers.molecular_formula; }, set(v){ record.identifiers.molecular_formula=v; }, enumerable:true },
-    smiles:             { get(){ return record.identifiers.canonical_smiles; }, set(v){ record.identifiers.canonical_smiles=v; }, enumerable:true },
-    isomeric_smiles:    { get(){ return record.identifiers.isomeric_smiles; }, set(v){ record.identifiers.isomeric_smiles=v; }, enumerable:true },
-    inchi:              { get(){ return record.identifiers.inchi; }, set(v){ record.identifiers.inchi=v; }, enumerable:true },
-    molecular_weight:   { get(){ return record.properties.molecular_weight; }, set(v){ record.properties.molecular_weight=v; }, enumerable:true },
-    exact_mass:         { get(){ return record.properties.exact_mass; }, set(v){ record.properties.exact_mass=v; }, enumerable:true },
-    xlogp:              { get(){ return record.properties.xlogp; }, set(v){ record.properties.xlogp=v; }, enumerable:true },
-    tpsa:               { get(){ return record.properties.tpsa; }, set(v){ record.properties.tpsa=v; }, enumerable:true },
-    hbond_donor:        { get(){ return record.properties.hbond_donor; }, set(v){ record.properties.hbond_donor=v; }, enumerable:true },
-    hbond_acceptor:     { get(){ return record.properties.hbond_acceptor; }, set(v){ record.properties.hbond_acceptor=v; }, enumerable:true },
-    rotatable_bond:     { get(){ return record.properties.rotatable_bonds; }, set(v){ record.properties.rotatable_bonds=v; }, enumerable:true },
-    heavy_atom:         { get(){ return record.properties.heavy_atoms; }, set(v){ record.properties.heavy_atoms=v; }, enumerable:true },
-    synonyms:           { get(){ return record.names.synonyms; }, set(v){ record.names.synonyms=v; }, enumerable:true },
-    odor_description:   { get(){ return record.perfumery.odor_description; }, set(v){ record.perfumery.odor_description=v; }, enumerable:true },
-    odor_type:          { get(){ return record.perfumery.odor_type; }, set(v){ record.perfumery.odor_type=v; }, enumerable:true },
-    odor_strength:      { get(){ return record.perfumery.odor_strength; }, set(v){ record.perfumery.odor_strength=v; }, enumerable:true },
-    note_classification:{ get(){ return record.perfumery.note; }, set(v){ record.perfumery.note=v; }, enumerable:true },
-    tenacity:           { get(){ return record.perfumery.tenacity; }, set(v){ record.perfumery.tenacity=v; }, enumerable:true },
-    tenacity_hours:     { get(){ return record.perfumery.tenacity_hours; }, set(v){ record.perfumery.tenacity_hours=v; }, enumerable:true },
-    blends_well_with:   { get(){ return record.perfumery.blends_with; }, set(v){ record.perfumery.blends_with=v; }, enumerable:true },
-    ifra_guidelines:    { get(){ return record.safety.ifra_guideline; }, set(v){ record.safety.ifra_guideline=v; }, enumerable:true },
-    usage_levels:       { get(){ return record.safety.usage_levels; }, set(v){ record.safety.usage_levels=v; }, enumerable:true },
-    pubchem_sections:   { get(){ return record.metadata.pubchem_sections; }, set(v){ record.metadata.pubchem_sections=v; }, enumerable:true },
-    _cid:               { get(){ return record.identifiers.pubchem_cid; }, set(v){ record.identifiers.pubchem_cid=v; }, enumerable:false },
-    _pubchemTitle:      { get(){ return record.names.pubchem_title; }, set(v){ record.names.pubchem_title=v; }, enumerable:false },
-    _externalPerfumery: { get(){ return record.metadata.is_external; }, set(v){ record.metadata.is_external=v; }, enumerable:false },
-    _match:             { get(){ return record.match; }, set(v){ record.match=v; }, enumerable:false },
-    _material_type:     { get(){ return record.classification.material_type; }, set(v){ record.classification.material_type=v; }, enumerable:false },
-    _industry_tags:     { get(){ return record.classification.industry_tags; }, set(v){ record.classification.industry_tags=v; }, enumerable:false },
-    _odor_source:       { get(){ return record.perfumery.odor_source; }, set(v){ record.perfumery.odor_source=v; }, enumerable:false },
-  });
-  return r;
 }
 
 async function scrapeMaterial(name) {
@@ -1139,7 +1100,7 @@ async function scrapeMaterial(name) {
   const fuzzyResult = matchFuzzyLocal(n);
   if (fuzzyResult) {
     if (fuzzyResult.type === 'ambiguous') {
-      mat._match = fuzzyResult; mat.found = false; mat._ambiguous = true;
+      mat.record.match = fuzzyResult; mat.found = false; mat._ambiguous = true;
       return mat;
     }
     if (_applyLocalMatch(mat, fuzzyResult)) return mat;
@@ -1151,14 +1112,14 @@ async function scrapeMaterial(name) {
   // Step 7: CAS via PubChem
   if (CAS_RE_SEARCH.test(n)) {
     cid = await getCid(n);
-    if (cid) { mat.cas_number = n; mat._match = makeMatch('cas_exact', 0.98, name, n, null, 'CAS lookup via PubChem', 'pubchem'); }
+    if (cid) { mat.record.identifiers.cas = n; mat.record.match = makeMatch('cas_exact', 0.98, name, n, null, 'CAS lookup via PubChem', 'pubchem'); }
   }
   // Step 8: SMILES
   if (!cid && SMILES_RE_SEARCH.test(n) && n.length > 5 && /[=#\(\)]/.test(n)) {
     try {
       const r = await fetchWithTimeout(PUBCHEM_REST+'/compound/smiles/cids/JSON?smiles='+encodeURIComponent(name.trim()));
       const d = await r.json(); cid = d.IdentifierList?.CID?.[0] || null;
-      if (cid) mat._match = makeMatch('structure_lookup', 0.90, name, name, null, 'SMILES lookup via PubChem', 'pubchem');
+      if (cid) mat.record.match = makeMatch('structure_lookup', 0.90, name, name, null, 'SMILES lookup via PubChem', 'pubchem');
     } catch(e) {}
   }
   // Step 9: InChI
@@ -1166,7 +1127,7 @@ async function scrapeMaterial(name) {
     try {
       const r = await fetchWithTimeout(PUBCHEM_REST+'/compound/inchi/cids/JSON', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'inchi='+encodeURIComponent(name.trim())});
       const d = await r.json(); cid = d.IdentifierList?.CID?.[0] || null;
-      if (cid) mat._match = makeMatch('structure_lookup', 0.95, name, name, null, 'InChI lookup via PubChem', 'pubchem');
+      if (cid) mat.record.match = makeMatch('structure_lookup', 0.95, name, name, null, 'InChI lookup via PubChem', 'pubchem');
     } catch(e) {}
   }
   // Step 10: PubChem name — validate that resolved compound actually relates to input
@@ -1184,10 +1145,10 @@ async function scrapeMaterial(name) {
       const isPlausible = titleNorm && (titleNorm.includes(inputNorm) || inputNorm.includes(titleNorm)
         || titleNorm.split(/[\s\-,]/).some(w => w.length > 3 && inputNorm.includes(w)));
       if (isPlausible) {
-        mat._match = makeMatch('pubchem_name', 0.80, name, pcTitle||name, pcTitle, 'PubChem name lookup', 'pubchem');
+        mat.record.match = makeMatch('pubchem_name', 0.80, name, pcTitle||name, pcTitle, 'PubChem name lookup', 'pubchem');
       } else {
         // Low confidence — PubChem returned something but name doesn't match well
-        mat._match = makeMatch('pubchem_name', 0.55, name, pcTitle||name, pcTitle,
+        mat.record.match = makeMatch('pubchem_name', 0.55, name, pcTitle||name, pcTitle,
           'PubChem returned "' + (pcTitle||'unknown') + '" — may not match input', 'pubchem');
       }
     }
@@ -1195,15 +1156,15 @@ async function scrapeMaterial(name) {
   // Step 11: SID — lowest confidence, always flag for verification
   if (!cid) {
     cid = await getCidViaSid(name);
-    if (cid) mat._match = makeMatch('sid_lookup', 0.50, name, name, null, 'Substance DB — verify identity', 'pubchem');
+    if (cid) mat.record.match = makeMatch('sid_lookup', 0.50, name, name, null, 'Substance DB — verify identity', 'pubchem');
   }
 
   if (!cid) return mat;
 
-  mat.found = true; mat._cid = cid;
+  mat.found = true; mat.record.identifiers.pubchem_cid = cid;
   mat.page_url = 'https://pubchem.ncbi.nlm.nih.gov/compound/'+cid;
   mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/record/PNG?image_size=500x500';
-  mat.match_info = (mat._match.confidence >= 0.9 ? '\u2705 ' : '\u2139\uFE0F ') + (mat._match.reason || 'Found via PubChem');
+  mat.match_info = (mat.record.match.confidence >= 0.9 ? '\u2705 ' : '\u2139\uFE0F ') + (mat.record.match.reason || 'Found via PubChem');
 
   // Fetch properties
   const [propsRes, synsRes, descRes] = await Promise.allSettled([
@@ -1212,28 +1173,28 @@ async function scrapeMaterial(name) {
     fetchWithTimeout(PUBCHEM_REST+'/compound/cid/'+cid+'/description/JSON').then(r=>r.json()).catch(()=>null),
   ]);
   _applyPubchemProps(mat, propsRes.status==='fulfilled'?propsRes.value:null, synsRes.status==='fulfilled'?synsRes.value:null, descRes.status==='fulfilled'?descRes.value:null);
-  if (!mat.cas_number && mat.synonyms.length) { const cas = mat.synonyms.find(s => CAS_RE_SEARCH.test(s)); if (cas) mat.cas_number = cas; }
-  if (mat.cas_number) { if (DB[mat.cas_number]) mat.name = DB[mat.cas_number].name; applyPerfumery(mat, mat.cas_number); }
+  if (!mat.record.identifiers.cas && mat.record.names.synonyms.length) { const cas = mat.record.names.synonyms.find(s => CAS_RE_SEARCH.test(s)); if (cas) mat.record.identifiers.cas = cas; }
+  if (mat.record.identifiers.cas) { if (DB[mat.record.identifiers.cas]) mat.record.names.canonical = DB[mat.record.identifiers.cas].name; applyPerfumery(mat, mat.record.identifiers.cas); }
 
   // ── Perfumery validation ──
-  if (mat.molecular_formula) {
-    const els = mat.molecular_formula.replace(/[0-9+\-\(\)]/g, '').match(/[A-Z][a-z]?/g) || [];
+  if (mat.record.identifiers.molecular_formula) {
+    const els = mat.record.identifiers.molecular_formula.replace(/[0-9+\-\(\)]/g, '').match(/[A-Z][a-z]?/g) || [];
     if (els.some(el => !AROMA_ELEMENTS_SET.has(el))) { mat.found = false; mat._notPerfumery = true; return mat; }
   }
-  const hasPerfData = mat.odor_description || mat.odor_type || mat.note_classification || mat.ifra_guidelines || mat.tenacity || MIXTURES.has(mat.cas_number) || (mat.cas_number && DB[mat.cas_number]);
+  const hasPerfData = mat.record.perfumery.odor_description || mat.record.perfumery.odor_type || mat.record.perfumery.note || mat.record.safety.ifra_guideline || mat.record.perfumery.tenacity || MIXTURES.has(mat.record.identifiers.cas) || (mat.record.identifiers.cas && DB[mat.record.identifiers.cas]);
   if (!hasPerfData) {
-    const mw = +(mat.molecular_weight||0), tpsa = +(mat.tpsa||0), xlogp = +(mat.xlogp||0), heavy = +(mat.heavy_atom||0);
-    if (!(mw >= 80 && mw <= 400 && (!mat.tpsa || tpsa < 60))) { mat.found = false; mat._notPerfumery = true; return mat; }
+    const mw = +(mat.record.properties.molecular_weight||0), tpsa = +(mat.record.properties.tpsa||0), xlogp = +(mat.record.properties.xlogp||0), heavy = +(mat.record.properties.heavy_atoms||0);
+    if (!(mw >= 80 && mw <= 400 && (!mat.record.properties.tpsa || tpsa < 60))) { mat.found = false; mat._notPerfumery = true; return mat; }
     let isPerfPC = false;
     try {
       const pvRes = await fetchWithTimeout(PUBCHEM_REST.replace('/rest/pug','')+'/rest/pug_view/data/compound/'+cid+'/JSON?heading=Use+and+Manufacturing', {}, 6000);
       isPerfPC = /fragranc|perfum|flavor|flavour|aroma\s*chemical|odor\s*agent|ifra|rifm|fema\s*\d|jecfa|essential\s*oil|fragrance\s*ingredient/i.test(JSON.stringify(await pvRes.json()));
     } catch(e) {}
     if (!isPerfPC && mw >= 80 && mw <= 400 && xlogp >= 0 && xlogp <= 6 && tpsa < 60 && heavy >= 5 && heavy <= 30) {
-      isPerfPC = /fragranc|perfum|aroma|flavor|flavour|essential oil|fema|ifra|odor|scent/i.test(mat.synonyms.join(' ').toLowerCase());
+      isPerfPC = /fragranc|perfum|aroma|flavor|flavour|essential oil|fema|ifra|odor|scent/i.test(mat.record.names.synonyms.join(' ').toLowerCase());
     }
     if (!isPerfPC) { mat.found = false; mat._notPerfumery = true; return mat; }
-    mat._externalPerfumery = true;
+    mat.record.metadata.is_external = true;
   }
 
   _computeClassification(mat);
@@ -1350,23 +1311,23 @@ function extractAllSections(sections, prefix="", depth=0) {
 }
 
 function applyPerfumery(mat, cas) {
+  const rec = mat.record, id = rec.identifiers, pf = rec.perfumery, sf = rec.safety;
   let pdb = DB[cas];
-  // Fallback: try finding CAS via synonym match from mat.name
-  if (!pdb && mat.name) {
-    const fallbackCas = NAME_TO_CAS[mat.name.toLowerCase()];
-    if (fallbackCas) { pdb = DB[fallbackCas]; cas = fallbackCas; mat.cas_number = cas; }
+  if (!pdb && rec.names.canonical) {
+    const fallbackCas = NAME_TO_CAS[rec.names.canonical.toLowerCase()];
+    if (fallbackCas) { pdb = DB[fallbackCas]; cas = fallbackCas; id.cas = cas; }
   }
   if (!pdb) return;
-  mat.odor_description = (pdb.odor && pdb.odor.description) || "";
-  mat.odor_type = (pdb.odor && pdb.odor.type) || "";
-  mat.odor_strength = (pdb.odor && pdb.odor.strength) || "";
-  mat.note_classification = pdb.note || "";
-  mat.tenacity = (pdb.performance && pdb.performance.tenacity) || "";
-  mat.tenacity_hours = (pdb.performance && pdb.performance.duration) || "";
-  mat.ifra_guidelines = (pdb.safety && pdb.safety.ifra) || "";
-  mat.usage_levels = (pdb.safety && pdb.safety.usage) || "";
-  mat.blends_well_with = pdb.blends_with || [];
-  if (pdb.fema) mat.fema_number = pdb.fema;
+  pf.odor_description = pdb.odor?.description || null;
+  pf.odor_type = pdb.odor?.type || null;
+  pf.odor_strength = pdb.odor?.strength || null;
+  pf.note = pdb.note || null;
+  pf.tenacity = pdb.performance?.tenacity || null;
+  pf.tenacity_hours = pdb.performance?.duration || null;
+  sf.ifra_guideline = pdb.safety?.ifra || null;
+  sf.usage_levels = pdb.safety?.usage || null;
+  pf.blends_with = pdb.blends_with || [];
+  if (pdb.fema) id.fema = pdb.fema;
   if (!mat.match_info) mat.match_info = "✅ CAS match (" + cas + ")";
 }
 
@@ -1578,44 +1539,44 @@ function prefetchAll() {
       img.src = mat.structure_image_url;
     }
     // Prefetch PubChem pug_view data in background
-    if (mat._cid && !mat._prefetched) {
+    if (mat.record.identifiers.pubchem_cid && !mat._prefetched) {
       mat._prefetched = true;
-      fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`, {}, 15000)
+      fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat.record.identifiers.pubchem_cid}/JSON`, {}, 15000)
         .then(r => r.json())
         .then(d => {
           const sections = d.Record?.Section || [];
-          mat.pubchem_sections = extractAllSections(sections);
-          if (!mat.fema_number) {
-            for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
+          mat.record.metadata.pubchem_sections = extractAllSections(sections);
+          if (!mat.record.identifiers.fema) {
+            for (const [heading, items] of Object.entries(mat.record.metadata.pubchem_sections)) {
               if (heading.toLowerCase().includes('fema') && items.length) {
-                mat.fema_number = items[0]; break;
+                mat.record.identifiers.fema = items[0]; break;
               }
             }
           }
           // Merge PubChem odor/description for compounds without local perfumery data
-          if (!mat.odor_description) {
-            for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
+          if (!mat.record.perfumery.odor_description) {
+            for (const [heading, items] of Object.entries(mat.record.metadata.pubchem_sections)) {
               const hl = heading.toLowerCase();
               if (hl.includes('odor') && !hl.includes('threshold') && items.length) {
-                mat.odor_description = items[0];
-                mat._odor_source = 'PubChem'; break;
+                mat.record.perfumery.odor_description = items[0];
+                mat.record.perfumery.odor_source = 'PubChem'; break;
               }
             }
           }
-          if (!mat.odor_description) {
-            for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
+          if (!mat.record.perfumery.odor_description) {
+            for (const [heading, items] of Object.entries(mat.record.metadata.pubchem_sections)) {
               const hl = heading.toLowerCase();
               if (hl.includes('physical description') && items.length) {
                 // Extract odor info from physical description
                 const odorItem = items.find(i => /odor|smell|aroma|scent/i.test(i));
                 if (odorItem) {
-                  mat.odor_description = odorItem;
-                  mat._odor_source = 'PubChem'; break;
+                  mat.record.perfumery.odor_description = odorItem;
+                  mat.record.perfumery.odor_source = 'PubChem'; break;
                 }
               }
             }
           }
-          if (mat._odor_source === 'PubChem') renderResults();
+          if (mat.record.perfumery.odor_source === 'PubChem') renderResults();
         })
         .catch(() => {});
     }
@@ -1686,26 +1647,26 @@ async function loadPubchemData(idx) {
   }
   
   const mat = results[idx];
-  if (!mat._cid) return;
+  if (!mat.record.identifiers.pubchem_cid) return;
   
   toggle.textContent = "⏳ Loading...";
   try {
     // Use prefetched data if available, otherwise fetch now
-    if (!mat.pubchem_sections || !Object.keys(mat.pubchem_sections).length) {
-      const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`, {}, 10000);
+    if (!mat.record.metadata.pubchem_sections || !Object.keys(mat.record.metadata.pubchem_sections).length) {
+      const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat.record.identifiers.pubchem_cid}/JSON`, {}, 10000);
       const d = await r.json();
       const sections = d.Record?.Section || [];
-      mat.pubchem_sections = extractAllSections(sections);
-      if (!mat.fema_number) {
-        for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
+      mat.record.metadata.pubchem_sections = extractAllSections(sections);
+      if (!mat.record.identifiers.fema) {
+        for (const [heading, items] of Object.entries(mat.record.metadata.pubchem_sections)) {
           if (heading.toLowerCase().includes('fema') && items.length) {
-            mat.fema_number = items[0]; break;
+            mat.record.identifiers.fema = items[0]; break;
           }
         }
       }
     }
     
-    dataDiv.innerHTML = renderPubchemSections(mat.pubchem_sections);
+    dataDiv.innerHTML = renderPubchemSections(mat.record.metadata.pubchem_sections);
     dataDiv.dataset.loaded = "1";
     dataDiv.classList.add("open");
     toggle.textContent = "▼ Complete PubChem Data";
@@ -1829,12 +1790,12 @@ async function downloadJSON() {
     const batch = found.slice(i, i + BATCH);
     btn.textContent = `⏳ ${i+1}/${found.length}...`;
     await Promise.allSettled(batch.map(async mat => {
-      if (mat._cid && (!mat.pubchem_sections || !Object.keys(mat.pubchem_sections).length)) {
+      if (mat.record.identifiers.pubchem_cid && (!mat.record.metadata.pubchem_sections || !Object.keys(mat.record.metadata.pubchem_sections).length)) {
         try {
-          const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat._cid}/JSON`, {}, 10000);
+          const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat.record.identifiers.pubchem_cid}/JSON`, {}, 10000);
           const d = await r.json();
           const sections = d.Record?.Section || [];
-          mat.pubchem_sections = extractAllSections(sections);
+          mat.record.metadata.pubchem_sections = extractAllSections(sections);
         } catch(e) {}
       }
     }));
@@ -2071,7 +2032,7 @@ async function downloadJSON() {
     // Add filtered PubChem sections
     if (src.metadata.pubchem_sections && Object.keys(src.metadata.pubchem_sections).length) {
       const globalSeen = new Set();
-      for (const [heading, items] of Object.entries(mat.pubchem_sections)) {
+      for (const [heading, items] of Object.entries(mat.record.metadata.pubchem_sections)) {
         const hl = heading.toLowerCase();
         // Skip excluded sections
         if (SKIP_JSON.some(k => hl.includes(k))) continue;
@@ -2150,7 +2111,7 @@ async function downloadJSON() {
     record.data_completeness_pct = calcCompleteness(record);
     record.data_source = {
       chemical_data: "PubChem (NIH/NCBI)",
-      perfumery_data: mat._odor_source === 'PubChem' ? "PubChem (partial)" : mat.odor_description ? "Local Perfumery Database" : "Not Available"
+      perfumery_data: mat.record?.perfumery?.odor_source === 'PubChem' ? "PubChem (partial)" : mat.record?.perfumery?.odor_description ? "Local Perfumery Database" : "Not Available"
     };
 
     return record;
@@ -2173,7 +2134,7 @@ async function preparePrint(full=true) {
     // Load all PubChem data that hasn't been fetched yet
     const unloaded = [];
     results.forEach((mat, idx) => {
-      if (mat.found && mat._cid) {
+      if (mat.found && mat.record.identifiers.pubchem_cid) {
         const dataDiv = document.getElementById("pcData"+idx);
         if (dataDiv && !dataDiv.dataset.loaded) unloaded.push(idx);
       }
@@ -2239,12 +2200,12 @@ document.addEventListener('click', e => {
 function classifyMaterialType(mat) {
   const r = mat.record || mat; // support both result objects and raw DB entries
   const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, id = r.identifiers || {};
-  const n = (nm.canonical || mat.name || '').toLowerCase();
-  const syns = (nm.synonyms || mat.synonyms || []).join(' ').toLowerCase();
-  const desc = ((pf.odor_description || mat.odor_description || '') + ' ' + (sf.usage_levels || mat.usage_levels || '')).toLowerCase();
-  const odorType = (pf.odor_type || mat.odor_type || '').toLowerCase();
-  const note = (pf.note || mat.note_classification || mat.note || '').toLowerCase();
-  const cas = id.cas || mat.cas_number || mat.cas || '';
+  const n = (nm.canonical || '').toLowerCase();
+  const syns = (nm.synonyms || []).join(' ').toLowerCase();
+  const desc = ((pf.odor_description || '') + ' ' + (sf.usage_levels || '')).toLowerCase();
+  const odorType = (pf.odor_type || '').toLowerCase();
+  const note = (pf.note || '').toLowerCase();
+  const cas = id.cas || '';
   const all = n + ' ' + syns + ' ' + desc + ' ' + odorType;
   if (/\b(preservative|biocide|antioxidant|stabilizer|additive)\b/i.test(all) || /^(additive|base\/additive)$/i.test(note)) return 'additive';
   if (MIXTURES.has(cas)) return 'natural_extract';
@@ -2265,8 +2226,8 @@ const MATERIAL_TYPE_LABELS = {
 function getBanStatus(mat) {
   const r = mat.record || mat;
   const sf = r.safety || {};
-  const ifra = (sf.ifra_guideline || mat.ifra_guidelines || '').toLowerCase();
-  const usage = (sf.usage_levels || mat.usage_levels || '').toLowerCase();
+  const ifra = (sf.ifra_guideline || '').toLowerCase();
+  const usage = (sf.usage_levels || '').toLowerCase();
   const all = ifra + ' ' + usage;
   if (/prohibited\s*worldwide|\bbanned\b(?!.*\beu\b)/i.test(all) && !/\beu\b/i.test(ifra))
     return 'worldwide';
@@ -2280,19 +2241,19 @@ function classifyIndustryTags(mat) {
   const r = mat.record || mat;
   const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, md = r.metadata || {};
   const tags = [];
-  const n = (nm.canonical || mat.name || '').toLowerCase();
-  const desc = (pf.odor_description || mat.odor_description || '').toLowerCase();
-  const odorType = (pf.odor_type || mat.odor_type || '').toLowerCase();
-  const syns = (nm.synonyms || mat.synonyms || []).join(' ').toLowerCase();
-  const pdStr = (md.pubchem_sections || mat.pubchem_sections) ? JSON.stringify(md.pubchem_sections || mat.pubchem_sections).toLowerCase() : '';
-  const cas = (r.identifiers || {}).cas || mat.cas_number || mat.cas || '';
+  const n = (nm.canonical || '').toLowerCase();
+  const desc = (pf.odor_description || '').toLowerCase();
+  const odorType = (pf.odor_type || '').toLowerCase();
+  const syns = (nm.synonyms || []).join(' ').toLowerCase();
+  const pdStr = md.pubchem_sections ? JSON.stringify(md.pubchem_sections).toLowerCase() : '';
+  const cas = (r.identifiers || {}).cas || '';
   const banned = isBannedEU(mat);
 
-  const isSolvent = /\bsolvent\b/i.test(odorType + ' ' + desc + ' ' + (pf.note || mat.note_classification || mat.note || ''));
+  const isSolvent = /\bsolvent\b/i.test(odorType + ' ' + desc + ' ' + (pf.note || ''));
   const isFunctional = !isSolvent && /preservative|biocide|antioxidant|stabilizer/i.test(odorType + ' ' + desc);
-  const hasRealOdor = (mat.odor_description || mat.odor_type || mat.odor_strength)
+  const hasRealOdor = (pf.odor_description || pf.odor_type || pf.odor_strength)
     && !isFunctional
-    && !/^odorless|^none$/i.test((mat.odor_strength||''));
+    && !/^odorless|^none$/i.test((pf.odor_strength||''));
 
   // Functional additives — not perfumery
   if (isFunctional) {
@@ -2301,12 +2262,12 @@ function classifyIndustryTags(mat) {
   }
 
   // Perfumery / Flavor / Cosmetics
-  if (hasRealOdor || MIXTURES.has(mat.cas_number) ||
+  if (hasRealOdor || MIXTURES.has(cas) ||
       /fragrance|perfum|aroma|odor agent/i.test(pdStr) ||
       /solvent.*carrier|carrier.*solvent|emollient/i.test(desc + ' ' + odorType)) {
     tags.push('perfumery');
     // Flavor: only if has FEMA or explicit food use, and not banned
-    if (!banned && (mat.fema_number || /flavor|flavour|food additive|fema|jecfa/i.test(pdStr))) {
+    if (!banned && (id.fema || /flavor|flavour|food additive|fema|jecfa/i.test(pdStr))) {
       tags.push('flavor');
     }
     // Cosmetics: exclude if banned in EU

@@ -1,5 +1,28 @@
 # Perfume Analyzer — Refactor Plan
 
+## Final Architecture Status
+
+**Completed:**
+- Canonical nested record (`record.*`) is the single source of truth
+- All 21 accessor proxies removed — zero flat business-field access remains
+- All write paths (applyPerfumery, _applyPubchemProps, scrapeMaterial, PubChem enrichment) write to `mat.record.*` directly
+- All read paths (render, export, classification, GHS, validation) read from `mat.record.*` directly
+- FILTER_CACHE fully decoupled from raw DB entry shape
+- Export consumes canonical record directly
+- Classification precomputed once, cached on `record.classification.*`
+- Consistent `_` prefix convention for transient UI state
+
+**Retained by design:**
+- Single-file architecture (file:// compatibility)
+- Transient UI state outside record: `found`, `_open`, `_loadPubchem`, `_ghsCodes`, `_ghsPictograms`, `_ambiguous`, `_notPerfumery`, `_prefetched`, `structure_image_url`, `page_url`, `match_info`
+- Classification functions accept both result objects and raw DB entries (dual path for FILTER_CACHE init)
+
+**Deferred:**
+- Physical file/module split (requires dev server, breaks file://)
+- Full TypeScript types (would need build step)
+
+---
+
 ## CHANGELOG
 
 ### 2026-04-05 — Canonical Record as Primary Source of Truth
