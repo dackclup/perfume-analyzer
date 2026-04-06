@@ -23,6 +23,63 @@
 
 ---
 
+## Pass-2 Status: ACCEPTED (closed)
+
+- Strict schema audit passed across `calcCompleteness`, `createResult`,
+  `_applyPubchemProps`, `applyPerfumery`, `renderResults`, `downloadJSON`,
+  and `buildLocalRecord`.
+- No schema inconsistencies found. Every field read by `calcCompleteness`
+  is actually written by `downloadJSON`. Every canonical-record path used
+  by writers and readers matches `createResult`.
+- `hasCid` detection via `record.pubchem_url` is verified sound: `mat.page_url`
+  is set in exactly two places (`_enrichPubchem` line 1053 and `scrapeMaterial`
+  line 1234), both gated on a successfully resolved CID.
+- 60/40 completeness weighting verified active: `downloadJSON` awaits
+  `mat._loadPubchem` before building the export record, so `pubchem_url`
+  is populated for all enriched materials by the time `calcCompleteness` runs.
+- No further surgical fixes required in Pass-2.
+
+## Deferred Technical Debt
+
+These items are known and intentionally deferred. None are Pass-2
+regressions; all pre-date Pass-2 or are by-design trade-offs.
+
+1. **Silent catch in `downloadJSON` pug_view retry path** (line 1888,
+   `} catch(e) {}`). If the per-batch PubChem fetch fails for one
+   material during JSON export, that material's `pubchem_sections` stays
+   empty and its `pubchem_pct` is lower than it should be. Pre-existing,
+   not flagged in earlier audits.
+
+2. **Intentional silent fallbacks in `scrapeMaterial` network branches**
+   (lines 1157, 1165, 1176, 1261). Four `} catch(e) {}` inside the
+   SMILES / InChI / PubChem-name / Use+Manufacturing fallback chain.
+   The result of each catch is immediately checked by the next
+   `if (!cid)` or `isPerfPC` test, so they cannot hide a logic bug —
+   only network errors. Acceptable.
+
+3. **`material_type` taxonomy split** between `classifyMaterialType`
+   (5 values: `single_molecule`, `natural_extract`, `natural_isolate`,
+   `solvent_carrier`, `additive`) and `_buildFilterRecord` / FILTER_CACHE
+   (4 values: `single_molecule`, `natural_extract`, `natural_isolate`,
+   `other`). The render badge and the Type filter use different
+   classifications for the same material. Not user-visible at "All",
+   but materials labelled `'other'` cannot be selected by any Type radio.
+
+4. **`NAME_TO_CAS` vs `TRADES` data collisions** for `tonka bean`,
+   `ambergris`, `norlabdane oxide` — same lowercased term resolves to
+   different CAS in the two indexes. Matcher order resolves
+   deterministically, so user-visible behavior is stable. Requires
+   chemistry judgment to fix at the data layer.
+
+5. **Limited scope of the plausibility stem helper** in `scrapeMaterial`
+   Step 10. The `_stem` regex collapses `-yl alcohol` ↔ `-anol` for
+   the phenylethyl/phenylethanol class, but does not handle other
+   English chemical-name variants like `-ic acid` ↔ `-oate`,
+   `-yl` ↔ `-ane`. Future synonym pairs in those families would
+   still depend on the token-overlap fallback.
+
+---
+
 ## CHANGELOG
 
 ### 2026-04-06 — Pass-1 correctness audit (P0/P1 fixes)
