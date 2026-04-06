@@ -25,6 +25,39 @@
 
 ## CHANGELOG
 
+### 2026-04-06 — Data-quality/UX audit fixes (filter buckets + pill ranking)
+
+**Filter classification (FILTER_CACHE):**
+- Bug: 9 legitimate perfumery solvents/carriers/antioxidants (Dipropylene
+  Glycol, Isopropyl Myristate, Propylene Glycol, Squalane, MCT Oil,
+  Isododecane, Tocopherol, Guaiazulene, and Isododecane) had empty
+  `odor.description`/`odor.type` fields in the DB, so the old
+  `hasPerfumery = odor.description || odor.type || MIXTURES.has(cas)`
+  check excluded them. They correctly had `funcRole = solvent/carrier/_other`,
+  but that wasn't consulted.
+- Fix: Extended `hasPerfumery` to also be true when `funcRole` is truthy.
+  8 of 9 orphans now correctly appear under "perfumery"/"cosmetics" filter
+  tags. Bergaptene remains excluded (correct: a phototoxin that must be
+  removed from finished products, not a perfumery ingredient).
+
+**Pill ranking (PREFIX_IX):**
+- Bug: Sort comparator used pure `b.name.length - a.name.length`, so
+  long latin/scientific synonyms like "dipteryx odorata absolute" ranked
+  before direct canonical matches like "dipropylene glycol" when user
+  typed "dip".
+- Fix: Prefer canonical-name matches first (where the indexed name
+  equals the DB canonical name), falling back to longer-first as a
+  tiebreaker. Verified: "dip" now shows Dipropylene Glycol first;
+  "lin"/"hed"/"iso"/"osm"/"ros"/"cou" all place canonical matches ahead.
+
+**DB consistency audit:**
+- 403 entries, 0 duplicate CAS, 0 duplicate canonical names, 0 empty
+  CAS, 0 non-array synonyms/blends_with, 0 invalid CAS format, 0
+  blacklisted terms still in TRADES/NAME_TO_CAS indexes.
+- Flagged (left unchanged per audit constraints): 3 name collisions
+  between NAME_TO_CAS and TRADES (`tonka bean`, `ambergris`,
+  `norlabdane oxide`) — these require chemistry judgment.
+
 ### 2026-04-05 — Fix ReferenceError in classifyIndustryTags crashing non-banned aromatic materials
 
 **Bug:** `classifyIndustryTags()` used `id.fema` on line 2281 but never declared

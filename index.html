@@ -338,7 +338,16 @@ function _addPrefix(name) {
 }
 Object.keys(TRADES).forEach(_addPrefix);
 Object.values(DB).forEach(e => (e.synonyms||[]).forEach(_addPrefix));
-for (const key in PREFIX_IX) PREFIX_IX[key].sort((a,b)=>b.name.length-a.name.length);
+// Sort PREFIX_IX buckets so canonical-name matches rank before
+// alternative synonyms/trade names (e.g. "dipropylene glycol" before
+// "dipteryx odorata absolute" when user types "dip"), falling back to
+// longer-name-first as a tiebreaker.
+for (const key in PREFIX_IX) PREFIX_IX[key].sort((a,b) => {
+  const aCanon = a.cas && DB[a.cas] && a.name === DB[a.cas].name.toLowerCase() ? 1 : 0;
+  const bCanon = b.cas && DB[b.cas] && b.name === DB[b.cas].name.toLowerCase() ? 1 : 0;
+  if (aCanon !== bCanon) return bCanon - aCanon;
+  return b.name.length - a.name.length;
+});
 
 // Build lowercase synonym→CAS index for fast fuzzy matching (keep first match per synonym)
 const SYN_IX = {};
@@ -418,7 +427,14 @@ function _buildFilterRecord(cas, entry) {
   const hasNoOdorType = !odorType || RE_ODOR_FUNC.test(entry.odor?.type||'');
 
   // Precompute industry tags
-  const hasPerfumery = !!(entry.odor?.description || entry.odor?.type || MIXTURES.has(cas));
+  // hasPerfumery = true for materials with odor data, natural mixtures, OR
+  // materials with a non-null perfumery-use function role (solvent/carrier/
+  // fixative/additive/_other). This prevents common perfumery solvents like
+  // Dipropylene Glycol, Isopropyl Myristate, Propylene Glycol, Squalane,
+  // MCT Oil, Isododecane, Tocopherol, Guaiazulene from being hidden under
+  // "perfumery"/"cosmetics" tag filters despite being legitimate perfumery
+  // formulation ingredients.
+  const hasPerfumery = !!(entry.odor?.description || entry.odor?.type || MIXTURES.has(cas) || funcRole);
   const hasFlavor = !!entry.fema;
 
   return {
