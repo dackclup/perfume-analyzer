@@ -2337,7 +2337,7 @@ const INDUSTRY_TAG_LABELS = {
   'chemical': 'Chemical', 'unclassified': 'Unclassified'
 };
 
-function esc(s) { return (s||"").replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s) { return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function toTitle(s) { return s.replace(/\b\w/g, c=>c.toUpperCase()); }
 </script>
 </body>
