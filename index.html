@@ -2172,6 +2172,21 @@ async function downloadJSON() {
         blends_well_with: (src.perfumery.blends_with||[]).length ? src.perfumery.blends_with : []
       },
       synonyms: (src.names.synonyms||[]).length ? src.names.synonyms.filter(s => !CAS_RE_SYN.test(s)) : [],
+      // Canonical-record nested views (Plan §B.1) — additive; the flat
+      // top-level material_type / industry_tags / is_external_perfumery
+      // / match / cas_number / fema_number above are kept for backwards
+      // compatibility with any existing JSON consumer.
+      classification: {
+        material_type: src.classification?.material_type ?? null,
+        industry_tags: Array.isArray(src.classification?.industry_tags) ? src.classification.industry_tags : [],
+        function: null,  // reserved by Plan §B.1; not currently computed on the record
+      },
+      metadata: {
+        source: src.metadata?.source ?? null,
+        is_external: src.metadata?.is_external ?? false,
+        has_pubchem_sections: !!(src.metadata?.pubchem_sections && Object.keys(src.metadata.pubchem_sections).length),
+        data_quality_pct: null,  // filled below after calcCompleteness runs
+      },
       pubchem_data: {},
       ai_extracted: {}
     };
@@ -2275,6 +2290,8 @@ async function downloadJSON() {
     const _cmp = calcCompleteness(record);
     record.data_completeness_pct = _cmp.overall;
     record.data_completeness = _cmp;
+    // Mirror the same value into the canonical-shape metadata block.
+    if (record.metadata) record.metadata.data_quality_pct = _cmp.overall;
     record.data_source = {
       chemical_data: "PubChem (NIH/NCBI)",
       perfumery_data: mat.record?.perfumery?.odor_source === 'PubChem' ? "PubChem (partial)" : mat.record?.perfumery?.odor_description ? "Local Perfumery Database" : "Not Available"
