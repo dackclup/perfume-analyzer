@@ -25,6 +25,50 @@
 
 ## CHANGELOG
 
+### 2026-04-06 — Pass-1 correctness audit (P0/P1 fixes)
+
+**P0 — JSON export completeness undercount:**
+- Bug: `calcCompleteness()` checked `record.identifiers?.smiles` but the
+  export schema writes `canonical_smiles`. The field was always undefined,
+  so every exported record's completeness score undercounted by 1.
+- Fix: Check `record.identifiers?.canonical_smiles`.
+
+**P1 — `natural_isolate` regex misclassifies synthetics:**
+- Bug: `RE_NATURAL_ISO = /\b(natural|isolate|from .* oil|occurs in)\b/i`
+  matched the bare word "natural", so aroma chemicals with descriptions
+  like "closest synthetic to natural sandalwood oil" (Javanol),
+  "natural sandalwood" (Firsantol), "natural feel" (Tricyclodecenyl
+  Propionate), "natural rose character" (Rosalva) were classified as
+  natural_isolate in both the render badge and FILTER_CACHE.
+- Fix: Tightened to require an explicit claim:
+  `\bisolate(?:d|s)?\b | \bfrom\s+\w+(?:\s+\w+)?\s+oil\b | \boccurs\s+in\b | \bnatural\s+(?:form|isolate|source|origin)\b`
+  L-Menthol still correctly matches ("natural form of menthol"). Javanol,
+  Firsantol, Tricyclodecenyl Propionate, Rosalva, Alpha Santalol now
+  correctly resolve to single_molecule.
+- `classifyMaterialType` now reuses the same `RE_NATURAL_ISO` constant
+  to keep render/filter classification consistent.
+
+**P1 — `classifyIndustryTags` dead branch:**
+- Bug: `if (/cosmetic.../) { tags.push('cosmetics'); } else { tags.push('cosmetics'); }`
+  — both branches pushed the same tag. Dead code.
+- Fix: Simplified to a single `if (!banned) tags.push('cosmetics')`.
+
+**P2 — Search error not cleared on pill-click or new search:**
+- Bug: `doSearch()` never called `clearSearchError()`. Pill-click leaves
+  a stale "Did you mean?" or "Not found" banner visible until the new
+  response arrives.
+- Fix: Call `clearSearchError()` at the start of `doSearch()`.
+
+**P2 — Silent error swallowing in background catches:**
+- Bug: Three `.catch(()=>{})` in `_enrichPubchem` and the PubChem GHS
+  fetch, plus `Promise.allSettled` in `doSearch` silently dropping
+  rejected items. This pattern hid the earlier `classifyIndustryTags`
+  ReferenceError for weeks.
+- Fix: Wrap `_computeClassification` calls in try/catch that logs via
+  `console.warn`, log non-`AbortError` errors in the GHS catches, and
+  log rejected `scrapeMaterial` promises (and surface them to the user
+  with a visible error banner instead of silent drop).
+
 ### 2026-04-06 — Data-quality/UX audit fixes (filter buckets + pill ranking)
 
 **Filter classification (FILTER_CACHE):**

@@ -375,7 +375,9 @@ const FUNC_TERMS = new Set(['functional','carrier','fixative','solvent','additiv
 // Pre-compiled regexes for matchesAllFilters hot path
 const RE_NOTE_OTHER = /top|middle|base/i;
 const RE_NATURAL_EXT = /\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i;
-const RE_NATURAL_ISO = /\b(natural|isolate|from .* oil|occurs in)\b/i;
+// natural_isolate must be an explicit claim; bare "natural" matches too many
+// aroma chemicals whose descriptions say "natural-like" or "natural sandalwood note".
+const RE_NATURAL_ISO = /\bisolate(?:d|s)?\b|\bfrom\s+\w+(?:\s+\w+)?\s+oil\b|\boccurs\s+in\b|\bnatural\s+(?:form|isolate|source|origin)\b/i;
 const RE_TYPE_OTHER = /\b(solvent|carrier|diluent|emollient|odorless)\b|preservative|biocide|antioxidant|stabilizer/i;
 const RE_FUNC_AROMATIC_EXCLUDE = /solvent|carrier|fixative|additive|preservative|repellent|biocide|colorant|antioxidant|emollient|denaturant|plasticizer/i;
 const RE_FUNC_OTHER = /colorant|antioxidant|emollient|phototoxic|denaturant|plasticizer|biocide|functional/i;
@@ -772,6 +774,7 @@ function _showDidYouMean(input, candidates) {
 
 // ===== Search Orchestration =====
 async function doSearch(term) {
+  clearSearchError();
   const names = term.split(',').map(s=>s.trim()).filter(Boolean);
   const existingNames = new Set(results.map(r=>(r.record?.names?.canonical||'').toLowerCase()));
   const newNames = names.filter(n=>!existingNames.has(n.toLowerCase()));
@@ -789,16 +792,19 @@ async function doSearch(term) {
     progBar.style.width = ((i/newNames.length)*100)+"%";
     progText.textContent = batch.join(', ');
     const settled = await Promise.allSettled(batch.map(n => scrapeMaterial(n)));
-    settled.forEach(r => {
-      if (r.status==='fulfilled') {
-        const mat = r.value;
-        if (mat.found) {
-          results.unshift(mat);
-        } else if (mat._ambiguous && mat.record.match?.ambiguous_candidates?.length) {
-          _showDidYouMean(mat.record.names.canonical, mat.record.match.ambiguous_candidates);
-        } else {
-          showSearchError(`'${mat.record.names.canonical}' — ${mat._notPerfumery ? 'No data (not a perfumery material)' : 'Not found'}`);
-        }
+    settled.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        console.warn('scrapeMaterial rejected for "'+batch[i]+'":', r.reason);
+        showSearchError(`'${batch[i]}' — search error (see console)`);
+        return;
+      }
+      const mat = r.value;
+      if (mat.found) {
+        results.unshift(mat);
+      } else if (mat._ambiguous && mat.record.match?.ambiguous_candidates?.length) {
+        _showDidYouMean(mat.record.names.canonical, mat.record.match.ambiguous_candidates);
+      } else {
+        showSearchError(`'${mat.record.names.canonical}' — ${mat._notPerfumery ? 'No data (not a perfumery material)' : 'Not found'}`);
       }
     });
   }
@@ -1052,11 +1058,12 @@ function _enrichPubchem(mat, cas) {
       fetchWithTimeout(PUBCHEM_REST+'/compound/cid/'+cid+'/description/JSON').then(r=>r.json()).catch(()=>null),
     ]);
     _applyPubchemProps(mat, propsRes.status==='fulfilled'?propsRes.value:null, synsRes.status==='fulfilled'?synsRes.value:null, descRes.status==='fulfilled'?descRes.value:null);
-    _computeClassification(mat);
+    try { _computeClassification(mat); } catch(e) { console.warn('_computeClassification (enrich):', e); }
     renderResults(); prefetchAll();
     fetchWithTimeout('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/'+cid+'/JSON?heading=GHS+Classification', {}, 8000)
-      .then(r=>r.json()).then(d => { mat._ghsCodes = _extractGHSFromMarkup(d.Record?.Section||[]); mat._ghsPictograms=null; renderResults(); }).catch(()=>{});
-  }).catch(()=>{});
+      .then(r=>r.json()).then(d => { mat._ghsCodes = _extractGHSFromMarkup(d.Record?.Section||[]); mat._ghsPictograms=null; renderResults(); })
+      .catch(e => { if (e?.name !== 'AbortError') console.warn('GHS fetch error:', e); });
+  }).catch(e => { if (e?.name !== 'AbortError') console.warn('_enrichPubchem error:', e); });
 }
 
 // ── Helper: apply local DB match result to mat object ──
@@ -1224,11 +1231,12 @@ async function scrapeMaterial(name) {
     mat.record.metadata.is_external = true;
   }
 
-  _computeClassification(mat);
+  try { _computeClassification(mat); } catch(e) { console.warn('_computeClassification (pubchem):', e); }
 
   // Fetch GHS
   fetchWithTimeout('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/'+cid+'/JSON?heading=GHS+Classification', {}, 8000)
-    .then(r=>r.json()).then(d => { mat._ghsCodes = _extractGHSFromMarkup(d.Record?.Section||[]); mat._ghsPictograms=null; renderResults(); }).catch(()=>{});
+    .then(r=>r.json()).then(d => { mat._ghsCodes = _extractGHSFromMarkup(d.Record?.Section||[]); mat._ghsPictograms=null; renderResults(); })
+    .catch(e => { if (e?.name !== 'AbortError') console.warn('GHS fetch (pubchem path):', e); });
 
   return mat;
 }
@@ -1977,7 +1985,7 @@ async function downloadJSON() {
       record.cas_number,
       record.identifiers?.iupac_name,
       record.identifiers?.molecular_formula,
-      record.identifiers?.smiles,
+      record.identifiers?.canonical_smiles,
       record.properties?.molecular_weight,
       record.properties?.xlogp,
       record.perfumery?.odor_description,
@@ -2251,7 +2259,7 @@ function classifyMaterialType(mat) {
   if (/\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i.test(all)) return 'natural_extract';
   if (/\b(solvent|carrier|diluent|emollient|virtually odorless|odorless)\b/i.test(all)) return 'solvent_carrier';
   if (/\b(isododecane|dipropylene glycol|isopropyl myristate|triethyl citrate|benzyl benzoate)\b/i.test(n)) return 'solvent_carrier';
-  if (/\b(natural|isolate|from .* oil|occurs in)\b/i.test(all) && !MIXTURES.has(cas)) return 'natural_isolate';
+  if (RE_NATURAL_ISO.test(all) && !MIXTURES.has(cas)) return 'natural_isolate';
   return 'single_molecule';
 }
 const MATERIAL_TYPE_LABELS = {
@@ -2310,14 +2318,8 @@ function classifyIndustryTags(mat) {
     if (!banned && (id.fema || /flavor|flavour|food additive|fema|jecfa/i.test(pdStr))) {
       tags.push('flavor');
     }
-    // Cosmetics: exclude if banned in EU
-    if (!banned) {
-      if (/cosmetic|skin|dermal|masking|emollient/i.test(pdStr)) {
-        tags.push('cosmetics');
-      } else {
-        tags.push('cosmetics');
-      }
-    }
+    // Cosmetics: tag for any perfumery material unless banned in EU
+    if (!banned) tags.push('cosmetics');
     // Add banned tag
     if (banned) {
       const scope = getBanStatus(mat);
