@@ -773,23 +773,27 @@ function fetchWithTimeout(url, opts={}, ms=8000) {
 }
 
 
-function showSearchError(msg) {
+// Append pre-escaped HTML into the searchError banner so multiple
+// per-item messages in one batch (e.g. "foo, bar, baz" all failing)
+// all stay visible instead of only the last one surviving. Callers
+// are responsible for passing already-escaped HTML; user-controlled
+// strings must go through esc() first.
+function _appendSearchError(html) {
   const el = document.getElementById('searchError');
-  el.textContent = msg;
   el.style.display = 'block';
+  el.innerHTML = el.innerHTML ? el.innerHTML + '<br>' + html : html;
+}
+function showSearchError(msg) {
+  _appendSearchError(esc(msg));
 }
 // "Not found" — neutral, non-technical, invites a spelling check.
 function showNotFoundMessage(name) {
-  const el = document.getElementById('searchError');
-  el.style.display = 'block';
-  el.innerHTML = `<span>No material found for &ldquo;${esc(name)}&rdquo;. Check the spelling or try a different name.</span>`;
+  _appendSearchError(`<span>No material found for &ldquo;${esc(name)}&rdquo;. Check the spelling or try a different name.</span>`);
 }
 // "Not a perfumery material" — chemical exists but is outside scope.
 // Uses a softer color since this is informational, not an error.
 function showNotPerfumeryMessage(name) {
-  const el = document.getElementById('searchError');
-  el.style.display = 'block';
-  el.innerHTML = `<span style="color:var(--text2);font-weight:400">&ldquo;${esc(name)}&rdquo; is a chemical, but it isn&rsquo;t classified as a perfumery raw material in this tool.</span>`;
+  _appendSearchError(`<span style="color:var(--text2);font-weight:400">&ldquo;${esc(name)}&rdquo; is a chemical, but it isn&rsquo;t classified as a perfumery raw material in this tool.</span>`);
 }
 function clearSearchError() {
   const el = document.getElementById('searchError');
@@ -807,12 +811,12 @@ function _formatBatchSummary(ambig, notPerf) {
   return parts.length ? parts.join(', ') + '.' : null;
 }
 function _showDidYouMean(input, candidates) {
-  const el = document.getElementById('searchError');
-  el.style.display = 'block';
-  el.innerHTML = `<span style="color:var(--text2);font-weight:400">No exact match for &ldquo;${esc(input)}&rdquo;. Several close matches were found &mdash; please choose one:</span> ` +
+  _appendSearchError(
+    `<span style="color:var(--text2);font-weight:400">No exact match for &ldquo;${esc(input)}&rdquo;. Several close matches were found &mdash; please choose one:</span> ` +
     candidates.map(c =>
       `<a href="#" onclick="event.preventDefault();clearSearchError();doSearch('${c.name.replace(/'/g,"\\'")}');return false" style="color:var(--accent);text-decoration:underline;margin:0 4px">${esc(c.name)} (${c.score}%)</a>`
-    ).join(' ');
+    ).join(' ')
+  );
 }
 
 // ===== Search Orchestration =====
