@@ -1127,11 +1127,32 @@ function _enrichPubchem(mat, cas) {
   }).catch(e => { if (e?.name !== 'AbortError') console.warn('_enrichPubchem error:', e); });
 }
 
+// Mirror of _buildFilterRecord's funcRole decision tree, applied to the
+// canonical record shape. Reuses the same regex constants and SPECIFIC_FUNCS
+// list (declared at module top, near FILTER_CACHE) — no regex duplication,
+// no behavior fork. Returns one of the same canonical strings FILTER_CACHE
+// emits ('_aromatic', 'solvent', 'carrier', 'fixative', 'additive',
+// 'preservative', 'repellent', '_other') or null when no rule matches.
+function classifyFunctionFromRecord(record) {
+  if (!record || !record.perfumery) return null;
+  const pf = record.perfumery, sf = record.safety || {};
+  const odorType = (pf.odor_type || '').toLowerCase();
+  const noteLow  = (pf.note || '').toLowerCase();
+  const desc     = ((pf.odor_description || '') + ' ' + (sf.usage_levels || '')).toLowerCase();
+  const funcAll  = odorType + ' ' + noteLow + ' ' + desc;
+  const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
+  if (hasRealOdor && !RE_FUNC_AROMATIC_EXCLUDE.test(funcAll)) return '_aromatic';
+  for (const f of SPECIFIC_FUNCS) { if (funcAll.includes(f)) return f; }
+  if (!hasRealOdor && RE_FUNC_OTHER.test(funcAll)) return '_other';
+  return null;
+}
+
 // ── Helper: apply local DB match result to mat object ──
 function _computeClassification(mat) {
   if (mat.found) {
     mat.record.classification.material_type = classifyMaterialType(mat);
     mat.record.classification.industry_tags = classifyIndustryTags(mat);
+    mat.record.classification.function      = classifyFunctionFromRecord(mat.record);
   }
 }
 
