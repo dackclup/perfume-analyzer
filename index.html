@@ -1654,13 +1654,23 @@ function renderResults() {
   // renderResults._statusOverride so subsequent background re-renders
   // (e.g. _enrichPubchem callbacks) don't re-apply a stale summary from
   // an earlier search.
+  // On the default (non-override) path, also append compact quick stats
+  // ("X banned", "Y external") for the current result set. These are
+  // computed lazily here; no new state, no shared mutation.
   const _baseStatus = `${results.length} material${results.length!==1?'s':''}`;
   const _override = renderResults._statusOverride;
   if (typeof _override === 'string' && _override.trim()) {
     document.getElementById("statusText").textContent = `${_baseStatus} • ${_override}`;
     renderResults._statusOverride = null;
   } else {
-    document.getElementById("statusText").textContent = _baseStatus;
+    const _bannedCount   = results.filter(r => !!getBanStatus(r)).length;
+    const _externalCount = results.filter(r => !!r.record?.metadata?.is_external).length;
+    const _stats = [];
+    if (_bannedCount)   _stats.push(`${_bannedCount} banned`);
+    if (_externalCount) _stats.push(`${_externalCount} external`);
+    document.getElementById("statusText").textContent = _stats.length
+      ? `${_baseStatus} • ${_stats.join(' • ')}`
+      : _baseStatus;
   }
   document.getElementById("downloads").style.display = results.length?"flex":"none";
 
