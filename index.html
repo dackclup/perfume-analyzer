@@ -321,6 +321,7 @@ html { scroll-behavior:smooth; }
     <a onclick="toggleDlMenu()">▼ Download</a>
     <div class="dl-menu" id="dlMenu">
       <a onclick="downloadJSON();closeDlMenu()">Save.JSON</a>
+      <a onclick="downloadCSV();closeDlMenu()">Save.CSV</a>
       <a onclick="preparePrint(false);closeDlMenu()">Save.PDF</a>
       <a onclick="preparePrint(true);closeDlMenu()">Save.PDF (Full)</a>
     </div>
@@ -2395,6 +2396,49 @@ async function downloadJSON() {
   btn.textContent = origText;
   btn.style.pointerEvents = "";
   btn.style.opacity = "";
+}
+
+// ===== CSV Export =====
+// One row per found material, read directly from src = mat.record.
+// Reuses existing globals only: getBanStatus, FILTER_CACHE. No new
+// heuristics, no duplicated parsers, no shared helpers touched.
+function downloadCSV() {
+  const found = results.filter(r => r.found);
+  if (!found.length) return;
+  // RFC 4180 field escaping: quote fields containing ", , \n, or \r;
+  // double internal quotes. null/undefined → empty string.
+  const _csv = v => {
+    if (v == null) return '';
+    const s = Array.isArray(v) ? v.join(';') : String(v);
+    return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const headers = [
+    'cas_number', 'name', 'material_type', 'function',
+    'ban_status', 'note', 'odor_description', 'usage_levels', 'industry_tags'
+  ];
+  const rows = [headers.join(',')];
+  for (const mat of found) {
+    const src = mat.record;
+    const cas = src.identifiers?.cas ?? null;
+    const fc  = cas ? FILTER_CACHE.get(cas) : null;
+    rows.push([
+      _csv(cas),
+      _csv(src.names?.canonical),
+      _csv(src.classification?.material_type),
+      _csv(fc?.funcRole ?? null),
+      _csv(getBanStatus(mat)),
+      _csv(src.perfumery?.note),
+      _csv(src.perfumery?.odor_description),
+      _csv(src.safety?.usage_levels),
+      _csv(src.classification?.industry_tags),
+    ].join(','));
+  }
+  // Prepend UTF-8 BOM so Excel opens the file with correct encoding.
+  const blob = new Blob(['\uFEFF' + rows.join('\r\n') + '\r\n'], {type: 'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'perfume-report.csv';
+  a.click();
 }
 
 // ===== Print / PDF =====
