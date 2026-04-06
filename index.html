@@ -1462,14 +1462,14 @@ function renderResults() {
     ].join('');
 
     const shortProps = [
-      pr.molecular_weight?`<span><code>MW</code> ${esc(pr.molecular_weight)}</span>`:"",
-      pr.exact_mass?`<span><code>Exact Mass</code> ${esc(pr.exact_mass)}</span>`:"",
-      pr.xlogp?`<span><code>XLogP</code> ${esc(pr.xlogp)}</span>`:"",
-      pr.tpsa?`<span><code>TPSA</code> ${esc(pr.tpsa)} Å²</span>`:"",
-      pr.hbond_donor?`<span><code>H-Donor</code> ${esc(pr.hbond_donor)}</span>`:"",
-      pr.hbond_acceptor?`<span><code>H-Acceptor</code> ${esc(pr.hbond_acceptor)}</span>`:"",
-      pr.rotatable_bonds?`<span><code>Rotatable</code> ${esc(pr.rotatable_bonds)}</span>`:"",
-      pr.heavy_atoms?`<span><code>Heavy Atoms</code> ${esc(pr.heavy_atoms)}</span>`:"",
+      pr.molecular_weight!=null?`<span><code>MW</code> ${esc(pr.molecular_weight)}</span>`:"",
+      pr.exact_mass!=null?`<span><code>Exact Mass</code> ${esc(pr.exact_mass)}</span>`:"",
+      pr.xlogp!=null?`<span><code>XLogP</code> ${esc(pr.xlogp)}</span>`:"",
+      pr.tpsa!=null?`<span><code>TPSA</code> ${esc(pr.tpsa)} Å²</span>`:"",
+      pr.hbond_donor!=null?`<span><code>H-Donor</code> ${esc(pr.hbond_donor)}</span>`:"",
+      pr.hbond_acceptor!=null?`<span><code>H-Acceptor</code> ${esc(pr.hbond_acceptor)}</span>`:"",
+      pr.rotatable_bonds!=null?`<span><code>Rotatable</code> ${esc(pr.rotatable_bonds)}</span>`:"",
+      pr.heavy_atoms!=null?`<span><code>Heavy Atoms</code> ${esc(pr.heavy_atoms)}</span>`:"",
     ].filter(Boolean).join('');
 
     const longProps = [
@@ -1620,6 +1620,7 @@ function collapseSubSections(cardBody) {
 }
 function toggleCard(idx) {
   const body = document.getElementById("body"+idx);
+  if (!body) return;
   const arrow = document.getElementById("arrow"+idx);
   const card = body.closest('.card');
   const isOpening = !body.classList.contains("open");
@@ -1737,9 +1738,10 @@ function buildPerfumerySections(mat) {
     if (sf.usage_levels) info.push({ReferenceNumber:0,Description:"Usage Levels",Value:{StringWithMarkup:[{String:sf.usage_levels}]}});
     sections.push({TOCHeading:"Perfumery Safety",Description:"IFRA restrictions and recommended usage levels.",Information:info});
   }
-  if (pf.blends_with && pf.blends_with.length) {
+  const _bw = Array.isArray(pf.blends_with) ? pf.blends_with : [];
+  if (_bw.length) {
     sections.push({TOCHeading:"Blending",Description:"Compatible fragrance materials.",Information:[
-      {ReferenceNumber:0,Description:"Blends Well With",Value:{StringWithMarkup:pf.blends_with.map(s=>({String:s}))}}
+      {ReferenceNumber:0,Description:"Blends Well With",Value:{StringWithMarkup:_bw.map(s=>({String:String(s)}))}}
     ]});
   }
   return sections;
@@ -1753,7 +1755,7 @@ function buildLocalRecord(mat) {
   if (id.cas) namesSec.push({TOCHeading:"CAS",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:id.cas}]}}]});
   if (id.fema) namesSec.push({TOCHeading:"FEMA Number",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:String(id.fema)}]}}]});
   if (id.iupac) namesSec.push({TOCHeading:"IUPAC Name",Description:"Chemical name.",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:id.iupac}]}}]});
-  if (nm.synonyms.length) namesSec.push({TOCHeading:"Synonyms",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:nm.synonyms.map(s=>({String:s}))}}]});
+  if ((nm.synonyms||[]).length) namesSec.push({TOCHeading:"Synonyms",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:(nm.synonyms||[]).map(s=>({String:String(s)}))}}]});
   if (namesSec.length) sections.push({TOCHeading:"Names and Identifiers",Description:"Chemical names, synonyms, identifiers.",Section:namesSec});
 
   const chemSec = [];
