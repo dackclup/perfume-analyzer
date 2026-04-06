@@ -23,6 +23,67 @@
 
 ---
 
+## Pass-3 Status: ACCEPTED (closed after Step 4)
+
+Pass-3 was a strictly observability-only pass: instrument the safest
+silent `catch` blocks so future runtime errors in rare PubChem fallback
+paths surface in the console instead of being swallowed silently. No
+runtime behavior, no Promise semantics, no control flow, no thresholds,
+no matchers, no data, and no UI were changed.
+
+**Catches instrumented (4 single-line edits, all logging-only):**
+
+| Step | Line | Location | Pattern |
+|---|---|---|---|
+| 1 | 1888 | `downloadJSON` PubChem pug_view retry | `console.warn('downloadJSON pug_view:', e)` |
+| 2 | 1165 | `scrapeMaterial` Step 9 InChI lookup | `console.warn('scrapeMaterial inchi lookup:', e)` |
+| 3 | 1157 | `scrapeMaterial` Step 8 SMILES lookup | `console.warn('scrapeMaterial smiles lookup:', e)` |
+| 4 | 1261 | `scrapeMaterial` Use+Manufacturing fetch (perfumery validation) | `console.warn('scrapeMaterial use+manufacturing fetch:', e)` |
+
+All four follow the same shape: `} catch(e) { if (e?.name !== 'AbortError') console.warn(<scoped tag>, e); }`. AbortError (timeout) remains silent. The catch still consumes the rejection (no re-throw), so Promise resolution and downstream control flow are unchanged.
+
+**Intentionally NOT instrumented:**
+
+- **Line 1176** — `scrapeMaterial` Step 10 PubChem name title fetch.
+  This is the highest-firing-rate empty catch in the file because
+  Step 10 is the most common PubChem fallback path and PubChem returns
+  404s for unknown user inputs as a normal outcome. Instrumenting it
+  would risk console noise during routine searching. Left as a
+  documented intentional silent catch.
+- **Lines 1056-1058 and 1240-1242** — six `.catch(()=>null)`
+  sentinel-returners on the PubChem property/synonyms/description
+  fetches in `_enrichPubchem` and `scrapeMaterial`. These are deliberate
+  sentinel-returners (the caller checks `propsRes.status === 'fulfilled'
+  ? propsRes.value : null`), not silent swallows. Logging them would
+  spam every search session with normal PubChem 404s.
+
+**Verified after Step 4:**
+- All 4 patches are 1-line catch replacements; total Pass-3 footprint
+  is 4 lines across 4 commits.
+- JS syntax clean after every step.
+- No matcher order, threshold, confidence, filter, or render template
+  changed.
+- 10-case smoke test still passes (verified during Pass-2; no Pass-3
+  edits could have changed it because all edits are inside catch blocks
+  that are not entered on the happy path).
+
+**Deferred items NOT addressed in Pass-3** (still open for a future pass
+if a concrete user need arises):
+
+1. `material_type` taxonomy split between `classifyMaterialType` and
+   `_buildFilterRecord` (16 disagreeing materials, ~10-line patch with
+   mild UI implications).
+2. `NAME_TO_CAS` ↔ `TRADES` data collisions (3 keys: `tonka bean`,
+   `ambergris`, `norlabdane oxide`) — data-only edit in `perfumery_data.js`
+   requiring a small chemistry decision.
+3. Plausibility `_stem` helper scope (handles only `-yl alcohol` ↔
+   `-anol`; doesn't cover `-ic acid` ↔ `-oate`, `-aldehyde` ↔ `-al`,
+   etc.). Each new stem rule is a chance to over-match.
+4. Line 1176 silent catch (see above).
+5. Six `.catch(()=>null)` sentinel-returners (see above).
+
+---
+
 ## Pass-2 Status: ACCEPTED (closed)
 
 - Strict schema audit passed across `calcCompleteness`, `createResult`,
