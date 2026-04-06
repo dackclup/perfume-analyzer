@@ -2186,6 +2186,10 @@ async function downloadJSON() {
     const ifra51 = parseIFRA51(src.safety.usage_levels);
     const notes = noteOneHot(src.perfumery.note);
     const banStatus = getBanStatus(mat);
+    // FILTER_CACHE is the single source of truth for funcRole. Look it up
+    // by canonical CAS and forward to the export's classification.function
+    // field below. No recomputation, no new heuristics.
+    const _fc = src.identifiers?.cas ? FILTER_CACHE.get(src.identifiers.cas) : null;
     const record = {
       name: src.names.canonical,
       pubchem_name: src.names.pubchem_title || (src.names.synonyms||[]).find(s => !CAS_RE_SYN.test(s)) || src.identifiers.iupac || src.names.canonical,
@@ -2240,7 +2244,7 @@ async function downloadJSON() {
       classification: {
         material_type: src.classification?.material_type ?? null,
         industry_tags: Array.isArray(src.classification?.industry_tags) ? src.classification.industry_tags : [],
-        function: src.classification?.function ?? null,
+        function: _fc?.funcRole ?? null,
       },
       metadata: {
         source: src.metadata?.source ?? null,
