@@ -1596,10 +1596,18 @@ function renderResults() {
   // Default status text is "N material(s)". If the most recent doSearch
   // attached a batch summary (ambiguous / not-perfumery counts), append it
   // after a bullet separator so the user sees both pieces of information.
+  // One-shot consumption: after a summary is used for one render, clear
+  // renderResults._statusOverride so subsequent background re-renders
+  // (e.g. _enrichPubchem callbacks) don't re-apply a stale summary from
+  // an earlier search.
   const _baseStatus = `${results.length} material${results.length!==1?'s':''}`;
-  document.getElementById("statusText").textContent = renderResults._statusOverride
-    ? `${_baseStatus} • ${renderResults._statusOverride}`
-    : _baseStatus;
+  const _override = renderResults._statusOverride;
+  if (typeof _override === 'string' && _override.trim()) {
+    document.getElementById("statusText").textContent = `${_baseStatus} • ${_override}`;
+    renderResults._statusOverride = null;
+  } else {
+    document.getElementById("statusText").textContent = _baseStatus;
+  }
   document.getElementById("downloads").style.display = results.length?"flex":"none";
 
   const cards = [];
