@@ -1258,7 +1258,7 @@ async function scrapeMaterial(name) {
     try {
       const pvRes = await fetchWithTimeout(PUBCHEM_REST.replace('/rest/pug','')+'/rest/pug_view/data/compound/'+cid+'/JSON?heading=Use+and+Manufacturing', {}, 6000);
       isPerfPC = /fragranc|perfum|flavor|flavour|aroma\s*chemical|odor\s*agent|ifra|rifm|fema\s*\d|jecfa|essential\s*oil|fragrance\s*ingredient/i.test(JSON.stringify(await pvRes.json()));
-    } catch(e) {}
+    } catch(e) { if (e?.name !== 'AbortError') console.warn('scrapeMaterial use+manufacturing fetch:', e); }
     if (!isPerfPC && mw >= 80 && mw <= 400 && xlogp >= 0 && xlogp <= 6 && tpsa < 60 && heavy >= 5 && heavy <= 30) {
       isPerfPC = /fragranc|perfum|aroma|flavor|flavour|essential oil|fema|ifra|odor|scent/i.test(mat.record.names.synonyms.join(' ').toLowerCase());
     }
