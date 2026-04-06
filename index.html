@@ -1162,7 +1162,7 @@ async function scrapeMaterial(name) {
       const r = await fetchWithTimeout(PUBCHEM_REST+'/compound/inchi/cids/JSON', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'inchi='+encodeURIComponent(name.trim())});
       const d = await r.json(); cid = d.IdentifierList?.CID?.[0] || null;
       if (cid) mat.record.match = makeMatch('structure_lookup', 0.95, name, name, null, 'InChI lookup via PubChem', 'pubchem');
-    } catch(e) {}
+    } catch(e) { if (e?.name !== 'AbortError') console.warn('scrapeMaterial inchi lookup:', e); }
   }
   // Step 10: PubChem name — validate that resolved compound actually relates to input
   if (!cid) {
