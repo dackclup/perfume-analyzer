@@ -1176,8 +1176,26 @@ async function scrapeMaterial(name) {
       } catch(e) {}
       const titleNorm = (pcTitle||'').toLowerCase();
       const inputNorm = n;
-      const isPlausible = titleNorm && (titleNorm.includes(inputNorm) || inputNorm.includes(titleNorm)
-        || titleNorm.split(/[\s\-,]/).some(w => w.length > 3 && inputNorm.includes(w)));
+      // Plausibility: accept only if
+      //   (a) one string contains the entire other (substring match), OR
+      //   (b) at least TWO tokens from the title appear in the input AND
+      //       the shared tokens cover ≥50% of the input characters.
+      // The old rule accepted any 4-char token shared in either direction,
+      // which admitted random PubChem hits whose titles just happened to
+      // contain a common chemistry word like "methyl" or "acid".
+      let isPlausible = false;
+      if (titleNorm) {
+        if (titleNorm.includes(inputNorm) || inputNorm.includes(titleNorm)) {
+          isPlausible = true;
+        } else {
+          const titleTokens = titleNorm.split(/[\s\-,()\[\]]+/).filter(w => w.length >= 5);
+          const inputTokens = new Set(inputNorm.split(/[\s\-,()\[\]]+/).filter(w => w.length >= 5));
+          const shared = titleTokens.filter(w => inputTokens.has(w));
+          const sharedChars = shared.reduce((n, w) => n + w.length, 0);
+          const inputLen = Math.max(inputNorm.replace(/\s+/g,'').length, 1);
+          if (shared.length >= 2 && sharedChars / inputLen >= 0.5) isPlausible = true;
+        }
+      }
       if (isPlausible) {
         mat.record.match = makeMatch('pubchem_name', 0.80, name, pcTitle||name, pcTitle, 'PubChem name lookup', 'pubchem');
       } else {
@@ -1353,15 +1371,22 @@ function applyPerfumery(mat, cas) {
     if (fallbackCas) { pdb = DB[fallbackCas]; cas = fallbackCas; id.cas = cas; }
   }
   if (!pdb) return;
-  pf.odor_description = pdb.odor?.description || null;
-  pf.odor_type = pdb.odor?.type || null;
-  pf.odor_strength = pdb.odor?.strength || null;
-  pf.note = pdb.note || null;
-  pf.tenacity = pdb.performance?.tenacity || null;
-  pf.tenacity_hours = pdb.performance?.duration || null;
-  sf.ifra_guideline = pdb.safety?.ifra || null;
-  sf.usage_levels = pdb.safety?.usage || null;
-  pf.blends_with = pdb.blends_with || [];
+  // Non-destructive overlay: only overwrite a field when the local DB
+  // actually has a truthy value for it. This protects PubChem-sourced
+  // data (e.g. odor_description extracted from a Physical Description
+  // section) from being clobbered back to null when applyPerfumery is
+  // re-run on a material whose local DB entry has empty odor fields
+  // (e.g. Dipropylene Glycol, Isopropyl Myristate).
+  const _assign = (target, key, value) => { if (value) target[key] = value; };
+  _assign(pf, 'odor_description', pdb.odor?.description);
+  _assign(pf, 'odor_type',        pdb.odor?.type);
+  _assign(pf, 'odor_strength',    pdb.odor?.strength);
+  _assign(pf, 'note',             pdb.note);
+  _assign(pf, 'tenacity',         pdb.performance?.tenacity);
+  _assign(pf, 'tenacity_hours',   pdb.performance?.duration);
+  _assign(sf, 'ifra_guideline',   pdb.safety?.ifra);
+  _assign(sf, 'usage_levels',     pdb.safety?.usage);
+  if (Array.isArray(pdb.blends_with) && pdb.blends_with.length) pf.blends_with = pdb.blends_with;
   if (pdb.fema) id.fema = pdb.fema;
   if (!mat.match_info) mat.match_info = "✅ CAS match (" + cas + ")";
 }
@@ -1980,27 +2005,46 @@ async function downloadJSON() {
   }
 
   // === Data Completeness Score ===
+  // Split completeness into local (always computable) and pubchem (only
+  // meaningful when a CID was resolved). This prevents local-only materials
+  // from being chronically under-scored just because ai_extracted.* is null.
+  // Returned shape:
+  //   { overall, local, pubchem }   (overall = local if no CID, else weighted avg)
   function calcCompleteness(record) {
-    const keyFields = [
+    const hasCid = record.identifiers?.pubchem_cid != null;
+    // Local fields: always expected for curated materials
+    const localFields = [
       record.cas_number,
-      record.identifiers?.iupac_name,
       record.identifiers?.molecular_formula,
       record.identifiers?.canonical_smiles,
       record.properties?.molecular_weight,
-      record.properties?.xlogp,
       record.perfumery?.odor_description,
       record.perfumery?.odor_type,
       record.perfumery?.note_classification,
       record.perfumery?.tenacity_hours_numeric,
       record.perfumery?.usage_level_min_pct,
+    ];
+    // PubChem-only fields: only expected when a CID was resolved
+    const pubchemFields = [
+      record.identifiers?.iupac_name,
+      record.properties?.xlogp,
       record.ai_extracted?.boiling_point_celsius,
       record.ai_extracted?.density_value,
       record.ai_extracted?.vapor_pressure_mmhg,
       record.ai_extracted?.logp_experimental,
       record.ai_extracted?.ghs_codes?.length > 0 ? true : null,
     ];
-    const filled = keyFields.filter(v => v != null && v !== "" && v !== false).length;
-    return Math.round(filled / keyFields.length * 100);
+    const isFilled = v => v != null && v !== "" && v !== false;
+    const localFilled = localFields.filter(isFilled).length;
+    const pubchemFilled = pubchemFields.filter(isFilled).length;
+    const local_pct = Math.round(localFilled / localFields.length * 100);
+    const pubchem_pct = hasCid ? Math.round(pubchemFilled / pubchemFields.length * 100) : null;
+    // Overall: if no CID, pubchem section is irrelevant and shouldn't drag
+    // the score down. If a CID exists, weight local 60% / pubchem 40%.
+    const overall = hasCid
+      ? Math.round(local_pct * 0.6 + pubchem_pct * 0.4)
+      : local_pct;
+    return { overall, local: local_pct, pubchem: pubchem_pct };
   }
 
   // Build clean JSON — consumes canonical record directly
@@ -2155,7 +2199,11 @@ async function downloadJSON() {
     if (!Object.keys(record.ai_extracted).length) delete record.ai_extracted;
 
     // === Data Completeness Score (0-100%) ===
-    record.data_completeness_pct = calcCompleteness(record);
+    // New shape: { overall, local, pubchem } — pubchem is null when no CID.
+    // Keep `data_completeness_pct` for backwards compat (= overall).
+    const _cmp = calcCompleteness(record);
+    record.data_completeness_pct = _cmp.overall;
+    record.data_completeness = _cmp;
     record.data_source = {
       chemical_data: "PubChem (NIH/NCBI)",
       perfumery_data: mat.record?.perfumery?.odor_source === 'PubChem' ? "PubChem (partial)" : mat.record?.perfumery?.odor_description ? "Local Perfumery Database" : "Not Available"
@@ -2309,6 +2357,17 @@ function classifyIndustryTags(mat) {
     return tags;
   }
 
+  // Cosmetics-only branch: solvents / carriers / diluents that are not
+  // themselves perfumery ingredients but are used in cosmetic formulation.
+  // This runs BEFORE the perfumery branch so materials like Dipropylene
+  // Glycol, Isopropyl Myristate, Propylene Glycol, Squalane get a meaningful
+  // cosmetics tag without being incorrectly tagged 'perfumery'.
+  const isCosmeticCarrier = !banned && !hasRealOdor && !MIXTURES.has(cas) && (
+    /\b(solvent|carrier|diluent|emollient)\b/i.test((pf.note||'') + ' ' + desc + ' ' + odorType) ||
+    /\b(dipropylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|propylene glycol|benzyl benzoate)\b/i.test(n)
+  );
+  if (isCosmeticCarrier) tags.push('cosmetics');
+
   // Perfumery / Flavor / Cosmetics
   if (hasRealOdor || MIXTURES.has(cas) ||
       /fragrance|perfum|aroma|odor agent/i.test(pdStr) ||
@@ -2318,8 +2377,20 @@ function classifyIndustryTags(mat) {
     if (!banned && (id.fema || /flavor|flavour|food additive|fema|jecfa/i.test(pdStr))) {
       tags.push('flavor');
     }
-    // Cosmetics: tag for any perfumery material unless banned in EU
-    if (!banned) tags.push('cosmetics');
+    // Cosmetics: narrower rule than "any non-banned perfumery material".
+    // Tag only when there's a concrete cosmetic signal:
+    //   - explicit cosmetic/skin keywords in PubChem sections, OR
+    //   - solvent/carrier/emollient function (non-aromatic functional use), OR
+    //   - MCT oil / triacetin / benzyl benzoate class (explicit carriers in name), OR
+    //   - odorless / very-low-odor ingredients that are commonly used as diluents.
+    // This makes "cosmetics" distinguishable from "perfumery" in the filter.
+    if (!banned) {
+      const cosmeticSignal =
+        /\b(cosmetic|skin|dermal|masking|emollient|carrier|diluent|excipient)\b/i.test(pdStr) ||
+        /\b(solvent|carrier|diluent|emollient)\b/i.test(desc + ' ' + odorType + ' ' + (pf.note||'')) ||
+        /\b(benzyl benzoate|dipropylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|propylene glycol)\b/i.test(n);
+      if (cosmeticSignal) tags.push('cosmetics');
+    }
     // Add banned tag
     if (banned) {
       const scope = getBanStatus(mat);
