@@ -1189,7 +1189,7 @@ function createResult(inputName) {
     perfumery: { odor_description:null, odor_type:null, odor_strength:null, odor_source:null,
       note:null, tenacity:null, tenacity_hours:null, blends_with:[] },
     safety: { ifra_guideline:null, usage_levels:null, ban_status:null, ghs_codes:[] },
-    classification: { material_type:null, industry_tags:null },
+    classification: { material_type:null, industry_tags:null, function:null },
     match: makeMatch(null, 0, inputName, null, null, null, null),
     metadata: { source:null, is_external:false, pubchem_sections:{} }
   };
@@ -2228,7 +2228,7 @@ async function downloadJSON() {
       classification: {
         material_type: src.classification?.material_type ?? null,
         industry_tags: Array.isArray(src.classification?.industry_tags) ? src.classification.industry_tags : [],
-        function: null,  // reserved by Plan §B.1; not currently computed on the record
+        function: src.classification?.function ?? null,
       },
       metadata: {
         source: src.metadata?.source ?? null,
