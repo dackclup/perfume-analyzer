@@ -1640,7 +1640,7 @@ function renderResults() {
     cards.push(`
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
-          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${MATERIAL_TYPE_LABELS[cls.material_type || classifyMaterialType(mat)]||''}</span>${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
+          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${MATERIAL_TYPE_LABELS[cls.material_type || classifyMaterialType(mat)]||''}${FUNCTION_LABELS[cls.function]?` &middot; ${FUNCTION_LABELS[cls.function]}`:''}</span>${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
@@ -2453,6 +2453,20 @@ const MATERIAL_TYPE_LABELS = {
   'natural_isolate': 'Natural Isolate',
   'solvent_carrier': 'Solvent / Carrier',
   'single_molecule': 'Aroma Chemical'
+};
+// UI-only mapping for record.classification.function. Strips the
+// leading underscore from FILTER_CACHE-style enum values for display.
+// Returns undefined for unknown / null inputs so the caller can render
+// nothing extra without showing "other" or "unknown" placeholders.
+const FUNCTION_LABELS = {
+  '_aromatic': 'aromatic',
+  'solvent': 'solvent',
+  'carrier': 'carrier',
+  'fixative': 'fixative',
+  'additive': 'additive',
+  'preservative': 'preservative',
+  'repellent': 'repellent',
+  '_other': 'other',
 };
 
 function getBanStatus(mat) {
