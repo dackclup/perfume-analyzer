@@ -1183,17 +1183,34 @@ async function scrapeMaterial(name) {
       // The old rule accepted any 4-char token shared in either direction,
       // which admitted random PubChem hits whose titles just happened to
       // contain a common chemistry word like "methyl" or "acid".
+      // Normalize chemical-name suffix variants so that English synonyms
+      // like "phenylethyl alcohol" and "2-phenylethanol" both reduce to
+      // a comparable stem ("phenylethan-"). Strips leading positional
+      // numbers and collapses "-ol"/"-yl alcohol" tail forms.
+      const _stem = s => s
+        .replace(/^\d+[-\s]*/, '')      // drop leading "2-" / "1 "
+        .replace(/\s+alcohol\b/g, 'ol') // "phenylethyl alcohol" → "phenylethylol"
+        .replace(/yl ?ol\b/g, 'anol')   // "phenylethylol" → "phenylethanol"
+        .replace(/[\s\-]+/g, '');       // strip remaining whitespace/hyphens
       let isPlausible = false;
       if (titleNorm) {
         if (titleNorm.includes(inputNorm) || inputNorm.includes(titleNorm)) {
           isPlausible = true;
         } else {
-          const titleTokens = titleNorm.split(/[\s\-,()\[\]]+/).filter(w => w.length >= 5);
-          const inputTokens = new Set(inputNorm.split(/[\s\-,()\[\]]+/).filter(w => w.length >= 5));
-          const shared = titleTokens.filter(w => inputTokens.has(w));
-          const sharedChars = shared.reduce((n, w) => n + w.length, 0);
-          const inputLen = Math.max(inputNorm.replace(/\s+/g,'').length, 1);
-          if (shared.length >= 2 && sharedChars / inputLen >= 0.5) isPlausible = true;
+          // Stem-normalized substring check (handles -ol / -yl alcohol pairs)
+          const titleStem = _stem(titleNorm);
+          const inputStem = _stem(inputNorm);
+          if (titleStem && inputStem && titleStem.length >= 5 && inputStem.length >= 5
+              && (titleStem.includes(inputStem) || inputStem.includes(titleStem))) {
+            isPlausible = true;
+          } else {
+            const titleTokens = titleNorm.split(/[\s\-,()\[\]]+/).filter(w => w.length >= 5);
+            const inputTokens = new Set(inputNorm.split(/[\s\-,()\[\]]+/).filter(w => w.length >= 5));
+            const shared = titleTokens.filter(w => inputTokens.has(w));
+            const sharedChars = shared.reduce((n, w) => n + w.length, 0);
+            const inputLen = Math.max(inputNorm.replace(/\s+/g,'').length, 1);
+            if (shared.length >= 2 && sharedChars / inputLen >= 0.5) isPlausible = true;
+          }
         }
       }
       if (isPlausible) {
@@ -1648,7 +1665,7 @@ function prefetchAll() {
           }
           if (mat.record.perfumery.odor_source === 'PubChem') renderResults();
         })
-        .catch(() => {});
+        .catch(e => { if (e?.name !== 'AbortError') console.warn('prefetchAll pug_view:', e); });
     }
   });
 }
@@ -2005,31 +2022,48 @@ async function downloadJSON() {
   }
 
   // === Data Completeness Score ===
-  // Split completeness into local (always computable) and pubchem (only
-  // meaningful when a CID was resolved). This prevents local-only materials
-  // from being chronically under-scored just because ai_extracted.* is null.
-  // Returned shape:
-  //   { overall, local, pubchem }   (overall = local if no CID, else weighted avg)
+  // Split completeness into local (curated perfumery DB) and pubchem
+  // (CID-derived chemical/physical data). This prevents local-only
+  // materials from being chronically under-scored just because PubChem
+  // wasn't consulted, and lets enriched materials get visible credit
+  // for the additional data.
+  // Returned shape: { overall, local, pubchem }
+  //   - no CID:   overall == local, pubchem == null
+  //   - with CID: overall == round(local*0.6 + pubchem*0.4)
   function calcCompleteness(record) {
-    const hasCid = record.identifiers?.pubchem_cid != null;
-    // Local fields: always expected for curated materials
+    // hasCid: derived from pubchem_url presence (the export record
+    // doesn't carry pubchem_cid as a key, but pubchem_url is set
+    // exactly when a CID was resolved at scrape time).
+    const hasCid = record.pubchem_url != null;
+    // Local fields — curated by perfumery_data.js / parsed at export.
+    // Restricted to fields that realistically come from the local DB
+    // for this codebase. molecular_formula/canonical_smiles/molecular_weight
+    // are NOT here because perfumery_data.js leaves them empty for
+    // virtually every entry; they only fill in after PubChem enrichment.
     const localFields = [
       record.cas_number,
-      record.identifiers?.molecular_formula,
-      record.identifiers?.canonical_smiles,
-      record.properties?.molecular_weight,
+      record.fema_number,
       record.perfumery?.odor_description,
       record.perfumery?.odor_type,
+      record.perfumery?.odor_strength,
       record.perfumery?.note_classification,
+      record.perfumery?.tenacity,
       record.perfumery?.tenacity_hours_numeric,
       record.perfumery?.usage_level_min_pct,
+      (record.perfumery?.blends_well_with || []).length > 0 ? true : null,
+      record.perfumery?.ifra_guidelines,
     ];
-    // PubChem-only fields: only expected when a CID was resolved
+    // PubChem fields — only expected when a CID was resolved.
     const pubchemFields = [
       record.identifiers?.iupac_name,
+      record.identifiers?.molecular_formula,
+      record.identifiers?.canonical_smiles,
+      record.identifiers?.inchi,
+      record.properties?.molecular_weight,
       record.properties?.xlogp,
+      record.properties?.tpsa,
       record.ai_extracted?.boiling_point_celsius,
-      record.ai_extracted?.density_value,
+      record.ai_extracted?.density_g_cm3,
       record.ai_extracted?.vapor_pressure_mmhg,
       record.ai_extracted?.logp_experimental,
       record.ai_extracted?.ghs_codes?.length > 0 ? true : null,
@@ -2039,8 +2073,6 @@ async function downloadJSON() {
     const pubchemFilled = pubchemFields.filter(isFilled).length;
     const local_pct = Math.round(localFilled / localFields.length * 100);
     const pubchem_pct = hasCid ? Math.round(pubchemFilled / pubchemFields.length * 100) : null;
-    // Overall: if no CID, pubchem section is irrelevant and shouldn't drag
-    // the score down. If a CID exists, weight local 60% / pubchem 40%.
     const overall = hasCid
       ? Math.round(local_pct * 0.6 + pubchem_pct * 0.4)
       : local_pct;
