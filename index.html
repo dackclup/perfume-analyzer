@@ -22,6 +22,22 @@
     --badge-base-bg: #2e1065; --badge-base-fg: #c4b5fd;
   }
 }
+/* Manual theme override — [data-theme="dark"] mirrors the @media dark block
+   above so the user toggle can force dark regardless of system preference.
+   Values are an exact copy of the @media block; no new tokens introduced. */
+[data-theme="dark"] {
+  --bg: #0e1117; --bg2: #1a2332; --text: #e8ecf0; --text2: #8899aa;
+  --accent: #7E8EA6; --border: #2a3a50; --card-bg: #1a2332;
+  --badge-top-bg: #422006; --badge-top-fg: #fbbf24;
+  --badge-mid-bg: #172554; --badge-mid-fg: #60a5fa;
+  --badge-base-bg: #2e1065; --badge-base-fg: #c4b5fd;
+}
+/* Theme toggle button — minimal, sits at top-right of the header row. */
+.header-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.header-row > div { flex:1 1 auto; min-width:0; }
+#themeToggle { margin-left:auto; font-size:1.1em; line-height:1; border:none; background:none; cursor:pointer; padding:4px 8px; border-radius:4px; color:var(--text); flex:0 0 auto; }
+#themeToggle:hover { background:var(--bg2); }
+@media print { #themeToggle { display:none !important; } }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); padding:16px; padding-bottom:60px; max-width:900px; margin:0 auto; }
 h1 { font-size:1.8em; font-weight:600; margin-bottom:4px; }
@@ -219,8 +235,13 @@ html { scroll-behavior:smooth; }
 </head>
 <body>
 <div id="top"></div>
-<h1>Perfume Raw Materials Analyzer</h1>
-<p class="subtitle">PubChem compound data + perfumery knowledge</p>
+<div class="header-row">
+  <div>
+    <h1>Perfume Raw Materials Analyzer</h1>
+    <p class="subtitle">PubChem compound data + perfumery knowledge</p>
+  </div>
+  <button id="themeToggle" type="button" aria-label="Switch to dark mode">🌙</button>
+</div>
 <hr>
 
 <div class="search-box">
@@ -2597,6 +2618,30 @@ const INDUSTRY_TAG_LABELS = {
 
 function esc(s) { return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function toTitle(s) { return s.replace(/\b\w/g, c=>c.toUpperCase()); }
+
+// ===== Manual dark-mode toggle =====
+// Respects system preference on initial load (via matchMedia) and lets
+// the user flip the theme at runtime by setting data-theme on <html>.
+// In-memory only — no localStorage, no sessionStorage. The existing
+// :root + @media (prefers-color-scheme: dark) blocks remain the default
+// fallback for users who never touch the toggle.
+(function() {
+  const root = document.documentElement;
+  const btn  = document.getElementById('themeToggle');
+  if (!btn || !root) return;
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  let currentTheme = prefersDark ? 'dark' : 'light';
+  const apply = () => {
+    root.setAttribute('data-theme', currentTheme);
+    btn.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+    btn.setAttribute('aria-label', currentTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+  };
+  apply();
+  btn.addEventListener('click', () => {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    apply();
+  });
+})();
 </script>
 </body>
 </html>
