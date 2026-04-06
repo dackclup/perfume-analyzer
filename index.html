@@ -1885,7 +1885,7 @@ async function downloadJSON() {
           const d = await r.json();
           const sections = d.Record?.Section || [];
           mat.record.metadata.pubchem_sections = extractAllSections(sections);
-        } catch(e) {}
+        } catch(e) { if (e?.name !== 'AbortError') console.warn('downloadJSON pug_view:', e); }
       }
     }));
   }
