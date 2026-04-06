@@ -294,6 +294,13 @@ html { scroll-behavior:smooth; }
       </div>
     </div>
     <div class="sub-drawer">
+      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Regulatory <span class="sub-selected" id="regSelected"></span></div>
+      <div class="sub-body" id="regFilters">
+        <label class="filter-radio"><input type="radio" name="reg" value="" checked onchange="setRegFilter(this.value)"> All</label>
+        <label class="filter-radio"><input type="radio" name="reg" value="banned" onchange="setRegFilter(this.value)"> Banned / Restricted</label>
+      </div>
+    </div>
+    <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Odor <span class="sub-selected" id="odorSelected"></span></div>
       <div class="sub-body" id="odorFilters">
         <div style="display:flex;flex-wrap:wrap;gap:4px">
@@ -410,6 +417,7 @@ const _filters = {
   type: {active: "", elId: "typeSelected"},
   func: {active: "", elId: "funcSelected"},
   tag:  {active: "", elId: "tagSelected"},
+  reg:  {active: "", elId: "regSelected"},
 };
 let activeOdorFilters = new Set();
 
@@ -492,6 +500,23 @@ for (const [cas, entry] of Object.entries(DB)) {
   FILTER_CACHE.set(cas, _buildFilterRecord(cas, entry));
 }
 
+// Regulatory filter precompute: one-time O(n) pass over raw DB entries
+// to collect CAS values whose safety text matches the same ban heuristic
+// that getBanStatus() uses for rendering cards and exports. Each raw
+// entry is wrapped in a minimal { safety: { ifra_guideline, usage_levels } }
+// shape so getBanStatus()'s canonical-record field paths resolve. This
+// guarantees "banned" means exactly the same thing across card badges,
+// JSON export, CSV export, and the new regulatory filter.
+// Note: getBanStatus is a function declaration, so forward-reference
+// via hoisting is safe here at module-level init time. Does NOT touch
+// FILTER_CACHE or _buildFilterRecord.
+const BANNED_CAS = new Set();
+for (const [cas, entry] of Object.entries(DB)) {
+  if (getBanStatus({ safety: { ifra_guideline: entry.safety?.ifra, usage_levels: entry.safety?.usage } })) {
+    BANNED_CAS.add(cas);
+  }
+}
+
 function setFilter(name, val) {
   _filters[name].active = val || "";
   const label = document.querySelector(`input[name="${name}"]:checked`);
@@ -502,6 +527,7 @@ function setTagFilter(v) { setFilter('tag', v); }
 function setFuncFilter(v) { setFilter('func', v); }
 function setTypeFilter(v) { setFilter('type', v); }
 function setNoteFilter(v) { setFilter('note', v); }
+function setRegFilter(v)  { setFilter('reg',  v); }
 
 let _visTimer;
 function _refreshPills() {
@@ -613,7 +639,7 @@ function resetAllFilters() {
   const allOdor = document.querySelector('#odorFilters .odor-tag[data-odor=""]');
   if (allOdor) allOdor.classList.add('active');
   // Update labels
-  ['tagSelected','funcSelected','typeSelected','noteSelected','odorSelected'].forEach(id => {
+  ['tagSelected','funcSelected','typeSelected','noteSelected','odorSelected','regSelected'].forEach(id => {
     document.getElementById(id).textContent = 'All';
   });
   _refreshPills();
@@ -643,7 +669,7 @@ function resetAllFilters() {
   });
   _updateFilterVisibility();
   // Set initial "All" labels
-  ['tagSelected','funcSelected','typeSelected','noteSelected','odorSelected'].forEach(id => {
+  ['tagSelected','funcSelected','typeSelected','noteSelected','odorSelected','regSelected'].forEach(id => {
     document.getElementById(id).textContent = 'All';
   });
 }
@@ -669,7 +695,7 @@ btn.addEventListener("click", () => { const v=input.value.trim(); if (v) doSearc
 // ═══════════════════════════════════════════════════════════════
 function matchesAllFilters(cas) {
   const fc = cas ? FILTER_CACHE.get(cas) : null;
-  if (!fc) return !_filters.note.active && !_filters.type.active && !_filters.func.active && !_filters.tag.active && !activeOdorFilters.size;
+  if (!fc) return !_filters.note.active && !_filters.type.active && !_filters.func.active && !_filters.tag.active && !_filters.reg.active && !activeOdorFilters.size;
 
   // Note
   const noteF = _filters.note.active;
@@ -703,12 +729,18 @@ function matchesAllFilters(cas) {
       else { if (!fc.odorTags.has(f)) return false; }
     }
   }
+  // Regulatory (banned/restricted): single O(1) Set lookup reusing the
+  // BANNED_CAS precompute built from getBanStatus at startup.
+  const regF = _filters.reg.active;
+  if (regF === 'banned') {
+    if (!BANNED_CAS.has(cas)) return false;
+  }
   return true;
 }
 
 function showPills(typed) {
   const ql = typed.toLowerCase().replace(/\s+/g,' ').trim();
-  const hasAnyFilter = _filters.note.active || _filters.type.active || _filters.func.active || _filters.tag.active || activeOdorFilters.size;
+  const hasAnyFilter = _filters.note.active || _filters.type.active || _filters.func.active || _filters.tag.active || _filters.reg.active || activeOdorFilters.size;
 
   // Existing results — exclude from pill suggestions
   const existingCas = new Set();
