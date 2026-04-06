@@ -313,6 +313,26 @@ html { scroll-behavior:smooth; }
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
+// Schema hygiene (Pass: Schema/Data Hygiene P0):
+// Normalize empty-string scalar fields on raw DB entries to `null` so the
+// in-memory data layer matches the canonical-record schema (Plan §B).
+// This is a one-time, in-memory pass — perfumery_data.js itself is left
+// unchanged (the file holds raw curated data; this shim aligns its shape
+// with the runtime schema). All readers already use truthy / `||''` /
+// optional-chaining patterns, so null behaves identically to '' for them.
+// No matcher, filter, classification, or render logic is touched.
+(function _normalizeDBSchema() {
+  const SCALAR_KEYS  = ['fema','iupac','formula','weight','smiles','inchi','pubchem_url','note'];
+  const ODOR_KEYS    = ['description','type','strength'];
+  const PERF_KEYS    = ['tenacity','duration'];
+  const SAFETY_KEYS  = ['ifra','usage'];
+  for (const e of PERFUMERY_DATA.perfumery_db) {
+    for (const k of SCALAR_KEYS) if (e[k] === '') e[k] = null;
+    if (e.odor)        for (const k of ODOR_KEYS)   if (e.odor[k] === '')        e.odor[k] = null;
+    if (e.performance) for (const k of PERF_KEYS)   if (e.performance[k] === '') e.performance[k] = null;
+    if (e.safety)      for (const k of SAFETY_KEYS) if (e.safety[k] === '')      e.safety[k] = null;
+  }
+})();
 const TRADES = PERFUMERY_DATA.trade_names;
 const MIXTURES = new Set(PERFUMERY_DATA.mixture_cas);
 
