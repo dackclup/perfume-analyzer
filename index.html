@@ -757,6 +757,19 @@ function showSearchError(msg) {
   el.textContent = msg;
   el.style.display = 'block';
 }
+// "Not found" — neutral, non-technical, invites a spelling check.
+function showNotFoundMessage(name) {
+  const el = document.getElementById('searchError');
+  el.style.display = 'block';
+  el.innerHTML = `<span>No material found for &ldquo;${esc(name)}&rdquo;. Check the spelling or try a different name.</span>`;
+}
+// "Not a perfumery material" — chemical exists but is outside scope.
+// Uses a softer color since this is informational, not an error.
+function showNotPerfumeryMessage(name) {
+  const el = document.getElementById('searchError');
+  el.style.display = 'block';
+  el.innerHTML = `<span style="color:var(--text2);font-weight:400">&ldquo;${esc(name)}&rdquo; is a chemical, but it isn&rsquo;t classified as a perfumery raw material in this tool.</span>`;
+}
 function clearSearchError() {
   const el = document.getElementById('searchError');
   el.textContent = '';
@@ -766,7 +779,7 @@ function clearSearchError() {
 function _showDidYouMean(input, candidates) {
   const el = document.getElementById('searchError');
   el.style.display = 'block';
-  el.innerHTML = `<span style="color:var(--text2)">No exact match for "${esc(input)}". Did you mean:</span> ` +
+  el.innerHTML = `<span style="color:var(--text2);font-weight:400">No exact match for &ldquo;${esc(input)}&rdquo;. Several close matches were found &mdash; please choose one:</span> ` +
     candidates.map(c =>
       `<a href="#" onclick="event.preventDefault();clearSearchError();doSearch('${c.name.replace(/'/g,"\\'")}');return false" style="color:var(--accent);text-decoration:underline;margin:0 4px">${esc(c.name)} (${c.score}%)</a>`
     ).join(' ');
@@ -803,8 +816,13 @@ async function doSearch(term) {
         results.unshift(mat);
       } else if (mat._ambiguous && mat.record.match?.ambiguous_candidates?.length) {
         _showDidYouMean(mat.record.names.canonical, mat.record.match.ambiguous_candidates);
+      } else if (mat._notPerfumery) {
+        // Pipeline found a chemical but validation classified it as outside perfumery scope.
+        // Prefer the canonical/resolved name (set by PubChem path) over the raw input.
+        showNotPerfumeryMessage(mat.record.names.canonical);
       } else {
-        showSearchError(`'${mat.record.names.canonical}' — ${mat._notPerfumery ? 'No data (not a perfumery material)' : 'Not found'}`);
+        // No local match and PubChem couldn't resolve anything.
+        showNotFoundMessage(mat.record.names.canonical);
       }
     });
   }
