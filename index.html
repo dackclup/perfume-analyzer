@@ -1154,7 +1154,7 @@ async function scrapeMaterial(name) {
       const r = await fetchWithTimeout(PUBCHEM_REST+'/compound/smiles/cids/JSON?smiles='+encodeURIComponent(name.trim()));
       const d = await r.json(); cid = d.IdentifierList?.CID?.[0] || null;
       if (cid) mat.record.match = makeMatch('structure_lookup', 0.90, name, name, null, 'SMILES lookup via PubChem', 'pubchem');
-    } catch(e) {}
+    } catch(e) { if (e?.name !== 'AbortError') console.warn('scrapeMaterial smiles lookup:', e); }
   }
   // Step 9: InChI
   if (!cid && n.startsWith('inchi=')) {
