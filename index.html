@@ -797,6 +797,15 @@ function clearSearchError() {
   el.style.display = 'none';
   el.innerHTML = '';
 }
+// Compose a short, neutral one-line summary of batch-level non-success
+// outcomes (ambiguous and not-perfumery counts). Returns null when both
+// counts are zero so the caller can preserve the default status text.
+function _formatBatchSummary(ambig, notPerf) {
+  const parts = [];
+  if (ambig)   parts.push(`${ambig} ambiguous`);
+  if (notPerf) parts.push(`${notPerf} outside perfumery scope`);
+  return parts.length ? parts.join(', ') + '.' : null;
+}
 function _showDidYouMean(input, candidates) {
   const el = document.getElementById('searchError');
   el.style.display = 'block';
@@ -818,7 +827,13 @@ async function doSearch(term) {
   const progBar = document.getElementById("progressBar");
   const progText = document.getElementById("progressText");
   prog.style.display = "block";
-  
+
+  // Batch-level counters for the post-render status summary (UX only).
+  // These do NOT influence which materials enter `results`; they only feed
+  // the optional one-line summary written into the existing statusText.
+  let _ambiguousCount = 0;
+  let _notPerfumeryCount = 0;
+
   // Parallel scraping (max 5 concurrent, fault-tolerant)
   const BATCH = 5;
   for (let i=0; i<newNames.length; i+=BATCH) {
@@ -836,10 +851,12 @@ async function doSearch(term) {
       if (mat.found) {
         results.unshift(mat);
       } else if (mat._ambiguous && mat.record.match?.ambiguous_candidates?.length) {
+        _ambiguousCount++;
         _showDidYouMean(mat.record.names.canonical, mat.record.match.ambiguous_candidates);
       } else if (mat._notPerfumery) {
         // Pipeline found a chemical but validation classified it as outside perfumery scope.
         // Prefer the canonical/resolved name (set by PubChem path) over the raw input.
+        _notPerfumeryCount++;
         showNotPerfumeryMessage(mat.record.names.canonical);
       } else {
         // No local match and PubChem couldn't resolve anything.
@@ -864,6 +881,11 @@ async function doSearch(term) {
   btn.disabled = true;
   results.forEach(r => r._open = false);
   renderResults._forceCollapse = true;
+  // Stash a one-line summary string for renderResults to surface in the
+  // status bar. Resets to null when both counts are 0 so the default
+  // "N material(s)" text returns. Persists across background re-renders
+  // (e.g. _enrichPubchem callbacks) until the next doSearch overwrites it.
+  renderResults._statusOverride = _formatBatchSummary(_ambiguousCount, _notPerfumeryCount);
   renderResults();
   // Re-show filtered pills (minus the ones just searched)
   showPills(input.value);
@@ -1546,7 +1568,13 @@ function renderResults() {
   }
   renderResults._forceCollapse = false;
   document.getElementById("statusBar").style.display = results.length?"flex":"none";
-  document.getElementById("statusText").textContent = `${results.length} material${results.length!==1?'s':''}`;
+  // Default status text is "N material(s)". If the most recent doSearch
+  // attached a batch summary (ambiguous / not-perfumery counts), append it
+  // after a bullet separator so the user sees both pieces of information.
+  const _baseStatus = `${results.length} material${results.length!==1?'s':''}`;
+  document.getElementById("statusText").textContent = renderResults._statusOverride
+    ? `${_baseStatus} • ${renderResults._statusOverride}`
+    : _baseStatus;
   document.getElementById("downloads").style.display = results.length?"flex":"none";
 
   const cards = [];
