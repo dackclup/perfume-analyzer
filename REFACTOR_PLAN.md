@@ -23,7 +23,219 @@
 
 ---
 
+## Pass-3 Status: ACCEPTED (closed after Step 4)
+
+Pass-3 was a strictly observability-only pass: instrument the safest
+silent `catch` blocks so future runtime errors in rare PubChem fallback
+paths surface in the console instead of being swallowed silently. No
+runtime behavior, no Promise semantics, no control flow, no thresholds,
+no matchers, no data, and no UI were changed.
+
+**Catches instrumented (4 single-line edits, all logging-only):**
+
+| Step | Line | Location | Pattern |
+|---|---|---|---|
+| 1 | 1888 | `downloadJSON` PubChem pug_view retry | `console.warn('downloadJSON pug_view:', e)` |
+| 2 | 1165 | `scrapeMaterial` Step 9 InChI lookup | `console.warn('scrapeMaterial inchi lookup:', e)` |
+| 3 | 1157 | `scrapeMaterial` Step 8 SMILES lookup | `console.warn('scrapeMaterial smiles lookup:', e)` |
+| 4 | 1261 | `scrapeMaterial` Use+Manufacturing fetch (perfumery validation) | `console.warn('scrapeMaterial use+manufacturing fetch:', e)` |
+
+All four follow the same shape: `} catch(e) { if (e?.name !== 'AbortError') console.warn(<scoped tag>, e); }`. AbortError (timeout) remains silent. The catch still consumes the rejection (no re-throw), so Promise resolution and downstream control flow are unchanged.
+
+**Intentionally NOT instrumented:**
+
+- **Line 1176** — `scrapeMaterial` Step 10 PubChem name title fetch.
+  This is the highest-firing-rate empty catch in the file because
+  Step 10 is the most common PubChem fallback path and PubChem returns
+  404s for unknown user inputs as a normal outcome. Instrumenting it
+  would risk console noise during routine searching. Left as a
+  documented intentional silent catch.
+- **Lines 1056-1058 and 1240-1242** — six `.catch(()=>null)`
+  sentinel-returners on the PubChem property/synonyms/description
+  fetches in `_enrichPubchem` and `scrapeMaterial`. These are deliberate
+  sentinel-returners (the caller checks `propsRes.status === 'fulfilled'
+  ? propsRes.value : null`), not silent swallows. Logging them would
+  spam every search session with normal PubChem 404s.
+
+**Verified after Step 4:**
+- All 4 patches are 1-line catch replacements; total Pass-3 footprint
+  is 4 lines across 4 commits.
+- JS syntax clean after every step.
+- No matcher order, threshold, confidence, filter, or render template
+  changed.
+- 10-case smoke test still passes (verified during Pass-2; no Pass-3
+  edits could have changed it because all edits are inside catch blocks
+  that are not entered on the happy path).
+
+**Deferred items NOT addressed in Pass-3** (still open for a future pass
+if a concrete user need arises):
+
+1. `material_type` taxonomy split between `classifyMaterialType` and
+   `_buildFilterRecord` (16 disagreeing materials, ~10-line patch with
+   mild UI implications).
+2. `NAME_TO_CAS` ↔ `TRADES` data collisions (3 keys: `tonka bean`,
+   `ambergris`, `norlabdane oxide`) — data-only edit in `perfumery_data.js`
+   requiring a small chemistry decision.
+3. Plausibility `_stem` helper scope (handles only `-yl alcohol` ↔
+   `-anol`; doesn't cover `-ic acid` ↔ `-oate`, `-aldehyde` ↔ `-al`,
+   etc.). Each new stem rule is a chance to over-match.
+4. Line 1176 silent catch (see above).
+5. Six `.catch(()=>null)` sentinel-returners (see above).
+
+---
+
+## Pass-2 Status: ACCEPTED (closed)
+
+- Strict schema audit passed across `calcCompleteness`, `createResult`,
+  `_applyPubchemProps`, `applyPerfumery`, `renderResults`, `downloadJSON`,
+  and `buildLocalRecord`.
+- No schema inconsistencies found. Every field read by `calcCompleteness`
+  is actually written by `downloadJSON`. Every canonical-record path used
+  by writers and readers matches `createResult`.
+- `hasCid` detection via `record.pubchem_url` is verified sound: `mat.page_url`
+  is set in exactly two places (`_enrichPubchem` line 1053 and `scrapeMaterial`
+  line 1234), both gated on a successfully resolved CID.
+- 60/40 completeness weighting verified active: `downloadJSON` awaits
+  `mat._loadPubchem` before building the export record, so `pubchem_url`
+  is populated for all enriched materials by the time `calcCompleteness` runs.
+- No further surgical fixes required in Pass-2.
+
+## Deferred Technical Debt
+
+These items are known and intentionally deferred. None are Pass-2
+regressions; all pre-date Pass-2 or are by-design trade-offs.
+
+1. **Silent catch in `downloadJSON` pug_view retry path** (line 1888,
+   `} catch(e) {}`). If the per-batch PubChem fetch fails for one
+   material during JSON export, that material's `pubchem_sections` stays
+   empty and its `pubchem_pct` is lower than it should be. Pre-existing,
+   not flagged in earlier audits.
+
+2. **Intentional silent fallbacks in `scrapeMaterial` network branches**
+   (lines 1157, 1165, 1176, 1261). Four `} catch(e) {}` inside the
+   SMILES / InChI / PubChem-name / Use+Manufacturing fallback chain.
+   The result of each catch is immediately checked by the next
+   `if (!cid)` or `isPerfPC` test, so they cannot hide a logic bug —
+   only network errors. Acceptable.
+
+3. **`material_type` taxonomy split** between `classifyMaterialType`
+   (5 values: `single_molecule`, `natural_extract`, `natural_isolate`,
+   `solvent_carrier`, `additive`) and `_buildFilterRecord` / FILTER_CACHE
+   (4 values: `single_molecule`, `natural_extract`, `natural_isolate`,
+   `other`). The render badge and the Type filter use different
+   classifications for the same material. Not user-visible at "All",
+   but materials labelled `'other'` cannot be selected by any Type radio.
+
+4. **`NAME_TO_CAS` vs `TRADES` data collisions** for `tonka bean`,
+   `ambergris`, `norlabdane oxide` — same lowercased term resolves to
+   different CAS in the two indexes. Matcher order resolves
+   deterministically, so user-visible behavior is stable. Requires
+   chemistry judgment to fix at the data layer.
+
+5. **Limited scope of the plausibility stem helper** in `scrapeMaterial`
+   Step 10. The `_stem` regex collapses `-yl alcohol` ↔ `-anol` for
+   the phenylethyl/phenylethanol class, but does not handle other
+   English chemical-name variants like `-ic acid` ↔ `-oate`,
+   `-yl` ↔ `-ane`. Future synonym pairs in those families would
+   still depend on the token-overlap fallback.
+
+---
+
 ## CHANGELOG
+
+### 2026-04-06 — Pass-1 correctness audit (P0/P1 fixes)
+
+**P0 — JSON export completeness undercount:**
+- Bug: `calcCompleteness()` checked `record.identifiers?.smiles` but the
+  export schema writes `canonical_smiles`. The field was always undefined,
+  so every exported record's completeness score undercounted by 1.
+- Fix: Check `record.identifiers?.canonical_smiles`.
+
+**P1 — `natural_isolate` regex misclassifies synthetics:**
+- Bug: `RE_NATURAL_ISO = /\b(natural|isolate|from .* oil|occurs in)\b/i`
+  matched the bare word "natural", so aroma chemicals with descriptions
+  like "closest synthetic to natural sandalwood oil" (Javanol),
+  "natural sandalwood" (Firsantol), "natural feel" (Tricyclodecenyl
+  Propionate), "natural rose character" (Rosalva) were classified as
+  natural_isolate in both the render badge and FILTER_CACHE.
+- Fix: Tightened to require an explicit claim:
+  `\bisolate(?:d|s)?\b | \bfrom\s+\w+(?:\s+\w+)?\s+oil\b | \boccurs\s+in\b | \bnatural\s+(?:form|isolate|source|origin)\b`
+  L-Menthol still correctly matches ("natural form of menthol"). Javanol,
+  Firsantol, Tricyclodecenyl Propionate, Rosalva, Alpha Santalol now
+  correctly resolve to single_molecule.
+- `classifyMaterialType` now reuses the same `RE_NATURAL_ISO` constant
+  to keep render/filter classification consistent.
+
+**P1 — `classifyIndustryTags` dead branch:**
+- Bug: `if (/cosmetic.../) { tags.push('cosmetics'); } else { tags.push('cosmetics'); }`
+  — both branches pushed the same tag. Dead code.
+- Fix: Simplified to a single `if (!banned) tags.push('cosmetics')`.
+
+**P2 — Search error not cleared on pill-click or new search:**
+- Bug: `doSearch()` never called `clearSearchError()`. Pill-click leaves
+  a stale "Did you mean?" or "Not found" banner visible until the new
+  response arrives.
+- Fix: Call `clearSearchError()` at the start of `doSearch()`.
+
+**P2 — Silent error swallowing in background catches:**
+- Bug: Three `.catch(()=>{})` in `_enrichPubchem` and the PubChem GHS
+  fetch, plus `Promise.allSettled` in `doSearch` silently dropping
+  rejected items. This pattern hid the earlier `classifyIndustryTags`
+  ReferenceError for weeks.
+- Fix: Wrap `_computeClassification` calls in try/catch that logs via
+  `console.warn`, log non-`AbortError` errors in the GHS catches, and
+  log rejected `scrapeMaterial` promises (and surface them to the user
+  with a visible error banner instead of silent drop).
+
+### 2026-04-06 — Data-quality/UX audit fixes (filter buckets + pill ranking)
+
+**Filter classification (FILTER_CACHE):**
+- Bug: 9 legitimate perfumery solvents/carriers/antioxidants (Dipropylene
+  Glycol, Isopropyl Myristate, Propylene Glycol, Squalane, MCT Oil,
+  Isododecane, Tocopherol, Guaiazulene, and Isododecane) had empty
+  `odor.description`/`odor.type` fields in the DB, so the old
+  `hasPerfumery = odor.description || odor.type || MIXTURES.has(cas)`
+  check excluded them. They correctly had `funcRole = solvent/carrier/_other`,
+  but that wasn't consulted.
+- Fix: Extended `hasPerfumery` to also be true when `funcRole` is truthy.
+  8 of 9 orphans now correctly appear under "perfumery"/"cosmetics" filter
+  tags. Bergaptene remains excluded (correct: a phototoxin that must be
+  removed from finished products, not a perfumery ingredient).
+
+**Pill ranking (PREFIX_IX):**
+- Bug: Sort comparator used pure `b.name.length - a.name.length`, so
+  long latin/scientific synonyms like "dipteryx odorata absolute" ranked
+  before direct canonical matches like "dipropylene glycol" when user
+  typed "dip".
+- Fix: Prefer canonical-name matches first (where the indexed name
+  equals the DB canonical name), falling back to longer-first as a
+  tiebreaker. Verified: "dip" now shows Dipropylene Glycol first;
+  "lin"/"hed"/"iso"/"osm"/"ros"/"cou" all place canonical matches ahead.
+
+**DB consistency audit:**
+- 403 entries, 0 duplicate CAS, 0 duplicate canonical names, 0 empty
+  CAS, 0 non-array synonyms/blends_with, 0 invalid CAS format, 0
+  blacklisted terms still in TRADES/NAME_TO_CAS indexes.
+- Flagged (left unchanged per audit constraints): 3 name collisions
+  between NAME_TO_CAS and TRADES (`tonka bean`, `ambergris`,
+  `norlabdane oxide`) — these require chemistry judgment.
+
+### 2026-04-05 — Fix ReferenceError in classifyIndustryTags crashing non-banned aromatic materials
+
+**Bug:** `classifyIndustryTags()` used `id.fema` on line 2281 but never declared
+an `id` variable (only `cas` was extracted from `r.identifiers`). This caused a
+`ReferenceError` that was silently swallowed by `Promise.allSettled` in `doSearch`,
+dropping the material from results entirely.
+
+**Why only some materials were affected:**
+- Hedione / Iso E Super: `hasRealOdor=true`, `banned=false` → entered the
+  perfumery block → hit `id.fema` → crash
+- Dipropylene Glycol: `isSolvent=true` → `hasRealOdor=false` → never entered
+  the perfumery block → no crash
+- Lilial: `banned=true` → `!banned` short-circuited before `id.fema` → no crash
+
+**Fix:** Added `const id = r.identifiers || {};` and derived `cas` from `id.cas`
+instead of a separate destructure.
 
 ### 2026-04-05 — Final Smoke Test (post-normalizeKey hardening)
 
