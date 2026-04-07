@@ -1484,6 +1484,10 @@ const FORCE_SKIP = [
 ];
 // Word-boundary skip patterns (to avoid "gene" matching "general")
 const FORCE_SKIP_REGEX = [/\bgene\b/, /\bgenes\b/];
+// PubChem section filtering — used only by extractAllSections() to decide
+// which TOC sections survive into the flattened pubchem_sections map.
+// Not part of the search/match pipeline. Not directly called from any
+// other site.
 function isForceSkipped(text) {
   const h = text.toLowerCase();
   if (FORCE_SKIP.some(k => h.includes(k))) return true;
@@ -1494,6 +1498,13 @@ function isKeepMatch(text) {
   return KEEP_KEYWORDS.some(k => text.toLowerCase().includes(k));
 }
 
+// Niche helper — used by:
+//   1) prefetchAll (background PubChem section prefetch)
+//   2) loadPubchemData (on-demand "Complete PubChem Data" card expand)
+//   3) downloadJSON (best-effort retry inside the per-batch enrichment loop)
+// Not part of the core search/match/filter pipeline. Returns the raw
+// flattened {heading: [strings]} shape; future structured-export work
+// would replace this with a typed PUG View walker.
 // Extract all PUG View sections recursively (whitelist approach)
 function extractAllSections(sections, prefix="", depth=0) {
   if (depth > 4) return {};
@@ -1568,6 +1579,9 @@ async function getCid(name) {
 }
 
 let pcGroupId = 0;
+// Niche helper — only called from loadPubchemData() to render the
+// expanded "Complete PubChem Data" sub-panel inside a card. Not used
+// by the main JSON/CSV export, the search pipeline, or filters.
 function renderPubchemSections(sections) {
   const grouped = {};
   for (const [heading, items] of Object.entries(sections)) {
@@ -1789,6 +1803,11 @@ function renderResults() {
   div.innerHTML = cards.join('');
 }
 
+// Background-only helper — called from doSearch() at the very end of
+// each search to warm structure-image and PubChem section caches for
+// each card. Failure is silent and tolerated; the card UI continues
+// to work without prefetched data. Not part of the search/match/filter
+// pipeline.
 function prefetchAll() {
   results.forEach((mat, idx) => {
     if (!mat.found) return;
@@ -1882,6 +1901,10 @@ function toggleCard(idx) {
   }
 }
 
+// Card-UI / print-only helper — wired to the "▶ Complete PubChem Data"
+// toggle inside each card body and also called by preparePrint() to
+// load all sections before generating a PDF. Not part of the main JSON
+// or CSV export, search pipeline, or filter logic.
 async function loadPubchemData(idx) {
   const toggle = document.getElementById("pcToggle"+idx);
   const dataDiv = document.getElementById("pcData"+idx);
@@ -1947,88 +1970,6 @@ function clearAll() {
   results = [];
   renderResults();
   showPills(input.value);
-}
-
-function buildPerfumerySections(mat) {
-  const pf = mat.record.perfumery, sf = mat.record.safety;
-  const sections = [];
-  if (pf.odor_description || pf.odor_type || pf.odor_strength) {
-    const info = [];
-    if (pf.odor_description) info.push({ReferenceNumber:0,Description:"Odor Description",Value:{StringWithMarkup:[{String:pf.odor_description}]}});
-    if (pf.odor_type) info.push({ReferenceNumber:0,Description:"Odor Type",Value:{StringWithMarkup:[{String:pf.odor_type}]}});
-    if (pf.odor_strength) info.push({ReferenceNumber:0,Description:"Odor Strength",Value:{StringWithMarkup:[{String:pf.odor_strength}]}});
-    sections.push({TOCHeading:"Odor Profile",Description:"Olfactory characteristics from perfumery database.",Information:info});
-  }
-  if (pf.note) {
-    sections.push({TOCHeading:"Note Classification",Description:"Fragrance pyramid classification.",Information:[
-      {ReferenceNumber:0,Value:{StringWithMarkup:[{String:pf.note}]}}
-    ]});
-  }
-  if (pf.tenacity || pf.tenacity_hours) {
-    const info = [];
-    if (pf.tenacity) info.push({ReferenceNumber:0,Description:"Tenacity",Value:{StringWithMarkup:[{String:pf.tenacity}]}});
-    if (pf.tenacity_hours) info.push({ReferenceNumber:0,Description:"Duration",Value:{StringWithMarkup:[{String:pf.tenacity_hours}]}});
-    sections.push({TOCHeading:"Performance",Description:"Longevity and projection characteristics.",Information:info});
-  }
-  if (sf.ifra_guideline || sf.usage_levels) {
-    const info = [];
-    if (sf.ifra_guideline) info.push({ReferenceNumber:0,Description:"IFRA Guidelines",Value:{StringWithMarkup:[{String:sf.ifra_guideline}]}});
-    if (sf.usage_levels) info.push({ReferenceNumber:0,Description:"Usage Levels",Value:{StringWithMarkup:[{String:sf.usage_levels}]}});
-    sections.push({TOCHeading:"Perfumery Safety",Description:"IFRA restrictions and recommended usage levels.",Information:info});
-  }
-  const _bw = Array.isArray(pf.blends_with) ? pf.blends_with : [];
-  if (_bw.length) {
-    sections.push({TOCHeading:"Blending",Description:"Compatible fragrance materials.",Information:[
-      {ReferenceNumber:0,Description:"Blends Well With",Value:{StringWithMarkup:_bw.map(s=>({String:String(s)}))}}
-    ]});
-  }
-  return sections;
-}
-
-function buildLocalRecord(mat) {
-  const rec = mat.record, id = rec.identifiers, nm = rec.names, pr = rec.properties;
-  const sections = [];
-
-  const namesSec = [];
-  if (id.cas) namesSec.push({TOCHeading:"CAS",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:id.cas}]}}]});
-  if (id.fema) namesSec.push({TOCHeading:"FEMA Number",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:String(id.fema)}]}}]});
-  if (id.iupac) namesSec.push({TOCHeading:"IUPAC Name",Description:"Chemical name.",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:id.iupac}]}}]});
-  if ((nm.synonyms||[]).length) namesSec.push({TOCHeading:"Synonyms",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:(nm.synonyms||[]).map(s=>({String:String(s)}))}}]});
-  if (namesSec.length) sections.push({TOCHeading:"Names and Identifiers",Description:"Chemical names, synonyms, identifiers.",Section:namesSec});
-
-  const chemSec = [];
-  if (id.molecular_formula) chemSec.push({TOCHeading:"Molecular Formula",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:id.molecular_formula}]}}]});
-  if (pr.molecular_weight) chemSec.push({TOCHeading:"Molecular Weight",Information:[{ReferenceNumber:0,Value:{Number:[pr.molecular_weight]}}]});
-  if (pr.exact_mass) chemSec.push({TOCHeading:"Exact Mass",Information:[{ReferenceNumber:0,Value:{Number:[pr.exact_mass]}}]});
-  if (pr.xlogp!=null) chemSec.push({TOCHeading:"XLogP",Information:[{ReferenceNumber:0,Value:{Number:[pr.xlogp]}}]});
-  if (pr.tpsa!=null) chemSec.push({TOCHeading:"TPSA",Information:[{ReferenceNumber:0,Value:{Number:[pr.tpsa]}}]});
-  if (pr.hbond_donor!=null) chemSec.push({TOCHeading:"H-Bond Donor Count",Information:[{ReferenceNumber:0,Value:{Number:[pr.hbond_donor]}}]});
-  if (pr.hbond_acceptor!=null) chemSec.push({TOCHeading:"H-Bond Acceptor Count",Information:[{ReferenceNumber:0,Value:{Number:[pr.hbond_acceptor]}}]});
-  if (pr.rotatable_bonds!=null) chemSec.push({TOCHeading:"Rotatable Bond Count",Information:[{ReferenceNumber:0,Value:{Number:[pr.rotatable_bonds]}}]});
-  if (pr.heavy_atoms!=null) chemSec.push({TOCHeading:"Heavy Atom Count",Information:[{ReferenceNumber:0,Value:{Number:[pr.heavy_atoms]}}]});
-  if (id.canonical_smiles) chemSec.push({TOCHeading:"Canonical SMILES",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:id.canonical_smiles}]}}]});
-  if (id.inchi) chemSec.push({TOCHeading:"InChI",Description:"International Chemical Identifier.",Information:[{ReferenceNumber:0,Value:{StringWithMarkup:[{String:id.inchi}]}}]});
-  if (chemSec.length) sections.push({TOCHeading:"Chemical and Physical Properties",Description:"Structural descriptors and computed properties.",Section:chemSec});
-
-  if (id.pubchem_cid) {
-    sections.push({TOCHeading:"Structures",Description:"Structure depictions.",Section:[
-      {TOCHeading:"2D Structure",Information:[{ReferenceNumber:0,Value:{Boolean:[true]}}],
-        URL:`https://pubchem.ncbi.nlm.nih.gov/image/imgsrv.fcgi?cid=${id.pubchem_cid}&t=l`}
-    ]});
-  }
-
-  // Perfumery Data
-  const perfSections = buildPerfumerySections(mat);
-  if (perfSections.length) sections.push({TOCHeading:"Perfumery Data",Description:"Perfumery-specific data from local fragrance database.",Section:perfSections});
-
-  return {
-    Record: {
-      RecordType: "CID",
-      RecordNumber: id.pubchem_cid || null,
-      RecordTitle: nm.canonical,
-      Section: sections
-    }
-  };
 }
 
 // ===== JSON Export =====
