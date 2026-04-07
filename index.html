@@ -289,6 +289,8 @@ html { scroll-behavior:smooth; }
         <label class="filter-radio"><input type="radio" name="type" value="single_molecule" onchange="setTypeFilter(this.value)"> Aroma Chemical</label>
         <label class="filter-radio"><input type="radio" name="type" value="natural_extract" onchange="setTypeFilter(this.value)"> Natural Extract</label>
         <label class="filter-radio"><input type="radio" name="type" value="natural_isolate" onchange="setTypeFilter(this.value)"> Natural Isolate</label>
+        <label class="filter-radio"><input type="radio" name="type" value="solvent_carrier" onchange="setTypeFilter(this.value)"> Solvent / Carrier</label>
+        <label class="filter-radio"><input type="radio" name="type" value="additive" onchange="setTypeFilter(this.value)"> Preservative / Additive</label>
       </div>
     </div>
     <div class="sub-drawer">
@@ -433,11 +435,6 @@ const FUNC_TERMS = new Set(['functional','carrier','fixative','solvent','additiv
 
 // Pre-compiled regexes for matchesAllFilters hot path
 const RE_NOTE_OTHER = /top|middle|base/i;
-const RE_NATURAL_EXT = /\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i;
-// natural_isolate must be an explicit claim; bare "natural" matches too many
-// aroma chemicals whose descriptions say "natural-like" or "natural sandalwood note".
-const RE_NATURAL_ISO = /\bisolate(?:d|s)?\b|\bfrom\s+\w+(?:\s+\w+)?\s+oil\b|\boccurs\s+in\b|\bnatural\s+(?:form|isolate|source|origin)\b/i;
-const RE_TYPE_OTHER = /\b(solvent|carrier|diluent|emollient|odorless)\b|preservative|biocide|antioxidant|stabilizer/i;
 const RE_FUNC_AROMATIC_EXCLUDE = /solvent|carrier|fixative|additive|preservative|repellent|biocide|colorant|antioxidant|emollient|denaturant|plasticizer/i;
 const RE_FUNC_OTHER = /colorant|antioxidant|emollient|phototoxic|denaturant|plasticizer|biocide|functional/i;
 const RE_ODOR_FUNC = /functional|carrier|solvent|fixative|preservative|additive|repellent|n\/a/i;
@@ -460,11 +457,28 @@ function _buildFilterRecord(cas, entry) {
   const funcAll = odorType + ' ' + noteLow + ' ' + desc;
   const hasRealOdor = !!(entry.odor?.description && !RE_ODORLESS.test(entry.odor.description));
 
-  // Precompute material type
-  let materialType = 'single_molecule';
-  if (MIXTURES.has(cas) || RE_NATURAL_EXT.test(allText)) materialType = 'natural_extract';
-  else if (RE_NATURAL_ISO.test(allText)) materialType = 'natural_isolate';
-  else if (RE_TYPE_OTHER.test(allText) || /additive/i.test(noteLow)) materialType = 'other';
+  // Build a synthetic mat-like shape from the raw DB entry once, then route both
+  // materialType and industryTags through the canonical classifiers. This makes
+  // classifyMaterialType / classifyIndustryTags the single source of truth for
+  // FILTER_CACHE *and* the result-card render path.
+  const syntheticMat = {
+    record: {
+      identifiers: { cas, fema: entry.fema || null },
+      names: { canonical: entry.name || '', synonyms: entry.synonyms || [] },
+      perfumery: {
+        odor_description: entry.odor?.description || null,
+        odor_type: entry.odor?.type || null,
+        odor_strength: entry.odor?.strength || null,
+        note: entry.note || null
+      },
+      safety: {
+        ifra_guideline: entry.safety?.ifra || null,
+        usage_levels: entry.safety?.usage || null
+      },
+      metadata: { pubchem_sections: null }
+    }
+  };
+  const materialType = classifyMaterialType(syntheticMat);
 
   // Precompute function role
   let funcRole = null;
@@ -487,20 +501,14 @@ function _buildFilterRecord(cas, entry) {
   }
   const hasNoOdorType = !odorType || RE_ODOR_FUNC.test(entry.odor?.type||'');
 
-  // Precompute industry tags
-  // hasPerfumery = true for materials with odor data, natural mixtures, OR
-  // materials with a non-null perfumery-use function role (solvent/carrier/
-  // fixative/additive/_other). This prevents common perfumery solvents like
-  // Dipropylene Glycol, Isopropyl Myristate, Propylene Glycol, Squalane,
-  // MCT Oil, Isododecane, Tocopherol, Guaiazulene from being hidden under
-  // "perfumery"/"cosmetics" tag filters despite being legitimate perfumery
-  // formulation ingredients.
-  const hasPerfumery = !!(entry.odor?.description || entry.odor?.type || MIXTURES.has(cas) || funcRole);
-  const hasFlavor = !!entry.fema;
+  // Industry tags from the shared classifier (same syntheticMat as above).
+  // classifyIndustryTags is the single source of truth for both FILTER_CACHE
+  // and the result-card render path.
+  const industryTags = new Set(classifyIndustryTags(syntheticMat));
 
   return {
     cas, noteLow, materialType, funcRole, funcAll, hasRealOdor,
-    odorTags, hasNoOdorType, hasPerfumery, hasFlavor, allText
+    odorTags, hasNoOdorType, industryTags, allText
   };
 }
 
@@ -565,9 +573,10 @@ function _updateFilterVisibility() {
     if (fc.funcRole !== '_aromatic' && fc.funcRole !== '_other') {
       SPECIFIC_FUNCS.forEach(f => { if (fc.funcAll.includes(f)) funcCounts[f] = (funcCounts[f]||0)+1; });
     }
-    // Tag (precomputed flags)
-    if (fc.hasPerfumery) { tagCounts['perfumery'] = (tagCounts['perfumery']||0)+1; tagCounts['cosmetics'] = (tagCounts['cosmetics']||0)+1; }
-    if (fc.hasFlavor) tagCounts['flavor'] = (tagCounts['flavor']||0)+1;
+    // Tag (precomputed industry tag set — shared with card render)
+    if (fc.industryTags.has('perfumery')) tagCounts['perfumery'] = (tagCounts['perfumery']||0)+1;
+    if (fc.industryTags.has('cosmetics')) tagCounts['cosmetics'] = (tagCounts['cosmetics']||0)+1;
+    if (fc.industryTags.has('flavor'))    tagCounts['flavor']    = (tagCounts['flavor']   ||0)+1;
     // Odor (precomputed tags)
     for (const tag of fc.odorTags) odorHas[tag] = true;
     if (fc.hasNoOdorType) odorHas['_other'] = true;
@@ -723,13 +732,9 @@ function matchesAllFilters(cas) {
     else if (funcF === '_other') { if (fc.funcRole !== '_other') return false; }
     else { if (!fc.funcAll.includes(funcF)) return false; }
   }
-  // Use/industry tag (precomputed flags)
+  // Use/industry tag (precomputed industry tag set)
   const tagF = _filters.tag.active;
-  if (tagF) {
-    if (tagF === 'perfumery' && !fc.hasPerfumery) return false;
-    if (tagF === 'flavor' && !fc.hasFlavor) return false;
-    if (tagF === 'cosmetics' && !fc.hasPerfumery) return false;
-  }
+  if (tagF && !fc.industryTags.has(tagF)) return false;
   // Odor (multi-select AND, precomputed tags)
   if (activeOdorFilters.size) {
     for (const f of activeOdorFilters) {
@@ -1700,6 +1705,14 @@ function renderResults() {
   results.forEach((mat,idx) => {
    try {
     const rec = mat.record, id = rec.identifiers, nm = rec.names, pr = rec.properties, pf = rec.perfumery, sf = rec.safety, cls = rec.classification, mtch = rec.match;
+    // ── Card classification display (single precedence) ──
+    // 1. material_type: canonical record first, then runtime classifier (for external/PubChem-only)
+    // 2. industry_tags: canonical record first, then runtime classifier
+    // 3. Filter tags so they never duplicate or contradict the material_type label
+    const _displayMaterialType = cls.material_type || classifyMaterialType(mat) || null;
+    const _rawTags = (cls.industry_tags && cls.industry_tags.length) ? cls.industry_tags : (classifyIndustryTags(mat) || []);
+    const displayTags = _filterDisplayTags(_rawTags, _displayMaterialType);
+    const displayMatLabel = MATERIAL_TYPE_LABELS[_displayMaterialType] || '';
     const nl = (pf.note||"").toLowerCase();
     let badges = "";
     if (nl.includes("top")) badges += `<span class="badge badge-top">Top</span>`;
@@ -1732,19 +1745,18 @@ function renderResults() {
 
     const syns = (nm.synonyms||[]).length?`<p style="color:var(--text2);font-size:0.8em;margin-top:6px">${esc((nm.synonyms||[]).slice(0,8).join(', '))}</p>`:"";
 
-    const industryTags = (cls.industry_tags || classifyIndustryTags(mat) || []);
     const blendsArr = Array.isArray(pf.blends_with) ? pf.blends_with : [];
 
     cards.push(`
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
-          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${MATERIAL_TYPE_LABELS[cls.material_type || classifyMaterialType(mat)]||''}${FUNCTION_LABELS[cls.function]?` &middot; ${FUNCTION_LABELS[cls.function]}`:''}</span>${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
+          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${displayMatLabel}${(_displayMaterialType==='single_molecule'&&FUNCTION_LABELS[cls.function])?` &middot; ${FUNCTION_LABELS[cls.function]}`:''}</span>${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
-          <p style="margin:4px 0 8px">${industryTags.map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
+          ${displayTags.length?`<p style="margin:4px 0 8px">${displayTags.map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
@@ -2516,7 +2528,9 @@ function classifyMaterialType(mat) {
   if (/\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i.test(all)) return 'natural_extract';
   if (/\b(solvent|carrier|diluent|emollient|virtually odorless|odorless)\b/i.test(all)) return 'solvent_carrier';
   if (/\b(isododecane|dipropylene glycol|isopropyl myristate|triethyl citrate|benzyl benzoate)\b/i.test(n)) return 'solvent_carrier';
-  if (RE_NATURAL_ISO.test(all) && !MIXTURES.has(cas)) return 'natural_isolate';
+  // natural_isolate: explicit claim only — bare "natural" matches too many
+  // aroma chemicals whose descriptions say "natural-like" or "natural sandalwood note".
+  if (/\bisolate(?:d|s)?\b|\bfrom\s+\w+(?:\s+\w+)?\s+oil\b|\boccurs\s+in\b|\bnatural\s+(?:form|isolate|source|origin)\b/i.test(all) && !MIXTURES.has(cas)) return 'natural_isolate';
   return 'single_molecule';
 }
 const MATERIAL_TYPE_LABELS = {
@@ -2541,6 +2555,25 @@ const FUNCTION_LABELS = {
   '_other': 'other',
 };
 
+// Strip industry tags that duplicate or contradict the chosen material_type label.
+// Used by the result-card render path so the header badge and the tag row never conflict.
+function _filterDisplayTags(tags, materialType) {
+  if (!Array.isArray(tags) || !tags.length) return [];
+  const out = [];
+  const seen = new Set();
+  const mtIsInformative = !!materialType && materialType !== 'unknown';
+  for (const t of tags) {
+    if (!t || seen.has(t)) continue;
+    // Suppress generic fallback labels once we already have any material_type
+    if (mtIsInformative && (t === 'unclassified' || t === 'chemical')) continue;
+    // Suppress redundancy with the "Solvent / Carrier" header badge
+    if (materialType === 'solvent_carrier' && (t === 'solvent' || t === 'carrier')) continue;
+    seen.add(t);
+    out.push(t);
+  }
+  return out;
+}
+
 function getBanStatus(mat) {
   const r = mat.record || mat;
   const sf = r.safety || {};
@@ -2557,14 +2590,13 @@ function isBannedEU(mat) { return getBanStatus(mat) !== null; }
 
 function classifyIndustryTags(mat) {
   const r = mat.record || mat;
-  const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, md = r.metadata || {};
+  const pf = r.perfumery || {}, nm = r.names || {}, md = r.metadata || {}, id = r.identifiers || {};
   const tags = [];
   const n = (nm.canonical || '').toLowerCase();
   const desc = (pf.odor_description || '').toLowerCase();
   const odorType = (pf.odor_type || '').toLowerCase();
   const syns = (nm.synonyms || []).join(' ').toLowerCase();
   const pdStr = md.pubchem_sections ? JSON.stringify(md.pubchem_sections).toLowerCase() : '';
-  const id = r.identifiers || {};
   const cas = id.cas || '';
   const banned = isBannedEU(mat);
 
@@ -2613,9 +2645,8 @@ function classifyIndustryTags(mat) {
         /\b(solvent|carrier|diluent|emollient)\b/i.test(desc + ' ' + odorType + ' ' + (pf.note||'')) ||
         /\b(benzyl benzoate|dipropylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|propylene glycol)\b/i.test(n);
       if (cosmeticSignal) tags.push('cosmetics');
-    }
-    // Add banned tag
-    if (banned) {
+    } else {
+      // Add banned tag (scope worldwide vs EU)
       const scope = getBanStatus(mat);
       tags.push(scope === 'worldwide' ? 'banned_global' : 'banned_eu');
     }

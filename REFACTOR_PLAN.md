@@ -796,3 +796,152 @@ perfume-analyzer/
 | **P2** | Add ambiguous_candidates for low-confidence | Better UX |
 | **P3** | Separate file structure | Maintainability |
 | **P3** | Full schema migration | Future-proof |
+
+---
+
+# Perfume Analyzer Refactor Plan — QA Checklist
+
+> Permanent regression checklist. Run the relevant section after any
+> refactor before merging. Each subsection is grouped by domain so a
+> targeted change (e.g. only matchers) only requires re-running that
+> section. The full set should be run before any release-style merge.
+
+## A. Search pipeline smoke tests
+
+The 10 end-to-end cases from the
+[2026-04-05 Final Smoke Test](#2026-04-05--final-smoke-test-post-normalizekey-hardening)
+must all still pass. Required after any refactor touching matchers,
+`normalizeKey`, `_applyLocalMatch`, `FILTER_CACHE`, or `doSearch`.
+
+| # | Input | Expected matcher | Expected confidence | Expected UI |
+|---|---|---|---|---|
+| 1 | `linalool` | `matchByCanonicalName` → `name_exact` | 0.99 | card rendered |
+| 2 | `linalol` | `matchBySynonym` | 0.95 | card rendered |
+| 3 | `iso e super` | `matchByCanonicalName` → `name_exact` | 0.99 | card rendered |
+| 4 | `78-70-6` | `matchByCAS` | 0.99 | card rendered |
+| 5 | `alcohol` | (blocked by `SYNONYM_BLACKLIST`) | — | no card; banner shows "not found" |
+| 6 | `musk` | (blocked by `SYNONYM_BLACKLIST`); fuzzy may surface ambiguous candidates | — | no card; "Did you mean?" or "not found" banner |
+| 7 | `geran` | `matchFuzzyLocal` < 0.8 | — | no card; "Did you mean?" with candidate links |
+| 8 | pill click (suggestion) | identical to typing the suggestion text | matches that path | card rendered |
+| 9 | CAS dedup: search `linalool` then `linalol` | both resolve to CAS `78-70-6` | — | single card, newest kept |
+| 10 | `clearAll` then re-search | `results = []` → `renderResults` clears DOM → next `doSearch` works | — | new card rendered |
+
+## B. Filters and regulatory logic
+
+### Standard filters (Note / Type / Function / Use / Odor)
+
+Manually exercise at least one combination from each filter group:
+
+- **Note:** `Top`, `Middle`, `Base`, `Other`
+- **Type:** `Aroma Chemical`, `Natural Extract`, `Natural Isolate`
+- **Function:** `Aromatic`, `Fixative`, `Solvent`, `Carrier`, `Additive`
+- **Use:** `Perfumery`, `Flavor`, `Cosmetics`
+- **Odor:** at least one tag from the auto-built list
+
+For each combination verify:
+- Result counts visibly change as filters are toggled.
+- Filter options that match zero materials are hidden by `_updateFilterVisibility`.
+- Combining filters across groups behaves as logical AND.
+
+### Regulatory filter (Banned / Restricted)
+
+Selecting **Regulatory → Banned / Restricted** must yield exactly **4** materials from the current DB:
+
+| Material | Scope |
+|---|---|
+| Musk Ambrette | `worldwide` |
+| Lilial | `eu` |
+| Lyral | `eu` |
+| Musk Xylene | `eu` |
+
+The same 4 materials must:
+- Render the **banned badge** in the card body.
+- Export with a **non-null `ban_status`** in both the JSON `ban_status` field and the CSV `ban_status` column.
+
+If any of these regress, audit `BANNED_CAS` precompute (built once at startup from `getBanStatus`) and the card-render ban-detection path.
+
+## C. Export (JSON / CSV)
+
+### JSON export (`Save.JSON` → `downloadJSON`)
+
+- Each exported record reads from `src = mat.record` (canonical record), not from flat `mat.*` fields.
+- `classification.function` matches `FILTER_CACHE.get(cas)?.funcRole` for every known CAS (single source of truth — Task C).
+- `metadata.source`, `metadata.is_external`, `metadata.has_pubchem_sections`, and `metadata.data_quality_pct` are all present and `metadata.data_quality_pct` equals top-level `data_completeness_pct`.
+- `record.match` is a nested object containing `type`, `confidence`, `input`, `term`, `canonical`, `reason`, `source`, and `ambiguous_candidates`.
+- Backwards-compat: every previously-exported flat top-level field (`cas_number`, `fema_number`, `material_type`, `industry_tags`, `pubchem_url`, `structure_image_url`, `is_external_perfumery`, etc.) is still present.
+
+### CSV export (`Save.CSV` → `downloadCSV`)
+
+Header row must contain exactly these 9 columns in order:
+
+```
+cas_number, name, material_type, function, ban_status, note, odor_description, usage_levels, industry_tags
+```
+
+Sample row spot-check:
+
+| Material | `function` | `ban_status` | `odor_description` | `usage_levels` |
+|---|---|---|---|---|
+| Linalool | `_aromatic` | empty | non-empty (commas → quoted) | IFRA 51 string |
+| Dipropylene Glycol | `solvent` | empty | empty cell | "Used as solvent at 10–50 %" |
+| Lilial | `_aromatic` | `eu` | non-empty (commas → quoted) | IFRA prohibition text |
+
+Verify:
+- Fields containing commas, double quotes, `\r`, or `\n` are wrapped in double quotes; internal quotes are doubled (RFC 4180).
+- Array-typed cells (`industry_tags`) are joined with `;` so they never break a row.
+- The file starts with a UTF-8 BOM (`\uFEFF`) so Excel opens it in UTF-8 mode.
+- Line endings are `\r\n`.
+
+## D. Status bar and UX text
+
+### Batch summary override (Task B — one-shot consumption)
+
+After a search where some inputs were ambiguous or not-perfumery:
+
+- **First render** (immediately after `doSearch`): `N materials • X ambiguous, Y outside perfumery scope.`
+- **Next background re-render** (e.g. from `_enrichPubchem`): `N materials` — override has been consumed and cleared.
+- A subsequent clean search: `N materials` (no override set, no stale text).
+
+If the override survives a second render, audit the one-shot clear inside `renderResults`.
+
+### Quick stats (banned / external)
+
+On the default (non-override) path, the status text appends compact counts:
+
+| Result set | Status text |
+|---|---|
+| Clean (0 banned, 0 external) | `N material(s)` |
+| 1 banned, 0 external | `N material(s) • 1 banned` |
+| 0 banned, 2 external | `N material(s) • 2 external` |
+| 1 banned, 2 external | `N material(s) • 1 banned • 2 external` |
+
+Both counts use existing globals only (`getBanStatus`, `mat.record.metadata.is_external`); the override and quick-stat paths are mutually exclusive (override takes precedence on the first render).
+
+## E. Layout & mobile
+
+### Desktop (≥ 1024px)
+
+- Header (title + subtitle + theme toggle), search box, filter drawer, and result cards render without horizontal overflow.
+- Theme toggle is at the top-right of the header row and clicks flip `data-theme` between `light` and `dark` on `<html>`.
+- All filter sub-drawers expand/collapse as expected.
+
+### Mobile (~375px width)
+
+- **No horizontal scroll** anywhere in the header + search area.
+- Title and subtitle wrap cleanly; theme toggle stays visible at the top-right and never collides with the title block.
+- Search input + button **stack vertically**, both full-width, both with comfortable touch-target height (≥ 44px from existing padding).
+- Filter drawer collapses to vertical layout without breaking sub-toggles.
+
+If the header/search area overflows on mobile, audit `@media (max-width:600px)` rules for `.header-row`, `.search-box`, `#themeToggle`, and `min-width:0` on flex children.
+
+## F. Print / PDF
+
+`Save.PDF` and `Save.PDF (Full)` (both call `preparePrint`) must produce:
+
+- **Hidden in print:** search box, filter drawer, status bar, downloads bar, theme toggle, card delete buttons, card arrows, "Complete PubChem Data" toggles, "Back to title" links.
+- **Visible in print:** card headers, card bodies (forced open via `.card-body { display:block !important }`), names, identifiers, properties, perfumery sections, safety sections, hazard pictograms (where present).
+- One card per page break point (`.card { break-before:page }`), except the first card uses `break-before:auto`.
+- `Save.PDF (Full)` waits for all unloaded `loadPubchemData(idx)` calls to complete before triggering `window.print()`.
+- After printing, removed elements are restored to the DOM via the `cleanup` function bound to `afterprint`.
+
+If any of the hidden elements appear in print output, audit the `@media print` block (currently around lines 192–220) and the DOM removal/restoration logic in `preparePrint`.
