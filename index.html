@@ -417,13 +417,31 @@ function _buildFilterRecord(cas, entry) {
   }
   const hasNoOdorType = !odorType || RE_ODOR_FUNC.test(entry.odor?.type||'');
 
-  // Precompute industry tags
-  const hasPerfumery = !!(entry.odor?.description || entry.odor?.type || MIXTURES.has(cas));
-  const hasFlavor = !!entry.fema;
+  // Precompute industry tags via the shared classifier so FILTER_CACHE
+  // and the result-card badges always stay in sync. A synthetic mat-like
+  // shape is built from `entry` to match classifyIndustryTags's expected
+  // canonical record structure.
+  const industryTags = new Set(classifyIndustryTags({
+    record: {
+      identifiers: { cas, fema: entry.fema || null },
+      names: { canonical: entry.name || '', synonyms: entry.synonyms || [] },
+      perfumery: {
+        odor_description: entry.odor?.description || null,
+        odor_type: entry.odor?.type || null,
+        odor_strength: entry.odor?.strength || null,
+        note: entry.note || null
+      },
+      safety: {
+        ifra_guideline: entry.safety?.ifra || null,
+        usage_levels: entry.safety?.usage || null
+      },
+      metadata: { pubchem_sections: null }
+    }
+  }));
 
   return {
     cas, noteLow, materialType, funcRole, funcAll, hasRealOdor,
-    odorTags, hasNoOdorType, hasPerfumery, hasFlavor, allText
+    odorTags, hasNoOdorType, industryTags, allText
   };
 }
 
@@ -470,9 +488,10 @@ function _updateFilterVisibility() {
     if (fc.funcRole !== '_aromatic' && fc.funcRole !== '_other') {
       SPECIFIC_FUNCS.forEach(f => { if (fc.funcAll.includes(f)) funcCounts[f] = (funcCounts[f]||0)+1; });
     }
-    // Tag (precomputed flags)
-    if (fc.hasPerfumery) { tagCounts['perfumery'] = (tagCounts['perfumery']||0)+1; tagCounts['cosmetics'] = (tagCounts['cosmetics']||0)+1; }
-    if (fc.hasFlavor) tagCounts['flavor'] = (tagCounts['flavor']||0)+1;
+    // Tag (precomputed industry tag set — shared with card render)
+    if (fc.industryTags.has('perfumery')) tagCounts['perfumery'] = (tagCounts['perfumery']||0)+1;
+    if (fc.industryTags.has('cosmetics')) tagCounts['cosmetics'] = (tagCounts['cosmetics']||0)+1;
+    if (fc.industryTags.has('flavor'))    tagCounts['flavor']    = (tagCounts['flavor']   ||0)+1;
     // Odor (precomputed tags)
     for (const tag of fc.odorTags) odorHas[tag] = true;
     if (fc.hasNoOdorType) odorHas['_other'] = true;
@@ -628,13 +647,9 @@ function matchesAllFilters(cas) {
     else if (funcF === '_other') { if (fc.funcRole !== '_other') return false; }
     else { if (!fc.funcAll.includes(funcF)) return false; }
   }
-  // Use/industry tag (precomputed flags)
+  // Use/industry tag (precomputed industry tag set)
   const tagF = _filters.tag.active;
-  if (tagF) {
-    if (tagF === 'perfumery' && !fc.hasPerfumery) return false;
-    if (tagF === 'flavor' && !fc.hasFlavor) return false;
-    if (tagF === 'cosmetics' && !fc.hasPerfumery) return false;
-  }
+  if (tagF && !fc.industryTags.has(tagF)) return false;
   // Odor (multi-select AND, precomputed tags)
   if (activeOdorFilters.size) {
     for (const f of activeOdorFilters) {
@@ -2277,14 +2292,14 @@ function isBannedEU(mat) { return getBanStatus(mat) !== null; }
 
 function classifyIndustryTags(mat) {
   const r = mat.record || mat;
-  const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, md = r.metadata || {};
+  const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, md = r.metadata || {}, id = r.identifiers || {};
   const tags = [];
   const n = (nm.canonical || '').toLowerCase();
   const desc = (pf.odor_description || '').toLowerCase();
   const odorType = (pf.odor_type || '').toLowerCase();
   const syns = (nm.synonyms || []).join(' ').toLowerCase();
   const pdStr = md.pubchem_sections ? JSON.stringify(md.pubchem_sections).toLowerCase() : '';
-  const cas = (r.identifiers || {}).cas || '';
+  const cas = id.cas || '';
   const banned = isBannedEU(mat);
 
   const isSolvent = /\bsolvent\b/i.test(odorType + ' ' + desc + ' ' + (pf.note || ''));
@@ -2310,14 +2325,9 @@ function classifyIndustryTags(mat) {
     }
     // Cosmetics: exclude if banned in EU
     if (!banned) {
-      if (/cosmetic|skin|dermal|masking|emollient/i.test(pdStr)) {
-        tags.push('cosmetics');
-      } else {
-        tags.push('cosmetics');
-      }
-    }
-    // Add banned tag
-    if (banned) {
+      tags.push('cosmetics');
+    } else {
+      // Add banned tag (scope worldwide vs EU)
       const scope = getBanStatus(mat);
       tags.push(scope === 'worldwide' ? 'banned_global' : 'banned_eu');
     }
