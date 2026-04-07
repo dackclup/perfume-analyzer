@@ -1446,6 +1446,14 @@ function renderResults() {
   
   div.innerHTML = results.map((mat,idx) => {
     const rec = mat.record, id = rec.identifiers, nm = rec.names, pr = rec.properties, pf = rec.perfumery, sf = rec.safety, cls = rec.classification, mtch = rec.match;
+    // ── Card classification display (single precedence) ──
+    // 1. material_type: canonical record first, then runtime classifier (for external/PubChem-only)
+    // 2. industry_tags: canonical record first, then runtime classifier
+    // 3. Filter tags so they never duplicate or contradict the material_type label
+    const _displayMaterialType = cls.material_type || classifyMaterialType(mat) || null;
+    const _rawTags = (cls.industry_tags && cls.industry_tags.length) ? cls.industry_tags : (classifyIndustryTags(mat) || []);
+    const displayTags = _filterDisplayTags(_rawTags, _displayMaterialType);
+    const displayMatLabel = MATERIAL_TYPE_LABELS[_displayMaterialType] || '';
     const nl = (pf.note||"").toLowerCase();
     let badges = "";
     if (nl.includes("top")) badges += `<span class="badge badge-top">Top</span>`;
@@ -1481,13 +1489,13 @@ function renderResults() {
     return `
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
-          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${MATERIAL_TYPE_LABELS[cls.material_type || classifyMaterialType(mat)]||''}</span></h3>
+          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${displayMatLabel}</span></h3>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
-          <p style="margin:4px 0 8px">${(cls.industry_tags || classifyIndustryTags(mat)).map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>
+          ${displayTags.length?`<p style="margin:4px 0 8px">${displayTags.map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || nm.synonyms.find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
@@ -2233,6 +2241,25 @@ const MATERIAL_TYPE_LABELS = {
   'solvent_carrier': 'Solvent / Carrier',
   'single_molecule': 'Aroma Chemical'
 };
+
+// Strip industry tags that duplicate or contradict the chosen material_type label.
+// Used by the result-card render path so the header badge and the tag row never conflict.
+function _filterDisplayTags(tags, materialType) {
+  if (!Array.isArray(tags) || !tags.length) return [];
+  const out = [];
+  const seen = new Set();
+  const mtIsInformative = !!materialType && materialType !== 'unknown';
+  for (const t of tags) {
+    if (!t || seen.has(t)) continue;
+    // Suppress generic fallback labels once we already have any material_type
+    if (mtIsInformative && (t === 'unclassified' || t === 'chemical')) continue;
+    // Suppress redundancy with the "Solvent / Carrier" header badge
+    if (materialType === 'solvent_carrier' && (t === 'solvent' || t === 'carrier')) continue;
+    seen.add(t);
+    out.push(t);
+  }
+  return out;
+}
 
 function getBanStatus(mat) {
   const r = mat.record || mat;
