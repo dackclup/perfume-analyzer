@@ -259,6 +259,8 @@ html { scroll-behavior:smooth; }
         <label class="filter-radio"><input type="radio" name="type" value="single_molecule" onchange="setTypeFilter(this.value)"> Aroma Chemical</label>
         <label class="filter-radio"><input type="radio" name="type" value="natural_extract" onchange="setTypeFilter(this.value)"> Natural Extract</label>
         <label class="filter-radio"><input type="radio" name="type" value="natural_isolate" onchange="setTypeFilter(this.value)"> Natural Isolate</label>
+        <label class="filter-radio"><input type="radio" name="type" value="solvent_carrier" onchange="setTypeFilter(this.value)"> Solvent / Carrier</label>
+        <label class="filter-radio"><input type="radio" name="type" value="additive" onchange="setTypeFilter(this.value)"> Preservative / Additive</label>
       </div>
     </div>
     <div class="sub-drawer">
@@ -365,9 +367,6 @@ const FUNC_TERMS = new Set(['functional','carrier','fixative','solvent','additiv
 
 // Pre-compiled regexes for matchesAllFilters hot path
 const RE_NOTE_OTHER = /top|middle|base/i;
-const RE_NATURAL_EXT = /\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i;
-const RE_NATURAL_ISO = /\b(natural|isolate|from .* oil|occurs in)\b/i;
-const RE_TYPE_OTHER = /\b(solvent|carrier|diluent|emollient|odorless)\b|preservative|biocide|antioxidant|stabilizer/i;
 const RE_FUNC_AROMATIC_EXCLUDE = /solvent|carrier|fixative|additive|preservative|repellent|biocide|colorant|antioxidant|emollient|denaturant|plasticizer/i;
 const RE_FUNC_OTHER = /colorant|antioxidant|emollient|phototoxic|denaturant|plasticizer|biocide|functional/i;
 const RE_ODOR_FUNC = /functional|carrier|solvent|fixative|preservative|additive|repellent|n\/a/i;
@@ -390,11 +389,28 @@ function _buildFilterRecord(cas, entry) {
   const funcAll = odorType + ' ' + noteLow + ' ' + desc;
   const hasRealOdor = !!(entry.odor?.description && !RE_ODORLESS.test(entry.odor.description));
 
-  // Precompute material type
-  let materialType = 'single_molecule';
-  if (MIXTURES.has(cas) || RE_NATURAL_EXT.test(allText)) materialType = 'natural_extract';
-  else if (RE_NATURAL_ISO.test(allText)) materialType = 'natural_isolate';
-  else if (RE_TYPE_OTHER.test(allText) || /additive/i.test(noteLow)) materialType = 'other';
+  // Build a synthetic mat-like shape from the raw DB entry once, then route both
+  // materialType and industryTags through the canonical classifiers. This makes
+  // classifyMaterialType / classifyIndustryTags the single source of truth for
+  // FILTER_CACHE *and* the result-card render path.
+  const syntheticMat = {
+    record: {
+      identifiers: { cas, fema: entry.fema || null },
+      names: { canonical: entry.name || '', synonyms: entry.synonyms || [] },
+      perfumery: {
+        odor_description: entry.odor?.description || null,
+        odor_type: entry.odor?.type || null,
+        odor_strength: entry.odor?.strength || null,
+        note: entry.note || null
+      },
+      safety: {
+        ifra_guideline: entry.safety?.ifra || null,
+        usage_levels: entry.safety?.usage || null
+      },
+      metadata: { pubchem_sections: null }
+    }
+  };
+  const materialType = classifyMaterialType(syntheticMat);
 
   // Precompute function role
   let funcRole = null;
@@ -417,27 +433,8 @@ function _buildFilterRecord(cas, entry) {
   }
   const hasNoOdorType = !odorType || RE_ODOR_FUNC.test(entry.odor?.type||'');
 
-  // Precompute industry tags via the shared classifier so FILTER_CACHE
-  // and the result-card badges always stay in sync. A synthetic mat-like
-  // shape is built from `entry` to match classifyIndustryTags's expected
-  // canonical record structure.
-  const industryTags = new Set(classifyIndustryTags({
-    record: {
-      identifiers: { cas, fema: entry.fema || null },
-      names: { canonical: entry.name || '', synonyms: entry.synonyms || [] },
-      perfumery: {
-        odor_description: entry.odor?.description || null,
-        odor_type: entry.odor?.type || null,
-        odor_strength: entry.odor?.strength || null,
-        note: entry.note || null
-      },
-      safety: {
-        ifra_guideline: entry.safety?.ifra || null,
-        usage_levels: entry.safety?.usage || null
-      },
-      metadata: { pubchem_sections: null }
-    }
-  }));
+  // Industry tags from the shared classifier (same syntheticMat as above).
+  const industryTags = new Set(classifyIndustryTags(syntheticMat));
 
   return {
     cas, noteLow, materialType, funcRole, funcAll, hasRealOdor,
@@ -2292,7 +2289,7 @@ function isBannedEU(mat) { return getBanStatus(mat) !== null; }
 
 function classifyIndustryTags(mat) {
   const r = mat.record || mat;
-  const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, md = r.metadata || {}, id = r.identifiers || {};
+  const pf = r.perfumery || {}, nm = r.names || {}, md = r.metadata || {}, id = r.identifiers || {};
   const tags = [];
   const n = (nm.canonical || '').toLowerCase();
   const desc = (pf.odor_description || '').toLowerCase();
