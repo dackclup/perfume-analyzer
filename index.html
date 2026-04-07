@@ -186,8 +186,16 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 html { scroll-behavior:smooth; }
 @media (max-width:600px) {
   .col-img { flex:0 0 80px; }
-  h1 { font-size:1.4em; }
+  h1 { font-size:1.4em; line-height:1.2; }
   .row { gap:10px; }
+  /* Mobile header polish — keep title/subtitle and the theme toggle on
+     one row without overflow, then stack the search box vertically. */
+  .header-row { gap:8px; align-items:flex-start; min-width:0; }
+  .header-row > div { min-width:0; }
+  .subtitle { margin-bottom:10px; overflow-wrap:anywhere; }
+  #themeToggle { font-size:1em; padding:2px 6px; flex:0 0 auto; }
+  .search-box { flex-direction:column; gap:8px; }
+  .search-box > * { min-width:0; width:100%; }
 }
 @media print {
   :root {
