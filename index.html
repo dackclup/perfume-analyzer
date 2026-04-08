@@ -35,8 +35,8 @@
 /* Theme toggle button — minimal, sits at top-right of the header row. */
 .header-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
 .header-row > div { flex:1 1 auto; min-width:0; }
-#themeToggle { margin-left:auto; font-size:1.1em; line-height:1; border:none; background:none; cursor:pointer; padding:4px 8px; border-radius:4px; color:var(--text); flex:0 0 auto; }
-#themeToggle:hover { background:var(--bg2); }
+#themeToggle { margin-left:auto; font-size:0.85em; line-height:1; border:1px solid var(--border); background:var(--bg2); cursor:pointer; padding:6px 12px; border-radius:6px; color:var(--text2); flex:0 0 auto; font-family:inherit; font-weight:500; }
+#themeToggle:hover { background:var(--card-bg); color:var(--text); border-color:var(--accent); }
 @media print { #themeToggle { display:none !important; } }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); padding:16px; padding-bottom:60px; max-width:900px; margin:0 auto; }
