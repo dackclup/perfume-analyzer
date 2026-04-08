@@ -132,6 +132,11 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .badge-mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
 .badge-base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
 .badge-type { font-size:0.7em; padding:2px 8px; border-radius:3px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px solid var(--border); vertical-align:middle; }
+/* Step 5 — taxonomy badges. Primary = strong (accent fill), Secondary
+   = lighter (muted bg2), Facet = small chip (transparent + thin border). */
+.badge-primary { font-size:0.7em; padding:2px 9px; border-radius:3px; font-weight:600; background:var(--accent); color:#fff; border:1px solid var(--accent); vertical-align:middle; }
+.badge-secondary { font-size:0.68em; padding:1px 8px; border-radius:3px; font-weight:500; background:var(--bg2); color:var(--text); border:1px solid var(--border); vertical-align:middle; }
+.badge-facet { font-size:0.62em; padding:1px 7px; border-radius:10px; font-weight:400; background:transparent; color:var(--text2); border:1px solid var(--border); vertical-align:middle; }
 .card-meta-row { margin:6px 0 0 18px; display:flex; flex-direction:column; gap:4px; }
 /* Each tag row = one taxonomy axis. Label column is fixed-width so the
    chip columns line up across rows. Chip column wraps on overflow. */
@@ -139,6 +144,12 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .tag-row > .tag-axis-label { flex:0 0 56px; padding-top:3px; text-align:right; margin-right:0; }
 .tag-row > .tag-chips { flex:1 1 auto; min-width:0; display:flex; flex-wrap:wrap; gap:4px 6px; }
 .tag-axis-label { font-size:0.62em; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; font-weight:600; opacity:0.75; vertical-align:middle; }
+/* Step 5 — facet sub-drawer grouping. Each parent family gets a small
+   header label so the chip cloud is scannable on mobile instead of one
+   massive unstructured wrap. */
+.facet-group { margin:6px 0; }
+.facet-group-label { font-size:0.6em; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; opacity:0.7; font-weight:600; margin:2px 2px 3px; }
+.facet-group-chips { display:flex; flex-wrap:wrap; gap:4px; }
 .badge-not-perfumery { font-size:0.7em; padding:2px 8px; border-radius:3px; margin-left:6px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px dashed var(--border); text-transform:none; vertical-align:middle; }
 .match-tag { font-size:0.6em; padding:1px 6px; border-radius:3px; font-weight:400; background:var(--accent); color:#fff; vertical-align:middle; opacity:0.8; }
 
@@ -304,12 +315,21 @@ html { scroll-behavior:smooth; }
       <div class="sub-body" id="regFilters"></div>
     </div>
     <div class="sub-drawer">
-      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Odor Family <span class="sub-selected" id="odorSelected"></span></div>
-      <div class="sub-body" id="odorFilters">
+      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Primary Family <span class="sub-selected" id="primaryFamSelected"></span></div>
+      <div class="sub-body" id="primaryFamilyFilters">
         <div style="display:flex;flex-wrap:wrap;gap:4px">
-          <span class="odor-tag active" data-odor="" onclick="clearOdorFilters(this)">All</span>
-          <div class="odor-tags" id="odorTags" style="display:contents"></div>
+          <span class="odor-tag active" onclick="clearPrimaryFamilyFiltersUI(this)">All</span>
+          <div class="primary-family-chips" id="primaryFamilyChips" style="display:contents"></div>
         </div>
+      </div>
+    </div>
+    <div class="sub-drawer">
+      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Facet <span class="sub-selected" id="facetSelected"></span></div>
+      <div class="sub-body" id="facetFilters">
+        <div style="display:flex;justify-content:flex-start;margin-bottom:4px">
+          <span class="odor-tag active" onclick="clearFacetFiltersUI(this)">All</span>
+        </div>
+        <div id="facetGroups"></div>
       </div>
     </div>
   </div>
@@ -550,6 +570,21 @@ const PRIMARY_FAMILIES = [
   'camphoraceous','floral','fruity','sweet','gourmand','spicy','powdery',
   'woody','balsamic','resinous','amber','animalic','leather','musk','smoky'
 ];
+// Display labels for the Step-2 primary family axis (used by the
+// Step-5 UI chips and result-card badges).
+const PRIMARY_FAMILY_LABELS = {
+  citrus:'Citrus', green:'Green', herbal:'Herbal', aldehydic:'Aldehydic',
+  aquatic:'Aquatic', ozonic:'Ozonic', fresh:'Fresh', camphoraceous:'Camphoraceous',
+  floral:'Floral', fruity:'Fruity', sweet:'Sweet', gourmand:'Gourmand',
+  spicy:'Spicy', powdery:'Powdery', woody:'Woody', balsamic:'Balsamic',
+  resinous:'Resinous', amber:'Amber', animalic:'Animalic', leather:'Leather',
+  musk:'Musk', smoky:'Smoky'
+};
+// Build a snake_case facet token into a presentable label.
+function facetLabel(t) {
+  if (!t) return '';
+  return String(t).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
 
 // Facet tags = specific descriptors that live UNDER a primary family.
 // Each entry maps a normalized facet token (snake_case) to its parent
@@ -1146,7 +1181,8 @@ function _updateFilterVisibility() {
   // render and filters match on, so counts and labels can never drift.
   const noteCounts = {}, typeCounts = {}, funcCounts = {}, tagCounts = {};
   const regCounts = {}, sourceCounts = {};
-  const odorHas = {};
+  const primaryFamHas = {};
+  const facetHas = {};
 
   for (const fc of FILTER_CACHE.values()) {
     if (!matchesAllFilters(fc.cas)) continue;
@@ -1165,8 +1201,10 @@ function _updateFilterVisibility() {
     for (const reg of fc.regulatory) regCounts[reg] = (regCounts[reg]||0)+1;
     // Source axis (single value)
     if (fc.source) sourceCounts[fc.source] = (sourceCounts[fc.source]||0)+1;
-    // Odor Family axis (multi-value Set)
-    for (const fam of fc.odorFamilies) odorHas[fam] = true;
+    // Step 5: Primary family axis (multi-value array, marker-only)
+    for (const fam of fc.primaryFamilies || []) primaryFamHas[fam] = true;
+    // Step 5: Facet axis (multi-value array, marker-only)
+    for (const f of fc.facets || []) facetHas[f] = true;
   }
 
   // Apply visibility — single pass per axis name
@@ -1178,10 +1216,18 @@ function _updateFilterVisibility() {
       radio.parentElement.style.display = (counts[radio.value] || 0) > 0 ? '' : 'none';
     });
   }
-  document.querySelectorAll('#odorTags .odor-tag').forEach(btn => {
-    const v = btn.dataset.odor;
-    if (!v) return;
-    btn.style.display = odorHas[v] ? '' : 'none';
+  // Step 5: hide Primary Family / Facet chips that have zero count
+  // under the current filter combo. Reads marker maps built above.
+  document.querySelectorAll('#primaryFamilyFilters .odor-tag[data-fam]').forEach(btn => {
+    btn.style.display = primaryFamHas[btn.dataset.fam] ? '' : 'none';
+  });
+  document.querySelectorAll('#facetFilters .odor-tag[data-facet]').forEach(btn => {
+    btn.style.display = facetHas[btn.dataset.facet] ? '' : 'none';
+  });
+  // Hide an entire facet group if every facet in it is hidden.
+  document.querySelectorAll('#facetGroups .facet-group').forEach(g => {
+    const visible = g.querySelectorAll('.odor-tag[data-facet]:not([style*="display: none"])').length;
+    g.style.display = visible ? '' : 'none';
   });
 }
 function _updateOdorSelected() {
@@ -1204,6 +1250,62 @@ function clearOdorFilters(el) {
   document.querySelectorAll('.odor-tag').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   _updateOdorSelected();
+  _refreshPills();
+}
+
+// Step 5: UI handlers for the new Primary Family + Facet chip
+// drawers. Mirror the existing toggleOdorTag / clearOdorFilters
+// pattern: mutate the active Set, sync the chip's CSS .active
+// class, refresh the "All" reset chip, update the sub-drawer
+// summary label, and call _refreshPills().
+function _updatePrimaryFamSelected() {
+  const sel = document.getElementById('primaryFamSelected');
+  if (!sel) return;
+  if (activePrimaryFamilyFilters.size) {
+    sel.textContent = [...activePrimaryFamilyFilters].map(f => PRIMARY_FAMILY_LABELS[f] || f).join(', ');
+  } else { sel.textContent = 'All'; }
+}
+function _updateFacetSelected() {
+  const sel = document.getElementById('facetSelected');
+  if (!sel) return;
+  if (activeFacetFilters.size) {
+    sel.textContent = [...activeFacetFilters].map(facetLabel).join(', ');
+  } else { sel.textContent = 'All'; }
+}
+function togglePrimaryFamilyChip(el) {
+  const v = el.dataset.fam;
+  if (!v) return;
+  const allBtn = document.querySelector('#primaryFamilyFilters .odor-tag.active[onclick*="clearPrimaryFamilyFiltersUI"]');
+  if (activePrimaryFamilyFilters.has(v)) { activePrimaryFamilyFilters.delete(v); el.classList.remove('active'); }
+  else { activePrimaryFamilyFilters.add(v); el.classList.add('active'); }
+  // Toggle the "All" reset chip's .active state to mirror Set emptiness.
+  const allReset = document.querySelector('#primaryFamilyFilters > div > .odor-tag:first-child');
+  if (allReset) allReset.classList.toggle('active', !activePrimaryFamilyFilters.size);
+  _updatePrimaryFamSelected();
+  _refreshPills();
+}
+function clearPrimaryFamilyFiltersUI(el) {
+  activePrimaryFamilyFilters.clear();
+  document.querySelectorAll('#primaryFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  _updatePrimaryFamSelected();
+  _refreshPills();
+}
+function toggleFacetChip(el) {
+  const v = el.dataset.facet;
+  if (!v) return;
+  if (activeFacetFilters.has(v)) { activeFacetFilters.delete(v); el.classList.remove('active'); }
+  else { activeFacetFilters.add(v); el.classList.add('active'); }
+  const allReset = document.querySelector('#facetFilters > div > .odor-tag:first-child');
+  if (allReset) allReset.classList.toggle('active', !activeFacetFilters.size);
+  _updateFacetSelected();
+  _refreshPills();
+}
+function clearFacetFiltersUI(el) {
+  activeFacetFilters.clear();
+  document.querySelectorAll('#facetFilters .odor-tag').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  _updateFacetSelected();
   _refreshPills();
 }
 
@@ -1243,14 +1345,18 @@ function resetAllFilters() {
   document.querySelectorAll('.odor-tag').forEach(b => b.classList.remove('active'));
   const allOdor = document.querySelector('#odorFilters .odor-tag[data-odor=""]');
   if (allOdor) allOdor.classList.add('active');
-  // Step 4: reset new taxonomy filter Sets. Their UI controls don't
-  // exist yet (Step 5) so the DOM cleanup is a no-op for now, but
-  // the Set clear() ensures any programmatically-populated filter
-  // state is also cleared by the global Reset button.
+  // Step 5: reset new Primary Family + Facet chip drawers (state +
+  // DOM + summary labels).
   activePrimaryFamilyFilters.clear();
   activeFacetFilters.clear();
+  document.querySelectorAll('#primaryFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#facetFilters .odor-tag').forEach(b => b.classList.remove('active'));
+  const _allPrim = document.querySelector('#primaryFamilyFilters > div > .odor-tag:first-child');
+  if (_allPrim) _allPrim.classList.add('active');
+  const _allFacet = document.querySelector('#facetFilters > div > .odor-tag:first-child');
+  if (_allFacet) _allFacet.classList.add('active');
   // Update labels
-  ['tagSelected','funcSelected','typeSelected','noteSelected','odorSelected','regSelected','sourceSelected'].forEach(id => {
+  ['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','primaryFamSelected','facetSelected'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = 'All';
   });
   _refreshPills();
@@ -1307,22 +1413,73 @@ _buildRadioFilter('typeFilters',   'type',   TYPE_VALUES,       TYPE_LABELS,    
 _buildRadioFilter('regFilters',    'reg',    REGULATORY_VALUES, REGULATORY_LABELS, 'setRegFilter');
 _buildRadioFilter('sourceFilters', 'source', SOURCE_VALUES,     SOURCE_LABELS,     'setSourceFilter');
 
-// Odor Family pills (closed list, multi-select AND).
+// Primary Family chips (Step 5). Multi-select OR within group.
+// Built from PRIMARY_FAMILIES — only families that appear in at
+// least one FILTER_CACHE entry are added so the UI stays compact.
 {
-  const container = document.getElementById('odorTags');
-  ODOR_FAMILY_VALUES.forEach(v => {
+  const container = document.getElementById('primaryFamilyChips');
+  const present = new Set();
+  for (const fc of FILTER_CACHE.values()) {
+    for (const fam of fc.primaryFamilies || []) present.add(fam);
+  }
+  for (const fam of PRIMARY_FAMILIES) {
+    if (!present.has(fam)) continue;
     const btn = document.createElement('span');
     btn.className = 'odor-tag';
-    btn.dataset.odor = v;
-    btn.textContent = ODOR_FAMILY_LABELS[v] || v;
-    btn.onclick = function() { toggleOdorTag(this); };
+    btn.dataset.fam = fam;
+    btn.textContent = PRIMARY_FAMILY_LABELS[fam] || fam;
+    btn.onclick = function() { togglePrimaryFamilyChip(this); };
     container.appendChild(btn);
-  });
+  }
+}
+
+// Facet chips (Step 5). Grouped by parent family with a small heading
+// per group so the chip cloud is scannable on mobile. Only facets that
+// appear in at least one FILTER_CACHE entry are rendered, and only
+// parent families that have at least one such facet get a group.
+{
+  const container = document.getElementById('facetGroups');
+  const facetCounts = {};
+  for (const fc of FILTER_CACHE.values()) {
+    for (const f of fc.facets || []) facetCounts[f] = (facetCounts[f] || 0) + 1;
+  }
+  // Group facets by parent family in canonical order.
+  const facetsByFamily = {};
+  for (const [facet, family] of Object.entries(FACET_TAGS)) {
+    if (facet === family) continue; // skip family self-references
+    if (!facetCounts[facet]) continue; // skip facets unused in DB
+    if (!facetsByFamily[family]) facetsByFamily[family] = [];
+    facetsByFamily[family].push(facet);
+  }
+  for (const family of PRIMARY_FAMILIES) {
+    const facets = facetsByFamily[family];
+    if (!facets || !facets.length) continue;
+    facets.sort();
+    const group = document.createElement('div');
+    group.className = 'facet-group';
+    group.dataset.family = family;
+    const label = document.createElement('div');
+    label.className = 'facet-group-label';
+    label.textContent = PRIMARY_FAMILY_LABELS[family] || family;
+    group.appendChild(label);
+    const chips = document.createElement('div');
+    chips.className = 'facet-group-chips';
+    for (const f of facets) {
+      const btn = document.createElement('span');
+      btn.className = 'odor-tag';
+      btn.dataset.facet = f;
+      btn.textContent = facetLabel(f);
+      btn.onclick = function() { toggleFacetChip(this); };
+      chips.appendChild(btn);
+    }
+    group.appendChild(chips);
+    container.appendChild(group);
+  }
 }
 
 _updateFilterVisibility();
 // Set initial "All" labels for every selected-axis indicator.
-['tagSelected','funcSelected','typeSelected','noteSelected','odorSelected','regSelected','sourceSelected'].forEach(id => {
+['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','primaryFamSelected','facetSelected'].forEach(id => {
   const el = document.getElementById(id); if (el) el.textContent = 'All';
 });
 
@@ -2530,6 +2687,18 @@ function renderResults() {
       ? [...(_fcCard.regulatory || [])]
       : (Array.isArray(cls.regulatory) && cls.regulatory.length ? cls.regulatory : classifyRegulatory(mat));
     const displaySource = _fcCard ? _fcCard.source : (cls.source || classifySource(mat));
+    // Step 5 axis — read precomputed primary / secondary / facets from
+    // FILTER_CACHE for local-DB hits, fall back to record.classification
+    // for PubChem-only / external results.
+    const displayPrimaryFamilies = _fcCard
+      ? [...(_fcCard.primaryFamilies || [])]
+      : (Array.isArray(cls.primaryFamilies) ? cls.primaryFamilies : []);
+    const displaySecondaryFamilies = _fcCard
+      ? [...(_fcCard.secondaryFamilies || [])]
+      : (Array.isArray(cls.secondaryFamilies) ? cls.secondaryFamilies : []);
+    const displayFacets = _fcCard
+      ? [...(_fcCard.facets || [])]
+      : (Array.isArray(cls.facets) ? cls.facets : []);
     // Display-only field cleaners (see _cleanOdorDescription /
     // _cleanPerformanceTenacity / _cleanSafetyUsage defined near the top
     // of the Rendering module). These normalize text that mixes
@@ -2589,7 +2758,7 @@ function renderResults() {
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
-          ${(displayTags.length || displayOdorFamilies.length)?`<div class="card-meta-row" style="margin:6px 0 10px 0">${displayTags.length?`<div class="tag-row"><span class="tag-axis-label">Use</span><span class="tag-chips">${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px;margin:0">${USE_LABELS[t]||t}</span>`).join('')}</span></div>`:''}${displayOdorFamilies.length?`<div class="tag-row"><span class="tag-axis-label">Odor</span><span class="tag-chips">${displayOdorFamilies.map(f=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px;margin:0">${ODOR_FAMILY_LABELS[f]||f}</span>`).join('')}</span></div>`:''}</div>`:""}
+          ${(displayTags.length || displayPrimaryFamilies.length || displaySecondaryFamilies.length || displayFacets.length)?`<div class="card-meta-row" style="margin:6px 0 10px 0">${displayTags.length?`<div class="tag-row"><span class="tag-axis-label">Use</span><span class="tag-chips">${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px;margin:0">${USE_LABELS[t]||t}</span>`).join('')}</span></div>`:''}${displayPrimaryFamilies.length?`<div class="tag-row"><span class="tag-axis-label">Primary</span><span class="tag-chips">${displayPrimaryFamilies.map(f=>`<span class="badge-primary">${PRIMARY_FAMILY_LABELS[f]||f}</span>`).join('')}</span></div>`:''}${displaySecondaryFamilies.length?`<div class="tag-row"><span class="tag-axis-label">Secondary</span><span class="tag-chips">${displaySecondaryFamilies.map(f=>`<span class="badge-secondary">${PRIMARY_FAMILY_LABELS[f]||f}</span>`).join('')}</span></div>`:''}${displayFacets.length?`<div class="tag-row"><span class="tag-axis-label">Facets</span><span class="tag-chips">${displayFacets.map(f=>`<span class="badge-facet">${facetLabel(f)}</span>`).join('')}</span></div>`:''}</div>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
