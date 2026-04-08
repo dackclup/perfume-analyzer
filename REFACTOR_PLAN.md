@@ -945,3 +945,114 @@ If the header/search area overflows on mobile, audit `@media (max-width:600px)` 
 - After printing, removed elements are restored to the DOM via the `cleanup` function bound to `afterprint`.
 
 If any of the hidden elements appear in print output, audit the `@media print` block (currently around lines 192–220) and the DOM removal/restoration logic in `preparePrint`.
+
+## G. Taxonomy Migration (Steps 1–6)
+
+A six-step refactor moved the odor / classification system from a
+single closed-list odor-family axis to a three-field primary /
+secondary / facets taxonomy. Every step was additive and backward
+compatible — no existing field was renamed or removed, no existing
+consumer broke.
+
+### Axes
+
+| Field | Type | Cap | Source of truth |
+|---|---|---|---|
+| `classification.material_type` | string | 1 | `classifyMaterialType(mat)` |
+| `classification.functions` | string[] | closed set | `classifyFunctionsFromRecord` + FILTER_CACHE |
+| `classification.uses` (alias `industry_tags`) | string[] | closed set | `classifyUses(mat)` |
+| `classification.regulatory` | string[] | closed set | `classifyRegulatory(mat)` |
+| `classification.source` | string | 1 | `classifySource(mat)` |
+| `classification.primaryFamilies` | string[] | 1–3 | `_inferTaxonomy(mat)` (Step 2) |
+| `classification.secondaryFamilies` | string[] | 0–3 | `_inferTaxonomy(mat)` (Step 2) |
+| `classification.facets` | string[] | 0–8 | `_inferTaxonomy(mat)` (Step 2) |
+| `classification.odor_families` | string[] | legacy 17-family | `classifyOdorFamilies(mat)` — **retained for backwards compat** |
+
+### Step-by-step
+
+**Step 1 — foundation (additive constants + helpers).**
+Added `PRIMARY_FAMILIES` (22 canonical family ids), `FACET_TAGS` (180+
+facet → parent-family map including family self-references),
+`TAXONOMY_SYNONYMS` (adjective and compound-phrase folds like
+`musky → musk`, `ambery → amber`, `peach_skin → peach`), and the pure
+helpers `normalizeTaxonomyToken`, `uniqStable`, `sortByCanonicalOrder`,
+`tokenizeOdorSources`. All hoisted above FILTER_CACHE init so the
+module-init pass can read them. No wiring into render, filters, or
+exports.
+
+**Step 2 — classifier + record wiring.**
+Added `_inferTaxonomy(matOrRecord)` (three-pass inference — odor_type
+strongest, odor_description medium, blends_with / name / synonyms
+weakest; caps 3/3/8; specificity override `leather > animalic`;
+conservative `gourmand` guard that requires an explicit gourmand
+facet to survive). Thin public wrappers `classifyPrimaryFamilies`,
+`classifySecondaryFamilies`, `classifyFacets`. Extended
+`record.classification` with `primaryFamilies`, `secondaryFamilies`,
+`facets`. `_computeClassification` calls `_inferTaxonomy` once per
+material and writes all three fields. Anchor validation (10 hand-crafted
+odor_type examples from `Leather Smoky` to `Aldehydic Waxy`) passed 10/10.
+
+**Step 3 — legacy migration parser + FILTER_CACHE precompute.**
+Added `migrateLegacyTaxonomy(entry)` — the single conversion point
+from raw `perfumery_data.js` entry shape to the new taxonomy arrays.
+`_buildFilterRecord` now calls it once per CAS at module init and
+stores `primaryFamilies / secondaryFamilies / facets` on every
+FILTER_CACHE entry. `_computeClassification` prefers the FILTER_CACHE
+precompute over a fresh `_inferTaxonomy` call when the CAS hits the
+local DB, so inference runs ONCE per CAS at module init and never
+inside `matchesAllFilters`, `_updateFilterVisibility`, or render. A
+diagnostic `console.warn` fires if a perfumery candidate (hasRealOdor
+|| in MIXTURES) ends up with zero primary families — vehicles and
+additives are excluded so the console doesn't spam.
+
+**Step 4 — filter logic (no UI change yet).**
+Added `activePrimaryFamilyFilters` and `activeFacetFilters` Sets
+alongside the legacy `activeOdorFilters`. Extended `matchesAllFilters`
+to AND the new groups on top of every other axis, with **OR inside
+each group**. Scaffolding helpers `togglePrimaryFamilyFilter`,
+`clearPrimaryFamilyFilters`, `toggleFacetFilter`, `clearFacetFilters`
+added for the upcoming UI wiring. 11-case matching-logic unit test
+passed 11/11.
+
+**Step 5 — UI wiring.**
+Replaced the legacy Odor Family pill sub-drawer with two new
+multi-select drawers: **Primary Family** (22 chips, but only families
+present in at least one DB entry are rendered → 20 chips in the
+current DB) and **Facet** (grouped by parent family in canonical
+order, 20 groups, 133 distinct chips in the current DB). Each group
+gets a small uppercase header so the chip cloud is scannable on
+mobile. `_updateFilterVisibility` now hides chips and entire facet
+groups that would have zero count under the current filter combo.
+Result cards gained three new badge rows in the body: **Primary**
+(strong accent-fill badge), **Secondary** (lighter muted badge),
+**Facets** (small transparent chip). The original curated odor
+description text in the Odor section is preserved unchanged.
+
+**Step 6 — export + docs + smoke-test pass.**
+JSON export `classification` nested view now emits `primaryFamilies`,
+`secondaryFamilies`, and `facets` alongside the legacy `odor_families`
+array. `odor_families` is explicitly retained so older consumers that
+still read the single-axis odor list don't break. Ran a 20-material
+smoke test covering balsamic / gourmand / aquatic / aldehydic /
+leather / camphoraceous / amber / musk / woody / sweet archetypes —
+all produced reasonable primary / secondary / facet assignments.
+Applied one tight refinement: the tokenizer's inner-snake_case
+expansion now skips when the whole compound already resolves to a
+FACET_TAGS key or a TAXONOMY_SYNONYMS fold, which prevents compounds
+like `peach-skin` from leaking a spurious `skin → animalic` tag onto
+Gamma Undecalactone while still letting Ambroxan's `skin-like` expand
+and carry its `skin` facet.
+
+### Backward compatibility invariants
+- `ODOR_FAMILY_VALUES` / `ODOR_FAMILY_KEYWORDS` / `classifyOdorFamilies`
+  — still defined, still called by `_computeClassification`, still
+  populate `FILTER_CACHE.odorFamilies` and `classification.odor_families`.
+- `activeOdorFilters` Set — still defined, no UI populates it after
+  Step 5, the empty-Set branch in `matchesAllFilters` keeps it inert.
+- JSON / CSV export columns — `classification.odor_families` still
+  emitted; new fields added next to it, no rename, no removal.
+- `FILTER_CACHE` shape — new fields added; existing fields unchanged.
+- `record.classification` shape — new fields added; existing fields
+  unchanged.
+- Search / PubChem fetch / card expand / print / PDF pipelines — all
+  untouched.
