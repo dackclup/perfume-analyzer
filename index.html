@@ -941,6 +941,42 @@ function classifyPrimaryFamilies(matOrRecord)   { return _inferTaxonomy(matOrRec
 function classifySecondaryFamilies(matOrRecord) { return _inferTaxonomy(matOrRecord).secondaries; }
 function classifyFacets(matOrRecord)            { return _inferTaxonomy(matOrRecord).facets; }
 
+// ── Step 3: legacy migration parser ──
+// Bridges the OLD raw-DB entry shape into the NEW taxonomy arrays.
+// Takes a perfumery_data.js-style entry (with .odor.type / .odor.description
+// / .blends_with / .name / .synonyms) and returns:
+//   { primaryFamilies, secondaryFamilies, facets }
+// This is the single conversion point used by _buildFilterRecord at module
+// init, so FILTER_CACHE is populated with the new axis directly from the
+// legacy DB shape — the runtime classifier never has to re-derive these
+// from raw odor_type strings inside any hot loop.
+//
+// The parser is intentionally additive: the old odor_type string is read
+// only as INPUT for inference, never as the final filter model. The new
+// taxonomy arrays are the source of truth for the upcoming filter UI.
+function migrateLegacyTaxonomy(entry) {
+  if (!entry) return { primaryFamilies: [], secondaryFamilies: [], facets: [] };
+  const synthetic = {
+    record: {
+      perfumery: {
+        odor_type:        entry.odor?.type || null,
+        odor_description: entry.odor?.description || null,
+        blends_with:      Array.isArray(entry.blends_with) ? entry.blends_with : []
+      },
+      names: {
+        canonical: entry.name || '',
+        synonyms:  Array.isArray(entry.synonyms) ? entry.synonyms : []
+      }
+    }
+  };
+  const tax = _inferTaxonomy(synthetic);
+  return {
+    primaryFamilies:   tax.primaries,
+    secondaryFamilies: tax.secondaries,
+    facets:            tax.facets
+  };
+}
+
 // ═══════════════════════════════════════════════════════════════
 // MODULE: Normalized Filter Cache
 // Precomputed per-CAS filter data derived from DB entries.
@@ -1026,10 +1062,33 @@ function _buildFilterRecord(cas, entry) {
   const regulatory = new Set(classifyRegulatory(syntheticMat));
   const source = classifySource(syntheticMat);
 
+  // Step 3: precompute the new primary/secondary/facets axis directly
+  // from the raw DB entry via the legacy migration parser. This runs
+  // ONCE per CAS at module init — no hot-loop recomputation. The legacy
+  // odorFamilies Set above is intentionally left in place so the
+  // current Odor Family filter UI keeps working until Step 4+ swaps it.
+  const _newTax = migrateLegacyTaxonomy(entry);
+  const primaryFamilies   = _newTax.primaryFamilies;
+  const secondaryFamilies = _newTax.secondaryFamilies;
+  const facets            = _newTax.facets;
+
+  // Diagnostic: any material that looks like a perfumery candidate
+  // (has a real odor description or is in MIXTURES) but ended up with
+  // zero primary families is almost certainly a missing rule. Log it
+  // once at module init so the dev console flags the gap. Excludes
+  // genuine vehicles / additives (no real odor, not in MIXTURES) which
+  // legitimately have no family.
+  const _isPerfumeryCandidate = hasRealOdor || MIXTURES.has(cas);
+  if (_isPerfumeryCandidate && primaryFamilies.length === 0) {
+    console.warn('[taxonomy] zero primary families for perfumery material:', entry.name, '(' + cas + ')');
+  }
+
   return {
     cas, noteLow, materialType, functions, funcAll, hasRealOdor,
     odorTags, odorFamilies, hasNoOdorType,
-    industryTags, uses, regulatory, source, allText
+    industryTags, uses, regulatory, source, allText,
+    // Step 3 axis — precomputed once, read-only from here on.
+    primaryFamilies, secondaryFamilies, facets
   };
 }
 
@@ -1798,14 +1857,23 @@ function _computeClassification(mat) {
   c.odor_families = classifyOdorFamilies(mat); // legacy odor axis
   c.regulatory    = classifyRegulatory(mat);
   c.source        = classifySource(mat);
-  // Step 2 axis — fill primary / secondary / facets from a single
-  // _inferTaxonomy call so the three lists stay consistent with
-  // each other (calling each classify* helper separately would
-  // recompute three times). NOT yet wired into the card render.
-  const _tax = _inferTaxonomy(mat);
-  c.primaryFamilies   = _tax.primaries;
-  c.secondaryFamilies = _tax.secondaries;
-  c.facets            = _tax.facets;
+  // Step 3 axis — prefer the FILTER_CACHE precompute when the CAS
+  // is in the local DB so we don't recompute the inference per
+  // result. PubChem-only / external materials fall through to a
+  // single _inferTaxonomy call (still once per result, never inside
+  // a render hot loop).
+  const _cas = mat.record.identifiers?.cas;
+  const _fc  = _cas ? FILTER_CACHE.get(_cas) : null;
+  if (_fc) {
+    c.primaryFamilies   = _fc.primaryFamilies;
+    c.secondaryFamilies = _fc.secondaryFamilies;
+    c.facets            = _fc.facets;
+  } else {
+    const _tax = _inferTaxonomy(mat);
+    c.primaryFamilies   = _tax.primaries;
+    c.secondaryFamilies = _tax.secondaries;
+    c.facets            = _tax.facets;
+  }
 }
 
 function _applyLocalMatch(mat, match) {
