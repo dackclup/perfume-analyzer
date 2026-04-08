@@ -250,7 +250,7 @@ html { scroll-behavior:smooth; }
     <h1>Perfume Raw Materials Analyzer</h1>
     <p class="subtitle">PubChem compound data + perfumery knowledge</p>
   </div>
-  <button id="themeToggle" type="button" aria-label="Switch to dark mode">🌙</button>
+  <button id="themeToggle" type="button" aria-label="Switch to dark mode">Dark</button>
 </div>
 <hr>
 
@@ -2880,7 +2880,7 @@ function toTitle(s) { return s.replace(/\b\w/g, c=>c.toUpperCase()); }
   let currentTheme = prefersDark ? 'dark' : 'light';
   const apply = () => {
     root.setAttribute('data-theme', currentTheme);
-    btn.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+    btn.textContent = currentTheme === 'dark' ? 'Light' : 'Dark';
     btn.setAttribute('aria-label', currentTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
   };
   apply();
