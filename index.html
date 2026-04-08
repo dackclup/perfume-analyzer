@@ -425,6 +425,13 @@ const _filters = {
   source: {active: "", elId: "sourceSelected"},
 };
 let activeOdorFilters = new Set();
+// Step 4: new taxonomy filter state. Multi-select Sets for the
+// primaryFamilies and facets axes precomputed on FILTER_CACHE in
+// Step 3. Both default to empty so existing behavior is unchanged
+// — Step 5 will wire UI controls that populate them. Filter logic
+// rule: OR inside each Set, AND between Sets and the other axes.
+let activePrimaryFamilyFilters = new Set();
+let activeFacetFilters = new Set();
 
 const FUNC_TERMS = new Set(['functional','carrier','fixative','solvent','additive','preservative','repellent','mild','colorant','n/a']);
 
@@ -1231,15 +1238,47 @@ function resetAllFilters() {
     const allRadio = document.querySelector(`input[name="${name}"][value=""]`);
     if (allRadio) allRadio.checked = true;
   }
-  // Reset odor
+  // Reset legacy odor pills
   activeOdorFilters.clear();
   document.querySelectorAll('.odor-tag').forEach(b => b.classList.remove('active'));
   const allOdor = document.querySelector('#odorFilters .odor-tag[data-odor=""]');
   if (allOdor) allOdor.classList.add('active');
+  // Step 4: reset new taxonomy filter Sets. Their UI controls don't
+  // exist yet (Step 5) so the DOM cleanup is a no-op for now, but
+  // the Set clear() ensures any programmatically-populated filter
+  // state is also cleared by the global Reset button.
+  activePrimaryFamilyFilters.clear();
+  activeFacetFilters.clear();
   // Update labels
   ['tagSelected','funcSelected','typeSelected','noteSelected','odorSelected','regSelected','sourceSelected'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = 'All';
   });
+  _refreshPills();
+}
+
+// Step 4: toggle / clear helpers for the new taxonomy filter Sets.
+// These are the API surface that the upcoming Step-5 UI controls
+// (primary family chips, facet chips) will call. Behavior mirrors
+// the existing toggleOdorTag / clearOdorFilters helpers — toggle
+// adds or removes from the Set and triggers a pill refresh.
+function togglePrimaryFamilyFilter(family) {
+  if (!family) return;
+  if (activePrimaryFamilyFilters.has(family)) activePrimaryFamilyFilters.delete(family);
+  else activePrimaryFamilyFilters.add(family);
+  _refreshPills();
+}
+function clearPrimaryFamilyFilters() {
+  activePrimaryFamilyFilters.clear();
+  _refreshPills();
+}
+function toggleFacetFilter(facet) {
+  if (!facet) return;
+  if (activeFacetFilters.has(facet)) activeFacetFilters.delete(facet);
+  else activeFacetFilters.add(facet);
+  _refreshPills();
+}
+function clearFacetFilters() {
+  activeFacetFilters.clear();
   _refreshPills();
 }
 
@@ -1311,7 +1350,7 @@ function matchesAllFilters(cas) {
   if (!fc) {
     return !_filters.note.active && !_filters.type.active && !_filters.func.active &&
            !_filters.tag.active && !_filters.reg.active && !_filters.source.active &&
-           !activeOdorFilters.size;
+           !activeOdorFilters.size && !activePrimaryFamilyFilters.size && !activeFacetFilters.size;
   }
 
   // Note
@@ -1339,18 +1378,39 @@ function matchesAllFilters(cas) {
   // Source axis (single value)
   const sourceF = _filters.source.active;
   if (sourceF && fc.source !== sourceF) return false;
-  // Odor Family axis (multi-select AND over the closed family list)
+  // Legacy Odor Family axis (multi-select AND over the closed family list)
   if (activeOdorFilters.size) {
     for (const f of activeOdorFilters) {
       if (!fc.odorFamilies.has(f)) return false;
     }
+  }
+  // Step 4: Primary Family axis (multi-select OR within group, AND
+  // across groups). Reads FILTER_CACHE.primaryFamilies precomputed in
+  // Step 3 — never recomputed here.
+  if (activePrimaryFamilyFilters.size) {
+    const fcPrim = fc.primaryFamilies || [];
+    let any = false;
+    for (const fam of activePrimaryFamilyFilters) {
+      if (fcPrim.includes(fam)) { any = true; break; }
+    }
+    if (!any) return false;
+  }
+  // Step 4: Facet axis (multi-select OR within group, AND across
+  // groups). Reads FILTER_CACHE.facets precomputed in Step 3.
+  if (activeFacetFilters.size) {
+    const fcFacets = fc.facets || [];
+    let any = false;
+    for (const facet of activeFacetFilters) {
+      if (fcFacets.includes(facet)) { any = true; break; }
+    }
+    if (!any) return false;
   }
   return true;
 }
 
 function showPills(typed) {
   const ql = typed.toLowerCase().replace(/\s+/g,' ').trim();
-  const hasAnyFilter = _filters.note.active || _filters.type.active || _filters.func.active || _filters.tag.active || _filters.reg.active || _filters.source.active || activeOdorFilters.size;
+  const hasAnyFilter = _filters.note.active || _filters.type.active || _filters.func.active || _filters.tag.active || _filters.reg.active || _filters.source.active || activeOdorFilters.size || activePrimaryFamilyFilters.size || activeFacetFilters.size;
 
   // Existing results — exclude from pill suggestions
   const existingCas = new Set();
