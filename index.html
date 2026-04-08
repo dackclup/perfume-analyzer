@@ -132,6 +132,8 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .badge-mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
 .badge-base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
 .badge-type { font-size:0.7em; padding:2px 8px; border-radius:3px; margin-left:8px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px solid var(--border); vertical-align:middle; }
+.card-meta-row { margin:4px 0 0 18px; }
+.card-meta-row .badge-type { margin-left:0; display:inline-block; }
 .badge-not-perfumery { font-size:0.7em; padding:2px 8px; border-radius:3px; margin-left:6px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px dashed var(--border); text-transform:none; vertical-align:middle; }
 .match-tag { font-size:0.6em; padding:1px 6px; border-radius:3px; font-weight:400; background:var(--accent); color:#fff; vertical-align:middle; opacity:0.8; }
 
@@ -1752,7 +1754,10 @@ function renderResults() {
     cards.push(`
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
-          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${displayMatLabel}</span>${displayFunctions.map(f=>` <span class="badge-type">${FUNCTION_LABELS[f]||f}</span>`).join('')}${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
+          <div style="flex:1;min-width:0">
+            <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)}${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
+            ${(displayMatLabel || displayFunctions.length)?`<div class="card-meta-row"><span class="badge-type">${[displayMatLabel, ...displayFunctions.map(f=>FUNCTION_LABELS[f]||f)].filter(Boolean).join(' • ')}</span></div>`:''}
+          </div>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
