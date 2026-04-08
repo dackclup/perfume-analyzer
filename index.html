@@ -1868,7 +1868,7 @@ function renderResults() {
         <div class="card-header" onclick="toggleCard(${idx})">
           <div style="flex:1;min-width:0">
             <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(nm.canonical)}${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''}${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
-            ${(displayMatLabel || displayFunctions.length || displayRegulatory.length)?`<div class="card-meta-row">${(displayMatLabel || displayFunctions.length)?`<span class="badge-type">${[displayMatLabel, ...displayFunctions.map(f=>FUNCTION_LABELS[f]||f)].filter(Boolean).join(' • ')}</span>`:''}${displayRegulatory.map(r=>` <span class="badge-type">${REGULATORY_LABELS[r]||r}</span>`).join('')}</div>`:''}
+            ${(displayMatLabel || displayFunctions.length || displayRegulatory.length)?`<div class="card-meta-row">${(displayMatLabel || displayFunctions.length)?`<span class="badge-type">${[displayMatLabel, ...displayFunctions.map(f=>FUNCTION_LABELS[f]||f)].filter(Boolean).join(' • ')}</span>`:''}${displayRegulatory.map(r=>` <span class="badge-type" style="color:#b91c1c">${REGULATORY_LABELS[r]||r}</span>`).join('')}</div>`:''}
           </div>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
