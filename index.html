@@ -1752,16 +1752,13 @@ function renderResults() {
     cards.push(`
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
-          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${displayMatLabel}</span>${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
+          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${displayMatLabel}</span>${displayFunctions.map(f=>` <span class="badge-type">${FUNCTION_LABELS[f]||f}</span>`).join('')}${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
-          ${(displayFunctions.length || displayTags.length)?`<p style="margin:4px 0 8px">${[
-            ...displayFunctions.map(f=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px">${FUNCTION_LABELS[f]||f}</span>`),
-            ...displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`)
-          ].join(' ')}</p>`:""}
+          ${displayTags.length?`<p style="margin:4px 0 8px">${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
