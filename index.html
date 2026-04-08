@@ -275,21 +275,19 @@ html { scroll-behavior:smooth; }
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Function <span class="sub-selected" id="funcSelected"></span></div>
       <div class="sub-body" id="funcFilters">
         <label class="filter-radio"><input type="radio" name="func" value="" checked onchange="setFuncFilter(this.value)"> All</label>
-        <label class="filter-radio"><input type="radio" name="func" value="_aromatic" onchange="setFuncFilter(this.value)"> Aromatic</label>
+        <label class="filter-radio"><input type="radio" name="func" value="aromatic" onchange="setFuncFilter(this.value)"> Aromatic</label>
         <label class="filter-radio"><input type="radio" name="func" value="fixative" onchange="setFuncFilter(this.value)"> Fixative</label>
         <label class="filter-radio"><input type="radio" name="func" value="solvent" onchange="setFuncFilter(this.value)"> Solvent</label>
         <label class="filter-radio"><input type="radio" name="func" value="carrier" onchange="setFuncFilter(this.value)"> Carrier</label>
-        <label class="filter-radio"><input type="radio" name="func" value="additive" onchange="setFuncFilter(this.value)"> Additive</label>
       </div>
     </div>
     <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Type <span class="sub-selected" id="typeSelected"></span></div>
       <div class="sub-body" id="typeFilters">
         <label class="filter-radio"><input type="radio" name="type" value="" checked onchange="setTypeFilter(this.value)"> All</label>
-        <label class="filter-radio"><input type="radio" name="type" value="single_molecule" onchange="setTypeFilter(this.value)"> Aroma Chemical</label>
+        <label class="filter-radio"><input type="radio" name="type" value="aroma_chemical" onchange="setTypeFilter(this.value)"> Aroma Chemical</label>
         <label class="filter-radio"><input type="radio" name="type" value="natural_extract" onchange="setTypeFilter(this.value)"> Natural Extract</label>
         <label class="filter-radio"><input type="radio" name="type" value="natural_isolate" onchange="setTypeFilter(this.value)"> Natural Isolate</label>
-        <label class="filter-radio"><input type="radio" name="type" value="solvent_carrier" onchange="setTypeFilter(this.value)"> Solvent / Carrier</label>
         <label class="filter-radio"><input type="radio" name="type" value="additive" onchange="setTypeFilter(this.value)"> Preservative / Additive</label>
       </div>
     </div>
@@ -436,10 +434,12 @@ const FUNC_TERMS = new Set(['functional','carrier','fixative','solvent','additiv
 // Pre-compiled regexes for matchesAllFilters hot path
 const RE_NOTE_OTHER = /top|middle|base/i;
 const RE_FUNC_AROMATIC_EXCLUDE = /solvent|carrier|fixative|additive|preservative|repellent|biocide|colorant|antioxidant|emollient|denaturant|plasticizer/i;
-const RE_FUNC_OTHER = /colorant|antioxidant|emollient|phototoxic|denaturant|plasticizer|biocide|functional/i;
 const RE_ODOR_FUNC = /functional|carrier|solvent|fixative|preservative|additive|repellent|n\/a/i;
 const RE_ODORLESS = /odorless|virtually odorless|preservative|antioxidant/i;
-const SPECIFIC_FUNCS = ['solvent','carrier','fixative','additive','preservative','repellent'];
+// Function axis = closed set { aromatic, fixative, solvent, carrier }.
+// "additive" lives on the Type axis and is intentionally NOT a Function value.
+const FUNCTION_AXIS = ['aromatic','fixative','solvent','carrier'];
+const FUNCTION_AXIS_SPECIFIC = ['fixative','solvent','carrier'];
 
 // ═══════════════════════════════════════════════════════════════
 // MODULE: Normalized Filter Cache
@@ -480,16 +480,12 @@ function _buildFilterRecord(cas, entry) {
   };
   const materialType = classifyMaterialType(syntheticMat);
 
-  // Precompute function role
-  let funcRole = null;
-  if (hasRealOdor && !RE_FUNC_AROMATIC_EXCLUDE.test(funcAll)) funcRole = '_aromatic';
-  else {
-    for (const f of SPECIFIC_FUNCS) { if (funcAll.includes(f)) { funcRole = f; break; } }
-    if (!funcRole) {
-      const hasSpec = SPECIFIC_FUNCS.some(f => funcAll.includes(f));
-      if (!hasSpec && !hasRealOdor && RE_FUNC_OTHER.test(funcAll)) funcRole = '_other';
-    }
-  }
+  // Precompute Function-axis set. A material may belong to MULTIPLE functions
+  // (e.g., dipropylene glycol is both solvent and carrier). This Set is the
+  // single source of truth for both filter matching/counts AND card render.
+  const functions = new Set();
+  if (hasRealOdor && !RE_FUNC_AROMATIC_EXCLUDE.test(funcAll)) functions.add('aromatic');
+  for (const f of FUNCTION_AXIS_SPECIFIC) { if (funcAll.includes(f)) functions.add(f); }
 
   // Precompute odor type tags
   const odorTags = new Set();
@@ -507,7 +503,7 @@ function _buildFilterRecord(cas, entry) {
   const industryTags = new Set(classifyIndustryTags(syntheticMat));
 
   return {
-    cas, noteLow, materialType, funcRole, funcAll, hasRealOdor,
+    cas, noteLow, materialType, functions, funcAll, hasRealOdor,
     odorTags, hasNoOdorType, industryTags, allText
   };
 }
@@ -564,15 +560,13 @@ function _updateFilterVisibility() {
     if (fc.noteLow.includes('middle')) noteCounts['middle'] = (noteCounts['middle']||0)+1;
     if (fc.noteLow.includes('base')) noteCounts['base'] = (noteCounts['base']||0)+1;
     if (!RE_NOTE_OTHER.test(fc.noteLow)) noteCounts['_other'] = (noteCounts['_other']||0)+1;
-    // Type (precomputed)
+    // Type (precomputed) — strict per-axis counts; isolates and extracts are
+    // independent values, so do not collapse them into each other.
     typeCounts[fc.materialType] = (typeCounts[fc.materialType]||0)+1;
-    if (fc.materialType === 'natural_isolate') typeCounts['natural_extract'] = (typeCounts['natural_extract']||0)+1;
-    // Func (precomputed role)
-    if (fc.funcRole) funcCounts[fc.funcRole] = (funcCounts[fc.funcRole]||0)+1;
-    // Also count specific funcs for non-_aromatic entries
-    if (fc.funcRole !== '_aromatic' && fc.funcRole !== '_other') {
-      SPECIFIC_FUNCS.forEach(f => { if (fc.funcAll.includes(f)) funcCounts[f] = (funcCounts[f]||0)+1; });
-    }
+    // Function (precomputed set) — a material may contribute to multiple
+    // function buckets, mirroring the same source of truth used by filter
+    // matching and card render.
+    for (const f of fc.functions) funcCounts[f] = (funcCounts[f]||0)+1;
     // Tag (precomputed industry tag set — shared with card render)
     if (fc.industryTags.has('perfumery')) tagCounts['perfumery'] = (tagCounts['perfumery']||0)+1;
     if (fc.industryTags.has('cosmetics')) tagCounts['cosmetics'] = (tagCounts['cosmetics']||0)+1;
@@ -720,17 +714,15 @@ function matchesAllFilters(cas) {
     if (noteF === '_other') { if (RE_NOTE_OTHER.test(fc.noteLow)) return false; }
     else { if (!fc.noteLow.includes(noteF)) return false; }
   }
-  // Type (precomputed)
+  // Type (precomputed) — strict equality on the Type axis.
   const typeF = _filters.type.active;
   if (typeF) {
-    if (!(fc.materialType === typeF || (typeF === 'natural_extract' && fc.materialType === 'natural_isolate'))) return false;
+    if (fc.materialType !== typeF) return false;
   }
-  // Function (precomputed role)
+  // Function (precomputed set) — closed axis { aromatic, fixative, solvent, carrier }.
   const funcF = _filters.func.active;
   if (funcF) {
-    if (funcF === '_aromatic') { if (fc.funcRole !== '_aromatic') return false; }
-    else if (funcF === '_other') { if (fc.funcRole !== '_other') return false; }
-    else { if (!fc.funcAll.includes(funcF)) return false; }
+    if (!fc.functions.has(funcF)) return false;
   }
   // Use/industry tag (precomputed industry tag set)
   const tagF = _filters.tag.active;
@@ -1198,24 +1190,24 @@ function _enrichPubchem(mat, cas) {
   }).catch(e => { if (e?.name !== 'AbortError') console.warn('_enrichPubchem error:', e); });
 }
 
-// Mirror of _buildFilterRecord's funcRole decision tree, applied to the
-// canonical record shape. Reuses the same regex constants and SPECIFIC_FUNCS
-// list (declared at module top, near FILTER_CACHE) — no regex duplication,
-// no behavior fork. Returns one of the same canonical strings FILTER_CACHE
-// emits ('_aromatic', 'solvent', 'carrier', 'fixative', 'additive',
-// 'preservative', 'repellent', '_other') or null when no rule matches.
-function classifyFunctionFromRecord(record) {
-  if (!record || !record.perfumery) return null;
+// Mirror of _buildFilterRecord's Function-axis derivation, applied to the
+// canonical record shape. Returns an array of values from the closed
+// Function axis { aromatic, fixative, solvent, carrier }. Used by the
+// runtime classification path for materials that bypass FILTER_CACHE
+// (external / PubChem-only results). FILTER_CACHE remains the primary
+// source of truth whenever a CAS hits the local DB.
+function classifyFunctionsFromRecord(record) {
+  if (!record || !record.perfumery) return [];
   const pf = record.perfumery, sf = record.safety || {};
   const odorType = (pf.odor_type || '').toLowerCase();
   const noteLow  = (pf.note || '').toLowerCase();
   const desc     = ((pf.odor_description || '') + ' ' + (sf.usage_levels || '')).toLowerCase();
   const funcAll  = odorType + ' ' + noteLow + ' ' + desc;
   const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
-  if (hasRealOdor && !RE_FUNC_AROMATIC_EXCLUDE.test(funcAll)) return '_aromatic';
-  for (const f of SPECIFIC_FUNCS) { if (funcAll.includes(f)) return f; }
-  if (!hasRealOdor && RE_FUNC_OTHER.test(funcAll)) return '_other';
-  return null;
+  const out = [];
+  if (hasRealOdor && !RE_FUNC_AROMATIC_EXCLUDE.test(funcAll)) out.push('aromatic');
+  for (const f of FUNCTION_AXIS_SPECIFIC) { if (funcAll.includes(f)) out.push(f); }
+  return out;
 }
 
 // ── Helper: apply local DB match result to mat object ──
@@ -1223,7 +1215,7 @@ function _computeClassification(mat) {
   if (mat.found) {
     mat.record.classification.material_type = classifyMaterialType(mat);
     mat.record.classification.industry_tags = classifyIndustryTags(mat);
-    mat.record.classification.function      = classifyFunctionFromRecord(mat.record);
+    mat.record.classification.functions     = classifyFunctionsFromRecord(mat.record);
   }
 }
 
@@ -1260,7 +1252,7 @@ function createResult(inputName) {
     perfumery: { odor_description:null, odor_type:null, odor_strength:null, odor_source:null,
       note:null, tenacity:null, tenacity_hours:null, blends_with:[] },
     safety: { ifra_guideline:null, usage_levels:null, ban_status:null, ghs_codes:[] },
-    classification: { material_type:null, industry_tags:null, function:null },
+    classification: { material_type:null, industry_tags:null, functions:null },
     match: makeMatch(null, 0, inputName, null, null, null, null),
     metadata: { source:null, is_external:false, pubchem_sections:{} }
   };
@@ -1709,10 +1701,20 @@ function renderResults() {
     // 1. material_type: canonical record first, then runtime classifier (for external/PubChem-only)
     // 2. industry_tags: canonical record first, then runtime classifier
     // 3. Filter tags so they never duplicate or contradict the material_type label
+    // Three independent axes — Type, Function, Industry — each rendered
+    // from the same source of truth used by FILTER_CACHE / matchesAllFilters
+    // so cards and filter counts can never disagree.
     const _displayMaterialType = cls.material_type || classifyMaterialType(mat) || null;
-    const _rawTags = (cls.industry_tags && cls.industry_tags.length) ? cls.industry_tags : (classifyIndustryTags(mat) || []);
-    const displayTags = _filterDisplayTags(_rawTags, _displayMaterialType);
+    const _fcCard = id.cas ? FILTER_CACHE.get(id.cas) : null;
+    const _rawIndTags = (cls.industry_tags && cls.industry_tags.length) ? cls.industry_tags : (classifyIndustryTags(mat) || []);
+    const displayTags = _filterDisplayTags(_rawIndTags);
     const displayMatLabel = MATERIAL_TYPE_LABELS[_displayMaterialType] || '';
+    // Function-axis values for this card. Prefer FILTER_CACHE (single source
+    // of truth shared with filter matching/counts); fall back to the runtime
+    // classifier for external/PubChem-only results that aren't in FILTER_CACHE.
+    const displayFunctions = _fcCard
+      ? [...(_fcCard.functions || [])]
+      : (Array.isArray(cls.functions) && cls.functions.length ? cls.functions : classifyFunctionsFromRecord(rec));
     const nl = (pf.note||"").toLowerCase();
     let badges = "";
     if (nl.includes("top")) badges += `<span class="badge badge-top">Top</span>`;
@@ -1750,13 +1752,14 @@ function renderResults() {
     cards.push(`
       <div class="card">
         <div class="card-header" onclick="toggleCard(${idx})">
-          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${displayMatLabel}${(_displayMaterialType==='single_molecule'&&FUNCTION_LABELS[cls.function])?` &middot; ${FUNCTION_LABELS[cls.function]}`:''}</span>${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
+          <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span>${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''} ${esc(nm.canonical)} <span class="badge-type">${displayMatLabel}</span>${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
-          ${displayTags.length?`<p style="margin:4px 0 8px">${displayTags.map(t=>`<span class="badge" style="${t.startsWith('banned_')?'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:600;':'background:var(--bg2);color:var(--text2);border:1px solid var(--border);'}font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>`:""}
+          ${displayFunctions.length?`<p style="margin:4px 0 4px">${displayFunctions.map(f=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px">${FUNCTION_LABELS[f]||f}</span>`).join(' ')}</p>`:""}
+          ${displayTags.length?`<p style="margin:4px 0 8px">${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
@@ -2211,9 +2214,9 @@ async function downloadJSON() {
     const ifra51 = parseIFRA51(src.safety.usage_levels);
     const notes = noteOneHot(src.perfumery.note);
     const banStatus = getBanStatus(mat);
-    // FILTER_CACHE is the single source of truth for funcRole. Look it up
-    // by canonical CAS and forward to the export's classification.function
-    // field below. No recomputation, no new heuristics.
+    // FILTER_CACHE is the single source of truth for the Function-axis set.
+    // Look it up by canonical CAS and forward to the export's
+    // classification.functions array below. No recomputation, no new heuristics.
     const _fc = src.identifiers?.cas ? FILTER_CACHE.get(src.identifiers.cas) : null;
     const record = {
       name: src.names.canonical,
@@ -2269,7 +2272,7 @@ async function downloadJSON() {
       classification: {
         material_type: src.classification?.material_type ?? null,
         industry_tags: Array.isArray(src.classification?.industry_tags) ? src.classification.industry_tags : [],
-        function: _fc?.funcRole ?? null,
+        functions: _fc ? [...(_fc.functions || [])] : (Array.isArray(src.classification?.functions) ? src.classification.functions : []),
       },
       metadata: {
         source: src.metadata?.source ?? null,
@@ -2416,7 +2419,7 @@ function downloadCSV() {
     return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
   const headers = [
-    'cas_number', 'name', 'material_type', 'function',
+    'cas_number', 'name', 'material_type', 'functions',
     'ban_status', 'note', 'odor_description', 'usage_levels', 'industry_tags'
   ];
   const rows = [headers.join(',')];
@@ -2428,7 +2431,7 @@ function downloadCSV() {
       _csv(cas),
       _csv(src.names?.canonical),
       _csv(src.classification?.material_type),
-      _csv(fc?.funcRole ?? null),
+      _csv(fc ? [...(fc.functions || [])] : (src.classification?.functions ?? null)),
       _csv(getBanStatus(mat)),
       _csv(src.perfumery?.note),
       _csv(src.perfumery?.odor_description),
@@ -2523,51 +2526,45 @@ function classifyMaterialType(mat) {
   const note = (pf.note || '').toLowerCase();
   const cas = id.cas || '';
   const all = n + ' ' + syns + ' ' + desc + ' ' + odorType;
+  // Type axis = what the material IS (independent of Function/Industry).
+  // Solvent / Carrier roles are NOT a Type — they live on the Function axis.
   if (/\b(preservative|biocide|antioxidant|stabilizer|additive)\b/i.test(all) || /^(additive|base\/additive)$/i.test(note)) return 'additive';
   if (MIXTURES.has(cas)) return 'natural_extract';
   if (/\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i.test(all)) return 'natural_extract';
-  if (/\b(solvent|carrier|diluent|emollient|virtually odorless|odorless)\b/i.test(all)) return 'solvent_carrier';
-  if (/\b(isododecane|dipropylene glycol|isopropyl myristate|triethyl citrate|benzyl benzoate)\b/i.test(n)) return 'solvent_carrier';
   // natural_isolate: explicit claim only — bare "natural" matches too many
   // aroma chemicals whose descriptions say "natural-like" or "natural sandalwood note".
   if (/\bisolate(?:d|s)?\b|\bfrom\s+\w+(?:\s+\w+)?\s+oil\b|\boccurs\s+in\b|\bnatural\s+(?:form|isolate|source|origin)\b/i.test(all) && !MIXTURES.has(cas)) return 'natural_isolate';
-  return 'single_molecule';
+  return 'aroma_chemical';
 }
 const MATERIAL_TYPE_LABELS = {
   'additive': 'Preservative / Additive',
   'natural_extract': 'Natural Extract',
   'natural_isolate': 'Natural Isolate',
-  'solvent_carrier': 'Solvent / Carrier',
-  'single_molecule': 'Aroma Chemical'
+  'aroma_chemical': 'Aroma Chemical'
 };
-// UI-only mapping for record.classification.function. Strips the
-// leading underscore from FILTER_CACHE-style enum values for display.
-// Returns undefined for unknown / null inputs so the caller can render
-// nothing extra without showing "other" or "unknown" placeholders.
+// UI label map for the canonical Function axis.
+// Function = what the material DOES (axis is independent of Type / Industry).
 const FUNCTION_LABELS = {
-  '_aromatic': 'aromatic',
-  'solvent': 'solvent',
-  'carrier': 'carrier',
+  'aromatic': 'aromatic',
   'fixative': 'fixative',
-  'additive': 'additive',
-  'preservative': 'preservative',
-  'repellent': 'repellent',
-  '_other': 'other',
+  'solvent':  'solvent',
+  'carrier':  'carrier',
 };
 
-// Strip industry tags that duplicate or contradict the chosen material_type label.
-// Used by the result-card render path so the header badge and the tag row never conflict.
-function _filterDisplayTags(tags, materialType) {
+// Industry axis is the closed set { perfumery, flavor, cosmetics }.
+// Regulatory / banned status lives on its own axis and is rendered separately.
+const INDUSTRY_AXIS = ['perfumery','flavor','cosmetics'];
+
+// Reduce raw industry-tag list to ONLY industry-axis values, dedup-preserving order.
+// Used by the result-card render path so the Industry tag row never mixes in
+// regulatory, pharma, or fallback "chemical/unclassified" labels.
+function _filterDisplayTags(tags) {
   if (!Array.isArray(tags) || !tags.length) return [];
   const out = [];
   const seen = new Set();
-  const mtIsInformative = !!materialType && materialType !== 'unknown';
   for (const t of tags) {
     if (!t || seen.has(t)) continue;
-    // Suppress generic fallback labels once we already have any material_type
-    if (mtIsInformative && (t === 'unclassified' || t === 'chemical')) continue;
-    // Suppress redundancy with the "Solvent / Carrier" header badge
-    if (materialType === 'solvent_carrier' && (t === 'solvent' || t === 'carrier')) continue;
+    if (!INDUSTRY_AXIS.includes(t)) continue;
     seen.add(t);
     out.push(t);
   }
