@@ -244,14 +244,25 @@ html { scroll-behavior:smooth; }
 }
 @media print {
   :root {
-    --bg: #ffffff; --bg2: #f5f5fa; --text: #1a1a2e; --text2: #4a5e78;
-    --accent: #3D5A80; --border: transparent; --card-bg: #ffffff;
+    --bg: #ffffff; --bg2: #eef2f7; --text: #1a1a2e; --text2: #4a5e78;
+    --accent: #3D5A80; --border: #cbd5e1; --card-bg: #ffffff;
     --badge-top-bg: #fef9c3; --badge-top-fg: #854d0e;
     --badge-mid-bg: #dbeafe; --badge-mid-fg: #1e40af;
     --badge-base-bg: #ede9fe; --badge-base-fg: #5b21b6;
   }
   body { padding:0; padding-bottom:0; max-width:100%; counter-reset:page; }
-  .badge { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  /* Print colour accuracy — force every taxonomy chip to render with
+     its background + border so Type·Fn / Reg / Use / Primary / Facets
+     badges and the match-tag (name exact 99%) all print as visible
+     chips instead of bare text on white paper. */
+  .badge, .badge-type, .badge-primary, .badge-secondary, .badge-facet,
+  .match-tag, .badge-not-perfumery {
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .match-tag { opacity:1 !important; }
+  /* Hide the PubChem deep-link line in printed output — it's a live
+     hyperlink that has no meaning on paper / PDF. */
+  .pubchem-link { display:none !important; }
   .ghs-icon-wrap { width:32px; height:32px; }
   .ghs-icon, .ghs-icon-wrap::before { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   .ghs-section { border:none !important; background:transparent !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -2956,7 +2967,7 @@ function renderResults() {
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
-            ${mat.page_url?`<p><a href="${mat.page_url}" target="_blank" style="color:var(--accent);font-size:0.85em">PubChem ↗</a></p>`:""}
+            ${mat.page_url?`<p class="pubchem-link"><a href="${mat.page_url}" target="_blank" style="color:var(--accent);font-size:0.85em">PubChem ↗</a></p>`:""}
             ${ids}
             ${shortProps?`<div class="props-grid">${shortProps}</div>`:""}
             ${longProps}${syns}
