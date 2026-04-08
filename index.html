@@ -1822,6 +1822,20 @@ function renderResults() {
     const displayFunctions = _fcCard
       ? [...(_fcCard.functions || [])]
       : (Array.isArray(cls.functions) && cls.functions.length ? cls.functions : classifyFunctionsFromRecord(rec));
+    // Dedup the Type label against the Function labels (case-insensitive).
+    // Materials whose Type and Function are literally the same word —
+    // ethanol → Type "Solvent" + Function "solvent", squalane → Type
+    // "Carrier" + Function "carrier" — used to render as "Solvent • Solvent"
+    // / "Carrier • Carrier". Build a deduped joined-label list once and
+    // reuse it in the .card-meta-row template below.
+    const _typeFuncParts = [];
+    {
+      const seen = new Set();
+      const _addPart = lbl => { if (!lbl) return; const k = lbl.toLowerCase(); if (seen.has(k)) return; seen.add(k); _typeFuncParts.push(lbl); };
+      _addPart(displayMatLabel);
+      for (const f of displayFunctions) _addPart(FUNCTION_LABELS[f] || f);
+    }
+    const _typeFuncJoined = _typeFuncParts.join(' • ');
     const displayOdorFamilies = _fcCard
       ? [...(_fcCard.odorFamilies || [])]
       : (Array.isArray(cls.odor_families) && cls.odor_families.length ? cls.odor_families : classifyOdorFamilies(mat));
@@ -1868,7 +1882,7 @@ function renderResults() {
         <div class="card-header" onclick="toggleCard(${idx})">
           <div style="flex:1;min-width:0">
             <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(nm.canonical)}${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''}${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
-            ${(displayMatLabel || displayFunctions.length || displayRegulatory.length)?`<div class="card-meta-row">${(displayMatLabel || displayFunctions.length)?`<span class="badge-type">${[displayMatLabel, ...displayFunctions.map(f=>FUNCTION_LABELS[f]||f)].filter(Boolean).join(' • ')}</span>`:''}${displayRegulatory.map(r=>` <span class="badge-type" style="color:#b91c1c">${REGULATORY_LABELS[r]||r}</span>`).join('')}</div>`:''}
+            ${(_typeFuncJoined || displayRegulatory.length)?`<div class="card-meta-row">${_typeFuncJoined?`<span class="badge-type">${_typeFuncJoined}</span>`:''}${displayRegulatory.map(r=>` <span class="badge-type" style="color:#b91c1c">${REGULATORY_LABELS[r]||r}</span>`).join('')}</div>`:''}
           </div>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
