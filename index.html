@@ -562,7 +562,11 @@ function _buildFilterRecord(cas, entry) {
   const functions = new Set();
   const _entryName = (entry.name || '').toLowerCase();
   const _tenacity  = (entry.performance?.tenacity || '').toLowerCase();
-  if (hasRealOdor && !RE_FUNC_AROMATIC_EXCLUDE.test(funcAll)) functions.add('aromatic');
+  // Aromatic = any material with a real odor description. The earlier
+  // RE_FUNC_AROMATIC_EXCLUDE filter wrongly stripped 'aromatic' from
+  // aroma chemicals whose curated text mentions a secondary fixative /
+  // solvent role (Benzyl Salicylate, Benzyl Alcohol, Cinnamic Acid, …).
+  if (hasRealOdor) functions.add('aromatic');
   for (const f of FUNCTION_AXIS_SPECIFIC) { if (funcAll.includes(f)) functions.add(f); }
   if (/\b(very high|excellent)\b/i.test(_tenacity) && /\bbase\b/i.test(noteLow)) functions.add('fixative');
   if (KNOWN_FIXATIVE_NAMES.test(_entryName)) functions.add('fixative');
@@ -1325,7 +1329,12 @@ function classifyFunctionsFromRecord(record) {
   const out = [];
   const add = f => { if (!out.includes(f)) out.push(f); };
 
-  if (hasRealOdor && !RE_FUNC_AROMATIC_EXCLUDE.test(funcAll)) add('aromatic');
+  // Aromatic: any material with a real odor description is aromatic. Do
+  // NOT exclude based on funcAll containing "fixative" / "solvent" — many
+  // aroma chemicals (Benzyl Salicylate, Benzyl Alcohol, Cinnamic Acid,
+  // Lanolin, Isoamyl Acetate, …) have a real odor AND a fixative/solvent
+  // secondary role. They belong on the aromatic Function bucket too.
+  if (hasRealOdor) add('aromatic');
   for (const f of FUNCTION_AXIS_SPECIFIC) { if (funcAll.includes(f)) add(f); }
 
   // Fixative: explicit text trigger above already added it. Add it for
@@ -2734,13 +2743,15 @@ function classifyMaterialType(mat) {
   if (/\bisolate(?:d|s)?\b|\bfrom\s+\w+(?:\s+\w+)?\s+oil\b|\boccurs\s+in\b|\bnatural\s+(?:form|isolate|source|origin)\b/i.test(all) && !MIXTURES.has(cas)) return 'natural_isolate';
 
   // 4) Waxes (after balsam/absolute so beeswax-absolute hits absolute).
-  if (/\b(wax)\b/i.test(n)) return 'wax';
+  //    Lanolin is a wool wax whose canonical name has no "wax" word — add
+  //    it explicitly so the Type axis doesn't fall through to aroma_chemical.
+  if (/\b(wax|lanolin)\b/i.test(n)) return 'wax';
 
   // 5) Formulation solvents and carriers — split into two distinct
   //    Type values via name and curated text. The override list above
   //    already caught the dual-role aromatic ones (BB / TEC).
   const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
-  const isCarrierName = /\b(dipropylene glycol|propylene glycol|mct oil|squalane|isododecane|isopropyl myristate)\b/i.test(n);
+  const isCarrierName = /\b(dipropylene glycol|propylene glycol|mct oil|squalane|isododecane|isopropyl myristate|triacetin|diethyl phthalate)\b/i.test(n);
   const isSolventName = /\b(ethanol|ethyl alcohol)\b/i.test(n);
   if (!hasRealOdor && (isSolventName || /\bsolvent\b/i.test(note + ' ' + desc))) return 'solvent';
   if (!hasRealOdor && (isCarrierName || /\bcarrier\b/i.test(note + ' ' + desc))) return 'carrier';
@@ -2810,7 +2821,7 @@ function classifyUses(mat) {
 
   const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
   const isMixture = MIXTURES.has(cas);
-  const isFragranceVehicle = /\b(ethanol|ethyl alcohol|dipropylene glycol|propylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|benzyl benzoate)\b/i.test(n);
+  const isFragranceVehicle = /\b(ethanol|ethyl alcohol|dipropylene glycol|propylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|benzyl benzoate|triacetin|diethyl phthalate)\b/i.test(n);
   const isPerfumeryMaterial = hasRealOdor || isMixture || isFragranceVehicle || /\b(fragranc|perfum)/i.test(usage + ' ' + noteLow);
   const usageDesc = usage + ' ' + desc;
   const push = t => { if (!tags.includes(t)) tags.push(t); };
