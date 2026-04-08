@@ -134,6 +134,8 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .badge-type { font-size:0.7em; padding:2px 8px; border-radius:3px; margin-left:8px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px solid var(--border); vertical-align:middle; }
 .card-meta-row { margin:4px 0 0 18px; }
 .card-meta-row .badge-type { margin-left:0; display:inline-block; }
+.tag-axis-label { font-size:0.62em; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; font-weight:600; opacity:0.7; margin-right:4px; vertical-align:middle; }
+.badge + .tag-axis-label, .badge-type + .tag-axis-label { margin-left:10px; }
 .badge-not-perfumery { font-size:0.7em; padding:2px 8px; border-radius:3px; margin-left:6px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px dashed var(--border); text-transform:none; vertical-align:middle; }
 .match-tag { font-size:0.6em; padding:1px 6px; border-radius:3px; font-weight:400; background:var(--accent); color:#fff; vertical-align:middle; opacity:0.8; }
 
@@ -2017,17 +2019,14 @@ function renderResults() {
         <div class="card-header" onclick="toggleCard(${idx})">
           <div style="flex:1;min-width:0">
             <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(nm.canonical)}${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''}${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
-            ${(_typeFuncJoined || displayRegulatory.length)?`<div class="card-meta-row">${_typeFuncJoined?`<span class="badge-type">${_typeFuncJoined}</span>`:''}${displayRegulatory.map(r=>` <span class="badge-type" style="color:#b91c1c">${REGULATORY_LABELS[r]||r}</span>`).join('')}</div>`:''}
+            ${(_typeFuncJoined || displayRegulatory.length)?`<div class="card-meta-row">${_typeFuncJoined?`<span class="tag-axis-label">Type·Fn</span><span class="badge-type">${_typeFuncJoined}</span>`:''}${displayRegulatory.length?`<span class="tag-axis-label">Reg</span>${displayRegulatory.map(r=>`<span class="badge-type" style="color:#b91c1c">${REGULATORY_LABELS[r]||r}</span>`).join(' ')}`:''}</div>`:''}
           </div>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
-          ${(displayTags.length || displayOdorFamilies.length)?`<p style="margin:4px 0 8px">${[
-            ...displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px">${USE_LABELS[t]||t}</span>`),
-            ...displayOdorFamilies.map(f=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px">${ODOR_FAMILY_LABELS[f]||f}</span>`)
-          ].join(' ')}</p>`:""}
+          ${(displayTags.length || displayOdorFamilies.length)?`<p style="margin:4px 0 8px">${displayTags.length?`<span class="tag-axis-label">Use</span>${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px">${USE_LABELS[t]||t}</span>`).join(' ')}`:''}${displayOdorFamilies.length?`<span class="tag-axis-label">Odor</span>${displayOdorFamilies.map(f=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px">${ODOR_FAMILY_LABELS[f]||f}</span>`).join(' ')}`:''}</p>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
