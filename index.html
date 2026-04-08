@@ -264,34 +264,25 @@ html { scroll-behavior:smooth; }
     <span class="filter-reset" onclick="resetAllFilters()">Reset</span>
   </div>
   <div class="filter-content" id="filterContent">
+    <!-- Six sub-drawers, one per taxonomy axis. The bodies are populated
+         from the TYPE_VALUES / FUNCTION_VALUES / USE_VALUES /
+         REGULATORY_VALUES / ODOR_FAMILY_VALUES / SOURCE_VALUES constants
+         by the filter init block (search for "BUILD FILTER UI"). -->
     <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Use <span class="sub-selected" id="tagSelected"></span></div>
-      <div class="sub-body" id="tagFilters">
-        <label class="filter-radio"><input type="radio" name="tag" value="" checked onchange="setTagFilter(this.value)"> All</label>
-        <label class="filter-radio"><input type="radio" name="tag" value="perfumery" onchange="setTagFilter(this.value)"> Perfumery</label>
-        <label class="filter-radio"><input type="radio" name="tag" value="flavor" onchange="setTagFilter(this.value)"> Flavor</label>
-        <label class="filter-radio"><input type="radio" name="tag" value="cosmetics" onchange="setTagFilter(this.value)"> Cosmetics</label>
-      </div>
+      <div class="sub-body" id="tagFilters"></div>
     </div>
     <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Function <span class="sub-selected" id="funcSelected"></span></div>
-      <div class="sub-body" id="funcFilters">
-        <label class="filter-radio"><input type="radio" name="func" value="" checked onchange="setFuncFilter(this.value)"> All</label>
-        <label class="filter-radio"><input type="radio" name="func" value="aromatic" onchange="setFuncFilter(this.value)"> Aromatic</label>
-        <label class="filter-radio"><input type="radio" name="func" value="fixative" onchange="setFuncFilter(this.value)"> Fixative</label>
-        <label class="filter-radio"><input type="radio" name="func" value="solvent" onchange="setFuncFilter(this.value)"> Solvent</label>
-        <label class="filter-radio"><input type="radio" name="func" value="carrier" onchange="setFuncFilter(this.value)"> Carrier</label>
-      </div>
+      <div class="sub-body" id="funcFilters"></div>
     </div>
     <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Type <span class="sub-selected" id="typeSelected"></span></div>
-      <div class="sub-body" id="typeFilters">
-        <label class="filter-radio"><input type="radio" name="type" value="" checked onchange="setTypeFilter(this.value)"> All</label>
-        <label class="filter-radio"><input type="radio" name="type" value="aroma_chemical" onchange="setTypeFilter(this.value)"> Aroma Chemical</label>
-        <label class="filter-radio"><input type="radio" name="type" value="natural_extract" onchange="setTypeFilter(this.value)"> Natural Extract</label>
-        <label class="filter-radio"><input type="radio" name="type" value="natural_isolate" onchange="setTypeFilter(this.value)"> Natural Isolate</label>
-        <label class="filter-radio"><input type="radio" name="type" value="additive" onchange="setTypeFilter(this.value)"> Additive</label>
-      </div>
+      <div class="sub-body" id="typeFilters"></div>
+    </div>
+    <div class="sub-drawer">
+      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Source <span class="sub-selected" id="sourceSelected"></span></div>
+      <div class="sub-body" id="sourceFilters"></div>
     </div>
     <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Note <span class="sub-selected" id="noteSelected"></span></div>
@@ -305,18 +296,14 @@ html { scroll-behavior:smooth; }
     </div>
     <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Regulatory <span class="sub-selected" id="regSelected"></span></div>
-      <div class="sub-body" id="regFilters">
-        <label class="filter-radio"><input type="radio" name="reg" value="" checked onchange="setRegFilter(this.value)"> All</label>
-        <label class="filter-radio"><input type="radio" name="reg" value="banned" onchange="setRegFilter(this.value)"> Banned / Restricted</label>
-      </div>
+      <div class="sub-body" id="regFilters"></div>
     </div>
     <div class="sub-drawer">
-      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Odor <span class="sub-selected" id="odorSelected"></span></div>
+      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Odor Family <span class="sub-selected" id="odorSelected"></span></div>
       <div class="sub-body" id="odorFilters">
         <div style="display:flex;flex-wrap:wrap;gap:4px">
           <span class="odor-tag active" data-odor="" onclick="clearOdorFilters(this)">All</span>
           <div class="odor-tags" id="odorTags" style="display:contents"></div>
-          <span class="odor-tag" data-odor="_other" onclick="toggleOdorTag(this)">Other</span>
         </div>
       </div>
     </div>
@@ -422,12 +409,15 @@ let results = [];
 let pcCache = {};
 
 // ===== Filter State =====
+// One slot per single-select axis. The Odor Family axis is multi-select
+// and lives in `activeOdorFilters` (Set).
 const _filters = {
-  note: {active: "", elId: "noteSelected"},
-  type: {active: "", elId: "typeSelected"},
-  func: {active: "", elId: "funcSelected"},
-  tag:  {active: "", elId: "tagSelected"},
-  reg:  {active: "", elId: "regSelected"},
+  note:   {active: "", elId: "noteSelected"},
+  type:   {active: "", elId: "typeSelected"},
+  func:   {active: "", elId: "funcSelected"},
+  tag:    {active: "", elId: "tagSelected"},
+  reg:    {active: "", elId: "regSelected"},
+  source: {active: "", elId: "sourceSelected"},
 };
 let activeOdorFilters = new Set();
 
@@ -438,10 +428,84 @@ const RE_NOTE_OTHER = /top|middle|base/i;
 const RE_FUNC_AROMATIC_EXCLUDE = /solvent|carrier|fixative|additive|preservative|repellent|biocide|colorant|antioxidant|emollient|denaturant|plasticizer/i;
 const RE_ODOR_FUNC = /functional|carrier|solvent|fixative|preservative|additive|repellent|n\/a/i;
 const RE_ODORLESS = /odorless|virtually odorless|preservative|antioxidant/i;
-// Function axis = closed set { aromatic, fixative, solvent, carrier }.
-// "additive" lives on the Type axis and is intentionally NOT a Function value.
-const FUNCTION_AXIS = ['aromatic','fixative','solvent','carrier'];
+// Function-axis substring set used by FILTER_CACHE precompute. Kept
+// separate from the closed FUNCTION_VALUES list below because
+// FILTER_CACHE matches via funcAll.includes(...).
 const FUNCTION_AXIS_SPECIFIC = ['fixative','solvent','carrier'];
+
+// ═══════════════════════════════════════════════════════════════
+// MULTI-AXIS TAG TAXONOMY
+// Six independent axes — Type, Function, Odor Family, Use,
+// Regulatory, Source — each with a fixed closed value set and a
+// human-readable label map. The taxonomy is intentionally
+// international (no region-specific terms), more granular than the
+// previous 3-axis design, and split so each axis answers ONE question:
+//   Type        = what the material IS, materially / by source class
+//   Function    = what it DOES inside a formulation
+//   Odor Family = what it SMELLS LIKE
+//   Use         = where in industry it is USED
+//   Regulatory  = the safety / restriction status
+//   Source      = (optional) natural vs synthetic provenance
+// Mixing dimensions across axes is forbidden by design. All filter
+// UI, FILTER_CACHE precompute, classifiers, card render and
+// JSON / CSV export read these constants as the single source of truth.
+// Hoisted above FILTER_CACHE so the module-init pass can read them.
+// ═══════════════════════════════════════════════════════════════
+const TYPE_VALUES = ['aroma_chemical','essential_oil','absolute','resin','balsam','natural_isolate','solvent','carrier','preservative','antioxidant','wax','additive'];
+const TYPE_LABELS = {
+  aroma_chemical:'Aroma Chemical', essential_oil:'Essential Oil', absolute:'Absolute',
+  resin:'Resin', balsam:'Balsam', natural_isolate:'Natural Isolate',
+  solvent:'Solvent', carrier:'Carrier', preservative:'Preservative',
+  antioxidant:'Antioxidant', wax:'Wax', additive:'Additive'
+};
+const FUNCTION_VALUES = ['aromatic','fixative','solvent','carrier','blender','modifier','enhancer'];
+const FUNCTION_LABELS = {
+  aromatic:'Aromatic', fixative:'Fixative', solvent:'Solvent', carrier:'Carrier',
+  blender:'Blender', modifier:'Modifier', enhancer:'Enhancer'
+};
+const ODOR_FAMILY_VALUES = ['citrus','floral','woody','amber','musk','green','fruity','spicy','herbal','balsamic','resinous','powdery','gourmand','fresh','animalic','smoky','aquatic'];
+const ODOR_FAMILY_LABELS = {
+  citrus:'Citrus', floral:'Floral', woody:'Woody', amber:'Amber', musk:'Musk',
+  green:'Green', fruity:'Fruity', spicy:'Spicy', herbal:'Herbal',
+  balsamic:'Balsamic', resinous:'Resinous', powdery:'Powdery',
+  gourmand:'Gourmand', fresh:'Fresh', animalic:'Animalic',
+  smoky:'Smoky', aquatic:'Aquatic'
+};
+const ODOR_FAMILY_KEYWORDS = {
+  citrus:   /\b(citrus|hesperid|lemon|orange|bergamot|grapefruit|mandarin|lime|yuzu|tangerine|petitgrain)\b/i,
+  floral:   /\b(floral|flower|jasmin|rose|lily|violet|tuberose|narcissus|ylang|orchid|magnolia|hyacinth|lilac|gardenia|mimosa|champaca)\b/i,
+  woody:    /\b(wood|woody|cedar|sandalwood|patchouli|vetiver|guaiac|oud|agarwood|cypress|fir|pine|birch)\b/i,
+  amber:    /\b(amber|ambergris|ambery|ambrox|ambrette)\b/i,
+  musk:     /\b(musk|musky)\b/i,
+  green:    /\b(green|leaf|leafy|grass|stem|cut[\s-]?grass|galbanum|tomato leaf|violet leaf)\b/i,
+  fruity:   /\b(fruit|fruity|berry|peach|apricot|apple|pear|plum|tropical|pineapple|coconut|melon|raspberry|strawberry|blackcurrant)\b/i,
+  spicy:    /\b(spice|spicy|cinnamon|clove|pepper|nutmeg|cardamom|saffron|ginger|anise)\b/i,
+  herbal:   /\b(herb|herbal|lavender|mint|peppermint|spearmint|sage|thyme|rosemary|basil|tarragon|fennel|chamomile|bay)\b/i,
+  balsamic: /\b(balsam|balsamic|tolu|peru|benzoin|styrax)\b/i,
+  resinous: /\b(resin|resinous|frankincense|myrrh|elemi|labdanum|olibanum|opoponax|copal)\b/i,
+  powdery:  /\b(powder|powdery|iris|orris|heliotrope)\b/i,
+  gourmand: /\b(vanilla|vanillin|caramel|chocolate|cocoa|honey|coffee|gourmand|sweet|tonka|maple|hazelnut|almond|praline|biscuit)\b/i,
+  fresh:    /\b(fresh|aldehyd|ozone|ozonic|cool|cooling|airy|crisp|clean)\b/i,
+  animalic: /\b(animal|animalic|leather|leathery|civet|castore|hyrax|skin)\b/i,
+  smoky:    /\b(smok|smoke|burn|tar|tarry|tobacco|incense|leather)\b/i,
+  aquatic:  /\b(aquatic|marine|ozone|water|sea|seaweed|oceanic|calone)\b/i,
+};
+const USE_VALUES = ['perfumery','fine_fragrance','flavor','cosmetics','personal_care','home_care','air_care','fabric_care','soap','candle'];
+const USE_LABELS = {
+  perfumery:'Perfumery', fine_fragrance:'Fine Fragrance', flavor:'Flavor',
+  cosmetics:'Cosmetics', personal_care:'Personal Care', home_care:'Home Care',
+  air_care:'Air Care', fabric_care:'Fabric Care', soap:'Soap', candle:'Candle'
+};
+const REGULATORY_VALUES = ['ifra_limited','allergen','phototoxic','restricted','banned','sensitizer'];
+const REGULATORY_LABELS = {
+  ifra_limited:'IFRA Limited', allergen:'Allergen', phototoxic:'Phototoxic',
+  restricted:'Restricted', banned:'Banned', sensitizer:'Sensitizer'
+};
+const SOURCE_VALUES = ['natural','synthetic','semi_synthetic','biotech'];
+const SOURCE_LABELS = {
+  natural:'Natural', synthetic:'Synthetic',
+  semi_synthetic:'Semi-Synthetic', biotech:'Biotech'
+};
 
 // ═══════════════════════════════════════════════════════════════
 // MODULE: Normalized Filter Cache
@@ -488,8 +552,18 @@ function _buildFilterRecord(cas, entry) {
   const functions = new Set();
   if (hasRealOdor && !RE_FUNC_AROMATIC_EXCLUDE.test(funcAll)) functions.add('aromatic');
   for (const f of FUNCTION_AXIS_SPECIFIC) { if (funcAll.includes(f)) functions.add(f); }
+  // Function-axis extensions: blender / modifier / enhancer when explicitly
+  // mentioned in the curated text.
+  if (/\bblender\b/i.test(funcAll)) functions.add('blender');
+  if (/\bmodifier\b/i.test(funcAll)) functions.add('modifier');
+  if (/\benhancer\b|\bbooster\b/i.test(funcAll)) functions.add('enhancer');
 
-  // Precompute odor type tags
+  // Precompute Odor Family axis (closed list). Multi-value Set shared by
+  // filter counts/matching and card render.
+  const odorFamilies = new Set(classifyOdorFamilies(syntheticMat));
+
+  // Precompute legacy free-form odor tag set (still used by the old "Odor"
+  // sub-drawer for backward compatibility with the dynamic per-DB tag list).
   const odorTags = new Set();
   if (odorType) {
     odorType.split(/\s*[\/,]\s*/).forEach(term => {
@@ -499,14 +573,20 @@ function _buildFilterRecord(cas, entry) {
   }
   const hasNoOdorType = !odorType || RE_ODOR_FUNC.test(entry.odor?.type||'');
 
-  // Industry tags from the shared classifier (same syntheticMat as above).
-  // classifyIndustryTags is the single source of truth for both FILTER_CACHE
-  // and the result-card render path.
-  const industryTags = new Set(classifyIndustryTags(syntheticMat));
+  // Use-axis tags (renamed Industry → Use in the taxonomy redesign).
+  // Stored as both `industryTags` (legacy field name) and `uses` (new) so
+  // existing read sites keep working.
+  const uses = new Set(classifyUses(syntheticMat));
+  const industryTags = uses;
+
+  // Regulatory + Source axes (multi-axis taxonomy redesign).
+  const regulatory = new Set(classifyRegulatory(syntheticMat));
+  const source = classifySource(syntheticMat);
 
   return {
     cas, noteLow, materialType, functions, funcAll, hasRealOdor,
-    odorTags, hasNoOdorType, industryTags, allText
+    odorTags, odorFamilies, hasNoOdorType,
+    industryTags, uses, regulatory, source, allText
   };
 }
 
@@ -537,11 +617,12 @@ function setFilter(name, val) {
   document.getElementById(_filters[name].elId).textContent = label ? label.parentElement.textContent.trim() : 'All';
   _refreshPills();
 }
-function setTagFilter(v) { setFilter('tag', v); }
-function setFuncFilter(v) { setFilter('func', v); }
-function setTypeFilter(v) { setFilter('type', v); }
-function setNoteFilter(v) { setFilter('note', v); }
-function setRegFilter(v)  { setFilter('reg',  v); }
+function setTagFilter(v)    { setFilter('tag', v); }
+function setFuncFilter(v)   { setFilter('func', v); }
+function setTypeFilter(v)   { setFilter('type', v); }
+function setNoteFilter(v)   { setFilter('note', v); }
+function setRegFilter(v)    { setFilter('reg', v); }
+function setSourceFilter(v) { setFilter('source', v); }
 
 let _visTimer;
 function _refreshPills() {
@@ -551,8 +632,11 @@ function _refreshPills() {
 }
 
 function _updateFilterVisibility() {
-  // Single pass over FILTER_CACHE: count matches for all filter options at once
+  // Single pass over FILTER_CACHE: count matches for every axis option.
+  // One bucket per axis, all keyed by the SAME enum string the cards
+  // render and filters match on, so counts and labels can never drift.
   const noteCounts = {}, typeCounts = {}, funcCounts = {}, tagCounts = {};
+  const regCounts = {}, sourceCounts = {};
   const odorHas = {};
 
   for (const fc of FILTER_CACHE.values()) {
@@ -562,31 +646,30 @@ function _updateFilterVisibility() {
     if (fc.noteLow.includes('middle')) noteCounts['middle'] = (noteCounts['middle']||0)+1;
     if (fc.noteLow.includes('base')) noteCounts['base'] = (noteCounts['base']||0)+1;
     if (!RE_NOTE_OTHER.test(fc.noteLow)) noteCounts['_other'] = (noteCounts['_other']||0)+1;
-    // Type (precomputed) — strict per-axis counts; isolates and extracts are
-    // independent values, so do not collapse them into each other.
+    // Type axis (single value per material)
     typeCounts[fc.materialType] = (typeCounts[fc.materialType]||0)+1;
-    // Function (precomputed set) — a material may contribute to multiple
-    // function buckets, mirroring the same source of truth used by filter
-    // matching and card render.
+    // Function axis (multi-value Set)
     for (const f of fc.functions) funcCounts[f] = (funcCounts[f]||0)+1;
-    // Tag (precomputed industry tag set — shared with card render)
-    if (fc.industryTags.has('perfumery')) tagCounts['perfumery'] = (tagCounts['perfumery']||0)+1;
-    if (fc.industryTags.has('cosmetics')) tagCounts['cosmetics'] = (tagCounts['cosmetics']||0)+1;
-    if (fc.industryTags.has('flavor'))    tagCounts['flavor']    = (tagCounts['flavor']   ||0)+1;
-    // Odor (precomputed tags)
-    for (const tag of fc.odorTags) odorHas[tag] = true;
-    if (fc.hasNoOdorType) odorHas['_other'] = true;
+    // Use axis (multi-value Set, formerly "Industry")
+    for (const u of fc.uses) tagCounts[u] = (tagCounts[u]||0)+1;
+    // Regulatory axis (multi-value Set)
+    for (const reg of fc.regulatory) regCounts[reg] = (regCounts[reg]||0)+1;
+    // Source axis (single value)
+    if (fc.source) sourceCounts[fc.source] = (sourceCounts[fc.source]||0)+1;
+    // Odor Family axis (multi-value Set)
+    for (const fam of fc.odorFamilies) odorHas[fam] = true;
   }
 
-  // Apply visibility
-  ['note','type','func','tag'].forEach(name => {
-    const counts = {note:noteCounts, type:typeCounts, func:funcCounts, tag:tagCounts}[name];
+  // Apply visibility — single pass per axis name
+  const countsByName = {note:noteCounts, type:typeCounts, func:funcCounts, tag:tagCounts, reg:regCounts, source:sourceCounts};
+  for (const name in countsByName) {
+    const counts = countsByName[name];
     document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
       if (!radio.value) { radio.parentElement.style.display = ''; return; }
       radio.parentElement.style.display = (counts[radio.value] || 0) > 0 ? '' : 'none';
     });
-  });
-  document.querySelectorAll('#odorTags .odor-tag, .odor-tag[data-odor="_other"]').forEach(btn => {
+  }
+  document.querySelectorAll('#odorTags .odor-tag').forEach(btn => {
     const v = btn.dataset.odor;
     if (!v) return;
     btn.style.display = odorHas[v] ? '' : 'none';
@@ -652,40 +735,55 @@ function resetAllFilters() {
   const allOdor = document.querySelector('#odorFilters .odor-tag[data-odor=""]');
   if (allOdor) allOdor.classList.add('active');
   // Update labels
-  ['tagSelected','funcSelected','typeSelected','noteSelected','odorSelected','regSelected'].forEach(id => {
-    document.getElementById(id).textContent = 'All';
+  ['tagSelected','funcSelected','typeSelected','noteSelected','odorSelected','regSelected','sourceSelected'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = 'All';
   });
   _refreshPills();
 }
 
-// Build odor tag buttons from DB (exclude function terms)
+// ===== BUILD FILTER UI =====
+// Populate the six taxonomy sub-drawers from the canonical *_VALUES /
+// *_LABELS constants. Single source of truth: edit the constants and
+// the filter UI updates automatically.
+function _buildRadioFilter(containerId, axisName, values, labels, onchangeName) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  const allLabel = document.createElement('label');
+  allLabel.className = 'filter-radio';
+  allLabel.innerHTML = `<input type="radio" name="${axisName}" value="" checked onchange="${onchangeName}(this.value)"> All`;
+  container.appendChild(allLabel);
+  for (const v of values) {
+    const lbl = document.createElement('label');
+    lbl.className = 'filter-radio';
+    lbl.innerHTML = `<input type="radio" name="${axisName}" value="${v}" onchange="${onchangeName}(this.value)"> ${labels[v]||v}`;
+    container.appendChild(lbl);
+  }
+}
+_buildRadioFilter('tagFilters',    'tag',    USE_VALUES,        USE_LABELS,        'setTagFilter');
+_buildRadioFilter('funcFilters',   'func',   FUNCTION_VALUES,   FUNCTION_LABELS,   'setFuncFilter');
+_buildRadioFilter('typeFilters',   'type',   TYPE_VALUES,       TYPE_LABELS,       'setTypeFilter');
+_buildRadioFilter('regFilters',    'reg',    REGULATORY_VALUES, REGULATORY_LABELS, 'setRegFilter');
+_buildRadioFilter('sourceFilters', 'source', SOURCE_VALUES,     SOURCE_LABELS,     'setSourceFilter');
+
+// Odor Family pills (closed list, multi-select AND).
 {
-  const odorTypes = new Set();
-  Object.values(DB).forEach(e => {
-    if (e.odor && e.odor.type) {
-      e.odor.type.split(/\s*[\/,]\s*/).forEach(t => {
-        const clean = t.trim();
-        if (clean && clean.length > 2 && !FUNC_TERMS.has(clean.toLowerCase()) && !/^N\/A/i.test(clean) && !clean.includes('—')) {
-          odorTypes.add(clean);
-        }
-      });
-    }
-  });
   const container = document.getElementById('odorTags');
-  [...odorTypes].sort().forEach(t => {
+  ODOR_FAMILY_VALUES.forEach(v => {
     const btn = document.createElement('span');
     btn.className = 'odor-tag';
-    btn.dataset.odor = t.toLowerCase();
-    btn.textContent = t;
+    btn.dataset.odor = v;
+    btn.textContent = ODOR_FAMILY_LABELS[v] || v;
     btn.onclick = function() { toggleOdorTag(this); };
     container.appendChild(btn);
   });
-  _updateFilterVisibility();
-  // Set initial "All" labels
-  ['tagSelected','funcSelected','typeSelected','noteSelected','odorSelected','regSelected'].forEach(id => {
-    document.getElementById(id).textContent = 'All';
-  });
 }
+
+_updateFilterVisibility();
+// Set initial "All" labels for every selected-axis indicator.
+['tagSelected','funcSelected','typeSelected','noteSelected','odorSelected','regSelected','sourceSelected'].forEach(id => {
+  const el = document.getElementById(id); if (el) el.textContent = 'All';
+});
 
 // ===== UI Event Bindings =====
 const input = document.getElementById("searchInput");
@@ -708,7 +806,11 @@ btn.addEventListener("click", () => { const v=input.value.trim(); if (v) doSearc
 // ═══════════════════════════════════════════════════════════════
 function matchesAllFilters(cas) {
   const fc = cas ? FILTER_CACHE.get(cas) : null;
-  if (!fc) return !_filters.note.active && !_filters.type.active && !_filters.func.active && !_filters.tag.active && !_filters.reg.active && !activeOdorFilters.size;
+  if (!fc) {
+    return !_filters.note.active && !_filters.type.active && !_filters.func.active &&
+           !_filters.tag.active && !_filters.reg.active && !_filters.source.active &&
+           !activeOdorFilters.size;
+  }
 
   // Note
   const noteF = _filters.note.active;
@@ -716,38 +818,37 @@ function matchesAllFilters(cas) {
     if (noteF === '_other') { if (RE_NOTE_OTHER.test(fc.noteLow)) return false; }
     else { if (!fc.noteLow.includes(noteF)) return false; }
   }
-  // Type (precomputed) — strict equality on the Type axis.
+  // Type axis (precomputed) — strict equality on the Type axis.
   const typeF = _filters.type.active;
-  if (typeF) {
-    if (fc.materialType !== typeF) return false;
-  }
-  // Function (precomputed set) — closed axis { aromatic, fixative, solvent, carrier }.
+  if (typeF && fc.materialType !== typeF) return false;
+  // Function axis (multi-value Set)
   const funcF = _filters.func.active;
-  if (funcF) {
-    if (!fc.functions.has(funcF)) return false;
-  }
-  // Use/industry tag (precomputed industry tag set)
+  if (funcF && !fc.functions.has(funcF)) return false;
+  // Use axis (multi-value Set, precomputed)
   const tagF = _filters.tag.active;
-  if (tagF && !fc.industryTags.has(tagF)) return false;
-  // Odor (multi-select AND, precomputed tags)
+  if (tagF && !fc.uses.has(tagF)) return false;
+  // Regulatory axis (multi-value Set). Falls back to BANNED_CAS for the
+  // legacy 'banned' enum so older filter state still narrows correctly.
+  const regF = _filters.reg.active;
+  if (regF) {
+    if (regF === 'banned') { if (!BANNED_CAS.has(cas) && !fc.regulatory.has('banned')) return false; }
+    else { if (!fc.regulatory.has(regF)) return false; }
+  }
+  // Source axis (single value)
+  const sourceF = _filters.source.active;
+  if (sourceF && fc.source !== sourceF) return false;
+  // Odor Family axis (multi-select AND over the closed family list)
   if (activeOdorFilters.size) {
     for (const f of activeOdorFilters) {
-      if (f === '_other') { if (!fc.hasNoOdorType) return false; }
-      else { if (!fc.odorTags.has(f)) return false; }
+      if (!fc.odorFamilies.has(f)) return false;
     }
-  }
-  // Regulatory (banned/restricted): single O(1) Set lookup reusing the
-  // BANNED_CAS precompute built from getBanStatus at startup.
-  const regF = _filters.reg.active;
-  if (regF === 'banned') {
-    if (!BANNED_CAS.has(cas)) return false;
   }
   return true;
 }
 
 function showPills(typed) {
   const ql = typed.toLowerCase().replace(/\s+/g,' ').trim();
-  const hasAnyFilter = _filters.note.active || _filters.type.active || _filters.func.active || _filters.tag.active || _filters.reg.active || activeOdorFilters.size;
+  const hasAnyFilter = _filters.note.active || _filters.type.active || _filters.func.active || _filters.tag.active || _filters.reg.active || _filters.source.active || activeOdorFilters.size;
 
   // Existing results — exclude from pill suggestions
   const existingCas = new Set();
@@ -1213,12 +1314,20 @@ function classifyFunctionsFromRecord(record) {
 }
 
 // ── Helper: apply local DB match result to mat object ──
+// Populates every taxonomy axis on the canonical record. industry_tags
+// is kept for backward compat (it aliases the new `uses` field that
+// exposes the multi-axis Use taxonomy).
 function _computeClassification(mat) {
-  if (mat.found) {
-    mat.record.classification.material_type = classifyMaterialType(mat);
-    mat.record.classification.industry_tags = classifyIndustryTags(mat);
-    mat.record.classification.functions     = classifyFunctionsFromRecord(mat.record);
-  }
+  if (!mat.found) return;
+  const c = mat.record.classification;
+  c.material_type = classifyMaterialType(mat);
+  const uses      = classifyUses(mat);
+  c.uses          = uses;
+  c.industry_tags = uses; // legacy alias
+  c.functions     = classifyFunctionsFromRecord(mat.record);
+  c.odor_families = classifyOdorFamilies(mat);
+  c.regulatory    = classifyRegulatory(mat);
+  c.source        = classifySource(mat);
 }
 
 function _applyLocalMatch(mat, match) {
@@ -1254,7 +1363,7 @@ function createResult(inputName) {
     perfumery: { odor_description:null, odor_type:null, odor_strength:null, odor_source:null,
       note:null, tenacity:null, tenacity_hours:null, blends_with:[] },
     safety: { ifra_guideline:null, usage_levels:null, ban_status:null, ghs_codes:[] },
-    classification: { material_type:null, industry_tags:null, functions:null },
+    classification: { material_type:null, industry_tags:null, uses:null, functions:null, odor_families:null, regulatory:null, source:null },
     match: makeMatch(null, 0, inputName, null, null, null, null),
     metadata: { source:null, is_external:false, pubchem_sections:{} }
   };
@@ -1699,24 +1808,27 @@ function renderResults() {
   results.forEach((mat,idx) => {
    try {
     const rec = mat.record, id = rec.identifiers, nm = rec.names, pr = rec.properties, pf = rec.perfumery, sf = rec.safety, cls = rec.classification, mtch = rec.match;
-    // ── Card classification display (single precedence) ──
-    // 1. material_type: canonical record first, then runtime classifier (for external/PubChem-only)
-    // 2. industry_tags: canonical record first, then runtime classifier
-    // 3. Filter tags so they never duplicate or contradict the material_type label
-    // Three independent axes — Type, Function, Industry — each rendered
-    // from the same source of truth used by FILTER_CACHE / matchesAllFilters
-    // so cards and filter counts can never disagree.
+    // ── Card classification display (single precedence per axis) ──
+    // Six independent axes — Type, Function, Use, Odor Family, Regulatory,
+    // Source — each rendered from the same source of truth used by
+    // FILTER_CACHE / matchesAllFilters so cards and filter counts can never
+    // disagree. FILTER_CACHE is preferred for local-DB CAS hits; the runtime
+    // classifier is used as the fallback for external / PubChem-only results.
     const _displayMaterialType = cls.material_type || classifyMaterialType(mat) || null;
     const _fcCard = id.cas ? FILTER_CACHE.get(id.cas) : null;
-    const _rawIndTags = (cls.industry_tags && cls.industry_tags.length) ? cls.industry_tags : (classifyIndustryTags(mat) || []);
+    const _rawIndTags = (cls.industry_tags && cls.industry_tags.length) ? cls.industry_tags : (classifyUses(mat) || []);
     const displayTags = _filterDisplayTags(_rawIndTags);
-    const displayMatLabel = MATERIAL_TYPE_LABELS[_displayMaterialType] || '';
-    // Function-axis values for this card. Prefer FILTER_CACHE (single source
-    // of truth shared with filter matching/counts); fall back to the runtime
-    // classifier for external/PubChem-only results that aren't in FILTER_CACHE.
+    const displayMatLabel = TYPE_LABELS[_displayMaterialType] || '';
     const displayFunctions = _fcCard
       ? [...(_fcCard.functions || [])]
       : (Array.isArray(cls.functions) && cls.functions.length ? cls.functions : classifyFunctionsFromRecord(rec));
+    const displayOdorFamilies = _fcCard
+      ? [...(_fcCard.odorFamilies || [])]
+      : (Array.isArray(cls.odor_families) && cls.odor_families.length ? cls.odor_families : classifyOdorFamilies(mat));
+    const displayRegulatory = _fcCard
+      ? [...(_fcCard.regulatory || [])]
+      : (Array.isArray(cls.regulatory) && cls.regulatory.length ? cls.regulatory : classifyRegulatory(mat));
+    const displaySource = _fcCard ? _fcCard.source : (cls.source || classifySource(mat));
     const nl = (pf.note||"").toLowerCase();
     let badges = "";
     if (nl.includes("top")) badges += `<span class="badge badge-top">Top</span>`;
@@ -1763,7 +1875,11 @@ function renderResults() {
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${mat.match_info?`<p class="card-match">${esc(mat.match_info)}</p>`:""}
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
-          ${displayTags.length?`<p style="margin:4px 0 8px">${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px">${INDUSTRY_TAG_LABELS[t]||t}</span>`).join(' ')}</p>`:""}
+          ${(displayTags.length || displayOdorFamilies.length || displayRegulatory.length)?`<p style="margin:4px 0 8px">${[
+            ...displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px">${USE_LABELS[t]||t}</span>`),
+            ...displayOdorFamilies.map(f=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px">${ODOR_FAMILY_LABELS[f]||f}</span>`),
+            ...displayRegulatory.map(r=>`<span class="badge" style="background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-size:0.7em;padding:1px 8px">${REGULATORY_LABELS[r]||r}</span>`)
+          ].join(' ')}</p>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
@@ -2276,7 +2392,11 @@ async function downloadJSON() {
       classification: {
         material_type: src.classification?.material_type ?? null,
         industry_tags: Array.isArray(src.classification?.industry_tags) ? src.classification.industry_tags : [],
-        functions: _fc ? [...(_fc.functions || [])] : (Array.isArray(src.classification?.functions) ? src.classification.functions : []),
+        uses:          _fc ? [...(_fc.uses || [])]          : (Array.isArray(src.classification?.uses)          ? src.classification.uses          : (src.classification?.industry_tags || [])),
+        functions:     _fc ? [...(_fc.functions || [])]     : (Array.isArray(src.classification?.functions)     ? src.classification.functions     : []),
+        odor_families: _fc ? [...(_fc.odorFamilies || [])]  : (Array.isArray(src.classification?.odor_families) ? src.classification.odor_families : []),
+        regulatory:    _fc ? [...(_fc.regulatory || [])]    : (Array.isArray(src.classification?.regulatory)    ? src.classification.regulatory    : []),
+        source:        _fc ? _fc.source                      : (src.classification?.source ?? null),
       },
       metadata: {
         source: src.metadata?.source ?? null,
@@ -2424,7 +2544,8 @@ function downloadCSV() {
   };
   const headers = [
     'cas_number', 'name', 'material_type', 'functions',
-    'ban_status', 'note', 'odor_description', 'usage_levels', 'industry_tags'
+    'ban_status', 'note', 'odor_description', 'usage_levels',
+    'uses', 'odor_families', 'regulatory', 'source'
   ];
   const rows = [headers.join(',')];
   for (const mat of found) {
@@ -2440,7 +2561,10 @@ function downloadCSV() {
       _csv(src.perfumery?.note),
       _csv(src.perfumery?.odor_description),
       _csv(src.safety?.usage_levels),
-      _csv(src.classification?.industry_tags),
+      _csv(fc ? [...(fc.uses || [])]         : (src.classification?.uses         ?? src.classification?.industry_tags ?? null)),
+      _csv(fc ? [...(fc.odorFamilies || [])] : (src.classification?.odor_families ?? null)),
+      _csv(fc ? [...(fc.regulatory || [])]   : (src.classification?.regulatory   ?? null)),
+      _csv(fc ? fc.source                     : (src.classification?.source       ?? null)),
     ].join(','));
   }
   // Prepend UTF-8 BOM so Excel opens the file with correct encoding.
@@ -2520,6 +2644,10 @@ document.addEventListener('click', e => {
 });
 
 // ===== Classification =====
+// (Taxonomy constants — TYPE_VALUES, FUNCTION_VALUES, ODOR_FAMILY_*,
+//  USE_VALUES, REGULATORY_VALUES, SOURCE_VALUES — have been hoisted to
+//  the top of the script so they are available when FILTER_CACHE runs
+//  its module-init pass.)
 function classifyMaterialType(mat) {
   const r = mat.record || mat; // support both result objects and raw DB entries
   const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, id = r.identifiers || {};
@@ -2530,68 +2658,67 @@ function classifyMaterialType(mat) {
   const cas = id.cas || '';
   // NOTE: synonyms are intentionally excluded from the keyword surface.
   // PubChem synonym lists inject noise like "Absolute ethanol", "Ethanol wax
-  // emulsion", etc. that used to flip single molecules into natural_extract /
-  // natural_isolate via loose \b(absolute|wax|...)\b matches. Curated fields
-  // (name / note / odor_type / odor_description / usage_levels) are enough
-  // to identify a natural extract because such materials either sit in
-  // MIXTURES or carry an unambiguous keyword in their canonical name.
+  // emulsion", etc. that used to flip single molecules into the wrong Type.
+  // Curated fields (name / note / odor_type / odor_description / usage_levels)
+  // are enough — natural materials either sit in MIXTURES or carry an
+  // unambiguous keyword in their canonical name.
   const all = n + ' ' + desc + ' ' + odorType + ' ' + note;
-  // Type axis = what the material IS (independent of Function/Industry).
-  // Solvent / Carrier roles are NOT a Type — they live on the Function axis.
-  if (/\b(preservative|biocide|antioxidant|stabilizer)\b/i.test(all) || /^(additive|base\/additive)$/i.test(note)) return 'additive';
-  if (MIXTURES.has(cas)) return 'natural_extract';
-  // Narrowed natural_extract keyword set: dropped the generic "balsam" and
-  // "wax" hits that false-positived on single molecules whose curated odor
-  // descriptions say "peru balsam-like" (Benzyl Cinnamate) or "waxy" notes.
-  // Peru Balsam, Tolu Balsam, Beeswax Absolute etc. are all in MIXTURES and
-  // are caught by the preceding MIXTURES check.
-  if (/\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin)\b/i.test(n + ' ' + note)) return 'natural_extract';
-  // natural_isolate: explicit claim only — bare "natural" matches too many
-  // aroma chemicals whose descriptions say "natural-like" or "natural sandalwood note".
+  // Type axis = what the material IS (independent of Function/Use).
+  // Solvent / Carrier roles are also Function-axis values; the Type
+  // expresses what kind of substance it physically is.
+
+  // 1) Antioxidants and preservatives (most specific first).
+  if (/\b(antioxidant|tocopherol|bht|bha)\b/i.test(all)) return 'antioxidant';
+  if (/\b(preservative|biocide|paraben)\b/i.test(all)) return 'preservative';
+
+  // 2) Natural mixtures — sub-typed from the canonical name keyword,
+  //    then defaulting to essential_oil for any unmatched mixture.
+  if (MIXTURES.has(cas)) {
+    if (/\b(absolute)\b/i.test(n)) return 'absolute';
+    if (/\b(balsam)\b/i.test(n))   return 'balsam';
+    if (/\b(resin|resinoid|oleoresin)\b/i.test(n)) return 'resin';
+    if (/\b(wax)\b/i.test(n))      return 'wax';
+    return 'essential_oil';
+  }
+  if (/\b(absolute)\b/i.test(n)) return 'absolute';
+  if (/\b(balsam)\b/i.test(n))   return 'balsam';
+  if (/\b(resin|resinoid|oleoresin)\b/i.test(n)) return 'resin';
+  if (/\b(essential oil|tincture|concrete)\b/i.test(n)) return 'essential_oil';
+
+  // 3) Natural isolate — explicit claim only.
   if (/\bisolate(?:d|s)?\b|\bfrom\s+\w+(?:\s+\w+)?\s+oil\b|\boccurs\s+in\b|\bnatural\s+(?:form|isolate|source|origin)\b/i.test(all) && !MIXTURES.has(cas)) return 'natural_isolate';
-  // Odorless formulation solvents / carriers / diluents (ethanol, dipropylene
-  // glycol, propylene glycol, isopropyl myristate, triethyl citrate, MCT oil,
-  // squalane, isododecane, benzyl benzoate used as diluent, …) are NOT aroma
-  // chemicals in any domain sense. Under the 4-value Type axis they belong
-  // with `additive` (non-odorous functional material). This keeps solvent /
-  // carrier exclusively on the Function axis while giving Type a
-  // domain-correct home for them instead of the `aroma_chemical` catch-all.
+
+  // 4) Waxes (after balsam/absolute so beeswax-absolute hits absolute).
+  if (/\b(wax)\b/i.test(n)) return 'wax';
+
+  // 5) Formulation solvents and carriers — split into two distinct
+  //    Type values via name and curated text.
   const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
-  const solventCarrierSignal =
-    /\b(solvent|carrier|diluent|emollient)\b/i.test(note + ' ' + desc + ' ' + odorType) ||
-    /\b(ethanol|ethyl alcohol|dipropylene glycol|propylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|benzyl benzoate)\b/i.test(n);
-  if (!hasRealOdor && solventCarrierSignal) return 'additive';
+  const isCarrierName = /\b(dipropylene glycol|propylene glycol|mct oil|squalane|isododecane|triethyl citrate|isopropyl myristate|benzyl benzoate)\b/i.test(n);
+  const isSolventName = /\b(ethanol|ethyl alcohol)\b/i.test(n);
+  if (!hasRealOdor && (isSolventName || /\bsolvent\b/i.test(note + ' ' + desc))) return 'solvent';
+  if (!hasRealOdor && (isCarrierName || /\bcarrier\b/i.test(note + ' ' + desc))) return 'carrier';
+
+  // 6) Generic additive note ("additive" / "base/additive").
+  if (/^(additive|base\/additive)$/i.test(note)) return 'additive';
+
   return 'aroma_chemical';
 }
-const MATERIAL_TYPE_LABELS = {
-  'additive': 'Additive',
-  'natural_extract': 'Natural Extract',
-  'natural_isolate': 'Natural Isolate',
-  'aroma_chemical': 'Aroma Chemical'
-};
-// UI label map for the canonical Function axis.
-// Function = what the material DOES (axis is independent of Type / Industry).
-const FUNCTION_LABELS = {
-  'aromatic': 'aromatic',
-  'fixative': 'fixative',
-  'solvent':  'solvent',
-  'carrier':  'carrier',
-};
+// Backwards-compat label alias used by older render paths.
+const MATERIAL_TYPE_LABELS = TYPE_LABELS;
 
-// Industry axis is the closed set { perfumery, flavor, cosmetics }.
-// Regulatory / banned status lives on its own axis and is rendered separately.
-const INDUSTRY_AXIS = ['perfumery','flavor','cosmetics'];
-
-// Reduce raw industry-tag list to ONLY industry-axis values, dedup-preserving order.
-// Used by the result-card render path so the Industry tag row never mixes in
-// regulatory, pharma, or fallback "chemical/unclassified" labels.
+// Use axis is the closed set USE_VALUES. Regulatory / banned lives on
+// its own axis and is rendered separately. Reduce a raw tag list to
+// ONLY Use-axis values, dedup-preserving order. Used by the result-card
+// render path so the Use tag row never mixes in regulatory, pharma, or
+// fallback "chemical/unclassified" labels.
 function _filterDisplayTags(tags) {
   if (!Array.isArray(tags) || !tags.length) return [];
   const out = [];
   const seen = new Set();
   for (const t of tags) {
     if (!t || seen.has(t)) continue;
-    if (!INDUSTRY_AXIS.includes(t)) continue;
+    if (!USE_VALUES.includes(t)) continue;
     seen.add(t);
     out.push(t);
   }
@@ -2612,121 +2739,116 @@ function getBanStatus(mat) {
 }
 function isBannedEU(mat) { return getBanStatus(mat) !== null; }
 
-function classifyIndustryTags(mat) {
+// Use-axis classifier — closed set USE_VALUES. Returns an array (not
+// a Set) so the existing classification.industry_tags + export schema
+// keeps working. Uses curated DB fields only; no PubChem-synonym noise.
+function classifyUses(mat) {
   const r = mat.record || mat;
-  const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, md = r.metadata || {}, id = r.identifiers || {};
+  const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, id = r.identifiers || {};
   const tags = [];
   const n = (nm.canonical || '').toLowerCase();
   const desc = (pf.odor_description || '').toLowerCase();
   const odorType = (pf.odor_type || '').toLowerCase();
   const usage = (sf.usage_levels || '').toLowerCase();
   const noteLow = (pf.note || '').toLowerCase();
-  const syns = (nm.synonyms || []).join(' ').toLowerCase();
-  const pdStr = md.pubchem_sections ? JSON.stringify(md.pubchem_sections).toLowerCase() : '';
+  const tenacity = (pf.tenacity || '').toLowerCase();
   const cas = id.cas || '';
   const banned = isBannedEU(mat);
 
-  const isSolvent = /\bsolvent\b/i.test(odorType + ' ' + desc + ' ' + noteLow + ' ' + usage);
-  const isFunctional = !isSolvent && /preservative|biocide|antioxidant|stabilizer/i.test(odorType + ' ' + desc);
-  const hasRealOdor = (pf.odor_description || pf.odor_type || pf.odor_strength)
-    && !isFunctional
-    && !/^odorless|^none$/i.test((pf.odor_strength||''));
-
-  // Functional additives — not perfumery
-  if (isFunctional) {
-    tags.push('additive');
-    return tags;
-  }
-
-  // Fragrance-solvent / cosmetic-carrier branch.
-  // Materials with no real odor but a solvent / carrier / diluent /
-  // emollient signal (Dipropylene Glycol, Ethanol, Isopropyl Myristate,
-  // Triethyl Citrate, Propylene Glycol, MCT Oil, Squalane, Isododecane,
-  // Benzyl Benzoate, …) belong to MULTIPLE Use industries — not just
-  // cosmetics. They are used as fragrance-formulation solvents
-  // (perfumery), as cosmetic carriers (cosmetics), and many of them are
-  // also FEMA-listed flavor solvents (flavor). Push every axis value
-  // that is justified by the curated data.
+  const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
   const FRAGRANCE_SOLVENT_NAME_RE = /\b(ethanol|ethyl alcohol|dipropylene glycol|propylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|benzyl benzoate)\b/i;
-  const isCosmeticCarrier = !banned && !hasRealOdor && !MIXTURES.has(cas) && (
-    /\b(solvent|carrier|diluent|emollient)\b/i.test(noteLow + ' ' + desc + ' ' + odorType + ' ' + usage) ||
-    FRAGRANCE_SOLVENT_NAME_RE.test(n)
-  );
-  if (isCosmeticCarrier) {
-    // Cosmetics: every recognized cosmetic carrier is a cosmetic-axis member.
-    tags.push('cosmetics');
-    // Perfumery: usage text says "fragrance"/"perfume", OR the canonical
-    // name is on the well-known fragrance-solvent list. The curated DB
-    // wouldn't list these materials at all if they weren't perfumery
-    // adjuncts, so a name match is sufficient evidence.
-    const isFragranceSolvent =
-      /\b(fragranc|perfum)/i.test(usage + ' ' + noteLow) ||
-      FRAGRANCE_SOLVENT_NAME_RE.test(n);
-    if (isFragranceSolvent) tags.push('perfumery');
-    // Flavor: FEMA-listed solvents (e.g. ethanol FEMA 2419) are flavor
-    // industry diluents/solvents. Trigger purely from FEMA presence so
-    // the flavor-axis assignment is data-driven, not heuristic.
-    if (id.fema) tags.push('flavor');
-  }
+  const push = t => { if (!tags.includes(t)) tags.push(t); };
 
-  // Perfumery / Flavor / Cosmetics
-  if (hasRealOdor || MIXTURES.has(cas) ||
-      /fragrance|perfum|aroma|odor agent/i.test(pdStr) ||
-      /solvent.*carrier|carrier.*solvent|emollient/i.test(desc + ' ' + odorType)) {
-    if (!tags.includes('perfumery')) tags.push('perfumery');
-    // Flavor: only if has FEMA or explicit food use, and not banned
-    if (!banned && (id.fema || /flavor|flavour|food additive|fema|jecfa/i.test(pdStr))) {
-      if (!tags.includes('flavor')) tags.push('flavor');
-    }
-    // Cosmetics: narrower rule than "any non-banned perfumery material".
-    // Tag only when there's a concrete cosmetic signal:
-    //   - explicit cosmetic/skin keywords in PubChem sections, OR
-    //   - solvent/carrier/emollient function (non-aromatic functional use), OR
-    //   - MCT oil / triacetin / benzyl benzoate class (explicit carriers in name), OR
-    //   - odorless / very-low-odor ingredients that are commonly used as diluents.
-    // This makes "cosmetics" distinguishable from "perfumery" in the filter.
-    if (!banned) {
-      const cosmeticSignal =
-        /\b(cosmetic|skin|dermal|masking|emollient|carrier|diluent|excipient)\b/i.test(pdStr) ||
-        /\b(solvent|carrier|diluent|emollient)\b/i.test(desc + ' ' + odorType + ' ' + noteLow) ||
-        FRAGRANCE_SOLVENT_NAME_RE.test(n);
-      if (cosmeticSignal && !tags.includes('cosmetics')) tags.push('cosmetics');
-    } else {
-      // Add banned tag (scope worldwide vs EU)
-      const scope = getBanStatus(mat);
-      tags.push(scope === 'worldwide' ? 'banned_global' : 'banned_eu');
-    }
+  // Perfumery: aromatic single molecules, natural mixtures, recognized
+  // fragrance solvents/carriers all belong to the perfumery axis.
+  if (hasRealOdor || MIXTURES.has(cas) || FRAGRANCE_SOLVENT_NAME_RE.test(n) || /\b(fragranc|perfum)/i.test(usage + ' ' + noteLow)) {
+    push('perfumery');
   }
-
-  // Pharmaceutical
-  if (!hasRealOdor && /pharma|drug|medicine|therapeutic|anesthetic|analgesic|antibiotic/i.test(pdStr + ' ' + syns)) {
-    tags.push('pharmaceutical', 'medicine');
+  // Fine fragrance: explicit "fine fragrance" usage cue, OR very-high
+  // tenacity bases that are typical of EDP-class compositions.
+  if (/\bfine fragrance\b/i.test(usage) || /\b(very high|excellent)\b/i.test(tenacity)) {
+    push('fine_fragrance');
   }
-  // Also tag if ATC code present
-  if (/atc code/i.test(pdStr)) {
-    if (!tags.includes('pharmaceutical')) tags.push('pharmaceutical');
+  // Flavor: FEMA-listed material OR explicit food/flavor cue.
+  if (!banned && (id.fema || /\b(flavor|flavour|fema|jecfa|food)\b/i.test(usage + ' ' + desc))) {
+    push('flavor');
   }
-
-  // Toxicology / Research
-  if (/toxin|mycotoxin|venom|research.only|highly.toxic|poison/i.test(n + ' ' + syns + ' ' + pdStr)) {
-    tags.push('toxicology', 'research_only');
+  // Cosmetics: known cosmetic carrier/diluent OR explicit cosmetic cue.
+  if (!banned && (
+    FRAGRANCE_SOLVENT_NAME_RE.test(n) ||
+    /\b(solvent|carrier|diluent|emollient|cosmetic|skin)\b/i.test(noteLow + ' ' + desc + ' ' + odorType + ' ' + usage)
+  )) {
+    push('cosmetics');
   }
-
-  // Fallback: if no tags assigned
-  if (!tags.length) {
-    tags.push('chemical', 'unclassified');
+  // Personal care: same carrier set as cosmetics, plus explicit cue.
+  if (!banned && (
+    FRAGRANCE_SOLVENT_NAME_RE.test(n) ||
+    /\b(personal care|deodorant|shampoo|lotion|skin care|body wash)\b/i.test(usage + ' ' + desc)
+  )) {
+    push('personal_care');
   }
-
+  // Home / air / fabric care: triggered from explicit cues only.
+  if (/\b(home care|household|cleaner|detergent)\b/i.test(usage + ' ' + desc)) push('home_care');
+  if (/\b(air care|air freshener|reed diffuser|room spray)\b/i.test(usage + ' ' + desc)) push('air_care');
+  if (/\b(fabric|laundry|softener)\b/i.test(usage + ' ' + desc)) push('fabric_care');
+  // Soap & candle: high-tenacity bases or explicit cues.
+  if (/\bsoap\b/i.test(usage + ' ' + desc) || (/\b(very high|excellent|high)\b/i.test(tenacity) && /base/i.test(noteLow))) {
+    push('soap');
+  }
+  if (/\b(candle|wax melt)\b/i.test(usage + ' ' + desc)) push('candle');
   return tags;
 }
-const INDUSTRY_TAG_LABELS = {
-  'perfumery': 'Perfumery', 'flavor': 'Flavor', 'cosmetics': 'Cosmetics',
-  'additive': 'Additive / Preservative',
-  'banned_eu': 'Banned (EU)', 'banned_global': 'Banned (Worldwide)',
-  'pharmaceutical': 'Pharma', 'medicine': 'Medicine',
-  'toxicology': 'Toxicology', 'research_only': 'Research',
-  'chemical': 'Chemical', 'unclassified': 'Unclassified'
-};
+// Backwards-compat alias — older code paths still call classifyIndustryTags.
+function classifyIndustryTags(mat) { return classifyUses(mat); }
+const INDUSTRY_TAG_LABELS = USE_LABELS;
+
+// Odor-Family axis classifier — returns the subset of ODOR_FAMILY_VALUES
+// whose keyword regex matches the curated name + odor_description + odor_type.
+function classifyOdorFamilies(mat) {
+  const r = mat.record || mat;
+  const pf = r.perfumery || {}, nm = r.names || {};
+  const text = ((nm.canonical || '') + ' ' + (pf.odor_description || '') + ' ' + (pf.odor_type || '')).toLowerCase();
+  const out = [];
+  for (const family of ODOR_FAMILY_VALUES) {
+    if (ODOR_FAMILY_KEYWORDS[family].test(text)) out.push(family);
+  }
+  return out;
+}
+
+// Regulatory axis classifier — independent of Use. A material can be
+// perfumery + ifra_limited + allergen + sensitizer simultaneously.
+function classifyRegulatory(mat) {
+  const r = mat.record || mat;
+  const sf = r.safety || {}, nm = r.names || {};
+  const ifra = (sf.ifra_guideline || '').toLowerCase();
+  const usage = (sf.usage_levels || '').toLowerCase();
+  const n = (nm.canonical || '').toLowerCase();
+  const all = ifra + ' ' + usage + ' ' + n;
+  const out = [];
+  if (/\b(banned|prohibited)\b/i.test(all)) out.push('banned');
+  if (/\brestricted\b/i.test(all)) out.push('restricted');
+  if (/\bifra\b|\bcategory\s*\d|\b\d+(?:\.\d+)?\s*%/i.test(all) && !out.includes('banned')) out.push('ifra_limited');
+  if (/\b(allergen|26 allergens|annex iii)\b/i.test(all) || /\b(linalool|limonene|citral|geraniol|eugenol|coumarin|farnesol|citronellol|cinnamal|isoeugenol|benzyl alcohol|benzyl salicylate|hydroxycitronellal)\b/i.test(n)) out.push('allergen');
+  if (/\bphototox/i.test(all) || /\b(bergapten|psoralen)\b/i.test(n) || /\b(bergamot|lime|bitter orange|angelica)\b/i.test(n)) out.push('phototoxic');
+  if (/\bsensiti(?:s|z)/i.test(all)) out.push('sensitizer');
+  return out;
+}
+
+// Source axis classifier (optional / future-ready). Best-effort split
+// between natural (mixtures), synthetic (single molecules whose curated
+// data shows no natural-occurrence claim) and semi-synthetic / biotech
+// for explicit cues.
+function classifySource(mat) {
+  const r = mat.record || mat;
+  const pf = r.perfumery || {}, nm = r.names || {}, id = r.identifiers || {};
+  const cas = id.cas || '';
+  const all = ((nm.canonical || '') + ' ' + (pf.odor_description || '')).toLowerCase();
+  if (/\b(biotech|fermentation|bio[\s-]?based)\b/i.test(all)) return 'biotech';
+  if (/\b(semi[\s-]?synthetic|hemi[\s-]?synthetic)\b/i.test(all)) return 'semi_synthetic';
+  if (MIXTURES.has(cas)) return 'natural';
+  if (/\boccurs\s+in\b|\bnatural\s+(?:form|isolate|source|origin)\b/i.test(all)) return 'natural';
+  return 'synthetic';
+}
 
 function esc(s) { return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function toTitle(s) { return s.replace(/\b\w/g, c=>c.toUpperCase()); }
