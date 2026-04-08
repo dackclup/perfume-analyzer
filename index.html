@@ -288,7 +288,7 @@ html { scroll-behavior:smooth; }
         <label class="filter-radio"><input type="radio" name="type" value="aroma_chemical" onchange="setTypeFilter(this.value)"> Aroma Chemical</label>
         <label class="filter-radio"><input type="radio" name="type" value="natural_extract" onchange="setTypeFilter(this.value)"> Natural Extract</label>
         <label class="filter-radio"><input type="radio" name="type" value="natural_isolate" onchange="setTypeFilter(this.value)"> Natural Isolate</label>
-        <label class="filter-radio"><input type="radio" name="type" value="additive" onchange="setTypeFilter(this.value)"> Preservative / Additive</label>
+        <label class="filter-radio"><input type="radio" name="type" value="additive" onchange="setTypeFilter(this.value)"> Additive</label>
       </div>
     </div>
     <div class="sub-drawer">
@@ -2520,24 +2520,47 @@ function classifyMaterialType(mat) {
   const r = mat.record || mat; // support both result objects and raw DB entries
   const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, id = r.identifiers || {};
   const n = (nm.canonical || '').toLowerCase();
-  const syns = (nm.synonyms || []).join(' ').toLowerCase();
   const desc = ((pf.odor_description || '') + ' ' + (sf.usage_levels || '')).toLowerCase();
   const odorType = (pf.odor_type || '').toLowerCase();
   const note = (pf.note || '').toLowerCase();
   const cas = id.cas || '';
-  const all = n + ' ' + syns + ' ' + desc + ' ' + odorType;
+  // NOTE: synonyms are intentionally excluded from the keyword surface.
+  // PubChem synonym lists inject noise like "Absolute ethanol", "Ethanol wax
+  // emulsion", etc. that used to flip single molecules into natural_extract /
+  // natural_isolate via loose \b(absolute|wax|...)\b matches. Curated fields
+  // (name / note / odor_type / odor_description / usage_levels) are enough
+  // to identify a natural extract because such materials either sit in
+  // MIXTURES or carry an unambiguous keyword in their canonical name.
+  const all = n + ' ' + desc + ' ' + odorType + ' ' + note;
   // Type axis = what the material IS (independent of Function/Industry).
   // Solvent / Carrier roles are NOT a Type — they live on the Function axis.
-  if (/\b(preservative|biocide|antioxidant|stabilizer|additive)\b/i.test(all) || /^(additive|base\/additive)$/i.test(note)) return 'additive';
+  if (/\b(preservative|biocide|antioxidant|stabilizer)\b/i.test(all) || /^(additive|base\/additive)$/i.test(note)) return 'additive';
   if (MIXTURES.has(cas)) return 'natural_extract';
-  if (/\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin|balsam|wax)\b/i.test(all)) return 'natural_extract';
+  // Narrowed natural_extract keyword set: dropped the generic "balsam" and
+  // "wax" hits that false-positived on single molecules whose curated odor
+  // descriptions say "peru balsam-like" (Benzyl Cinnamate) or "waxy" notes.
+  // Peru Balsam, Tolu Balsam, Beeswax Absolute etc. are all in MIXTURES and
+  // are caught by the preceding MIXTURES check.
+  if (/\b(essential oil|absolute|extract|resinoid|concrete|tincture|oleoresin)\b/i.test(n + ' ' + note)) return 'natural_extract';
   // natural_isolate: explicit claim only — bare "natural" matches too many
   // aroma chemicals whose descriptions say "natural-like" or "natural sandalwood note".
   if (/\bisolate(?:d|s)?\b|\bfrom\s+\w+(?:\s+\w+)?\s+oil\b|\boccurs\s+in\b|\bnatural\s+(?:form|isolate|source|origin)\b/i.test(all) && !MIXTURES.has(cas)) return 'natural_isolate';
+  // Odorless formulation solvents / carriers / diluents (ethanol, dipropylene
+  // glycol, propylene glycol, isopropyl myristate, triethyl citrate, MCT oil,
+  // squalane, isododecane, benzyl benzoate used as diluent, …) are NOT aroma
+  // chemicals in any domain sense. Under the 4-value Type axis they belong
+  // with `additive` (non-odorous functional material). This keeps solvent /
+  // carrier exclusively on the Function axis while giving Type a
+  // domain-correct home for them instead of the `aroma_chemical` catch-all.
+  const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
+  const solventCarrierSignal =
+    /\b(solvent|carrier|diluent|emollient)\b/i.test(note + ' ' + desc + ' ' + odorType) ||
+    /\b(ethanol|ethyl alcohol|dipropylene glycol|propylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|benzyl benzoate)\b/i.test(n);
+  if (!hasRealOdor && solventCarrierSignal) return 'additive';
   return 'aroma_chemical';
 }
 const MATERIAL_TYPE_LABELS = {
-  'additive': 'Preservative / Additive',
+  'additive': 'Additive',
   'natural_extract': 'Natural Extract',
   'natural_isolate': 'Natural Isolate',
   'aroma_chemical': 'Aroma Chemical'
