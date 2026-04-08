@@ -2614,17 +2614,19 @@ function isBannedEU(mat) { return getBanStatus(mat) !== null; }
 
 function classifyIndustryTags(mat) {
   const r = mat.record || mat;
-  const pf = r.perfumery || {}, nm = r.names || {}, md = r.metadata || {}, id = r.identifiers || {};
+  const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, md = r.metadata || {}, id = r.identifiers || {};
   const tags = [];
   const n = (nm.canonical || '').toLowerCase();
   const desc = (pf.odor_description || '').toLowerCase();
   const odorType = (pf.odor_type || '').toLowerCase();
+  const usage = (sf.usage_levels || '').toLowerCase();
+  const noteLow = (pf.note || '').toLowerCase();
   const syns = (nm.synonyms || []).join(' ').toLowerCase();
   const pdStr = md.pubchem_sections ? JSON.stringify(md.pubchem_sections).toLowerCase() : '';
   const cas = id.cas || '';
   const banned = isBannedEU(mat);
 
-  const isSolvent = /\bsolvent\b/i.test(odorType + ' ' + desc + ' ' + (pf.note || ''));
+  const isSolvent = /\bsolvent\b/i.test(odorType + ' ' + desc + ' ' + noteLow + ' ' + usage);
   const isFunctional = !isSolvent && /preservative|biocide|antioxidant|stabilizer/i.test(odorType + ' ' + desc);
   const hasRealOdor = (pf.odor_description || pf.odor_type || pf.odor_strength)
     && !isFunctional
@@ -2636,25 +2638,45 @@ function classifyIndustryTags(mat) {
     return tags;
   }
 
-  // Cosmetics-only branch: solvents / carriers / diluents that are not
-  // themselves perfumery ingredients but are used in cosmetic formulation.
-  // This runs BEFORE the perfumery branch so materials like Dipropylene
-  // Glycol, Isopropyl Myristate, Propylene Glycol, Squalane get a meaningful
-  // cosmetics tag without being incorrectly tagged 'perfumery'.
+  // Fragrance-solvent / cosmetic-carrier branch.
+  // Materials with no real odor but a solvent / carrier / diluent /
+  // emollient signal (Dipropylene Glycol, Ethanol, Isopropyl Myristate,
+  // Triethyl Citrate, Propylene Glycol, MCT Oil, Squalane, Isododecane,
+  // Benzyl Benzoate, …) belong to MULTIPLE Use industries — not just
+  // cosmetics. They are used as fragrance-formulation solvents
+  // (perfumery), as cosmetic carriers (cosmetics), and many of them are
+  // also FEMA-listed flavor solvents (flavor). Push every axis value
+  // that is justified by the curated data.
+  const FRAGRANCE_SOLVENT_NAME_RE = /\b(ethanol|ethyl alcohol|dipropylene glycol|propylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|benzyl benzoate)\b/i;
   const isCosmeticCarrier = !banned && !hasRealOdor && !MIXTURES.has(cas) && (
-    /\b(solvent|carrier|diluent|emollient)\b/i.test((pf.note||'') + ' ' + desc + ' ' + odorType) ||
-    /\b(dipropylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|propylene glycol|benzyl benzoate)\b/i.test(n)
+    /\b(solvent|carrier|diluent|emollient)\b/i.test(noteLow + ' ' + desc + ' ' + odorType + ' ' + usage) ||
+    FRAGRANCE_SOLVENT_NAME_RE.test(n)
   );
-  if (isCosmeticCarrier) tags.push('cosmetics');
+  if (isCosmeticCarrier) {
+    // Cosmetics: every recognized cosmetic carrier is a cosmetic-axis member.
+    tags.push('cosmetics');
+    // Perfumery: usage text says "fragrance"/"perfume", OR the canonical
+    // name is on the well-known fragrance-solvent list. The curated DB
+    // wouldn't list these materials at all if they weren't perfumery
+    // adjuncts, so a name match is sufficient evidence.
+    const isFragranceSolvent =
+      /\b(fragranc|perfum)/i.test(usage + ' ' + noteLow) ||
+      FRAGRANCE_SOLVENT_NAME_RE.test(n);
+    if (isFragranceSolvent) tags.push('perfumery');
+    // Flavor: FEMA-listed solvents (e.g. ethanol FEMA 2419) are flavor
+    // industry diluents/solvents. Trigger purely from FEMA presence so
+    // the flavor-axis assignment is data-driven, not heuristic.
+    if (id.fema) tags.push('flavor');
+  }
 
   // Perfumery / Flavor / Cosmetics
   if (hasRealOdor || MIXTURES.has(cas) ||
       /fragrance|perfum|aroma|odor agent/i.test(pdStr) ||
       /solvent.*carrier|carrier.*solvent|emollient/i.test(desc + ' ' + odorType)) {
-    tags.push('perfumery');
+    if (!tags.includes('perfumery')) tags.push('perfumery');
     // Flavor: only if has FEMA or explicit food use, and not banned
     if (!banned && (id.fema || /flavor|flavour|food additive|fema|jecfa/i.test(pdStr))) {
-      tags.push('flavor');
+      if (!tags.includes('flavor')) tags.push('flavor');
     }
     // Cosmetics: narrower rule than "any non-banned perfumery material".
     // Tag only when there's a concrete cosmetic signal:
@@ -2666,9 +2688,9 @@ function classifyIndustryTags(mat) {
     if (!banned) {
       const cosmeticSignal =
         /\b(cosmetic|skin|dermal|masking|emollient|carrier|diluent|excipient)\b/i.test(pdStr) ||
-        /\b(solvent|carrier|diluent|emollient)\b/i.test(desc + ' ' + odorType + ' ' + (pf.note||'')) ||
-        /\b(benzyl benzoate|dipropylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|propylene glycol)\b/i.test(n);
-      if (cosmeticSignal) tags.push('cosmetics');
+        /\b(solvent|carrier|diluent|emollient)\b/i.test(desc + ' ' + odorType + ' ' + noteLow) ||
+        FRAGRANCE_SOLVENT_NAME_RE.test(n);
+      if (cosmeticSignal && !tags.includes('cosmetics')) tags.push('cosmetics');
     } else {
       // Add banned tag (scope worldwide vs EU)
       const scope = getBanStatus(mat);
