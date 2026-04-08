@@ -820,7 +820,12 @@ function sortByCanonicalOrder(items, canonical) {
 //   names.synonyms[]
 //   perfumery.odor_type
 //   perfumery.odor_description
-//   perfumery.blends_with[]
+//
+// NOTE: perfumery.blends_with is intentionally NOT a source.
+// That field describes BLEND PARTNERS, not facets of the material
+// itself, and scanning it leaks unrelated notes into the facets
+// output (e.g. Cedarwood picking up Vetiver / Patchouli / Lavender
+// facets just because those were its blend partners).
 function tokenizeOdorSources(matOrRecord) {
   const r = (matOrRecord && matOrRecord.record) || matOrRecord || {};
   const pf = r.perfumery || {};
@@ -830,7 +835,6 @@ function tokenizeOdorSources(matOrRecord) {
   if (Array.isArray(nm.synonyms)) for (const s of nm.synonyms) sources.push(s);
   if (pf.odor_type) sources.push(pf.odor_type);
   if (pf.odor_description) sources.push(pf.odor_description);
-  if (Array.isArray(pf.blends_with)) for (const b of pf.blends_with) sources.push(b);
 
   const tokens = [];
   for (const raw of sources) {
@@ -1012,12 +1016,21 @@ function _inferTaxonomy(matOrRecord) {
     }
   }
 
-  // Pass 3 — blends_with / canonical name / synonyms. Weakest
-  // evidence; contributes facets ONLY. Skips primary-family tokens
-  // because the weak source isn't strong enough to promote a
-  // material into a family bucket.
+  // Pass 3 — canonical name + synonyms. Weakest evidence;
+  // contributes facets ONLY. Skips primary-family tokens because the
+  // weak source isn't strong enough to promote a material into a
+  // family bucket.
+  //
+  // IMPORTANT: perfumery.blends_with is intentionally NOT scanned
+  // here. That field describes BLEND PARTNERS — other materials the
+  // current material pairs well with — not facets of the material
+  // itself. Treating blends_with as a facet source used to leak
+  // unrelated notes into the Facets list (e.g. Cedarwood picking up
+  // Vetiver / Patchouli / Sandalwood / Bergamot / Lavender facets
+  // just because those were its blend partners). Name and synonyms
+  // are still scanned because they legitimately describe the
+  // material's own identity (e.g. "Cedarwood" → cedar facet).
   const weakSources = [];
-  if (Array.isArray(pf.blends_with)) for (const b of pf.blends_with) weakSources.push(b);
   if (nm.canonical) weakSources.push(nm.canonical);
   if (Array.isArray(nm.synonyms)) for (const s of nm.synonyms) weakSources.push(s);
   for (const src of weakSources) {
