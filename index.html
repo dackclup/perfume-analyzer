@@ -1810,6 +1810,51 @@ function togglePcGroup(gid) {
 }
 
 // ===== Rendering =====
+// ── Field-separation helpers (display-only) ──
+// A handful of curated DB entries mix axis dimensions into the wrong
+// field — Benzyl Benzoate's odor description ends with "— mainly
+// fixative/solvent", its tenacity field is literally "Fixative",
+// its safety usage ends with "(also used as solvent/fixative)", and
+// similar patterns appear on Benzyl Salicylate / Benzyl Alcohol. These
+// helpers clean up the DISPLAY text only. They do NOT touch the raw
+// record fields the classifier reads — Function / Type / Use /
+// Regulatory detection still sees the original text, so filter
+// counts, FILTER_CACHE, and exports are unchanged.
+function _cleanOdorDescription(s) {
+  if (!s) return s;
+  // Strip trailing "— mainly fixative/solvent" / "— mostly a solvent" /
+  // "— fixative" / "— denaturant and fixative" style suffixes. Function
+  // words are Function-axis values and should not appear inside an odor
+  // description. The alternation accepts '/', '&', ',', and 'and' as
+  // separators between chained function words.
+  const FW = '(?:fixative|solvent|carrier|diluent|denaturant|plasticizer|emollient|preservative)';
+  const re = new RegExp('\\s*[—\\-–]\\s*(?:mainly\\s+|mostly\\s+|primarily\\s+|also\\s+|used\\s+as\\s+|acts\\s+as\\s+)*(?:a\\s+|an\\s+)?' + FW + '(?:\\s*(?:[\\/&,]|and)\\s*' + FW + ')*\\s*$', 'i');
+  return s.replace(re, '').trim();
+}
+function _cleanPerformanceTenacity(s) {
+  if (!s) return s;
+  const t = s.trim();
+  // If the tenacity field is literally just a function word, replace
+  // it with a performance-style description. If it's "N/A", return
+  // an empty string so the card falls through to the "—" placeholder.
+  if (/^fixative$/i.test(t)) return 'Low odor impact — acts mainly as a fixative';
+  if (/^solvent$/i.test(t))  return 'Minimal performance contribution — used as a solvent';
+  if (/^carrier$/i.test(t))  return 'Minimal performance contribution — used as a carrier';
+  if (/^n\/a$/i.test(t))     return '';
+  return s;
+}
+function _cleanSafetyUsage(s) {
+  if (!s) return s;
+  // Strip parentheticals that specifically mention function words as
+  // the material's "other use" — they belong on the Function axis,
+  // not inside a safety/usage note. Legitimate safety parentheticals
+  // ("(polycyclic musk; environmental persistence)") are preserved
+  // because they don't match the "(also used as …)" pattern.
+  return s
+    .replace(/\s*\(\s*(?:also\s+)?used\s+as\s+[^)]*\)/gi, '')
+    .replace(/\s*\(\s*also\s+[^)]*(?:solvent|fixative|carrier|diluent|denaturant|plasticizer|emollient)[^)]*\)/gi, '')
+    .trim();
+}
 function renderResults() {
   const div = document.getElementById("results");
   // Save open states before re-render (skip if just searched)
@@ -1887,6 +1932,17 @@ function renderResults() {
       ? [...(_fcCard.regulatory || [])]
       : (Array.isArray(cls.regulatory) && cls.regulatory.length ? cls.regulatory : classifyRegulatory(mat));
     const displaySource = _fcCard ? _fcCard.source : (cls.source || classifySource(mat));
+    // Display-only field cleaners (see _cleanOdorDescription /
+    // _cleanPerformanceTenacity / _cleanSafetyUsage defined near the top
+    // of the Rendering module). These normalize text that mixes
+    // dimensions into the wrong curated field — e.g. Benzyl Benzoate's
+    // odor description ends with "— mainly fixative/solvent", its
+    // tenacity is literally "Fixative", etc. Only the rendered strings
+    // change; the underlying record.perfumery.* / record.safety.* fields
+    // the classifier reads are untouched.
+    const _odorDescClean = _cleanOdorDescription(pf.odor_description);
+    const _tenacityClean = _cleanPerformanceTenacity(pf.tenacity);
+    const _usageLevelsClean = _cleanSafetyUsage(sf.usage_levels);
     const nl = (pf.note||"").toLowerCase();
     let badges = "";
     if (nl.includes("top")) badges += `<span class="badge badge-top">Top</span>`;
@@ -1949,7 +2005,7 @@ function renderResults() {
           <div class="row">
             <div style="flex:1">
               <p class="sec-title">Odor</p>
-              ${pf.odor_description?`<p class="odor-desc">${esc(pf.odor_description)}${pf.odor_source?` <span style="font-size:0.7em;color:var(--text2);font-style:normal">[${pf.odor_source}]</span>`:''}</p>`:""}
+              ${_odorDescClean?`<p class="odor-desc">${esc(_odorDescClean)}${pf.odor_source?` <span style="font-size:0.7em;color:var(--text2);font-style:normal">[${pf.odor_source}]</span>`:''}</p>`:""}
               ${pf.odor_type?`<p>${esc(pf.odor_type)}</p>`:""}
               ${pf.odor_strength?`<p style="color:var(--text2);font-size:0.85em">${esc(pf.odor_strength)}</p>`:""}
               ${!pf.odor_description&&!pf.odor_type?`<p style="color:var(--text2)">—</p>`:""}
@@ -1960,9 +2016,9 @@ function renderResults() {
             </div>
             <div style="flex:1">
               <p class="sec-title">Performance</p>
-              ${pf.tenacity?`<p>${esc(pf.tenacity)}</p>`:""}
+              ${_tenacityClean?`<p>${esc(_tenacityClean)}</p>`:""}
               ${pf.tenacity_hours?`<p style="color:var(--text2);font-size:0.85em">${esc(pf.tenacity_hours)}</p>`:""}
-              ${!pf.tenacity?`<p style="color:var(--text2)">—</p>`:""}
+              ${!_tenacityClean?`<p style="color:var(--text2)">—</p>`:""}
             </div>
           </div>
           ${sf.ifra_guideline||sf.usage_levels||blendsArr.length?`
@@ -1971,7 +2027,7 @@ function renderResults() {
             <div style="flex:1">
               <p class="sec-title">Safety</p>
               ${sf.ifra_guideline?(()=>{const bs=getBanStatus(mat);return bs?`<p style="color:#b91c1c;font-weight:600">${esc(sf.ifra_guideline)}</p><p style="color:#b91c1c;font-size:0.8em">${bs==='worldwide'?'Banned globally — IFRA prohibition; not permitted in any application':'Banned in EU cosmetics (EC No 2021/1902 — Omnibus II / CLP Annex VI)'}</p>`:`<p>${esc(sf.ifra_guideline)}</p>`;})():""}
-              ${sf.usage_levels?`<p style="color:var(--text2);font-size:0.85em">${esc(sf.usage_levels)}</p>`:""}
+              ${_usageLevelsClean?`<p style="color:var(--text2);font-size:0.85em">${esc(_usageLevelsClean)}</p>`:""}
               ${sf.ifra_guideline||sf.usage_levels?`<p style="color:var(--text2);font-size:0.7em;font-style:italic;margin-top:4px">Usage % = guideline in fragrance concentrate, not IFRA max in finished product. Always verify per product category.</p>`:""}
             </div>
             <div style="flex:1">
