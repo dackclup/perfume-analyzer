@@ -708,7 +708,11 @@ const TAXONOMY_SYNONYMS = {
   // smoky
   birch_tar_oil:'birch_tar',
   // common adjective forms that need to fold into the primary family
-  musky:'musk', ambery:'amber'
+  musky:'musk', ambery:'amber',
+  // compound-phrase folds. Prevent the inner-token expansion from
+  // leaking a sub-word facet when the whole phrase is unambiguously
+  // about a different note (e.g. "peach-skin" is peach, not skin).
+  peach_skin:'peach', peach_fuzz:'peach'
 };
 
 // ── Helpers ──
@@ -835,7 +839,17 @@ function _orderedTaxonomyTokens(s) {
     const piece = normalizeTaxonomyToken(part);
     if (!piece) continue;
     out.push(piece);
-    if (piece.includes('_')) {
+    // Inner-token expansion for compound snake_case tokens.
+    //
+    // Skip the expansion when the whole compound already resolves to a
+    // canonical token — either directly (FACET_TAGS has a key for it)
+    // or via a TAXONOMY_SYNONYMS fold. Otherwise a compound like
+    // "peach_skin" would leak "skin" (→ animalic) even though the
+    // whole phrase is unambiguously about the peach note. The
+    // synonym-aware guard keeps legitimate compounds like "skin_like"
+    // on Ambroxan working, since "skin_like" is NOT in either map and
+    // still expands to ["skin","like"] → skin → animalic.
+    if (piece.includes('_') && !FACET_TAGS[piece] && !TAXONOMY_SYNONYMS[piece]) {
       for (const sub of piece.split('_')) {
         if (sub.length >= 3) out.push(sub);
       }
@@ -3285,14 +3299,23 @@ async function downloadJSON() {
       // top-level material_type / industry_tags / is_external_perfumery
       // / match / cas_number / fema_number above are kept for backwards
       // compatibility with any existing JSON consumer.
+      //
+      // Step 6: primaryFamilies / secondaryFamilies / facets are emitted
+      // alongside the legacy odor_families field. odor_families is
+      // retained so older consumers that still read the single-axis
+      // odor list don't break — new consumers should prefer the
+      // three-field structure below.
       classification: {
-        material_type: src.classification?.material_type ?? null,
-        industry_tags: Array.isArray(src.classification?.industry_tags) ? src.classification.industry_tags : [],
-        uses:          _fc ? [...(_fc.uses || [])]          : (Array.isArray(src.classification?.uses)          ? src.classification.uses          : (src.classification?.industry_tags || [])),
-        functions:     _fc ? [...(_fc.functions || [])]     : (Array.isArray(src.classification?.functions)     ? src.classification.functions     : []),
-        odor_families: _fc ? [...(_fc.odorFamilies || [])]  : (Array.isArray(src.classification?.odor_families) ? src.classification.odor_families : []),
-        regulatory:    _fc ? [...(_fc.regulatory || [])]    : (Array.isArray(src.classification?.regulatory)    ? src.classification.regulatory    : []),
-        source:        _fc ? _fc.source                      : (src.classification?.source ?? null),
+        material_type:     src.classification?.material_type ?? null,
+        industry_tags:     Array.isArray(src.classification?.industry_tags) ? src.classification.industry_tags : [],
+        uses:              _fc ? [...(_fc.uses || [])]          : (Array.isArray(src.classification?.uses)          ? src.classification.uses          : (src.classification?.industry_tags || [])),
+        functions:         _fc ? [...(_fc.functions || [])]     : (Array.isArray(src.classification?.functions)     ? src.classification.functions     : []),
+        odor_families:     _fc ? [...(_fc.odorFamilies || [])]  : (Array.isArray(src.classification?.odor_families) ? src.classification.odor_families : []),
+        primaryFamilies:   _fc ? [...(_fc.primaryFamilies || [])]   : (Array.isArray(src.classification?.primaryFamilies)   ? src.classification.primaryFamilies   : []),
+        secondaryFamilies: _fc ? [...(_fc.secondaryFamilies || [])] : (Array.isArray(src.classification?.secondaryFamilies) ? src.classification.secondaryFamilies : []),
+        facets:            _fc ? [...(_fc.facets || [])]            : (Array.isArray(src.classification?.facets)            ? src.classification.facets            : []),
+        regulatory:        _fc ? [...(_fc.regulatory || [])]    : (Array.isArray(src.classification?.regulatory)    ? src.classification.regulatory    : []),
+        source:            _fc ? _fc.source                      : (src.classification?.source ?? null),
       },
       metadata: {
         source: src.metadata?.source ?? null,
