@@ -495,7 +495,7 @@ const ODOR_FAMILY_KEYWORDS = {
   gourmand: /\b(vanilla|vanillin|caramel|chocolate|cocoa|honey|coffee|gourmand|sweet|tonka|maple|hazelnut|almond|praline|biscuit)\b/i,
   fresh:    /\b(fresh|aldehyd|ozone|ozonic|cool|cooling|airy|crisp|clean)\b/i,
   animalic: /\b(animal|animalic|leather|leathery|civet|castore|hyrax|skin)\b/i,
-  smoky:    /\b(smok|smoke|burn|tar|tarry|tobacco|incense|leather)\b/i,
+  smoky:    /\b(smoky|smoked|smoke|smoking|burnt|burn|burning|tarry|tar|tobacco|incense|leathery|leather)\b/i,
   aquatic:  /\b(aquatic|marine|ozone|water|sea|seaweed|oceanic|calone)\b/i,
 };
 const USE_VALUES = ['perfumery','fine_fragrance','flavor','cosmetics','personal_care','home_care','air_care','fabric_care','soap','candle'];
@@ -568,7 +568,8 @@ function _buildFilterRecord(cas, entry) {
   // solvent role (Benzyl Salicylate, Benzyl Alcohol, Cinnamic Acid, …).
   if (hasRealOdor) functions.add('aromatic');
   for (const f of FUNCTION_AXIS_SPECIFIC) { if (funcAll.includes(f)) functions.add(f); }
-  if (/\b(very high|excellent)\b/i.test(_tenacity) && /\bbase\b/i.test(noteLow)) functions.add('fixative');
+  if (/\b(high|very high|excellent|extremely high)\b/i.test(_tenacity) && /\bbase\b/i.test(noteLow)) functions.add('fixative');
+  if (/\b(balsam|resin|resinoid|oleoresin|absolute)\b/i.test(_entryName)) functions.add('fixative');
   if (KNOWN_FIXATIVE_NAMES.test(_entryName)) functions.add('fixative');
   if (/\bblender\b/i.test(funcAll) || KNOWN_BLENDER_NAMES.test(_entryName)) functions.add('blender');
   if (/\bmodifier\b/i.test(funcAll) || KNOWN_MODIFIER_NAMES.test(_entryName)) functions.add('modifier');
@@ -1338,9 +1339,13 @@ function classifyFunctionsFromRecord(record) {
   for (const f of FUNCTION_AXIS_SPECIFIC) { if (funcAll.includes(f)) add(f); }
 
   // Fixative: explicit text trigger above already added it. Add it for
-  // base notes with very-high / excellent tenacity, AND for materials
-  // on the known-fixative override list.
-  if (/\b(very high|excellent)\b/i.test(tenacity) && /\bbase\b/i.test(noteLow)) add('fixative');
+  // base notes with high / very-high / excellent tenacity (a high-
+  // tenacity base material is a fixative by definition in perfumery),
+  // for materials whose canonical name is a natural base class
+  // (balsam / resin / oleoresin / absolute — these are fixatives by
+  // nature), and for materials on the known-fixative override list.
+  if (/\b(high|very high|excellent|extremely high)\b/i.test(tenacity) && /\bbase\b/i.test(noteLow)) add('fixative');
+  if (/\b(balsam|resin|resinoid|oleoresin|absolute)\b/i.test(n)) add('fixative');
   if (KNOWN_FIXATIVE_NAMES.test(n)) add('fixative');
 
   // Blender / modifier / enhancer: explicit text triggers + small
