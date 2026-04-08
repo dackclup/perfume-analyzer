@@ -432,6 +432,14 @@ const RE_ODORLESS = /odorless|virtually odorless|preservative|antioxidant/i;
 // separate from the closed FUNCTION_VALUES list below because
 // FILTER_CACHE matches via funcAll.includes(...).
 const FUNCTION_AXIS_SPECIFIC = ['fixative','solvent','carrier'];
+// Known-name overrides for the Function axis. These are intentionally
+// short, hand-curated lists of workhorse perfumery materials whose
+// curated DB descriptions don't include the literal "fixative" /
+// "blender" / "modifier" word. Hoisted above FILTER_CACHE init so the
+// module-init pass can read them. Mirrored by classifyFunctionsFromRecord.
+const KNOWN_FIXATIVE_NAMES = /\b(iso e super|hedione|ambroxan|galaxolide|cashmeran|vanillin|sandalore|javanol|polysantol|cedramber|patchouli\s*alcohol|moskene|musk\s*ketone|ethyl\s*maltol|maltol|coumarin|benzoin|exaltolide|habanolide|civetone)\b/i;
+const KNOWN_MODIFIER_NAMES = /\b(hedione|iso e super|methyl\s*ionone|alpha[- ]?ionone|beta[- ]?ionone|methyl pamplemousse|nectaryl)\b/i;
+const KNOWN_BLENDER_NAMES  = /\b(iso e super|hedione|cashmeran|musk\s*ketone)\b/i;
 
 // ═══════════════════════════════════════════════════════════════
 // MULTI-AXIS TAG TAXONOMY
@@ -549,13 +557,17 @@ function _buildFilterRecord(cas, entry) {
   // Precompute Function-axis set. A material may belong to MULTIPLE functions
   // (e.g., dipropylene glycol is both solvent and carrier). This Set is the
   // single source of truth for both filter matching/counts AND card render.
+  // Mirrors classifyFunctionsFromRecord exactly so FILTER_CACHE and the
+  // runtime classifier never disagree.
   const functions = new Set();
+  const _entryName = (entry.name || '').toLowerCase();
+  const _tenacity  = (entry.performance?.tenacity || '').toLowerCase();
   if (hasRealOdor && !RE_FUNC_AROMATIC_EXCLUDE.test(funcAll)) functions.add('aromatic');
   for (const f of FUNCTION_AXIS_SPECIFIC) { if (funcAll.includes(f)) functions.add(f); }
-  // Function-axis extensions: blender / modifier / enhancer when explicitly
-  // mentioned in the curated text.
-  if (/\bblender\b/i.test(funcAll)) functions.add('blender');
-  if (/\bmodifier\b/i.test(funcAll)) functions.add('modifier');
+  if (/\b(very high|excellent)\b/i.test(_tenacity) && /\bbase\b/i.test(noteLow)) functions.add('fixative');
+  if (KNOWN_FIXATIVE_NAMES.test(_entryName)) functions.add('fixative');
+  if (/\bblender\b/i.test(funcAll) || KNOWN_BLENDER_NAMES.test(_entryName)) functions.add('blender');
+  if (/\bmodifier\b/i.test(funcAll) || KNOWN_MODIFIER_NAMES.test(_entryName)) functions.add('modifier');
   if (/\benhancer\b|\bbooster\b/i.test(funcAll)) functions.add('enhancer');
 
   // Precompute Odor Family axis (closed list). Multi-value Set shared by
@@ -1295,21 +1307,39 @@ function _enrichPubchem(mat, cas) {
 
 // Mirror of _buildFilterRecord's Function-axis derivation, applied to the
 // canonical record shape. Returns an array of values from the closed
-// Function axis { aromatic, fixative, solvent, carrier }. Used by the
-// runtime classification path for materials that bypass FILTER_CACHE
-// (external / PubChem-only results). FILTER_CACHE remains the primary
-// source of truth whenever a CAS hits the local DB.
+// Function axis { aromatic, fixative, solvent, carrier, blender,
+// modifier, enhancer }. Used by the runtime classification path for
+// materials that bypass FILTER_CACHE (external / PubChem-only results).
+// FILTER_CACHE remains the primary source of truth whenever a CAS hits
+// the local DB.
 function classifyFunctionsFromRecord(record) {
   if (!record || !record.perfumery) return [];
-  const pf = record.perfumery, sf = record.safety || {};
-  const odorType = (pf.odor_type || '').toLowerCase();
-  const noteLow  = (pf.note || '').toLowerCase();
-  const desc     = ((pf.odor_description || '') + ' ' + (sf.usage_levels || '')).toLowerCase();
-  const funcAll  = odorType + ' ' + noteLow + ' ' + desc;
+  const pf = record.perfumery, sf = record.safety || {}, nm = record.names || {};
+  const n         = (nm.canonical || '').toLowerCase();
+  const odorType  = (pf.odor_type || '').toLowerCase();
+  const noteLow   = (pf.note || '').toLowerCase();
+  const desc      = ((pf.odor_description || '') + ' ' + (sf.usage_levels || '')).toLowerCase();
+  const tenacity  = (pf.tenacity || '').toLowerCase();
+  const funcAll   = odorType + ' ' + noteLow + ' ' + desc;
   const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
   const out = [];
-  if (hasRealOdor && !RE_FUNC_AROMATIC_EXCLUDE.test(funcAll)) out.push('aromatic');
-  for (const f of FUNCTION_AXIS_SPECIFIC) { if (funcAll.includes(f)) out.push(f); }
+  const add = f => { if (!out.includes(f)) out.push(f); };
+
+  if (hasRealOdor && !RE_FUNC_AROMATIC_EXCLUDE.test(funcAll)) add('aromatic');
+  for (const f of FUNCTION_AXIS_SPECIFIC) { if (funcAll.includes(f)) add(f); }
+
+  // Fixative: explicit text trigger above already added it. Add it for
+  // base notes with very-high / excellent tenacity, AND for materials
+  // on the known-fixative override list.
+  if (/\b(very high|excellent)\b/i.test(tenacity) && /\bbase\b/i.test(noteLow)) add('fixative');
+  if (KNOWN_FIXATIVE_NAMES.test(n)) add('fixative');
+
+  // Blender / modifier / enhancer: explicit text triggers + small
+  // known-name override lists.
+  if (/\bblender\b/i.test(funcAll) || KNOWN_BLENDER_NAMES.test(n)) add('blender');
+  if (/\bmodifier\b/i.test(funcAll) || KNOWN_MODIFIER_NAMES.test(n)) add('modifier');
+  if (/\benhancer\b|\bbooster\b/i.test(funcAll)) add('enhancer');
+
   return out;
 }
 
@@ -2672,13 +2702,15 @@ function classifyMaterialType(mat) {
   // NOTE: synonyms are intentionally excluded from the keyword surface.
   // PubChem synonym lists inject noise like "Absolute ethanol", "Ethanol wax
   // emulsion", etc. that used to flip single molecules into the wrong Type.
-  // Curated fields (name / note / odor_type / odor_description / usage_levels)
-  // are enough — natural materials either sit in MIXTURES or carry an
-  // unambiguous keyword in their canonical name.
   const all = n + ' ' + desc + ' ' + odorType + ' ' + note;
-  // Type axis = what the material IS (independent of Function/Use).
-  // Solvent / Carrier roles are also Function-axis values; the Type
-  // expresses what kind of substance it physically is.
+
+  // 0) Hard overrides for materials whose primary identity on the Type
+  //    axis is solvent/carrier even though the curated DB carries an odor
+  //    description (e.g. Benzyl Benzoate has a faint balsamic odor but is
+  //    primarily a perfumery solvent/fixative; TEC is a perfumery solvent
+  //    despite a faint plasticizer note). Tiny override list — kept here
+  //    instead of in classifyUses so the Type label comes out right too.
+  if (/\b(benzyl benzoate|triethyl citrate)\b/i.test(n)) return 'solvent';
 
   // 1) Antioxidants and preservatives (most specific first).
   if (/\b(antioxidant|tocopherol|bht|bha)\b/i.test(all)) return 'antioxidant';
@@ -2705,9 +2737,10 @@ function classifyMaterialType(mat) {
   if (/\b(wax)\b/i.test(n)) return 'wax';
 
   // 5) Formulation solvents and carriers — split into two distinct
-  //    Type values via name and curated text.
+  //    Type values via name and curated text. The override list above
+  //    already caught the dual-role aromatic ones (BB / TEC).
   const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
-  const isCarrierName = /\b(dipropylene glycol|propylene glycol|mct oil|squalane|isododecane|triethyl citrate|isopropyl myristate|benzyl benzoate)\b/i.test(n);
+  const isCarrierName = /\b(dipropylene glycol|propylene glycol|mct oil|squalane|isododecane|isopropyl myristate)\b/i.test(n);
   const isSolventName = /\b(ethanol|ethyl alcohol)\b/i.test(n);
   if (!hasRealOdor && (isSolventName || /\bsolvent\b/i.test(note + ' ' + desc))) return 'solvent';
   if (!hasRealOdor && (isCarrierName || /\bcarrier\b/i.test(note + ' ' + desc))) return 'carrier';
@@ -2755,6 +2788,13 @@ function isBannedEU(mat) { return getBanStatus(mat) !== null; }
 // Use-axis classifier — closed set USE_VALUES. Returns an array (not
 // a Set) so the existing classification.industry_tags + export schema
 // keeps working. Uses curated DB fields only; no PubChem-synonym noise.
+//
+// Strategy: the curated DB carries IFRA 51 usage text for restricted
+// materials, e.g. "IFRA 51: 16% Fine Fragrance / 4.3% Body lotion / 0.9%
+// Axillae", and freeform notes for unrestricted materials. We extract
+// Use signals from those category names directly when present, then
+// fall back to broad defaults so non-banned aromatic materials don't
+// end up with only a single tag.
 function classifyUses(mat) {
   const r = mat.record || mat;
   const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, id = r.identifiers || {};
@@ -2769,46 +2809,79 @@ function classifyUses(mat) {
   const banned = isBannedEU(mat);
 
   const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
-  const FRAGRANCE_SOLVENT_NAME_RE = /\b(ethanol|ethyl alcohol|dipropylene glycol|propylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|benzyl benzoate)\b/i;
+  const isMixture = MIXTURES.has(cas);
+  const isFragranceVehicle = /\b(ethanol|ethyl alcohol|dipropylene glycol|propylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|benzyl benzoate)\b/i.test(n);
+  const isPerfumeryMaterial = hasRealOdor || isMixture || isFragranceVehicle || /\b(fragranc|perfum)/i.test(usage + ' ' + noteLow);
+  const usageDesc = usage + ' ' + desc;
   const push = t => { if (!tags.includes(t)) tags.push(t); };
 
-  // Perfumery: aromatic single molecules, natural mixtures, recognized
-  // fragrance solvents/carriers all belong to the perfumery axis.
-  if (hasRealOdor || MIXTURES.has(cas) || FRAGRANCE_SOLVENT_NAME_RE.test(n) || /\b(fragranc|perfum)/i.test(usage + ' ' + noteLow)) {
-    push('perfumery');
-  }
-  // Fine fragrance: explicit "fine fragrance" usage cue, OR very-high
-  // tenacity bases that are typical of EDP-class compositions.
-  if (/\bfine fragrance\b/i.test(usage) || /\b(very high|excellent)\b/i.test(tenacity)) {
+  // === Perfumery ===
+  // Any aromatic material, natural mixture, or recognized fragrance
+  // vehicle belongs on the perfumery axis.
+  if (isPerfumeryMaterial) push('perfumery');
+
+  // === Fine fragrance ===
+  // Explicit cue OR base/very-high tenacity material (typical EDP base).
+  if (/\bfine fragrance\b/i.test(usage) ||
+      /\b(very high|excellent)\b/i.test(tenacity) ||
+      (isPerfumeryMaterial && !banned && /\bbase\b/i.test(noteLow) && /\b(high|very high|excellent)\b/i.test(tenacity))) {
     push('fine_fragrance');
   }
-  // Flavor: FEMA-listed material OR explicit food/flavor cue.
-  if (!banned && (id.fema || /\b(flavor|flavour|fema|jecfa|food)\b/i.test(usage + ' ' + desc))) {
+
+  // === Flavor ===
+  // FEMA number OR explicit food/flavor cue. Banned materials are
+  // excluded — banned-in-fragrance does not necessarily mean banned-
+  // in-flavor, but the curated DB does not separate the two cleanly,
+  // so we err on the side of caution.
+  if (!banned && (id.fema || /\b(flavor|flavour|fema|jecfa|food|gras)\b/i.test(usageDesc))) {
     push('flavor');
   }
-  // Cosmetics: known cosmetic carrier/diluent OR explicit cosmetic cue.
-  if (!banned && (
-    FRAGRANCE_SOLVENT_NAME_RE.test(n) ||
-    /\b(solvent|carrier|diluent|emollient|cosmetic|skin)\b/i.test(noteLow + ' ' + desc + ' ' + odorType + ' ' + usage)
-  )) {
+
+  // === Cosmetics + Personal Care ===
+  // Broad default: any non-banned perfumery material is also used in
+  // cosmetic / personal-care formulation. The curated DB only carries
+  // explicit cosmetic cues for restricted materials (via IFRA 51
+  // category names like "Body lotion", "Lip products", "Hair", "Hands",
+  // "Axillae"), so for unrestricted materials we use the perfumery
+  // membership as the proxy.
+  if (!banned && isPerfumeryMaterial) {
     push('cosmetics');
-  }
-  // Personal care: same carrier set as cosmetics, plus explicit cue.
-  if (!banned && (
-    FRAGRANCE_SOLVENT_NAME_RE.test(n) ||
-    /\b(personal care|deodorant|shampoo|lotion|skin care|body wash)\b/i.test(usage + ' ' + desc)
-  )) {
     push('personal_care');
   }
-  // Home / air / fabric care: triggered from explicit cues only.
-  if (/\b(home care|household|cleaner|detergent)\b/i.test(usage + ' ' + desc)) push('home_care');
-  if (/\b(air care|air freshener|reed diffuser|room spray)\b/i.test(usage + ' ' + desc)) push('air_care');
-  if (/\b(fabric|laundry|softener)\b/i.test(usage + ' ' + desc)) push('fabric_care');
-  // Soap & candle: high-tenacity bases or explicit cues.
-  if (/\bsoap\b/i.test(usage + ' ' + desc) || (/\b(very high|excellent|high)\b/i.test(tenacity) && /base/i.test(noteLow))) {
+  // Tighten back: explicit cue from IFRA 51 categories also counts even
+  // if the perfumery default already pushed.
+  if (!banned && /\b(body lotion|lip|hair|hands|axillae|deodorant|shampoo|skin care|body wash|cosmetic|skin)\b/i.test(usageDesc)) {
+    push('cosmetics'); push('personal_care');
+  }
+  // Vehicles (DPG, ethanol, IPM, …) get cosmetics + personal_care from
+  // the name override even when they have no aromatic role.
+  if (!banned && isFragranceVehicle) {
+    push('cosmetics'); push('personal_care');
+  }
+
+  // === Soap ===
+  // Explicit cue OR base/middle note with high tenacity (typical soap
+  // performer) OR most natural mixtures (essential oils / absolutes /
+  // balsams are widely used in soap fragrancing).
+  if (/\bsoap\b/i.test(usageDesc) ||
+      (!banned && /\b(very high|excellent|high)\b/i.test(tenacity) && /\b(base|middle)\b/i.test(noteLow)) ||
+      (!banned && isMixture)) {
     push('soap');
   }
-  if (/\b(candle|wax melt)\b/i.test(usage + ' ' + desc)) push('candle');
+
+  // === Candle ===
+  // Explicit cue OR woody / amber / balsamic / resinous / gourmand
+  // base note material (typical candle scent profile).
+  if (/\b(candle|wax melt)\b/i.test(usageDesc) ||
+      (!banned && /\bbase\b/i.test(noteLow) && /\b(woody|amber|ambery|balsamic|resin|vanilla|tobacco|tonka|smoke|smoky|gourmand)\b/i.test(odorType + ' ' + desc))) {
+    push('candle');
+  }
+
+  // === Home / Air / Fabric care === (narrow — explicit cues only)
+  if (/\b(home care|household|cleaner|detergent|all[- ]purpose)\b/i.test(usageDesc)) push('home_care');
+  if (/\b(air care|air freshener|reed diffuser|room spray|aerosol)\b/i.test(usageDesc)) push('air_care');
+  if (/\b(fabric|laundry|softener|conditioner)\b/i.test(usageDesc)) push('fabric_care');
+
   return tags;
 }
 // Backwards-compat alias — older code paths still call classifyIndustryTags.
@@ -2816,34 +2889,69 @@ function classifyIndustryTags(mat) { return classifyUses(mat); }
 const INDUSTRY_TAG_LABELS = USE_LABELS;
 
 // Odor-Family axis classifier — returns the subset of ODOR_FAMILY_VALUES
-// whose keyword regex matches the curated name + odor_description + odor_type.
+// whose keyword regex matches the curated name + odor_description +
+// odor_type. Capped at 5 values, prioritized so name and odor_type
+// matches rank above mere odor_description matches (the description is
+// the noisiest text and tends to over-fire on words like "fresh" or
+// "sweet"). Within each priority bucket, families are emitted in
+// ODOR_FAMILY_VALUES order so the rendering is stable.
 function classifyOdorFamilies(mat) {
   const r = mat.record || mat;
   const pf = r.perfumery || {}, nm = r.names || {};
-  const text = ((nm.canonical || '') + ' ' + (pf.odor_description || '') + ' ' + (pf.odor_type || '')).toLowerCase();
-  const out = [];
+  const nameAndType = ((nm.canonical || '') + ' ' + (pf.odor_type || '')).toLowerCase();
+  const fullText    = nameAndType + ' ' + (pf.odor_description || '').toLowerCase();
+  const strong = [], weak = [];
   for (const family of ODOR_FAMILY_VALUES) {
-    if (ODOR_FAMILY_KEYWORDS[family].test(text)) out.push(family);
+    const re = ODOR_FAMILY_KEYWORDS[family];
+    if (re.test(nameAndType))      strong.push(family);
+    else if (re.test(fullText))    weak.push(family);
   }
-  return out;
+  // Cap at 5 — strong first, then weak fillers, both in canonical order.
+  return strong.concat(weak).slice(0, 5);
 }
 
 // Regulatory axis classifier — independent of Use. A material can be
 // perfumery + ifra_limited + allergen + sensitizer simultaneously.
+// All triggers require an explicit safety cue: a bare "%" in usage
+// text (which most perfumery materials carry) is NOT enough to imply
+// IFRA limitation.
 function classifyRegulatory(mat) {
   const r = mat.record || mat;
   const sf = r.safety || {}, nm = r.names || {};
   const ifra = (sf.ifra_guideline || '').toLowerCase();
   const usage = (sf.usage_levels || '').toLowerCase();
   const n = (nm.canonical || '').toLowerCase();
-  const all = ifra + ' ' + usage + ' ' + n;
+  const all = ifra + ' ' + usage;
   const out = [];
+
+  // Banned: explicit "banned"/"prohibited" anywhere in safety text.
   if (/\b(banned|prohibited)\b/i.test(all)) out.push('banned');
+  // Restricted: explicit "restricted" word OR known restriction phrases.
   if (/\brestricted\b/i.test(all)) out.push('restricted');
-  if (/\bifra\b|\bcategory\s*\d|\b\d+(?:\.\d+)?\s*%/i.test(all) && !out.includes('banned')) out.push('ifra_limited');
-  if (/\b(allergen|26 allergens|annex iii)\b/i.test(all) || /\b(linalool|limonene|citral|geraniol|eugenol|coumarin|farnesol|citronellol|cinnamal|isoeugenol|benzyl alcohol|benzyl salicylate|hydroxycitronellal)\b/i.test(n)) out.push('allergen');
-  if (/\bphototox/i.test(all) || /\b(bergapten|psoralen)\b/i.test(n) || /\b(bergamot|lime|bitter orange|angelica)\b/i.test(n)) out.push('phototoxic');
-  if (/\bsensiti(?:s|z)/i.test(all)) out.push('sensitizer');
+  // IFRA-limited: only fires when the safety text carries an actual
+  // limit signal. The "IFRA" word inside a "No specific IFRA
+  // restriction" phrase is NOT a limit — guard against it explicitly.
+  const noRestriction = /\bno\b[^.\n]*\b(specific|ifra|restriction)\b/i.test(ifra);
+  const limitCue = /\bIFRA\s*51\b/i.test(usage) ||
+                   /\bcategory\s*\d/i.test(all) ||
+                   /\b(regulated|limited|limits?|max(?:imum)?)\b/i.test(ifra);
+  if (!out.includes('banned') && !noRestriction && limitCue) {
+    out.push('ifra_limited');
+  }
+  // Allergen: explicit cue OR canonical name on the EU 26-allergen list.
+  if (/\b(allergen|26 allergens|annex iii|labeling required)\b/i.test(all) ||
+      /\b(linalool|limonene|citral|geraniol|eugenol|coumarin|farnesol|citronellol|cinnamal|cinnamic alcohol|cinnamyl alcohol|isoeugenol|benzyl alcohol|benzyl salicylate|benzyl benzoate|benzyl cinnamate|hydroxycitronellal|amyl cinnamal|amylcinnamyl alcohol|hexyl cinnamal|methyl heptine carbonate|alpha-isomethyl ionone|oakmoss|treemoss|evernia)\b/i.test(n)) {
+    out.push('allergen');
+  }
+  // Phototoxic: explicit cue OR known phototoxic citrus / furocoumarin.
+  if (/\bphototox/i.test(all) ||
+      /\b(bergapten|psoralen|furocoumarin)\b/i.test(n + ' ' + all) ||
+      /\b(bergamot|lime|bitter orange|angelica root|rue|fig leaf|cumin)\b/i.test(n)) {
+    out.push('phototoxic');
+  }
+  // Sensitizer: explicit "sensitizer" / "sensitis(z)ing" / IFRA H317 cue.
+  if (/\bsensiti(?:s|z)/i.test(all) || /\bh317\b/i.test(all)) out.push('sensitizer');
+
   return out;
 }
 
