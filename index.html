@@ -340,13 +340,7 @@ html { scroll-behavior:smooth; }
     </div>
     <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Note <span class="sub-selected" id="noteSelected"></span></div>
-      <div class="sub-body" id="noteFilters">
-        <label class="filter-radio"><input type="radio" name="note" value="" checked onchange="setNoteFilter(this.value)"> All</label>
-        <label class="filter-radio"><input type="radio" name="note" value="top" onchange="setNoteFilter(this.value)"> Top</label>
-        <label class="filter-radio"><input type="radio" name="note" value="middle" onchange="setNoteFilter(this.value)"> Middle</label>
-        <label class="filter-radio"><input type="radio" name="note" value="base" onchange="setNoteFilter(this.value)"> Base</label>
-        <label class="filter-radio"><input type="radio" name="note" value="_other" onchange="setNoteFilter(this.value)"> Other</label>
-      </div>
+      <div class="sub-body" id="noteFilters"></div>
     </div>
     <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Regulatory <span class="sub-selected" id="regSelected"></span></div>
@@ -472,22 +466,27 @@ let results = [];
 let pcCache = {};
 
 // ===== Filter State =====
-// One slot per single-select axis. The Odor Family axis is multi-select
-// and lives in `activeOdorFilters` (Set).
-const _filters = {
-  note:   {active: "", elId: "noteSelected"},
-  type:   {active: "", elId: "typeSelected"},
-  func:   {active: "", elId: "funcSelected"},
-  tag:    {active: "", elId: "tagSelected"},
-  reg:    {active: "", elId: "regSelected"},
-  source: {active: "", elId: "sourceSelected"},
+// All single-select filter axes (Use / Function / Type / Source / Note
+// / Regulatory) were refactored from one-value radios to multi-select
+// pill chips with OR-within-group matching. Each axis now owns a Set
+// plus metadata for rendering the chip cloud and the sub-drawer
+// summary label. Primary Family / Facet / legacy Odor still live in
+// their own dedicated Sets below (activePrimaryFamilyFilters, etc.).
+const _NOTE_VALUES = ['top','middle','base','_other'];
+const _NOTE_LABELS = { top:'Top', middle:'Middle', base:'Base', _other:'Other' };
+const _filterAxes = {
+  note:   { set: new Set(), elId: 'noteSelected',   values: _NOTE_VALUES,    labels: _NOTE_LABELS,       containerId: 'noteFilters'   },
+  type:   { set: new Set(), elId: 'typeSelected',   values: TYPE_VALUES,     labels: TYPE_LABELS,        containerId: 'typeFilters'   },
+  func:   { set: new Set(), elId: 'funcSelected',   values: FUNCTION_VALUES, labels: FUNCTION_LABELS,    containerId: 'funcFilters'   },
+  tag:    { set: new Set(), elId: 'tagSelected',    values: USE_VALUES,      labels: USE_LABELS,         containerId: 'tagFilters'    },
+  reg:    { set: new Set(), elId: 'regSelected',    values: REGULATORY_VALUES, labels: REGULATORY_LABELS, containerId: 'regFilters'   },
+  source: { set: new Set(), elId: 'sourceSelected', values: SOURCE_VALUES,   labels: SOURCE_LABELS,      containerId: 'sourceFilters' },
 };
 let activeOdorFilters = new Set();
 // Step 4: new taxonomy filter state. Multi-select Sets for the
 // primaryFamilies and facets axes precomputed on FILTER_CACHE in
-// Step 3. Both default to empty so existing behavior is unchanged
-// — Step 5 will wire UI controls that populate them. Filter logic
-// rule: OR inside each Set, AND between Sets and the other axes.
+// Step 3. Filter logic rule: OR inside each Set, AND between Sets
+// and the other axes.
 let activePrimaryFamilyFilters = new Set();
 let activeFacetFilters = new Set();
 
@@ -1334,18 +1333,42 @@ for (const [cas, entry] of Object.entries(DB)) {
   }
 }
 
-function setFilter(name, val) {
-  _filters[name].active = val || "";
-  const label = document.querySelector(`input[name="${name}"]:checked`);
-  document.getElementById(_filters[name].elId).textContent = label ? label.parentElement.textContent.trim() : 'All';
+// Multi-select pill axis helpers. Every sub-drawer built by
+// _buildPillFilter ends up with the same interaction pattern:
+//   - click a value chip → toggle in the axis Set, toggle .active class
+//   - click the "All" chip → clear the Set, mark All active
+//   - sub-drawer summary label updates to show the comma-joined labels
+//     of the active values, or "All" when the Set is empty
+//   - every change triggers _refreshPills() to re-evaluate filter
+//     visibility counts and pill suggestions
+function _togglePillFilter(axisName, value, el) {
+  const ax = _filterAxes[axisName];
+  if (!ax) return;
+  if (ax.set.has(value)) { ax.set.delete(value); el.classList.remove('active'); }
+  else { ax.set.add(value); el.classList.add('active'); }
+  const allBtn = document.querySelector('#' + ax.containerId + ' .odor-tag[data-axis-all]');
+  if (allBtn) allBtn.classList.toggle('active', !ax.set.size);
+  _updateAxisSelectedLabel(axisName);
   _refreshPills();
 }
-function setTagFilter(v)    { setFilter('tag', v); }
-function setFuncFilter(v)   { setFilter('func', v); }
-function setTypeFilter(v)   { setFilter('type', v); }
-function setNoteFilter(v)   { setFilter('note', v); }
-function setRegFilter(v)    { setFilter('reg', v); }
-function setSourceFilter(v) { setFilter('source', v); }
+function _clearAxisFilter(axisName) {
+  const ax = _filterAxes[axisName];
+  if (!ax) return;
+  ax.set.clear();
+  document.querySelectorAll('#' + ax.containerId + ' .odor-tag[data-value]').forEach(b => b.classList.remove('active'));
+  const allBtn = document.querySelector('#' + ax.containerId + ' .odor-tag[data-axis-all]');
+  if (allBtn) allBtn.classList.add('active');
+  _updateAxisSelectedLabel(axisName);
+  _refreshPills();
+}
+function _updateAxisSelectedLabel(axisName) {
+  const ax = _filterAxes[axisName];
+  if (!ax) return;
+  const el = document.getElementById(ax.elId);
+  if (!el) return;
+  if (!ax.set.size) { el.textContent = 'All'; return; }
+  el.textContent = [...ax.set].map(v => ax.labels[v] || v).join(', ');
+}
 
 let _visTimer;
 function _refreshPills() {
@@ -1386,13 +1409,15 @@ function _updateFilterVisibility() {
     for (const f of fc.facets || []) facetHas[f] = true;
   }
 
-  // Apply visibility — single pass per axis name
+  // Apply visibility to the pill chips (now multi-select). Hide any
+  // chip whose value has zero count under the current filter combo.
   const countsByName = {note:noteCounts, type:typeCounts, func:funcCounts, tag:tagCounts, reg:regCounts, source:sourceCounts};
   for (const name in countsByName) {
+    const ax = _filterAxes[name];
+    if (!ax) continue;
     const counts = countsByName[name];
-    document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
-      if (!radio.value) { radio.parentElement.style.display = ''; return; }
-      radio.parentElement.style.display = (counts[radio.value] || 0) > 0 ? '' : 'none';
+    document.querySelectorAll('#' + ax.containerId + ' .odor-tag[data-value]').forEach(btn => {
+      btn.style.display = (counts[btn.dataset.value] || 0) > 0 ? '' : 'none';
     });
   }
   // Step 5: hide Primary Family / Facet chips that have zero count
@@ -1514,16 +1539,17 @@ function toggleSubDrawer(el) {
 }
 
 function resetAllFilters() {
-  for (const name of Object.keys(_filters)) {
-    _filters[name].active = "";
-    const allRadio = document.querySelector(`input[name="${name}"][value=""]`);
-    if (allRadio) allRadio.checked = true;
+  // Clear every multi-select pill axis (Set + chip DOM + summary label).
+  for (const name of Object.keys(_filterAxes)) {
+    const ax = _filterAxes[name];
+    ax.set.clear();
+    document.querySelectorAll('#' + ax.containerId + ' .odor-tag[data-value]').forEach(b => b.classList.remove('active'));
+    const allBtn = document.querySelector('#' + ax.containerId + ' .odor-tag[data-axis-all]');
+    if (allBtn) allBtn.classList.add('active');
   }
-  // Reset legacy odor pills
+  // Reset legacy odor pills (no UI control since Step 5, kept defined
+  // for the dead-code empty-Set short-circuit in matchesAllFilters).
   activeOdorFilters.clear();
-  document.querySelectorAll('.odor-tag').forEach(b => b.classList.remove('active'));
-  const allOdor = document.querySelector('#odorFilters .odor-tag[data-odor=""]');
-  if (allOdor) allOdor.classList.add('active');
   // Step 5: reset new Primary Family + Facet chip drawers (state +
   // DOM + summary labels).
   activePrimaryFamilyFilters.clear();
@@ -1568,29 +1594,45 @@ function clearFacetFilters() {
 }
 
 // ===== BUILD FILTER UI =====
-// Populate the six taxonomy sub-drawers from the canonical *_VALUES /
-// *_LABELS constants. Single source of truth: edit the constants and
-// the filter UI updates automatically.
-function _buildRadioFilter(containerId, axisName, values, labels, onchangeName) {
-  const container = document.getElementById(containerId);
+// Populate each taxonomy sub-drawer as a multi-select pill chip
+// cloud from the canonical *_VALUES / *_LABELS constants. Single
+// source of truth: edit the constants and the filter UI updates
+// automatically. Every axis shares the same interaction pattern
+// (see _togglePillFilter / _clearAxisFilter / _updateAxisSelectedLabel
+// above).
+function _buildPillFilter(axisName) {
+  const ax = _filterAxes[axisName];
+  if (!ax) return;
+  const container = document.getElementById(ax.containerId);
   if (!container) return;
   container.innerHTML = '';
-  const allLabel = document.createElement('label');
-  allLabel.className = 'filter-radio';
-  allLabel.innerHTML = `<input type="radio" name="${axisName}" value="" checked onchange="${onchangeName}(this.value)"> All`;
-  container.appendChild(allLabel);
-  for (const v of values) {
-    const lbl = document.createElement('label');
-    lbl.className = 'filter-radio';
-    lbl.innerHTML = `<input type="radio" name="${axisName}" value="${v}" onchange="${onchangeName}(this.value)"> ${labels[v]||v}`;
-    container.appendChild(lbl);
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px';
+  // "All" reset chip — click to clear the axis Set.
+  const allBtn = document.createElement('span');
+  allBtn.className = 'odor-tag active';
+  allBtn.dataset.axisAll = axisName;
+  allBtn.textContent = 'All';
+  allBtn.onclick = function() { _clearAxisFilter(axisName); };
+  wrap.appendChild(allBtn);
+  // One pill per value.
+  for (const v of ax.values) {
+    const btn = document.createElement('span');
+    btn.className = 'odor-tag';
+    btn.dataset.axis = axisName;
+    btn.dataset.value = v;
+    btn.textContent = ax.labels[v] || v;
+    btn.onclick = function() { _togglePillFilter(axisName, v, this); };
+    wrap.appendChild(btn);
   }
+  container.appendChild(wrap);
 }
-_buildRadioFilter('tagFilters',    'tag',    USE_VALUES,        USE_LABELS,        'setTagFilter');
-_buildRadioFilter('funcFilters',   'func',   FUNCTION_VALUES,   FUNCTION_LABELS,   'setFuncFilter');
-_buildRadioFilter('typeFilters',   'type',   TYPE_VALUES,       TYPE_LABELS,       'setTypeFilter');
-_buildRadioFilter('regFilters',    'reg',    REGULATORY_VALUES, REGULATORY_LABELS, 'setRegFilter');
-_buildRadioFilter('sourceFilters', 'source', SOURCE_VALUES,     SOURCE_LABELS,     'setSourceFilter');
+_buildPillFilter('note');
+_buildPillFilter('tag');
+_buildPillFilter('func');
+_buildPillFilter('type');
+_buildPillFilter('reg');
+_buildPillFilter('source');
 
 // Primary Family chips (Step 5). Multi-select OR within group.
 // Built from PRIMARY_FAMILIES — only families that appear in at
@@ -1681,58 +1723,76 @@ btn.addEventListener("click", () => { const v=input.value.trim(); if (v) doSearc
 // MODULE: Filter Matching
 // All filter logic reads from FILTER_CACHE only.
 // ═══════════════════════════════════════════════════════════════
+function _anyAxisActive() {
+  for (const ax of Object.values(_filterAxes)) if (ax.set.size) return true;
+  return activeOdorFilters.size > 0 || activePrimaryFamilyFilters.size > 0 || activeFacetFilters.size > 0;
+}
+
 function matchesAllFilters(cas) {
   const fc = cas ? FILTER_CACHE.get(cas) : null;
-  if (!fc) {
-    return !_filters.note.active && !_filters.type.active && !_filters.func.active &&
-           !_filters.tag.active && !_filters.reg.active && !_filters.source.active &&
-           !activeOdorFilters.size && !activePrimaryFamilyFilters.size && !activeFacetFilters.size;
-  }
+  if (!fc) return !_anyAxisActive();
 
-  // Note
-  const noteF = _filters.note.active;
-  if (noteF) {
-    if (noteF === '_other') { if (RE_NOTE_OTHER.test(fc.noteLow)) return false; }
-    else { if (!fc.noteLow.includes(noteF)) return false; }
+  // Every per-axis check uses OR-within-group: if the axis Set is
+  // non-empty, the cache value must match AT LEAST ONE of the
+  // selected values. AND-across-groups is implicit (any axis that
+  // fails its own check short-circuits the whole predicate).
+
+  // Note — OR over {top, middle, base, _other}. '_other' means none
+  // of top/middle/base are present in fc.noteLow.
+  const noteSet = _filterAxes.note.set;
+  if (noteSet.size) {
+    let any = false;
+    for (const v of noteSet) {
+      if (v === '_other') { if (!RE_NOTE_OTHER.test(fc.noteLow)) { any = true; break; } }
+      else { if (fc.noteLow.includes(v)) { any = true; break; } }
+    }
+    if (!any) return false;
   }
-  // Type axis (precomputed) — strict equality on the Type axis.
-  const typeF = _filters.type.active;
-  if (typeF && fc.materialType !== typeF) return false;
-  // Function axis (multi-value Set)
-  const funcF = _filters.func.active;
-  if (funcF && !fc.functions.has(funcF)) return false;
-  // Use axis (multi-value Set, precomputed)
-  const tagF = _filters.tag.active;
-  if (tagF && !fc.uses.has(tagF)) return false;
-  // Regulatory axis (multi-value Set). Falls back to BANNED_CAS for
-  // the 'banned' enum so older filter state still narrows correctly.
-  //
-  // Backward compatibility: the active filter value is normalized
-  // through _normalizeRegulatoryToken so 'ifra_limited' (if anything
-  // still sets it) is treated as 'regulated'. FILTER_CACHE.regulatory
-  // was already normalized at build time (see _buildFilterRecord),
-  // so a direct Set.has() lookup on the canonical token is enough —
-  // but we also check legacy aliases for defensive safety in case an
-  // external/PubChem-only result bypasses the cache.
-  const regF = _normalizeRegulatoryToken(_filters.reg.active);
-  if (regF) {
-    if (regF === 'banned') {
-      if (!BANNED_CAS.has(cas) && !fc.regulatory.has('banned')) return false;
-    } else {
-      if (!fc.regulatory.has(regF)) {
-        // Legacy alias fallback: if the canonical lookup missed, see
-        // if any aliased legacy key happens to be in the Set.
+  // Type axis — OR over TYPE_VALUES (single-value fc.materialType).
+  const typeSet = _filterAxes.type.set;
+  if (typeSet.size && !typeSet.has(fc.materialType)) return false;
+  // Function axis — OR over FUNCTION_VALUES, multi-value fc.functions.
+  const funcSet = _filterAxes.func.set;
+  if (funcSet.size) {
+    let any = false;
+    for (const f of fc.functions) if (funcSet.has(f)) { any = true; break; }
+    if (!any) return false;
+  }
+  // Use axis — OR over USE_VALUES, multi-value fc.uses.
+  const tagSet = _filterAxes.tag.set;
+  if (tagSet.size) {
+    let any = false;
+    for (const u of fc.uses) if (tagSet.has(u)) { any = true; break; }
+    if (!any) return false;
+  }
+  // Regulatory axis — OR over REGULATORY_VALUES. Legacy 'ifra_limited'
+  // folds to 'regulated' via _normalizeRegulatoryToken. 'banned' also
+  // checks the BANNED_CAS precompute so older filter state still hits.
+  const regSet = _filterAxes.reg.set;
+  if (regSet.size) {
+    let any = false;
+    for (const r of regSet) {
+      const canon = _normalizeRegulatoryToken(r);
+      if (canon === 'banned') {
+        if (BANNED_CAS.has(cas) || fc.regulatory.has('banned')) { any = true; break; }
+      } else if (fc.regulatory.has(canon)) {
+        any = true; break;
+      } else {
+        // Legacy alias fallback — defensive, FILTER_CACHE is already
+        // normalized on build but external / PubChem-only results
+        // might not be.
         let hit = false;
-        for (const [legacy, canonical] of Object.entries(REGULATORY_LEGACY_ALIASES)) {
-          if (canonical === regF && fc.regulatory.has(legacy)) { hit = true; break; }
+        for (const [legacy, c] of Object.entries(REGULATORY_LEGACY_ALIASES)) {
+          if (c === canon && fc.regulatory.has(legacy)) { hit = true; break; }
         }
-        if (!hit) return false;
+        if (hit) { any = true; break; }
       }
     }
+    if (!any) return false;
   }
-  // Source axis (single value)
-  const sourceF = _filters.source.active;
-  if (sourceF && fc.source !== sourceF) return false;
+  // Source axis — OR over SOURCE_VALUES (single-value fc.source).
+  const sourceSet = _filterAxes.source.set;
+  if (sourceSet.size && !sourceSet.has(fc.source)) return false;
   // Legacy Odor Family axis (multi-select AND over the closed family list)
   if (activeOdorFilters.size) {
     for (const f of activeOdorFilters) {
@@ -1765,7 +1825,7 @@ function matchesAllFilters(cas) {
 
 function showPills(typed) {
   const ql = typed.toLowerCase().replace(/\s+/g,' ').trim();
-  const hasAnyFilter = _filters.note.active || _filters.type.active || _filters.func.active || _filters.tag.active || _filters.reg.active || _filters.source.active || activeOdorFilters.size || activePrimaryFamilyFilters.size || activeFacetFilters.size;
+  const hasAnyFilter = _anyAxisActive();
 
   // Existing results — exclude from pill suggestions
   const existingCas = new Set();
