@@ -521,6 +521,239 @@ const SOURCE_LABELS = {
 };
 
 // ═══════════════════════════════════════════════════════════════
+// TAXONOMY FOUNDATION (Step 1 — additive only)
+// New canonical constants and helpers for the upcoming odor-family
+// + facet inference path. NOT wired into rendering, FILTER_CACHE,
+// or the existing classifyOdorFamilies pipeline yet — this block
+// exists so later steps can read from it. The legacy
+// ODOR_FAMILY_VALUES / ODOR_FAMILY_KEYWORDS / classifyOdorFamilies
+// constants and function above are intentionally left untouched.
+// ═══════════════════════════════════════════════════════════════
+
+// Primary families = the high-level perfumery buckets. Order is
+// canonical (used by sortByCanonicalOrder). The set mirrors the legacy
+// ODOR_FAMILY_VALUES one-for-one so the new and old taxonomies agree
+// on family ids — only the ORDER and the surrounding facet layer differ.
+const PRIMARY_FAMILIES = [
+  'citrus','green','herbal','floral','fruity','aldehydic','aquatic','fresh',
+  'spicy','gourmand','powdery','woody','balsamic','resinous','amber',
+  'animalic','musk','smoky','leather'
+];
+
+// Facet tags = specific descriptors that live UNDER a primary family.
+// Each entry maps a normalized facet token (snake_case) to its parent
+// family from PRIMARY_FAMILIES. A material can carry multiple facets.
+// This is the source of truth for facet → family inference.
+// The first block self-references every primary family so tokens like
+// "balsamic" / "floral" / "woody" / "fresh" resolve to their own family
+// even when no specific facet keyword is present in the source text.
+const FACET_TAGS = {
+  // family self-references (token === family)
+  citrus:'citrus', green:'green', herbal:'herbal', floral:'floral',
+  fruity:'fruity', aldehydic:'aldehydic', aquatic:'aquatic', fresh:'fresh',
+  spicy:'spicy', gourmand:'gourmand', powdery:'powdery', woody:'woody',
+  balsamic:'balsamic', resinous:'resinous', amber:'amber', animalic:'animalic',
+  musk:'musk', smoky:'smoky', leather:'leather',
+  // citrus
+  bergamot:'citrus', lemon:'citrus', orange:'citrus', mandarin:'citrus',
+  grapefruit:'citrus', lime:'citrus', yuzu:'citrus', tangerine:'citrus',
+  petitgrain:'citrus', neroli:'citrus', hesperidic:'citrus',
+  // green
+  galbanum:'green', leaf:'green', leafy:'green', grass:'green', stem:'green',
+  violet_leaf:'green', tomato_leaf:'green', cut_grass:'green',
+  // herbal
+  lavender:'herbal', mint:'herbal', peppermint:'herbal', spearmint:'herbal',
+  sage:'herbal', thyme:'herbal', rosemary:'herbal', basil:'herbal',
+  tarragon:'herbal', fennel:'herbal', chamomile:'herbal', bay_laurel:'herbal',
+  artemisia:'herbal',
+  // floral
+  rose:'floral', jasmine:'floral', ylang:'floral', tuberose:'floral',
+  narcissus:'floral', orchid:'floral', magnolia:'floral', hyacinth:'floral',
+  lilac:'floral', gardenia:'floral', mimosa:'floral', champaca:'floral',
+  violet:'floral', lily:'floral', osmanthus:'floral', honeysuckle:'floral',
+  iris_flower:'floral', muguet:'floral', frangipani:'floral', boronia:'floral',
+  cassie:'floral',
+  // fruity
+  apple:'fruity', pear:'fruity', peach:'fruity', apricot:'fruity',
+  berry:'fruity', plum:'fruity', tropical:'fruity', pineapple:'fruity',
+  coconut:'fruity', melon:'fruity', raspberry:'fruity', strawberry:'fruity',
+  blackcurrant:'fruity', cassis:'fruity', cherry:'fruity', fig:'fruity',
+  // aldehydic
+  aldehyde:'aldehydic', aldehydic:'aldehydic', waxy_aldehyde:'aldehydic',
+  // aquatic
+  marine:'aquatic', sea:'aquatic', seaweed:'aquatic', oceanic:'aquatic',
+  calone:'aquatic', water:'aquatic',
+  // fresh
+  ozone:'fresh', ozonic:'fresh', cool:'fresh', airy:'fresh', crisp:'fresh',
+  clean:'fresh',
+  // spicy
+  cinnamon:'spicy', clove:'spicy', pepper:'spicy', nutmeg:'spicy',
+  cardamom:'spicy', saffron:'spicy', ginger:'spicy', anise:'spicy',
+  star_anise:'spicy', allspice:'spicy', coriander:'spicy',
+  // gourmand
+  vanilla:'gourmand', vanillin:'gourmand', caramel:'gourmand',
+  chocolate:'gourmand', cocoa:'gourmand', honey:'gourmand', coffee:'gourmand',
+  tonka:'gourmand', maple:'gourmand', hazelnut:'gourmand', almond:'gourmand',
+  praline:'gourmand', biscuit:'gourmand', milk:'gourmand', rum:'gourmand',
+  // powdery
+  iris:'powdery', orris:'powdery', heliotrope:'powdery', talc:'powdery',
+  // woody
+  cedar:'woody', sandalwood:'woody', patchouli:'woody', vetiver:'woody',
+  guaiac:'woody', oud:'woody', agarwood:'woody', cypress:'woody',
+  fir:'woody', pine:'woody', birch:'woody', oakmoss:'woody', cashmere_wood:'woody',
+  rosewood:'woody', cedrol:'woody',
+  // balsamic
+  balsam:'balsamic', tolu_balsam:'balsamic', peru_balsam:'balsamic',
+  benzoin:'balsamic', styrax:'balsamic',
+  // resinous
+  frankincense:'resinous', myrrh:'resinous', elemi:'resinous',
+  labdanum:'resinous', olibanum:'resinous', opoponax:'resinous',
+  copal:'resinous', galbanum_resin:'resinous',
+  // amber (family self-reference declared above)
+  ambergris:'amber', ambrox:'amber', ambroxan:'amber', ambrette:'amber',
+  // animalic
+  civet:'animalic', castoreum:'animalic', hyrax:'animalic', skin:'animalic',
+  costus:'animalic',
+  // musk (family self-reference declared above)
+  white_musk:'musk', muscone:'musk',
+  // smoky
+  tobacco:'smoky', incense:'smoky', tar:'smoky', burn:'smoky', smoke:'smoky',
+  birch_tar:'smoky', cade:'smoky',
+  // leather (family self-reference declared above)
+  leathery:'leather', suede:'leather'
+};
+
+// Synonym → canonical-token map. The tokenizer hits raw text and many
+// real-world spellings need to fold into a single canonical FACET_TAGS
+// key (e.g. "jasmin" → "jasmine", "ylang-ylang" → "ylang", "rose otto"
+// → "rose"). Keys are matched AFTER normalizeTaxonomyToken() so they
+// must already be in snake_case form.
+const TAXONOMY_SYNONYMS = {
+  // citrus
+  orange_peel:'orange', sweet_orange:'orange', bitter_orange:'orange',
+  orange_blossom:'neroli',
+  // floral
+  jasmin:'jasmine', jasmine_sambac:'jasmine', jasmine_grandiflorum:'jasmine',
+  rose_otto:'rose', rose_absolute:'rose',
+  ylang_ylang:'ylang',
+  iris_butter:'iris', orris_root:'orris',
+  // woody
+  sandal:'sandalwood', sandalwood_oil:'sandalwood',
+  cedarwood:'cedar', virginia_cedarwood:'cedar', atlas_cedarwood:'cedar',
+  agarwood_oil:'oud', oudh:'oud',
+  patchouli_oil:'patchouli',
+  vetiver_oil:'vetiver', vetyver:'vetiver',
+  // balsamic
+  peru:'peru_balsam', tolu:'tolu_balsam',
+  benzoin_resin:'benzoin',
+  // resinous
+  frankincense_oil:'frankincense', olibanum_oil:'olibanum',
+  // gourmand
+  tonka_bean:'tonka', tonka_absolute:'tonka',
+  cacao:'cocoa',
+  // amber
+  ambroxide:'ambroxan',
+  // green
+  cut_leaf:'leaf',
+  // smoky
+  birch_tar_oil:'birch_tar'
+};
+
+// ── Helpers ──
+
+// Normalize a free-text token to a canonical snake_case key suitable
+// for FACET_TAGS / TAXONOMY_SYNONYMS lookup. Lowercases, strips
+// punctuation (except - and /), collapses whitespace and separators
+// to '_', and trims leading/trailing '_'. Returns '' on falsy input.
+function normalizeTaxonomyToken(s) {
+  if (s == null) return '';
+  return String(s)
+    .toLowerCase()
+    .replace(/[^\w\s\-/]+/g, ' ')
+    .trim()
+    .replace(/[\s\-/]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+// Stable dedup. Preserves first occurrence order.
+function uniqStable(arr) {
+  if (!Array.isArray(arr)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const x of arr) {
+    if (x == null) continue;
+    const key = typeof x === 'string' ? x : JSON.stringify(x);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(x);
+  }
+  return out;
+}
+
+// Sort `items` by their position in `canonical`. Items not present in
+// canonical are pushed to the end in their original relative order.
+function sortByCanonicalOrder(items, canonical) {
+  if (!Array.isArray(items)) return [];
+  const rank = new Map();
+  (canonical || []).forEach((v, i) => rank.set(v, i));
+  return items
+    .map((v, i) => ({ v, r: rank.has(v) ? rank.get(v) : (canonical?.length || 0) + i }))
+    .sort((a, b) => a.r - b.r)
+    .map(x => x.v);
+}
+
+// Collect candidate taxonomy tokens from every odor-relevant field on
+// a result-object OR a canonical-record shape. Splits each source on
+// common separators (commas, slashes, semicolons, em/en dashes, "and",
+// "with"), normalizes each fragment, and folds synonyms into their
+// canonical token. Returns a deduped, order-preserving list.
+//
+// Sources read:
+//   names.canonical
+//   names.synonyms[]
+//   perfumery.odor_type
+//   perfumery.odor_description
+//   perfumery.blends_with[]
+function tokenizeOdorSources(matOrRecord) {
+  const r = (matOrRecord && matOrRecord.record) || matOrRecord || {};
+  const pf = r.perfumery || {};
+  const nm = r.names || {};
+  const sources = [];
+  if (nm.canonical) sources.push(nm.canonical);
+  if (Array.isArray(nm.synonyms)) for (const s of nm.synonyms) sources.push(s);
+  if (pf.odor_type) sources.push(pf.odor_type);
+  if (pf.odor_description) sources.push(pf.odor_description);
+  if (Array.isArray(pf.blends_with)) for (const b of pf.blends_with) sources.push(b);
+
+  const tokens = [];
+  for (const raw of sources) {
+    if (!raw) continue;
+    const text = String(raw)
+      .toLowerCase()
+      .replace(/[—–]/g, ',')
+      .replace(/\b(?:and|with)\b/g, ',');
+    for (const part of text.split(/[,;]/)) {
+      const norm = normalizeTaxonomyToken(part);
+      if (!norm || norm.length < 3) continue;
+      tokens.push(norm);
+      if (TAXONOMY_SYNONYMS[norm]) tokens.push(TAXONOMY_SYNONYMS[norm]);
+      // Inner-token expansion: a fragment like "rose_otto_absolute"
+      // should ALSO yield each underscore-separated piece so a single
+      // multi-word descriptor can match both "rose" and "rose_otto".
+      if (norm.includes('_')) {
+        for (const piece of norm.split('_')) {
+          if (piece.length >= 3) {
+            tokens.push(piece);
+            if (TAXONOMY_SYNONYMS[piece]) tokens.push(TAXONOMY_SYNONYMS[piece]);
+          }
+        }
+      }
+    }
+  }
+  return uniqStable(tokens);
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MODULE: Normalized Filter Cache
 // Precomputed per-CAS filter data derived from DB entries.
 // This is the ONLY data structure that matchesAllFilters and
