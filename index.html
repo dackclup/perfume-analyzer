@@ -145,11 +145,25 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .badge-mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
 .badge-base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
 .badge-type { font-size:0.7em; padding:2px 8px; border-radius:3px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px solid var(--border); vertical-align:middle; }
-/* Step 5 — taxonomy badges. Primary = strong (accent fill), Secondary
-   = lighter (muted bg2), Facet = small chip (transparent + thin border). */
-.badge-primary { font-size:0.7em; padding:2px 9px; border-radius:3px; font-weight:600; background:var(--accent); color:#fff; border:1px solid var(--accent); vertical-align:middle; }
-.badge-secondary { font-size:0.68em; padding:1px 8px; border-radius:3px; font-weight:500; background:var(--bg2); color:var(--text); border:1px solid var(--border); vertical-align:middle; }
-.badge-facet { font-size:0.62em; padding:1px 7px; border-radius:10px; font-weight:400; background:transparent; color:var(--text2); border:1px solid var(--border); vertical-align:middle; }
+/* Step 5 — taxonomy badges. Primary / Secondary / Facets all share
+   the same neutral chip style as the Use tag row (muted bg2 +
+   thin border + small rounded rectangle) so the card reads as one
+   consistent tag family. The axis-label column on the left
+   (PRIMARY / SECONDARY / FACETS) carries the semantic distinction —
+   the chips themselves don't need visual differentiation. */
+.badge-primary,
+.badge-secondary,
+.badge-facet {
+  display:inline-block;
+  font-size:0.7em;
+  padding:1px 8px;
+  border-radius:3px;
+  font-weight:500;
+  background:var(--bg2);
+  color:var(--text2);
+  border:1px solid var(--border);
+  vertical-align:middle;
+}
 .card-meta-row { margin:6px 0 0 18px; display:flex; flex-direction:column; gap:4px; }
 /* Each tag row = one taxonomy axis. Label column is fixed-width so the
    chip columns line up across rows. Chip column wraps on overflow. */
