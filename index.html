@@ -536,10 +536,30 @@ const USE_LABELS = {
   cosmetics:'Cosmetics', personal_care:'Personal Care', home_care:'Home Care',
   air_care:'Air Care', fabric_care:'Fabric Care', soap:'Soap', candle:'Candle'
 };
-const REGULATORY_VALUES = ['ifra_limited','allergen','phototoxic','restricted','banned','sensitizer'];
+// Regulatory axis multi-value tags. CANONICAL vocabulary uses
+// 'regulated' for the IFRA-restriction bucket — 'IFRA Limited' is a
+// legacy alias and is accepted as input via REGULATORY_LEGACY_ALIASES
+// below, but it is NEVER emitted by the classifier or surfaced to the
+// UI. Any old record or imported JSON that still carries 'ifra_limited'
+// will be silently normalized at every read path.
+const REGULATORY_VALUES = ['regulated','allergen','phototoxic','restricted','banned','sensitizer'];
 const REGULATORY_LABELS = {
-  ifra_limited:'IFRA Limited', allergen:'Allergen', phototoxic:'Phototoxic',
+  regulated:'Regulated', allergen:'Allergen', phototoxic:'Phototoxic',
   restricted:'Restricted', banned:'Banned', sensitizer:'Sensitizer'
+};
+// Legacy → canonical alias table for the regulatory axis. Read-only:
+// the classifier and UI never produce these keys, but if they show up
+// on an imported record, runtime readers fold them into the canonical
+// token via _normalizeRegulatoryToken() below.
+const REGULATORY_LEGACY_ALIASES = {
+  'ifra_limited':  'regulated',
+  'ifra limited':  'regulated',
+  'ifra-limited':  'regulated',
+  'IFRA Limited':  'regulated',
+  'IFRA_LIMITED':  'regulated',
+  // defensive: alternate casings people may have hand-typed into JSON
+  'IFRA limited':  'regulated',
+  'Ifra Limited':  'regulated'
 };
 const SOURCE_VALUES = ['natural','synthetic','semi_synthetic','biotech'];
 const SOURCE_LABELS = {
@@ -1034,6 +1054,88 @@ function migrateLegacyTaxonomy(entry) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// REGULATORY STATUS NORMALIZATION (backward-compat layer)
+// Central helpers for the regulatory axis. There are TWO layers:
+//
+//   1. _normalizeRegulatoryToken(v) — used for the multi-value Set
+//      tags stored in FILTER_CACHE.regulatory and
+//      record.classification.regulatory. Folds legacy 'ifra_limited'
+//      (and variant casings) into canonical 'regulated' on every
+//      read. Leaves other tags (allergen / phototoxic / restricted /
+//      banned / sensitizer) untouched.
+//
+//   2. normalizeBanStatus(value, ifraGuidelineText) — canonical
+//      single-value ban-status summary. Returns ONE of:
+//        'banned' | 'restricted' | 'regulated' | 'no_restriction' | 'unknown'
+//      Used by the ban-status badge pipeline. Reads an explicit
+//      record.safety.ban_status field first (with legacy-value
+//      normalization), then falls back to keyword-scanning the
+//      record.safety.ifra_guideline free-text. Precedence:
+//        banned > restricted > regulated > no_restriction > unknown
+//
+// Both helpers accept null/undefined safely. They are the single
+// source of truth for regulatory status — every other reader should
+// route through them instead of re-implementing the mapping.
+// ═══════════════════════════════════════════════════════════════
+function _normalizeRegulatoryToken(v) {
+  if (v == null) return null;
+  const raw = String(v).trim();
+  if (!raw) return null;
+  // Direct alias hit (covers 'ifra_limited', 'IFRA Limited', etc.)
+  if (REGULATORY_LEGACY_ALIASES[raw]) return REGULATORY_LEGACY_ALIASES[raw];
+  const lower = raw.toLowerCase();
+  if (REGULATORY_LEGACY_ALIASES[lower]) return REGULATORY_LEGACY_ALIASES[lower];
+  // Canonical pass-through (matches REGULATORY_VALUES exactly).
+  return lower;
+}
+
+function normalizeBanStatus(value, ifraGuidelineText) {
+  // Pass 1 — explicit value field. Accept legacy aliases AND English
+  // ban-status prose via keyword matching.
+  const raw = value == null ? '' : String(value).trim();
+  const valLower = raw.toLowerCase();
+  if (valLower) {
+    // Legacy alias table hit → the alias map returns a regulatory
+    // axis token ('regulated'), which is also a valid ban-status
+    // canonical value.
+    if (REGULATORY_LEGACY_ALIASES[raw])    return REGULATORY_LEGACY_ALIASES[raw];
+    if (REGULATORY_LEGACY_ALIASES[valLower]) return REGULATORY_LEGACY_ALIASES[valLower];
+    // Direct canonical hits.
+    if (valLower === 'banned')          return 'banned';
+    if (valLower === 'restricted')      return 'restricted';
+    if (valLower === 'regulated')       return 'regulated';
+    if (valLower === 'no_restriction' ||
+        valLower === 'no restriction' ||
+        valLower === 'no restrictions' ||
+        valLower === 'unrestricted')    return 'no_restriction';
+    if (valLower === 'unknown')         return 'unknown';
+    // Freeform phrases on the value field itself (e.g. ban_status =
+    // "BANNED" or "prohibited worldwide"). Precedence order matters:
+    // banned > restricted > regulated > no_restriction.
+    if (/\b(banned|prohibited|prohibition|not\s+permitted)\b/.test(valLower)) return 'banned';
+    if (/\brestricted\b|\blimited\s+use\b|\bmaximum\s+use\b/.test(valLower))  return 'restricted';
+    if (/\bregulated\b|\bregulation\b|\bifra\s*51\b/.test(valLower))          return 'regulated';
+    if (/\bno\s+restriction/.test(valLower) ||
+        /\bno\s+specific\s+ifra/.test(valLower))                              return 'no_restriction';
+  }
+  // Pass 2 — fall back to the ifra_guideline free text. Same
+  // precedence order.
+  const gLower = (ifraGuidelineText == null ? '' : String(ifraGuidelineText)).toLowerCase();
+  if (gLower) {
+    if (/\b(banned|prohibited|prohibition|not\s+permitted|worldwide\s+prohibit)/.test(gLower)) return 'banned';
+    if (/\brestricted\b|\blimit(?:ed|s)?\b|\blimited\s+use\b|\bmax(?:imum)?\s+use/.test(gLower) ||
+        /\bskin\s+sensitiz(?:er|ing).*limited/.test(gLower)) return 'restricted';
+    if (/\bregulated\b|\bregulation\b|\bsubject\s+to\s+regulation\b|\bcheck\s+local\s+limits\b/.test(gLower) ||
+        /\bifra\s*51\b/.test(gLower)) return 'regulated';
+    if (/\bno\s+(?:specific\s+)?(?:ifra\s+)?restriction/.test(gLower) ||
+        /\bnot\s+phototoxic/.test(gLower) ||
+        /\bfollow(?:\s+finished[- ]product)?\s+safety\s+assessment/.test(gLower)) return 'no_restriction';
+  }
+  // Pass 3 — nothing conclusive.
+  return 'unknown';
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MODULE: Normalized Filter Cache
 // Precomputed per-CAS filter data derived from DB entries.
 // This is the ONLY data structure that matchesAllFilters and
@@ -1115,7 +1217,15 @@ function _buildFilterRecord(cas, entry) {
   const industryTags = uses;
 
   // Regulatory + Source axes (multi-axis taxonomy redesign).
-  const regulatory = new Set(classifyRegulatory(syntheticMat));
+  // Every token is run through _normalizeRegulatoryToken so legacy
+  // 'ifra_limited' / 'IFRA Limited' values from imported / saved data
+  // are silently folded to the canonical 'regulated' token on cache
+  // build. Downstream readers can always trust fc.regulatory.
+  const regulatory = new Set(
+    classifyRegulatory(syntheticMat)
+      .map(_normalizeRegulatoryToken)
+      .filter(Boolean)
+  );
   const source = classifySource(syntheticMat);
 
   // Step 3: precompute the new primary/secondary/facets axis directly
@@ -1539,12 +1649,31 @@ function matchesAllFilters(cas) {
   // Use axis (multi-value Set, precomputed)
   const tagF = _filters.tag.active;
   if (tagF && !fc.uses.has(tagF)) return false;
-  // Regulatory axis (multi-value Set). Falls back to BANNED_CAS for the
-  // legacy 'banned' enum so older filter state still narrows correctly.
-  const regF = _filters.reg.active;
+  // Regulatory axis (multi-value Set). Falls back to BANNED_CAS for
+  // the 'banned' enum so older filter state still narrows correctly.
+  //
+  // Backward compatibility: the active filter value is normalized
+  // through _normalizeRegulatoryToken so 'ifra_limited' (if anything
+  // still sets it) is treated as 'regulated'. FILTER_CACHE.regulatory
+  // was already normalized at build time (see _buildFilterRecord),
+  // so a direct Set.has() lookup on the canonical token is enough —
+  // but we also check legacy aliases for defensive safety in case an
+  // external/PubChem-only result bypasses the cache.
+  const regF = _normalizeRegulatoryToken(_filters.reg.active);
   if (regF) {
-    if (regF === 'banned') { if (!BANNED_CAS.has(cas) && !fc.regulatory.has('banned')) return false; }
-    else { if (!fc.regulatory.has(regF)) return false; }
+    if (regF === 'banned') {
+      if (!BANNED_CAS.has(cas) && !fc.regulatory.has('banned')) return false;
+    } else {
+      if (!fc.regulatory.has(regF)) {
+        // Legacy alias fallback: if the canonical lookup missed, see
+        // if any aliased legacy key happens to be in the Set.
+        let hit = false;
+        for (const [legacy, canonical] of Object.entries(REGULATORY_LEGACY_ALIASES)) {
+          if (canonical === regF && fc.regulatory.has(legacy)) { hit = true; break; }
+        }
+        if (!hit) return false;
+      }
+    }
   }
   // Source axis (single value)
   const sourceF = _filters.source.active;
@@ -2697,9 +2826,16 @@ function renderResults() {
     const displayOdorFamilies = _fcCard
       ? [...(_fcCard.odorFamilies || [])]
       : (Array.isArray(cls.odor_families) && cls.odor_families.length ? cls.odor_families : classifyOdorFamilies(mat));
-    const displayRegulatory = _fcCard
+    // Regulatory display: normalize through _normalizeRegulatoryToken
+    // so a legacy-imported record carrying 'ifra_limited' (or any
+    // variant casing) renders as 'Regulated' on the badge, not as the
+    // legacy token. _fcCard is already normalized at build time; the
+    // PubChem-only / external fallback path isn't, so the normalizer
+    // runs on every element regardless of source.
+    const displayRegulatory = (_fcCard
       ? [...(_fcCard.regulatory || [])]
-      : (Array.isArray(cls.regulatory) && cls.regulatory.length ? cls.regulatory : classifyRegulatory(mat));
+      : (Array.isArray(cls.regulatory) && cls.regulatory.length ? cls.regulatory : classifyRegulatory(mat))
+    ).map(_normalizeRegulatoryToken).filter(Boolean);
     const displaySource = _fcCard ? _fcCard.source : (cls.source || classifySource(mat));
     // Step 5 axis — read precomputed primary / secondary / facets from
     // FILTER_CACHE for local-DB hits, fall back to record.classification
@@ -3314,7 +3450,7 @@ async function downloadJSON() {
         primaryFamilies:   _fc ? [...(_fc.primaryFamilies || [])]   : (Array.isArray(src.classification?.primaryFamilies)   ? src.classification.primaryFamilies   : []),
         secondaryFamilies: _fc ? [...(_fc.secondaryFamilies || [])] : (Array.isArray(src.classification?.secondaryFamilies) ? src.classification.secondaryFamilies : []),
         facets:            _fc ? [...(_fc.facets || [])]            : (Array.isArray(src.classification?.facets)            ? src.classification.facets            : []),
-        regulatory:        _fc ? [...(_fc.regulatory || [])]    : (Array.isArray(src.classification?.regulatory)    ? src.classification.regulatory    : []),
+        regulatory:        ((_fc ? [...(_fc.regulatory || [])]    : (Array.isArray(src.classification?.regulatory)    ? src.classification.regulatory    : []))).map(_normalizeRegulatoryToken).filter(Boolean),
         source:            _fc ? _fc.source                      : (src.classification?.source ?? null),
       },
       metadata: {
@@ -3482,7 +3618,7 @@ function downloadCSV() {
       _csv(src.safety?.usage_levels),
       _csv(fc ? [...(fc.uses || [])]         : (src.classification?.uses         ?? src.classification?.industry_tags ?? null)),
       _csv(fc ? [...(fc.odorFamilies || [])] : (src.classification?.odor_families ?? null)),
-      _csv(fc ? [...(fc.regulatory || [])]   : (src.classification?.regulatory   ?? null)),
+      _csv(((fc ? [...(fc.regulatory || [])]   : (src.classification?.regulatory   ?? []))).map(_normalizeRegulatoryToken).filter(Boolean)),
       _csv(fc ? fc.source                     : (src.classification?.source       ?? null)),
     ].join(','));
   }
@@ -3789,10 +3925,17 @@ function classifyOdorFamilies(mat) {
 }
 
 // Regulatory axis classifier — independent of Use. A material can be
-// perfumery + ifra_limited + allergen + sensitizer simultaneously.
+// perfumery + regulated + allergen + sensitizer simultaneously.
 // All triggers require an explicit safety cue: a bare "%" in usage
 // text (which most perfumery materials carry) is NOT enough to imply
 // IFRA limitation.
+//
+// Backward compatibility: the canonical token for the IFRA-limit
+// bucket is now 'regulated'. The legacy token 'ifra_limited' is still
+// accepted on INPUT (via _normalizeRegulatoryToken / the legacy alias
+// map) but this classifier only EMITS 'regulated'. Cards, filters,
+// and JSON export all route through the normalizer so any old
+// imported record carrying 'ifra_limited' still works end-to-end.
 function classifyRegulatory(mat) {
   const r = mat.record || mat;
   const sf = r.safety || {}, nm = r.names || {};
@@ -3806,15 +3949,15 @@ function classifyRegulatory(mat) {
   if (/\b(banned|prohibited)\b/i.test(all)) out.push('banned');
   // Restricted: explicit "restricted" word OR known restriction phrases.
   if (/\brestricted\b/i.test(all)) out.push('restricted');
-  // IFRA-limited: only fires when the safety text carries an actual
-  // limit signal. The "IFRA" word inside a "No specific IFRA
-  // restriction" phrase is NOT a limit — guard against it explicitly.
+  // Regulated: only fires when the safety text carries an actual limit
+  // signal. The "IFRA" word inside a "No specific IFRA restriction"
+  // phrase is NOT a limit — guard against it explicitly.
   const noRestriction = /\bno\b[^.\n]*\b(specific|ifra|restriction)\b/i.test(ifra);
   const limitCue = /\bIFRA\s*51\b/i.test(usage) ||
                    /\bcategory\s*\d/i.test(all) ||
                    /\b(regulated|limited|limits?|max(?:imum)?)\b/i.test(ifra);
   if (!out.includes('banned') && !noRestriction && limitCue) {
-    out.push('ifra_limited');
+    out.push('regulated');
   }
   // Allergen: explicit cue OR canonical name on the EU 26-allergen list.
   if (/\b(allergen|26 allergens|annex iii|labeling required)\b/i.test(all) ||
