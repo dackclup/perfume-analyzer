@@ -1820,7 +1820,7 @@ function togglePcGroup(gid) {
 // record fields the classifier reads — Function / Type / Use /
 // Regulatory detection still sees the original text, so filter
 // counts, FILTER_CACHE, and exports are unchanged.
-function _cleanOdorDescription(s) {
+function _cleanOdorDescription(s, source) {
   if (!s) return s;
   // Strip trailing "— mainly fixative/solvent" / "— mostly a solvent" /
   // "— fixative" / "— denaturant and fixative" style suffixes. Function
@@ -1829,7 +1829,15 @@ function _cleanOdorDescription(s) {
   // separators between chained function words.
   const FW = '(?:fixative|solvent|carrier|diluent|denaturant|plasticizer|emollient|preservative)';
   const re = new RegExp('\\s*[—\\-–]\\s*(?:mainly\\s+|mostly\\s+|primarily\\s+|also\\s+|used\\s+as\\s+|acts\\s+as\\s+)*(?:a\\s+|an\\s+)?' + FW + '(?:\\s*(?:[\\/&,]|and)\\s*' + FW + ')*\\s*$', 'i');
-  return s.replace(re, '').trim();
+  const cleaned = s.replace(re, '').trim();
+  // PubChem-sourced odor descriptions are often single-word generic
+  // adjectives ("Pleasant", "Mild", "Characteristic odor", …) that
+  // carry no perfumery information. Suppress them so the card falls
+  // through to the "—" placeholder instead of showing noise.
+  if (source === 'PubChem' && /^(pleasant|mild|strong|sweet|faint|odorless|odourless|none|pungent|aromatic|characteristic|mild\s+odor|pleasant\s+odor|sweet\s+odor|characteristic\s+odor|no\s+odor|odour\s+none)\.?$/i.test(cleaned)) {
+    return '';
+  }
+  return cleaned;
 }
 function _cleanPerformanceTenacity(s) {
   if (!s) return s;
@@ -1843,6 +1851,16 @@ function _cleanPerformanceTenacity(s) {
   if (/^n\/a$/i.test(t))     return '';
   return s;
 }
+function _cleanTenacityHours(s) {
+  if (!s) return s;
+  // Strip trailing parentheticals that are function-word leakage
+  // (e.g. "N/A (fixative)", "~48h (fixative)"). After stripping, if
+  // the remaining text is just "N/A" or empty, return '' so the card
+  // doesn't render a meaningless placeholder line.
+  const stripped = s.replace(/\s*\(\s*(?:fixative|solvent|carrier|diluent|denaturant|plasticizer|emollient|preservative)\s*\)\s*$/i, '').trim();
+  if (!stripped || /^n\/a$/i.test(stripped)) return '';
+  return stripped;
+}
 function _cleanSafetyUsage(s) {
   if (!s) return s;
   // Strip parentheticals that specifically mention function words as
@@ -1854,6 +1872,21 @@ function _cleanSafetyUsage(s) {
     .replace(/\s*\(\s*(?:also\s+)?used\s+as\s+[^)]*\)/gi, '')
     .replace(/\s*\(\s*also\s+[^)]*(?:solvent|fixative|carrier|diluent|denaturant|plasticizer|emollient)[^)]*\)/gi, '')
     .trim();
+}
+function _cleanBlendsWith(arr) {
+  if (!Array.isArray(arr) || !arr.length) return [];
+  // Strip entries that describe the material's function instead of
+  // naming a blend partner. "All — universal fixative/solvent" is not
+  // a blend partner; "Universal" / "N/A" are not blend partners; any
+  // entry whose text contains a function word is suspect.
+  const FW = /\b(fixative|solvent|carrier|diluent|denaturant|plasticizer|emollient|preservative|universal)\b/i;
+  return arr.filter(x => {
+    if (!x || typeof x !== 'string') return false;
+    const t = x.trim();
+    if (!t || /^(n\/a|none|all|any)$/i.test(t)) return false;
+    if (FW.test(t)) return false;
+    return true;
+  });
 }
 function renderResults() {
   const div = document.getElementById("results");
@@ -1940,9 +1973,11 @@ function renderResults() {
     // tenacity is literally "Fixative", etc. Only the rendered strings
     // change; the underlying record.perfumery.* / record.safety.* fields
     // the classifier reads are untouched.
-    const _odorDescClean = _cleanOdorDescription(pf.odor_description);
+    const _odorDescClean = _cleanOdorDescription(pf.odor_description, pf.odor_source);
     const _tenacityClean = _cleanPerformanceTenacity(pf.tenacity);
+    const _tenacityHoursClean = _cleanTenacityHours(pf.tenacity_hours);
     const _usageLevelsClean = _cleanSafetyUsage(sf.usage_levels);
+    const _blendsWithClean = _cleanBlendsWith(pf.blends_with);
     const nl = (pf.note||"").toLowerCase();
     let badges = "";
     if (nl.includes("top")) badges += `<span class="badge badge-top">Top</span>`;
@@ -1975,7 +2010,7 @@ function renderResults() {
 
     const syns = (nm.synonyms||[]).length?`<p style="color:var(--text2);font-size:0.8em;margin-top:6px">${esc((nm.synonyms||[]).slice(0,8).join(', '))}</p>`:"";
 
-    const blendsArr = Array.isArray(pf.blends_with) ? pf.blends_with : [];
+    const blendsArr = _blendsWithClean;
 
     cards.push(`
       <div class="card">
@@ -2008,7 +2043,7 @@ function renderResults() {
               ${_odorDescClean?`<p class="odor-desc">${esc(_odorDescClean)}${pf.odor_source?` <span style="font-size:0.7em;color:var(--text2);font-style:normal">[${pf.odor_source}]</span>`:''}</p>`:""}
               ${pf.odor_type?`<p>${esc(pf.odor_type)}</p>`:""}
               ${pf.odor_strength?`<p style="color:var(--text2);font-size:0.85em">${esc(pf.odor_strength)}</p>`:""}
-              ${!pf.odor_description&&!pf.odor_type?`<p style="color:var(--text2)">—</p>`:""}
+              ${!_odorDescClean&&!pf.odor_type?`<p style="color:var(--text2)">—</p>`:""}
             </div>
             <div style="flex:1">
               <p class="sec-title">Note</p>
@@ -2017,8 +2052,8 @@ function renderResults() {
             <div style="flex:1">
               <p class="sec-title">Performance</p>
               ${_tenacityClean?`<p>${esc(_tenacityClean)}</p>`:""}
-              ${pf.tenacity_hours?`<p style="color:var(--text2);font-size:0.85em">${esc(pf.tenacity_hours)}</p>`:""}
-              ${!_tenacityClean?`<p style="color:var(--text2)">—</p>`:""}
+              ${_tenacityHoursClean?`<p style="color:var(--text2);font-size:0.85em">${esc(_tenacityHoursClean)}</p>`:""}
+              ${!_tenacityClean&&!_tenacityHoursClean?`<p style="color:var(--text2)">—</p>`:""}
             </div>
           </div>
           ${sf.ifra_guideline||sf.usage_levels||blendsArr.length?`
@@ -2079,13 +2114,31 @@ function prefetchAll() {
               }
             }
           }
-          // Merge PubChem odor/description for compounds without local perfumery data
+          // Merge PubChem odor/description for compounds without local perfumery data.
+          // Reject single-word / generic adjectives like "Pleasant", "Mild",
+          // "Characteristic odor" — they carry no perfumery information AND
+          // they would make hasRealOdor true inside the classifier, flipping
+          // materials like Ethanol from Type=solvent to Type=aroma_chemical
+          // after prefetch. Keep only descriptions that look genuinely
+          // informative (longer than a single adjective, or containing a
+          // specific note word).
+          const _isUsefulPubchemOdor = (s) => {
+            if (!s) return false;
+            const t = s.trim();
+            if (t.length < 15) return false;
+            if (/^(pleasant|mild|strong|sweet|faint|odorless|odourless|none|pungent|aromatic|characteristic|mild\s+odor|pleasant\s+odor|sweet\s+odor|characteristic\s+odor|no\s+odor|odour\s+none)\.?$/i.test(t)) return false;
+            return true;
+          };
           if (!mat.record.perfumery.odor_description) {
             for (const [heading, items] of Object.entries(mat.record.metadata.pubchem_sections)) {
               const hl = heading.toLowerCase();
               if (hl.includes('odor') && !hl.includes('threshold') && items.length) {
-                mat.record.perfumery.odor_description = items[0];
-                mat.record.perfumery.odor_source = 'PubChem'; break;
+                const first = items.find(_isUsefulPubchemOdor);
+                if (first) {
+                  mat.record.perfumery.odor_description = first;
+                  mat.record.perfumery.odor_source = 'PubChem';
+                }
+                break;
               }
             }
           }
@@ -2093,8 +2146,7 @@ function prefetchAll() {
             for (const [heading, items] of Object.entries(mat.record.metadata.pubchem_sections)) {
               const hl = heading.toLowerCase();
               if (hl.includes('physical description') && items.length) {
-                // Extract odor info from physical description
-                const odorItem = items.find(i => /odor|smell|aroma|scent/i.test(i));
+                const odorItem = items.find(i => /odor|smell|aroma|scent/i.test(i) && _isUsefulPubchemOdor(i));
                 if (odorItem) {
                   mat.record.perfumery.odor_description = odorItem;
                   mat.record.perfumery.odor_source = 'PubChem'; break;
