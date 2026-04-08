@@ -531,13 +531,17 @@ const SOURCE_LABELS = {
 // ═══════════════════════════════════════════════════════════════
 
 // Primary families = the high-level perfumery buckets. Order is
-// canonical (used by sortByCanonicalOrder). The set mirrors the legacy
-// ODOR_FAMILY_VALUES one-for-one so the new and old taxonomies agree
-// on family ids — only the ORDER and the surrounding facet layer differ.
+// canonical (used by sortByCanonicalOrder). Mirrors the legacy
+// ODOR_FAMILY_VALUES one-for-one PLUS three Step-2 additions
+// ('sweet', 'ozonic', 'camphoraceous') that the new
+// classifyPrimaryFamilies / classifySecondaryFamilies pipeline
+// distinguishes from their broader siblings ('gourmand', 'fresh',
+// 'herbal'). The legacy ODOR_FAMILY_VALUES constant above is
+// intentionally NOT mutated — both lists coexist.
 const PRIMARY_FAMILIES = [
-  'citrus','green','herbal','floral','fruity','aldehydic','aquatic','fresh',
-  'spicy','gourmand','powdery','woody','balsamic','resinous','amber',
-  'animalic','musk','smoky','leather'
+  'citrus','green','herbal','aldehydic','aquatic','ozonic','fresh',
+  'camphoraceous','floral','fruity','sweet','gourmand','spicy','powdery',
+  'woody','balsamic','resinous','amber','animalic','leather','musk','smoky'
 ];
 
 // Facet tags = specific descriptors that live UNDER a primary family.
@@ -554,6 +558,10 @@ const FACET_TAGS = {
   spicy:'spicy', gourmand:'gourmand', powdery:'powdery', woody:'woody',
   balsamic:'balsamic', resinous:'resinous', amber:'amber', animalic:'animalic',
   musk:'musk', smoky:'smoky', leather:'leather',
+  sweet:'sweet', ozonic:'ozonic', camphoraceous:'camphoraceous',
+  // step-2 facets that map to a parent family
+  camphor:'camphoraceous', camphor_oil:'camphoraceous',
+  waxy:'fresh',
   // citrus
   bergamot:'citrus', lemon:'citrus', orange:'citrus', mandarin:'citrus',
   grapefruit:'citrus', lime:'citrus', yuzu:'citrus', tangerine:'citrus',
@@ -656,7 +664,9 @@ const TAXONOMY_SYNONYMS = {
   // green
   cut_leaf:'leaf',
   // smoky
-  birch_tar_oil:'birch_tar'
+  birch_tar_oil:'birch_tar',
+  // common adjective forms that need to fold into the primary family
+  musky:'musk', ambery:'amber'
 };
 
 // ── Helpers ──
@@ -752,6 +762,184 @@ function tokenizeOdorSources(matOrRecord) {
   }
   return uniqStable(tokens);
 }
+
+// ═══════════════════════════════════════════════════════════════
+// TAXONOMY CLASSIFIER (Step 2)
+// Builds primaryFamilies / secondaryFamilies / facets for a record.
+// Reads odor_type (strongest signal), odor_description (medium), and
+// blends_with / canonical name / synonyms (weakest, facets only).
+// Caps: 1–3 primary families, 0–3 secondary families, 0–8 facets.
+// Conservative on `gourmand` — won't enter primary or secondary
+// unless an explicit gourmand facet (vanilla / caramel / honey /
+// chocolate / coffee / tonka / …) is present in the facets list.
+// NOT wired into rendering or filter UI yet — only writes the new
+// fields onto record.classification via _computeClassification.
+// ═══════════════════════════════════════════════════════════════
+
+// Internal helper: split a free-text source into ordered normalized
+// tokens. Splits on commas, slashes, semicolons, em/en dashes, the
+// words "and" / "with" / "of", then expands snake_case multi-word
+// fragments into their inner pieces so a string like "sweet vanilla"
+// yields ['sweet_vanilla','sweet','vanilla'] (the multi-word form is
+// kept first so a future synonym map can match the longer phrase).
+function _orderedTaxonomyTokens(s) {
+  if (!s) return [];
+  const text = String(s)
+    .toLowerCase()
+    .replace(/[—–]/g, ',')
+    .replace(/\b(?:and|with|of)\b/g, ',');
+  const out = [];
+  for (const part of text.split(/[,;\/]+/)) {
+    const piece = normalizeTaxonomyToken(part);
+    if (!piece) continue;
+    out.push(piece);
+    if (piece.includes('_')) {
+      for (const sub of piece.split('_')) {
+        if (sub.length >= 3) out.push(sub);
+      }
+    }
+  }
+  return uniqStable(out);
+}
+
+// Resolve a normalized token to its canonical synonym (if any).
+function _resolveTaxonomyToken(tok) {
+  return TAXONOMY_SYNONYMS[tok] || tok;
+}
+
+// Specificity overrides — when both members of a pair land in the
+// classifier output, the more SPECIFIC one is forced into primary
+// even if the curated odor_type lists them in the opposite order.
+// Currently only "leather > animalic" but the structure scales.
+const FAMILY_SPECIFICITY_OVERRIDES = [
+  { specific: 'leather', general: 'animalic' },
+];
+
+// Explicit gourmand facets — if at least one of these is present in
+// the facets list, the conservative gourmand guard lets `gourmand`
+// stay in primary / secondary. Otherwise gourmand is dropped.
+const _EXPLICIT_GOURMAND_FACETS = new Set([
+  'vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee',
+  'tonka','maple','hazelnut','almond','praline','biscuit','milk','rum'
+]);
+
+// Internal: full inference. Returns { primaries, secondaries, facets }.
+// Read-only — never mutates the record. The three classify*Families /
+// classifyFacets functions below all delegate here.
+function _inferTaxonomy(matOrRecord) {
+  const r = (matOrRecord && matOrRecord.record) || matOrRecord || {};
+  const pf = r.perfumery || {};
+  const nm = r.names || {};
+  const primaries = [];
+  const secondaries = [];
+  const facets = [];
+
+  const _addPrimary = fam => {
+    if (!fam) return;
+    if (primaries.includes(fam) || secondaries.includes(fam)) return;
+    if (primaries.length < 3) primaries.push(fam);
+  };
+  const _addSecondary = fam => {
+    if (!fam) return;
+    if (primaries.includes(fam) || secondaries.includes(fam)) return;
+    if (secondaries.length < 3) secondaries.push(fam);
+  };
+  const _addFacet = facet => {
+    if (!facet) return;
+    if (facets.includes(facet)) return;
+    if (facets.length < 8) facets.push(facet);
+  };
+
+  // True once a family-grade token has been promoted to primary in
+  // any pass. Reading order beyond the first family token routes
+  // subsequent family tokens to the secondary list.
+  let firstPrimaryAssigned = false;
+
+  // Pass logic shared between odor_type and odor_description scans.
+  // `mayPromotePrimary` controls whether the pass is allowed to
+  // assign the FIRST primary family — odor_description only does so
+  // when odor_type left primary empty.
+  const _scanFamilySource = (text, mayPromotePrimary) => {
+    const tokens = _orderedTaxonomyTokens(text);
+    for (const raw of tokens) {
+      const tok = _resolveTaxonomyToken(raw);
+      if (PRIMARY_FAMILIES.includes(tok)) {
+        if (mayPromotePrimary && !firstPrimaryAssigned) {
+          _addPrimary(tok);
+          firstPrimaryAssigned = true;
+        } else {
+          _addSecondary(tok);
+        }
+      } else if (FACET_TAGS[tok]) {
+        const parent = FACET_TAGS[tok];
+        _addFacet(tok);
+        if (PRIMARY_FAMILIES.includes(parent)) {
+          if (mayPromotePrimary && !firstPrimaryAssigned) {
+            _addPrimary(parent);
+            firstPrimaryAssigned = true;
+          } else if (!primaries.includes(parent)) {
+            _addSecondary(parent);
+          }
+        }
+      }
+    }
+  };
+
+  // Pass 1 — odor_type. Strongest signal; reading order drives
+  // primary/secondary assignment.
+  _scanFamilySource(pf.odor_type, true);
+
+  // Pass 2 — odor_description. Same logic, but only allowed to
+  // assign the first primary if pass 1 didn't.
+  _scanFamilySource(pf.odor_description, !firstPrimaryAssigned);
+
+  // Apply specificity overrides — leather always wins over animalic
+  // when both ended up in the classifier output, regardless of
+  // reading order in the curated odor_type.
+  for (const { specific, general } of FAMILY_SPECIFICITY_OVERRIDES) {
+    const inPrimary = primaries.indexOf(general);
+    const inSecondary = secondaries.indexOf(specific);
+    if (inPrimary >= 0 && inSecondary >= 0) {
+      primaries[inPrimary] = specific;
+      secondaries[inSecondary] = general;
+    }
+  }
+
+  // Pass 3 — blends_with / canonical name / synonyms. Weakest
+  // evidence; contributes facets ONLY. Skips primary-family tokens
+  // because the weak source isn't strong enough to promote a
+  // material into a family bucket.
+  const weakSources = [];
+  if (Array.isArray(pf.blends_with)) for (const b of pf.blends_with) weakSources.push(b);
+  if (nm.canonical) weakSources.push(nm.canonical);
+  if (Array.isArray(nm.synonyms)) for (const s of nm.synonyms) weakSources.push(s);
+  for (const src of weakSources) {
+    const tokens = _orderedTaxonomyTokens(src);
+    for (const raw of tokens) {
+      const tok = _resolveTaxonomyToken(raw);
+      if (PRIMARY_FAMILIES.includes(tok)) continue;
+      if (FACET_TAGS[tok]) _addFacet(tok);
+    }
+  }
+
+  // Conservative gourmand guard — drop `gourmand` from primary and
+  // secondary unless an explicit gourmand facet is present in the
+  // facets list. Keeps generic "sweet" descriptions from over-
+  // tagging materials as gourmand.
+  const hasExplicitGourmand = facets.some(f => _EXPLICIT_GOURMAND_FACETS.has(f));
+  if (!hasExplicitGourmand) {
+    const pi = primaries.indexOf('gourmand');
+    if (pi >= 0) primaries.splice(pi, 1);
+    const si = secondaries.indexOf('gourmand');
+    if (si >= 0) secondaries.splice(si, 1);
+  }
+
+  return { primaries, secondaries, facets };
+}
+
+function classifyPrimaryFamilies(matOrRecord)   { return _inferTaxonomy(matOrRecord).primaries; }
+function classifySecondaryFamilies(matOrRecord) { return _inferTaxonomy(matOrRecord).secondaries; }
+function classifyFacets(matOrRecord)            { return _inferTaxonomy(matOrRecord).facets; }
 
 // ═══════════════════════════════════════════════════════════════
 // MODULE: Normalized Filter Cache
@@ -1607,9 +1795,17 @@ function _computeClassification(mat) {
   c.uses          = uses;
   c.industry_tags = uses; // legacy alias
   c.functions     = classifyFunctionsFromRecord(mat.record);
-  c.odor_families = classifyOdorFamilies(mat);
+  c.odor_families = classifyOdorFamilies(mat); // legacy odor axis
   c.regulatory    = classifyRegulatory(mat);
   c.source        = classifySource(mat);
+  // Step 2 axis — fill primary / secondary / facets from a single
+  // _inferTaxonomy call so the three lists stay consistent with
+  // each other (calling each classify* helper separately would
+  // recompute three times). NOT yet wired into the card render.
+  const _tax = _inferTaxonomy(mat);
+  c.primaryFamilies   = _tax.primaries;
+  c.secondaryFamilies = _tax.secondaries;
+  c.facets            = _tax.facets;
 }
 
 function _applyLocalMatch(mat, match) {
@@ -1645,7 +1841,10 @@ function createResult(inputName) {
     perfumery: { odor_description:null, odor_type:null, odor_strength:null, odor_source:null,
       note:null, tenacity:null, tenacity_hours:null, blends_with:[] },
     safety: { ifra_guideline:null, usage_levels:null, ban_status:null, ghs_codes:[] },
-    classification: { material_type:null, industry_tags:null, uses:null, functions:null, odor_families:null, regulatory:null, source:null },
+    classification: { material_type:null, industry_tags:null, uses:null, functions:null, odor_families:null, regulatory:null, source:null,
+      // Step 2 axis — primary/secondary families and facets. Lives
+      // alongside the legacy odor_families list, not replacing it.
+      primaryFamilies:null, secondaryFamilies:null, facets:null },
     match: makeMatch(null, 0, inputName, null, null, null, null),
     metadata: { source:null, is_external:false, pubchem_sections:{} }
   };
