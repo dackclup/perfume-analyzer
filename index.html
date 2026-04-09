@@ -504,12 +504,13 @@ const KNOWN_BLENDER_NAMES  = /\b(iso e super|hedione|cashmeran|musk\s*ketone)\b/
 // JSON / CSV export read these constants as the single source of truth.
 // Hoisted above FILTER_CACHE so the module-init pass can read them.
 // ═══════════════════════════════════════════════════════════════
-const TYPE_VALUES = ['aroma_chemical','essential_oil','absolute','resin','balsam','natural_isolate','solvent','carrier','preservative','antioxidant','wax','additive'];
+const TYPE_VALUES = ['aroma_chemical','essential_oil','absolute','resin','balsam','natural_isolate','solvent','carrier','preservative','antioxidant','wax','additive','solubilizer','emulsifier'];
 const TYPE_LABELS = {
   aroma_chemical:'Aroma Chemical', essential_oil:'Essential Oil', absolute:'Absolute',
   resin:'Resin', balsam:'Balsam', natural_isolate:'Natural Isolate',
   solvent:'Solvent', carrier:'Carrier', preservative:'Preservative',
-  antioxidant:'Antioxidant', wax:'Wax', additive:'Additive'
+  antioxidant:'Antioxidant', wax:'Wax', additive:'Additive',
+  solubilizer:'Solubilizer', emulsifier:'Emulsifier'
 };
 const FUNCTION_VALUES = ['aromatic','fixative','solvent','carrier','blender','modifier','enhancer'];
 const FUNCTION_LABELS = {
@@ -4065,9 +4066,11 @@ function classifyMaterialType(mat) {
   //    instead of in classifyUses so the Type label comes out right too.
   if (/\b(benzyl benzoate|triethyl citrate)\b/i.test(n)) return 'solvent';
 
-  // 1) Antioxidants and preservatives (most specific first).
+  // 1) Antioxidants, preservatives, solubilizers, emulsifiers (most specific first).
   if (/\b(antioxidant|tocopherol|bht|bha)\b/i.test(all)) return 'antioxidant';
   if (/\b(preservative|biocide|paraben)\b/i.test(all)) return 'preservative';
+  if (/\b(solubilizer|solubilis|polysorbate|peg[- ]\d|hydrogenated castor)\b/i.test(all)) return 'solubilizer';
+  if (/\b(emulsifier|emulsifying|lecithin|ceteareth|stearate)\b/i.test(all)) return 'emulsifier';
 
   // 2) Natural mixtures — sub-typed from the canonical name keyword,
   //    then defaulting to essential_oil for any unmatched mixture.
