@@ -70,8 +70,6 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .sub-selected { font-weight:400; font-size:0.85em; color:var(--accent); }
 .sub-body { display:none; padding:0 0 8px 14px; overflow:hidden; transition:max-height 0.25s ease; }
 .sub-body.open { display:block; }
-.filter-radio { display:block; font-size:0.8em; color:var(--text); padding:3px 0; cursor:pointer; }
-.filter-radio input { margin-right:6px; accent-color:var(--accent); }
 /* GHS hazard section */
 .ghs-section { margin:8px 0; padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); }
 .ghs-section-title { font-size:0.8em; font-weight:500; color:var(--text2); margin:0 0 8px; }
@@ -83,13 +81,9 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .ghs-label { font-size:0.65em; color:var(--text2); text-align:center; max-width:64px; line-height:1.2; }
 @media (max-width:600px) { .ghs-icon-wrap { width:44px; height:44px; } }
 
-.odor-tags { display:flex; flex-wrap:wrap; gap:4px; }
 .odor-tag { padding:2px 10px; border:1px solid var(--border); border-radius:12px; font-size:0.72em; cursor:pointer; background:var(--bg2); color:var(--text2); font-family:inherit; transition:all 0.15s; }
 .odor-tag:hover { border-color:var(--accent); color:var(--accent); }
 .odor-tag.active { background:var(--accent); color:#fff; border-color:var(--accent); }
-.note-btn { padding:4px 16px; border:1px solid var(--border); border-radius:16px; font-size:0.8em; cursor:pointer; background:var(--bg2); color:var(--text2); font-family:inherit; transition:all 0.15s; }
-.note-btn:hover { border-color:var(--accent); color:var(--accent); }
-.note-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
 
 /* Pills */
 .pills { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; min-height:0; }
@@ -523,13 +517,6 @@ const FUNCTION_LABELS = {
   blender:'Blender', modifier:'Modifier', enhancer:'Enhancer'
 };
 const ODOR_FAMILY_VALUES = ['citrus','floral','woody','amber','musk','green','fruity','spicy','herbal','balsamic','resinous','powdery','gourmand','fresh','animalic','smoky','aquatic'];
-const ODOR_FAMILY_LABELS = {
-  citrus:'Citrus', floral:'Floral', woody:'Woody', amber:'Amber', musk:'Musk',
-  green:'Green', fruity:'Fruity', spicy:'Spicy', herbal:'Herbal',
-  balsamic:'Balsamic', resinous:'Resinous', powdery:'Powdery',
-  gourmand:'Gourmand', fresh:'Fresh', animalic:'Animalic',
-  smoky:'Smoky', aquatic:'Aquatic'
-};
 const ODOR_FAMILY_KEYWORDS = {
   citrus:   /\b(citrus|hesperid|lemon|orange|bergamot|grapefruit|mandarin|lime|yuzu|tangerine|petitgrain)\b/i,
   floral:   /\b(floral|flower|jasmin|rose|lily|violet|tuberose|narcissus|ylang|orchid|magnolia|hyacinth|lilac|gardenia|mimosa|champaca)\b/i,
@@ -966,60 +953,6 @@ function sortByCanonicalOrder(items, canonical) {
     .map(x => x.v);
 }
 
-// Collect candidate taxonomy tokens from every odor-relevant field on
-// a result-object OR a canonical-record shape. Splits each source on
-// common separators (commas, slashes, semicolons, em/en dashes, "and",
-// "with"), normalizes each fragment, and folds synonyms into their
-// canonical token. Returns a deduped, order-preserving list.
-//
-// Sources read:
-//   names.canonical
-//   names.synonyms[]
-//   perfumery.odor_type
-//   perfumery.odor_description
-//
-// NOTE: perfumery.blends_with is intentionally NOT a source.
-// That field describes BLEND PARTNERS, not facets of the material
-// itself, and scanning it leaks unrelated notes into the facets
-// output (e.g. Cedarwood picking up Vetiver / Patchouli / Lavender
-// facets just because those were its blend partners).
-function tokenizeOdorSources(matOrRecord) {
-  const r = (matOrRecord && matOrRecord.record) || matOrRecord || {};
-  const pf = r.perfumery || {};
-  const nm = r.names || {};
-  const sources = [];
-  if (nm.canonical) sources.push(nm.canonical);
-  if (Array.isArray(nm.synonyms)) for (const s of nm.synonyms) sources.push(s);
-  if (pf.odor_type) sources.push(pf.odor_type);
-  if (pf.odor_description) sources.push(pf.odor_description);
-
-  const tokens = [];
-  for (const raw of sources) {
-    if (!raw) continue;
-    const text = String(raw)
-      .toLowerCase()
-      .replace(/[—–]/g, ',')
-      .replace(/\b(?:and|with)\b/g, ',');
-    for (const part of text.split(/[,;]/)) {
-      const norm = normalizeTaxonomyToken(part);
-      if (!norm || norm.length < 3) continue;
-      tokens.push(norm);
-      if (TAXONOMY_SYNONYMS[norm]) tokens.push(TAXONOMY_SYNONYMS[norm]);
-      // Inner-token expansion: a fragment like "rose_otto_absolute"
-      // should ALSO yield each underscore-separated piece so a single
-      // multi-word descriptor can match both "rose" and "rose_otto".
-      if (norm.includes('_')) {
-        for (const piece of norm.split('_')) {
-          if (piece.length >= 3) {
-            tokens.push(piece);
-            if (TAXONOMY_SYNONYMS[piece]) tokens.push(TAXONOMY_SYNONYMS[piece]);
-          }
-        }
-      }
-    }
-  }
-  return uniqStable(tokens);
-}
 
 // ═══════════════════════════════════════════════════════════════
 // TAXONOMY CLASSIFIER (Step 2)
@@ -1253,20 +1186,6 @@ function classifyFacets(matOrRecord)            { return _inferTaxonomy(matOrRec
 // The parser is intentionally additive: the old odor_type string is read
 // only as INPUT for inference, never as the final filter model. The new
 // taxonomy arrays are the source of truth for the upcoming filter UI.
-// Normalize a single token to a known primary-family or null.
-function _normalizePrimaryFamilyToken(token) {
-  if (!token) return null;
-  const norm = normalizeTaxonomyToken(token);
-  const resolved = TAXONOMY_SYNONYMS[norm] || norm;
-  return PRIMARY_FAMILIES.includes(resolved) ? resolved : null;
-}
-
-// Normalize a single token to a known facet key or null.
-function _normalizeFacetToken(token) {
-  if (!token) return null;
-  const norm = normalizeTaxonomyToken(token);
-  const resolved = TAXONOMY_SYNONYMS[norm] || norm;
-  return (resolved in FACET_TAGS) ? resolved : null;
 }
 
 function migrateLegacyTaxonomy(entry) {
@@ -1304,18 +1223,9 @@ function migrateLegacyTaxonomy(entry) {
 //      read. Leaves other tags (allergen / phototoxic / restricted /
 //      banned / sensitizer) untouched.
 //
-//   2. normalizeBanStatus(value, ifraGuidelineText) — canonical
-//      single-value ban-status summary. Returns ONE of:
-//        'banned' | 'restricted' | 'regulated' | 'no_restriction' | 'unknown'
-//      Used by the ban-status badge pipeline. Reads an explicit
-//      record.safety.ban_status field first (with legacy-value
-//      normalization), then falls back to keyword-scanning the
-//      record.safety.ifra_guideline free-text. Precedence:
-//        banned > restricted > regulated > no_restriction > unknown
-//
-// Both helpers accept null/undefined safely. They are the single
-// source of truth for regulatory status — every other reader should
-// route through them instead of re-implementing the mapping.
+// Accepts null/undefined safely. This is the single source of truth
+// for regulatory status — every other reader should route through
+// it instead of re-implementing the mapping.
 // ═══════════════════════════════════════════════════════════════
 function _normalizeRegulatoryToken(v) {
   if (v == null) return null;
@@ -1329,51 +1239,6 @@ function _normalizeRegulatoryToken(v) {
   return lower;
 }
 
-function normalizeBanStatus(value, ifraGuidelineText) {
-  // Pass 1 — explicit value field. Accept legacy aliases AND English
-  // ban-status prose via keyword matching.
-  const raw = value == null ? '' : String(value).trim();
-  const valLower = raw.toLowerCase();
-  if (valLower) {
-    // Legacy alias table hit → the alias map returns a regulatory
-    // axis token ('regulated'), which is also a valid ban-status
-    // canonical value.
-    if (REGULATORY_LEGACY_ALIASES[raw])    return REGULATORY_LEGACY_ALIASES[raw];
-    if (REGULATORY_LEGACY_ALIASES[valLower]) return REGULATORY_LEGACY_ALIASES[valLower];
-    // Direct canonical hits.
-    if (valLower === 'banned')          return 'banned';
-    if (valLower === 'restricted')      return 'restricted';
-    if (valLower === 'regulated')       return 'regulated';
-    if (valLower === 'no_restriction' ||
-        valLower === 'no restriction' ||
-        valLower === 'no restrictions' ||
-        valLower === 'unrestricted')    return 'no_restriction';
-    if (valLower === 'unknown')         return 'unknown';
-    // Freeform phrases on the value field itself (e.g. ban_status =
-    // "BANNED" or "prohibited worldwide"). Precedence order matters:
-    // banned > restricted > regulated > no_restriction.
-    if (/\b(banned|prohibited|prohibition|not\s+permitted)\b/.test(valLower)) return 'banned';
-    if (/\brestricted\b|\blimited\s+use\b|\bmaximum\s+use\b/.test(valLower))  return 'restricted';
-    if (/\bregulated\b|\bregulation\b|\bifra\s*51\b/.test(valLower))          return 'regulated';
-    if (/\bno\s+restriction/.test(valLower) ||
-        /\bno\s+specific\s+ifra/.test(valLower))                              return 'no_restriction';
-  }
-  // Pass 2 — fall back to the ifra_guideline free text. Same
-  // precedence order.
-  const gLower = (ifraGuidelineText == null ? '' : String(ifraGuidelineText)).toLowerCase();
-  if (gLower) {
-    if (/\b(banned|prohibited|prohibition|not\s+permitted|worldwide\s+prohibit)/.test(gLower)) return 'banned';
-    if (/\brestricted\b|\blimit(?:ed|s)?\b|\blimited\s+use\b|\bmax(?:imum)?\s+use/.test(gLower) ||
-        /\bskin\s+sensitiz(?:er|ing).*limited/.test(gLower)) return 'restricted';
-    if (/\bregulated\b|\bregulation\b|\bsubject\s+to\s+regulation\b|\bcheck\s+local\s+limits\b/.test(gLower) ||
-        /\bifra\s*51\b/.test(gLower)) return 'regulated';
-    if (/\bno\s+(?:specific\s+)?(?:ifra\s+)?restriction/.test(gLower) ||
-        /\bnot\s+phototoxic/.test(gLower) ||
-        /\bfollow(?:\s+finished[- ]product)?\s+safety\s+assessment/.test(gLower)) return 'no_restriction';
-  }
-  // Pass 3 — nothing conclusive.
-  return 'unknown';
-}
 
 // ═══════════════════════════════════════════════════════════════
 // MODULE: Normalized Filter Cache
@@ -1909,26 +1774,6 @@ function resetAllFilters() {
 // (primary family chips, facet chips) will call. Behavior mirrors
 // the existing toggleOdorTag / clearOdorFilters helpers — toggle
 // adds or removes from the Set and triggers a pill refresh.
-function togglePrimaryFamilyFilter(family) {
-  if (!family) return;
-  if (activePrimaryFamilyFilters.has(family)) activePrimaryFamilyFilters.delete(family);
-  else activePrimaryFamilyFilters.add(family);
-  _refreshPills();
-}
-function clearPrimaryFamilyFilters() {
-  activePrimaryFamilyFilters.clear();
-  _refreshPills();
-}
-function toggleFacetFilter(facet) {
-  if (!facet) return;
-  if (activeFacetFilters.has(facet)) activeFacetFilters.delete(facet);
-  else activeFacetFilters.add(facet);
-  _refreshPills();
-}
-function clearFacetFilters() {
-  activeFacetFilters.clear();
-  _refreshPills();
-}
 
 // ===== BUILD FILTER UI =====
 // Populate each taxonomy sub-drawer as a multi-select pill chip
@@ -3475,7 +3320,7 @@ function prefetchAll() {
     // Prefetch PubChem pug_view data in background
     if (mat.record.identifiers.pubchem_cid && !mat._prefetched) {
       mat._prefetched = true;
-      fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat.record.identifiers.pubchem_cid}/JSON`, {}, 15000)
+      mat._loadPubchem = fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat.record.identifiers.pubchem_cid}/JSON`, {}, 15000)
         .then(r => r.json())
         .then(d => {
           const sections = d.Record?.Section || [];
@@ -3665,6 +3510,10 @@ async function downloadJSON() {
           const d = await r.json();
           const sections = d.Record?.Section || [];
           mat.record.metadata.pubchem_sections = extractAllSections(sections);
+          if (!mat.record.identifiers.fema) {
+            const _fn = _extractFemaNumber(sections);
+            if (_fn) mat.record.identifiers.fema = _fn;
+          }
         } catch(e) { if (e?.name !== 'AbortError') console.warn('downloadJSON pug_view:', e); }
       }
     }));
@@ -3865,17 +3714,18 @@ async function downloadJSON() {
     const usageRange = parseUsageRange(src.safety.usage_levels);
     const ifra51 = parseIFRA51(src.safety.usage_levels);
     const notes = noteOneHot(src.perfumery.note);
-    const banStatus = getBanStatus(mat);
     // FILTER_CACHE is the single source of truth for the Function-axis set.
     // Look it up by canonical CAS and forward to the export's
     // classification.functions array below. No recomputation, no new heuristics.
     const _fc = src.identifiers?.cas ? FILTER_CACHE.get(src.identifiers.cas) : null;
+    const _regTags = ((_fc ? [...(_fc.regulatory || [])] : (src.classification?.regulatory ?? []))).map(_normalizeRegulatoryToken).filter(Boolean);
+    const banStatus = _regTags.some(r => /banned/i.test(r)) ? 'banned' : _regTags.some(r => /restricted/i.test(r)) ? 'restricted' : null;
     const record = {
       name: src.names.canonical,
       pubchem_name: src.names.pubchem_title || (src.names.synonyms||[]).find(s => !CAS_RE_SYN.test(s)) || src.identifiers.iupac || src.names.canonical,
       material_type: src.classification.material_type || classifyMaterialType(mat),
       industry_tags: src.classification.industry_tags || classifyIndustryTags(mat),
-      ban_status: banStatus || null,
+      ban_status: banStatus,
       is_external_perfumery: src.metadata.is_external || false,
       match: src.match || null,
       cas_number: src.identifiers.cas || null,
@@ -3900,23 +3750,24 @@ async function downloadJSON() {
         heavy_atom_count: src.properties.heavy_atoms
       },
       perfumery: {
-        odor_description: src.perfumery.odor_description,
+        odor_description: _cleanOdorDescription(src.perfumery.odor_description, src.perfumery.odor_source) || null,
+        odor_source: src.perfumery.odor_source || null,
         odor_type: src.perfumery.odor_type,
         odor_strength: src.perfumery.odor_strength,
         odor_strength_scale: odorStrengthScale(src.perfumery.odor_strength),
         note_classification: src.perfumery.note,
         ...notes,
-        tenacity: src.perfumery.tenacity,
-        tenacity_hours: src.perfumery.tenacity_hours,
-        tenacity_hours_numeric: parseHoursNumeric(src.perfumery.tenacity_hours),
+        tenacity: _cleanPerformanceTenacity(src.perfumery.tenacity) || null,
+        tenacity_hours: _cleanTenacityHours(src.perfumery.tenacity_hours) || null,
+        tenacity_hours_numeric: parseHoursNumeric(_cleanTenacityHours(src.perfumery.tenacity_hours)),
         ifra_guidelines: src.safety.ifra_guideline,
-        usage_levels: src.safety.usage_levels,
+        usage_levels: _cleanSafetyUsage(src.safety.usage_levels) || null,
         usage_level_min_pct: usageRange.min,
         usage_level_max_pct: usageRange.max,
         ifra_51_limits: ifra51,
-        blends_well_with: (src.perfumery.blends_with||[]).length ? src.perfumery.blends_with : []
+        blends_well_with: _cleanBlendsWith(src.perfumery.blends_with)
       },
-      synonyms: (src.names.synonyms||[]).length ? src.names.synonyms.filter(s => !CAS_RE_SYN.test(s)) : [],
+      synonyms: (src.names.synonyms||[]).length ? [...new Set(src.names.synonyms.filter(s => !CAS_RE_SYN.test(s)))] : [],
       // Canonical-record nested views (Plan §B.1) — additive; the flat
       // top-level material_type / industry_tags / is_external_perfumery
       // / match / cas_number / fema_number above are kept for backwards
@@ -4051,8 +3902,8 @@ async function downloadJSON() {
     // Mirror the same value into the canonical-shape metadata block.
     if (record.metadata) record.metadata.data_quality_pct = _cmp.overall;
     record.data_source = {
-      chemical_data: "PubChem (NIH/NCBI)",
-      perfumery_data: mat.record?.perfumery?.odor_source === 'PubChem' ? "PubChem (partial)" : mat.record?.perfumery?.odor_description ? "Local Perfumery Database" : "Not Available"
+      chemical_data: record.pubchem_url ? "PubChem (NIH/NCBI)" : "Local Perfumery Database",
+      perfumery_data: mat.record?.perfumery?.odor_source === 'PubChem' ? "PubChem (enriched)" : mat.record?.perfumery?.odor_description ? "Local Perfumery Database" : "Not Available"
     };
 
     return record;
@@ -4086,25 +3937,31 @@ function downloadCSV() {
   const headers = [
     'cas_number', 'name', 'material_type', 'functions',
     'ban_status', 'note', 'odor_description', 'usage_levels',
-    'uses', 'odor_families', 'regulatory', 'source'
+    'uses', 'odor_families', 'primary_families', 'secondary_families', 'facets',
+    'regulatory', 'source'
   ];
   const rows = [headers.join(',')];
   for (const mat of found) {
     const src = mat.record;
     const cas = src.identifiers?.cas ?? null;
     const fc  = cas ? FILTER_CACHE.get(cas) : null;
+    const regTags = ((fc ? [...(fc.regulatory || [])] : (src.classification?.regulatory ?? []))).map(_normalizeRegulatoryToken).filter(Boolean);
+    const banStatus = regTags.some(r => /banned/i.test(r)) ? 'banned' : regTags.some(r => /restricted/i.test(r)) ? 'restricted' : 'norestriction';
     rows.push([
       _csv(cas),
       _csv(src.names?.canonical),
       _csv(src.classification?.material_type),
       _csv(fc ? [...(fc.functions || [])] : (src.classification?.functions ?? null)),
-      _csv(getBanStatus(mat)),
+      _csv(banStatus),
       _csv(src.perfumery?.note),
       _csv(src.perfumery?.odor_description),
       _csv(src.safety?.usage_levels),
       _csv(fc ? [...(fc.uses || [])]         : (src.classification?.uses         ?? src.classification?.industry_tags ?? null)),
       _csv(fc ? [...(fc.odorFamilies || [])] : (src.classification?.odor_families ?? null)),
-      _csv(((fc ? [...(fc.regulatory || [])]   : (src.classification?.regulatory   ?? []))).map(_normalizeRegulatoryToken).filter(Boolean)),
+      _csv(fc ? [...(fc.primaryFamilies || [])]   : (src.classification?.primaryFamilies ?? [])),
+      _csv(fc ? [...(fc.secondaryFamilies || [])] : (src.classification?.secondaryFamilies ?? [])),
+      _csv(fc ? [...(fc.facets || [])]             : (src.classification?.facets ?? [])),
+      _csv(regTags),
       _csv(fc ? fc.source                     : (src.classification?.source       ?? null)),
     ].join(','));
   }
@@ -4250,8 +4107,6 @@ function classifyMaterialType(mat) {
 
   return 'aroma_chemical';
 }
-// Backwards-compat label alias used by older render paths.
-const MATERIAL_TYPE_LABELS = TYPE_LABELS;
 
 // Use axis is the closed set USE_VALUES. Regulatory / banned lives on
 // its own axis and is rendered separately. Reduce a raw tag list to
@@ -4399,7 +4254,6 @@ function classifyUses(mat) {
 }
 // Backwards-compat alias — older code paths still call classifyIndustryTags.
 function classifyIndustryTags(mat) { return classifyUses(mat); }
-const INDUSTRY_TAG_LABELS = USE_LABELS;
 
 // Odor-Family axis classifier — returns the subset of ODOR_FAMILY_VALUES
 // whose keyword regex matches the curated name + odor_description +
