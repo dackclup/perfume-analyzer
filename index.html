@@ -3475,7 +3475,7 @@ function prefetchAll() {
     // Prefetch PubChem pug_view data in background
     if (mat.record.identifiers.pubchem_cid && !mat._prefetched) {
       mat._prefetched = true;
-      fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat.record.identifiers.pubchem_cid}/JSON`, {}, 15000)
+      mat._loadPubchem = fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat.record.identifiers.pubchem_cid}/JSON`, {}, 15000)
         .then(r => r.json())
         .then(d => {
           const sections = d.Record?.Section || [];
