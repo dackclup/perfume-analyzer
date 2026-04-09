@@ -1165,6 +1165,17 @@ function _inferTaxonomy(matOrRecord) {
     if (re.test(_kwText)) _addFacet(facet);
   }
 
+  // Pass 4b — Enrich secondary families from keyword-matched facets.
+  // When Pass 4 adds a facet whose parent family isn't yet in primary
+  // or secondary, promote the parent to secondary. This closes the gap
+  // where keyword-only matches (e.g. "tea-like" caught by regex but
+  // missed by token splitter) would add the facet without its parent
+  // family appearing in the family axes.
+  for (const f of facets) {
+    const parent = FACET_TAGS[f];
+    if (parent && PRIMARY_FAMILIES.includes(parent)) _addSecondary(parent);
+  }
+
   // Conservative gourmand guard — drop `gourmand` from primary and
   // secondary unless an explicit gourmand facet is present in the
   // facets list. Keeps generic "sweet" descriptions from over-
@@ -1403,7 +1414,9 @@ function _buildFilterRecord(cas, entry) {
   const _newTax = migrateLegacyTaxonomy(entry);
   const primaryFamilies   = _newTax.primaryFamilies;
   const secondaryFamilies = _newTax.secondaryFamilies;
-  const facets            = _newTax.facets;
+  // Sort facets alphabetically for deterministic output (helps diff/debug).
+  // Primary/secondary keep discovery order (strongest signal first).
+  const facets            = _newTax.facets.slice().sort();
 
   // Diagnostic: any material that looks like a perfumery candidate
   // (has a real odor description or is in MIXTURES) but ended up with
@@ -1427,6 +1440,36 @@ function _buildFilterRecord(cas, entry) {
 
 for (const [cas, entry] of Object.entries(DB)) {
   FILTER_CACHE.set(cas, _buildFilterRecord(cas, entry));
+}
+
+// ── Inverted index: axis‑value → Set<CAS> ──
+// Precomputed once at module init. Provides O(1) set‑intersection
+// filtering on any axis without re‑running classifiers. The primary
+// filter matching still iterates FILTER_CACHE.values() (fast for ~400
+// entries) but this index is available for future optimisations and
+// for quick cardinality queries (e.g. "how many materials have facet
+// tea?").
+const FILTER_INDEX = {};
+{
+  const _idx = (axis, value, cas) => {
+    if (!FILTER_INDEX[axis]) FILTER_INDEX[axis] = {};
+    if (!FILTER_INDEX[axis][value]) FILTER_INDEX[axis][value] = new Set();
+    FILTER_INDEX[axis][value].add(cas);
+  };
+  const RE_NOTE_T = /\btop\b/, RE_NOTE_M = /\bmiddle\b/, RE_NOTE_B = /\bbase\b/;
+  for (const [cas, fc] of FILTER_CACHE) {
+    if (fc.materialType) _idx('type', fc.materialType, cas);
+    for (const f of fc.functions) _idx('func', f, cas);
+    for (const u of fc.uses) _idx('use', u, cas);
+    for (const r of fc.regulatory) _idx('reg', r, cas);
+    if (fc.source) _idx('source', fc.source, cas);
+    if (RE_NOTE_T.test(fc.noteLow)) _idx('note', 'top', cas);
+    if (RE_NOTE_M.test(fc.noteLow)) _idx('note', 'middle', cas);
+    if (RE_NOTE_B.test(fc.noteLow)) _idx('note', 'base', cas);
+    for (const pf of fc.primaryFamilies || []) _idx('primaryFamily', pf, cas);
+    for (const sf of fc.secondaryFamilies || []) _idx('primaryFamily', sf, cas);
+    for (const f of fc.facets || []) _idx('facet', f, cas);
+  }
 }
 
 // Regulatory filter precompute: one-time O(n) pass over raw DB entries
