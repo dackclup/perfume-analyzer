@@ -966,60 +966,6 @@ function sortByCanonicalOrder(items, canonical) {
     .map(x => x.v);
 }
 
-// Collect candidate taxonomy tokens from every odor-relevant field on
-// a result-object OR a canonical-record shape. Splits each source on
-// common separators (commas, slashes, semicolons, em/en dashes, "and",
-// "with"), normalizes each fragment, and folds synonyms into their
-// canonical token. Returns a deduped, order-preserving list.
-//
-// Sources read:
-//   names.canonical
-//   names.synonyms[]
-//   perfumery.odor_type
-//   perfumery.odor_description
-//
-// NOTE: perfumery.blends_with is intentionally NOT a source.
-// That field describes BLEND PARTNERS, not facets of the material
-// itself, and scanning it leaks unrelated notes into the facets
-// output (e.g. Cedarwood picking up Vetiver / Patchouli / Lavender
-// facets just because those were its blend partners).
-function tokenizeOdorSources(matOrRecord) {
-  const r = (matOrRecord && matOrRecord.record) || matOrRecord || {};
-  const pf = r.perfumery || {};
-  const nm = r.names || {};
-  const sources = [];
-  if (nm.canonical) sources.push(nm.canonical);
-  if (Array.isArray(nm.synonyms)) for (const s of nm.synonyms) sources.push(s);
-  if (pf.odor_type) sources.push(pf.odor_type);
-  if (pf.odor_description) sources.push(pf.odor_description);
-
-  const tokens = [];
-  for (const raw of sources) {
-    if (!raw) continue;
-    const text = String(raw)
-      .toLowerCase()
-      .replace(/[—–]/g, ',')
-      .replace(/\b(?:and|with)\b/g, ',');
-    for (const part of text.split(/[,;]/)) {
-      const norm = normalizeTaxonomyToken(part);
-      if (!norm || norm.length < 3) continue;
-      tokens.push(norm);
-      if (TAXONOMY_SYNONYMS[norm]) tokens.push(TAXONOMY_SYNONYMS[norm]);
-      // Inner-token expansion: a fragment like "rose_otto_absolute"
-      // should ALSO yield each underscore-separated piece so a single
-      // multi-word descriptor can match both "rose" and "rose_otto".
-      if (norm.includes('_')) {
-        for (const piece of norm.split('_')) {
-          if (piece.length >= 3) {
-            tokens.push(piece);
-            if (TAXONOMY_SYNONYMS[piece]) tokens.push(TAXONOMY_SYNONYMS[piece]);
-          }
-        }
-      }
-    }
-  }
-  return uniqStable(tokens);
-}
 
 // ═══════════════════════════════════════════════════════════════
 // TAXONOMY CLASSIFIER (Step 2)
@@ -1253,20 +1199,6 @@ function classifyFacets(matOrRecord)            { return _inferTaxonomy(matOrRec
 // The parser is intentionally additive: the old odor_type string is read
 // only as INPUT for inference, never as the final filter model. The new
 // taxonomy arrays are the source of truth for the upcoming filter UI.
-// Normalize a single token to a known primary-family or null.
-function _normalizePrimaryFamilyToken(token) {
-  if (!token) return null;
-  const norm = normalizeTaxonomyToken(token);
-  const resolved = TAXONOMY_SYNONYMS[norm] || norm;
-  return PRIMARY_FAMILIES.includes(resolved) ? resolved : null;
-}
-
-// Normalize a single token to a known facet key or null.
-function _normalizeFacetToken(token) {
-  if (!token) return null;
-  const norm = normalizeTaxonomyToken(token);
-  const resolved = TAXONOMY_SYNONYMS[norm] || norm;
-  return (resolved in FACET_TAGS) ? resolved : null;
 }
 
 function migrateLegacyTaxonomy(entry) {
@@ -1304,18 +1236,9 @@ function migrateLegacyTaxonomy(entry) {
 //      read. Leaves other tags (allergen / phototoxic / restricted /
 //      banned / sensitizer) untouched.
 //
-//   2. normalizeBanStatus(value, ifraGuidelineText) — canonical
-//      single-value ban-status summary. Returns ONE of:
-//        'banned' | 'restricted' | 'regulated' | 'no_restriction' | 'unknown'
-//      Used by the ban-status badge pipeline. Reads an explicit
-//      record.safety.ban_status field first (with legacy-value
-//      normalization), then falls back to keyword-scanning the
-//      record.safety.ifra_guideline free-text. Precedence:
-//        banned > restricted > regulated > no_restriction > unknown
-//
-// Both helpers accept null/undefined safely. They are the single
-// source of truth for regulatory status — every other reader should
-// route through them instead of re-implementing the mapping.
+// Accepts null/undefined safely. This is the single source of truth
+// for regulatory status — every other reader should route through
+// it instead of re-implementing the mapping.
 // ═══════════════════════════════════════════════════════════════
 function _normalizeRegulatoryToken(v) {
   if (v == null) return null;
@@ -1329,51 +1252,6 @@ function _normalizeRegulatoryToken(v) {
   return lower;
 }
 
-function normalizeBanStatus(value, ifraGuidelineText) {
-  // Pass 1 — explicit value field. Accept legacy aliases AND English
-  // ban-status prose via keyword matching.
-  const raw = value == null ? '' : String(value).trim();
-  const valLower = raw.toLowerCase();
-  if (valLower) {
-    // Legacy alias table hit → the alias map returns a regulatory
-    // axis token ('regulated'), which is also a valid ban-status
-    // canonical value.
-    if (REGULATORY_LEGACY_ALIASES[raw])    return REGULATORY_LEGACY_ALIASES[raw];
-    if (REGULATORY_LEGACY_ALIASES[valLower]) return REGULATORY_LEGACY_ALIASES[valLower];
-    // Direct canonical hits.
-    if (valLower === 'banned')          return 'banned';
-    if (valLower === 'restricted')      return 'restricted';
-    if (valLower === 'regulated')       return 'regulated';
-    if (valLower === 'no_restriction' ||
-        valLower === 'no restriction' ||
-        valLower === 'no restrictions' ||
-        valLower === 'unrestricted')    return 'no_restriction';
-    if (valLower === 'unknown')         return 'unknown';
-    // Freeform phrases on the value field itself (e.g. ban_status =
-    // "BANNED" or "prohibited worldwide"). Precedence order matters:
-    // banned > restricted > regulated > no_restriction.
-    if (/\b(banned|prohibited|prohibition|not\s+permitted)\b/.test(valLower)) return 'banned';
-    if (/\brestricted\b|\blimited\s+use\b|\bmaximum\s+use\b/.test(valLower))  return 'restricted';
-    if (/\bregulated\b|\bregulation\b|\bifra\s*51\b/.test(valLower))          return 'regulated';
-    if (/\bno\s+restriction/.test(valLower) ||
-        /\bno\s+specific\s+ifra/.test(valLower))                              return 'no_restriction';
-  }
-  // Pass 2 — fall back to the ifra_guideline free text. Same
-  // precedence order.
-  const gLower = (ifraGuidelineText == null ? '' : String(ifraGuidelineText)).toLowerCase();
-  if (gLower) {
-    if (/\b(banned|prohibited|prohibition|not\s+permitted|worldwide\s+prohibit)/.test(gLower)) return 'banned';
-    if (/\brestricted\b|\blimit(?:ed|s)?\b|\blimited\s+use\b|\bmax(?:imum)?\s+use/.test(gLower) ||
-        /\bskin\s+sensitiz(?:er|ing).*limited/.test(gLower)) return 'restricted';
-    if (/\bregulated\b|\bregulation\b|\bsubject\s+to\s+regulation\b|\bcheck\s+local\s+limits\b/.test(gLower) ||
-        /\bifra\s*51\b/.test(gLower)) return 'regulated';
-    if (/\bno\s+(?:specific\s+)?(?:ifra\s+)?restriction/.test(gLower) ||
-        /\bnot\s+phototoxic/.test(gLower) ||
-        /\bfollow(?:\s+finished[- ]product)?\s+safety\s+assessment/.test(gLower)) return 'no_restriction';
-  }
-  // Pass 3 — nothing conclusive.
-  return 'unknown';
-}
 
 // ═══════════════════════════════════════════════════════════════
 // MODULE: Normalized Filter Cache
@@ -1909,26 +1787,6 @@ function resetAllFilters() {
 // (primary family chips, facet chips) will call. Behavior mirrors
 // the existing toggleOdorTag / clearOdorFilters helpers — toggle
 // adds or removes from the Set and triggers a pill refresh.
-function togglePrimaryFamilyFilter(family) {
-  if (!family) return;
-  if (activePrimaryFamilyFilters.has(family)) activePrimaryFamilyFilters.delete(family);
-  else activePrimaryFamilyFilters.add(family);
-  _refreshPills();
-}
-function clearPrimaryFamilyFilters() {
-  activePrimaryFamilyFilters.clear();
-  _refreshPills();
-}
-function toggleFacetFilter(facet) {
-  if (!facet) return;
-  if (activeFacetFilters.has(facet)) activeFacetFilters.delete(facet);
-  else activeFacetFilters.add(facet);
-  _refreshPills();
-}
-function clearFacetFilters() {
-  activeFacetFilters.clear();
-  _refreshPills();
-}
 
 // ===== BUILD FILTER UI =====
 // Populate each taxonomy sub-drawer as a multi-select pill chip
