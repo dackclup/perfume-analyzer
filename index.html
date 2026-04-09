@@ -4041,10 +4041,23 @@ function classifyUses(mat) {
   if (isPerfumeryMaterial) push('perfumery');
 
   // === Fine fragrance ===
-  // Explicit cue OR base/very-high tenacity material (typical EDP base).
+  // Triggered by any of:
+  //   1. Explicit "fine fragrance" phrase in the usage text.
+  //   2. Very-high / excellent tenacity (EDP base material).
+  //   3. Base note + high+ tenacity on a non-banned perfumery material.
+  //   4. Non-banned perfumery material used at ≥5 % in fragrance
+  //      concentrate — the canonical Hedione / Iso E Super / Vanillin
+  //      case. Anything at 5%+ in the concentrate is, by industry
+  //      convention, a fine fragrance workhorse.
+  const _usageMax = (() => {
+    const m = (usage || '').match(/(\d+(?:\.\d+)?)\s*(?:[–-]\s*(\d+(?:\.\d+)?))?\s*%/);
+    if (!m) return 0;
+    return parseFloat(m[2] || m[1]);
+  })();
   if (/\bfine fragrance\b/i.test(usage) ||
       /\b(very high|excellent)\b/i.test(tenacity) ||
-      (isPerfumeryMaterial && !banned && /\bbase\b/i.test(noteLow) && /\b(high|very high|excellent)\b/i.test(tenacity))) {
+      (isPerfumeryMaterial && !banned && /\bbase\b/i.test(noteLow) && /\b(high|very high|excellent)\b/i.test(tenacity)) ||
+      (isPerfumeryMaterial && !banned && _usageMax >= 5 && /fragrance\s*concentrate/i.test(usage))) {
     push('fine_fragrance');
   }
 
