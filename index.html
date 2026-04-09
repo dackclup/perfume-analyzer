@@ -1741,93 +1741,81 @@ function matchesAllFilters(cas) {
   const fc = cas ? FILTER_CACHE.get(cas) : null;
   if (!fc) return !_anyAxisActive();
 
-  // Every per-axis check uses OR-within-group: if the axis Set is
-  // non-empty, the cache value must match AT LEAST ONE of the
-  // selected values. AND-across-groups is implicit (any axis that
-  // fails its own check short-circuits the whole predicate).
+  // Filter rule: AND-within-group AND AND-across-groups.
+  //   - If the user selects multiple chips inside one axis, the
+  //     material must carry ALL of those values (strict AND).
+  //   - If the user selects chips across multiple axes, the material
+  //     must pass every axis's check.
+  //   - Axes the user leaves untouched don't constrain anything.
+  // Single-value material fields (Type, Source, Note literal) use
+  // the "material's value must be one of the selected values" rule,
+  // which is the natural equivalent of AND for a single slot.
 
-  // Note — OR over {top, middle, base, _other}. '_other' means none
-  // of top/middle/base are present in fc.noteLow.
+  // Note — AND-within on multi-word material notes. '_other' means
+  // "no top/middle/base"; selecting it alongside a concrete note
+  // is intentionally contradictory (matches nothing).
   const noteSet = _filterAxes.note.set;
   if (noteSet.size) {
-    let any = false;
     for (const v of noteSet) {
-      if (v === '_other') { if (!RE_NOTE_OTHER.test(fc.noteLow)) { any = true; break; } }
-      else { if (fc.noteLow.includes(v)) { any = true; break; } }
+      if (v === '_other') { if (RE_NOTE_OTHER.test(fc.noteLow)) return false; }
+      else { if (!fc.noteLow.includes(v)) return false; }
     }
-    if (!any) return false;
   }
-  // Type axis — OR over TYPE_VALUES (single-value fc.materialType).
+  // Type — single-value on material. Material's materialType must
+  // be one of the selected values.
   const typeSet = _filterAxes.type.set;
   if (typeSet.size && !typeSet.has(fc.materialType)) return false;
-  // Function axis — OR over FUNCTION_VALUES, multi-value fc.functions.
+  // Function — multi-value on material. AND-within.
   const funcSet = _filterAxes.func.set;
   if (funcSet.size) {
-    let any = false;
-    for (const f of fc.functions) if (funcSet.has(f)) { any = true; break; }
-    if (!any) return false;
+    for (const f of funcSet) if (!fc.functions.has(f)) return false;
   }
-  // Use axis — OR over USE_VALUES, multi-value fc.uses.
+  // Use — multi-value on material. AND-within.
   const tagSet = _filterAxes.tag.set;
   if (tagSet.size) {
-    let any = false;
-    for (const u of fc.uses) if (tagSet.has(u)) { any = true; break; }
-    if (!any) return false;
+    for (const u of tagSet) if (!fc.uses.has(u)) return false;
   }
-  // Regulatory axis — OR over REGULATORY_VALUES. Legacy 'ifra_limited'
-  // folds to 'regulated' via _normalizeRegulatoryToken. 'banned' also
-  // checks the BANNED_CAS precompute so older filter state still hits.
+  // Regulatory — multi-value on material. AND-within with the
+  // _normalizeRegulatoryToken legacy fold and the BANNED_CAS
+  // fallback for the 'banned' token.
   const regSet = _filterAxes.reg.set;
   if (regSet.size) {
-    let any = false;
     for (const r of regSet) {
       const canon = _normalizeRegulatoryToken(r);
       if (canon === 'banned') {
-        if (BANNED_CAS.has(cas) || fc.regulatory.has('banned')) { any = true; break; }
-      } else if (fc.regulatory.has(canon)) {
-        any = true; break;
-      } else {
-        // Legacy alias fallback — defensive, FILTER_CACHE is already
-        // normalized on build but external / PubChem-only results
-        // might not be.
+        if (!(BANNED_CAS.has(cas) || fc.regulatory.has('banned'))) return false;
+      } else if (!fc.regulatory.has(canon)) {
+        // Legacy alias fallback (defensive).
         let hit = false;
         for (const [legacy, c] of Object.entries(REGULATORY_LEGACY_ALIASES)) {
           if (c === canon && fc.regulatory.has(legacy)) { hit = true; break; }
         }
-        if (hit) { any = true; break; }
+        if (!hit) return false;
       }
     }
-    if (!any) return false;
   }
-  // Source axis — OR over SOURCE_VALUES (single-value fc.source).
+  // Source — single-value on material.
   const sourceSet = _filterAxes.source.set;
   if (sourceSet.size && !sourceSet.has(fc.source)) return false;
-  // Legacy Odor Family axis (multi-select AND over the closed family list)
+  // Legacy Odor Family axis — AND-within (unchanged).
   if (activeOdorFilters.size) {
     for (const f of activeOdorFilters) {
       if (!fc.odorFamilies.has(f)) return false;
     }
   }
-  // Step 4: Primary Family axis (multi-select OR within group, AND
-  // across groups). Reads FILTER_CACHE.primaryFamilies precomputed in
-  // Step 3 — never recomputed here.
+  // Primary Family — multi-value on material. AND-within.
   if (activePrimaryFamilyFilters.size) {
     const fcPrim = fc.primaryFamilies || [];
-    let any = false;
     for (const fam of activePrimaryFamilyFilters) {
-      if (fcPrim.includes(fam)) { any = true; break; }
+      if (!fcPrim.includes(fam)) return false;
     }
-    if (!any) return false;
   }
-  // Step 4: Facet axis (multi-select OR within group, AND across
-  // groups). Reads FILTER_CACHE.facets precomputed in Step 3.
+  // Facet — multi-value on material. AND-within.
   if (activeFacetFilters.size) {
     const fcFacets = fc.facets || [];
-    let any = false;
     for (const facet of activeFacetFilters) {
-      if (fcFacets.includes(facet)) { any = true; break; }
+      if (!fcFacets.includes(facet)) return false;
     }
-    if (!any) return false;
   }
   return true;
 }
