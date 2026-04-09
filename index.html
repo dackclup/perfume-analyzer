@@ -4211,6 +4211,18 @@ function classifyUses(mat) {
     push('flavor');
   }
 
+  // === 5. Functional materials (preservative / solubilizer / emulsifier / antioxidant / carrier) ===
+  // These are non-fragrant ingredients whose usage/safety text describes
+  // the product categories they serve. Scan all text fields so they
+  // appear under the correct Use filter when combined with Type.
+  if (!tags.length || !isPerfumeryMaterial) {
+    const allText = (usage + ' ' + (sf.ifra_guideline || '') + ' ' + noteLow + ' ' + n).toLowerCase();
+    if (/\b(cosmetics?|personal care|creams?|lotions?|skin|soaps?|shampoo|body|rinse[- ]off|leave[- ]on|emulsif)/i.test(allText)) push('personal_care');
+    if (/\b(home care|household|detergent|fabric|laundry|room spray|diffuser|candle|softener|mists?)\b/i.test(allText)) push('home_care');
+    if (/\b(fine fragrance|perfum|edp|edt|fragrance concentrate)\b/i.test(allText)) push('fine_fragrance');
+    if (/\b(food|gras|flavor|flavour|beverage|toothpaste|chewing gum)\b/i.test(allText)) push('flavor');
+  }
+
   return tags;
 }
 // Backwards-compat alias — older code paths still call classifyIndustryTags.
