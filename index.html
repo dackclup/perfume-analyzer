@@ -686,9 +686,9 @@ const FACET_TAGS = {
   artemisia:'herbal', celery:'herbal', parsley:'herbal',
   minty:'herbal', medicinal:'herbal', antiseptic:'herbal',
   tea:'herbal', green_tea:'herbal', black_tea:'herbal', mate:'herbal',
-  hay:'herbal',
+  hay:'herbal', clover:'herbal',
   // ── floral ──
-  rose:'floral', jasmine:'floral', ylang:'floral', tuberose:'floral',
+  rose:'floral', jasmine:'floral', ylang:'floral', tuberose:'floral', geranium:'floral', linden:'floral',
   narcissus:'floral', orchid:'floral', magnolia:'floral', hyacinth:'floral',
   lilac:'floral', gardenia:'floral', mimosa:'floral', champaca:'floral',
   violet:'floral', lily:'floral', osmanthus:'floral', honeysuckle:'floral',
@@ -726,7 +726,7 @@ const FACET_TAGS = {
   cedar:'woody', sandalwood:'woody', patchouli:'woody', vetiver:'woody',
   guaiac:'woody', oud:'woody', agarwood:'woody', cypress:'woody',
   fir:'woody', pine:'woody', birch:'woody', oakmoss:'woody', cashmere_wood:'woody',
-  rosewood:'woody', cedrol:'woody', coniferous:'woody', dry:'woody',
+  rosewood:'woody', cedrol:'woody', coniferous:'woody', dry:'woody', earthy:'woody',
   // ── balsamic ──
   balsam:'balsamic', tolu_balsam:'balsamic', peru_balsam:'balsamic',
   benzoin:'balsamic', styrax:'balsamic',
@@ -738,7 +738,7 @@ const FACET_TAGS = {
   ambergris:'amber', ambrox:'amber', ambroxan:'amber', ambrette:'amber', mineral:'amber',
   // ── animalic ──
   civet:'animalic', castoreum:'animalic', hyrax:'animalic', skin:'animalic',
-  costus:'animalic',
+  costus:'animalic', sweaty:'animalic',
   // ── musk ──
   white_musk:'musk', muscone:'musk',
   // ── smoky ──
@@ -810,8 +810,12 @@ const FACET_KEYWORDS = {
   soapy:       /\bsoapy\b|fresh\s+laundry|laundry[- ]like|\bdetergent\b|\bshampoo\b/i,
   metallic:    /\bmetallic\b|ink[- ]like|\binky\b/i,
   iodine:      /\biodine\b|\biodic\b/i,
-  // amber
+  // amber / woody / animalic
   mineral:     /\bmineral\b/i,
+  earthy:      /\bearthy\b|\bmusty\b/i,
+  geranium:    /\bgeranium\b/i,
+  sweaty:      /\bsweaty\b|sweat[- ]like/i,
+  tonka:       /\bcoumarin[- ]like\b|\bcoumarinic\b/i,
   // coniferous / woody
   coniferous:  /\bconiferous\b|evergreen\s+forest/i,
   pine:        /\bpine\b|\bpiney\b/i,
@@ -826,10 +830,10 @@ const FACET_KEYWORDS = {
 const FACET_GROUPS = [
   { label:'Citrus',           facets:['bergamot','lemon','orange','mandarin','grapefruit','lime','yuzu','tangerine','petitgrain','neroli','hesperidic'] },
   { label:'Green',            facets:['leaf','leafy','grass','stem','violet_leaf','tomato_leaf','cut_grass','galbanum','cucumber'] },
-  { label:'Herbal',           facets:['lavender','sage','thyme','rosemary','basil','tarragon','fennel','chamomile','bay_laurel','artemisia','celery','parsley','medicinal','antiseptic'] },
+  { label:'Herbal',           facets:['lavender','sage','thyme','rosemary','basil','tarragon','fennel','chamomile','bay_laurel','artemisia','celery','parsley','medicinal','antiseptic','clover'] },
   { label:'Mint',             facets:['mint','minty','peppermint','spearmint'] },
   { label:'Tea',              facets:['tea','green_tea','black_tea','mate'] },
-  { label:'Floral',           facets:['rose','jasmine','ylang','tuberose','narcissus','orchid','magnolia','hyacinth','lilac','gardenia','mimosa','champaca','violet','lily','osmanthus','honeysuckle','iris_flower','muguet','frangipani','boronia','cassie'] },
+  { label:'Floral',           facets:['rose','jasmine','ylang','tuberose','narcissus','orchid','magnolia','hyacinth','lilac','gardenia','mimosa','champaca','violet','lily','osmanthus','honeysuckle','iris_flower','muguet','frangipani','boronia','cassie','geranium','linden'] },
   { label:'Fruity',           facets:['apple','pear','peach','apricot','berry','plum','tropical','pineapple','coconut','melon','raspberry','strawberry','blackcurrant','cassis','cherry','fig','banana','grape'] },
   { label:'Aldehydic',        facets:['aldehyde','waxy_aldehyde','waxy','fatty'] },
   { label:'Aquatic',          facets:['marine','sea','seaweed','oceanic','calone','water','watery','dewy','iodine'] },
@@ -840,11 +844,11 @@ const FACET_GROUPS = [
   { label:'Sweet & Gourmand', facets:['vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee','tonka','maple','hazelnut','almond','praline','biscuit','milk','rum','roasted','nutty','cereal','beeswax'] },
   { label:'Lactonic & Creamy',facets:['creamy','milky','buttery','cream'] },
   { label:'Powdery',          facets:['iris','orris','heliotrope','talc','velvety'] },
-  { label:'Woody',            facets:['cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','pine','birch','oakmoss','cashmere_wood','rosewood','cedrol','coniferous','dry'] },
+  { label:'Woody',            facets:['cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','pine','birch','oakmoss','cashmere_wood','rosewood','cedrol','coniferous','dry','earthy'] },
   { label:'Balsamic',         facets:['balsam','tolu_balsam','peru_balsam','benzoin','styrax'] },
   { label:'Resinous',         facets:['frankincense','myrrh','elemi','labdanum','olibanum','opoponax','copal','galbanum_resin'] },
   { label:'Amber',            facets:['ambergris','ambrox','ambroxan','ambrette','mineral'] },
-  { label:'Animalic',         facets:['civet','castoreum','hyrax','skin','costus'] },
+  { label:'Animalic',         facets:['civet','castoreum','hyrax','skin','costus','sweaty'] },
   { label:'Musk',             facets:['white_musk','muscone'] },
   { label:'Tobacco & Hay',    facets:['tobacco','hay'] },
   { label:'Smoky',            facets:['incense','tar','burn','burnt','smoke','birch_tar','cade','phenolic'] },
@@ -911,7 +915,12 @@ const TAXONOMY_SYNONYMS = {
   pepperminty:'peppermint', spearminty:'spearmint',
   // tea / tobacco / hay
   tea_leaf:'tea', tea_note:'tea',
-  tobacco_leaf:'tobacco', hay_like:'hay', dry_grass:'hay'
+  tobacco_leaf:'tobacco', hay_like:'hay', dry_grass:'hay',
+  // adjective forms → canonical facet tokens
+  rosy:'rose', lemony:'lemon', grassy:'grass', peppery:'pepper',
+  citrusy:'citrus', velvet_like:'velvety', velvet:'velvety', musty:'earthy',
+  geranium_like:'geranium', civetone:'civet', clover_like:'clover',
+  linden_blossom:'linden', sweat_like:'sweaty'
 };
 
 // ── Helpers ──
@@ -1522,6 +1531,35 @@ const FILTER_INDEX = {};
     for (const pf of fc.primaryFamilies || []) _idx('primaryFamily', pf, cas);
     for (const sf of fc.secondaryFamilies || []) _idx('primaryFamily', sf, cas);
     for (const f of fc.facets || []) _idx('facet', f, cas);
+  }
+}
+
+// ── Taxonomy coverage audit (dev diagnostic, runs once at init) ──
+// Logs perfumery candidates missing primaryFamilies and/or facets so
+// gaps are visible in the dev console without user-facing UI noise.
+{
+  const _missingP = [], _missingF = [], _missingBoth = [];
+  let _okCount = 0;
+  for (const [cas, fc] of FILTER_CACHE) {
+    const isPerfCandidate = fc.hasRealOdor || MIXTURES.has(cas);
+    if (!isPerfCandidate) continue;
+    const noP = !fc.primaryFamilies || fc.primaryFamilies.length === 0;
+    const noF = !fc.facets || fc.facets.length === 0;
+    const name = DB[cas]?.name || cas;
+    if (noP && noF) _missingBoth.push(name);
+    else if (noP) _missingP.push(name);
+    else if (noF) _missingF.push(name);
+    else _okCount++;
+  }
+  if (_missingBoth.length || _missingP.length || _missingF.length) {
+    console.groupCollapsed('[taxonomy audit] coverage gaps (' +
+      (_missingP.length + _missingF.length + _missingBoth.length) + ' materials)');
+    if (_missingBoth.length) console.warn('Missing BOTH primary+facets:', _missingBoth);
+    if (_missingP.length)    console.warn('Missing primary only:', _missingP);
+    if (_missingF.length)    console.warn('Missing facets only:', _missingF);
+    console.log('Full coverage:', _okCount, '| missing-primary:', _missingP.length,
+      '| missing-facets:', _missingF.length, '| missing-both:', _missingBoth.length);
+    console.groupEnd();
   }
 }
 
