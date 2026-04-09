@@ -2603,7 +2603,7 @@ function _enrichPubchem(mat, cas) {
     if (!cid) return;
     mat.record.identifiers.pubchem_cid = cid;
     mat.page_url = 'https://pubchem.ncbi.nlm.nih.gov/compound/'+cid;
-    mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/record/PNG?image_size=500x500';
+    mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/PNG?image_size=500x500';
     const [propsRes, synsRes, descRes] = await Promise.allSettled([
       fetchWithTimeout(PUBCHEM_REST+'/compound/cid/'+cid+'/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,IUPACName,InChI,XLogP,ExactMass,TPSA,HBondDonorCount,HBondAcceptorCount,RotatableBondCount,HeavyAtomCount/JSON').then(r=>r.json()).catch(()=>null),
       fetchWithTimeout(PUBCHEM_REST+'/compound/cid/'+cid+'/synonyms/JSON').then(r=>r.json()).catch(()=>null),
@@ -2865,7 +2865,7 @@ async function scrapeMaterial(name) {
 
   mat.found = true; mat.record.identifiers.pubchem_cid = cid;
   mat.page_url = 'https://pubchem.ncbi.nlm.nih.gov/compound/'+cid;
-  mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/record/PNG?image_size=500x500';
+  mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/PNG?image_size=500x500';
   mat.match_info = (mat.record.match.confidence >= 0.9 ? '\u2705 ' : '\u2139\uFE0F ') + (mat.record.match.reason || 'Found via PubChem');
 
   // Fetch properties
@@ -2990,6 +2990,30 @@ function isKeepMatch(text) {
 // Not part of the core search/match/filter pipeline. Returns the raw
 // flattened {heading: [strings]} shape; future structured-export work
 // would replace this with a typed PUG View walker.
+// Walk raw PubChem sections to find the FEMA Number (3-4 digit string
+// that extractAllSections discards because of its >5-char threshold).
+// Returns the FEMA number string or null.
+function _extractFemaNumber(sections, depth=0) {
+  if (!sections || depth > 5) return null;
+  for (const sec of sections) {
+    if (/^fema\s+number$/i.test(sec.TOCHeading || '')) {
+      for (const info of (sec.Information || [])) {
+        if (info.Value?.Number?.length) return String(info.Value.Number[0]);
+        if (info.Value?.StringWithMarkup) {
+          for (const sm of info.Value.StringWithMarkup) {
+            if (sm.String && /^\d{3,5}$/.test(sm.String.trim())) return sm.String.trim();
+          }
+        }
+      }
+    }
+    if (sec.Section) {
+      const found = _extractFemaNumber(sec.Section, depth+1);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 // Extract all PUG View sections recursively (whitelist approach)
 function extractAllSections(sections, prefix="", depth=0) {
   if (depth > 4) return {};
@@ -3412,10 +3436,11 @@ function renderResults() {
               ${sf.ifra_guideline?(()=>{const bs=getBanStatus(mat);return bs?`<p style="color:#b91c1c;font-weight:600">${esc(sf.ifra_guideline)}</p><p style="color:#b91c1c;font-size:0.8em">${bs==='worldwide'?'Banned globally — IFRA prohibition; not permitted in any application':'Banned in EU cosmetics (EC No 2021/1902 — Omnibus II / CLP Annex VI)'}</p>`:`<p>${esc(sf.ifra_guideline)}</p>`;})():""}
               ${_usageLevelsClean?`<p style="color:var(--text2);font-size:0.85em">${esc(_usageLevelsClean)}</p>`:""}
               ${sf.ifra_guideline||sf.usage_levels?`<p style="color:var(--text2);font-size:0.7em;font-style:italic;margin-top:4px">Usage % = guideline in fragrance concentrate, not IFRA max in finished product. Always verify per product category.</p>`:""}
+              ${!sf.ifra_guideline&&!_usageLevelsClean?`<p style="color:var(--text2)">—</p>`:""}
             </div>
             <div style="flex:1">
               <p class="sec-title">Blends with</p>
-              ${blendsArr.length?`<p>${esc(blendsArr.join(', '))}</p>`:""}
+              ${blendsArr.length?`<p>${esc(blendsArr.join(', '))}</p>`:`<p style="color:var(--text2)">—</p>`}
             </div>
           </div>`:""}
           ${renderGHSIcons(mat)}
@@ -3456,11 +3481,8 @@ function prefetchAll() {
           const sections = d.Record?.Section || [];
           mat.record.metadata.pubchem_sections = extractAllSections(sections);
           if (!mat.record.identifiers.fema) {
-            for (const [heading, items] of Object.entries(mat.record.metadata.pubchem_sections)) {
-              if (heading.toLowerCase().includes('fema') && items.length) {
-                mat.record.identifiers.fema = items[0]; break;
-              }
-            }
+            const _fn = _extractFemaNumber(sections);
+            if (_fn) mat.record.identifiers.fema = _fn;
           }
           // Merge PubChem odor/description for compounds without local perfumery data.
           // Reject single-word / generic adjectives like "Pleasant", "Mild",
@@ -3589,11 +3611,8 @@ async function loadPubchemData(idx) {
       const sections = d.Record?.Section || [];
       mat.record.metadata.pubchem_sections = extractAllSections(sections);
       if (!mat.record.identifiers.fema) {
-        for (const [heading, items] of Object.entries(mat.record.metadata.pubchem_sections)) {
-          if (heading.toLowerCase().includes('fema') && items.length) {
-            mat.record.identifiers.fema = items[0]; break;
-          }
-        }
+        const _fn = _extractFemaNumber(sections);
+        if (_fn) mat.record.identifiers.fema = _fn;
       }
     }
     
