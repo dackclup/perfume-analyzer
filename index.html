@@ -3665,6 +3665,10 @@ async function downloadJSON() {
           const d = await r.json();
           const sections = d.Record?.Section || [];
           mat.record.metadata.pubchem_sections = extractAllSections(sections);
+          if (!mat.record.identifiers.fema) {
+            const _fn = _extractFemaNumber(sections);
+            if (_fn) mat.record.identifiers.fema = _fn;
+          }
         } catch(e) { if (e?.name !== 'AbortError') console.warn('downloadJSON pug_view:', e); }
       }
     }));
@@ -3865,17 +3869,18 @@ async function downloadJSON() {
     const usageRange = parseUsageRange(src.safety.usage_levels);
     const ifra51 = parseIFRA51(src.safety.usage_levels);
     const notes = noteOneHot(src.perfumery.note);
-    const banStatus = getBanStatus(mat);
     // FILTER_CACHE is the single source of truth for the Function-axis set.
     // Look it up by canonical CAS and forward to the export's
     // classification.functions array below. No recomputation, no new heuristics.
     const _fc = src.identifiers?.cas ? FILTER_CACHE.get(src.identifiers.cas) : null;
+    const _regTags = ((_fc ? [...(_fc.regulatory || [])] : (src.classification?.regulatory ?? []))).map(_normalizeRegulatoryToken).filter(Boolean);
+    const banStatus = _regTags.some(r => /banned/i.test(r)) ? 'banned' : _regTags.some(r => /restricted/i.test(r)) ? 'restricted' : null;
     const record = {
       name: src.names.canonical,
       pubchem_name: src.names.pubchem_title || (src.names.synonyms||[]).find(s => !CAS_RE_SYN.test(s)) || src.identifiers.iupac || src.names.canonical,
       material_type: src.classification.material_type || classifyMaterialType(mat),
       industry_tags: src.classification.industry_tags || classifyIndustryTags(mat),
-      ban_status: banStatus || null,
+      ban_status: banStatus,
       is_external_perfumery: src.metadata.is_external || false,
       match: src.match || null,
       cas_number: src.identifiers.cas || null,
