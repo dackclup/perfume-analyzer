@@ -1434,10 +1434,13 @@ function _axesFailedBy(fc, cas) {
   // Source (single-value)
   const sourceSet = _filterAxes.source.set;
   if (sourceSet.size && !sourceSet.has(fc.source)) failed.add('source');
-  // Primary Family
+  // Primary Family — AND-within against primary ∪ secondary union.
   if (activePrimaryFamilyFilters.size) {
-    const fcPrim = fc.primaryFamilies || [];
-    for (const fam of activePrimaryFamilyFilters) if (!fcPrim.includes(fam)) { failed.add('primaryFamily'); break; }
+    const combined = new Set([
+      ...(fc.primaryFamilies || []),
+      ...(fc.secondaryFamilies || [])
+    ]);
+    for (const fam of activePrimaryFamilyFilters) if (!combined.has(fam)) { failed.add('primaryFamily'); break; }
   }
   // Facet
   if (activeFacetFilters.size) {
@@ -1487,8 +1490,14 @@ function _updateFilterVisibility() {
     if (contribTo('reg')) for (const reg of fc.regulatory) regCounts[reg] = (regCounts[reg]||0)+1;
     // Source axis (single value)
     if (contribTo('source') && fc.source) sourceCounts[fc.source] = (sourceCounts[fc.source]||0)+1;
-    // Primary family axis (marker-only)
-    if (contribTo('primaryFamily')) for (const fam of fc.primaryFamilies || []) primaryFamHas[fam] = true;
+    // Primary family axis (marker-only). The axis matches against
+    // the primary ∪ secondary union, so chip visibility must also
+    // look at both fields — otherwise a family that only ever
+    // appears as a secondary never gets a clickable chip.
+    if (contribTo('primaryFamily')) {
+      for (const fam of fc.primaryFamilies || []) primaryFamHas[fam] = true;
+      for (const fam of fc.secondaryFamilies || []) primaryFamHas[fam] = true;
+    }
     // Facet axis (marker-only)
     if (contribTo('facet')) for (const f of fc.facets || []) facetHas[f] = true;
   }
@@ -1718,14 +1727,17 @@ _buildPillFilter('type');
 _buildPillFilter('reg');
 _buildPillFilter('source');
 
-// Primary Family chips (Step 5). Multi-select OR within group.
-// Built from PRIMARY_FAMILIES — only families that appear in at
-// least one FILTER_CACHE entry are added so the UI stays compact.
+// Primary Family chips. The axis matches against the union of
+// primary + secondary families on each material (AND-within), so
+// the chip cloud must also be seeded from that union — otherwise
+// a family that only ever appears as a secondary never gets a
+// clickable chip in the drawer.
 {
   const container = document.getElementById('primaryFamilyChips');
   const present = new Set();
   for (const fc of FILTER_CACHE.values()) {
     for (const fam of fc.primaryFamilies || []) present.add(fam);
+    for (const fam of fc.secondaryFamilies || []) present.add(fam);
   }
   for (const fam of PRIMARY_FAMILIES) {
     if (!present.has(fam)) continue;
@@ -1878,11 +1890,19 @@ function matchesAllFilters(cas) {
       if (!fc.odorFamilies.has(f)) return false;
     }
   }
-  // Primary Family — multi-value on material. AND-within.
+  // Primary Family — multi-value on material. Unlike the other
+  // multi-value axes this one is AND-within, AND the axis checks
+  // against the UNION of primaryFamilies ∪ secondaryFamilies so
+  // that a material like Hedione (P=Floral, S=Fresh/Green/Citrus)
+  // can match Primary=[Floral, Fresh, Green, Citrus] — the user
+  // treats "primary + secondary" as one "family profile" axis.
   if (activePrimaryFamilyFilters.size) {
-    const fcPrim = fc.primaryFamilies || [];
+    const combined = new Set([
+      ...(fc.primaryFamilies || []),
+      ...(fc.secondaryFamilies || [])
+    ]);
     for (const fam of activePrimaryFamilyFilters) {
-      if (!fcPrim.includes(fam)) return false;
+      if (!combined.has(fam)) return false;
     }
   }
   // Facet — multi-value on material. AND-within.
