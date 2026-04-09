@@ -2565,11 +2565,16 @@ async function scrapeMaterial(name) {
       // like "phenylethyl alcohol" and "2-phenylethanol" both reduce to
       // a comparable stem ("phenylethan-"). Strips leading positional
       // numbers and collapses "-ol"/"-yl alcohol" tail forms.
+      // Also normalizes "-ic acid" → "-ate" for a conservative whitelist
+      // of roots common in perfumery (cinnam, benzo, salicyl, anthranil)
+      // so "cinnamic acid" matches "methyl cinnamate" etc.
       const _stem = s => s
         .replace(/^\d+[-\s]*/, '')      // drop leading "2-" / "1 "
         .replace(/\s+alcohol\b/g, 'ol') // "phenylethyl alcohol" → "phenylethylol"
         .replace(/yl ?ol\b/g, 'anol')   // "phenylethylol" → "phenylethanol"
-        .replace(/[\s\-]+/g, '');       // strip remaining whitespace/hyphens
+        .replace(/[\s\-]+/g, '')        // strip remaining whitespace/hyphens
+        // acid↔ester: whitelisted roots only to avoid over-matching
+        .replace(/(cinnam|benzo|salicyl|anthranil)icacid/g, '$1ate');
       let isPlausible = false;
       if (titleNorm) {
         if (titleNorm.includes(inputNorm) || inputNorm.includes(titleNorm)) {
