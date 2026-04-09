@@ -585,7 +585,7 @@ const SOURCE_LABELS = {
 // summary label. Primary Family / Facet / legacy Odor still live in
 // their own dedicated Sets below (activePrimaryFamilyFilters, etc.).
 const _NOTE_VALUES = ['top','middle','base','_other'];
-const _NOTE_LABELS = { top:'Top', middle:'Middle', base:'Base', _other:'Other' };
+const _NOTE_LABELS = { top:'Top', middle:'Middle', base:'Base', _other:'Odorless' };
 const _filterAxes = {
   note:   { set: new Set(), elId: 'noteSelected',   values: _NOTE_VALUES,    labels: _NOTE_LABELS,       containerId: 'noteFilters'   },
   type:   { set: new Set(), elId: 'typeSelected',   values: TYPE_VALUES,     labels: TYPE_LABELS,        containerId: 'typeFilters'   },
@@ -1638,7 +1638,7 @@ function _updateFilterVisibility() {
 function _updateOdorSelected() {
   const sel = document.getElementById('odorSelected');
   if (activeOdorFilters.size) {
-    sel.textContent = [...activeOdorFilters].map(f => f === '_other' ? 'Other' : f.charAt(0).toUpperCase()+f.slice(1)).join(', ');
+    sel.textContent = [...activeOdorFilters].map(f => f === '_other' ? 'Odorless' : f.charAt(0).toUpperCase()+f.slice(1)).join(', ');
   } else { sel.textContent = 'All'; }
 }
 function toggleOdorTag(el) {
