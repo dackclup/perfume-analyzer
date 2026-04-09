@@ -536,11 +536,10 @@ const ODOR_FAMILY_KEYWORDS = {
   smoky:    /\b(smoky|smoked|smoke|smoking|burnt|burn|burning|tarry|tar|tobacco|incense|leathery|leather)\b/i,
   aquatic:  /\b(aquatic|marine|ozone|water|sea|seaweed|oceanic|calone)\b/i,
 };
-const USE_VALUES = ['perfumery','fine_fragrance','flavor','cosmetics','personal_care','home_care','air_care','fabric_care','soap','candle'];
+const USE_VALUES = ['fine_fragrance','personal_care','home_care','flavor'];
 const USE_LABELS = {
-  perfumery:'Perfumery', fine_fragrance:'Fine Fragrance', flavor:'Flavor',
-  cosmetics:'Cosmetics', personal_care:'Personal Care', home_care:'Home Care',
-  air_care:'Air Care', fabric_care:'Fabric Care', soap:'Soap', candle:'Candle'
+  fine_fragrance:'Fine Fragrance', personal_care:'Personal Care & Cosmetics',
+  home_care:'Home Care & Air Care', flavor:'Flavor'
 };
 // Regulatory axis multi-value tags. CANONICAL vocabulary uses
 // 'regulated' for the IFRA-restriction bucket — 'IFRA Limited' is a
@@ -4139,16 +4138,11 @@ function getBanStatus(mat) {
 }
 function isBannedEU(mat) { return getBanStatus(mat) !== null; }
 
-// Use-axis classifier — closed set USE_VALUES. Returns an array (not
-// a Set) so the existing classification.industry_tags + export schema
-// keeps working. Uses curated DB fields only; no PubChem-synonym noise.
-//
-// Strategy: the curated DB carries IFRA 51 usage text for restricted
-// materials, e.g. "IFRA 51: 16% Fine Fragrance / 4.3% Body lotion / 0.9%
-// Axillae", and freeform notes for unrestricted materials. We extract
-// Use signals from those category names directly when present, then
-// fall back to broad defaults so non-banned aromatic materials don't
-// end up with only a single tag.
+// Use-axis classifier — 4 industry categories. Returns an array.
+// 1) Fine Fragrance — complex scent compositions (EDP/EDT/niche)
+// 2) Personal Care & Cosmetics — soap, shampoo, lotion, deodorant, cosmetics
+// 3) Home Care & Air Care — candle, reed diffuser, fabric softener, detergent
+// 4) Flavor — food-grade aroma chemicals (FEMA/GRAS)
 function classifyUses(mat) {
   const r = mat.record || mat;
   const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, id = r.identifiers || {};
@@ -4169,20 +4163,9 @@ function classifyUses(mat) {
   const usageDesc = usage + ' ' + desc;
   const push = t => { if (!tags.includes(t)) tags.push(t); };
 
-  // === Perfumery ===
-  // Any aromatic material, natural mixture, or recognized fragrance
-  // vehicle belongs on the perfumery axis.
-  if (isPerfumeryMaterial) push('perfumery');
-
-  // === Fine fragrance ===
-  // Triggered by any of:
-  //   1. Explicit "fine fragrance" phrase in the usage text.
-  //   2. Very-high / excellent tenacity (EDP base material).
-  //   3. Base note + high+ tenacity on a non-banned perfumery material.
-  //   4. Non-banned perfumery material used at ≥5 % in fragrance
-  //      concentrate — the canonical Hedione / Iso E Super / Vanillin
-  //      case. Anything at 5%+ in the concentrate is, by industry
-  //      convention, a fine fragrance workhorse.
+  // === 1. Fine Fragrance ===
+  // Explicit cue, very-high tenacity, base+high tenacity, or ≥5% in
+  // fragrance concentrate (industry workhorse threshold).
   const _usageMax = (() => {
     const m = (usage || '').match(/(\d+(?:\.\d+)?)\s*(?:[–-]\s*(\d+(?:\.\d+)?))?\s*%/);
     if (!m) return 0;
@@ -4195,59 +4178,35 @@ function classifyUses(mat) {
     push('fine_fragrance');
   }
 
-  // === Flavor ===
-  // FEMA number OR explicit food/flavor cue. Banned materials are
-  // excluded — banned-in-fragrance does not necessarily mean banned-
-  // in-flavor, but the curated DB does not separate the two cleanly,
-  // so we err on the side of caution.
+  // === 2. Personal Care & Cosmetics ===
+  // Any non-banned perfumery material or fragrance vehicle is used in
+  // personal-care / cosmetic formulations (soap, shampoo, lotion, etc.).
+  if (!banned && (isPerfumeryMaterial || isFragranceVehicle)) {
+    push('personal_care');
+  }
+  if (!banned && /\b(body lotion|lip|hair|hands|axillae|deodorant|shampoo|skin care|body wash|cosmetic|skin|soap)\b/i.test(usageDesc)) {
+    push('personal_care');
+  }
+
+  // === 3. Home Care & Air Care ===
+  // Candle / reed diffuser / fabric / laundry / household, plus
+  // non-banned base-note materials with woody/amber/gourmand profile
+  // (typical home-fragrance scent profile) and natural mixtures.
+  if (/\b(candle|wax melt|home care|household|cleaner|detergent|all[- ]purpose|air care|air freshener|reed diffuser|room spray|aerosol|fabric|laundry|softener|conditioner)\b/i.test(usageDesc)) {
+    push('home_care');
+  }
+  if (!banned && /\bbase\b/i.test(noteLow) && /\b(woody|amber|ambery|balsamic|resin|vanilla|tobacco|tonka|smoke|smoky|gourmand)\b/i.test(odorType + ' ' + desc)) {
+    push('home_care');
+  }
+  if (!banned && isMixture && /\b(base|middle)\b/i.test(noteLow)) {
+    push('home_care');
+  }
+
+  // === 4. Flavor ===
+  // FEMA number or explicit food/flavor cue. Banned materials excluded.
   if (!banned && (id.fema || /\b(flavor|flavour|fema|jecfa|food|gras)\b/i.test(usageDesc))) {
     push('flavor');
   }
-
-  // === Cosmetics + Personal Care ===
-  // Broad default: any non-banned perfumery material is also used in
-  // cosmetic / personal-care formulation. The curated DB only carries
-  // explicit cosmetic cues for restricted materials (via IFRA 51
-  // category names like "Body lotion", "Lip products", "Hair", "Hands",
-  // "Axillae"), so for unrestricted materials we use the perfumery
-  // membership as the proxy.
-  if (!banned && isPerfumeryMaterial) {
-    push('cosmetics');
-    push('personal_care');
-  }
-  // Tighten back: explicit cue from IFRA 51 categories also counts even
-  // if the perfumery default already pushed.
-  if (!banned && /\b(body lotion|lip|hair|hands|axillae|deodorant|shampoo|skin care|body wash|cosmetic|skin)\b/i.test(usageDesc)) {
-    push('cosmetics'); push('personal_care');
-  }
-  // Vehicles (DPG, ethanol, IPM, …) get cosmetics + personal_care from
-  // the name override even when they have no aromatic role.
-  if (!banned && isFragranceVehicle) {
-    push('cosmetics'); push('personal_care');
-  }
-
-  // === Soap ===
-  // Explicit cue OR base/middle note with high tenacity (typical soap
-  // performer) OR most natural mixtures (essential oils / absolutes /
-  // balsams are widely used in soap fragrancing).
-  if (/\bsoap\b/i.test(usageDesc) ||
-      (!banned && /\b(very high|excellent|high)\b/i.test(tenacity) && /\b(base|middle)\b/i.test(noteLow)) ||
-      (!banned && isMixture)) {
-    push('soap');
-  }
-
-  // === Candle ===
-  // Explicit cue OR woody / amber / balsamic / resinous / gourmand
-  // base note material (typical candle scent profile).
-  if (/\b(candle|wax melt)\b/i.test(usageDesc) ||
-      (!banned && /\bbase\b/i.test(noteLow) && /\b(woody|amber|ambery|balsamic|resin|vanilla|tobacco|tonka|smoke|smoky|gourmand)\b/i.test(odorType + ' ' + desc))) {
-    push('candle');
-  }
-
-  // === Home / Air / Fabric care === (narrow — explicit cues only)
-  if (/\b(home care|household|cleaner|detergent|all[- ]purpose)\b/i.test(usageDesc)) push('home_care');
-  if (/\b(air care|air freshener|reed diffuser|room spray|aerosol)\b/i.test(usageDesc)) push('air_care');
-  if (/\b(fabric|laundry|softener|conditioner)\b/i.test(usageDesc)) push('fabric_care');
 
   return tags;
 }
