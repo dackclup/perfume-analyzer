@@ -2603,7 +2603,7 @@ function _enrichPubchem(mat, cas) {
     if (!cid) return;
     mat.record.identifiers.pubchem_cid = cid;
     mat.page_url = 'https://pubchem.ncbi.nlm.nih.gov/compound/'+cid;
-    mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/record/PNG?image_size=500x500';
+    mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/PNG?image_size=500x500';
     const [propsRes, synsRes, descRes] = await Promise.allSettled([
       fetchWithTimeout(PUBCHEM_REST+'/compound/cid/'+cid+'/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,IUPACName,InChI,XLogP,ExactMass,TPSA,HBondDonorCount,HBondAcceptorCount,RotatableBondCount,HeavyAtomCount/JSON').then(r=>r.json()).catch(()=>null),
       fetchWithTimeout(PUBCHEM_REST+'/compound/cid/'+cid+'/synonyms/JSON').then(r=>r.json()).catch(()=>null),
@@ -2865,7 +2865,7 @@ async function scrapeMaterial(name) {
 
   mat.found = true; mat.record.identifiers.pubchem_cid = cid;
   mat.page_url = 'https://pubchem.ncbi.nlm.nih.gov/compound/'+cid;
-  mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/record/PNG?image_size=500x500';
+  mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/PNG?image_size=500x500';
   mat.match_info = (mat.record.match.confidence >= 0.9 ? '\u2705 ' : '\u2139\uFE0F ') + (mat.record.match.reason || 'Found via PubChem');
 
   // Fetch properties
