@@ -1186,7 +1186,6 @@ function classifyFacets(matOrRecord)            { return _inferTaxonomy(matOrRec
 // The parser is intentionally additive: the old odor_type string is read
 // only as INPUT for inference, never as the final filter model. The new
 // taxonomy arrays are the source of truth for the upcoming filter UI.
-}
 
 function migrateLegacyTaxonomy(entry) {
   if (!entry) return { primaryFamilies: [], secondaryFamilies: [], facets: [] };
