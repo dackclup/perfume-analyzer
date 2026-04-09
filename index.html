@@ -4086,25 +4086,31 @@ function downloadCSV() {
   const headers = [
     'cas_number', 'name', 'material_type', 'functions',
     'ban_status', 'note', 'odor_description', 'usage_levels',
-    'uses', 'odor_families', 'regulatory', 'source'
+    'uses', 'odor_families', 'primary_families', 'secondary_families', 'facets',
+    'regulatory', 'source'
   ];
   const rows = [headers.join(',')];
   for (const mat of found) {
     const src = mat.record;
     const cas = src.identifiers?.cas ?? null;
     const fc  = cas ? FILTER_CACHE.get(cas) : null;
+    const regTags = ((fc ? [...(fc.regulatory || [])] : (src.classification?.regulatory ?? []))).map(_normalizeRegulatoryToken).filter(Boolean);
+    const banStatus = regTags.some(r => /banned/i.test(r)) ? 'banned' : regTags.some(r => /restricted/i.test(r)) ? 'restricted' : 'norestriction';
     rows.push([
       _csv(cas),
       _csv(src.names?.canonical),
       _csv(src.classification?.material_type),
       _csv(fc ? [...(fc.functions || [])] : (src.classification?.functions ?? null)),
-      _csv(getBanStatus(mat)),
+      _csv(banStatus),
       _csv(src.perfumery?.note),
       _csv(src.perfumery?.odor_description),
       _csv(src.safety?.usage_levels),
       _csv(fc ? [...(fc.uses || [])]         : (src.classification?.uses         ?? src.classification?.industry_tags ?? null)),
       _csv(fc ? [...(fc.odorFamilies || [])] : (src.classification?.odor_families ?? null)),
-      _csv(((fc ? [...(fc.regulatory || [])]   : (src.classification?.regulatory   ?? []))).map(_normalizeRegulatoryToken).filter(Boolean)),
+      _csv(fc ? [...(fc.primaryFamilies || [])]   : (src.classification?.primaryFamilies ?? [])),
+      _csv(fc ? [...(fc.secondaryFamilies || [])] : (src.classification?.secondaryFamilies ?? [])),
+      _csv(fc ? [...(fc.facets || [])]             : (src.classification?.facets ?? [])),
+      _csv(regTags),
       _csv(fc ? fc.source                     : (src.classification?.source       ?? null)),
     ].join(','));
   }
