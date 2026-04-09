@@ -633,7 +633,7 @@ let activeFacetFilters = new Set();
 // intentionally NOT mutated — both lists coexist.
 const PRIMARY_FAMILIES = [
   'citrus','green','herbal','aldehydic','aquatic','ozonic','fresh',
-  'camphoraceous','floral','fruity','sweet','gourmand','spicy','powdery',
+  'camphoraceous','floral','fruity','sweet','gourmand','lactonic','spicy','powdery',
   'woody','balsamic','resinous','amber','animalic','leather','musk','smoky'
 ];
 // Display labels for the Step-2 primary family axis (used by the
@@ -642,9 +642,9 @@ const PRIMARY_FAMILY_LABELS = {
   citrus:'Citrus', green:'Green', herbal:'Herbal', aldehydic:'Aldehydic',
   aquatic:'Aquatic', ozonic:'Ozonic', fresh:'Fresh', camphoraceous:'Camphoraceous',
   floral:'Floral', fruity:'Fruity', sweet:'Sweet', gourmand:'Gourmand',
-  spicy:'Spicy', powdery:'Powdery', woody:'Woody', balsamic:'Balsamic',
-  resinous:'Resinous', amber:'Amber', animalic:'Animalic', leather:'Leather',
-  musk:'Musk', smoky:'Smoky'
+  lactonic:'Lactonic', spicy:'Spicy', powdery:'Powdery', woody:'Woody',
+  balsamic:'Balsamic', resinous:'Resinous', amber:'Amber', animalic:'Animalic',
+  leather:'Leather', musk:'Musk', smoky:'Smoky'
 };
 // Build a snake_case facet token into a presentable label.
 function facetLabel(t) {
@@ -660,100 +660,92 @@ function facetLabel(t) {
 // "balsamic" / "floral" / "woody" / "fresh" resolve to their own family
 // even when no specific facet keyword is present in the source text.
 const FACET_TAGS = {
-  // family self-references (token === family)
+  // ── family self-references (token === family) ──
   citrus:'citrus', green:'green', herbal:'herbal', floral:'floral',
   fruity:'fruity', aldehydic:'aldehydic', aquatic:'aquatic', fresh:'fresh',
   spicy:'spicy', gourmand:'gourmand', powdery:'powdery', woody:'woody',
   balsamic:'balsamic', resinous:'resinous', amber:'amber', animalic:'animalic',
   musk:'musk', smoky:'smoky', leather:'leather',
   sweet:'sweet', ozonic:'ozonic', camphoraceous:'camphoraceous',
-  // step-2 facets that map to a parent family
-  camphor:'camphoraceous', camphor_oil:'camphoraceous',
-  waxy:'fresh',
-  // citrus
+  lactonic:'lactonic',
+  // ── camphoraceous ──
+  camphor:'camphoraceous', camphor_oil:'camphoraceous', cooling:'camphoraceous',
+  // ── aldehydic (incl. waxy / fatty) ──
+  aldehyde:'aldehydic', waxy_aldehyde:'aldehydic', waxy:'aldehydic', fatty:'aldehydic',
+  // ── citrus ──
   bergamot:'citrus', lemon:'citrus', orange:'citrus', mandarin:'citrus',
   grapefruit:'citrus', lime:'citrus', yuzu:'citrus', tangerine:'citrus',
   petitgrain:'citrus', neroli:'citrus', hesperidic:'citrus',
-  // green
+  // ── green ──
   galbanum:'green', leaf:'green', leafy:'green', grass:'green', stem:'green',
-  violet_leaf:'green', tomato_leaf:'green', cut_grass:'green',
-  // herbal
+  violet_leaf:'green', tomato_leaf:'green', cut_grass:'green', cucumber:'green',
+  // ── herbal (incl. tea / hay / mint / medicinal) ──
   lavender:'herbal', mint:'herbal', peppermint:'herbal', spearmint:'herbal',
   sage:'herbal', thyme:'herbal', rosemary:'herbal', basil:'herbal',
   tarragon:'herbal', fennel:'herbal', chamomile:'herbal', bay_laurel:'herbal',
-  artemisia:'herbal',
-  // floral
+  artemisia:'herbal', celery:'herbal', parsley:'herbal',
+  minty:'herbal', medicinal:'herbal', antiseptic:'herbal',
+  tea:'herbal', green_tea:'herbal', black_tea:'herbal', mate:'herbal',
+  hay:'herbal',
+  // ── floral ──
   rose:'floral', jasmine:'floral', ylang:'floral', tuberose:'floral',
   narcissus:'floral', orchid:'floral', magnolia:'floral', hyacinth:'floral',
   lilac:'floral', gardenia:'floral', mimosa:'floral', champaca:'floral',
   violet:'floral', lily:'floral', osmanthus:'floral', honeysuckle:'floral',
   iris_flower:'floral', muguet:'floral', frangipani:'floral', boronia:'floral',
   cassie:'floral',
-  // fruity
+  // ── fruity ──
   apple:'fruity', pear:'fruity', peach:'fruity', apricot:'fruity',
   berry:'fruity', plum:'fruity', tropical:'fruity', pineapple:'fruity',
   coconut:'fruity', melon:'fruity', raspberry:'fruity', strawberry:'fruity',
   blackcurrant:'fruity', cassis:'fruity', cherry:'fruity', fig:'fruity',
-  // aldehydic
-  aldehyde:'aldehydic', aldehydic:'aldehydic', waxy_aldehyde:'aldehydic',
-  // aquatic
+  banana:'fruity', grape:'fruity',
+  // ── aquatic ──
   marine:'aquatic', sea:'aquatic', seaweed:'aquatic', oceanic:'aquatic',
-  calone:'aquatic', water:'aquatic',
-  // fresh
-  ozone:'fresh', ozonic:'fresh', cool:'fresh', airy:'fresh', crisp:'fresh',
-  clean:'fresh',
-  // spicy
+  calone:'aquatic', water:'aquatic', watery:'aquatic', dewy:'aquatic', iodine:'aquatic',
+  // ── ozonic (NOT fresh — distinct family) ──
+  ozone:'ozonic', airy:'ozonic',
+  // ── fresh ──
+  cool:'fresh', crisp:'fresh', clean:'fresh',
+  soapy:'fresh', metallic:'fresh', laundry:'fresh',
+  // ── spicy ──
   cinnamon:'spicy', clove:'spicy', pepper:'spicy', nutmeg:'spicy',
   cardamom:'spicy', saffron:'spicy', ginger:'spicy', anise:'spicy',
-  star_anise:'spicy', allspice:'spicy', coriander:'spicy',
-  // gourmand
+  star_anise:'spicy', allspice:'spicy', coriander:'spicy', licorice:'spicy',
+  // ── gourmand ──
   vanilla:'gourmand', vanillin:'gourmand', caramel:'gourmand',
   chocolate:'gourmand', cocoa:'gourmand', honey:'gourmand', coffee:'gourmand',
   tonka:'gourmand', maple:'gourmand', hazelnut:'gourmand', almond:'gourmand',
   praline:'gourmand', biscuit:'gourmand', milk:'gourmand', rum:'gourmand',
-  // powdery
-  iris:'powdery', orris:'powdery', heliotrope:'powdery', talc:'powdery',
-  // woody
+  roasted:'gourmand', nutty:'gourmand', cereal:'gourmand', beeswax:'gourmand',
+  // ── lactonic ──
+  creamy:'lactonic', milky:'lactonic', buttery:'lactonic', cream:'lactonic',
+  // ── powdery ──
+  iris:'powdery', orris:'powdery', heliotrope:'powdery', talc:'powdery', velvety:'powdery',
+  // ── woody ──
   cedar:'woody', sandalwood:'woody', patchouli:'woody', vetiver:'woody',
   guaiac:'woody', oud:'woody', agarwood:'woody', cypress:'woody',
   fir:'woody', pine:'woody', birch:'woody', oakmoss:'woody', cashmere_wood:'woody',
-  rosewood:'woody', cedrol:'woody',
-  // balsamic
+  rosewood:'woody', cedrol:'woody', coniferous:'woody', dry:'woody',
+  // ── balsamic ──
   balsam:'balsamic', tolu_balsam:'balsamic', peru_balsam:'balsamic',
   benzoin:'balsamic', styrax:'balsamic',
-  // resinous
+  // ── resinous ──
   frankincense:'resinous', myrrh:'resinous', elemi:'resinous',
   labdanum:'resinous', olibanum:'resinous', opoponax:'resinous',
   copal:'resinous', galbanum_resin:'resinous',
-  // amber (family self-reference declared above)
-  ambergris:'amber', ambrox:'amber', ambroxan:'amber', ambrette:'amber',
-  // animalic
+  // ── amber ──
+  ambergris:'amber', ambrox:'amber', ambroxan:'amber', ambrette:'amber', mineral:'amber',
+  // ── animalic ──
   civet:'animalic', castoreum:'animalic', hyrax:'animalic', skin:'animalic',
   costus:'animalic',
-  // musk (family self-reference declared above)
+  // ── musk ──
   white_musk:'musk', muscone:'musk',
-  // smoky
-  tobacco:'smoky', incense:'smoky', tar:'smoky', burn:'smoky', smoke:'smoky',
-  birch_tar:'smoky', cade:'smoky',
-  // leather (family self-reference declared above)
-  leathery:'leather', suede:'leather',
-  // ── nose-friendly note facets (added for keyword-based inference) ──
-  // tea
-  tea:'herbal', green_tea:'herbal', black_tea:'herbal', mate:'herbal',
-  // tobacco & hay
-  hay:'herbal',
-  // comfort / gourmand extras
-  beeswax:'gourmand', roasted:'gourmand', nutty:'gourmand', cereal:'gourmand',
-  // herbal extras
-  celery:'herbal', parsley:'herbal',
-  // spicy extras
-  licorice:'spicy',
-  // fresh / texture
-  soapy:'fresh', metallic:'fresh', laundry:'fresh',
-  // woody extras
-  coniferous:'woody',
-  // aquatic extras
-  iodine:'aquatic'
+  // ── smoky ──
+  tobacco:'smoky', incense:'smoky', tar:'smoky', burn:'smoky', burnt:'smoky',
+  smoke:'smoky', birch_tar:'smoky', cade:'smoky', phenolic:'smoky',
+  // ── leather ──
+  leathery:'leather', suede:'leather'
 };
 
 // ── Nose-friendly keyword → facet regex map ──
@@ -766,40 +758,61 @@ const FACET_TAGS = {
 const FACET_KEYWORDS = {
   // tea
   tea:         /\btea\b|tea[- ]like/i,
-  green_tea:   /\bgreen\s+tea\b|sencha|matcha/i,
-  black_tea:   /\bblack\s+tea\b|assam\b|ceylon\b/i,
+  green_tea:   /\bgreen\s+tea\b|\bsencha\b|\bmatcha\b/i,
+  black_tea:   /\bblack\s+tea\b|\bassam\b|\bceylon\b/i,
   mate:        /\bmate\b|yerba\s*mate/i,
   // tobacco & hay
-  tobacco:     /\btobacco\b|pipe\s*tobacco|cigar(?:ette)?\b/i,
+  tobacco:     /\btobacco\b|pipe\s*tobacco|\bcigar(?:ette)?\b/i,
   hay:         /\bhay\b|hay[- ]like|dry[\s-]+grass/i,
-  // comfort
-  honey:       /\bhoney\b|honeyed|nectar[- ]like/i,
+  // gourmand
+  honey:       /\bhoney\b|\bhoneyed\b|nectar[- ]like/i,
   beeswax:     /\bbeeswax\b/i,
   chocolate:   /\bchocolate\b/i,
   cocoa:       /\bcocoa\b|\bcacao\b/i,
-  coffee:      /\bcoffee\b|espresso/i,
+  coffee:      /\bcoffee\b|\bespresso\b/i,
   roasted:     /\broasted\b|\btoasted\b|burnt\s+sugar/i,
   nutty:       /\bnutty\b/i,
   biscuit:     /\bbiscuit\b|\bcookie\b/i,
   cereal:      /\bcereal\b|\bgrainy\b|\boatmeal\b/i,
-  // green specifics
+  // lactonic / creamy
+  creamy:      /\bcreamy\b|cream[- ]like/i,
+  milky:       /\bmilky\b|milk[- ]like/i,
+  buttery:     /\bbuttery\b|butter[- ]like/i,
+  lactonic:    /\blactonic\b/i,
+  // green
   tomato_leaf: /\btomato\s+leaf\b/i,
   violet_leaf: /\bviolet\s+leaf\b/i,
   galbanum:    /\bgalbanum\b/i,
-  // spicy specifics
+  cucumber:    /\bcucumber\b/i,
+  // aquatic
+  watery:      /\bwatery\b|water[- ]like/i,
+  dewy:        /\bdewy\b|dew[- ]like/i,
+  // ozonic
+  ozone:       /\bozone\b|\bozonic\b|ozone[- ]like/i,
+  // camphoraceous
+  camphor:     /\bcamphor(?:ous|aceous)?\b|camphor[- ]like/i,
+  cooling:     /\bcooling\b/i,
+  // herbal / mint / medicinal
+  minty:       /\bminty\b/i,
+  medicinal:   /\bmedicinal\b|\bantiseptic\b/i,
+  // smoky / phenolic
+  phenolic:    /\bphenolic\b/i,
+  // spicy
   anise:       /\banise\b|\banisic\b/i,
   licorice:    /\blicorice\b|\bliquorice\b/i,
   celery:      /\bcelery\b/i,
   coriander:   /\bcoriander\b|\bcilantro\b/i,
   parsley:     /\bparsley\b/i,
-  // powdery detail
+  // powdery
   heliotrope:  /\bheliotrope\b|\bheliotropin\b/i,
   almond:      /\balmond\b|\bmarzipan\b/i,
   // texture
   soapy:       /\bsoapy\b|fresh\s+laundry|laundry[- ]like|\bdetergent\b|\bshampoo\b/i,
   metallic:    /\bmetallic\b|ink[- ]like|\binky\b/i,
   iodine:      /\biodine\b|\biodic\b/i,
-  // coniferous
+  // amber
+  mineral:     /\bmineral\b/i,
+  // coniferous / woody
   coniferous:  /\bconiferous\b|evergreen\s+forest/i,
   pine:        /\bpine\b|\bpiney\b/i,
   fir:         /\bfir\b|fir\s+needle/i,
@@ -811,27 +824,32 @@ const FACET_KEYWORDS = {
 // a labelled section in the Facet sub-drawer. Only facets with ≥1
 // material in FILTER_CACHE are rendered as chips.
 const FACET_GROUPS = [
-  { label:'Citrus',        facets:['bergamot','lemon','orange','mandarin','grapefruit','lime','yuzu','tangerine','petitgrain','neroli','hesperidic'] },
-  { label:'Green',         facets:['leaf','leafy','grass','stem','violet_leaf','tomato_leaf','cut_grass','galbanum'] },
-  { label:'Herbal',        facets:['lavender','mint','peppermint','spearmint','sage','thyme','rosemary','basil','tarragon','fennel','chamomile','bay_laurel','artemisia','celery','parsley'] },
-  { label:'Tea',           facets:['tea','green_tea','black_tea','mate'] },
-  { label:'Floral',        facets:['rose','jasmine','ylang','tuberose','narcissus','orchid','magnolia','hyacinth','lilac','gardenia','mimosa','champaca','violet','lily','osmanthus','honeysuckle','iris_flower','muguet','frangipani','boronia','cassie'] },
-  { label:'Fruity',        facets:['apple','pear','peach','apricot','berry','plum','tropical','pineapple','coconut','melon','raspberry','strawberry','blackcurrant','cassis','cherry','fig'] },
-  { label:'Aldehydic',     facets:['aldehyde','waxy_aldehyde'] },
-  { label:'Aquatic',       facets:['marine','sea','seaweed','oceanic','calone','water','iodine'] },
-  { label:'Fresh & Clean', facets:['ozone','ozonic','cool','airy','crisp','clean','soapy','metallic','laundry','waxy','camphor','camphor_oil'] },
-  { label:'Spicy',         facets:['cinnamon','clove','pepper','nutmeg','cardamom','saffron','ginger','anise','star_anise','allspice','coriander','licorice'] },
-  { label:'Gourmand',      facets:['vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee','tonka','maple','hazelnut','almond','praline','biscuit','milk','rum','roasted','nutty','cereal','beeswax'] },
-  { label:'Powdery',       facets:['iris','orris','heliotrope','talc'] },
-  { label:'Woody',         facets:['cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','pine','birch','oakmoss','cashmere_wood','rosewood','cedrol','coniferous'] },
-  { label:'Balsamic',      facets:['balsam','tolu_balsam','peru_balsam','benzoin','styrax'] },
-  { label:'Resinous',      facets:['frankincense','myrrh','elemi','labdanum','olibanum','opoponax','copal','galbanum_resin'] },
-  { label:'Amber',         facets:['ambergris','ambrox','ambroxan','ambrette'] },
-  { label:'Animalic',      facets:['civet','castoreum','hyrax','skin','costus'] },
-  { label:'Musk',          facets:['white_musk','muscone'] },
-  { label:'Tobacco & Hay', facets:['tobacco','hay'] },
-  { label:'Smoky',         facets:['incense','tar','burn','smoke','birch_tar','cade'] },
-  { label:'Leather',       facets:['leathery','suede'] },
+  { label:'Citrus',           facets:['bergamot','lemon','orange','mandarin','grapefruit','lime','yuzu','tangerine','petitgrain','neroli','hesperidic'] },
+  { label:'Green',            facets:['leaf','leafy','grass','stem','violet_leaf','tomato_leaf','cut_grass','galbanum','cucumber'] },
+  { label:'Herbal',           facets:['lavender','sage','thyme','rosemary','basil','tarragon','fennel','chamomile','bay_laurel','artemisia','celery','parsley','medicinal','antiseptic'] },
+  { label:'Mint',             facets:['mint','minty','peppermint','spearmint'] },
+  { label:'Tea',              facets:['tea','green_tea','black_tea','mate'] },
+  { label:'Floral',           facets:['rose','jasmine','ylang','tuberose','narcissus','orchid','magnolia','hyacinth','lilac','gardenia','mimosa','champaca','violet','lily','osmanthus','honeysuckle','iris_flower','muguet','frangipani','boronia','cassie'] },
+  { label:'Fruity',           facets:['apple','pear','peach','apricot','berry','plum','tropical','pineapple','coconut','melon','raspberry','strawberry','blackcurrant','cassis','cherry','fig','banana','grape'] },
+  { label:'Aldehydic',        facets:['aldehyde','waxy_aldehyde','waxy','fatty'] },
+  { label:'Aquatic',          facets:['marine','sea','seaweed','oceanic','calone','water','watery','dewy','iodine'] },
+  { label:'Ozonic',           facets:['ozone','airy'] },
+  { label:'Fresh',            facets:['cool','crisp'] },
+  { label:'Camphoraceous',    facets:['camphor','camphor_oil','cooling'] },
+  { label:'Spicy',            facets:['cinnamon','clove','pepper','nutmeg','cardamom','saffron','ginger','anise','star_anise','allspice','coriander','licorice'] },
+  { label:'Sweet & Gourmand', facets:['vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee','tonka','maple','hazelnut','almond','praline','biscuit','milk','rum','roasted','nutty','cereal','beeswax'] },
+  { label:'Lactonic & Creamy',facets:['creamy','milky','buttery','cream'] },
+  { label:'Powdery',          facets:['iris','orris','heliotrope','talc','velvety'] },
+  { label:'Woody',            facets:['cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','pine','birch','oakmoss','cashmere_wood','rosewood','cedrol','coniferous','dry'] },
+  { label:'Balsamic',         facets:['balsam','tolu_balsam','peru_balsam','benzoin','styrax'] },
+  { label:'Resinous',         facets:['frankincense','myrrh','elemi','labdanum','olibanum','opoponax','copal','galbanum_resin'] },
+  { label:'Amber',            facets:['ambergris','ambrox','ambroxan','ambrette','mineral'] },
+  { label:'Animalic',         facets:['civet','castoreum','hyrax','skin','costus'] },
+  { label:'Musk',             facets:['white_musk','muscone'] },
+  { label:'Tobacco & Hay',    facets:['tobacco','hay'] },
+  { label:'Smoky',            facets:['incense','tar','burn','burnt','smoke','birch_tar','cade','phenolic'] },
+  { label:'Leather',          facets:['leathery','suede'] },
+  { label:'Clean & Texture',  facets:['clean','soapy','metallic','laundry'] },
 ];
 
 // Synonym → canonical-token map. The tokenizer hits raw text and many
@@ -859,25 +877,41 @@ const TAXONOMY_SYNONYMS = {
   benzoin_resin:'benzoin',
   // resinous
   frankincense_oil:'frankincense', olibanum_oil:'olibanum',
-  // gourmand
+  // gourmand — adjective / compound folds
   tonka_bean:'tonka', tonka_absolute:'tonka',
-  cacao:'cocoa',
+  cacao:'cocoa', honeyed:'honey', nectar_like:'honey',
+  caramelic:'caramel', vanillic:'vanilla', cocoa_like:'cocoa', almondy:'almond',
+  burnt_sugar:'roasted',
   // amber
   ambroxide:'ambroxan',
   // green
-  cut_leaf:'leaf',
-  // smoky
-  birch_tar_oil:'birch_tar',
-  // common adjective forms that need to fold into the primary family
+  cut_leaf:'leaf', watery_green:'watery',
+  // smoky / leather
+  birch_tar_oil:'birch_tar', smoked:'smoky', burned:'burnt',
+  skin_like:'skin', suedey:'suede',
+  // common adjective forms → primary family
   musky:'musk', ambery:'amber', herbaceous:'herbal',
-  // coumarinic is the classical hay/tonka note — map to the tonka
-  // facet (which carries a gourmand parent family) so materials
-  // like Hay Absolute pick up the correct gourmand nuance.
+  // coumarinic → tonka (gourmand parent)
   coumarinic:'tonka', coumarin_like:'tonka',
-  // compound-phrase folds. Prevent the inner-token expansion from
-  // leaking a sub-word facet when the whole phrase is unambiguously
-  // about a different note (e.g. "peach-skin" is peach, not skin).
-  peach_skin:'peach', peach_fuzz:'peach'
+  // compound-phrase folds (prevent inner-token leak)
+  peach_skin:'peach', peach_fuzz:'peach',
+  coconut_milk:'milky',
+  // lactonic / creamy
+  creamy_milk:'milky', milky_creamy:'milky', milk_lactone:'lactonic',
+  // aldehydic / waxy
+  aldehydic_waxy:'waxy_aldehyde', waxy_aldehydic:'waxy_aldehyde',
+  fatty_waxy:'waxy', waxy_fatty:'waxy',
+  // ozonic / aquatic
+  ocean:'oceanic', marine_ozonic:'ozonic', ozone_fresh:'ozonic', fresh_ozonic:'ozonic',
+  // camphoraceous / medicinal
+  camphorous:'camphoraceous', camphor_like:'camphor',
+  medicated:'medicinal', medicinal_mint:'medicinal', minty_medicinal:'medicinal',
+  mothball_like:'camphor',
+  // mint
+  pepperminty:'peppermint', spearminty:'spearmint',
+  // tea / tobacco / hay
+  tea_leaf:'tea', tea_note:'tea',
+  tobacco_leaf:'tobacco', hay_like:'hay', dry_grass:'hay'
 };
 
 // ── Helpers ──
@@ -1038,6 +1072,7 @@ function _resolveTaxonomyToken(tok) {
 // Currently only "leather > animalic" but the structure scales.
 const FAMILY_SPECIFICITY_OVERRIDES = [
   { specific: 'leather', general: 'animalic' },
+  { specific: 'ozonic', general: 'fresh' },
 ];
 
 // Explicit gourmand facets — if at least one of these is present in
@@ -1045,7 +1080,8 @@ const FAMILY_SPECIFICITY_OVERRIDES = [
 // stay in primary / secondary. Otherwise gourmand is dropped.
 const _EXPLICIT_GOURMAND_FACETS = new Set([
   'vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee',
-  'tonka','maple','hazelnut','almond','praline','biscuit','milk','rum'
+  'tonka','maple','hazelnut','almond','praline','biscuit','milk','rum',
+  'roasted','nutty','cereal','beeswax'
 ]);
 
 // Internal: full inference. Returns { primaries, secondaries, facets }.
@@ -1208,6 +1244,22 @@ function classifyFacets(matOrRecord)            { return _inferTaxonomy(matOrRec
 // The parser is intentionally additive: the old odor_type string is read
 // only as INPUT for inference, never as the final filter model. The new
 // taxonomy arrays are the source of truth for the upcoming filter UI.
+// Normalize a single token to a known primary-family or null.
+function _normalizePrimaryFamilyToken(token) {
+  if (!token) return null;
+  const norm = normalizeTaxonomyToken(token);
+  const resolved = TAXONOMY_SYNONYMS[norm] || norm;
+  return PRIMARY_FAMILIES.includes(resolved) ? resolved : null;
+}
+
+// Normalize a single token to a known facet key or null.
+function _normalizeFacetToken(token) {
+  if (!token) return null;
+  const norm = normalizeTaxonomyToken(token);
+  const resolved = TAXONOMY_SYNONYMS[norm] || norm;
+  return (resolved in FACET_TAGS) ? resolved : null;
+}
+
 function migrateLegacyTaxonomy(entry) {
   if (!entry) return { primaryFamilies: [], secondaryFamilies: [], facets: [] };
   const synthetic = {
@@ -1224,11 +1276,12 @@ function migrateLegacyTaxonomy(entry) {
     }
   };
   const tax = _inferTaxonomy(synthetic);
-  return {
-    primaryFamilies:   tax.primaries,
-    secondaryFamilies: tax.secondaries,
-    facets:            tax.facets
-  };
+  // Normalize and validate: only canonical tokens survive, deduped,
+  // secondaries cannot duplicate primaries, unknown tokens dropped.
+  const pf = uniqStable(tax.primaries.filter(f => PRIMARY_FAMILIES.includes(f)));
+  const sf = uniqStable(tax.secondaries.filter(f => PRIMARY_FAMILIES.includes(f) && !pf.includes(f)));
+  const fa = uniqStable(tax.facets.filter(f => f in FACET_TAGS));
+  return { primaryFamilies: pf, secondaryFamilies: sf, facets: fa };
 }
 
 // ═══════════════════════════════════════════════════════════════
