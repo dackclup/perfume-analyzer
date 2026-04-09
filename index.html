@@ -736,8 +736,103 @@ const FACET_TAGS = {
   tobacco:'smoky', incense:'smoky', tar:'smoky', burn:'smoky', smoke:'smoky',
   birch_tar:'smoky', cade:'smoky',
   // leather (family self-reference declared above)
-  leathery:'leather', suede:'leather'
+  leathery:'leather', suede:'leather',
+  // ── nose-friendly note facets (added for keyword-based inference) ──
+  // tea
+  tea:'herbal', green_tea:'herbal', black_tea:'herbal', mate:'herbal',
+  // tobacco & hay
+  hay:'herbal',
+  // comfort / gourmand extras
+  beeswax:'gourmand', roasted:'gourmand', nutty:'gourmand', cereal:'gourmand',
+  // herbal extras
+  celery:'herbal', parsley:'herbal',
+  // spicy extras
+  licorice:'spicy',
+  // fresh / texture
+  soapy:'fresh', metallic:'fresh', laundry:'fresh',
+  // woody extras
+  coniferous:'woody',
+  // aquatic extras
+  iodine:'aquatic'
 };
+
+// ── Nose-friendly keyword → facet regex map ──
+// Catches compound phrases and adjective forms that the token-splitting
+// approach in _orderedTaxonomyTokens misses (e.g. "tea-like" → tea,
+// "honeyed" → honey, "burnt sugar" → roasted). Each pattern is tested
+// against the lowercased odor_type + odor_description in Pass 4 of
+// _inferTaxonomy. Only adds to the facet list — never touches primary
+// or secondary families.
+const FACET_KEYWORDS = {
+  // tea
+  tea:         /\btea\b|tea[- ]like/i,
+  green_tea:   /\bgreen\s+tea\b|sencha|matcha/i,
+  black_tea:   /\bblack\s+tea\b|assam\b|ceylon\b/i,
+  mate:        /\bmate\b|yerba\s*mate/i,
+  // tobacco & hay
+  tobacco:     /\btobacco\b|pipe\s*tobacco|cigar(?:ette)?\b/i,
+  hay:         /\bhay\b|hay[- ]like|dry[\s-]+grass/i,
+  // comfort
+  honey:       /\bhoney\b|honeyed|nectar[- ]like/i,
+  beeswax:     /\bbeeswax\b/i,
+  chocolate:   /\bchocolate\b/i,
+  cocoa:       /\bcocoa\b|\bcacao\b/i,
+  coffee:      /\bcoffee\b|espresso/i,
+  roasted:     /\broasted\b|\btoasted\b|burnt\s+sugar/i,
+  nutty:       /\bnutty\b/i,
+  biscuit:     /\bbiscuit\b|\bcookie\b/i,
+  cereal:      /\bcereal\b|\bgrainy\b|\boatmeal\b/i,
+  // green specifics
+  tomato_leaf: /\btomato\s+leaf\b/i,
+  violet_leaf: /\bviolet\s+leaf\b/i,
+  galbanum:    /\bgalbanum\b/i,
+  // spicy specifics
+  anise:       /\banise\b|\banisic\b/i,
+  licorice:    /\blicorice\b|\bliquorice\b/i,
+  celery:      /\bcelery\b/i,
+  coriander:   /\bcoriander\b|\bcilantro\b/i,
+  parsley:     /\bparsley\b/i,
+  // powdery detail
+  heliotrope:  /\bheliotrope\b|\bheliotropin\b/i,
+  almond:      /\balmond\b|\bmarzipan\b/i,
+  // texture
+  soapy:       /\bsoapy\b|fresh\s+laundry|laundry[- ]like|\bdetergent\b|\bshampoo\b/i,
+  metallic:    /\bmetallic\b|ink[- ]like|\binky\b/i,
+  iodine:      /\biodine\b|\biodic\b/i,
+  // coniferous
+  coniferous:  /\bconiferous\b|evergreen\s+forest/i,
+  pine:        /\bpine\b|\bpiney\b/i,
+  fir:         /\bfir\b|fir\s+needle/i,
+  cypress:     /\bcypress\b/i,
+};
+
+// ── Facet display groups ──
+// Ordered grouping used by the facet chip renderer. Each entry defines
+// a labelled section in the Facet sub-drawer. Only facets with ≥1
+// material in FILTER_CACHE are rendered as chips.
+const FACET_GROUPS = [
+  { label:'Citrus',        facets:['bergamot','lemon','orange','mandarin','grapefruit','lime','yuzu','tangerine','petitgrain','neroli','hesperidic'] },
+  { label:'Green',         facets:['leaf','leafy','grass','stem','violet_leaf','tomato_leaf','cut_grass','galbanum'] },
+  { label:'Herbal',        facets:['lavender','mint','peppermint','spearmint','sage','thyme','rosemary','basil','tarragon','fennel','chamomile','bay_laurel','artemisia','celery','parsley'] },
+  { label:'Tea',           facets:['tea','green_tea','black_tea','mate'] },
+  { label:'Floral',        facets:['rose','jasmine','ylang','tuberose','narcissus','orchid','magnolia','hyacinth','lilac','gardenia','mimosa','champaca','violet','lily','osmanthus','honeysuckle','iris_flower','muguet','frangipani','boronia','cassie'] },
+  { label:'Fruity',        facets:['apple','pear','peach','apricot','berry','plum','tropical','pineapple','coconut','melon','raspberry','strawberry','blackcurrant','cassis','cherry','fig'] },
+  { label:'Aldehydic',     facets:['aldehyde','waxy_aldehyde'] },
+  { label:'Aquatic',       facets:['marine','sea','seaweed','oceanic','calone','water','iodine'] },
+  { label:'Fresh & Clean', facets:['ozone','ozonic','cool','airy','crisp','clean','soapy','metallic','laundry','waxy','camphor','camphor_oil'] },
+  { label:'Spicy',         facets:['cinnamon','clove','pepper','nutmeg','cardamom','saffron','ginger','anise','star_anise','allspice','coriander','licorice'] },
+  { label:'Gourmand',      facets:['vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee','tonka','maple','hazelnut','almond','praline','biscuit','milk','rum','roasted','nutty','cereal','beeswax'] },
+  { label:'Powdery',       facets:['iris','orris','heliotrope','talc'] },
+  { label:'Woody',         facets:['cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','pine','birch','oakmoss','cashmere_wood','rosewood','cedrol','coniferous'] },
+  { label:'Balsamic',      facets:['balsam','tolu_balsam','peru_balsam','benzoin','styrax'] },
+  { label:'Resinous',      facets:['frankincense','myrrh','elemi','labdanum','olibanum','opoponax','copal','galbanum_resin'] },
+  { label:'Amber',         facets:['ambergris','ambrox','ambroxan','ambrette'] },
+  { label:'Animalic',      facets:['civet','castoreum','hyrax','skin','costus'] },
+  { label:'Musk',          facets:['white_musk','muscone'] },
+  { label:'Tobacco & Hay', facets:['tobacco','hay'] },
+  { label:'Smoky',         facets:['incense','tar','burn','smoke','birch_tar','cade'] },
+  { label:'Leather',       facets:['leathery','suede'] },
+];
 
 // Synonym → canonical-token map. The tokenizer hits raw text and many
 // real-world spellings need to fold into a single canonical FACET_TAGS
@@ -1059,6 +1154,15 @@ function _inferTaxonomy(matOrRecord) {
       if (PRIMARY_FAMILIES.includes(tok)) continue;
       if (FACET_TAGS[tok]) _addFacet(tok);
     }
+  }
+
+  // Pass 4 — keyword regex scan of odor_type + odor_description.
+  // Catches nose-friendly facets that the token-splitting approach
+  // misses (e.g. "tea-like" → tea, "honeyed" → honey, "burnt sugar"
+  // → roasted). Adds facets only — never touches primary/secondary.
+  const _kwText = ((pf.odor_type || '') + ' ' + (pf.odor_description || '')).toLowerCase();
+  for (const [facet, re] of Object.entries(FACET_KEYWORDS)) {
+    if (re.test(_kwText)) _addFacet(facet);
   }
 
   // Conservative gourmand guard — drop `gourmand` from primary and
@@ -1760,43 +1864,55 @@ _buildPillFilter('source');
 // per group so the chip cloud is scannable on mobile. Only facets that
 // appear in at least one FILTER_CACHE entry are rendered, and only
 // parent families that have at least one such facet get a group.
+// Render facet chips grouped by FACET_GROUPS. Only facets that appear
+// in at least one FILTER_CACHE entry get a chip. Facets not listed in
+// any FACET_GROUPS entry fall back to a parent-family "Other" group.
 {
   const container = document.getElementById('facetGroups');
   const facetCounts = {};
   for (const fc of FILTER_CACHE.values()) {
     for (const f of fc.facets || []) facetCounts[f] = (facetCounts[f] || 0) + 1;
   }
-  // Group facets by parent family in canonical order.
-  const facetsByFamily = {};
-  for (const [facet, family] of Object.entries(FACET_TAGS)) {
-    if (facet === family) continue; // skip family self-references
-    if (!facetCounts[facet]) continue; // skip facets unused in DB
-    if (!facetsByFamily[family]) facetsByFamily[family] = [];
-    facetsByFamily[family].push(facet);
-  }
-  for (const family of PRIMARY_FAMILIES) {
-    const facets = facetsByFamily[family];
-    if (!facets || !facets.length) continue;
-    facets.sort();
+  const rendered = new Set();
+  const _renderGroup = (labelText, facets) => {
+    const live = facets.filter(f => facetCounts[f]);
+    if (!live.length) return;
     const group = document.createElement('div');
     group.className = 'facet-group';
-    group.dataset.family = family;
     const label = document.createElement('div');
     label.className = 'facet-group-label';
-    label.textContent = PRIMARY_FAMILY_LABELS[family] || family;
+    label.textContent = labelText;
     group.appendChild(label);
     const chips = document.createElement('div');
     chips.className = 'facet-group-chips';
-    for (const f of facets) {
+    for (const f of live) {
       const btn = document.createElement('span');
       btn.className = 'odor-tag';
       btn.dataset.facet = f;
       btn.textContent = facetLabel(f);
       btn.onclick = function() { toggleFacetChip(this); };
       chips.appendChild(btn);
+      rendered.add(f);
     }
     group.appendChild(chips);
     container.appendChild(group);
+  };
+  // Explicit groups from FACET_GROUPS
+  for (const g of FACET_GROUPS) _renderGroup(g.label, g.facets);
+  // Catch-all: any facet with data but not in any group → parent-family bucket
+  const orphansByFamily = {};
+  for (const [facet, family] of Object.entries(FACET_TAGS)) {
+    if (facet === family) continue;
+    if (rendered.has(facet)) continue;
+    if (!facetCounts[facet]) continue;
+    if (!orphansByFamily[family]) orphansByFamily[family] = [];
+    orphansByFamily[family].push(facet);
+  }
+  for (const family of PRIMARY_FAMILIES) {
+    const ofs = orphansByFamily[family];
+    if (!ofs || !ofs.length) continue;
+    ofs.sort();
+    _renderGroup(PRIMARY_FAMILY_LABELS[family] || family, ofs);
   }
 }
 
