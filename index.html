@@ -1504,21 +1504,27 @@ function _updateFilterVisibility() {
 
   // Apply visibility to the pill chips (now multi-select). Hide any
   // chip whose value has zero count under the "minus-self" filter.
+  // Never hide a chip the user has already selected — it must stay
+  // visible so they can always deselect it.
   const countsByName = {note:noteCounts, type:typeCounts, func:funcCounts, tag:tagCounts, reg:regCounts, source:sourceCounts};
   for (const name in countsByName) {
     const ax = _filterAxes[name];
     if (!ax) continue;
     const counts = countsByName[name];
     document.querySelectorAll('#' + ax.containerId + ' .odor-tag[data-value]').forEach(btn => {
+      if (btn.classList.contains('active')) { btn.style.display = ''; return; }
       btn.style.display = (counts[btn.dataset.value] || 0) > 0 ? '' : 'none';
     });
   }
   // Primary Family / Facet chip visibility — same "minus-self" logic
-  // via the primaryFamHas / facetHas marker maps built above.
+  // via the primaryFamHas / facetHas marker maps built above. Selected
+  // chips are always kept visible so the user can deselect them.
   document.querySelectorAll('#primaryFamilyFilters .odor-tag[data-fam]').forEach(btn => {
+    if (btn.classList.contains('active')) { btn.style.display = ''; return; }
     btn.style.display = primaryFamHas[btn.dataset.fam] ? '' : 'none';
   });
   document.querySelectorAll('#facetFilters .odor-tag[data-facet]').forEach(btn => {
+    if (btn.classList.contains('active')) { btn.style.display = ''; return; }
     btn.style.display = facetHas[btn.dataset.facet] ? '' : 'none';
   });
   // Hide an entire facet group if every facet in it is hidden.
