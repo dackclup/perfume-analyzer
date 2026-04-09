@@ -1386,40 +1386,115 @@ function _refreshPills() {
   _visTimer = setTimeout(_updateFilterVisibility, 80);
 }
 
+// Per-axis failure set. Returns which axes the material would fail
+// under the current active filter combo. Used by _updateFilterVisibility
+// so each axis's chip visibility is computed against the OTHER axes
+// only — otherwise an AND-within selection hides every other chip in
+// the same group the moment the user picks the first one, making
+// multi-select impossible.
+function _axesFailedBy(fc, cas) {
+  const failed = new Set();
+  // Note
+  const noteSet = _filterAxes.note.set;
+  if (noteSet.size) {
+    for (const v of noteSet) {
+      if (v === '_other') { if (RE_NOTE_OTHER.test(fc.noteLow)) { failed.add('note'); break; } }
+      else { if (!fc.noteLow.includes(v)) { failed.add('note'); break; } }
+    }
+  }
+  // Type (single-value)
+  const typeSet = _filterAxes.type.set;
+  if (typeSet.size && !typeSet.has(fc.materialType)) failed.add('type');
+  // Function
+  const funcSet = _filterAxes.func.set;
+  if (funcSet.size) {
+    for (const f of funcSet) if (!fc.functions.has(f)) { failed.add('func'); break; }
+  }
+  // Use
+  const tagSet = _filterAxes.tag.set;
+  if (tagSet.size) {
+    for (const u of tagSet) if (!fc.uses.has(u)) { failed.add('tag'); break; }
+  }
+  // Regulatory (with legacy alias fallback + BANNED_CAS)
+  const regSet = _filterAxes.reg.set;
+  if (regSet.size) {
+    for (const r of regSet) {
+      const canon = _normalizeRegulatoryToken(r);
+      if (canon === 'banned') {
+        if (!(BANNED_CAS.has(cas) || fc.regulatory.has('banned'))) { failed.add('reg'); break; }
+      } else if (!fc.regulatory.has(canon)) {
+        let hit = false;
+        for (const [legacy, c] of Object.entries(REGULATORY_LEGACY_ALIASES)) {
+          if (c === canon && fc.regulatory.has(legacy)) { hit = true; break; }
+        }
+        if (!hit) { failed.add('reg'); break; }
+      }
+    }
+  }
+  // Source (single-value)
+  const sourceSet = _filterAxes.source.set;
+  if (sourceSet.size && !sourceSet.has(fc.source)) failed.add('source');
+  // Primary Family
+  if (activePrimaryFamilyFilters.size) {
+    const fcPrim = fc.primaryFamilies || [];
+    for (const fam of activePrimaryFamilyFilters) if (!fcPrim.includes(fam)) { failed.add('primaryFamily'); break; }
+  }
+  // Facet
+  if (activeFacetFilters.size) {
+    const fcFacets = fc.facets || [];
+    for (const facet of activeFacetFilters) if (!fcFacets.includes(facet)) { failed.add('facet'); break; }
+  }
+  return failed;
+}
+
 function _updateFilterVisibility() {
-  // Single pass over FILTER_CACHE: count matches for every axis option.
-  // One bucket per axis, all keyed by the SAME enum string the cards
-  // render and filters match on, so counts and labels can never drift.
+  // For each axis, compute what chip values would be reachable if the
+  // axis's CURRENT selection were the only one ignored. This is
+  // "filter independence": a material contributes to axis A's counts
+  // iff it passes every OTHER axis. That way, selecting one chip in
+  // axis A never hides the other chips inside A, so the user can
+  // continue clicking to AND more values together.
+  //
+  // Implementation: for each material, compute its failed-axis set.
+  // - failures.size === 0 → contributes to EVERY axis's counts.
+  // - failures.size === 1 → contributes only to that one axis's
+  //                         counts (because ignoring just that axis
+  //                         makes the material pass).
+  // - failures.size >= 2  → contributes to no axis.
   const noteCounts = {}, typeCounts = {}, funcCounts = {}, tagCounts = {};
   const regCounts = {}, sourceCounts = {};
   const primaryFamHas = {};
   const facetHas = {};
 
   for (const fc of FILTER_CACHE.values()) {
-    if (!matchesAllFilters(fc.cas)) continue;
+    const failures = _axesFailedBy(fc, fc.cas);
+    if (failures.size > 1) continue;
+    const contribTo = (axis) => failures.size === 0 || failures.has(axis);
     // Note
-    if (fc.noteLow.includes('top')) noteCounts['top'] = (noteCounts['top']||0)+1;
-    if (fc.noteLow.includes('middle')) noteCounts['middle'] = (noteCounts['middle']||0)+1;
-    if (fc.noteLow.includes('base')) noteCounts['base'] = (noteCounts['base']||0)+1;
-    if (!RE_NOTE_OTHER.test(fc.noteLow)) noteCounts['_other'] = (noteCounts['_other']||0)+1;
+    if (contribTo('note')) {
+      if (fc.noteLow.includes('top')) noteCounts['top'] = (noteCounts['top']||0)+1;
+      if (fc.noteLow.includes('middle')) noteCounts['middle'] = (noteCounts['middle']||0)+1;
+      if (fc.noteLow.includes('base')) noteCounts['base'] = (noteCounts['base']||0)+1;
+      if (!RE_NOTE_OTHER.test(fc.noteLow)) noteCounts['_other'] = (noteCounts['_other']||0)+1;
+    }
     // Type axis (single value per material)
-    typeCounts[fc.materialType] = (typeCounts[fc.materialType]||0)+1;
+    if (contribTo('type')) typeCounts[fc.materialType] = (typeCounts[fc.materialType]||0)+1;
     // Function axis (multi-value Set)
-    for (const f of fc.functions) funcCounts[f] = (funcCounts[f]||0)+1;
-    // Use axis (multi-value Set, formerly "Industry")
-    for (const u of fc.uses) tagCounts[u] = (tagCounts[u]||0)+1;
+    if (contribTo('func')) for (const f of fc.functions) funcCounts[f] = (funcCounts[f]||0)+1;
+    // Use axis (multi-value Set)
+    if (contribTo('tag')) for (const u of fc.uses) tagCounts[u] = (tagCounts[u]||0)+1;
     // Regulatory axis (multi-value Set)
-    for (const reg of fc.regulatory) regCounts[reg] = (regCounts[reg]||0)+1;
+    if (contribTo('reg')) for (const reg of fc.regulatory) regCounts[reg] = (regCounts[reg]||0)+1;
     // Source axis (single value)
-    if (fc.source) sourceCounts[fc.source] = (sourceCounts[fc.source]||0)+1;
-    // Step 5: Primary family axis (multi-value array, marker-only)
-    for (const fam of fc.primaryFamilies || []) primaryFamHas[fam] = true;
-    // Step 5: Facet axis (multi-value array, marker-only)
-    for (const f of fc.facets || []) facetHas[f] = true;
+    if (contribTo('source') && fc.source) sourceCounts[fc.source] = (sourceCounts[fc.source]||0)+1;
+    // Primary family axis (marker-only)
+    if (contribTo('primaryFamily')) for (const fam of fc.primaryFamilies || []) primaryFamHas[fam] = true;
+    // Facet axis (marker-only)
+    if (contribTo('facet')) for (const f of fc.facets || []) facetHas[f] = true;
   }
 
   // Apply visibility to the pill chips (now multi-select). Hide any
-  // chip whose value has zero count under the current filter combo.
+  // chip whose value has zero count under the "minus-self" filter.
   const countsByName = {note:noteCounts, type:typeCounts, func:funcCounts, tag:tagCounts, reg:regCounts, source:sourceCounts};
   for (const name in countsByName) {
     const ax = _filterAxes[name];
@@ -1429,8 +1504,8 @@ function _updateFilterVisibility() {
       btn.style.display = (counts[btn.dataset.value] || 0) > 0 ? '' : 'none';
     });
   }
-  // Step 5: hide Primary Family / Facet chips that have zero count
-  // under the current filter combo. Reads marker maps built above.
+  // Primary Family / Facet chip visibility — same "minus-self" logic
+  // via the primaryFamHas / facetHas marker maps built above.
   document.querySelectorAll('#primaryFamilyFilters .odor-tag[data-fam]').forEach(btn => {
     btn.style.display = primaryFamHas[btn.dataset.fam] ? '' : 'none';
   });
