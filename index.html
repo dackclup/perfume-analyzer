@@ -4181,6 +4181,13 @@ function classifyUses(mat) {
     push('fine_fragrance');
   }
 
+  // === 1b. Fine Fragrance — fragrance vehicles & antioxidants ===
+  // Solvents, carriers and antioxidants that are essential backbone
+  // ingredients in fine fragrance formulation (EDP/EDT/extrait).
+  if (!banned && (isFragranceVehicle || /\b(antioxidant|tocopherol|bht|bha)\b/i.test(n))) {
+    push('fine_fragrance');
+  }
+
   // === 2. Personal Care & Cosmetics ===
   // Any non-banned perfumery material or fragrance vehicle is used in
   // personal-care / cosmetic formulations (soap, shampoo, lotion, etc.).
