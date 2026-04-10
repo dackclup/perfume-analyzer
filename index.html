@@ -569,6 +569,17 @@ const TOXICITY_BLOCK_RE = /\b(?:carcinogen|mutagen|neurotox|reproductive\s*tox|C
 const FLAVOR_POSITIVE_RE = /\b(?:food[\s-]*grade|food[\s-]*(?:flavou?r|additive|safe)|gras|fema\s*\d+|jecfa|flavou?ring\s*(?:agent|substance|ingredient|compound)|permitted\s+(?:in\s+)?food|food[\s-]*contact[\s-]*approved|edible)\b/i;
 // Weaker food-use signals — only trusted from usage/safety text.
 const FLAVOR_WEAK_RE = /\b(?:flavou?r(?:ing)?|beverage|toothpaste|chewing[\s-]*gum|confection|bak(?:ery|ing)|dairy|candy|ice[\s-]*cream|soft[\s-]*drink|food)\b/i;
+// PubChem section-level flavor signals (Use and Manufacturing, Food Additives, FDA).
+const PUBCHEM_FLAVOR_RE = /\b(?:food\s*additive|flavou?ring\s*agent|direct\s*food|flavou?ring\s*substance|food\s*use|flavo(?:r|ur)\s*ingredient|E[\s-]?\d{3,4}[a-z]?\b)/i;
+// PubChem section-level fragrance / personal-care / home-care signals.
+// IFRA categories: 4 = Fine Fragrance (EDP/EDT), 3 = shaved-skin hydroalcoholic.
+const PUBCHEM_FRAGRANCE_RE = /\b(?:fragrance\s*(?:agent|ingredient|compound)|perfumer(?:y|ie)|fixative|(?:fine\s+)?fragrance|IFRA\s*(?:category|cat\.?)\s*[34](?!\d))/i;
+// Personal Care: cosmetic, skin, emollient, humectant, CosIng,
+// IFRA Cat 1 (lip), 2 (deo), 5 (body lotion), 6-9 (hair/rinse-off).
+const PUBCHEM_PERSONALCARE_RE = /\b(?:cosmetic(?:\s*ingredient)?|skin\s*(?:care|condition(?:ing|er)?)|personal\s*care|shampoo|soap|lotion|dermal|deodorant|body\s*wash|leave[- ]on|rinse[- ]off|lip\s*(?:stick|balm|gloss)|humectant|emollient|EU\s*cosmetic|cosing|IFRA\s*(?:category|cat\.?)\s*[125-9](?!\d))\b/i;
+// Home Care: household, detergent, surfactant, air freshener,
+// IFRA Cat 10 (household), 11 (candle/spray), 12 (reed diffuser).
+const PUBCHEM_HOMECARE_RE = /\b(?:household(?:\s*product)?|detergent|laundry|fabric\s*soften|air\s*freshen|candle|room\s*spray|cleaning\s*(?:agent|product)|dishwash|surface\s*(?:clean|active)|surfactant|deodori[sz]er|polishing|IFRA\s*(?:category|cat\.?)\s*1[0-2](?!\d))\b/i;
 // Regulatory axis multi-value tags. CANONICAL vocabulary uses
 // 'regulated' for the IFRA-restriction bucket — 'IFRA Limited' is a
 // legacy alias and is accepted as input via REGULATORY_LEGACY_ALIASES
@@ -3355,6 +3366,9 @@ function prefetchAll() {
             const _fn = _extractFemaNumber(sections);
             if (_fn) mat.record.identifiers.fema = _fn;
           }
+          // Re-classify with PubChem-enriched data: newly-found FEMA number
+          // and pubchem_sections with food/flavor signals.
+          try { _computeClassification(mat); } catch(e) { console.warn('_computeClassification (prefetch):', e); }
           // Merge PubChem odor/description for compounds without local perfumery data.
           // Reject single-word / generic adjectives like "Pleasant", "Mild",
           // "Characteristic odor" — they carry no perfumery information AND
@@ -3395,7 +3409,7 @@ function prefetchAll() {
               }
             }
           }
-          if (mat.record.perfumery.odor_source === 'PubChem') renderResults();
+          renderResults();
         })
         .catch(e => { if (e?.name !== 'AbortError') console.warn('prefetchAll pug_view:', e); });
     }
@@ -4274,6 +4288,46 @@ function classifyUses(mat) {
     if (/\b(fine fragrance|perfum|edp|edt|fragrance concentrate)\b/i.test(allText)) push('fine_fragrance');
     if (!banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !toxicNonFema &&
         FLAVOR_POSITIVE_RE.test(allText)) push('flavor');
+  }
+
+  // === 6. PubChem section-based enrichment ===
+  // After prefetch, pubchem_sections may contain "Use and Manufacturing",
+  // "Food Additives", "FDA", "IFRA", or "Cosmetic" headings with
+  // industry-use signals that the local DB safety text lacks.
+  const pcSections = r.metadata?.pubchem_sections;
+  if (pcSections) {
+    // Collect relevant section text once for all axes.
+    let pcUseText = '';
+    for (const [heading, items] of Object.entries(pcSections)) {
+      const hl = heading.toLowerCase();
+      if (hl.includes('use') || hl.includes('food') || hl.includes('pharmacol') ||
+          hl.includes('fda') || hl.includes('gras') || hl.includes('cosmetic') ||
+          hl.includes('consumer') || hl.includes('fragrance') || hl.includes('household')) {
+        pcUseText += ' ' + items.join(' ');
+      }
+    }
+    if (pcUseText) {
+      // 6a. Fine Fragrance — fragrance agent, perfumery, fixative, IFRA category
+      if (!tags.includes('fine_fragrance') && !banned &&
+          PUBCHEM_FRAGRANCE_RE.test(pcUseText)) {
+        push('fine_fragrance');
+      }
+      // 6b. Personal Care — cosmetic, skin care, dermal, shampoo, soap
+      if (!tags.includes('personal_care') && !banned &&
+          PUBCHEM_PERSONALCARE_RE.test(pcUseText)) {
+        push('personal_care');
+      }
+      // 6c. Home Care — household, detergent, laundry, air freshener, candle
+      if (!tags.includes('home_care') &&
+          PUBCHEM_HOMECARE_RE.test(pcUseText)) {
+        push('home_care');
+      }
+      // 6d. Flavor — food additive, flavoring agent, GRAS, FEMA, E-numbers
+      if (!tags.includes('flavor') && !banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !toxicNonFema &&
+          (FLAVOR_POSITIVE_RE.test(pcUseText) || PUBCHEM_FLAVOR_RE.test(pcUseText))) {
+        push('flavor');
+      }
+    }
   }
 
   return tags;
