@@ -542,6 +542,33 @@ const USE_LABELS = {
   fine_fragrance:'Fine Fragrance', personal_care:'Personal Care & Cosmetics',
   home_care:'Home Care & Air Care', flavor:'Flavor'
 };
+// ── Flavor-safety gate constants ──
+// CAS numbers of common perfumery materials that are definitively NOT food-safe.
+const FLAVOR_EXCLUDED_CAS = new Set([
+  '84-66-2',    // Diethyl phthalate (DEP) — endocrine disruptor
+  '84-74-2',    // Dibutyl phthalate (DBP) — plasticizer
+  '117-81-7',   // DEHP — plasticizer
+  '88-29-9',    // Galaxolide — polycyclic musk
+  '1222-05-5',  // Galaxolide (alt CAS)
+  '81-14-1',    // Musk Ketone — nitro musk
+  '81-15-2',    // Musk Xylene — nitro musk
+  '21145-77-7', // Tonalide — polycyclic musk
+  '1506-02-1',  // Tonalide (alt CAS)
+  '15323-35-0', // Phantolide — polycyclic musk
+  '32388-55-9', // Vertofix — macrocyclic musk
+  '101-81-5',   // Diphenylmethane — industrial solvent
+]);
+// Negative cues: explicit denial of food use.
+const NOT_FOOD_RE = /\bnot\s+(?:for\s+)?(?:food|flavou?r|human\s+consumption|internal\s+use|ingestion)\b|\bnon[- ]?food\b|\bdo\s+not\s+(?:eat|ingest|consume)\b|\bindustrial\s+use\s+only\b|\bnot\s+intended\s+for\s+(?:food|consumption|ingestion)\b/i;
+// Text-based toxicity signals — applied ONLY to non-FEMA materials.
+// No trailing \b — so "carcinogen" matches "carcinogenic" too.
+// Leading \b ensures no match inside "anticarcinogen" or "nonmutagenic".
+const TOXICITY_BLOCK_RE = /\b(?:carcinogen|mutagen|neurotox|reproductive\s*tox|CMR\s*[12]|fatal\s+if\s+(?:swallowed|ingested))/i;
+// Strong positive food-use signals — high confidence.
+// Note: fema\s*\d+ (not \d) to consume all digits so trailing \b works.
+const FLAVOR_POSITIVE_RE = /\b(?:food[\s-]*grade|food[\s-]*(?:flavou?r|additive|safe)|gras|fema\s*\d+|jecfa|flavou?ring\s*(?:agent|substance|ingredient|compound)|permitted\s+(?:in\s+)?food|food[\s-]*contact[\s-]*approved|edible)\b/i;
+// Weaker food-use signals — only trusted from usage/safety text.
+const FLAVOR_WEAK_RE = /\b(?:flavou?r(?:ing)?|beverage|toothpaste|chewing[\s-]*gum|confection|bak(?:ery|ing)|dairy|candy|ice[\s-]*cream|soft[\s-]*drink|food)\b/i;
 // Regulatory axis multi-value tags. CANONICAL vocabulary uses
 // 'regulated' for the IFRA-restriction bucket — 'IFRA Limited' is a
 // legacy alias and is accepted as input via REGULATORY_LEGACY_ALIASES
@@ -4213,9 +4240,27 @@ function classifyUses(mat) {
   }
 
   // === 4. Flavor ===
-  // FEMA number or explicit food/flavor cue. Banned materials excluded.
-  if (!banned && (id.fema || /\b(flavor|flavour|fema|jecfa|food|gras)\b/i.test(usageDesc))) {
-    push('flavor');
+  // Food-grade aroma chemicals (FEMA/GRAS). Multi-layer safety gate:
+  //  a) not banned (EU or worldwide)
+  //  b) not on FLAVOR_EXCLUDED_CAS (phthalates, nitro/polycyclic musks)
+  //  c) no explicit "not for food" / "non-food" negative cues
+  //  d) for non-FEMA materials: no carcinogen/mutagen/neurotoxin cues
+  //  e) positive evidence: valid FEMA OR food-use keywords in safety text
+  const femaNum = parseInt(id.fema, 10);
+  const hasValidFema = id.fema && femaNum >= 2001 && femaNum <= 5999;
+  const ifraUsage = (sf.ifra_guideline || '') + ' ' + usage;
+  const notFood = NOT_FOOD_RE.test(ifraUsage + ' ' + n);
+  const toxicNonFema = !hasValidFema && TOXICITY_BLOCK_RE.test(ifraUsage);
+
+  if (!banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !toxicNonFema) {
+    if (hasValidFema ||
+        FLAVOR_POSITIVE_RE.test(usageDesc) ||
+        FLAVOR_POSITIVE_RE.test(ifraUsage)) {
+      push('flavor');
+    } else if (FLAVOR_WEAK_RE.test(usage)) {
+      // Weak keyword only from usage_levels (safety text), NOT odor description
+      push('flavor');
+    }
   }
 
   // === 5. Functional materials (preservative / solubilizer / emulsifier / antioxidant / carrier) ===
@@ -4227,7 +4272,8 @@ function classifyUses(mat) {
     if (/\b(cosmetics?|personal care|creams?|lotions?|skin|soaps?|shampoo|body|rinse[- ]off|leave[- ]on|emulsif)/i.test(allText)) push('personal_care');
     if (/\b(home care|household|detergent|fabric|laundry|room spray|diffuser|candle|softener|mists?)\b/i.test(allText)) push('home_care');
     if (/\b(fine fragrance|perfum|edp|edt|fragrance concentrate)\b/i.test(allText)) push('fine_fragrance');
-    if (/\b(food|gras|flavor|flavour|beverage|toothpaste|chewing gum)\b/i.test(allText)) push('flavor');
+    if (!banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !toxicNonFema &&
+        FLAVOR_POSITIVE_RE.test(allText)) push('flavor');
   }
 
   return tags;
