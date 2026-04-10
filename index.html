@@ -571,6 +571,10 @@ const FLAVOR_POSITIVE_RE = /\b(?:food[\s-]*grade|food[\s-]*(?:flavou?r|additive|
 const FLAVOR_WEAK_RE = /\b(?:flavou?r(?:ing)?|beverage|toothpaste|chewing[\s-]*gum|confection|bak(?:ery|ing)|dairy|candy|ice[\s-]*cream|soft[\s-]*drink|food)\b/i;
 // PubChem section-level flavor signals (Use and Manufacturing, Food Additives, FDA).
 const PUBCHEM_FLAVOR_RE = /\b(?:food\s*additive|flavou?ring\s*agent|direct\s*food|flavou?ring\s*substance|food\s*use|flavo(?:r|ur)\s*ingredient|E[\s-]?\d{3,4}[a-z]?\b)/i;
+// PubChem section-level fragrance / personal-care / home-care signals.
+const PUBCHEM_FRAGRANCE_RE = /\b(?:fragrance\s*(?:agent|ingredient|compound)|perfumer(?:y|ie)|fixative|(?:fine\s+)?fragrance|IFRA\s*(?:category|cat\.?)\s*[1-9])/i;
+const PUBCHEM_PERSONALCARE_RE = /\b(?:cosmetic|skin\s*care|personal\s*care|shampoo|soap|lotion|dermal|deodorant|body\s*wash|leave[- ]on|rinse[- ]off|lip\s*(?:stick|balm|gloss))\b/i;
+const PUBCHEM_HOMECARE_RE = /\b(?:household|detergent|laundry|fabric\s*soften|air\s*freshen|candle|room\s*spray|cleaning\s*product|dishwash|surface\s*clean)\b/i;
 // Regulatory axis multi-value tags. CANONICAL vocabulary uses
 // 'regulated' for the IFRA-restriction bucket — 'IFRA Limited' is a
 // legacy alias and is accepted as input via REGULATORY_LEGACY_ALIASES
@@ -4281,23 +4285,42 @@ function classifyUses(mat) {
         FLAVOR_POSITIVE_RE.test(allText)) push('flavor');
   }
 
-  // === 6. PubChem section-based flavor enrichment ===
+  // === 6. PubChem section-based enrichment ===
   // After prefetch, pubchem_sections may contain "Use and Manufacturing",
-  // "Food Additives", or "FDA" headings with food-grade signals that the
-  // local DB safety text lacks (e.g., "Food additive", "Flavoring agent",
-  // "Direct Food Additive", E-numbers, GRAS status).
-  if (!tags.includes('flavor') && !banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !toxicNonFema) {
-    const pcSections = r.metadata?.pubchem_sections;
-    if (pcSections) {
-      for (const [heading, items] of Object.entries(pcSections)) {
-        const hl = heading.toLowerCase();
-        if (hl.includes('use') || hl.includes('food') || hl.includes('pharmacol') || hl.includes('fda') || hl.includes('gras')) {
-          const sectionText = items.join(' ');
-          if (FLAVOR_POSITIVE_RE.test(sectionText) || PUBCHEM_FLAVOR_RE.test(sectionText)) {
-            push('flavor');
-            break;
-          }
-        }
+  // "Food Additives", "FDA", "IFRA", or "Cosmetic" headings with
+  // industry-use signals that the local DB safety text lacks.
+  const pcSections = r.metadata?.pubchem_sections;
+  if (pcSections) {
+    // Collect relevant section text once for all axes.
+    let pcUseText = '';
+    for (const [heading, items] of Object.entries(pcSections)) {
+      const hl = heading.toLowerCase();
+      if (hl.includes('use') || hl.includes('food') || hl.includes('pharmacol') ||
+          hl.includes('fda') || hl.includes('gras') || hl.includes('cosmetic') ||
+          hl.includes('consumer') || hl.includes('fragrance') || hl.includes('household')) {
+        pcUseText += ' ' + items.join(' ');
+      }
+    }
+    if (pcUseText) {
+      // 6a. Fine Fragrance — fragrance agent, perfumery, fixative, IFRA category
+      if (!tags.includes('fine_fragrance') && !banned &&
+          PUBCHEM_FRAGRANCE_RE.test(pcUseText)) {
+        push('fine_fragrance');
+      }
+      // 6b. Personal Care — cosmetic, skin care, dermal, shampoo, soap
+      if (!tags.includes('personal_care') && !banned &&
+          PUBCHEM_PERSONALCARE_RE.test(pcUseText)) {
+        push('personal_care');
+      }
+      // 6c. Home Care — household, detergent, laundry, air freshener, candle
+      if (!tags.includes('home_care') &&
+          PUBCHEM_HOMECARE_RE.test(pcUseText)) {
+        push('home_care');
+      }
+      // 6d. Flavor — food additive, flavoring agent, GRAS, FEMA, E-numbers
+      if (!tags.includes('flavor') && !banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !toxicNonFema &&
+          (FLAVOR_POSITIVE_RE.test(pcUseText) || PUBCHEM_FLAVOR_RE.test(pcUseText))) {
+        push('flavor');
       }
     }
   }
