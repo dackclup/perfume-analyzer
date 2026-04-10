@@ -2485,7 +2485,7 @@ function _enrichPubchem(mat, cas) {
     if (!cid) return;
     mat.record.identifiers.pubchem_cid = cid;
     mat.page_url = 'https://pubchem.ncbi.nlm.nih.gov/compound/'+cid;
-    mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/PNG?image_size=500x500';
+    mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/PNG?image_size=large';
     const [propsRes, synsRes, descRes] = await Promise.allSettled([
       fetchWithTimeout(PUBCHEM_REST+'/compound/cid/'+cid+'/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,IUPACName,InChI,XLogP,ExactMass,TPSA,HBondDonorCount,HBondAcceptorCount,RotatableBondCount,HeavyAtomCount/JSON').then(r=>r.json()).catch(()=>null),
       fetchWithTimeout(PUBCHEM_REST+'/compound/cid/'+cid+'/synonyms/JSON').then(r=>r.json()).catch(()=>null),
@@ -2747,7 +2747,7 @@ async function scrapeMaterial(name) {
 
   mat.found = true; mat.record.identifiers.pubchem_cid = cid;
   mat.page_url = 'https://pubchem.ncbi.nlm.nih.gov/compound/'+cid;
-  mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/PNG?image_size=500x500';
+  mat.structure_image_url = PUBCHEM_REST+'/compound/cid/'+cid+'/PNG?image_size=large';
   mat.match_info = (mat.record.match.confidence >= 0.9 ? '\u2705 ' : '\u2139\uFE0F ') + (mat.record.match.reason || 'Found via PubChem');
 
   // Fetch properties
@@ -3283,7 +3283,7 @@ function renderResults() {
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
           ${(displayTags.length || displayPrimaryFamilies.length || displaySecondaryFamilies.length || displayFacets.length)?`<div class="card-meta-row" style="margin:6px 0 10px 0">${displayTags.length?`<div class="tag-row"><span class="tag-axis-label">Use</span><span class="tag-chips">${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px;margin:0">${USE_LABELS[t]||t}</span>`).join('')}</span></div>`:''}${(displayPrimaryFamilies.length || displaySecondaryFamilies.length)?`<div class="tag-row"><span class="tag-axis-label">Primary</span><span class="tag-chips">${displayPrimaryFamilies.map(f=>`<span class="badge-primary">${PRIMARY_FAMILY_LABELS[f]||f}</span>`).join('')}${displaySecondaryFamilies.length?`<span class="badge-primary">${displaySecondaryFamilies.map(f=>PRIMARY_FAMILY_LABELS[f]||f).join(' • ')}</span>`:''}</span></div>`:''}${displayFacets.length?`<div class="tag-row"><span class="tag-axis-label">Facets</span><span class="tag-chips">${displayFacets.map(f=>`<span class="badge-facet">${facetLabel(f)}</span>`).join('')}</span></div>`:''}</div>`:""}
-          ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" loading="lazy"></div>`:""}
+          ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" onerror="this.parentNode.style.display='none'"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
             ${mat.page_url?`<p class="pubchem-link"><a href="${mat.page_url}" target="_blank" style="color:var(--accent);font-size:0.85em">PubChem ↗</a></p>`:""}
