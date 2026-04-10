@@ -572,9 +572,14 @@ const FLAVOR_WEAK_RE = /\b(?:flavou?r(?:ing)?|beverage|toothpaste|chewing[\s-]*g
 // PubChem section-level flavor signals (Use and Manufacturing, Food Additives, FDA).
 const PUBCHEM_FLAVOR_RE = /\b(?:food\s*additive|flavou?ring\s*agent|direct\s*food|flavou?ring\s*substance|food\s*use|flavo(?:r|ur)\s*ingredient|E[\s-]?\d{3,4}[a-z]?\b)/i;
 // PubChem section-level fragrance / personal-care / home-care signals.
-const PUBCHEM_FRAGRANCE_RE = /\b(?:fragrance\s*(?:agent|ingredient|compound)|perfumer(?:y|ie)|fixative|(?:fine\s+)?fragrance|IFRA\s*(?:category|cat\.?)\s*[1-9])/i;
-const PUBCHEM_PERSONALCARE_RE = /\b(?:cosmetic|skin\s*care|personal\s*care|shampoo|soap|lotion|dermal|deodorant|body\s*wash|leave[- ]on|rinse[- ]off|lip\s*(?:stick|balm|gloss))\b/i;
-const PUBCHEM_HOMECARE_RE = /\b(?:household|detergent|laundry|fabric\s*soften|air\s*freshen|candle|room\s*spray|cleaning\s*product|dishwash|surface\s*clean)\b/i;
+// IFRA categories: 4 = Fine Fragrance (EDP/EDT), 3 = shaved-skin hydroalcoholic.
+const PUBCHEM_FRAGRANCE_RE = /\b(?:fragrance\s*(?:agent|ingredient|compound)|perfumer(?:y|ie)|fixative|(?:fine\s+)?fragrance|IFRA\s*(?:category|cat\.?)\s*[34](?!\d))/i;
+// Personal Care: cosmetic, skin, emollient, humectant, CosIng,
+// IFRA Cat 1 (lip), 2 (deo), 5 (body lotion), 6-9 (hair/rinse-off).
+const PUBCHEM_PERSONALCARE_RE = /\b(?:cosmetic(?:\s*ingredient)?|skin\s*(?:care|condition(?:ing|er)?)|personal\s*care|shampoo|soap|lotion|dermal|deodorant|body\s*wash|leave[- ]on|rinse[- ]off|lip\s*(?:stick|balm|gloss)|humectant|emollient|EU\s*cosmetic|cosing|IFRA\s*(?:category|cat\.?)\s*[125-9](?!\d))\b/i;
+// Home Care: household, detergent, surfactant, air freshener,
+// IFRA Cat 10 (household), 11 (candle/spray), 12 (reed diffuser).
+const PUBCHEM_HOMECARE_RE = /\b(?:household(?:\s*product)?|detergent|laundry|fabric\s*soften|air\s*freshen|candle|room\s*spray|cleaning\s*(?:agent|product)|dishwash|surface\s*(?:clean|active)|surfactant|deodori[sz]er|polishing|IFRA\s*(?:category|cat\.?)\s*1[0-2](?!\d))\b/i;
 // Regulatory axis multi-value tags. CANONICAL vocabulary uses
 // 'regulated' for the IFRA-restriction bucket — 'IFRA Limited' is a
 // legacy alias and is accepted as input via REGULATORY_LEGACY_ALIASES
