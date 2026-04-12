@@ -201,6 +201,8 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .dl-menu.open { display:block; }
 .dl-menu a { display:block; padding:10px 16px; font-size:0.9em; text-decoration:none; color:var(--text); cursor:pointer; }
 .dl-menu a:hover { background:var(--bg2); opacity:1; }
+.formulate-link { margin-left:auto; padding:6px 16px; background:var(--accent); color:#fff !important; text-decoration:none !important; border-radius:6px; font-size:0.85em; font-weight:500; cursor:pointer; white-space:nowrap; opacity:0.9; }
+.formulate-link:hover { opacity:1; }
 
 /* Progress */
 .progress { display:none; height:4px; background:var(--border); border-radius:2px; margin:8px 0; overflow:hidden; }
@@ -381,6 +383,7 @@ html { scroll-behavior:smooth; }
       <a onclick="preparePrint(true);closeDlMenu()">Save.PDF (Full)</a>
     </div>
   </div>
+  <a class="formulate-link" onclick="sendToFormulator()">Formulate &#x2192;</a>
   <span class="back-top"><a href="#top">▲ Back to top</a></span>
 </div>
 
@@ -4080,6 +4083,48 @@ function closeDlMenu() {
 document.addEventListener('click', e => {
   if (!e.target.closest('.dl-wrap')) closeDlMenu();
 });
+
+// ===== Send to Formulator =====
+function sendToFormulator() {
+  const found = results.filter(r => r.found);
+  if (!found.length) return;
+  const payload = found.map(mat => {
+    const src = mat.record;
+    const fc = src.identifiers?.cas ? FILTER_CACHE.get(src.identifiers.cas) : null;
+    return {
+      cas: src.identifiers.cas || null,
+      name: src.names.canonical,
+      smiles: src.identifiers.canonical_smiles || null,
+      molecular_weight: src.properties.molecular_weight || null,
+      xlogp: src.properties.xlogp || null,
+      tpsa: src.properties.tpsa || null,
+      hbond_donor: src.properties.hbond_donor || null,
+      hbond_acceptor: src.properties.hbond_acceptor || null,
+      note: src.perfumery.note || null,
+      odor_type: src.perfumery.odor_type || null,
+      odor_strength: src.perfumery.odor_strength || null,
+      odor_description: src.perfumery.odor_description || null,
+      tenacity: src.perfumery.tenacity || null,
+      tenacity_hours: src.perfumery.tenacity_hours || null,
+      blends_with: src.perfumery.blends_with || [],
+      ifra_guideline: src.safety.ifra_guideline || null,
+      usage_levels: src.safety.usage_levels || null,
+      primaryFamilies: fc ? [...(fc.primaryFamilies || [])] : (src.classification?.primaryFamilies || []),
+      secondaryFamilies: fc ? [...(fc.secondaryFamilies || [])] : (src.classification?.secondaryFamilies || []),
+      facets: fc ? [...(fc.facets || [])] : (src.classification?.facets || []),
+      functions: fc ? [...(fc.functions || [])] : (src.classification?.functions || []),
+      regulatory: fc ? [...(fc.regulatory || [])] : (src.classification?.regulatory || []),
+    };
+  });
+  try {
+    localStorage.setItem('perfume_formulation_materials', JSON.stringify(payload));
+    localStorage.setItem('perfume_formulation_ts', Date.now().toString());
+    window.open('formulation.html', '_blank');
+  } catch (e) {
+    console.error('sendToFormulator:', e);
+    alert('Could not save formulation data. Please try with fewer materials.');
+  }
+}
 
 // ===== Classification =====
 // (Taxonomy constants — TYPE_VALUES, FUNCTION_VALUES, ODOR_FAMILY_*,
