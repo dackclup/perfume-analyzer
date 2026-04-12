@@ -710,10 +710,310 @@ function applyAllocation(type) {
     alloc.forEach(a => formulation.updatePct(a.cas, a.optimizedPct));
   }
 }
-function renderThermoTab()    {}
-function renderOdorTab()      {}
-function renderStabilityTab() {}
-function renderMoodTab()      {}
+// ===== Tab 3: Evaporation & Thermodynamics (System 1) =====
+let _evapChart = null;
+function renderThermoTab() {
+  const el = document.getElementById('thermoContent');
+  const mats = formulation.materials;
+  if (!mats.length) { el.innerHTML = '<div class="empty-state"><p>Add materials to see evaporation analysis</p></div>'; return; }
+
+  const tempC = parseInt(document.getElementById('tempSlider').value);
+  const vpTable = buildVPTable(mats, tempC);
+  const sim = simulateEvaporation(mats, tempC);
+  const longevity = estimateLongevity(mats, tempC);
+
+  let html = '';
+
+  // Longevity estimate
+  html += '<div class="analysis-card"><h4>Estimated Longevity</h4>';
+  html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">';
+  for (const phase of [longevity.topPhase, longevity.heartPhase, longevity.basePhase]) {
+    html += '<div style="flex:1;min-width:100px;padding:10px;background:var(--bg2);border-radius:6px;text-align:center">';
+    html += '<div style="font-size:0.78em;color:var(--text2)">' + phase.label + '</div>';
+    html += '<div style="font-size:1.2em;font-weight:600">' + phase.end + 'h</div>';
+    html += '</div>';
+  }
+  html += '</div></div>';
+
+  // Evaporation chart
+  html += '<div class="analysis-card"><h4>Headspace Concentration Over Time (' + tempC + ' &deg;C)</h4>';
+  html += '<div class="chart-wrap wide"><canvas id="evapChart"></canvas></div></div>';
+
+  // VP Table
+  html += '<div class="analysis-card"><h4>Vapor Pressure at ' + tempC + ' &deg;C</h4>';
+  html += '<table class="data-table"><thead><tr><th>Material</th><th>VP (mmHg)</th><th>Method</th><th>MW</th><th>LogP</th><th>Kp (cm/s)</th></tr></thead><tbody>';
+  for (const r of vpTable) {
+    const confDot = r.confidence === 'high' ? 'high' : r.confidence === 'medium' ? 'med' : 'low';
+    html += '<tr>';
+    html += '<td>' + r.name + ' <span class="conf-dot ' + confDot + '"></span></td>';
+    html += '<td>' + (r.vp_mmHg != null ? r.vp_mmHg.toExponential(3) : '—') + '</td>';
+    html += '<td>' + r.method + '</td>';
+    html += '<td>' + (r.mw || '—') + '</td>';
+    html += '<td>' + (r.logP || '—') + '</td>';
+    html += '<td>' + (r.kp ? r.kp.toExponential(2) : '—') + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+
+  el.innerHTML = html;
+
+  // Render Chart.js evaporation chart
+  const canvas = document.getElementById('evapChart');
+  if (!canvas) return;
+  if (_evapChart) _evapChart.destroy();
+
+  const noteColors = { top: '#eab308', middle: '#3b82f6', base: '#8b5cf6' };
+  const datasets = sim.curves.map(c => {
+    const tier = classifyNote(c.note);
+    return {
+      label: c.name,
+      data: c.concentrations,
+      borderColor: noteColors[tier] || 'var(--text2)',
+      backgroundColor: (noteColors[tier] || '#888') + '22',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 2,
+    };
+  });
+
+  _evapChart = new Chart(canvas, {
+    type: 'line',
+    data: { labels: sim.timePoints.map(t => t + 'h'), datasets },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+      scales: {
+        x: { title: { display: true, text: 'Time (hours)' } },
+        y: { title: { display: true, text: 'Relative Headspace Conc.' }, beginAtZero: true },
+      },
+    },
+  });
+}
+// ===== Tab 4: Odor Profile & Perception (System 2) =====
+let _radarChart = null;
+function renderOdorTab() {
+  const el = document.getElementById('odorContent');
+  const mats = formulation.materials;
+  if (!mats.length) { el.innerHTML = '<div class="empty-state"><p>Add materials to see odor profile</p></div>'; return; }
+
+  const tempC = parseInt(document.getElementById('tempSlider').value);
+  const ovTable = buildOdorValueTable(mats, tempC);
+  const radar = buildRadarData(mats, tempC, [0, 1, 4, 12]);
+
+  let html = '';
+
+  // Radar chart
+  html += '<div class="analysis-card"><h4>Perfumery Radar — Odor Profile Over Time</h4>';
+  html += '<div class="chart-wrap"><canvas id="odorRadar"></canvas></div></div>';
+
+  // OV Table
+  html += '<div class="analysis-card"><h4>Odor Value & Perceived Intensity</h4>';
+  html += '<p class="panel-desc">Sorted by perceived intensity. OV = headspace concentration / odor detection threshold.</p>';
+  html += '<table class="data-table"><thead><tr><th>Material</th><th>Note</th><th>ODT (ppb)</th><th>OV</th><th>PSI</th><th>n</th><th>Data</th></tr></thead><tbody>';
+  for (const r of ovTable) {
+    const psiBar = '<div style="display:inline-block;width:' + Math.min(r.perceivedIntensity, 100) + 'px;height:8px;background:var(--accent);border-radius:4px;opacity:0.7"></div>';
+    const confDot = r.odt_confidence === 'high' ? 'high' : r.odt_confidence === 'low' ? 'med' : 'low';
+    html += '<tr>';
+    html += '<td>' + r.name + '</td>';
+    html += '<td>' + (r.note || '—') + '</td>';
+    html += '<td>' + (r.odt_ppb != null ? r.odt_ppb : '—') + '</td>';
+    html += '<td>' + r.odorValue + '</td>';
+    html += '<td>' + psiBar + ' ' + r.perceivedIntensity + '</td>';
+    html += '<td>' + r.stevensN + '</td>';
+    html += '<td><span class="conf-dot ' + confDot + '" title="' + r.odt_method + '"></span></td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+
+  el.innerHTML = html;
+
+  // Render radar chart
+  const canvas = document.getElementById('odorRadar');
+  if (!canvas) return;
+  if (_radarChart) _radarChart.destroy();
+
+  const colors = ['rgba(59,130,246,0.8)', 'rgba(234,179,8,0.7)', 'rgba(249,115,22,0.6)', 'rgba(139,92,246,0.5)'];
+  const bgColors = ['rgba(59,130,246,0.15)', 'rgba(234,179,8,0.10)', 'rgba(249,115,22,0.08)', 'rgba(139,92,246,0.06)'];
+
+  _radarChart = new Chart(canvas, {
+    type: 'radar',
+    data: {
+      labels: radar.axes.map(a => a.charAt(0).toUpperCase() + a.slice(1)),
+      datasets: radar.datasets.map((ds, i) => ({
+        label: ds.label,
+        data: ds.data,
+        borderColor: colors[i] || colors[0],
+        backgroundColor: bgColors[i] || bgColors[0],
+        borderWidth: 2,
+        pointRadius: 3,
+      })),
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+      scales: { r: { beginAtZero: true, ticks: { font: { size: 10 } } } },
+    },
+  });
+}
+// ===== Tab 5: Stability & Maturation (System 4) =====
+function renderStabilityTab() {
+  const el = document.getElementById('stabilityContent');
+  const mats = formulation.materials;
+  if (!mats.length) { el.innerHTML = '<div class="empty-state"><p>Add materials to see stability analysis</p></div>'; return; }
+
+  const matrix = buildFunctionalGroupMatrix(mats);
+  const warnings = detectReactivePairs(matrix);
+  const summary = getStabilitySummary(warnings, matrix);
+
+  let html = '';
+
+  // Summary
+  const riskClass = summary.overallRisk === 'low' ? 'badge-ok' : summary.overallRisk === 'medium' ? 'badge-warn' : 'badge-danger';
+  html += '<div class="analysis-card"><h4>Stability Risk <span class="badge ' + riskClass + '">' + summary.overallRisk.toUpperCase() + '</span></h4>';
+  html += '<div style="font-size:0.85em;color:var(--text2);margin-top:4px">';
+  html += 'Reactive pairs: ' + warnings.length + ' (' + summary.highCount + ' high, ' + summary.mediumCount + ' medium, ' + summary.lowCount + ' low)';
+  if (summary.materialsWithoutSmiles) html += ' &middot; ' + summary.materialsWithoutSmiles + ' materials without SMILES data';
+  html += '</div></div>';
+
+  // Functional Group Matrix
+  html += '<div class="analysis-card"><h4>Functional Group Matrix</h4>';
+  html += '<p class="panel-desc">Detected from SMILES (approximate). Groups used for reactive pair analysis.</p>';
+  html += '<table class="data-table"><thead><tr><th>Material</th><th>Source</th><th>Functional Groups</th></tr></thead><tbody>';
+  for (const m of matrix) {
+    const srcBadge = m.smilesSource === 'pubchem' ? 'badge-ok' : m.smilesSource === 'fallback' ? 'badge-warn' : 'badge-danger';
+    const srcLabel = m.smilesSource === 'none' ? 'No SMILES' : m.smilesSource;
+    html += '<tr><td>' + m.name + '</td>';
+    html += '<td><span class="badge ' + srcBadge + '">' + srcLabel + '</span></td>';
+    html += '<td>' + (m.groups.length ? m.groups.map(g => '<code>' + g.label + '</code>').join(' ') : '<span style="color:var(--text2)">—</span>') + '</td></tr>';
+  }
+  html += '</tbody></table></div>';
+
+  // Reactive Pair Warnings
+  if (warnings.length) {
+    html += '<div class="analysis-card"><h4>Reactive Pair Warnings</h4>';
+    for (const w of warnings) {
+      const sevClass = w.severity === 'high' ? 'badge-danger' : w.severity === 'medium' ? 'badge-warn' : 'badge-ok';
+      const colorSwatch = w.colorChange ? '<span style="display:inline-flex;gap:2px;vertical-align:middle"><span style="width:14px;height:14px;border-radius:3px;background:' + w.colorChange.from + ';border:1px solid var(--border)"></span><span style="font-size:0.8em">&rarr;</span><span style="width:14px;height:14px;border-radius:3px;background:' + w.colorChange.to + ';border:1px solid var(--border)"></span></span>' : '';
+      html += '<div style="padding:10px;border:1px solid var(--border);border-radius:6px;margin-bottom:8px;background:var(--bg2)">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+      html += '<strong>' + w.matA.name + ' + ' + w.matB.name + '</strong>';
+      html += '<span class="badge ' + sevClass + '">' + w.severity + '</span>';
+      html += '</div>';
+      html += '<div style="font-size:0.85em;margin-top:4px"><strong>' + w.reaction + '</strong> ' + colorSwatch + '</div>';
+      html += '<div style="font-size:0.82em;color:var(--text2);margin-top:2px">' + w.effect + '</div>';
+      html += '<div style="font-size:0.82em;margin-top:4px"><strong>Timeframe:</strong> ' + w.timeframe + '</div>';
+      html += '<div style="font-size:0.82em;color:var(--accent);margin-top:2px"><strong>Mitigation:</strong> ' + w.mitigation + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  el.innerHTML = html;
+}
+// ===== Tab 6: Mood & Aromachology (System 6) =====
+let _moodChart = null;
+let _moodTargets = [];
+function renderMoodTab() {
+  const el = document.getElementById('moodContent');
+  const mats = formulation.materials;
+  if (!mats.length) { el.innerHTML = '<div class="empty-state"><p>Add materials to see mood analysis</p></div>'; return; }
+
+  const tempC = parseInt(document.getElementById('tempSlider').value);
+  const mood = computeMoodProfile(mats, null);
+  const desc = describeMood(mood.profile);
+
+  let html = '';
+
+  // Mood description
+  html += '<div class="analysis-card"><h4>Mood Profile</h4>';
+  html += '<p style="font-size:0.9em;margin-top:4px">' + desc.description + '</p>';
+  html += '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">';
+  if (desc.primary) html += '<span class="badge badge-ok">Primary: ' + desc.primary.dimension + ' (' + desc.primary.score + ')</span>';
+  if (desc.secondary) html += '<span class="badge badge-warn">Secondary: ' + desc.secondary.dimension + ' (' + desc.secondary.score + ')</span>';
+  html += '</div></div>';
+
+  // Mood radar
+  html += '<div class="analysis-card"><h4>Mood Radar</h4>';
+  html += '<div class="chart-wrap"><canvas id="moodRadar"></canvas></div></div>';
+
+  // Target mood selector
+  html += '<div class="analysis-card"><h4>Target Mood — Click to Find Materials</h4>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px" id="moodChips">';
+  for (const dim of MOOD_DIMENSIONS) {
+    const active = _moodTargets.includes(dim) ? ' active' : '';
+    html += '<span class="odor-tag' + active + '" onclick="toggleMoodTarget(\'' + dim + '\')">' + dim + '</span>';
+  }
+  html += '</div></div>';
+
+  // Mood suggestions (if targets selected)
+  if (_moodTargets.length) {
+    const graph = getCompatGraph();
+    const suggestions = suggestByMood(_moodTargets, mats, graph, DB, 8);
+    if (suggestions.length) {
+      html += '<div class="analysis-card"><h4>Suggested for ' + _moodTargets.join(' + ') + '</h4>';
+      html += '<table class="data-table"><thead><tr><th>Material</th><th>Note</th><th>Relevance</th><th>Compat.</th><th></th></tr></thead><tbody>';
+      for (const s of suggestions) {
+        html += '<tr>';
+        html += '<td>' + s.name + '</td>';
+        html += '<td>' + (s.note || '—') + '</td>';
+        html += '<td>' + s.relevance + '</td>';
+        html += '<td>' + s.compatibility + '</td>';
+        html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + s.cas + '\')">+ Add</button></td>';
+        html += '</tr>';
+      }
+      html += '</tbody></table></div>';
+    }
+  }
+
+  // Per-material mood breakdown
+  html += '<div class="analysis-card"><h4>Per-Material Mood Scores</h4>';
+  html += '<table class="data-table"><thead><tr><th>Material</th>';
+  for (const d of MOOD_DIMENSIONS) html += '<th style="font-size:0.72em;writing-mode:vertical-lr;transform:rotate(180deg);height:60px">' + d + '</th>';
+  html += '<th>Source</th></tr></thead><tbody>';
+  for (const pm of mood.perMaterial) {
+    html += '<tr><td>' + pm.name + '</td>';
+    for (const s of pm.scores) {
+      const bg = s >= 4 ? 'var(--success-bg)' : s >= 3 ? 'var(--warn-bg)' : 'transparent';
+      html += '<td style="text-align:center;background:' + bg + '">' + s + '</td>';
+    }
+    html += '<td><span class="badge ' + (pm.method === 'literature' ? 'badge-ok' : 'badge-warn') + '">' + pm.method + '</span></td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+
+  el.innerHTML = html;
+
+  // Render mood radar chart
+  const canvas = document.getElementById('moodRadar');
+  if (!canvas) return;
+  if (_moodChart) _moodChart.destroy();
+  _moodChart = new Chart(canvas, {
+    type: 'radar',
+    data: {
+      labels: mood.dimensions.map(d => d.charAt(0).toUpperCase() + d.slice(1)),
+      datasets: [{
+        label: 'Mood Profile',
+        data: mood.profile,
+        borderColor: 'rgba(59,130,246,0.8)',
+        backgroundColor: 'rgba(59,130,246,0.15)',
+        borderWidth: 2,
+        pointRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      scales: { r: { beginAtZero: true, max: 5, ticks: { stepSize: 1, font: { size: 10 } } } },
+      plugins: { legend: { display: false } },
+    },
+  });
+}
+
+function toggleMoodTarget(dim) {
+  const idx = _moodTargets.indexOf(dim);
+  if (idx >= 0) _moodTargets.splice(idx, 1);
+  else _moodTargets.push(dim);
+  renderMoodTab();
+}
 
 // ===== Tab 1: Safety & Compliance (System 5) =====
 function renderSafetyTab() {
