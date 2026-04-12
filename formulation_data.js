@@ -813,162 +813,6 @@ const FAMILY_MOOD_DEFAULTS = {
 };
 
 // ─────────────────────────────────────────────────────────────
-// Functional Group Patterns for SMILES Detection (System 4)
-// Each pattern has a regex for SMILES string matching.
-// These are APPROXIMATE — SMILES regex cannot fully replace a
-// proper molecular graph parser. Results labelled "approximate".
-// ─────────────────────────────────────────────────────────────
-const FUNCTIONAL_GROUP_PATTERNS = {
-  aldehyde: {
-    label: "Aldehyde (-CHO)",
-    // Matches C=O not preceded by O (ester/acid) and not followed by O (acid)
-    regex: /(?<![O])C=O(?![O])|O=C(?![O(])/,
-  },
-  primary_amine: {
-    label: "Primary Amine (-NH2)",
-    regex: /N(?![+=o])(?:\([^)]*\))?(?=[^=]|$)|n[hH]/,
-  },
-  alcohol: {
-    label: "Hydroxyl (-OH)",
-    // Matches O bonded to carbon, not in C=O, ester, or aromatic ring
-    regex: /(?<![c=])O(?![C=c)])(?=[^=]|$)|O\)/,
-  },
-  carboxylic: {
-    label: "Carboxylic Acid (-COOH)",
-    regex: /C\(=O\)O(?=[^Cc]|$)|OC\(=O\)O/,
-  },
-  ester: {
-    label: "Ester (-COOR)",
-    regex: /C\(=O\)O[Cc]|OC\(=O\)[Cc]/,
-  },
-  phenol: {
-    label: "Phenol (Ar-OH)",
-    regex: /c[0-9]?O(?!C)|cO[Hh]?(?=[^(]|$)/,
-  },
-  ketone: {
-    label: "Ketone (C=O)",
-    regex: /[Cc]C?\(=O\)[Cc]|CC\(=O\)(?=[Cc])/,
-  },
-  thiol: {
-    label: "Thiol (-SH)",
-    regex: /[^=]S(?![+=O(])|(?:^|\()S(?=[^=])/,
-  },
-  alkene: {
-    label: "Alkene (C=C)",
-    regex: /C=C(?!=[^C])|C\\?=C/,
-  },
-  nitro: {
-    label: "Nitro (-NO2)",
-    regex: /\[N\+\]\(\[O-\]\)=O|\[N\+\].*\[O-\]/,
-  },
-};
-
-// ─────────────────────────────────────────────────────────────
-// Reactive Pair Rules (System 4 — Chemical Dynamics)
-// Pairs of functional groups that may react during maturation.
-// severity: "high" = significant change, "medium" = noticeable,
-// "low" = minor / very slow at room temperature
-// ─────────────────────────────────────────────────────────────
-const REACTIVE_PAIRS = [
-  {
-    group_a: "aldehyde", group_b: "primary_amine",
-    reaction: "Schiff Base Formation",
-    effect: "Color darkening (yellow to brown); gradual loss of both aldehyde top-note brightness and amine character",
-    severity: "high",
-    timeframe: "Days to weeks",
-    mitigation: "Use Dimethyl Anthranilate instead of Methyl Anthranilate; add BHT antioxidant; avoid direct mixing"
-  },
-  {
-    group_a: "aldehyde", group_b: "alcohol",
-    reaction: "Hemiacetal / Acetal Formation",
-    effect: "Subtle softening of aldehyde note; generally reversible equilibrium at room temperature",
-    severity: "low",
-    timeframe: "Weeks to months",
-    mitigation: "Usually acceptable in finished products; monitor for note drift"
-  },
-  {
-    group_a: "aldehyde", group_b: "phenol",
-    reaction: "Phenol-Aldehyde Condensation",
-    effect: "Brownish discoloration; possible off-notes from polymeric byproducts",
-    severity: "medium",
-    timeframe: "Weeks to months",
-    mitigation: "Add antioxidant (BHT/BHA); separate in formulation timing"
-  },
-  {
-    group_a: "aldehyde", group_b: "thiol",
-    reaction: "Thioacetal Formation",
-    effect: "Loss of both thiol and aldehyde character; sulfurous off-notes possible",
-    severity: "high",
-    timeframe: "Hours to days",
-    mitigation: "Avoid combining; use hemithioacetal-stable alternatives"
-  },
-  {
-    group_a: "thiol", group_b: "alkene",
-    reaction: "Thiol-ene Reaction",
-    effect: "Loss of thiol sulfury notes; new thioether character",
-    severity: "medium",
-    timeframe: "Days to weeks",
-    mitigation: "Avoid combination or add radical inhibitor"
-  },
-  {
-    group_a: "carboxylic", group_b: "alcohol",
-    reaction: "Fischer Esterification",
-    effect: "Very slow at room temperature without catalyst; may produce fruity ester over months",
-    severity: "low",
-    timeframe: "Months to years (negligible at RT)",
-    mitigation: "Acceptable; monitor pH over time"
-  },
-  {
-    group_a: "ester", group_b: "alcohol",
-    reaction: "Transesterification",
-    effect: "Slow exchange of ester groups; subtle note shifts possible over long storage",
-    severity: "low",
-    timeframe: "Months",
-    mitigation: "Acceptable; avoid strong acid/base conditions"
-  },
-  {
-    group_a: "ketone", group_b: "primary_amine",
-    reaction: "Imine (Ketimine) Formation",
-    effect: "Similar to Schiff base but slower; color change possible",
-    severity: "medium",
-    timeframe: "Weeks to months",
-    mitigation: "Reduce concentration of one component; add stabilizer"
-  },
-  {
-    group_a: "phenol", group_b: "alkene",
-    reaction: "Oxidative Coupling",
-    effect: "Discoloration under light/air exposure; phenol polymerization",
-    severity: "medium",
-    timeframe: "Weeks (accelerated by light/heat)",
-    mitigation: "Store in dark; add UV stabilizer or antioxidant"
-  },
-  {
-    group_a: "aldehyde", group_b: "aldehyde",
-    reaction: "Aldol Condensation",
-    effect: "Self-condensation forming larger molecules; yellowing; viscosity increase",
-    severity: "medium",
-    timeframe: "Weeks to months",
-    mitigation: "Avoid high concentrations of mixed aldehydes; add antioxidant"
-  },
-  {
-    group_a: "nitro", group_b: "primary_amine",
-    reaction: "Nitro Reduction / Coupling",
-    effect: "Potential color instability; nitro musks are photosensitive",
-    severity: "medium",
-    timeframe: "Weeks (light-dependent)",
-    mitigation: "Store in dark; consider non-nitro musk alternatives"
-  },
-  {
-    group_a: "phenol", group_b: "aldehyde",
-    reaction: "Mannich-type Reaction",
-    effect: "Brown discoloration; possible precipitate formation in concentrated bases",
-    severity: "medium",
-    timeframe: "Weeks to months",
-    mitigation: "Dilute in solvent first; add chelating agent"
-  },
-];
-
-// ─────────────────────────────────────────────────────────────
 // Blend Target Resolution Table
 // Maps shorthand names found in blends_with arrays to CAS
 // numbers. Covers common shorthand names that don't exactly
@@ -1020,3 +864,221 @@ const BLEND_TARGET_RESOLUTION = {
   "tonka":         "91-64-5",     // Coumarin (primary odorant of tonka bean)
   "musk":          "541-91-3",    // Muscone as default musk
 };
+
+// ─────────────────────────────────────────────────────────────
+// Functional Group SMILES Patterns (System 4)
+// Regex patterns applied to canonical SMILES strings.
+// NOTE: SMILES regex is approximate and may produce false positives.
+// Results should be labeled "approximate" in the UI.
+// ─────────────────────────────────────────────────────────────
+const FUNCTIONAL_GROUP_PATTERNS = {
+  aldehyde: {
+    label: "Aldehyde (-CHO)",
+    // Matches C=O or O=C NOT followed by O (ester/acid) or preceded by c (aromatic ketone special)
+    test(smiles) {
+      // Terminal aldehyde: =O at end or C=O not part of ester/acid/amide
+      if (/C=O$/.test(smiles) || /^O=C[^(O)]/.test(smiles)) return true;
+      if (/[^c]C\(=O\)[^O]/.test(smiles)) return true;
+      if (/C\(=O\)$/.test(smiles)) return true;
+      // Explicit CHO
+      if (/\[CH\]=O/.test(smiles)) return true;
+      return /C=O/.test(smiles) && !/C\(=O\)O/.test(smiles) && !/C\(=O\)N/.test(smiles);
+    },
+  },
+  ketone: {
+    label: "Ketone (C=O)",
+    test(smiles) {
+      // CC(=O)C pattern — carbonyl flanked by carbons
+      return /[Cc]\(=O\)[Cc]/.test(smiles) || /[Cc]C\(=O\)[Cc]/.test(smiles);
+    },
+  },
+  primary_amine: {
+    label: "Primary Amine (-NH2)",
+    test(smiles) {
+      return /N(?![+=])(?!\()/.test(smiles) && /\[NH2\]|N[^(=+]/.test(smiles);
+    },
+  },
+  secondary_amine: {
+    label: "Secondary Amine (-NH-)",
+    test(smiles) {
+      return /\[nH\]|\[NH\]/.test(smiles);
+    },
+  },
+  alcohol: {
+    label: "Alcohol (-OH)",
+    test(smiles) {
+      // O not in ester C(=O)O, not in ring O (epoxide), not aromatic
+      return /[^=]O[^=Cc(]|O$|[^(=]O[H]/.test(smiles) || /\)O$/.test(smiles) || /\(O\)/.test(smiles);
+    },
+  },
+  phenol: {
+    label: "Phenol (Ar-OH)",
+    test(smiles) {
+      return /cO[^C(=]|cO$|cO\)/.test(smiles) || /c1[^)]*O[Hh]?/.test(smiles);
+    },
+  },
+  carboxylic_acid: {
+    label: "Carboxylic Acid (-COOH)",
+    test(smiles) {
+      return /C\(=O\)O[^Cc]|C\(=O\)O$|C\(=O\)\[OH\]/.test(smiles);
+    },
+  },
+  ester: {
+    label: "Ester (-COOR)",
+    test(smiles) {
+      return /C\(=O\)O[Cc]|OC\(=O\)[Cc]/.test(smiles);
+    },
+  },
+  thiol: {
+    label: "Thiol (-SH)",
+    test(smiles) {
+      return /[^=]S[^=Oo(]|S$|\[SH\]/.test(smiles);
+    },
+  },
+  alkene: {
+    label: "Alkene (C=C)",
+    test(smiles) {
+      // C=C not in aromatic ring context
+      return /[^c]C=C|^C=C/.test(smiles);
+    },
+  },
+  epoxide: {
+    label: "Epoxide",
+    test(smiles) {
+      return /C1OC1|C1CO1/.test(smiles);
+    },
+  },
+  lactone: {
+    label: "Lactone (cyclic ester)",
+    test(smiles) {
+      // Ring containing C(=O)O pattern
+      return /C\(=O\)O.*\d|OC\(=O\).*\d/.test(smiles) && /\d/.test(smiles);
+    },
+  },
+  nitrile: {
+    label: "Nitrile (-CN)",
+    test(smiles) {
+      return /C#N/.test(smiles);
+    },
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// Reactive Pair Rules (System 4)
+// Known problematic chemical interactions in perfumery.
+// Sources: Calkin & Jellinek "Perfumery: Practice and Principles"
+// (1994), Sell "Chemistry of Fragrances" (2006), Curtis & Williams
+// "Introduction to Perfumery" (2001)
+// ─────────────────────────────────────────────────────────────
+const REACTIVE_PAIRS = [
+  {
+    group_a: "aldehyde",
+    group_b: "primary_amine",
+    reaction: "Schiff base formation",
+    effect: "Color darkening (yellow to brown); loss of both aldehyde freshness and amine character; new imine note",
+    severity: "high",
+    timeframe: "Days to weeks",
+    mitigation: "Replace primary amine (e.g. use Dimethyl Anthranilate instead of Methyl Anthranilate); add antioxidant (BHT 0.01%); separate application timing",
+    colorChange: { from: "#f5f0e0", to: "#8B6914" },
+  },
+  {
+    group_a: "aldehyde",
+    group_b: "secondary_amine",
+    reaction: "Enamine formation",
+    effect: "Slower than Schiff base; moderate color change; altered note character",
+    severity: "medium",
+    timeframe: "Weeks to months",
+    mitigation: "Monitor aging; consider substitution",
+    colorChange: { from: "#f5f0e0", to: "#C4A44A" },
+  },
+  {
+    group_a: "aldehyde",
+    group_b: "alcohol",
+    reaction: "Hemiacetal / acetal formation",
+    effect: "Subtle note change; generally reversible equilibrium; minimal color change",
+    severity: "low",
+    timeframe: "Weeks (equilibrium)",
+    mitigation: "Usually acceptable in finished product; monitor pH",
+    colorChange: null,
+  },
+  {
+    group_a: "phenol",
+    group_b: "aldehyde",
+    reaction: "Phenol-aldehyde condensation",
+    effect: "Brownish discoloration; possible off-notes; resinification over time",
+    severity: "medium",
+    timeframe: "Weeks to months",
+    mitigation: "Separate in formula; add antioxidant; avoid heat exposure",
+    colorChange: { from: "#f5f0e0", to: "#A0522D" },
+  },
+  {
+    group_a: "thiol",
+    group_b: "alkene",
+    reaction: "Thiol-ene reaction",
+    effect: "Loss of thiol character; new sulfide notes; potential off-odor",
+    severity: "medium",
+    timeframe: "Days",
+    mitigation: "Avoid combination; use radical inhibitor if needed",
+    colorChange: null,
+  },
+  {
+    group_a: "carboxylic_acid",
+    group_b: "alcohol",
+    reaction: "Fischer esterification (slow)",
+    effect: "Very slow at room temperature without catalyst; fruity ester byproduct over months",
+    severity: "low",
+    timeframe: "Months to years at RT",
+    mitigation: "Acceptable; monitor pH; avoid acid catalysts in formula",
+    colorChange: null,
+  },
+  {
+    group_a: "aldehyde",
+    group_b: "thiol",
+    reaction: "Hemithioacetal formation",
+    effect: "Strong unpleasant sulfurous off-note; rapid reaction",
+    severity: "high",
+    timeframe: "Hours to days",
+    mitigation: "Never combine; replace one component",
+    colorChange: null,
+  },
+  {
+    group_a: "ketone",
+    group_b: "primary_amine",
+    reaction: "Imine (ketimine) formation",
+    effect: "Slower than aldehyde-amine; moderate impact on odor profile",
+    severity: "low",
+    timeframe: "Weeks to months",
+    mitigation: "Monitor; generally less problematic than aldehyde-amine",
+    colorChange: { from: "#f5f0e0", to: "#D4C78A" },
+  },
+  {
+    group_a: "ester",
+    group_b: "alcohol",
+    reaction: "Transesterification",
+    effect: "Exchange of alcohol groups; subtle odor shift; reversible equilibrium",
+    severity: "low",
+    timeframe: "Months",
+    mitigation: "Acceptable; no significant quality impact",
+    colorChange: null,
+  },
+  {
+    group_a: "alkene",
+    group_b: "alkene",
+    reaction: "Oxidative polymerization",
+    effect: "Terpene polymerization upon oxidation; viscosity increase; off-notes",
+    severity: "medium",
+    timeframe: "Weeks (accelerated by light/air)",
+    mitigation: "Add antioxidant (BHT/BHA 0.01-0.05%); store in dark; nitrogen blanket",
+    colorChange: { from: "#f5f0e0", to: "#E8D88E" },
+  },
+  {
+    group_a: "phenol",
+    group_b: "phenol",
+    reaction: "Oxidative coupling / browning",
+    effect: "Phenol oxidation causes progressive darkening; melanoidin-like polymers",
+    severity: "medium",
+    timeframe: "Weeks to months",
+    mitigation: "Add antioxidant; minimize air contact; UV-protected packaging",
+    colorChange: { from: "#f5f0e0", to: "#6B4226" },
+  },
+];

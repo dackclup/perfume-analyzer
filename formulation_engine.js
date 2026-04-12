@@ -1188,3 +1188,179 @@ function estimateLongevity(materials, tempC) {
     totalHours: roundN(baseFade, 1),
   };
 }
+
+// ─────────────────────────────────────────────────────────────
+// SYSTEM 4: Chemical Dynamics & Maturation Engine
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Get SMILES for a material — from enriched data or fallback table.
+ * @param {string} cas
+ * @param {Object} matData - may contain smiles from PubChem enrichment
+ * @returns {string|null}
+ */
+function getSmiles(cas, matData) {
+  if (matData?.smiles) return matData.smiles;
+  const fb = SMILES_FALLBACK[cas];
+  return fb ? fb.smiles : null;
+}
+
+/**
+ * Detect functional groups in a SMILES string.
+ * @param {string} smiles
+ * @returns {Array} [{group, label}]
+ */
+function detectFunctionalGroups(smiles) {
+  if (!smiles) return [];
+  const found = [];
+  for (const [group, pattern] of Object.entries(FUNCTIONAL_GROUP_PATTERNS)) {
+    if (pattern.test(smiles)) {
+      found.push({ group, label: pattern.label });
+    }
+  }
+  return found;
+}
+
+/**
+ * Build functional group matrix for all materials.
+ * @param {Array} materials - [{cas, name, data:{smiles?, ...}}]
+ * @returns {Array} [{cas, name, smiles, smilesSource, groups:[{group, label}]}]
+ */
+function buildFunctionalGroupMatrix(materials) {
+  return materials.map(mat => {
+    const smiles = getSmiles(mat.cas, mat.data);
+    let smilesSource = 'none';
+    if (mat.data?.smiles) smilesSource = 'pubchem';
+    else if (SMILES_FALLBACK[mat.cas]) smilesSource = 'fallback';
+
+    const groups = detectFunctionalGroups(smiles);
+
+    return {
+      cas: mat.cas,
+      name: mat.name,
+      smiles,
+      smilesSource,
+      groups,
+    };
+  });
+}
+
+/**
+ * Detect reactive pairs in the formulation.
+ * Checks all material pairs for known problematic reactions.
+ * @param {Array} groupMatrix - output of buildFunctionalGroupMatrix()
+ * @returns {Array} [{matA, matB, reaction, effect, severity, timeframe, mitigation, colorChange}]
+ */
+function detectReactivePairs(groupMatrix) {
+  const warnings = [];
+
+  for (let i = 0; i < groupMatrix.length; i++) {
+    for (let j = i + 1; j < groupMatrix.length; j++) {
+      const a = groupMatrix[i];
+      const b = groupMatrix[j];
+      if (!a.groups.length || !b.groups.length) continue;
+
+      const groupsA = new Set(a.groups.map(g => g.group));
+      const groupsB = new Set(b.groups.map(g => g.group));
+
+      for (const rule of REACTIVE_PAIRS) {
+        const matchForward = groupsA.has(rule.group_a) && groupsB.has(rule.group_b);
+        const matchReverse = groupsA.has(rule.group_b) && groupsB.has(rule.group_a);
+
+        if (matchForward || matchReverse) {
+          warnings.push({
+            matA: { cas: a.cas, name: a.name, group: matchForward ? rule.group_a : rule.group_b },
+            matB: { cas: b.cas, name: b.name, group: matchForward ? rule.group_b : rule.group_a },
+            reaction: rule.reaction,
+            effect: rule.effect,
+            severity: rule.severity,
+            timeframe: rule.timeframe,
+            mitigation: rule.mitigation,
+            colorChange: rule.colorChange,
+          });
+        }
+      }
+    }
+  }
+
+  // Sort by severity: high > medium > low
+  const sevOrder = { high: 0, medium: 1, low: 2 };
+  warnings.sort((a, b) => (sevOrder[a.severity] || 2) - (sevOrder[b.severity] || 2));
+
+  return warnings;
+}
+
+/**
+ * Suggest substitution for a problematic material.
+ * Finds materials in the same odor family that lack the reactive group.
+ * @param {string} cas - CAS of material to replace
+ * @param {string} avoidGroup - functional group to avoid
+ * @param {Object} db - perfumery DB
+ * @param {number} maxResults
+ * @returns {Array} [{cas, name, odorType, note}]
+ */
+function suggestSubstitution(cas, avoidGroup, db, maxResults) {
+  maxResults = maxResults || 5;
+  const entry = db[cas];
+  if (!entry) return [];
+
+  const targetType = (entry.odor && entry.odor.type || '').toLowerCase();
+  const targetNote = (entry.note || '').toLowerCase();
+
+  const candidates = [];
+  for (const [candCAS, candEntry] of Object.entries(db)) {
+    if (candCAS === cas) continue;
+
+    // Must have similar odor type
+    const candType = (candEntry.odor && candEntry.odor.type || '').toLowerCase();
+    if (!candType || !targetType) continue;
+    const typeWords = targetType.split(/[\s\/,]+/);
+    const candWords = candType.split(/[\s\/,]+/);
+    const overlap = typeWords.filter(w => candWords.includes(w)).length;
+    if (overlap === 0) continue;
+
+    // Must not have the problematic functional group
+    const smiles = getSmiles(candCAS, {});
+    if (smiles) {
+      const pattern = FUNCTIONAL_GROUP_PATTERNS[avoidGroup];
+      if (pattern && pattern.test(smiles)) continue;
+    }
+
+    candidates.push({
+      cas: candCAS,
+      name: candEntry.name,
+      odorType: candEntry.odor ? candEntry.odor.type : null,
+      note: candEntry.note,
+      similarity: overlap / typeWords.length,
+    });
+  }
+
+  return candidates
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, maxResults)
+    .map(({ similarity, ...rest }) => rest);
+}
+
+/**
+ * Get stability summary for the formulation.
+ * @param {Array} reactiveWarnings - output of detectReactivePairs()
+ * @param {Array} groupMatrix - output of buildFunctionalGroupMatrix()
+ * @returns {Object} {overallRisk, highCount, mediumCount, lowCount, materialsWithoutSmiles, totalGroups}
+ */
+function getStabilitySummary(reactiveWarnings, groupMatrix) {
+  let highCount = 0, mediumCount = 0, lowCount = 0;
+  for (const w of reactiveWarnings) {
+    if (w.severity === 'high') highCount++;
+    else if (w.severity === 'medium') mediumCount++;
+    else lowCount++;
+  }
+
+  const materialsWithoutSmiles = groupMatrix.filter(m => !m.smiles).length;
+  const totalGroups = groupMatrix.reduce((sum, m) => sum + m.groups.length, 0);
+
+  let overallRisk = 'low';
+  if (highCount > 0) overallRisk = 'high';
+  else if (mediumCount > 0) overallRisk = 'medium';
+
+  return { overallRisk, highCount, mediumCount, lowCount, materialsWithoutSmiles, totalGroups };
+}
