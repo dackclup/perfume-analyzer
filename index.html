@@ -373,7 +373,7 @@ html { scroll-behavior:smooth; }
   <button class="clear-btn" onclick="clearAll()">Clear all</button>
 </div>
 <div id="results"></div>
-<div class="downloads" id="downloads" style="display:none">
+<div class="downloads" id="downloads">
   <div class="dl-wrap">
     <a onclick="toggleDlMenu()">▼ Download</a>
     <div class="dl-menu" id="dlMenu">
@@ -3165,7 +3165,7 @@ function renderResults() {
       ? `${_baseStatus} • ${_stats.join(' • ')}`
       : _baseStatus;
   }
-  document.getElementById("downloads").style.display = results.length?"flex":"none";
+  // Download bar always visible (contains Formulate link)
 
   const cards = [];
   results.forEach((mat,idx) => {
