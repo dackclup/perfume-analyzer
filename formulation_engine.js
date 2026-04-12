@@ -448,3 +448,253 @@ function getSafetySummary(complianceResults, allergenResult) {
 
   return { overallStatus, bannedCount, dangerCount, warnCount, okCount, declaredAllergenCount };
 }
+
+// ─────────────────────────────────────────────────────────────
+// SYSTEM 3: Compatibility Graph & Allocation Engine
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Build an undirected compatibility graph from blends_with data.
+ * Nodes are CAS numbers, edges mean "blends well together".
+ * @param {Object} db - The perfumery DB keyed by CAS
+ * @returns {Map<string, Set<string>>} adjacency map
+ */
+function buildCompatibilityGraph(db) {
+  const graph = new Map();
+
+  for (const [cas, entry] of Object.entries(db)) {
+    if (!graph.has(cas)) graph.set(cas, new Set());
+
+    for (const target of (entry.blends_with || [])) {
+      const targetCAS = resolveNameToCAS(target);
+      if (!targetCAS || targetCAS === cas) continue;
+
+      graph.get(cas).add(targetCAS);
+      if (!graph.has(targetCAS)) graph.set(targetCAS, new Set());
+      graph.get(targetCAS).add(cas); // undirected
+    }
+  }
+
+  return graph;
+}
+
+/**
+ * Find materials compatible with ALL selected materials.
+ * Uses neighbor intersection scoring: candidates that appear in
+ * more neighbors of selected materials score higher.
+ * @param {Array<string>} selectedCASes - CAS numbers of selected materials
+ * @param {Map} graph - from buildCompatibilityGraph()
+ * @param {Object} db - perfumery DB
+ * @param {number} maxResults - max suggestions to return
+ * @returns {Array} [{cas, name, score, maxScore, note, odorType}]
+ */
+function findCompatibleMaterials(selectedCASes, graph, db, maxResults) {
+  maxResults = maxResults || 20;
+  const selectedSet = new Set(selectedCASes);
+  const candidates = new Map(); // CAS → score
+
+  for (const cas of selectedCASes) {
+    const neighbors = graph.get(cas);
+    if (!neighbors) continue;
+    for (const n of neighbors) {
+      if (selectedSet.has(n)) continue;
+      candidates.set(n, (candidates.get(n) || 0) + 1);
+    }
+  }
+
+  return [...candidates.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, maxResults)
+    .map(([cas, score]) => ({
+      cas,
+      name: db[cas] ? db[cas].name : cas,
+      score,
+      maxScore: selectedCASes.length,
+      note: db[cas] ? db[cas].note : null,
+      odorType: db[cas] ? (db[cas].odor && db[cas].odor.type) : null,
+    }));
+}
+
+/**
+ * Compute a harmony score for the current formulation.
+ * Measures how well the selected materials blend with each other
+ * based on graph connectivity.
+ * @param {Array<string>} selectedCASes
+ * @param {Map} graph
+ * @returns {Object} {score: 0-100, pairs, connectedPairs, totalPairs}
+ */
+function computeHarmonyScore(selectedCASes, graph) {
+  if (selectedCASes.length < 2) return { score: 100, connectedPairs: 0, totalPairs: 0, pairs: [] };
+
+  const pairs = [];
+  let connectedPairs = 0;
+  let totalPairs = 0;
+
+  for (let i = 0; i < selectedCASes.length; i++) {
+    for (let j = i + 1; j < selectedCASes.length; j++) {
+      totalPairs++;
+      const a = selectedCASes[i];
+      const b = selectedCASes[j];
+      const neighbors = graph.get(a);
+      const connected = neighbors ? neighbors.has(b) : false;
+      if (connected) connectedPairs++;
+      pairs.push({ a, b, connected });
+    }
+  }
+
+  const score = totalPairs > 0 ? Math.round(connectedPairs / totalPairs * 100) : 100;
+  return { score, connectedPairs, totalPairs, pairs };
+}
+
+/**
+ * Analyze note tier balance of the formulation.
+ * A well-balanced perfume typically has all three tiers represented.
+ * @param {Array} materials - [{cas, pct, data:{note}}]
+ * @returns {Object} {top, middle, base, missing[], balanced}
+ */
+function analyzeNoteBalance(materials) {
+  const tiers = { top: 0, middle: 0, base: 0 };
+
+  for (const mat of materials) {
+    const note = mat.data?.note || '';
+    const classified = classifyNoteTier(note);
+    for (const t of classified) {
+      tiers[t] += mat.pct;
+    }
+    // If material spans two tiers, split was already counted for both
+  }
+
+  const total = tiers.top + tiers.middle + tiers.base;
+  const missing = [];
+  if (tiers.top === 0) missing.push('top');
+  if (tiers.middle === 0) missing.push('middle');
+  if (tiers.base === 0) missing.push('base');
+
+  return {
+    top:    roundN(tiers.top, 1),
+    middle: roundN(tiers.middle, 1),
+    base:   roundN(tiers.base, 1),
+    total:  roundN(total, 1),
+    missing,
+    balanced: missing.length === 0,
+    // Ideal ranges (guidelines, not strict rules)
+    ideal: { top: '15-30%', middle: '30-50%', base: '20-40%' },
+  };
+}
+
+/**
+ * Suggest initial percentage allocation using Dirichlet-inspired priors.
+ * Stronger materials get lower %, base notes get more than top notes.
+ * @param {Array} materials - [{cas, name, data:{note, odor_strength}}]
+ * @returns {Array} [{cas, name, suggestedPct}]
+ */
+function suggestAllocation(materials) {
+  if (!materials.length) return [];
+
+  const alphas = materials.map(mat => {
+    const note = (mat.data?.note || '').toLowerCase();
+    const strength = odorStrengthScale(mat.data?.odor_strength) || 3;
+
+    // Base alpha by note tier
+    let baseAlpha;
+    if (note.includes('base'))        baseAlpha = 5.0;
+    else if (note.includes('middle')) baseAlpha = 3.5;
+    else if (note.includes('top'))    baseAlpha = 2.0;
+    else                              baseAlpha = 3.0; // functional/unknown
+
+    // Inverse strength: stronger materials need less
+    // strength 1 (Low) → multiply by 3, strength 5 (Very High) → multiply by 0.6
+    const strengthFactor = 3 / clamp(strength, 0.5, 5);
+
+    return baseAlpha * strengthFactor;
+  });
+
+  // Normalize to sum to 100%
+  const sum = alphas.reduce((a, b) => a + b, 0);
+  return materials.map((mat, i) => ({
+    cas: mat.cas,
+    name: mat.name,
+    suggestedPct: roundN((alphas[i] / sum) * 100, 1),
+  }));
+}
+
+/**
+ * Run constrained optimization to balance the formulation.
+ * Adjusts percentages to improve note balance + harmony while
+ * respecting IFRA limits. Uses simple iterative projection.
+ * @param {Array} materials - [{cas, name, pct, data:{...}}]
+ * @param {Map} graph - compatibility graph
+ * @param {string} categoryId - IFRA category
+ * @param {number} fragPct - fragrance concentration
+ * @param {number} iterations - optimization steps (default 50)
+ * @returns {Array} [{cas, name, optimizedPct}]
+ */
+function optimizeAllocation(materials, graph, categoryId, fragPct, iterations) {
+  iterations = iterations || 50;
+  if (materials.length < 2) {
+    return materials.map(m => ({ cas: m.cas, name: m.name, optimizedPct: m.pct }));
+  }
+
+  // Start from current allocation
+  let pcts = materials.map(m => m.pct);
+  const n = pcts.length;
+
+  // Get IFRA max limits per material
+  const ifraMaxes = materials.map(mat => {
+    const ifra51 = parseIFRA51(mat.data?.usage_levels);
+    const cat = IFRA_CATEGORIES[categoryId];
+    if (ifra51 && cat && cat.key && ifra51[cat.key] != null) {
+      // Convert from % in product to % in concentrate
+      return ifra51[cat.key] / (fragPct / 100);
+    }
+    const range = parseUsageRange(mat.data?.usage_levels);
+    return range.max || 100;
+  });
+
+  // Iterative projected gradient
+  const lr = 0.5;
+  for (let iter = 0; iter < iterations; iter++) {
+    // Compute gradient: push toward better note balance
+    const grad = new Array(n).fill(0);
+
+    // Note balance gradient
+    const tiers = { top: 0, middle: 0, base: 0 };
+    const tierIdx = { top: [], middle: [], base: [] };
+    for (let i = 0; i < n; i++) {
+      const note = (materials[i].data?.note || '').toLowerCase();
+      if (note.includes('top'))    { tiers.top += pcts[i]; tierIdx.top.push(i); }
+      if (note.includes('middle') || note.includes('mid')) { tiers.middle += pcts[i]; tierIdx.middle.push(i); }
+      if (note.includes('base'))   { tiers.base += pcts[i]; tierIdx.base.push(i); }
+    }
+
+    const total = pcts.reduce((a, b) => a + b, 0) || 1;
+    const targetTop = total * 0.22;
+    const targetMid = total * 0.40;
+    const targetBase = total * 0.30;
+
+    // Push tier members toward target
+    for (const i of tierIdx.top)    grad[i] += (targetTop - tiers.top) / (tierIdx.top.length || 1) * 0.01;
+    for (const i of tierIdx.middle) grad[i] += (targetMid - tiers.middle) / (tierIdx.middle.length || 1) * 0.01;
+    for (const i of tierIdx.base)   grad[i] += (targetBase - tiers.base) / (tierIdx.base.length || 1) * 0.01;
+
+    // Apply gradient
+    for (let i = 0; i < n; i++) {
+      pcts[i] = pcts[i] + lr * grad[i];
+    }
+
+    // Project: clamp to [0.1, ifraMax], then re-normalize to sum=100
+    for (let i = 0; i < n; i++) {
+      pcts[i] = clamp(pcts[i], 0.1, ifraMaxes[i]);
+    }
+    const pctSum = pcts.reduce((a, b) => a + b, 0);
+    if (pctSum > 0) {
+      for (let i = 0; i < n; i++) pcts[i] = pcts[i] / pctSum * 100;
+    }
+  }
+
+  return materials.map((m, i) => ({
+    cas: m.cas,
+    name: m.name,
+    optimizedPct: roundN(pcts[i], 1),
+  }));
+}
