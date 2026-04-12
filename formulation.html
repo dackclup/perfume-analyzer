@@ -410,8 +410,13 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 const formulation = {
   materials: [],  // { cas, name, pct, data:{...from localStorage or DB...} }
   addMaterial(cas, name, pct, data) {
+    if (!cas || !name) return false;
     if (this.materials.find(m => m.cas === cas)) return false;
-    this.materials.push({ cas, name, pct: pct || 10, data });
+    if (this.materials.length >= 30) { alert('Maximum 30 materials per formulation.'); return false; }
+    pct = parseFloat(pct);
+    if (isNaN(pct) || pct < 0) pct = 0;
+    if (pct > 100) pct = 100;
+    this.materials.push({ cas, name, pct: pct || 10, data: data || {} });
     this.onChange();
     return true;
   },
@@ -421,7 +426,13 @@ const formulation = {
   },
   updatePct(cas, pct) {
     const m = this.materials.find(m => m.cas === cas);
-    if (m) m.pct = pct;
+    if (m) {
+      // Validate: must be number, 0-100 range
+      pct = parseFloat(pct);
+      if (isNaN(pct) || pct < 0) pct = 0;
+      if (pct > 100) pct = 100;
+      m.pct = Math.round(pct * 10) / 10; // max 1 decimal
+    }
     this.onChange();
   },
   totalPct() { return this.materials.reduce((s, m) => s + m.pct, 0); },
@@ -429,6 +440,12 @@ const formulation = {
 };
 
 // ===== Render Material List =====
+// Escape HTML to prevent XSS from material names
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function classifyNote(note) {
   if (!note) return '';
   const n = note.toLowerCase();
@@ -457,20 +474,25 @@ function renderMaterialList() {
   for (const m of formulation.materials) {
     const noteClass = classifyNote(m.data?.note);
     const noteLabel = noteClass === 'top' ? 'T' : noteClass === 'mid' ? 'M' : noteClass === 'base' ? 'B' : '';
-    html += `<div class="mat-item" data-cas="${m.cas}">`;
+    const safeName = escHtml(m.name);
+    const safeCas = escHtml(m.cas);
+    html += `<div class="mat-item" data-cas="${safeCas}">`;
     if (noteLabel) html += `<span class="mat-note ${noteClass}">${noteLabel}</span>`;
-    html += `<span class="mat-name" title="${m.name}">${m.name}</span>`;
-    html += `<input type="number" class="mat-pct" value="${m.pct}" min="0" max="100" step="0.1" onchange="formulation.updatePct('${m.cas}',parseFloat(this.value)||0)">`;
+    html += `<span class="mat-name" title="${safeName}">${safeName}</span>`;
+    html += `<input type="number" class="mat-pct" value="${m.pct}" min="0" max="100" step="0.1"
+      onchange="formulation.updatePct('${safeCas}',this.value)"
+      onblur="if(this.value==='')this.value=0;formulation.updatePct('${safeCas}',this.value)">`;
     html += `<span style="font-size:0.75em;color:var(--text2)">%</span>`;
-    html += `<button class="mat-del" onclick="formulation.removeMaterial('${m.cas}')" title="Remove">&times;</button>`;
+    html += `<button class="mat-del" onclick="formulation.removeMaterial('${safeCas}')" title="Remove">&times;</button>`;
     html += `</div>`;
   }
   list.innerHTML = html;
 
   // Total
-  const pct = Math.round(formulation.totalPct() * 10) / 10;
+  const rawPct = formulation.totalPct();
+  const pct = isNaN(rawPct) ? 0 : Math.round(rawPct * 10) / 10;
   const pctEl = document.getElementById('matTotalPct');
-  pctEl.textContent = pct + '%';
+  pctEl.textContent = pct + '%' + (pct > 100 ? ' (over!)' : '');
   pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
   total.style.display = 'flex';
 }
@@ -500,9 +522,9 @@ modalSearch.addEventListener('input', () => {
     if (matches.length >= 20) break;
   }
   modalResults.innerHTML = matches.map(e =>
-    `<li onclick="addFromDB('${e.cas}')">
-      <span class="mr-name">${e.name}</span>
-      <span class="mr-meta">${e.cas}</span>
+    `<li onclick="addFromDB('${escHtml(e.cas)}')">
+      <span class="mr-name">${escHtml(e.name)}</span>
+      <span class="mr-meta">${escHtml(e.cas)}</span>
     </li>`
   ).join('');
 });
@@ -542,7 +564,8 @@ function importFromAnalyzer() {
     if (!Array.isArray(items) || !items.length) { alert('No valid materials found in storage.'); return; }
     let added = 0;
     for (const item of items) {
-      if (!item.cas) continue;
+      if (!item.cas || typeof item.cas !== 'string') continue;
+      if (!item.name || typeof item.name !== 'string') continue;
       if (formulation.addMaterial(item.cas, item.name, 10, item)) added++;
     }
     if (added) {
@@ -630,7 +653,7 @@ function renderCompatTab() {
       const nA = DB[p.a] ? DB[p.a].name : p.a;
       const nB = DB[p.b] ? DB[p.b].name : p.b;
       const cls = p.connected ? 'badge-ok' : 'badge-warn';
-      html += '<span class="badge ' + cls + '" style="font-size:0.72em">' + nA + ' + ' + nB + '</span>';
+      html += '<span class="badge ' + cls + '" style="font-size:0.72em">' + escHtml(nA) + ' + ' + escHtml(nB) + '</span>';
     }
     html += '</div>';
   }
@@ -662,7 +685,7 @@ function renderCompatTab() {
     const m = mats[i];
     const sug = allocation.find(a => a.cas === m.cas);
     const opt = optimized.find(o => o.cas === m.cas);
-    html += '<tr><td>' + m.name + '</td><td>' + m.pct + '%</td>';
+    html += '<tr><td>' + escHtml(m.name) + '</td><td>' + m.pct + '%</td>';
     html += '<td>' + (sug ? sug.suggestedPct : '—') + '%</td>';
     html += '<td>' + (opt ? opt.optimizedPct : '—') + '%</td></tr>';
   }
@@ -681,11 +704,11 @@ function renderCompatTab() {
       const scorePct = Math.round(s.score / s.maxScore * 100);
       const cls = scorePct >= 75 ? 'badge-ok' : scorePct >= 50 ? 'badge-warn' : 'badge-danger';
       html += '<tr>';
-      html += '<td>' + s.name + '</td>';
-      html += '<td>' + (s.note || '—') + '</td>';
-      html += '<td>' + (s.odorType || '—') + '</td>';
+      html += '<td>' + escHtml(s.name) + '</td>';
+      html += '<td>' + escHtml(s.note || '—') + '</td>';
+      html += '<td>' + escHtml(s.odorType || '—') + '</td>';
       html += '<td><span class="badge ' + cls + '">' + s.score + '/' + s.maxScore + '</span></td>';
-      html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + s.cas + '\')">+ Add</button></td>';
+      html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + escHtml(s.cas) + '\')">+ Add</button></td>';
       html += '</tr>';
     }
     html += '</tbody></table></div>';
@@ -745,7 +768,7 @@ function renderThermoTab() {
   for (const r of vpTable) {
     const confDot = r.confidence === 'high' ? 'high' : r.confidence === 'medium' ? 'med' : 'low';
     html += '<tr>';
-    html += '<td>' + r.name + ' <span class="conf-dot ' + confDot + '"></span></td>';
+    html += '<td>' + escHtml(r.name) + ' <span class="conf-dot ' + confDot + '"></span></td>';
     html += '<td>' + (r.vp_mmHg != null ? r.vp_mmHg.toExponential(3) : '—') + '</td>';
     html += '<td>' + r.method + '</td>';
     html += '<td>' + (r.mw || '—') + '</td>';
@@ -814,8 +837,8 @@ function renderOdorTab() {
     const psiBar = '<div style="display:inline-block;width:' + Math.min(r.perceivedIntensity, 100) + 'px;height:8px;background:var(--accent);border-radius:4px;opacity:0.7"></div>';
     const confDot = r.odt_confidence === 'high' ? 'high' : r.odt_confidence === 'low' ? 'med' : 'low';
     html += '<tr>';
-    html += '<td>' + r.name + '</td>';
-    html += '<td>' + (r.note || '—') + '</td>';
+    html += '<td>' + escHtml(r.name) + '</td>';
+    html += '<td>' + escHtml(r.note || '—') + '</td>';
     html += '<td>' + (r.odt_ppb != null ? r.odt_ppb : '—') + '</td>';
     html += '<td>' + r.odorValue + '</td>';
     html += '<td>' + psiBar + ' ' + r.perceivedIntensity + '</td>';
@@ -882,7 +905,7 @@ function renderStabilityTab() {
   for (const m of matrix) {
     const srcBadge = m.smilesSource === 'pubchem' ? 'badge-ok' : m.smilesSource === 'fallback' ? 'badge-warn' : 'badge-danger';
     const srcLabel = m.smilesSource === 'none' ? 'No SMILES' : m.smilesSource;
-    html += '<tr><td>' + m.name + '</td>';
+    html += '<tr><td>' + escHtml(m.name) + '</td>';
     html += '<td><span class="badge ' + srcBadge + '">' + srcLabel + '</span></td>';
     html += '<td>' + (m.groups.length ? m.groups.map(g => '<code>' + g.label + '</code>').join(' ') : '<span style="color:var(--text2)">—</span>') + '</td></tr>';
   }
@@ -896,7 +919,7 @@ function renderStabilityTab() {
       const colorSwatch = w.colorChange ? '<span style="display:inline-flex;gap:2px;vertical-align:middle"><span style="width:14px;height:14px;border-radius:3px;background:' + w.colorChange.from + ';border:1px solid var(--border)"></span><span style="font-size:0.8em">&rarr;</span><span style="width:14px;height:14px;border-radius:3px;background:' + w.colorChange.to + ';border:1px solid var(--border)"></span></span>' : '';
       html += '<div style="padding:10px;border:1px solid var(--border);border-radius:6px;margin-bottom:8px;background:var(--bg2)">';
       html += '<div style="display:flex;justify-content:space-between;align-items:center">';
-      html += '<strong>' + w.matA.name + ' + ' + w.matB.name + '</strong>';
+      html += '<strong>' + escHtml(w.matA.name) + ' + ' + escHtml(w.matB.name) + '</strong>';
       html += '<span class="badge ' + sevClass + '">' + w.severity + '</span>';
       html += '</div>';
       html += '<div style="font-size:0.85em;margin-top:4px"><strong>' + w.reaction + '</strong> ' + colorSwatch + '</div>';
@@ -954,11 +977,11 @@ function renderMoodTab() {
       html += '<table class="data-table"><thead><tr><th>Material</th><th>Note</th><th>Relevance</th><th>Compat.</th><th></th></tr></thead><tbody>';
       for (const s of suggestions) {
         html += '<tr>';
-        html += '<td>' + s.name + '</td>';
-        html += '<td>' + (s.note || '—') + '</td>';
+        html += '<td>' + escHtml(s.name) + '</td>';
+        html += '<td>' + escHtml(s.note || '—') + '</td>';
         html += '<td>' + s.relevance + '</td>';
         html += '<td>' + s.compatibility + '</td>';
-        html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + s.cas + '\')">+ Add</button></td>';
+        html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + escHtml(s.cas) + '\')">+ Add</button></td>';
         html += '</tr>';
       }
       html += '</tbody></table></div>';
@@ -971,7 +994,7 @@ function renderMoodTab() {
   for (const d of MOOD_DIMENSIONS) html += '<th style="font-size:0.72em;writing-mode:vertical-lr;transform:rotate(180deg);height:60px">' + d + '</th>';
   html += '<th>Source</th></tr></thead><tbody>';
   for (const pm of mood.perMaterial) {
-    html += '<tr><td>' + pm.name + '</td>';
+    html += '<tr><td>' + escHtml(pm.name) + '</td>';
     for (const s of pm.scores) {
       const bg = s >= 4 ? 'var(--success-bg)' : s >= 3 ? 'var(--warn-bg)' : 'transparent';
       html += '<td style="text-align:center;background:' + bg + '">' + s + '</td>';
@@ -1053,7 +1076,7 @@ function renderSafetyTab() {
     const cls = r.status === 'ok' ? 'badge-ok' : r.status === 'warn' ? 'badge-warn' : 'badge-danger';
     const statusTxt = r.banStatus === 'banned' ? 'BANNED' : r.status === 'danger' ? 'OVER' : r.status === 'warn' ? 'Caution' : 'OK';
     html += '<tr>';
-    html += '<td>' + r.name + '</td>';
+    html += '<td>' + escHtml(r.name) + '</td>';
     html += '<td>' + r.pctInConcentrate + '%</td>';
     html += '<td>' + r.pctInProduct + '%</td>';
     html += '<td>' + (r.ifraMax != null ? r.ifraMax + '%' : '—') + '</td>';
@@ -1071,7 +1094,7 @@ function renderSafetyTab() {
       const cls = a.exceedsThreshold ? 'badge-danger' : 'badge-ok';
       const srcTxt = a.sources.map(s => s.from + ' (' + s.ppm + ')').join(', ');
       html += '<tr>';
-      html += '<td>' + a.name + '</td>';
+      html += '<td>' + escHtml(a.name) + '</td>';
       html += '<td><code>' + a.inci + '</code></td>';
       html += '<td>' + a.totalPpm + '</td>';
       html += '<td style="font-size:0.8em">' + srcTxt + '</td>';
@@ -1086,7 +1109,12 @@ function renderSafetyTab() {
   html += '<div style="background:var(--bg2);padding:12px;border-radius:6px;font-size:0.85em;line-height:1.6;word-break:break-word;user-select:all">';
   html += inci;
   html += '</div>';
-  html += '<button class="btn btn-sm" style="margin-top:8px" onclick="navigator.clipboard.writeText(\'' + inci.replace(/'/g, "\\'") + '\');this.textContent=\'Copied!\'">Copy INCI</button>';
+  html += '<button class="btn btn-sm" style="margin-top:8px" id="copyInciBtn">Copy INCI</button>';
+  // Defer event binding to avoid inline script injection
+  setTimeout(() => {
+    const btn = document.getElementById('copyInciBtn');
+    if (btn) btn.addEventListener('click', () => { navigator.clipboard.writeText(inci); btn.textContent = 'Copied!'; });
+  }, 0);
   html += '</div>';
 
   el.innerHTML = html;
