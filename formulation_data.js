@@ -364,7 +364,7 @@ const INCI_NAMES = {
 // ─────────────────────────────────────────────────────────────
 const ANTOINE_COEFFICIENTS = {
   // --- Top Notes (high volatility) ---
-  "5989-27-5":  { A: 6.9496, B: 1640.0, C: 187.0, range:[20,176], name:"Limonene" },
+  "5989-27-5":  { A: 6.7320, B: 1448.0, C: 200.0, range:[20,176], name:"Limonene" },
   "80-56-8":    { A: 6.8526, B: 1446.2, C: 193.2, range:[20,156], name:"alpha-Pinene" },
   "127-91-3":   { A: 6.9120, B: 1507.0, C: 192.0, range:[20,166], name:"beta-Pinene" },
   "5392-40-5":  { A: 7.0200, B: 1720.0, C: 185.0, range:[25,229], name:"Citral" },
@@ -379,7 +379,7 @@ const ANTOINE_COEFFICIENTS = {
   "78-70-6":    { A: 6.6756, B: 1406.0, C: 163.0, range:[25,198], name:"Linalool" },
   "115-95-7":   { A: 7.0300, B: 1740.0, C: 190.0, range:[25,220], name:"Linalyl Acetate" },
   "106-22-9":   { A: 7.1100, B: 1770.0, C: 184.0, range:[25,225], name:"Citronellol" },
-  "106-24-1":   { A: 7.1200, B: 1790.0, C: 182.0, range:[25,230], name:"Geraniol" },
+  "106-24-1":   { A: 7.4190, B: 1838.0, C: 175.0, range:[25,230], name:"Geraniol" },
   "140-11-4":   { A: 7.0600, B: 1720.0, C: 195.0, range:[25,214], name:"Benzyl Acetate" },
   "150-84-5":   { A: 7.0500, B: 1760.0, C: 188.0, range:[25,225], name:"Citronellyl Acetate" },
   "105-87-3":   { A: 7.0700, B: 1780.0, C: 186.0, range:[25,230], name:"Geranyl Acetate" },
