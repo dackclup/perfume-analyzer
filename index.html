@@ -4086,42 +4086,43 @@ document.addEventListener('click', e => {
 // ===== Send to Formulator =====
 function sendToFormulator() {
   const found = results.filter(r => r.found);
-  if (!found.length) return;
-  const payload = found.map(mat => {
-    const src = mat.record;
-    const fc = src.identifiers?.cas ? FILTER_CACHE.get(src.identifiers.cas) : null;
-    return {
-      cas: src.identifiers.cas || null,
-      name: src.names.canonical,
-      smiles: src.identifiers.canonical_smiles || null,
-      molecular_weight: src.properties.molecular_weight || null,
-      xlogp: src.properties.xlogp || null,
-      tpsa: src.properties.tpsa || null,
-      hbond_donor: src.properties.hbond_donor || null,
-      hbond_acceptor: src.properties.hbond_acceptor || null,
-      note: src.perfumery.note || null,
-      odor_type: src.perfumery.odor_type || null,
-      odor_strength: src.perfumery.odor_strength || null,
-      odor_description: src.perfumery.odor_description || null,
-      tenacity: src.perfumery.tenacity || null,
-      tenacity_hours: src.perfumery.tenacity_hours || null,
-      blends_with: src.perfumery.blends_with || [],
-      ifra_guideline: src.safety.ifra_guideline || null,
-      usage_levels: src.safety.usage_levels || null,
-      primaryFamilies: fc ? [...(fc.primaryFamilies || [])] : (src.classification?.primaryFamilies || []),
-      secondaryFamilies: fc ? [...(fc.secondaryFamilies || [])] : (src.classification?.secondaryFamilies || []),
-      facets: fc ? [...(fc.facets || [])] : (src.classification?.facets || []),
-      functions: fc ? [...(fc.functions || [])] : (src.classification?.functions || []),
-      regulatory: fc ? [...(fc.regulatory || [])] : (src.classification?.regulatory || []),
-    };
-  });
   try {
-    localStorage.setItem('perfume_formulation_materials', JSON.stringify(payload));
-    localStorage.setItem('perfume_formulation_ts', Date.now().toString());
+    if (found.length) {
+      const payload = found.map(mat => {
+        const src = mat.record;
+        const fc = src.identifiers?.cas ? FILTER_CACHE.get(src.identifiers.cas) : null;
+        return {
+          cas: src.identifiers.cas || null,
+          name: src.names.canonical,
+          smiles: src.identifiers.canonical_smiles || null,
+          molecular_weight: src.properties.molecular_weight || null,
+          xlogp: src.properties.xlogp || null,
+          tpsa: src.properties.tpsa || null,
+          hbond_donor: src.properties.hbond_donor || null,
+          hbond_acceptor: src.properties.hbond_acceptor || null,
+          note: src.perfumery.note || null,
+          odor_type: src.perfumery.odor_type || null,
+          odor_strength: src.perfumery.odor_strength || null,
+          odor_description: src.perfumery.odor_description || null,
+          tenacity: src.perfumery.tenacity || null,
+          tenacity_hours: src.perfumery.tenacity_hours || null,
+          blends_with: src.perfumery.blends_with || [],
+          ifra_guideline: src.safety.ifra_guideline || null,
+          usage_levels: src.safety.usage_levels || null,
+          primaryFamilies: fc ? [...(fc.primaryFamilies || [])] : (src.classification?.primaryFamilies || []),
+          secondaryFamilies: fc ? [...(fc.secondaryFamilies || [])] : (src.classification?.secondaryFamilies || []),
+          facets: fc ? [...(fc.facets || [])] : (src.classification?.facets || []),
+          functions: fc ? [...(fc.functions || [])] : (src.classification?.functions || []),
+          regulatory: fc ? [...(fc.regulatory || [])] : (src.classification?.regulatory || []),
+        };
+      });
+      localStorage.setItem('perfume_formulation_materials', JSON.stringify(payload));
+      localStorage.setItem('perfume_formulation_ts', Date.now().toString());
+    }
     window.open('formulation.html', '_blank');
   } catch (e) {
     console.error('sendToFormulator:', e);
-    alert('Could not save formulation data. Please try with fewer materials.');
+    window.open('formulation.html', '_blank');
   }
 }
 
