@@ -60,15 +60,18 @@ hr { border:none; border-top:1px solid var(--border); margin:12px 0; }
 .layout { display:grid; grid-template-columns:320px 1fr; min-height:calc(100vh - 52px - 48px); }
 @media (max-width:860px) {
   .layout { grid-template-columns:1fr; }
-  .sidebar { border-right:none; border-bottom:1px solid var(--border); max-height:none; }
+  .header { padding:12px 20px; }
+  .sidebar { border-right:none; border-bottom:1px solid var(--border); max-height:none; padding:16px 20px; }
   .main { max-height:none; }
-  .tab-panel { padding:12px; }
-  .analysis-card { padding:10px; }
+  .tab-panel { padding:14px 20px; }
+  .analysis-card { padding:12px; }
   .analysis-card h4 { font-size:0.85em; word-break:break-word; }
   .data-table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
   .data-table th, .data-table td { padding:6px 8px; font-size:0.78em; }
   .tab-btn { padding:8px 10px; font-size:0.75em; }
   .chart-wrap { max-width:100%; }
+  .export-bar { padding:10px 20px; }
+  .sidebar-actions { padding:0; }
 }
 .sidebar h2 { font-size:0.9em; font-weight:600; margin-bottom:12px; color:var(--text2); text-transform:uppercase; letter-spacing:0.5px; }
 
