@@ -202,7 +202,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     </div>
   </div>
   <div class="header-right">
-    <button id="themeToggle" type="button" aria-label="Switch to dark mode">Dark &#x263E;&#xFE0E;</button>
+    <button id="themeToggle" type="button" aria-label="Switch language">EN</button>
   </div>
 </div>
 
@@ -383,25 +383,159 @@ for (const [cas, entry] of Object.entries(DB)) {
 }
 const TRADES = PERFUMERY_DATA.trade_names;
 
-// ===== Theme Toggle =====
-(function initTheme() {
-  const toggle = document.getElementById('themeToggle');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  if (prefersDark) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    toggle.textContent = 'Light \u2600\uFE0E';
+// ===== Language Toggle (TH/EN) =====
+const LANG_FORM = {
+  en: {
+    title: 'Perfume Formulation Lab',
+    subtitle: 'Deterministic scientific formulation calculator',
+    workspace: 'Workspace',
+    productCategory: 'Product Category',
+    fragInProduct: 'Fragrance in Product',
+    temperature: 'Temperature',
+    materials: 'Materials',
+    noMaterials: 'No materials yet',
+    noMaterialsHint: 'Click <strong>+ Add</strong> or <strong>Import</strong> below',
+    total: 'Total',
+    addBtn: '+ Add',
+    importBtn: 'Import from Analyzer',
+    tabSafety: 'Safety',
+    tabCompat: 'Compatibility',
+    tabThermo: 'Evaporation',
+    tabOdor: 'Odor Profile',
+    tabStability: 'Stability',
+    tabMood: 'Mood',
+    safetyTitle: 'IFRA Safety & Compliance',
+    safetyDesc: 'MAC enforcement, allergen aggregation, and INCI label generation per IFRA 51st Amendment.',
+    compatTitle: 'Compatibility & Allocation',
+    compatDesc: 'Graph-based harmony analysis, material suggestions via DFS, and Dirichlet percentage allocation.',
+    thermoTitle: 'Evaporation & Thermodynamics',
+    thermoDesc: 'Antoine / Clausius-Clapeyron vapor pressure, Raoult\'s law, and Potts-Guy skin absorption model.',
+    odorTitle: 'Odor Profile & Perception',
+    odorDesc: 'Odor value calculation, Stevens / Hill perceived intensity, and 12-axis perfumery radar.',
+    stabilityTitle: 'Stability & Maturation',
+    stabilityDesc: 'Functional group detection from SMILES, reactive pair warnings, and substitution recommendations.',
+    moodTitle: 'Mood & Aromachology',
+    moodDesc: 'Physiological mood scoring, 8-axis mood radar, and material suggestions by target mood.',
+    emptyState: 'Add materials to see analysis',
+    download: '\u25BC Download',
+    saveJSON: 'Save.JSON',
+    saveCSV: 'Save.CSV',
+    savePDF: 'Save.PDF',
+    analyzer: '\u2190 Analyzer',
+    addMaterial: 'Add Material',
+    searchPlaceholder: 'Search by name or CAS...',
+  },
+  th: {
+    title: '\u0E2B\u0E49\u0E2D\u0E07\u0E1B\u0E0F\u0E34\u0E1A\u0E31\u0E15\u0E34\u0E01\u0E32\u0E23\u0E1B\u0E23\u0E38\u0E07\u0E19\u0E49\u0E33\u0E2B\u0E2D\u0E21',
+    subtitle: '\u0E23\u0E30\u0E1A\u0E1A\u0E04\u0E33\u0E19\u0E27\u0E13\u0E40\u0E0A\u0E34\u0E07\u0E27\u0E34\u0E17\u0E22\u0E32\u0E28\u0E32\u0E2A\u0E15\u0E23\u0E4C\u0E41\u0E1A\u0E1A\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E44\u0E14\u0E49',
+    workspace: '\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48\u0E17\u0E33\u0E07\u0E32\u0E19',
+    productCategory: '\u0E1B\u0E23\u0E30\u0E40\u0E20\u0E17\u0E1C\u0E25\u0E34\u0E15\u0E20\u0E31\u0E13\u0E11\u0E4C',
+    fragInProduct: '\u0E2A\u0E31\u0E14\u0E2A\u0E48\u0E27\u0E19\u0E19\u0E49\u0E33\u0E2B\u0E2D\u0E21\u0E43\u0E19\u0E1C\u0E25\u0E34\u0E15\u0E20\u0E31\u0E13\u0E11\u0E4C',
+    temperature: '\u0E2D\u0E38\u0E13\u0E2B\u0E20\u0E39\u0E21\u0E34',
+    materials: '\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A',
+    noMaterials: '\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A',
+    noMaterialsHint: '\u0E01\u0E14 <strong>+ \u0E40\u0E1E\u0E34\u0E48\u0E21</strong> \u0E2B\u0E23\u0E37\u0E2D <strong>\u0E19\u0E33\u0E40\u0E02\u0E49\u0E32</strong> \u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07',
+    total: '\u0E23\u0E27\u0E21',
+    addBtn: '+ \u0E40\u0E1E\u0E34\u0E48\u0E21',
+    importBtn: '\u0E19\u0E33\u0E40\u0E02\u0E49\u0E32\u0E08\u0E32\u0E01\u0E2B\u0E19\u0E49\u0E32\u0E27\u0E34\u0E40\u0E04\u0E23\u0E32\u0E30\u0E2B\u0E4C',
+    tabSafety: '\u0E04\u0E27\u0E32\u0E21\u0E1B\u0E25\u0E2D\u0E14\u0E20\u0E31\u0E22',
+    tabCompat: '\u0E04\u0E27\u0E32\u0E21\u0E40\u0E02\u0E49\u0E32\u0E01\u0E31\u0E19',
+    tabThermo: '\u0E01\u0E32\u0E23\u0E23\u0E30\u0E40\u0E2B\u0E22',
+    tabOdor: '\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E01\u0E25\u0E34\u0E48\u0E19',
+    tabStability: '\u0E40\u0E2A\u0E16\u0E35\u0E22\u0E23\u0E20\u0E32\u0E1E',
+    tabMood: '\u0E2D\u0E32\u0E23\u0E21\u0E13\u0E4C',
+    safetyTitle: '\u0E04\u0E27\u0E32\u0E21\u0E1B\u0E25\u0E2D\u0E14\u0E20\u0E31\u0E22\u0E15\u0E32\u0E21\u0E21\u0E32\u0E15\u0E23\u0E10\u0E32\u0E19 IFRA',
+    safetyDesc: '\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E40\u0E1E\u0E14\u0E32\u0E19\u0E04\u0E27\u0E32\u0E21\u0E40\u0E02\u0E49\u0E21\u0E02\u0E49\u0E19\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 \u0E2A\u0E32\u0E23\u0E01\u0E48\u0E2D\u0E20\u0E39\u0E21\u0E34\u0E41\u0E1E\u0E49\u0E2A\u0E30\u0E2A\u0E21 \u0E41\u0E25\u0E30\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E09\u0E25\u0E32\u0E01 INCI \u0E15\u0E32\u0E21\u0E02\u0E49\u0E2D\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A IFRA \u0E09\u0E1A\u0E31\u0E1A\u0E17\u0E35\u0E48 51',
+    compatTitle: '\u0E04\u0E27\u0E32\u0E21\u0E40\u0E02\u0E49\u0E32\u0E01\u0E31\u0E19\u0E41\u0E25\u0E30\u0E2A\u0E31\u0E14\u0E2A\u0E48\u0E27\u0E19',
+    compatDesc: '\u0E27\u0E34\u0E40\u0E04\u0E23\u0E32\u0E30\u0E2B\u0E4C\u0E04\u0E27\u0E32\u0E21\u0E01\u0E25\u0E21\u0E01\u0E25\u0E37\u0E19\u0E14\u0E49\u0E27\u0E22\u0E01\u0E23\u0E32\u0E1F \u0E41\u0E19\u0E30\u0E19\u0E33\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E17\u0E35\u0E48\u0E40\u0E02\u0E49\u0E32\u0E01\u0E31\u0E19 \u0E41\u0E25\u0E30\u0E04\u0E33\u0E19\u0E27\u0E13\u0E2A\u0E31\u0E14\u0E2A\u0E48\u0E27\u0E19\u0E17\u0E35\u0E48\u0E40\u0E2B\u0E21\u0E32\u0E30\u0E2A\u0E21',
+    thermoTitle: '\u0E01\u0E32\u0E23\u0E23\u0E30\u0E40\u0E2B\u0E22\u0E41\u0E25\u0E30\u0E2D\u0E38\u0E13\u0E2B\u0E1E\u0E25\u0E28\u0E32\u0E2A\u0E15\u0E23\u0E4C',
+    thermoDesc: '\u0E04\u0E33\u0E19\u0E27\u0E13\u0E04\u0E27\u0E32\u0E21\u0E14\u0E31\u0E19\u0E44\u0E2D\u0E14\u0E49\u0E27\u0E22\u0E2A\u0E21\u0E01\u0E32\u0E23\u0E2D\u0E2D\u0E07\u0E15\u0E27\u0E19 \u0E01\u0E0E\u0E02\u0E2D\u0E07\u0E23\u0E32\u0E2D\u0E39\u0E25\u0E17\u0E4C \u0E41\u0E25\u0E30\u0E41\u0E1A\u0E1A\u0E08\u0E33\u0E25\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E0B\u0E36\u0E21\u0E1C\u0E48\u0E32\u0E19\u0E1C\u0E34\u0E27',
+    odorTitle: '\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E01\u0E25\u0E34\u0E48\u0E19\u0E41\u0E25\u0E30\u0E01\u0E32\u0E23\u0E23\u0E31\u0E1A\u0E23\u0E39\u0E49',
+    odorDesc: '\u0E04\u0E33\u0E19\u0E27\u0E13\u0E04\u0E48\u0E32\u0E01\u0E25\u0E34\u0E48\u0E19 \u0E04\u0E27\u0E32\u0E21\u0E40\u0E02\u0E49\u0E21\u0E02\u0E49\u0E19\u0E17\u0E35\u0E48\u0E23\u0E31\u0E1A\u0E23\u0E39\u0E49\u0E44\u0E14\u0E49 \u0E41\u0E25\u0E30\u0E40\u0E23\u0E14\u0E32\u0E23\u0E4C\u0E01\u0E25\u0E34\u0E48\u0E19 12 \u0E41\u0E01\u0E19',
+    stabilityTitle: '\u0E40\u0E2A\u0E16\u0E35\u0E22\u0E23\u0E20\u0E32\u0E1E\u0E41\u0E25\u0E30\u0E01\u0E32\u0E23\u0E1A\u0E48\u0E21',
+    stabilityDesc: '\u0E15\u0E23\u0E27\u0E08\u0E2B\u0E32\u0E2B\u0E21\u0E39\u0E48\u0E1F\u0E31\u0E07\u0E01\u0E4C\u0E0A\u0E31\u0E19\u0E08\u0E32\u0E01 SMILES \u0E40\u0E15\u0E37\u0E2D\u0E19\u0E1B\u0E0F\u0E34\u0E01\u0E34\u0E23\u0E34\u0E22\u0E32\u0E23\u0E30\u0E2B\u0E27\u0E48\u0E32\u0E07\u0E2A\u0E32\u0E23 \u0E41\u0E25\u0E30\u0E41\u0E19\u0E30\u0E19\u0E33\u0E2A\u0E32\u0E23\u0E17\u0E14\u0E41\u0E17\u0E19',
+    moodTitle: '\u0E2D\u0E32\u0E23\u0E21\u0E13\u0E4C\u0E41\u0E25\u0E30\u0E1C\u0E25\u0E17\u0E32\u0E07\u0E08\u0E34\u0E15\u0E43\u0E08',
+    moodDesc: '\u0E04\u0E30\u0E41\u0E19\u0E19\u0E2D\u0E32\u0E23\u0E21\u0E13\u0E4C 8 \u0E21\u0E34\u0E15\u0E34 \u0E40\u0E23\u0E14\u0E32\u0E23\u0E4C\u0E2D\u0E32\u0E23\u0E21\u0E13\u0E4C \u0E41\u0E25\u0E30\u0E41\u0E19\u0E30\u0E19\u0E33\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E15\u0E32\u0E21\u0E2D\u0E32\u0E23\u0E21\u0E13\u0E4C\u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23',
+    emptyState: '\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E14\u0E39\u0E1C\u0E25\u0E27\u0E34\u0E40\u0E04\u0E23\u0E32\u0E30\u0E2B\u0E4C',
+    download: '\u25BC \u0E14\u0E32\u0E27\u0E19\u0E4C\u0E42\u0E2B\u0E25\u0E14',
+    saveJSON: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.JSON',
+    saveCSV: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.CSV',
+    savePDF: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.PDF',
+    analyzer: '\u2190 \u0E2B\u0E19\u0E49\u0E32\u0E27\u0E34\u0E40\u0E04\u0E23\u0E32\u0E30\u0E2B\u0E4C',
+    addMaterial: '\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A',
+    searchPlaceholder: '\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E15\u0E32\u0E21\u0E0A\u0E37\u0E48\u0E2D\u0E2B\u0E23\u0E37\u0E2D CAS...',
   }
-  toggle.addEventListener('click', () => {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if (isDark) {
-      document.documentElement.removeAttribute('data-theme');
-      toggle.textContent = 'Dark \u263E\uFE0E';
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      toggle.textContent = 'Light \u2600\uFE0E';
+};
+let _lang = localStorage.getItem('perfume_lang') || 'en';
+function applyLangForm() {
+  const t = LANG_FORM[_lang];
+  const btn = document.getElementById('themeToggle');
+  btn.textContent = _lang === 'en' ? 'TH' : 'EN';
+  // Header
+  document.querySelector('.header h1').textContent = t.title;
+  document.querySelector('.header .subtitle').textContent = t.subtitle;
+  // Sidebar
+  document.querySelectorAll('.sidebar h2')[0].textContent = t.workspace;
+  const labels = document.querySelectorAll('.control-label span:first-child');
+  if (labels[0]) labels[0].textContent = t.productCategory;
+  if (labels[1]) labels[1].textContent = t.fragInProduct;
+  if (labels[2]) labels[2].textContent = t.temperature;
+  // Materials header
+  const matH2 = document.querySelectorAll('.sidebar h2')[1];
+  if (matH2) { const cnt = document.getElementById('matCount'); matH2.textContent = t.materials + ' '; matH2.appendChild(cnt); }
+  // Empty state
+  const emptyP = document.querySelectorAll('#matEmpty p');
+  if (emptyP[0]) emptyP[0].textContent = t.noMaterials;
+  if (emptyP[1]) emptyP[1].innerHTML = t.noMaterialsHint;
+  // Buttons
+  document.getElementById('btnAddMat').textContent = t.addBtn;
+  document.getElementById('btnImport').textContent = t.importBtn;
+  // Tabs
+  const tabs = document.querySelectorAll('.tab-btn');
+  const tabKeys = ['tabSafety','tabCompat','tabThermo','tabOdor','tabStability','tabMood'];
+  tabs.forEach((tab, i) => { if (tabKeys[i]) tab.textContent = t[tabKeys[i]]; });
+  // Tab panels
+  const panels = [
+    {id:'tab-safety', title:'safetyTitle', desc:'safetyDesc'},
+    {id:'tab-compat', title:'compatTitle', desc:'compatDesc'},
+    {id:'tab-thermo', title:'thermoTitle', desc:'thermoDesc'},
+    {id:'tab-odor', title:'odorTitle', desc:'odorDesc'},
+    {id:'tab-stability', title:'stabilityTitle', desc:'stabilityDesc'},
+    {id:'tab-mood', title:'moodTitle', desc:'moodDesc'},
+  ];
+  for (const p of panels) {
+    const el = document.getElementById(p.id);
+    if (el) {
+      const h3 = el.querySelector('h3'); if (h3) h3.textContent = t[p.title];
+      const desc = el.querySelector('.panel-desc'); if (desc) desc.textContent = t[p.desc];
     }
-  });
-})();
+  }
+  // Empty states inside tabs
+  document.querySelectorAll('.tab-panel .empty-state p').forEach(p => { p.textContent = t.emptyState; });
+  // Export bar
+  const dlToggle = document.querySelector('.dl-wrap > a');
+  if (dlToggle) dlToggle.textContent = t.download;
+  const dlMenuLinks = document.querySelectorAll('.dl-menu a');
+  if (dlMenuLinks[0]) dlMenuLinks[0].textContent = t.saveJSON;
+  if (dlMenuLinks[1]) dlMenuLinks[1].textContent = t.saveCSV;
+  if (dlMenuLinks[2]) dlMenuLinks[2].textContent = t.savePDF;
+  const analyzerLink = document.querySelector('.analyzer-link');
+  if (analyzerLink) analyzerLink.textContent = t.analyzer;
+  // Modal
+  const modalH3 = document.querySelector('.modal-header h3');
+  if (modalH3) modalH3.textContent = t.addMaterial;
+  const modalInput = document.getElementById('modalSearch');
+  if (modalInput) modalInput.placeholder = t.searchPlaceholder;
+  // Total label
+  const totalLabel = document.querySelector('.mat-total span:first-child');
+  if (totalLabel) totalLabel.textContent = t.total;
+}
+applyLangForm();
+document.getElementById('themeToggle').addEventListener('click', () => {
+  _lang = _lang === 'en' ? 'th' : 'en';
+  localStorage.setItem('perfume_lang', _lang);
+  applyLangForm();
+});
 
 // ===== Tab Navigation =====
 document.querySelectorAll('.tab-btn').forEach(btn => {
