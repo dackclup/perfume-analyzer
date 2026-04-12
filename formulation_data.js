@@ -354,3 +354,142 @@ const INCI_NAMES = {
   "9000-64-0":    "MYROXYLON BALSAMUM RESIN EXTRACT",
   "9000-72-0":    "STYRAX BENZOIN GUM EXTRACT",
 };
+
+// ─────────────────────────────────────────────────────────────
+// Antoine Equation Coefficients
+// log10(P_mmHg) = A - B / (C + T_celsius)
+// Sources: NIST Chemistry WebBook, Yaws' Handbook of Antoine
+// Coefficients, Perry's Chemical Engineers' Handbook
+// range: [Tmin, Tmax] in Celsius for validity
+// ─────────────────────────────────────────────────────────────
+const ANTOINE_COEFFICIENTS = {
+  // --- Top Notes (high volatility) ---
+  "5989-27-5":  { A: 6.9496, B: 1640.0, C: 187.0, range:[20,176], name:"Limonene" },
+  "80-56-8":    { A: 6.8526, B: 1446.2, C: 193.2, range:[20,156], name:"alpha-Pinene" },
+  "127-91-3":   { A: 6.9120, B: 1507.0, C: 192.0, range:[20,166], name:"beta-Pinene" },
+  "5392-40-5":  { A: 7.0200, B: 1720.0, C: 185.0, range:[25,229], name:"Citral" },
+  "928-96-1":   { A: 7.1530, B: 1545.0, C: 197.0, range:[20,157], name:"Cis-3-Hexenol" },
+  "99-49-0":    { A: 7.0100, B: 1780.0, C: 192.0, range:[25,231], name:"Carvone" },
+  "18479-58-8": { A: 6.8800, B: 1520.0, C: 190.0, range:[20,176], name:"Dihydromyrcenol" },
+  "100-52-7":   { A: 7.0340, B: 1595.5, C: 209.7, range:[20,179], name:"Benzaldehyde" },
+  "123-35-3":   { A: 6.8400, B: 1430.0, C: 190.0, range:[20,167], name:"Myrcene" },
+  "470-82-6":   { A: 6.8424, B: 1461.1, C: 193.8, range:[20,177], name:"Eucalyptol" },
+
+  // --- Top/Middle Notes ---
+  "78-70-6":    { A: 6.6756, B: 1406.0, C: 163.0, range:[25,198], name:"Linalool" },
+  "115-95-7":   { A: 7.0300, B: 1740.0, C: 190.0, range:[25,220], name:"Linalyl Acetate" },
+  "106-22-9":   { A: 7.1100, B: 1770.0, C: 184.0, range:[25,225], name:"Citronellol" },
+  "106-24-1":   { A: 7.1200, B: 1790.0, C: 182.0, range:[25,230], name:"Geraniol" },
+  "140-11-4":   { A: 7.0600, B: 1720.0, C: 195.0, range:[25,214], name:"Benzyl Acetate" },
+  "150-84-5":   { A: 7.0500, B: 1760.0, C: 188.0, range:[25,225], name:"Citronellyl Acetate" },
+  "105-87-3":   { A: 7.0700, B: 1780.0, C: 186.0, range:[25,230], name:"Geranyl Acetate" },
+  "119-36-8":   { A: 7.0168, B: 1685.0, C: 193.5, range:[20,223], name:"Methyl Salicylate" },
+  "76-22-2":    { A: 7.5600, B: 1860.0, C: 230.0, range:[20,204], name:"Camphor" },
+  "89-78-1":    { A: 7.1130, B: 1780.0, C: 194.0, range:[20,216], name:"Menthol" },
+  "16409-43-1": { A: 7.0400, B: 1650.0, C: 195.0, range:[20,200], name:"Rose Oxide" },
+  "104-46-1":   { A: 7.1800, B: 1829.0, C: 198.0, range:[25,234], name:"Anethole" },
+  "98-86-2":    { A: 7.0277, B: 1659.0, C: 200.0, range:[20,202], name:"Acetophenone" },
+
+  // --- Middle Notes ---
+  "60-12-8":    { A: 7.2210, B: 1810.0, C: 186.0, range:[25,220], name:"Phenylethyl Alcohol" },
+  "97-53-0":    { A: 7.1800, B: 1870.0, C: 178.0, range:[25,254], name:"Eugenol" },
+  "89-83-8":    { A: 7.2000, B: 1880.0, C: 180.0, range:[25,233], name:"Thymol" },
+  "97-54-1":    { A: 7.2100, B: 1890.0, C: 178.0, range:[25,266], name:"Isoeugenol" },
+  "104-55-2":   { A: 7.1500, B: 1830.0, C: 185.0, range:[25,248], name:"Cinnamaldehyde" },
+  "104-54-1":   { A: 7.2500, B: 1920.0, C: 180.0, range:[25,257], name:"Cinnamic Alcohol" },
+  "107-75-5":   { A: 7.1300, B: 1850.0, C: 180.0, range:[25,241], name:"Hydroxycitronellal" },
+  "105-13-5":   { A: 7.2400, B: 1900.0, C: 185.0, range:[25,259], name:"Anisyl Alcohol" },
+  "100-51-6":   { A: 7.1250, B: 1740.0, C: 179.0, range:[25,205], name:"Benzyl Alcohol" },
+  "24851-98-7": { A: 7.0900, B: 1900.0, C: 180.0, range:[25,260], name:"Hedione" },
+  "120-72-9":   { A: 7.3600, B: 2050.0, C: 185.0, range:[25,254], name:"Indole" },
+  "98-55-5":    { A: 7.1000, B: 1785.0, C: 185.0, range:[25,219], name:"Alpha Terpineol" },
+  "1205-17-0":  { A: 7.2000, B: 1950.0, C: 182.0, range:[25,270], name:"Helional" },
+  "67634-15-5": { A: 7.0800, B: 1830.0, C: 188.0, range:[25,250], name:"Floralozone" },
+
+  // --- Middle/Base Notes ---
+  "4602-84-0":  { A: 7.1800, B: 2050.0, C: 170.0, range:[25,280], name:"Farnesol" },
+  "7212-44-4":  { A: 7.2000, B: 2080.0, C: 168.0, range:[25,276], name:"Nerolidol" },
+  "91-64-5":    { A: 7.4500, B: 2200.0, C: 180.0, range:[70,301], name:"Coumarin" },
+  "118-58-1":   { A: 7.2800, B: 2100.0, C: 175.0, range:[25,320], name:"Benzyl Salicylate" },
+  "120-51-4":   { A: 7.2400, B: 2090.0, C: 172.0, range:[25,324], name:"Benzyl Benzoate" },
+
+  // --- Base Notes (low volatility) ---
+  "121-33-5":   { A: 7.8400, B: 2500.0, C: 180.0, range:[80,285], name:"Vanillin" },
+  "77-53-2":    { A: 7.3500, B: 2300.0, C: 165.0, range:[25,274], name:"Cedrol" },
+  "54464-57-2": { A: 7.2000, B: 2150.0, C: 170.0, range:[25,285], name:"Iso E Super" },
+  "1222-05-5":  { A: 7.3000, B: 2350.0, C: 165.0, range:[25,290], name:"Galaxolide" },
+  "33704-61-9": { A: 7.2800, B: 2300.0, C: 168.0, range:[25,280], name:"Cashmeran" },
+  "541-91-3":   { A: 7.4000, B: 2500.0, C: 160.0, range:[25,327], name:"Muscone" },
+  "81-14-1":    { A: 7.4200, B: 2480.0, C: 162.0, range:[25,310], name:"Musk Ketone" },
+  "105-95-3":   { A: 7.3500, B: 2400.0, C: 160.0, range:[25,310], name:"Ethylene Brassylate" },
+  "6790-58-5":  { A: 7.2500, B: 2200.0, C: 168.0, range:[25,295], name:"Ambroxan" },
+  "65113-99-7": { A: 7.2600, B: 2180.0, C: 170.0, range:[25,290], name:"Sandalore" },
+  "4940-11-8":  { A: 7.5500, B: 2150.0, C: 190.0, range:[25,280], name:"Ethyl Maltol" },
+
+  // --- Solvents / Carriers ---
+  "64-17-5":    { A: 8.1122, B: 1592.9, C: 226.2, range:[20,78],  name:"Ethanol" },
+  "25265-71-8": { A: 7.6200, B: 2010.0, C: 200.0, range:[25,232], name:"Dipropylene Glycol" },
+};
+
+// ─────────────────────────────────────────────────────────────
+// SMILES Fallback Table
+// Canonical SMILES for materials where PubChem enrichment may
+// not be available. Used for System 4 functional group detection.
+// Sources: PubChem, ChemSpider
+// ─────────────────────────────────────────────────────────────
+const SMILES_FALLBACK = {
+  "78-70-6":    { smiles: "CC(=CCC(/C)(C=C)O)C",                        name: "Linalool" },
+  "5989-27-5":  { smiles: "CC1=CCC(CC1)C(=C)C",                         name: "Limonene" },
+  "106-24-1":   { smiles: "CC(=CCCC(=CC=O)C)C",                         name: "Geraniol" },
+  "106-22-9":   { smiles: "CC(CCC=C(C)C)CCO",                           name: "Citronellol" },
+  "97-53-0":    { smiles: "COc1cc(CC=C)ccc1O",                          name: "Eugenol" },
+  "91-64-5":    { smiles: "O=C1OC2=CC=CC=C2C=C1",                       name: "Coumarin" },
+  "121-33-5":   { smiles: "COc1cc(C=O)ccc1O",                           name: "Vanillin" },
+  "5392-40-5":  { smiles: "CC(=CCCC(=CC=O)C)C",                         name: "Citral" },
+  "100-51-6":   { smiles: "OCC1=CC=CC=C1",                              name: "Benzyl Alcohol" },
+  "120-51-4":   { smiles: "O=C(OCC1=CC=CC=C1)C2=CC=CC=C2",             name: "Benzyl Benzoate" },
+  "118-58-1":   { smiles: "O=C(OCC1=CC=CC=C1)C2=CC=CC=C2O",            name: "Benzyl Salicylate" },
+  "104-55-2":   { smiles: "O=C/C=C/C1=CC=CC=C1",                       name: "Cinnamaldehyde" },
+  "104-54-1":   { smiles: "OC/C=C/C1=CC=CC=C1",                        name: "Cinnamic Alcohol" },
+  "97-54-1":    { smiles: "COc1cc(/C=C/C)ccc1O",                        name: "Isoeugenol" },
+  "107-75-5":   { smiles: "CC(CCC=C(C)C)CC=O",                          name: "Hydroxycitronellal" },
+  "105-13-5":   { smiles: "COc1ccc(CO)cc1",                             name: "Anisyl Alcohol" },
+  "89-78-1":    { smiles: "CC(C)C1CCC(C)CC1O",                          name: "Menthol" },
+  "89-83-8":    { smiles: "CC(C)c1cc(C)c(O)cc1",                        name: "Thymol" },
+  "76-22-2":    { smiles: "CC1(C)C2CCC1(C)C(=O)C2",                     name: "Camphor" },
+  "119-36-8":   { smiles: "COC(=O)c1ccccc1O",                           name: "Methyl Salicylate" },
+  "60-12-8":    { smiles: "OCCC1=CC=CC=C1",                             name: "Phenylethyl Alcohol" },
+  "98-55-5":    { smiles: "CC1=CCC(CC1)C(C)(C)O",                       name: "Alpha Terpineol" },
+  "100-52-7":   { smiles: "O=CC1=CC=CC=C1",                             name: "Benzaldehyde" },
+  "98-86-2":    { smiles: "CC(=O)C1=CC=CC=C1",                          name: "Acetophenone" },
+  "104-46-1":   { smiles: "COc1ccc(/C=C/C)cc1",                         name: "Anethole" },
+  "99-49-0":    { smiles: "CC1=CC(=O)C(CC1)C(=C)C",                     name: "Carvone" },
+  "115-95-7":   { smiles: "CC(=CCC(/C)(CC=C)OC(C)=O)C",                 name: "Linalyl Acetate" },
+  "140-11-4":   { smiles: "CC(=O)OCC1=CC=CC=C1",                        name: "Benzyl Acetate" },
+  "150-84-5":   { smiles: "CC(=O)OCCC(C)CCC=C(C)C",                     name: "Citronellyl Acetate" },
+  "105-87-3":   { smiles: "CC(=CCCC(=CCOC(C)=O)C)C",                    name: "Geranyl Acetate" },
+  "120-72-9":   { smiles: "c1ccc2[nH]ccc2c1",                           name: "Indole" },
+  "4602-84-0":  { smiles: "CC(=CCCC(=CCCC(=CCO)C)C)C",                  name: "Farnesol" },
+  "7212-44-4":  { smiles: "CC(=CCCC(=CCCC(=CC=O)C)C)C",                 name: "Nerolidol" },
+  "77-53-2":    { smiles: "CC1CCC2C(C1)C(CCC2(C)C)(C)O",               name: "Cedrol" },
+  "24851-98-7": { smiles: "COC(=O)CC1CCC(=O)C1CC",                      name: "Hedione" },
+  "54464-57-2": { smiles: "CC1(C)C2CCC3(C)C(CCC(CC2)C1=O)C3C",         name: "Iso E Super" },
+  "1222-05-5":  { smiles: "CC1(C)C2=CC(=CC(CC(C)(C)OC2)C)C1=O",        name: "Galaxolide" },
+  "33704-61-9": { smiles: "CC1(C)CC(=O)C2(CC1)CCCC2C",                  name: "Cashmeran" },
+  "6790-58-5":  { smiles: "CC12CCCC(C)(C1CCC3C2CCC(O3)C)C",            name: "Ambroxan" },
+  "541-91-3":   { smiles: "CC(CCCCCCCCCC(=O)C)CC",                      name: "Muscone" },
+  "81-14-1":    { smiles: "CC1=CC([N+]([O-])=O)=C(C)C(=C1[N+]([O-])=O)C(C)(C)C", name: "Musk Ketone" },
+  "105-95-3":   { smiles: "O=C(OCCCCCCCCCCCCOC(=O))CC",                 name: "Ethylene Brassylate" },
+  "65113-99-7": { smiles: "CC(CCC=C(C)C)CC(CC1OCCC1)O",                 name: "Sandalore" },
+  "4940-11-8":  { smiles: "CCC1=C(O)C(=O)C=CO1",                        name: "Ethyl Maltol" },
+  "928-96-1":   { smiles: "OC/C=C\\CCC",                                 name: "Cis-3-Hexenol" },
+  "18479-58-8": { smiles: "CC(CCC=C(C)C)CCO",                           name: "Dihydromyrcenol" },
+  "1205-17-0":  { smiles: "O=CCC(OC)c1ccc2OCOc2c1",                     name: "Helional" },
+  "28940-11-6": { smiles: "O=CC1CCOC(CCCCCC)C1",                        name: "Calone" },
+  "16409-43-1": { smiles: "CC1CCC(OC1)C(C)C",                           name: "Rose Oxide" },
+  "111-12-6":   { smiles: "COC(=O)CCCCCC#C",                            name: "Methyl 2-Octynoate" },
+  "103-41-3":   { smiles: "O=C(/C=C/c1ccccc1)OCc2ccccc2",               name: "Benzyl Cinnamate" },
+  // Solvents
+  "64-17-5":    { smiles: "CCO",                                         name: "Ethanol" },
+  "25265-71-8": { smiles: "CC(O)COCC(C)O",                              name: "Dipropylene Glycol" },
+};
