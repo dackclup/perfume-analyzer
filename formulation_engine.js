@@ -946,3 +946,245 @@ function buildVPTable(materials, tempC) {
     };
   });
 }
+
+// ─────────────────────────────────────────────────────────────
+// SYSTEM 2: Psychophysics & Odor Perception Engine
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Get odor detection threshold for a material.
+ * Uses hardcoded table first, then QSAR estimation fallback.
+ * @param {string} cas
+ * @param {Object} matData - may contain molecular_weight, xlogp, tpsa, hbond_donor, hbond_acceptor
+ * @returns {Object} {ppb, method, confidence}
+ */
+function getODT(cas, matData) {
+  // Strategy 1: hardcoded table
+  const entry = ODOR_THRESHOLDS[cas];
+  if (entry) {
+    return { ppb: entry.ppb, method: 'literature', source: entry.src, confidence: 'high' };
+  }
+
+  // Strategy 2: QSAR estimation from molecular properties
+  const mw  = matData?.molecular_weight || null;
+  const logP = matData?.xlogp || matData?.logp || null;
+  const tpsa = matData?.tpsa || null;
+  const hbd = matData?.hbond_donor || 0;
+  const hba = matData?.hbond_acceptor || 0;
+
+  if (mw != null && logP != null) {
+    const q = QSAR_ODT_COEFFICIENTS;
+    const logODT = q.c0 + q.c1 * mw + q.c2 * logP + q.c3 * (tpsa || 30) + q.c4 * hbd + q.c5 * hba;
+    return {
+      ppb: roundN(Math.pow(10, logODT), 3),
+      method: 'qsar',
+      source: 'estimated',
+      confidence: 'low',
+    };
+  }
+
+  // Strategy 3: rough estimate from odor strength
+  const strength = odorStrengthScale(matData?.odor_strength);
+  if (strength != null) {
+    // Map ordinal strength to approximate ODT: Very High(5)->1ppb, Low(1)->500ppb
+    const approxPpb = Math.pow(10, 2.7 - strength * 0.54);
+    return { ppb: roundN(approxPpb, 1), method: 'strength-estimate', source: 'inferred', confidence: 'very-low' };
+  }
+
+  return { ppb: null, method: 'none', source: null, confidence: 'none' };
+}
+
+/**
+ * Calculate Odor Value (OV) for a material.
+ * OV = headspace_concentration / ODT
+ * @param {number} headspaceConc
+ * @param {number} odt_ppb
+ * @returns {number}
+ */
+function calcOdorValue(headspaceConc, odt_ppb) {
+  if (!odt_ppb || odt_ppb <= 0 || headspaceConc == null) return 0;
+  return headspaceConc / odt_ppb;
+}
+
+/**
+ * Calculate perceived intensity using Hill equation.
+ * PSI = PSI_max * OV^n / (K_half^n + OV^n)
+ * @param {number} ov
+ * @param {number} n - Stevens exponent
+ * @returns {number} 0-100
+ */
+function hillPerceivedIntensity(ov, n) {
+  if (ov <= 0) return 0;
+  n = n || 0.5;
+  const ovN = Math.pow(ov, n);
+  const khN = Math.pow(HILL_K_HALF, n);
+  return roundN(HILL_PSI_MAX * ovN / (khN + ovN), 2);
+}
+
+/**
+ * Get Stevens exponent for a material based on its primary odor family.
+ * @param {Object} matData
+ * @returns {number} exponent n (default 0.5)
+ */
+function getStevensExponent(matData) {
+  const families = getMaterialFamilies(matData);
+  for (const f of families) {
+    const fl = f.toLowerCase().trim();
+    if (STEVENS_EXPONENTS[fl] != null) return STEVENS_EXPONENTS[fl];
+  }
+  return 0.50;
+}
+
+/**
+ * Build full odor value table for all materials in a formulation.
+ * Combines System 1 (headspace) with System 2 (perception).
+ * @param {Array} materials
+ * @param {number} tempC
+ * @returns {Array} sorted by perceived intensity descending
+ */
+function buildOdorValueTable(materials, tempC) {
+  const sim = simulateEvaporation(materials, tempC, [0]);
+
+  return materials.map((mat, i) => {
+    const curve = sim.curves[i];
+    const headspaceConc = curve ? curve.C0 : 0;
+    const odtResult = getODT(mat.cas, mat.data);
+    const ov = calcOdorValue(headspaceConc, odtResult.ppb);
+    const n = getStevensExponent(mat.data);
+    const psi = hillPerceivedIntensity(ov, n);
+
+    return {
+      cas: mat.cas,
+      name: mat.name,
+      note: mat.data?.note || '',
+      odt_ppb: odtResult.ppb,
+      odt_method: odtResult.method,
+      odt_confidence: odtResult.confidence,
+      headspaceConc: roundN(headspaceConc, 4),
+      odorValue: roundN(ov, 2),
+      perceivedIntensity: psi,
+      stevensN: n,
+    };
+  }).sort((a, b) => b.perceivedIntensity - a.perceivedIntensity);
+}
+
+// 12-axis perfumery radar
+const RADAR_AXES = [
+  'citrus', 'green', 'floral', 'fruity', 'woody', 'amber',
+  'musk', 'spicy', 'fresh', 'gourmand', 'powdery', 'animalic'
+];
+
+/**
+ * Map material odor families to radar axis weights.
+ * @param {Object} matData
+ * @returns {Object} {axis: weight 0-1}
+ */
+function materialToRadarWeights(matData) {
+  const weights = {};
+  RADAR_AXES.forEach(a => weights[a] = 0);
+
+  const families = getMaterialFamilies(matData);
+  if (!families.length) return weights;
+
+  const familyToAxes = {
+    citrus: ['citrus', 'fresh'], green: ['green', 'fresh'],
+    herbal: ['green', 'fresh'], aldehydic: ['fresh', 'floral'],
+    aquatic: ['fresh'], ozonic: ['fresh'], fresh: ['fresh'],
+    camphoraceous: ['fresh'], floral: ['floral'], fruity: ['fruity'],
+    sweet: ['gourmand'], gourmand: ['gourmand'],
+    lactonic: ['fruity', 'gourmand'], spicy: ['spicy'],
+    powdery: ['powdery'], woody: ['woody'],
+    balsamic: ['amber', 'woody'], resinous: ['amber', 'woody'],
+    amber: ['amber'], animalic: ['animalic'], leather: ['animalic'],
+    musk: ['musk'], smoky: ['woody', 'animalic'],
+    vanilla: ['gourmand'], rose: ['floral'], jasmine: ['floral'],
+    marine: ['fresh'], earthy: ['woody'],
+  };
+
+  for (const fam of families) {
+    const axes = familyToAxes[fam.toLowerCase()] || [];
+    for (const ax of axes) {
+      if (weights[ax] !== undefined) weights[ax] = Math.min(weights[ax] + 0.5, 1.0);
+    }
+  }
+  return weights;
+}
+
+/**
+ * Build radar chart data at multiple time points.
+ * @param {Array} materials
+ * @param {number} tempC
+ * @param {Array<number>} timePointsH
+ * @returns {Object} {axes, datasets:[{label, timeH, data:[12 values]}]}
+ */
+function buildRadarData(materials, tempC, timePointsH) {
+  timePointsH = timePointsH || [0, 1, 4, 12];
+  const sim = simulateEvaporation(materials, tempC, timePointsH);
+
+  const matInfo = materials.map((mat, i) => ({
+    radarWeights: materialToRadarWeights(mat.data),
+    odt: getODT(mat.cas, mat.data),
+    stevensN: getStevensExponent(mat.data),
+    curve: sim.curves[i],
+  }));
+
+  const datasets = timePointsH.map((t, ti) => {
+    const axisValues = RADAR_AXES.map(axis => {
+      let total = 0;
+      for (let mi = 0; mi < materials.length; mi++) {
+        const info = matInfo[mi];
+        const weight = info.radarWeights[axis] || 0;
+        if (weight <= 0) continue;
+        const conc = info.curve.concentrations[ti] || 0;
+        const ov = calcOdorValue(conc, info.odt.ppb);
+        const psi = hillPerceivedIntensity(ov, info.stevensN);
+        total += psi * weight;
+      }
+      return roundN(total, 2);
+    });
+    return { label: t === 0 ? 'Initial' : t + 'h', timeH: t, data: axisValues };
+  });
+
+  return { axes: RADAR_AXES, datasets };
+}
+
+/**
+ * Estimate longevity phases (top/heart/base) duration.
+ * @param {Array} materials
+ * @param {number} tempC
+ * @returns {Object} {topPhase, heartPhase, basePhase, totalHours}
+ */
+function estimateLongevity(materials, tempC) {
+  const times = [0, 0.25, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 10, 12, 16, 20, 24, 36, 48];
+  const sim = simulateEvaporation(materials, tempC, times);
+
+  const tierConc = { top: [], middle: [], base: [] };
+  for (const curve of sim.curves) {
+    const tier = primaryNoteTier(curve.note);
+    if (tier && tierConc[tier] !== undefined) tierConc[tier].push(curve.concentrations);
+  }
+
+  function tierTotals(concArrays) {
+    return times.map((_, ti) => concArrays.reduce((sum, c) => sum + (c[ti] || 0), 0));
+  }
+
+  function findFadeTime(totals) {
+    if (!totals[0] || totals[0] <= 0) return 0;
+    const threshold = totals[0] * 0.10;
+    for (let i = 1; i < times.length; i++) {
+      if (totals[i] < threshold) return times[i];
+    }
+    return times[times.length - 1];
+  }
+
+  const topFade = findFadeTime(tierTotals(tierConc.top));
+  const midFade = findFadeTime(tierTotals(tierConc.middle));
+  const baseFade = findFadeTime(tierTotals(tierConc.base));
+
+  return {
+    topPhase:   { start: 0, end: roundN(topFade, 1), label: 'Top notes' },
+    heartPhase: { start: roundN(topFade * 0.5, 1), end: roundN(midFade, 1), label: 'Heart notes' },
+    basePhase:  { start: roundN(midFade * 0.5, 1), end: roundN(baseFade, 1), label: 'Base notes' },
+    totalHours: roundN(baseFade, 1),
+  };
+}
