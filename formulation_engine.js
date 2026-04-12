@@ -698,3 +698,251 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations) {
     optimizedPct: roundN(pcts[i], 1),
   }));
 }
+
+// ─────────────────────────────────────────────────────────────
+// SYSTEM 1: Thermodynamics & Evaporation Engine
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Calculate vapor pressure using the Antoine equation.
+ * log10(P_mmHg) = A - B / (C + T_celsius)
+ * @param {string} cas - CAS number
+ * @param {number} tempC - temperature in Celsius
+ * @returns {Object|null} {vp_mmHg, method, confidence}
+ */
+function antoineVP(cas, tempC) {
+  const coeff = ANTOINE_COEFFICIENTS[cas];
+  if (!coeff) return null;
+
+  const vp = Math.pow(10, coeff.A - coeff.B / (coeff.C + tempC));
+  const inRange = tempC >= coeff.range[0] && tempC <= coeff.range[1];
+
+  return {
+    vp_mmHg: vp,
+    method: 'antoine',
+    confidence: inRange ? 'high' : 'medium',
+    note: inRange ? null : 'Extrapolated outside valid range',
+  };
+}
+
+/**
+ * Estimate enthalpy of vaporization using Kistiakowsky equation.
+ * deltaH_vap = (36.6 + R * ln(T_bp_K)) * T_bp_K  [J/mol]
+ * @param {number} bpCelsius - boiling point in Celsius
+ * @returns {number} deltaH_vap in J/mol
+ */
+function kistiakowskyDeltaHvap(bpCelsius) {
+  const T_bp_K = bpCelsius + 273.15;
+  return (36.6 + R_GAS * Math.log(T_bp_K)) * T_bp_K;
+}
+
+/**
+ * Calculate vapor pressure using Clausius-Clapeyron approximation.
+ * ln(P2/P1) = (deltaH_vap / R) * (1/T1 - 1/T2)
+ * Reference point: boiling point (P1 = 760 mmHg, T1 = BP)
+ * @param {number} bpCelsius - boiling point in Celsius
+ * @param {number} tempC - target temperature in Celsius
+ * @param {number} refVP - optional reference VP at refTemp (mmHg)
+ * @param {number} refTemp - reference temperature for refVP (Celsius)
+ * @returns {Object} {vp_mmHg, method, confidence}
+ */
+function clausiusClapeyronVP(bpCelsius, tempC, refVP, refTemp) {
+  const deltaH = kistiakowskyDeltaHvap(bpCelsius);
+
+  let T1_K, P1;
+  if (refVP != null && refTemp != null) {
+    T1_K = refTemp + 273.15;
+    P1 = refVP;
+  } else {
+    T1_K = bpCelsius + 273.15;
+    P1 = 760; // mmHg at boiling point
+  }
+
+  const T2_K = tempC + 273.15;
+  const lnRatio = (deltaH / R_GAS) * (1 / T1_K - 1 / T2_K);
+  const vp = P1 * Math.exp(lnRatio);
+
+  return {
+    vp_mmHg: Math.max(vp, 0),
+    method: 'clausius-clapeyron',
+    confidence: 'medium',
+  };
+}
+
+/**
+ * Get vapor pressure for a material at a given temperature.
+ * Tries Antoine first, then Clausius-Clapeyron fallback.
+ * @param {string} cas
+ * @param {number} tempC
+ * @param {Object} matData - enriched material data (may have boiling_point, vapor_pressure from PubChem)
+ * @returns {Object} {vp_mmHg, method, confidence} or {vp_mmHg:null, method:'none', confidence:'none'}
+ */
+function getVaporPressure(cas, tempC, matData) {
+  // Strategy 1: Antoine (exact coefficients)
+  const antoine = antoineVP(cas, tempC);
+  if (antoine) return antoine;
+
+  // Strategy 2: Clausius-Clapeyron with boiling point
+  const bp = matData?.boiling_point || null;
+  if (bp != null) {
+    const refVP = matData?.vapor_pressure || null;
+    return clausiusClapeyronVP(bp, tempC, refVP, 25);
+  }
+
+  // No data available
+  return { vp_mmHg: null, method: 'none', confidence: 'none' };
+}
+
+/**
+ * Calculate Hildebrand solubility parameter for activity coefficient estimation.
+ * delta = sqrt((deltaH_vap - R*T) / V_m)
+ * V_m = MW / density
+ * @param {number} bpCelsius
+ * @param {number} mw - molecular weight
+ * @param {number} density - g/cm³
+ * @param {number} tempC
+ * @returns {number|null} solubility parameter in (J/cm³)^0.5
+ */
+function hildebrandSolParam(bpCelsius, mw, density, tempC) {
+  if (!bpCelsius || !mw || !density) return null;
+  const deltaH = kistiakowskyDeltaHvap(bpCelsius);
+  const T_K = tempC + 273.15;
+  const V_m = mw / density; // cm³/mol
+  const delta_sq = (deltaH - R_GAS * T_K) / V_m;
+  if (delta_sq <= 0) return null;
+  return Math.sqrt(delta_sq);
+}
+
+/**
+ * Estimate activity coefficient using Hildebrand model.
+ * ln(gamma_i) = V_i * (delta_i - delta_mix)^2 / (R * T)
+ * For perfumery dilutions gamma is typically close to 1.
+ * @param {number} delta_i - solubility param of component
+ * @param {number} delta_mix - weighted avg solubility param of mixture
+ * @param {number} V_m - molar volume of component (cm³/mol)
+ * @param {number} tempC
+ * @returns {number} gamma (activity coefficient, >= 1)
+ */
+function activityCoefficient(delta_i, delta_mix, V_m, tempC) {
+  if (delta_i == null || delta_mix == null || !V_m) return 1.0;
+  const T_K = tempC + 273.15;
+  const lnGamma = V_m * Math.pow(delta_i - delta_mix, 2) / (R_GAS * T_K);
+  return Math.exp(lnGamma);
+}
+
+/**
+ * Calculate modified Raoult's law partial pressure.
+ * P_i = x_i * gamma_i * P_i_sat(T)
+ * @param {number} moleFraction - x_i
+ * @param {number} gamma - activity coefficient
+ * @param {number} vpSat - saturated VP at temp (mmHg)
+ * @returns {number} partial pressure in mmHg
+ */
+function raoultPartialPressure(moleFraction, gamma, vpSat) {
+  return moleFraction * gamma * vpSat;
+}
+
+/**
+ * Calculate skin permeability coefficient using Potts-Guy equation.
+ * log10(Kp_cm_s) = 0.71 * logP - 0.0061 * MW - 2.72
+ * @param {number} logP - partition coefficient
+ * @param {number} mw - molecular weight
+ * @returns {number} Kp in cm/s
+ */
+function pottsGuyKp(logP, mw) {
+  if (logP == null || !mw) return null;
+  const logKp = 0.71 * logP - 0.0061 * mw - 2.72;
+  return Math.pow(10, logKp);
+}
+
+/**
+ * Calculate evaporation rate constant.
+ * k_evap proportional to VP * MW^(-0.5) / density
+ * Normalized so that results are in relative units (not absolute).
+ * @param {number} vp_mmHg
+ * @param {number} mw
+ * @param {number} density
+ * @returns {number} relative evaporation rate
+ */
+function evaporationRate(vp_mmHg, mw, density) {
+  if (!vp_mmHg || !mw) return 0;
+  const d = density || 1.0;
+  return vp_mmHg * Math.pow(mw, -0.5) / d;
+}
+
+/**
+ * Simulate headspace concentration over time for a formulation.
+ * Uses first-order evaporation: C(t) = C0 * exp(-k_evap * t)
+ * @param {Array} materials - [{cas, name, pct, data:{...}}]
+ * @param {number} tempC
+ * @param {Array<number>} timePointsH - hours [0, 0.5, 1, 2, 4, 8, 12, 24]
+ * @returns {Object} {timePoints, curves: [{cas, name, note, concentrations:[]}], totals:[]}
+ */
+function simulateEvaporation(materials, tempC, timePointsH) {
+  timePointsH = timePointsH || [0, 0.25, 0.5, 1, 2, 4, 8, 12, 24];
+
+  const curves = [];
+
+  for (const mat of materials) {
+    const vpResult = getVaporPressure(mat.cas, tempC, mat.data);
+    const vp = vpResult.vp_mmHg || 0;
+    const mw = mat.data?.molecular_weight || 150; // default MW
+    const density = mat.data?.density || 1.0;
+
+    // Evaporation rate constant (normalized)
+    const k = evaporationRate(vp, mw, density) * 0.01; // scale factor
+
+    // Initial headspace concentration proportional to initial VP contribution
+    const C0 = mat.pct * vp;
+
+    const concentrations = timePointsH.map(t => {
+      return roundN(C0 * Math.exp(-k * t), 6);
+    });
+
+    curves.push({
+      cas: mat.cas,
+      name: mat.name,
+      note: mat.data?.note || '',
+      vpResult,
+      k_evap: roundN(k, 6),
+      C0: roundN(C0, 4),
+      concentrations,
+    });
+  }
+
+  // Totals per time point
+  const totals = timePointsH.map((_, ti) =>
+    roundN(curves.reduce((sum, c) => sum + c.concentrations[ti], 0), 4)
+  );
+
+  return { timePoints: timePointsH, curves, totals };
+}
+
+/**
+ * Build vapor pressure table for all materials at a given temperature.
+ * @param {Array} materials - [{cas, name, pct, data:{...}}]
+ * @param {number} tempC
+ * @returns {Array} [{cas, name, vp_mmHg, method, confidence, mw, logP, kp, k_evap}]
+ */
+function buildVPTable(materials, tempC) {
+  return materials.map(mat => {
+    const vpResult = getVaporPressure(mat.cas, tempC, mat.data);
+    const mw = mat.data?.molecular_weight || null;
+    const logP = mat.data?.xlogp || mat.data?.logp || null;
+    const density = mat.data?.density || null;
+    const kp = pottsGuyKp(logP, mw);
+    const k_evap = vpResult.vp_mmHg ? evaporationRate(vpResult.vp_mmHg, mw || 150, density || 1.0) : null;
+
+    return {
+      cas: mat.cas,
+      name: mat.name,
+      vp_mmHg: vpResult.vp_mmHg ? roundN(vpResult.vp_mmHg, 6) : null,
+      method: vpResult.method,
+      confidence: vpResult.confidence,
+      mw,
+      logP,
+      kp: kp ? roundN(kp, 10) : null,
+      k_evap: k_evap ? roundN(k_evap, 6) : null,
+    };
+  });
+}
