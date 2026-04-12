@@ -147,10 +147,16 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
 .chart-wrap.wide { max-width:100%; }
 
 /* ===== Export Bar ===== */
-.export-bar { position:fixed; bottom:0; left:0; right:0; z-index:100; background:var(--bg); border-top:1px solid var(--border); padding:10px 16px; display:flex; align-items:center; gap:16px; }
-.export-bar a { color:var(--text2); font-size:0.85em; text-decoration:none; cursor:pointer; }
-.export-bar a:hover { text-decoration:underline; }
-.export-bar .analyzer-link { margin-left:auto; }
+.export-bar { position:fixed; bottom:0; left:0; right:0; z-index:100; background:var(--bg); border-top:1px solid var(--border); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
+.dl-wrap { position:relative; }
+.dl-wrap > a { color:var(--text2); font-size:0.85em; text-decoration:none; cursor:pointer; }
+.dl-wrap > a:hover { text-decoration:underline; }
+.dl-menu { display:none; position:absolute; bottom:calc(100% + 8px); left:0; background:var(--card-bg); border:1px solid var(--border); border-radius:6px; min-width:140px; box-shadow:0 -4px 12px rgba(0,0,0,0.15); overflow:hidden; }
+.dl-menu.open { display:block; }
+.dl-menu a { display:block; padding:10px 16px; font-size:0.9em; text-decoration:none; color:var(--text); cursor:pointer; }
+.dl-menu a:hover { background:var(--bg2); }
+.export-bar .analyzer-link { color:var(--text2); font-size:0.85em; text-decoration:none; cursor:pointer; }
+.export-bar .analyzer-link:hover { text-decoration:underline; }
 
 /* ===== Search Modal ===== */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; justify-content:center; align-items:flex-start; padding-top:80px; }
@@ -335,8 +341,14 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
 
 <!-- ===== Export Bar ===== -->
 <div class="export-bar">
-  <a id="btnExportJSON">Save JSON</a>
-  <a id="btnExportPDF">Export PDF</a>
+  <div class="dl-wrap">
+    <a onclick="toggleDlMenu()">&#x25BC; Download</a>
+    <div class="dl-menu" id="dlMenu">
+      <a id="btnExportJSON">Save.JSON</a>
+      <a id="btnExportCSV">Save.CSV</a>
+      <a id="btnExportPDF">Save.PDF</a>
+    </div>
+  </div>
   <a href="index.html" class="analyzer-link">&larr; Analyzer</a>
 </div>
 
@@ -1115,9 +1127,15 @@ function renderSafetyTab() {
   el.innerHTML = html;
 }
 
+// ===== Download Menu =====
+function toggleDlMenu() { document.getElementById('dlMenu').classList.toggle('open'); }
+function closeDlMenu() { document.getElementById('dlMenu').classList.remove('open'); }
+document.addEventListener('click', ev => { if (!ev.target.closest('.dl-wrap')) closeDlMenu(); });
+
 // ===== Export =====
-document.getElementById('btnExportJSON').addEventListener('click', exportJSON);
-document.getElementById('btnExportPDF').addEventListener('click', exportPDF);
+document.getElementById('btnExportJSON').addEventListener('click', () => { exportJSON(); closeDlMenu(); });
+document.getElementById('btnExportCSV').addEventListener('click', () => { exportCSV(); closeDlMenu(); });
+document.getElementById('btnExportPDF').addEventListener('click', () => { exportPDF(); closeDlMenu(); });
 
 function exportJSON() {
   const mats = formulation.materials;
@@ -1180,6 +1198,53 @@ function exportJSON() {
   const a = document.createElement('a');
   a.href = url;
   a.download = 'formulation_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportCSV() {
+  const mats = formulation.materials;
+  if (!mats.length) { alert('Add materials first.'); return; }
+
+  const catId = document.getElementById('productCategory').value;
+  const fragPct = parseInt(document.getElementById('fragPct').value);
+
+  const compliance = checkIFRACompliance(mats, catId, fragPct);
+  const allergens = aggregateAllergens(mats, fragPct, catId);
+
+  // CSV header
+  const rows = [['Name','CAS','%','Note','Odor Type','Odor Strength','% in Product','IFRA Max','IFRA Status'].join(',')];
+
+  for (const mat of mats) {
+    const r = compliance.find(c => c.cas === mat.cas) || {};
+    const csvEsc = s => '"' + String(s || '').replace(/"/g, '""') + '"';
+    rows.push([
+      csvEsc(mat.name),
+      csvEsc(mat.cas),
+      mat.pct,
+      csvEsc(mat.data?.note),
+      csvEsc(mat.data?.odor_type),
+      csvEsc(mat.data?.odor_strength),
+      r.pctInProduct || '',
+      r.ifraMax != null ? r.ifraMax : '',
+      r.status || '',
+    ].join(','));
+  }
+
+  // Allergen section
+  rows.push('');
+  rows.push('Allergens to Declare');
+  rows.push('Allergen,INCI,Total ppm,Exceeds Threshold');
+  for (const a of allergens.allergens.filter(a => a.exceedsThreshold)) {
+    rows.push(['"'+a.name+'"','"'+a.inci+'"',a.totalPpm,'YES'].join(','));
+  }
+
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'formulation_' + new Date().toISOString().slice(0, 10) + '.csv';
   a.click();
   URL.revokeObjectURL(url);
 }
