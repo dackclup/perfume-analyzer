@@ -1364,3 +1364,180 @@ function getStabilitySummary(reactiveWarnings, groupMatrix) {
 
   return { overallRisk, highCount, mediumCount, lowCount, materialsWithoutSmiles, totalGroups };
 }
+
+// ─────────────────────────────────────────────────────────────
+// SYSTEM 6: Aromachology & Mood Engine
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Get mood scores for a material.
+ * Uses hardcoded table first, then family-level defaults.
+ * @param {string} cas
+ * @param {Object} matData
+ * @returns {Object} {scores: [8 values], method}
+ *   Dimensions: [relaxing, energizing, focusing, uplifting, sensual, calming, grounding, refreshing]
+ */
+function getMoodScores(cas, matData) {
+  // Strategy 1: hardcoded material-level scores
+  if (AROMACHOLOGY_SCORES[cas]) {
+    return { scores: AROMACHOLOGY_SCORES[cas], method: 'literature' };
+  }
+
+  // Strategy 2: family-level defaults
+  const families = getMaterialFamilies(matData);
+  for (const f of families) {
+    const fl = f.toLowerCase().trim();
+    if (FAMILY_MOOD_DEFAULTS[fl]) {
+      return { scores: FAMILY_MOOD_DEFAULTS[fl], method: 'family-default' };
+    }
+  }
+
+  // Strategy 3: neutral default
+  return { scores: [2, 2, 2, 2, 2, 2, 2, 2], method: 'neutral' };
+}
+
+/**
+ * Compute aggregate mood profile for the entire formulation.
+ * Weighted by material percentage (or perceived intensity if available).
+ * @param {Array} materials - [{cas, name, pct, data:{...}}]
+ * @param {Array|null} ovTable - output of buildOdorValueTable() for intensity weighting
+ * @returns {Object} {profile: [8 values], dimensions: string[], perMaterial: [...]}
+ */
+function computeMoodProfile(materials, ovTable) {
+  const profile = new Array(MOOD_DIMENSIONS.length).fill(0);
+  let totalWeight = 0;
+
+  const perMaterial = materials.map(mat => {
+    const moodResult = getMoodScores(mat.cas, mat.data);
+
+    // Weight: use perceived intensity if available, else fall back to pct
+    let weight = mat.pct;
+    if (ovTable) {
+      const ovEntry = ovTable.find(o => o.cas === mat.cas);
+      if (ovEntry && ovEntry.perceivedIntensity > 0) {
+        weight = ovEntry.perceivedIntensity;
+      }
+    }
+
+    totalWeight += weight;
+    moodResult.scores.forEach((s, i) => {
+      profile[i] += s * weight;
+    });
+
+    return {
+      cas: mat.cas,
+      name: mat.name,
+      scores: moodResult.scores,
+      method: moodResult.method,
+      weight: roundN(weight, 2),
+    };
+  });
+
+  // Normalize
+  if (totalWeight > 0) {
+    profile.forEach((_, i) => {
+      profile[i] = roundN(profile[i] / totalWeight, 2);
+    });
+  }
+
+  return { profile, dimensions: [...MOOD_DIMENSIONS], perMaterial };
+}
+
+/**
+ * Suggest materials to enhance a target mood.
+ * @param {Array<string>} targetDimensions - e.g. ['relaxing', 'calming']
+ * @param {Array} currentMaterials - current formulation materials
+ * @param {Map} graph - compatibility graph
+ * @param {Object} db - perfumery DB
+ * @param {number} maxResults
+ * @returns {Array} [{cas, name, relevance, compatibility, combined, odorType, note, moodScores}]
+ */
+function suggestByMood(targetDimensions, currentMaterials, graph, db, maxResults) {
+  maxResults = maxResults || 10;
+  const currentCASes = new Set(currentMaterials.map(m => m.cas));
+  const selectedCASes = [...currentCASes];
+
+  const candidates = [];
+
+  for (const [cas, entry] of Object.entries(db)) {
+    if (currentCASes.has(cas)) continue;
+
+    const moodResult = getMoodScores(cas, {
+      odor_type: entry.odor ? entry.odor.type : null,
+      primaryFamilies: [],
+    });
+
+    // Relevance: sum of scores in target dimensions
+    let relevance = 0;
+    for (const dim of targetDimensions) {
+      const dimIdx = MOOD_DIMENSIONS.indexOf(dim);
+      if (dimIdx >= 0) relevance += moodResult.scores[dimIdx];
+    }
+    if (relevance <= 0) continue;
+
+    // Compatibility: how many current materials does this blend with?
+    let compatibility = 0;
+    if (graph) {
+      const neighbors = graph.get(cas);
+      if (neighbors) {
+        for (const s of selectedCASes) {
+          if (neighbors.has(s)) compatibility++;
+        }
+      }
+    }
+
+    candidates.push({
+      cas,
+      name: entry.name,
+      relevance,
+      compatibility,
+      combined: roundN(relevance * 0.7 + compatibility * 0.3, 2),
+      odorType: entry.odor ? entry.odor.type : null,
+      note: entry.note,
+      moodScores: moodResult.scores,
+    });
+  }
+
+  return candidates
+    .sort((a, b) => b.combined - a.combined)
+    .slice(0, maxResults);
+}
+
+/**
+ * Get dominant mood description for the formulation.
+ * @param {Array<number>} profile - 8-dim mood profile
+ * @returns {Object} {primary, secondary, description}
+ */
+function describeMood(profile) {
+  if (!profile || profile.length === 0) return { primary: null, secondary: null, description: 'No mood data' };
+
+  // Find top 2 dimensions
+  const indexed = profile.map((v, i) => ({ dim: MOOD_DIMENSIONS[i], val: v }));
+  indexed.sort((a, b) => b.val - a.val);
+
+  const primary = indexed[0];
+  const secondary = indexed[1];
+
+  // Mood descriptions
+  const descriptions = {
+    relaxing:   'Creates a calming, stress-relieving atmosphere',
+    energizing: 'Invigorates and boosts energy levels',
+    focusing:   'Enhances mental clarity and concentration',
+    uplifting:  'Elevates mood and promotes positivity',
+    sensual:    'Creates an intimate, warm ambiance',
+    calming:    'Soothes anxiety and promotes tranquility',
+    grounding:  'Provides stability and connection to nature',
+    refreshing: 'Revitalizes and cleanses the senses',
+  };
+
+  let description = descriptions[primary.dim] || '';
+  if (secondary.val > 2.5) {
+    description += ', with ' + secondary.dim + ' undertones';
+  }
+
+  return {
+    primary: { dimension: primary.dim, score: primary.val },
+    secondary: { dimension: secondary.dim, score: secondary.val },
+    description,
+  };
+}
