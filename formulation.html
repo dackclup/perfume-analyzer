@@ -50,8 +50,6 @@ hr { border:none; border-top:1px solid var(--border); margin:12px 0; }
 /* ===== Header ===== */
 .header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; background:var(--bg); position:sticky; top:0; z-index:50; }
 .header-left { display:flex; align-items:center; gap:12px; }
-.header-left a { color:var(--accent); text-decoration:none; font-size:0.85em; white-space:nowrap; }
-.header-left a:hover { text-decoration:underline; }
 .header h1 { font-size:1.3em; font-weight:600; }
 .header .subtitle { color:var(--text2); font-size:0.75em; }
 .header-right { display:flex; align-items:center; gap:8px; }
@@ -149,10 +147,10 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
 .chart-wrap.wide { max-width:100%; }
 
 /* ===== Export Bar ===== */
-.export-bar { position:fixed; bottom:0; left:0; right:0; z-index:100; background:var(--bg); border-top:1px solid var(--border); padding:10px 16px; display:flex; justify-content:flex-start; align-items:center; gap:8px; }
-.export-bar a { color:var(--text); text-decoration:underline; font-size:0.85em; cursor:pointer; }
-.export-bar a:hover { opacity:0.6; }
-.export-bar .export-right { display:flex; gap:12px; align-items:center; }
+.export-bar { position:fixed; bottom:0; left:0; right:0; z-index:100; background:var(--bg); border-top:1px solid var(--border); padding:10px 16px; display:flex; align-items:center; gap:16px; }
+.export-bar a { color:var(--text2); font-size:0.85em; text-decoration:none; cursor:pointer; }
+.export-bar a:hover { text-decoration:underline; }
+.export-bar .analyzer-link { margin-left:auto; }
 
 /* ===== Search Modal ===== */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; justify-content:center; align-items:flex-start; padding-top:80px; }
@@ -192,7 +190,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
 <!-- ===== Header ===== -->
 <div class="header">
   <div class="header-left">
-    <a href="index.html">&larr; Analyzer</a>
     <div>
       <h1>Perfume Formulation Lab</h1>
       <div class="subtitle">Deterministic scientific formulation calculator</div>
@@ -338,10 +335,9 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
 
 <!-- ===== Export Bar ===== -->
 <div class="export-bar">
-  <div class="export-right">
-    <a id="btnExportJSON">Save JSON</a>
-    <a id="btnExportPDF">Export PDF</a>
-  </div>
+  <a id="btnExportJSON">Save JSON</a>
+  <a id="btnExportPDF">Export PDF</a>
+  <a href="index.html" class="analyzer-link">&larr; Analyzer</a>
 </div>
 
 <!-- ===== Add Material Modal ===== -->
