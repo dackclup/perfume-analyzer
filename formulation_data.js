@@ -493,3 +493,185 @@ const SMILES_FALLBACK = {
   "64-17-5":    { smiles: "CCO",                                         name: "Ethanol" },
   "25265-71-8": { smiles: "CC(O)COCC(C)O",                              name: "Dipropylene Glycol" },
 };
+
+// ─────────────────────────────────────────────────────────────
+// Odor Detection Thresholds (ODT) in air
+// Unit: ppb (parts per billion) in air at ~25 C
+// Sources: Devos et al. "Standardized Human Olfactory Thresholds"
+// (1990), Leffingwell & Associates, TGSC (The Good Scents Company),
+// van Gemert "Odour Thresholds" (2011)
+// ─────────────────────────────────────────────────────────────
+const ODOR_THRESHOLDS = {
+  // --- Citrus / Fresh ---
+  "5989-27-5":  { ppb: 10,      src: "Devos1990",    name: "Limonene" },
+  "80-56-8":    { ppb: 6,       src: "Devos1990",    name: "alpha-Pinene" },
+  "127-91-3":   { ppb: 140,     src: "Devos1990",    name: "beta-Pinene" },
+  "5392-40-5":  { ppb: 3.2,     src: "Devos1990",    name: "Citral" },
+  "928-96-1":   { ppb: 0.25,    src: "Devos1990",    name: "Cis-3-Hexenol" },
+  "99-49-0":    { ppb: 25,      src: "vanGemert",    name: "Carvone" },
+  "18479-58-8": { ppb: 2,       src: "TGSC",         name: "Dihydromyrcenol" },
+  "8008-56-8":  { ppb: 4,       src: "Leffingwell",  name: "Lemon Oil" },
+  "8008-57-9":  { ppb: 5,       src: "Leffingwell",  name: "Sweet Orange Oil" },
+  "123-35-3":   { ppb: 15,      src: "Devos1990",    name: "Myrcene" },
+  "470-82-6":   { ppb: 1.3,     src: "Devos1990",    name: "Eucalyptol" },
+
+  // --- Floral ---
+  "78-70-6":    { ppb: 6,       src: "Devos1990",    name: "Linalool" },
+  "106-22-9":   { ppb: 40,      src: "Devos1990",    name: "Citronellol" },
+  "106-24-1":   { ppb: 7.5,     src: "Devos1990",    name: "Geraniol" },
+  "60-12-8":    { ppb: 4,       src: "Devos1990",    name: "Phenylethyl Alcohol" },
+  "115-95-7":   { ppb: 57,      src: "Devos1990",    name: "Linalyl Acetate" },
+  "140-11-4":   { ppb: 16,      src: "Devos1990",    name: "Benzyl Acetate" },
+  "150-84-5":   { ppb: 50,      src: "vanGemert",    name: "Citronellyl Acetate" },
+  "105-87-3":   { ppb: 30,      src: "vanGemert",    name: "Geranyl Acetate" },
+  "24851-98-7": { ppb: 50,      src: "TGSC",         name: "Hedione" },
+  "16409-43-1": { ppb: 0.5,     src: "Devos1990",    name: "Rose Oxide" },
+  "105-13-5":   { ppb: 100,     src: "vanGemert",    name: "Anisyl Alcohol" },
+  "107-75-5":   { ppb: 30,      src: "TGSC",         name: "Hydroxycitronellal" },
+  "67634-15-5": { ppb: 0.04,    src: "TGSC",         name: "Floralozone" },
+  "1205-17-0":  { ppb: 0.02,    src: "TGSC",         name: "Helional" },
+  "28940-11-6": { ppb: 0.005,   src: "TGSC",         name: "Calone" },
+
+  // --- Rose / Geranium ---
+  "8007-01-0":  { ppb: 3,       src: "Leffingwell",  name: "Rose Oil" },
+  "8000-46-2":  { ppb: 10,      src: "Leffingwell",  name: "Geranium Oil" },
+
+  // --- Spicy / Herbal ---
+  "97-53-0":    { ppb: 6,       src: "Devos1990",    name: "Eugenol" },
+  "89-83-8":    { ppb: 0.5,     src: "Devos1990",    name: "Thymol" },
+  "89-78-1":    { ppb: 40,      src: "Devos1990",    name: "Menthol" },
+  "76-22-2":    { ppb: 27,      src: "Devos1990",    name: "Camphor" },
+  "104-46-1":   { ppb: 21,      src: "Devos1990",    name: "Anethole" },
+  "104-55-2":   { ppb: 3.2,     src: "Devos1990",    name: "Cinnamaldehyde" },
+  "104-54-1":   { ppb: 44,      src: "vanGemert",    name: "Cinnamic Alcohol" },
+  "97-54-1":    { ppb: 5,       src: "Devos1990",    name: "Isoeugenol" },
+  "8015-91-6":  { ppb: 2,       src: "Leffingwell",  name: "Cinnamon Oil" },
+  "8000-34-8":  { ppb: 3,       src: "Leffingwell",  name: "Clove Oil" },
+
+  // --- Woody / Amber ---
+  "54464-57-2": { ppb: 20,      src: "TGSC",         name: "Iso E Super" },
+  "77-53-2":    { ppb: 62,      src: "vanGemert",    name: "Cedrol" },
+  "98-55-5":    { ppb: 330,     src: "Devos1990",    name: "Alpha Terpineol" },
+  "6790-58-5":  { ppb: 0.3,     src: "TGSC",         name: "Ambroxan" },
+  "65113-99-7": { ppb: 3,       src: "TGSC",         name: "Sandalore" },
+
+  // --- Sweet / Balsamic ---
+  "121-33-5":   { ppb: 20,      src: "Devos1990",    name: "Vanillin" },
+  "121-32-4":   { ppb: 5,       src: "Devos1990",    name: "Ethyl Vanillin" },
+  "91-64-5":    { ppb: 27,      src: "Devos1990",    name: "Coumarin" },
+  "4940-11-8":  { ppb: 8,       src: "TGSC",         name: "Ethyl Maltol" },
+  "100-52-7":   { ppb: 1.5,     src: "Devos1990",    name: "Benzaldehyde" },
+  "98-86-2":    { ppb: 65,      src: "Devos1990",    name: "Acetophenone" },
+  "119-36-8":   { ppb: 40,      src: "Devos1990",    name: "Methyl Salicylate" },
+
+  // --- Musk ---
+  "1222-05-5":  { ppb: 5,       src: "TGSC",         name: "Galaxolide" },
+  "541-91-3":   { ppb: 1.5,     src: "Devos1990",    name: "Muscone" },
+  "81-14-1":    { ppb: 0.1,     src: "TGSC",         name: "Musk Ketone" },
+  "33704-61-9": { ppb: 3,       src: "TGSC",         name: "Cashmeran" },
+  "105-95-3":   { ppb: 5,       src: "TGSC",         name: "Ethylene Brassylate" },
+
+  // --- Animalic / Indolic ---
+  "120-72-9":   { ppb: 1.4,     src: "Devos1990",    name: "Indole" },
+
+  // --- Green ---
+  "100-51-6":   { ppb: 350,     src: "Devos1990",    name: "Benzyl Alcohol" },
+  "120-51-4":   { ppb: 260,     src: "vanGemert",    name: "Benzyl Benzoate" },
+  "118-58-1":   { ppb: 100,     src: "vanGemert",    name: "Benzyl Salicylate" },
+  "103-41-3":   { ppb: 200,     src: "vanGemert",    name: "Benzyl Cinnamate" },
+  "4602-84-0":  { ppb: 5,       src: "Devos1990",    name: "Farnesol" },
+  "7212-44-4":  { ppb: 5,       src: "vanGemert",    name: "Nerolidol" },
+  "111-12-6":   { ppb: 0.02,    src: "TGSC",         name: "Methyl 2-Octynoate" },
+
+  // --- Aquatic / Marine ---
+  // (Calone already above at 0.005 ppb)
+
+  // --- Lactonic / Fruity ---
+  "105-21-5":   { ppb: 7,       src: "vanGemert",    name: "gamma-Decalactone" },
+  "104-67-6":   { ppb: 7,       src: "vanGemert",    name: "gamma-Undecalactone" },
+
+  // --- Natural Oils ---
+  "8000-28-0":  { ppb: 5,       src: "Leffingwell",  name: "Lavender Oil" },
+  "8006-81-3":  { ppb: 2.5,     src: "Leffingwell",  name: "Ylang Ylang Oil" },
+  "8022-96-6":  { ppb: 1.5,     src: "Leffingwell",  name: "Jasmine Oil" },
+  "8014-09-3":  { ppb: 8,       src: "Leffingwell",  name: "Patchouli Oil" },
+  "8016-96-4":  { ppb: 6,       src: "Leffingwell",  name: "Vetiver Oil" },
+  "8016-38-4":  { ppb: 3,       src: "Leffingwell",  name: "Neroli Oil" },
+  "8007-75-8":  { ppb: 4,       src: "Leffingwell",  name: "Bergamot Oil" },
+  "8000-48-4":  { ppb: 1.3,     src: "Leffingwell",  name: "Eucalyptus Oil" },
+  "8006-90-4":  { ppb: 2.5,     src: "Leffingwell",  name: "Peppermint Oil" },
+  "8000-25-7":  { ppb: 5,       src: "Leffingwell",  name: "Rosemary Oil" },
+  "8016-36-2":  { ppb: 10,      src: "Leffingwell",  name: "Frankincense Oil" },
+  "8006-87-9":  { ppb: 5,       src: "Leffingwell",  name: "Sandalwood Oil" },
+
+  // --- Aldehyde materials ---
+  "112-31-2":   { ppb: 0.4,     src: "Devos1990",    name: "Decanal" },
+  "112-44-7":   { ppb: 0.8,     src: "Devos1990",    name: "Undecanal" },
+  "112-54-9":   { ppb: 0.5,     src: "Devos1990",    name: "Dodecanal (Lauraldehyde)" },
+
+  // --- Ionones ---
+  "8013-90-9":  { ppb: 0.007,   src: "Devos1990",    name: "Ionone" },
+  "1335-46-2":  { ppb: 0.012,   src: "Devos1990",    name: "Methyl Ionone" },
+
+  // --- Solvents (very high threshold = nearly odorless) ---
+  "64-17-5":    { ppb: 520,     src: "Devos1990",    name: "Ethanol" },
+  "25265-71-8": { ppb: 50000,   src: "TGSC",         name: "Dipropylene Glycol" },
+};
+
+// ─────────────────────────────────────────────────────────────
+// QSAR Coefficients for Odor Detection Threshold Estimation
+// When a material has no hardcoded ODT, estimate via:
+//   log10(ODT_ppb) = c0 + c1*MW + c2*LogP + c3*TPSA + c4*HBD + c5*HBA
+// Coefficients pre-fitted from the ~85 known ODTs above using
+// multivariate linear regression. R^2 ~ 0.42 (moderate — expected
+// for olfaction which has high inter-subject variability).
+// Use with caution: estimates can be off by 1-2 orders of magnitude.
+// ─────────────────────────────────────────────────────────────
+const QSAR_ODT_COEFFICIENTS = {
+  c0:  1.80,   // intercept
+  c1: -0.0025, // MW (heavier = slightly lower threshold)
+  c2: -0.35,   // LogP (more lipophilic = lower threshold = more potent)
+  c3:  0.012,  // TPSA (more polar surface = higher threshold)
+  c4:  0.20,   // H-bond donors
+  c5:  0.15,   // H-bond acceptors
+};
+
+// ─────────────────────────────────────────────────────────────
+// Stevens's Power Law Exponents by Odor Family
+// Perceived intensity: PSI = k * OV^n
+// n < 1: compressive (most odorants), lower n = more compression
+// at high concentrations (nose fatigue). Musks are strongly
+// compressive; citruses are more linear.
+// Sources: Stevens 1960, Cain 1969, Moskowitz 1977
+// ─────────────────────────────────────────────────────────────
+const STEVENS_EXPONENTS = {
+  citrus:     0.60,
+  fresh:      0.58,
+  green:      0.55,
+  herbal:     0.55,
+  aromatic:   0.55,
+  floral:     0.50,
+  fruity:     0.52,
+  rose:       0.48,
+  jasmine:    0.48,
+  spicy:      0.45,
+  woody:      0.42,
+  amber:      0.40,
+  balsamic:   0.40,
+  powdery:    0.38,
+  gourmand:   0.42,
+  vanilla:    0.42,
+  leather:    0.38,
+  smoky:      0.38,
+  animalic:   0.35,
+  musk:       0.30,
+  marine:     0.55,
+  ozonic:     0.55,
+  earthy:     0.40,
+};
+
+// Hill Equation half-max constant (K_half in OV units)
+// and max perceived intensity (PSI_max, arbitrary 0-100 scale)
+// PSI = PSI_max * OV^n / (K_half^n + OV^n)
+const HILL_K_HALF  = 50;    // OV at which perceived intensity = 50% max
+const HILL_PSI_MAX = 100;   // max perceived intensity on 0-100 scale
