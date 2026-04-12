@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perfume Formulation Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+/* ===== Theme Variables (mirrored from index.html) ===== */
+:root {
+  --bg: #ffffff; --bg2: #f5f5fa; --text: #1a1a2e; --text2: #4a5e78;
+  --accent: #3D5A80; --border: #d1d9e6; --card-bg: #ffffff;
+  --badge-top-bg: #fef9c3; --badge-top-fg: #854d0e;
+  --badge-mid-bg: #dbeafe; --badge-mid-fg: #1e40af;
+  --badge-base-bg: #ede9fe; --badge-base-fg: #5b21b6;
+  --danger: #dc2626; --danger-bg: #fef2f2;
+  --warn: #d97706; --warn-bg: #fffbeb;
+  --success: #16a34a; --success-bg: #f0fdf4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1117; --bg2: #1a2332; --text: #e8ecf0; --text2: #8899aa;
+    --accent: #7E8EA6; --border: #2a3a50; --card-bg: #1a2332;
+    --badge-top-bg: #422006; --badge-top-fg: #fbbf24;
+    --badge-mid-bg: #172554; --badge-mid-fg: #60a5fa;
+    --badge-base-bg: #2e1065; --badge-base-fg: #c4b5fd;
+    --danger: #f87171; --danger-bg: #1c1017;
+    --warn: #fbbf24; --warn-bg: #1c1a0e;
+    --success: #4ade80; --success-bg: #0e1a12;
+  }
+}
+[data-theme="dark"] {
+  --bg: #0e1117; --bg2: #1a2332; --text: #e8ecf0; --text2: #8899aa;
+  --accent: #7E8EA6; --border: #2a3a50; --card-bg: #1a2332;
+  --badge-top-bg: #422006; --badge-top-fg: #fbbf24;
+  --badge-mid-bg: #172554; --badge-mid-fg: #60a5fa;
+  --badge-base-bg: #2e1065; --badge-base-fg: #c4b5fd;
+  --danger: #f87171; --danger-bg: #1c1017;
+  --warn: #fbbf24; --warn-bg: #1c1a0e;
+  --success: #4ade80; --success-bg: #0e1a12;
+}
+
+/* ===== Reset & Base ===== */
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--accent); background:var(--bg2); padding:1px 6px; border-radius:3px; }
+hr { border:none; border-top:1px solid var(--border); margin:12px 0; }
+
+/* ===== Header ===== */
+.header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; background:var(--bg); position:sticky; top:0; z-index:50; }
+.header-left { display:flex; align-items:center; gap:12px; }
+.header-left a { color:var(--accent); text-decoration:none; font-size:0.85em; white-space:nowrap; }
+.header-left a:hover { text-decoration:underline; }
+.header h1 { font-size:1.3em; font-weight:600; }
+.header .subtitle { color:var(--text2); font-size:0.75em; }
+.header-right { display:flex; align-items:center; gap:8px; }
+#themeToggle { font-size:0.85em; line-height:1; border:1px solid var(--border); background:var(--bg2); cursor:pointer; padding:6px 12px; border-radius:6px; color:var(--text2); font-family:inherit; font-weight:500; }
+#themeToggle:hover { background:var(--card-bg); color:var(--text); border-color:var(--accent); }
+
+/* ===== Layout: Sidebar + Main ===== */
+.layout { display:grid; grid-template-columns:320px 1fr; min-height:calc(100vh - 52px - 48px); }
+@media (max-width:860px) { .layout { grid-template-columns:1fr; } }
+
+/* ===== Sidebar ===== */
+.sidebar { border-right:1px solid var(--border); padding:16px; overflow-y:auto; max-height:calc(100vh - 52px - 48px); background:var(--bg); }
+@media (max-width:860px) {
+  .sidebar { border-right:none; border-bottom:1px solid var(--border); max-height:none; }
+}
+.sidebar h2 { font-size:0.9em; font-weight:600; margin-bottom:12px; color:var(--text2); text-transform:uppercase; letter-spacing:0.5px; }
+
+/* Controls */
+.control-group { margin-bottom:16px; }
+.control-label { display:flex; justify-content:space-between; align-items:center; font-size:0.82em; color:var(--text2); margin-bottom:4px; }
+.control-label span { font-weight:500; }
+.control-label output { color:var(--accent); font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:0.95em; }
+select, input[type="range"] { width:100%; }
+select { padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); color:var(--text); font-family:inherit; font-size:0.85em; }
+input[type="range"] { -webkit-appearance:none; height:6px; border-radius:3px; background:var(--border); outline:none; cursor:pointer; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent); cursor:pointer; }
+
+/* Material List */
+.mat-list { margin-top:12px; }
+.mat-item { display:flex; align-items:center; gap:6px; padding:8px; border:1px solid var(--border); border-radius:6px; margin-bottom:6px; background:var(--card-bg); font-size:0.82em; }
+.mat-item .mat-name { flex:1; min-width:0; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mat-item .mat-cas { color:var(--text2); font-size:0.85em; font-family:'IBM Plex Mono',monospace; }
+.mat-note { padding:1px 6px; border-radius:8px; font-size:0.7em; font-weight:600; }
+.mat-note.top { background:var(--badge-top-bg); color:var(--badge-top-fg); }
+.mat-note.mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
+.mat-note.base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
+.mat-pct { width:52px; padding:4px 6px; border:1px solid var(--border); border-radius:4px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:0.85em; background:var(--bg2); color:var(--text); }
+.mat-del { background:none; border:none; color:var(--text2); cursor:pointer; font-size:1em; padding:2px 4px; line-height:1; }
+.mat-del:hover { color:var(--danger); }
+
+/* Total bar */
+.mat-total { display:flex; justify-content:space-between; align-items:center; padding:8px; font-size:0.85em; font-weight:600; border-top:1px solid var(--border); margin-top:4px; }
+.mat-total .pct-val { font-family:'IBM Plex Mono',monospace; }
+.mat-total .pct-val.over { color:var(--danger); }
+.mat-total .pct-val.under { color:var(--warn); }
+.mat-total .pct-val.ok { color:var(--success); }
+
+/* Action buttons */
+.sidebar-actions { display:flex; gap:6px; margin-top:12px; }
+.btn { padding:8px 14px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); color:var(--text); font-family:inherit; font-size:0.82em; cursor:pointer; font-weight:500; }
+.btn:hover { border-color:var(--accent); color:var(--accent); }
+.btn-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.btn-primary:hover { opacity:0.85; }
+.btn-sm { padding:5px 10px; font-size:0.78em; }
+
+/* Empty state */
+.empty-state { text-align:center; padding:32px 16px; color:var(--text2); font-size:0.85em; }
+.empty-state p { margin-bottom:8px; }
+
+/* ===== Main Content ===== */
+.main { padding:0; overflow-y:auto; max-height:calc(100vh - 52px - 48px); background:var(--bg2); }
+@media (max-width:860px) { .main { max-height:none; } }
+
+/* Tab Navigation */
+.tab-nav { display:flex; border-bottom:1px solid var(--border); background:var(--bg); overflow-x:auto; position:sticky; top:0; z-index:10; }
+.tab-btn { padding:10px 16px; font-size:0.8em; font-weight:500; color:var(--text2); background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; font-family:inherit; white-space:nowrap; }
+.tab-btn:hover { color:var(--text); background:var(--bg2); }
+.tab-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+/* Tab Panels */
+.tab-panel { display:none; padding:20px; }
+.tab-panel.active { display:block; }
+.tab-panel h3 { font-size:1em; font-weight:600; margin-bottom:12px; }
+.tab-panel .panel-desc { color:var(--text2); font-size:0.82em; margin-bottom:16px; }
+
+/* Cards inside tabs */
+.analysis-card { background:var(--card-bg); border:1px solid var(--border); border-radius:6px; padding:16px; margin-bottom:12px; }
+.analysis-card h4 { font-size:0.9em; font-weight:600; margin-bottom:8px; }
+
+/* Tables */
+.data-table { width:100%; border-collapse:collapse; font-size:0.82em; }
+.data-table th { text-align:left; padding:8px 10px; border-bottom:2px solid var(--border); color:var(--text2); font-weight:500; white-space:nowrap; }
+.data-table td { padding:8px 10px; border-bottom:1px solid var(--border); }
+.data-table tr:last-child td { border-bottom:none; }
+.data-table tr:hover { background:var(--bg2); }
+
+/* Status badges */
+.badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.72em; font-weight:600; }
+.badge-ok { background:var(--success-bg); color:var(--success); }
+.badge-warn { background:var(--warn-bg); color:var(--warn); }
+.badge-danger { background:var(--danger-bg); color:var(--danger); }
+
+/* Chart containers */
+.chart-wrap { position:relative; max-width:480px; margin:0 auto 16px; }
+.chart-wrap.wide { max-width:100%; }
+
+/* ===== Export Bar ===== */
+.export-bar { position:fixed; bottom:0; left:0; right:0; z-index:100; background:var(--bg); border-top:1px solid var(--border); padding:10px 16px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.export-bar a { color:var(--text); text-decoration:underline; font-size:0.85em; cursor:pointer; }
+.export-bar a:hover { opacity:0.6; }
+.export-bar .export-right { display:flex; gap:12px; align-items:center; }
+
+/* ===== Search Modal ===== */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; justify-content:center; align-items:flex-start; padding-top:80px; }
+.modal-overlay.open { display:flex; }
+.modal { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; width:90%; max-width:480px; max-height:70vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.2); }
+.modal-header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.modal-header h3 { font-size:0.95em; font-weight:600; }
+.modal-close { background:none; border:none; font-size:1.2em; cursor:pointer; color:var(--text2); padding:4px; }
+.modal-close:hover { color:var(--text); }
+.modal-body { padding:12px 16px; overflow-y:auto; flex:1; }
+.modal-search { width:100%; padding:10px 12px; border:2px solid var(--border); border-radius:6px; font-size:0.9em; background:var(--bg2); color:var(--text); outline:none; font-family:inherit; margin-bottom:8px; }
+.modal-search:focus { border-color:var(--accent); }
+.modal-results { list-style:none; }
+.modal-results li { padding:8px 10px; border-radius:4px; cursor:pointer; font-size:0.85em; display:flex; justify-content:space-between; align-items:center; }
+.modal-results li:hover { background:var(--bg2); }
+.modal-results .mr-name { font-weight:500; }
+.modal-results .mr-meta { color:var(--text2); font-size:0.85em; }
+
+/* ===== Confidence dots ===== */
+.conf-dot { display:inline-block; width:8px; height:8px; border-radius:50%; }
+.conf-dot.high { background:var(--success); }
+.conf-dot.med { background:var(--warn); }
+.conf-dot.low { background:var(--danger); }
+
+/* ===== Print ===== */
+@media print {
+  .header, .export-bar, .tab-nav, .sidebar-actions, .modal-overlay { display:none !important; }
+  .layout { grid-template-columns:1fr; }
+  .sidebar { border:none; max-height:none; }
+  .main { max-height:none; }
+  .tab-panel { display:block !important; page-break-inside:avoid; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<div class="header">
+  <div class="header-left">
+    <a href="index.html">&larr; Analyzer</a>
+    <div>
+      <h1>Perfume Formulation Lab</h1>
+      <div class="subtitle">Deterministic scientific formulation calculator</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button id="themeToggle" type="button" aria-label="Switch to dark mode">Dark &#x263E;&#xFE0E;</button>
+  </div>
+</div>
+
+<!-- ===== Layout ===== -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>Workspace</h2>
+
+    <!-- Product Category -->
+    <div class="control-group">
+      <div class="control-label"><span>Product Category</span></div>
+      <select id="productCategory">
+        <option value="4">Fine Fragrance (Cat.4)</option>
+        <option value="1">Lip Products (Cat.1)</option>
+        <option value="2">Deodorant / Antiperspirant (Cat.2)</option>
+        <option value="3">Hydroalcoholic — Shaved Skin (Cat.3)</option>
+        <option value="5A">Body Lotion (Cat.5A)</option>
+        <option value="5B">Face Cream (Cat.5B)</option>
+        <option value="5C">Hand Cream (Cat.5C)</option>
+        <option value="5D">Baby Products (Cat.5D)</option>
+        <option value="6">Mouthwash / Toothpaste (Cat.6)</option>
+        <option value="7">Rinse-off Hair (Cat.7)</option>
+        <option value="8">Leave-on Hair (Cat.8)</option>
+        <option value="9">Bar Soap (Cat.9)</option>
+        <option value="10">Household Cleaners (Cat.10)</option>
+        <option value="11">Candles / Air Care (Cat.11)</option>
+        <option value="12">Other (Cat.12)</option>
+      </select>
+    </div>
+
+    <!-- Fragrance Concentration -->
+    <div class="control-group">
+      <div class="control-label"><span>Fragrance in Product</span><output id="fragPctOut">15%</output></div>
+      <input type="range" id="fragPct" min="1" max="30" value="15" oninput="document.getElementById('fragPctOut').textContent=this.value+'%'">
+    </div>
+
+    <!-- Temperature -->
+    <div class="control-group">
+      <div class="control-label"><span>Temperature</span><output id="tempOut">25 &deg;C</output></div>
+      <input type="range" id="tempSlider" min="15" max="40" value="25" oninput="document.getElementById('tempOut').innerHTML=this.value+' &deg;C'">
+    </div>
+
+    <hr>
+
+    <!-- Material List -->
+    <h2>Materials <span id="matCount" style="font-weight:400; color:var(--text2)">(0)</span></h2>
+    <div id="matList" class="mat-list">
+      <div class="empty-state" id="matEmpty">
+        <p>No materials yet</p>
+        <p>Click <strong>+ Add</strong> or <strong>Import</strong> below</p>
+      </div>
+    </div>
+
+    <!-- Total -->
+    <div class="mat-total" id="matTotal" style="display:none">
+      <span>Total</span>
+      <span class="pct-val" id="matTotalPct">0%</span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="sidebar-actions">
+      <button class="btn btn-primary" id="btnAddMat">+ Add</button>
+      <button class="btn" id="btnImport">Import from Analyzer</button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="tab-safety">Safety</button>
+      <button class="tab-btn" data-tab="tab-compat">Compatibility</button>
+      <button class="tab-btn" data-tab="tab-thermo">Evaporation</button>
+      <button class="tab-btn" data-tab="tab-odor">Odor Profile</button>
+      <button class="tab-btn" data-tab="tab-stability">Stability</button>
+      <button class="tab-btn" data-tab="tab-mood">Mood</button>
+    </div>
+
+    <!-- Tab 1: Safety & Compliance (System 5) -->
+    <div class="tab-panel active" id="tab-safety">
+      <h3>IFRA Safety &amp; Compliance</h3>
+      <p class="panel-desc">MAC enforcement, allergen aggregation, and INCI label generation per IFRA 51st Amendment.</p>
+      <div id="safetyContent">
+        <div class="empty-state"><p>Add materials to see safety analysis</p></div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Compatibility & Allocation (System 3) -->
+    <div class="tab-panel" id="tab-compat">
+      <h3>Compatibility &amp; Allocation</h3>
+      <p class="panel-desc">Graph-based harmony analysis, material suggestions via DFS, and Dirichlet percentage allocation.</p>
+      <div id="compatContent">
+        <div class="empty-state"><p>Add materials to see compatibility analysis</p></div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Evaporation & Thermodynamics (System 1) -->
+    <div class="tab-panel" id="tab-thermo">
+      <h3>Evaporation &amp; Thermodynamics</h3>
+      <p class="panel-desc">Antoine / Clausius-Clapeyron vapor pressure, Raoult's law, and Potts-Guy skin absorption model.</p>
+      <div id="thermoContent">
+        <div class="empty-state"><p>Add materials to see evaporation analysis</p></div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Odor Profile & Perception (System 2) -->
+    <div class="tab-panel" id="tab-odor">
+      <h3>Odor Profile &amp; Perception</h3>
+      <p class="panel-desc">Odor value calculation, Stevens / Hill perceived intensity, and 12-axis perfumery radar.</p>
+      <div id="odorContent">
+        <div class="empty-state"><p>Add materials to see odor profile analysis</p></div>
+      </div>
+    </div>
+
+    <!-- Tab 5: Stability & Maturation (System 4) -->
+    <div class="tab-panel" id="tab-stability">
+      <h3>Stability &amp; Maturation</h3>
+      <p class="panel-desc">Functional group detection from SMILES, reactive pair warnings, and substitution recommendations.</p>
+      <div id="stabilityContent">
+        <div class="empty-state"><p>Add materials to see stability analysis</p></div>
+      </div>
+    </div>
+
+    <!-- Tab 6: Mood & Aromachology (System 6) -->
+    <div class="tab-panel" id="tab-mood">
+      <h3>Mood &amp; Aromachology</h3>
+      <p class="panel-desc">Physiological mood scoring, 8-axis mood radar, and material suggestions by target mood.</p>
+      <div id="moodContent">
+        <div class="empty-state"><p>Add materials to see mood analysis</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Export Bar ===== -->
+<div class="export-bar">
+  <span style="font-size:0.82em; color:var(--text2)">Perfume Formulation Lab</span>
+  <div class="export-right">
+    <a id="btnExportJSON">Save JSON</a>
+    <a id="btnExportPDF">Export PDF</a>
+  </div>
+</div>
+
+<!-- ===== Add Material Modal ===== -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Material</h3>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="text" class="modal-search" id="modalSearch" placeholder="Search by name or CAS..." autocomplete="off">
+      <ul class="modal-results" id="modalResults"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Scripts ===== -->
+<script src="perfumery_data.js"></script>
+<script>
+// ===== Data Layer =====
+const DB = {};
+PERFUMERY_DATA.perfumery_db.forEach(e => { DB[e.cas] = e; });
+
+// Build name lookup indexes
+const NAME_TO_CAS = {};
+for (const [cas, entry] of Object.entries(DB)) {
+  NAME_TO_CAS[entry.name.toLowerCase()] = cas;
+  for (const syn of entry.synonyms || []) NAME_TO_CAS[syn.toLowerCase()] = cas;
+}
+const TRADES = PERFUMERY_DATA.trade_names;
+
+// ===== Theme Toggle =====
+(function initTheme() {
+  const toggle = document.getElementById('themeToggle');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (prefersDark) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    toggle.textContent = 'Light \u2600\uFE0E';
+  }
+  toggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      toggle.textContent = 'Dark \u263E\uFE0E';
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      toggle.textContent = 'Light \u2600\uFE0E';
+    }
+  });
+})();
+
+// ===== Tab Navigation =====
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ===== Formulation State =====
+const formulation = {
+  materials: [],  // { cas, name, pct, data:{...from localStorage or DB...} }
+  addMaterial(cas, name, pct, data) {
+    if (this.materials.find(m => m.cas === cas)) return false;
+    this.materials.push({ cas, name, pct: pct || 10, data });
+    this.onChange();
+    return true;
+  },
+  removeMaterial(cas) {
+    this.materials = this.materials.filter(m => m.cas !== cas);
+    this.onChange();
+  },
+  updatePct(cas, pct) {
+    const m = this.materials.find(m => m.cas === cas);
+    if (m) m.pct = pct;
+    this.onChange();
+  },
+  totalPct() { return this.materials.reduce((s, m) => s + m.pct, 0); },
+  onChange() { renderMaterialList(); }
+};
+
+// ===== Render Material List =====
+function classifyNote(note) {
+  if (!note) return '';
+  const n = note.toLowerCase();
+  if (n.includes('top')) return 'top';
+  if (n.includes('middle') || n.includes('mid') || n.includes('heart')) return 'mid';
+  if (n.includes('base')) return 'base';
+  return '';
+}
+
+function renderMaterialList() {
+  const list = document.getElementById('matList');
+  const empty = document.getElementById('matEmpty');
+  const total = document.getElementById('matTotal');
+  const count = document.getElementById('matCount');
+
+  if (!formulation.materials.length) {
+    list.innerHTML = '';
+    list.appendChild(empty.cloneNode(true));
+    total.style.display = 'none';
+    count.textContent = '(0)';
+    return;
+  }
+
+  count.textContent = `(${formulation.materials.length})`;
+  let html = '';
+  for (const m of formulation.materials) {
+    const noteClass = classifyNote(m.data?.note);
+    const noteLabel = noteClass === 'top' ? 'T' : noteClass === 'mid' ? 'M' : noteClass === 'base' ? 'B' : '';
+    html += `<div class="mat-item" data-cas="${m.cas}">`;
+    if (noteLabel) html += `<span class="mat-note ${noteClass}">${noteLabel}</span>`;
+    html += `<span class="mat-name" title="${m.name}">${m.name}</span>`;
+    html += `<input type="number" class="mat-pct" value="${m.pct}" min="0" max="100" step="0.1" onchange="formulation.updatePct('${m.cas}',parseFloat(this.value)||0)">`;
+    html += `<span style="font-size:0.75em;color:var(--text2)">%</span>`;
+    html += `<button class="mat-del" onclick="formulation.removeMaterial('${m.cas}')" title="Remove">&times;</button>`;
+    html += `</div>`;
+  }
+  list.innerHTML = html;
+
+  // Total
+  const pct = Math.round(formulation.totalPct() * 10) / 10;
+  const pctEl = document.getElementById('matTotalPct');
+  pctEl.textContent = pct + '%';
+  pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
+  total.style.display = 'flex';
+}
+
+// ===== Add Material Modal =====
+const addModal = document.getElementById('addModal');
+const modalSearch = document.getElementById('modalSearch');
+const modalResults = document.getElementById('modalResults');
+
+document.getElementById('btnAddMat').addEventListener('click', () => {
+  addModal.classList.add('open');
+  modalSearch.value = '';
+  modalResults.innerHTML = '';
+  setTimeout(() => modalSearch.focus(), 50);
+});
+document.getElementById('modalClose').addEventListener('click', () => addModal.classList.remove('open'));
+addModal.addEventListener('click', e => { if (e.target === addModal) addModal.classList.remove('open'); });
+
+modalSearch.addEventListener('input', () => {
+  const q = modalSearch.value.trim().toLowerCase();
+  if (q.length < 2) { modalResults.innerHTML = ''; return; }
+  const matches = [];
+  for (const [cas, entry] of Object.entries(DB)) {
+    if (formulation.materials.find(m => m.cas === cas)) continue;
+    const haystack = (entry.name + ' ' + cas + ' ' + (entry.synonyms || []).join(' ')).toLowerCase();
+    if (haystack.includes(q)) matches.push(entry);
+    if (matches.length >= 20) break;
+  }
+  modalResults.innerHTML = matches.map(e =>
+    `<li onclick="addFromDB('${e.cas}')">
+      <span class="mr-name">${e.name}</span>
+      <span class="mr-meta">${e.cas}</span>
+    </li>`
+  ).join('');
+});
+
+function addFromDB(cas) {
+  const entry = DB[cas];
+  if (!entry) return;
+  formulation.addMaterial(cas, entry.name, 10, {
+    cas: entry.cas,
+    name: entry.name,
+    note: entry.note,
+    odor_type: entry.odor?.type || null,
+    odor_strength: entry.odor?.strength || null,
+    odor_description: entry.odor?.description || null,
+    tenacity: entry.performance?.tenacity || null,
+    tenacity_hours: entry.performance?.duration || null,
+    blends_with: entry.blends_with || [],
+    ifra_guideline: entry.safety?.ifra || null,
+    usage_levels: entry.safety?.usage || null,
+    primaryFamilies: [],
+    secondaryFamilies: [],
+    facets: [],
+    functions: [],
+    regulatory: [],
+  });
+  addModal.classList.remove('open');
+}
+
+// ===== Import from Analyzer (localStorage) =====
+document.getElementById('btnImport').addEventListener('click', importFromAnalyzer);
+
+function importFromAnalyzer() {
+  try {
+    const raw = localStorage.getItem('perfume_formulation_materials');
+    if (!raw) { alert('No materials found. Search materials in the Analyzer first, then click "Formulate →".'); return; }
+    const items = JSON.parse(raw);
+    if (!Array.isArray(items) || !items.length) { alert('No valid materials found in storage.'); return; }
+    let added = 0;
+    for (const item of items) {
+      if (!item.cas) continue;
+      if (formulation.addMaterial(item.cas, item.name, 10, item)) added++;
+    }
+    if (added) {
+      alert(`Imported ${added} material(s).`);
+    } else {
+      alert('All materials are already in the formulation.');
+    }
+  } catch (e) {
+    console.error('importFromAnalyzer:', e);
+    alert('Failed to import: ' + e.message);
+  }
+}
+
+// ===== Auto-import on page load if localStorage has data =====
+(function autoImport() {
+  try {
+    const raw = localStorage.getItem('perfume_formulation_materials');
+    const ts = localStorage.getItem('perfume_formulation_ts');
+    if (!raw || !ts) return;
+    // Only auto-import if timestamp is within last 30 seconds (just clicked Formulate)
+    if (Date.now() - parseInt(ts) > 30000) return;
+    const items = JSON.parse(raw);
+    if (!Array.isArray(items)) return;
+    for (const item of items) {
+      if (item.cas) formulation.addMaterial(item.cas, item.name, 10, item);
+    }
+    localStorage.removeItem('perfume_formulation_ts');
+  } catch (e) { console.error('autoImport:', e); }
+})();
+
+// ===== Placeholder: Export =====
+document.getElementById('btnExportJSON').addEventListener('click', () => {
+  alert('Export JSON — coming in Part 5a');
+});
+document.getElementById('btnExportPDF').addEventListener('click', () => {
+  alert('Export PDF — coming in Part 5a');
+});
+</script>
+</body>
+</html>
