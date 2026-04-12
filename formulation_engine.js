@@ -211,3 +211,240 @@ function getMaterialFamilies(matData) {
   }
   return [];
 }
+
+// ─────────────────────────────────────────────────────────────
+// SYSTEM 5: IFRA Safety & Compliance Engine
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Check IFRA compliance for a formulation.
+ * @param {Array} materials - [{cas, name, pct, data:{usage_levels, ifra_guideline, ...}}]
+ * @param {string} categoryId - IFRA category key (e.g. "4" for Fine Fragrance)
+ * @param {number} fragPct - Fragrance concentration in finished product (e.g. 15 for 15%)
+ * @returns {Array} [{cas, name, pctInConcentrate, pctInProduct, ifraMax, compliant, margin, status, banStatus}]
+ */
+function checkIFRACompliance(materials, categoryId, fragPct) {
+  const cat = IFRA_CATEGORIES[categoryId];
+  if (!cat) return [];
+
+  return materials.map(mat => {
+    const usage = mat.data?.usage_levels || null;
+    const ifraText = mat.data?.ifra_guideline || '';
+
+    // Parse IFRA 51 structured limits
+    const ifra51 = parseIFRA51(usage);
+    const usageRange = parseUsageRange(usage);
+
+    // Actual % in finished product
+    const pctInConcentrate = mat.pct || 0;
+    const pctInProduct = roundN(pctInConcentrate * (fragPct / 100), 4);
+
+    // Determine max allowed %
+    let ifraMax = null;
+    let ifraSource = null;
+
+    if (ifra51 && cat.key) {
+      // Try exact category key match
+      ifraMax = ifra51[cat.key] ?? null;
+      if (ifraMax !== null) ifraSource = 'IFRA 51 (' + cat.key + ')';
+    }
+
+    // Fallback: try matching partial key names
+    if (ifraMax === null && ifra51) {
+      for (const [k, v] of Object.entries(ifra51)) {
+        if (cat.name.toLowerCase().includes(k.toLowerCase()) ||
+            k.toLowerCase().includes(cat.name.split(/[\s\/]/)[0].toLowerCase())) {
+          ifraMax = v;
+          ifraSource = 'IFRA 51 (' + k + ')';
+          break;
+        }
+      }
+    }
+
+    // Detect ban status from IFRA guideline text
+    let banStatus = null;
+    if (ifraText) {
+      const ifraLower = ifraText.toLowerCase();
+      if (ifraLower.includes('banned') || ifraLower.includes('prohibition')) {
+        banStatus = 'banned';
+      } else if (ifraLower.includes('restricted') || ifraLower.includes('regulated')) {
+        banStatus = 'restricted';
+      }
+    }
+
+    // Compliance check
+    let compliant = true;
+    let status = 'ok';
+    let margin = null;
+
+    if (banStatus === 'banned') {
+      compliant = false;
+      status = 'banned';
+    } else if (ifraMax !== null) {
+      compliant = pctInProduct <= ifraMax;
+      margin = ifraMax > 0 ? roundN((ifraMax - pctInProduct) / ifraMax * 100, 1) : 0;
+      status = compliant ? (margin < 20 ? 'warn' : 'ok') : 'danger';
+    } else {
+      // No specific IFRA limit found — check usage range
+      if (usageRange.max !== null && pctInConcentrate > usageRange.max) {
+        status = 'warn';
+      }
+    }
+
+    return {
+      cas: mat.cas,
+      name: mat.name,
+      pctInConcentrate,
+      pctInProduct,
+      ifraMax,
+      ifraSource,
+      compliant,
+      margin,
+      status,
+      banStatus,
+      usageRange,
+    };
+  });
+}
+
+/**
+ * Aggregate allergen exposure across all materials in the formulation.
+ * Accounts for both pure allergen chemicals and allergens hidden inside
+ * natural ingredients (essential oils, absolutes, resins).
+ * @param {Array} materials - [{cas, name, pct, data:{...}}]
+ * @param {number} fragPct - Fragrance concentration in finished product (%)
+ * @param {string} categoryId - IFRA product category
+ * @returns {Object} { allergens: [{cas, name, inci, totalPpm, sources, exceedsThreshold}], threshold }
+ */
+function aggregateAllergens(materials, fragPct, categoryId) {
+  const cat = IFRA_CATEGORIES[categoryId];
+  const isRinseOff = cat ? cat.rinseOff : false;
+  const threshold = isRinseOff ? ALLERGEN_THRESHOLD_RINSEOFF : ALLERGEN_THRESHOLD_LEAVEON;
+
+  // Accumulate allergen ppm from all sources
+  const allergenMap = {}; // CAS → { name, inci, totalPpm, sources[] }
+
+  for (const mat of materials) {
+    const pctInProduct = (mat.pct / 100) * (fragPct / 100) * 100; // % in product
+    const ppmInProduct = pctInProduct * 10000; // convert % to ppm
+
+    // Case 1: Material itself IS an allergen
+    if (EU_ALLERGENS_26[mat.cas]) {
+      const a = EU_ALLERGENS_26[mat.cas];
+      if (!allergenMap[mat.cas]) {
+        allergenMap[mat.cas] = { name: a.name, inci: a.inci, totalPpm: 0, sources: [] };
+      }
+      allergenMap[mat.cas].totalPpm += ppmInProduct;
+      allergenMap[mat.cas].sources.push({ from: mat.name, ppm: roundN(ppmInProduct, 2), type: 'direct' });
+    }
+
+    // Case 2: Material is a natural containing allergens
+    const natComp = NATURAL_ALLERGEN_COMPOSITION[mat.cas];
+    if (natComp) {
+      for (const [allergenCAS, allergenPct] of Object.entries(natComp)) {
+        if (!EU_ALLERGENS_26[allergenCAS]) continue; // only track EU 26
+        const a = EU_ALLERGENS_26[allergenCAS];
+        const contribPpm = ppmInProduct * (allergenPct / 100);
+
+        if (!allergenMap[allergenCAS]) {
+          allergenMap[allergenCAS] = { name: a.name, inci: a.inci, totalPpm: 0, sources: [] };
+        }
+        allergenMap[allergenCAS].totalPpm += contribPpm;
+        allergenMap[allergenCAS].sources.push({
+          from: mat.name,
+          ppm: roundN(contribPpm, 2),
+          type: 'natural',
+          pctInNatural: allergenPct,
+        });
+      }
+    }
+  }
+
+  // Build sorted result
+  const allergens = Object.entries(allergenMap)
+    .map(([cas, info]) => ({
+      cas,
+      name: info.name,
+      inci: info.inci,
+      totalPpm: roundN(info.totalPpm, 2),
+      sources: info.sources,
+      exceedsThreshold: info.totalPpm > threshold,
+    }))
+    .sort((a, b) => b.totalPpm - a.totalPpm);
+
+  return { allergens, threshold, isRinseOff };
+}
+
+/**
+ * Generate INCI ingredient label for the formulation.
+ * Sorted by descending concentration (standard INCI ordering).
+ * Allergens exceeding declaration threshold are appended at the end.
+ * @param {Array} materials - [{cas, name, pct, data:{...}}]
+ * @param {Object} allergenResult - output of aggregateAllergens()
+ * @returns {string} INCI label text
+ */
+function generateINCILabel(materials, allergenResult) {
+  // Main ingredients sorted by descending %
+  const sorted = [...materials].sort((a, b) => b.pct - a.pct);
+  const inciParts = [];
+
+  for (const mat of sorted) {
+    const inci = INCI_NAMES[mat.cas];
+    if (inci) {
+      inciParts.push(inci);
+    } else {
+      // Fallback: use material name in uppercase
+      inciParts.push(mat.name.toUpperCase());
+    }
+  }
+
+  // Append declared allergens (exceeding threshold, not already listed)
+  if (allergenResult && allergenResult.allergens) {
+    const mainCASSet = new Set(materials.map(m => m.cas));
+    const declaredAllergens = allergenResult.allergens
+      .filter(a => a.exceedsThreshold && !mainCASSet.has(a.cas))
+      .map(a => a.inci);
+
+    if (declaredAllergens.length) {
+      inciParts.push(...declaredAllergens);
+    }
+  }
+
+  // Remove duplicates while preserving order
+  const seen = new Set();
+  const unique = inciParts.filter(p => {
+    if (seen.has(p)) return false;
+    seen.add(p);
+    return true;
+  });
+
+  return unique.join(', ');
+}
+
+/**
+ * Get overall safety summary for the formulation.
+ * @param {Array} complianceResults - output of checkIFRACompliance()
+ * @param {Object} allergenResult - output of aggregateAllergens()
+ * @returns {Object} { overallStatus, bannedCount, dangerCount, warnCount, okCount, declaredAllergenCount }
+ */
+function getSafetySummary(complianceResults, allergenResult) {
+  let bannedCount = 0, dangerCount = 0, warnCount = 0, okCount = 0;
+
+  for (const r of complianceResults) {
+    if (r.status === 'banned') bannedCount++;
+    else if (r.status === 'danger') dangerCount++;
+    else if (r.status === 'warn') warnCount++;
+    else okCount++;
+  }
+
+  const declaredAllergenCount = allergenResult
+    ? allergenResult.allergens.filter(a => a.exceedsThreshold).length
+    : 0;
+
+  let overallStatus = 'ok';
+  if (bannedCount > 0) overallStatus = 'banned';
+  else if (dangerCount > 0) overallStatus = 'danger';
+  else if (warnCount > 0) overallStatus = 'warn';
+
+  return { overallStatus, bannedCount, dangerCount, warnCount, okCount, declaredAllergenCount };
+}
