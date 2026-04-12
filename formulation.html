@@ -1092,13 +1092,88 @@ function renderSafetyTab() {
   el.innerHTML = html;
 }
 
-// ===== Placeholder: Export =====
-document.getElementById('btnExportJSON').addEventListener('click', () => {
-  alert('Export JSON — coming in Part 5a');
-});
-document.getElementById('btnExportPDF').addEventListener('click', () => {
-  alert('Export PDF — coming in Part 5a');
-});
+// ===== Export =====
+document.getElementById('btnExportJSON').addEventListener('click', exportJSON);
+document.getElementById('btnExportPDF').addEventListener('click', exportPDF);
+
+function exportJSON() {
+  const mats = formulation.materials;
+  if (!mats.length) { alert('Add materials first.'); return; }
+
+  const catId = document.getElementById('productCategory').value;
+  const fragPct = parseInt(document.getElementById('fragPct').value);
+  const tempC = parseInt(document.getElementById('tempSlider').value);
+
+  const payload = {
+    meta: {
+      title: 'Perfume Formulation',
+      exported: new Date().toISOString(),
+      productCategory: IFRA_CATEGORIES[catId]?.name || catId,
+      fragrancePct: fragPct,
+      temperatureC: tempC,
+      totalPct: formulation.totalPct(),
+    },
+    materials: mats.map(m => ({
+      cas: m.cas,
+      name: m.name,
+      pct: m.pct,
+      note: m.data?.note || null,
+      odorType: m.data?.odor_type || null,
+      odorStrength: m.data?.odor_strength || null,
+    })),
+    analysis: {},
+  };
+
+  // Run all analyses
+  try {
+    payload.analysis.safety = {
+      compliance: checkIFRACompliance(mats, catId, fragPct),
+      allergens: aggregateAllergens(mats, fragPct, catId),
+      inci: generateINCILabel(mats, aggregateAllergens(mats, fragPct, catId)),
+    };
+    const graph = getCompatGraph();
+    payload.analysis.compatibility = {
+      harmony: computeHarmonyScore(mats.map(m => m.cas), graph),
+      noteBalance: analyzeNoteBalance(mats),
+      suggestedAllocation: suggestAllocation(mats),
+    };
+    payload.analysis.thermodynamics = {
+      vpTable: buildVPTable(mats, tempC),
+      longevity: estimateLongevity(mats, tempC),
+    };
+    payload.analysis.odorProfile = {
+      ovTable: buildOdorValueTable(mats, tempC),
+      radarData: buildRadarData(mats, tempC),
+    };
+    payload.analysis.stability = {
+      groups: buildFunctionalGroupMatrix(mats),
+      warnings: detectReactivePairs(buildFunctionalGroupMatrix(mats)),
+    };
+    payload.analysis.mood = computeMoodProfile(mats, null);
+  } catch (e) { console.warn('Analysis export error:', e); }
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'formulation_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportPDF() {
+  if (!formulation.materials.length) { alert('Add materials first.'); return; }
+  // Show all tabs for printing
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('active'));
+  // Render all tabs
+  renderSafetyTab();
+  renderCompatTab();
+  renderThermoTab();
+  renderOdorTab();
+  renderStabilityTab();
+  renderMoodTab();
+  setTimeout(() => window.print(), 300);
+}
 </script>
 </body>
 </html>
