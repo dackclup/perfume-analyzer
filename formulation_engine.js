@@ -890,7 +890,10 @@ function simulateEvaporation(materials, tempC, timePointsH) {
     const density = mat.data?.density || 1.0;
 
     // Evaporation rate constant (normalized)
-    const k = evaporationRate(vp, mw, density) * 0.01; // scale factor
+    // Scale factor calibrated against real perfumery volatility:
+    // Limonene (top) fades in ~2h, Linalool (top/mid) in ~4-6h,
+    // Vanillin/Iso E Super (base) last >24h
+    const k = evaporationRate(vp, mw, density) * 12;
 
     // Initial headspace concentration proportional to initial VP contribution
     const C0 = mat.pct * vp;
@@ -1051,7 +1054,24 @@ function buildOdorValueTable(materials, tempC) {
     const odtResult = getODT(mat.cas, mat.data);
     const ov = calcOdorValue(headspaceConc, odtResult.ppb);
     const n = getStevensExponent(mat.data);
-    const psi = hillPerceivedIntensity(ov, n);
+    let psi = hillPerceivedIntensity(ov, n);
+
+    // Intensity floor for low-VP but high-potency materials:
+    // Materials like Indole (VP≈0.004mmHg) and Vanillin (VP≈0.00004mmHg)
+    // have very low headspace but are clearly perceived in a perfume.
+    // Their contribution on skin comes from direct contact and slow
+    // steady-state evaporation not captured by the simple VP model.
+    // Use odor strength × percentage as a floor estimate.
+    const strength = odorStrengthScale(mat.data?.odor_strength);
+    if (strength != null && strength > 0 && mat.pct > 0) {
+      // Floor formula: high-strength materials are perceptible even at low doses
+      // Uses sqrt(pct) so 0.5% Indole (strength 5) still gets meaningful PSI
+      // strength=5,pct=0.5 → 5/5 * sqrt(0.5) * 15 = 10.6
+      // strength=3,pct=8   → 3/5 * sqrt(8) * 15  = 25.5
+      // strength=1,pct=15  → 1/5 * sqrt(15) * 15 = 11.6
+      const floorPsi = (strength / 5) * Math.sqrt(Math.min(mat.pct, 30)) * 15;
+      if (floorPsi > psi) psi = roundN(floorPsi, 2);
+    }
 
     return {
       cas: mat.cas,

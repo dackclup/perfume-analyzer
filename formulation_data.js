@@ -874,15 +874,18 @@ const BLEND_TARGET_RESOLUTION = {
 const FUNCTIONAL_GROUP_PATTERNS = {
   aldehyde: {
     label: "Aldehyde (-CHO)",
-    // Matches C=O or O=C NOT followed by O (ester/acid) or preceded by c (aromatic ketone special)
     test(smiles) {
-      // Terminal aldehyde: =O at end or C=O not part of ester/acid/amide
-      if (/C=O$/.test(smiles) || /^O=C[^(O)]/.test(smiles)) return true;
-      if (/[^c]C\(=O\)[^O]/.test(smiles)) return true;
-      if (/C\(=O\)$/.test(smiles)) return true;
-      // Explicit CHO
-      if (/\[CH\]=O/.test(smiles)) return true;
-      return /C=O/.test(smiles) && !/C\(=O\)O/.test(smiles) && !/C\(=O\)N/.test(smiles);
+      // Aldehyde = terminal carbonyl on a carbon: C=O or O=C(H)
+      // Exclude: ester C(=O)O, amide C(=O)N, ketone C(=O)C
+      if (/C=O\)?$/.test(smiles)) return true;       // terminal C=O or C=O)
+      if (/^O=C[^(O)]/.test(smiles)) return true;    // starts with O=C
+      if (/\/C=O|\\C=O/.test(smiles)) return true;   // after stereo bond
+      if (/\(C=O\)/.test(smiles)) return true;        // branch aldehyde (e.g. Vanillin)
+      if (/\[CH\]=O/.test(smiles)) return true;       // explicit CHO
+      if (/C\(=O\)\)?$/.test(smiles)) return true;    // terminal C(=O)
+      // C(=O) NOT followed by O(ester) or N(amide) or C/c(ketone)
+      if (/C\(=O\)[^ONCc)]/.test(smiles)) return true;
+      return false;
     },
   },
   ketone: {
@@ -938,8 +941,10 @@ const FUNCTIONAL_GROUP_PATTERNS = {
   alkene: {
     label: "Alkene (C=C)",
     test(smiles) {
-      // C=C not in aromatic ring context
-      return /[^c]C=C|^C=C/.test(smiles);
+      // Strip Kekulé aromatic rings (C1=CC=CC=C1) to avoid false positives
+      let s = smiles.replace(/C\d=CC=CC=C\d/g, '');
+      s = s.replace(/C=C\d/g, '').replace(/\dC=C/g, '');
+      return /C=C|C\(=C[C)]/.test(s);
     },
   },
   epoxide: {
