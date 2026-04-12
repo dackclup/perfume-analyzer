@@ -149,7 +149,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
 .chart-wrap.wide { max-width:100%; }
 
 /* ===== Export Bar ===== */
-.export-bar { position:fixed; bottom:0; left:0; right:0; z-index:100; background:var(--bg); border-top:1px solid var(--border); padding:10px 16px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.export-bar { position:fixed; bottom:0; left:0; right:0; z-index:100; background:var(--bg); border-top:1px solid var(--border); padding:10px 16px; display:flex; justify-content:flex-start; align-items:center; gap:8px; }
 .export-bar a { color:var(--text); text-decoration:underline; font-size:0.85em; cursor:pointer; }
 .export-bar a:hover { opacity:0.6; }
 .export-bar .export-right { display:flex; gap:12px; align-items:center; }
@@ -338,7 +338,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
 
 <!-- ===== Export Bar ===== -->
 <div class="export-bar">
-  <span style="font-size:0.82em; color:var(--text2)">Perfume Formulation Lab</span>
   <div class="export-right">
     <a id="btnExportJSON">Save JSON</a>
     <a id="btnExportPDF">Export PDF</a>
