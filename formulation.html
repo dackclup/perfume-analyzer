@@ -59,10 +59,10 @@ hr { border:none; border-top:1px solid var(--border); margin:12px 0; }
 /* ===== Layout: Sidebar + Main ===== */
 .layout { display:grid; grid-template-columns:320px 1fr; min-height:calc(100vh - 52px - 48px); }
 @media (max-width:860px) {
-  .layout { grid-template-columns:1fr; }
+  .layout { grid-template-columns:1fr; min-height:auto; }
   .header { padding:12px 20px; }
-  .sidebar { border-right:none; border-bottom:1px solid var(--border); max-height:none; padding:16px 20px; }
-  .main { max-height:none; }
+  .sidebar { border-right:none; border-bottom:1px solid var(--border); max-height:none; overflow-y:visible; padding:16px 20px; }
+  .main { max-height:none; overflow-y:visible; }
   .tab-panel { padding:14px 20px; }
   .analysis-card { padding:12px; }
   .analysis-card h4 { font-size:0.85em; word-break:break-word; }
