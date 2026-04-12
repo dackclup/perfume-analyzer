@@ -675,3 +675,348 @@ const STEVENS_EXPONENTS = {
 // PSI = PSI_max * OV^n / (K_half^n + OV^n)
 const HILL_K_HALF  = 50;    // OV at which perceived intensity = 50% max
 const HILL_PSI_MAX = 100;   // max perceived intensity on 0-100 scale
+
+// ─────────────────────────────────────────────────────────────
+// Aromachology Mood Scores (0–5 per dimension)
+// 8 dimensions: [relaxing, energizing, focusing, uplifting,
+//                sensual, calming, grounding, refreshing]
+// Sources: Hongratanaworakit 2004, Moss & Oliver 2012,
+// Herz 2009, Tisserand & Young 2014, Haze et al. 2002
+// ─────────────────────────────────────────────────────────────
+const MOOD_DIMENSIONS = ['relaxing','energizing','focusing','uplifting','sensual','calming','grounding','refreshing'];
+
+const AROMACHOLOGY_SCORES = {
+  // --- Floral ---
+  "78-70-6":    [4, 1, 2, 3, 2, 4, 1, 3],  // Linalool — anxiolytic, sedative (Linck 2010)
+  "106-22-9":   [3, 1, 1, 2, 3, 3, 2, 2],  // Citronellol — calming floral
+  "106-24-1":   [3, 1, 1, 3, 3, 3, 1, 2],  // Geraniol — rose-like, mood-lifting
+  "60-12-8":    [4, 0, 1, 2, 4, 4, 2, 1],  // PEA — rose, deeply calming
+  "115-95-7":   [4, 0, 2, 2, 2, 4, 1, 2],  // Linalyl Acetate — lavender sedative
+  "24851-98-7": [2, 1, 1, 3, 3, 2, 1, 3],  // Hedione — jasmine radiance
+  "16409-43-1": [2, 2, 1, 3, 3, 2, 1, 2],  // Rose Oxide — rosy fresh
+  "107-75-5":   [3, 0, 1, 2, 3, 3, 2, 1],  // Hydroxycitronellal — lily calm
+  "67634-15-5": [1, 2, 2, 3, 2, 1, 0, 4],  // Floralozone — fresh ozone-floral
+  "1205-17-0":  [2, 1, 1, 3, 3, 2, 1, 3],  // Helional — clean fresh floral
+
+  // --- Citrus ---
+  "5989-27-5":  [1, 4, 3, 4, 0, 1, 0, 5],  // Limonene — energizing (Komiya 2006)
+  "5392-40-5":  [1, 4, 3, 4, 0, 1, 0, 4],  // Citral — lemony alert
+  "18479-58-8": [1, 3, 2, 4, 0, 1, 0, 5],  // Dihydromyrcenol — citrus fresh
+  "8008-56-8":  [1, 4, 3, 4, 0, 1, 0, 5],  // Lemon Oil
+  "8008-57-9":  [2, 3, 2, 4, 0, 2, 0, 4],  // Sweet Orange Oil
+  "8007-75-8":  [2, 3, 3, 4, 1, 2, 0, 4],  // Bergamot — balanced uplift+calm
+  "8016-20-4":  [1, 3, 2, 4, 0, 1, 0, 5],  // Grapefruit Oil
+  "8008-26-2":  [1, 4, 3, 4, 0, 1, 0, 4],  // Lime Oil
+
+  // --- Green / Herbal ---
+  "928-96-1":   [1, 2, 3, 3, 0, 2, 1, 4],  // Cis-3-Hexenol — green leaf
+  "80-56-8":    [1, 3, 4, 3, 0, 1, 1, 4],  // alpha-Pinene — forest air (Li 2016)
+  "127-91-3":   [1, 3, 4, 3, 0, 1, 1, 3],  // beta-Pinene — forest
+  "470-82-6":   [1, 3, 5, 3, 0, 1, 0, 4],  // Eucalyptol — mental clarity (Moss 2003)
+  "89-78-1":    [1, 3, 4, 2, 0, 1, 0, 5],  // Menthol — cooling alert
+  "76-22-2":    [1, 3, 4, 2, 0, 1, 0, 3],  // Camphor — stimulating
+  "8000-48-4":  [1, 3, 5, 3, 0, 1, 0, 4],  // Eucalyptus Oil — clarity
+  "8006-90-4":  [1, 4, 4, 3, 0, 1, 0, 5],  // Peppermint Oil — energizing focus
+  "8000-25-7":  [1, 3, 5, 3, 0, 1, 1, 3],  // Rosemary Oil — memory (Moss & Oliver 2012)
+  "68647-73-4": [1, 3, 3, 2, 0, 2, 1, 3],  // Tea Tree Oil — clean medicinal
+
+  // --- Spicy ---
+  "97-53-0":    [2, 2, 2, 2, 3, 2, 3, 1],  // Eugenol — warm comfort
+  "89-83-8":    [1, 3, 3, 2, 1, 1, 2, 2],  // Thymol — herbal spice
+  "104-55-2":   [1, 3, 2, 3, 3, 1, 2, 1],  // Cinnamaldehyde — warm stimulant
+  "104-54-1":   [2, 2, 1, 2, 3, 2, 2, 1],  // Cinnamic Alcohol — balsamic warm
+  "97-54-1":    [2, 1, 1, 2, 3, 2, 3, 1],  // Isoeugenol — spicy warm
+  "104-46-1":   [3, 1, 1, 2, 2, 3, 2, 1],  // Anethole — anise comfort
+  "8000-34-8":  [2, 2, 2, 2, 3, 2, 3, 1],  // Clove Oil
+  "8015-91-6":  [1, 3, 2, 3, 3, 1, 2, 1],  // Cinnamon Oil
+  "8000-66-6":  [2, 2, 2, 3, 2, 2, 2, 2],  // Cardamom Oil
+
+  // --- Sweet / Balsamic / Gourmand ---
+  "121-33-5":   [4, 0, 1, 2, 3, 4, 3, 0],  // Vanillin — comforting (Tubaldi 2022)
+  "121-32-4":   [4, 0, 1, 2, 3, 4, 3, 0],  // Ethyl Vanillin
+  "91-64-5":    [3, 1, 1, 2, 3, 3, 4, 0],  // Coumarin — warm hay comfort
+  "4940-11-8":  [3, 0, 0, 2, 2, 3, 3, 0],  // Ethyl Maltol — sweet comfort
+  "100-52-7":   [1, 2, 2, 3, 1, 1, 1, 2],  // Benzaldehyde — almond bright
+  "119-36-8":   [1, 2, 3, 2, 0, 2, 1, 3],  // Methyl Salicylate — wintergreen
+
+  // --- Woody ---
+  "54464-57-2": [3, 0, 2, 1, 3, 3, 5, 0],  // Iso E Super — velvety enveloping
+  "77-53-2":    [3, 0, 2, 1, 2, 3, 5, 0],  // Cedrol — sedative (Kagawa 2003)
+  "98-55-5":    [2, 1, 2, 1, 1, 2, 3, 2],  // Alpha Terpineol — pine-like
+  "6790-58-5":  [2, 0, 1, 1, 4, 2, 5, 0],  // Ambroxan — warm amber
+  "65113-99-7": [2, 0, 2, 1, 3, 2, 4, 0],  // Sandalore — creamy sandalwood
+  "8014-09-3":  [3, 0, 2, 1, 3, 3, 5, 0],  // Patchouli Oil — grounding (Haze 2002)
+  "8016-96-4":  [3, 0, 2, 0, 3, 3, 5, 0],  // Vetiver Oil — deep earthy calm
+  "8006-87-9":  [4, 0, 2, 1, 4, 4, 4, 0],  // Sandalwood Oil — meditative (Heuberger 2006)
+  "8000-27-9":  [3, 0, 2, 1, 1, 3, 5, 0],  // Cedarwood Oil
+  "8016-36-2":  [3, 0, 3, 1, 2, 3, 4, 0],  // Frankincense — contemplative
+
+  // --- Musk ---
+  "1222-05-5":  [3, 0, 0, 1, 4, 3, 3, 0],  // Galaxolide — clean musk
+  "33704-61-9": [3, 0, 1, 1, 4, 3, 3, 0],  // Cashmeran — warm musk-woody
+  "541-91-3":   [3, 0, 0, 1, 5, 3, 3, 0],  // Muscone — animalic musk
+  "81-14-1":    [3, 0, 0, 1, 4, 3, 3, 0],  // Musk Ketone — powdery musk
+  "105-95-3":   [3, 0, 0, 1, 4, 3, 3, 0],  // Ethylene Brassylate — clean musk
+
+  // --- Animalic / Indolic ---
+  "120-72-9":   [2, 0, 0, 1, 5, 1, 3, 0],  // Indole — animalic floral
+
+  // --- Aquatic / Marine ---
+  "28940-11-6": [1, 2, 2, 3, 1, 1, 0, 4],  // Calone — marine fresh
+
+  // --- Fixatives / Functional (near-neutral mood) ---
+  "120-51-4":   [1, 0, 0, 0, 1, 1, 2, 0],  // Benzyl Benzoate — fixative
+  "118-58-1":   [2, 0, 0, 1, 2, 2, 2, 0],  // Benzyl Salicylate — soft balsamic
+  "100-51-6":   [1, 0, 1, 0, 0, 1, 1, 0],  // Benzyl Alcohol — mild
+  "4602-84-0":  [2, 0, 1, 1, 2, 2, 2, 1],  // Farnesol — soft floral
+
+  // --- Natural Oils (not above) ---
+  "8000-28-0":  [5, 0, 2, 2, 2, 5, 2, 2],  // Lavender Oil — top anxiolytic (Kasper 2010)
+  "8006-81-3":  [3, 1, 0, 3, 5, 2, 2, 1],  // Ylang Ylang Oil — euphoric (Hongratanaworakit 2004)
+  "8022-96-6":  [2, 1, 1, 3, 5, 2, 1, 1],  // Jasmine Oil — euphoric confident
+  "8016-38-4":  [3, 1, 1, 3, 3, 3, 1, 2],  // Neroli Oil — calming anti-anxiety
+  "8000-46-2":  [3, 1, 1, 3, 2, 3, 2, 2],  // Geranium Oil — balancing
+  "8015-92-7":  [4, 0, 1, 1, 1, 5, 2, 1],  // Chamomile Oil — deeply calming
+  "8016-37-3":  [3, 0, 2, 1, 2, 3, 4, 0],  // Myrrh Oil — meditative
+};
+
+// ─────────────────────────────────────────────────────────────
+// Family-Level Mood Defaults
+// Fallback when a material has no individual AROMACHOLOGY_SCORES
+// entry. Indexed by PRIMARY_FAMILIES tokens (23 families).
+// [relaxing, energizing, focusing, uplifting, sensual, calming, grounding, refreshing]
+// ─────────────────────────────────────────────────────────────
+const FAMILY_MOOD_DEFAULTS = {
+  citrus:        [1, 4, 3, 4, 0, 1, 0, 5],
+  green:         [1, 2, 3, 3, 0, 2, 1, 4],
+  herbal:        [1, 3, 4, 2, 0, 2, 2, 3],
+  aldehydic:     [1, 2, 2, 3, 1, 1, 0, 3],
+  aquatic:       [1, 2, 2, 3, 1, 1, 0, 4],
+  ozonic:        [1, 2, 2, 3, 0, 1, 0, 4],
+  fresh:         [1, 3, 3, 3, 0, 1, 0, 5],
+  camphoraceous: [1, 3, 4, 2, 0, 1, 1, 3],
+  floral:        [3, 1, 1, 3, 3, 3, 1, 2],
+  fruity:        [2, 2, 1, 4, 1, 2, 0, 3],
+  sweet:         [3, 0, 1, 2, 3, 3, 3, 0],
+  gourmand:      [3, 0, 1, 2, 2, 3, 3, 0],
+  lactonic:      [2, 1, 1, 3, 2, 2, 1, 1],
+  spicy:         [2, 2, 2, 2, 3, 1, 3, 1],
+  powdery:       [3, 0, 1, 1, 3, 3, 3, 0],
+  woody:         [3, 0, 2, 1, 2, 3, 5, 0],
+  balsamic:      [3, 0, 1, 1, 3, 3, 4, 0],
+  resinous:      [3, 0, 2, 1, 2, 3, 4, 0],
+  amber:         [3, 0, 1, 1, 4, 3, 5, 0],
+  animalic:      [2, 0, 0, 1, 5, 1, 3, 0],
+  leather:       [2, 0, 1, 0, 4, 1, 4, 0],
+  musk:          [3, 0, 0, 1, 4, 3, 3, 0],
+  smoky:         [2, 0, 1, 0, 2, 1, 4, 0],
+};
+
+// ─────────────────────────────────────────────────────────────
+// Functional Group Patterns for SMILES Detection (System 4)
+// Each pattern has a regex for SMILES string matching.
+// These are APPROXIMATE — SMILES regex cannot fully replace a
+// proper molecular graph parser. Results labelled "approximate".
+// ─────────────────────────────────────────────────────────────
+const FUNCTIONAL_GROUP_PATTERNS = {
+  aldehyde: {
+    label: "Aldehyde (-CHO)",
+    // Matches C=O not preceded by O (ester/acid) and not followed by O (acid)
+    regex: /(?<![O])C=O(?![O])|O=C(?![O(])/,
+  },
+  primary_amine: {
+    label: "Primary Amine (-NH2)",
+    regex: /N(?![+=o])(?:\([^)]*\))?(?=[^=]|$)|n[hH]/,
+  },
+  alcohol: {
+    label: "Hydroxyl (-OH)",
+    // Matches O bonded to carbon, not in C=O, ester, or aromatic ring
+    regex: /(?<![c=])O(?![C=c)])(?=[^=]|$)|O\)/,
+  },
+  carboxylic: {
+    label: "Carboxylic Acid (-COOH)",
+    regex: /C\(=O\)O(?=[^Cc]|$)|OC\(=O\)O/,
+  },
+  ester: {
+    label: "Ester (-COOR)",
+    regex: /C\(=O\)O[Cc]|OC\(=O\)[Cc]/,
+  },
+  phenol: {
+    label: "Phenol (Ar-OH)",
+    regex: /c[0-9]?O(?!C)|cO[Hh]?(?=[^(]|$)/,
+  },
+  ketone: {
+    label: "Ketone (C=O)",
+    regex: /[Cc]C?\(=O\)[Cc]|CC\(=O\)(?=[Cc])/,
+  },
+  thiol: {
+    label: "Thiol (-SH)",
+    regex: /[^=]S(?![+=O(])|(?:^|\()S(?=[^=])/,
+  },
+  alkene: {
+    label: "Alkene (C=C)",
+    regex: /C=C(?!=[^C])|C\\?=C/,
+  },
+  nitro: {
+    label: "Nitro (-NO2)",
+    regex: /\[N\+\]\(\[O-\]\)=O|\[N\+\].*\[O-\]/,
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// Reactive Pair Rules (System 4 — Chemical Dynamics)
+// Pairs of functional groups that may react during maturation.
+// severity: "high" = significant change, "medium" = noticeable,
+// "low" = minor / very slow at room temperature
+// ─────────────────────────────────────────────────────────────
+const REACTIVE_PAIRS = [
+  {
+    group_a: "aldehyde", group_b: "primary_amine",
+    reaction: "Schiff Base Formation",
+    effect: "Color darkening (yellow to brown); gradual loss of both aldehyde top-note brightness and amine character",
+    severity: "high",
+    timeframe: "Days to weeks",
+    mitigation: "Use Dimethyl Anthranilate instead of Methyl Anthranilate; add BHT antioxidant; avoid direct mixing"
+  },
+  {
+    group_a: "aldehyde", group_b: "alcohol",
+    reaction: "Hemiacetal / Acetal Formation",
+    effect: "Subtle softening of aldehyde note; generally reversible equilibrium at room temperature",
+    severity: "low",
+    timeframe: "Weeks to months",
+    mitigation: "Usually acceptable in finished products; monitor for note drift"
+  },
+  {
+    group_a: "aldehyde", group_b: "phenol",
+    reaction: "Phenol-Aldehyde Condensation",
+    effect: "Brownish discoloration; possible off-notes from polymeric byproducts",
+    severity: "medium",
+    timeframe: "Weeks to months",
+    mitigation: "Add antioxidant (BHT/BHA); separate in formulation timing"
+  },
+  {
+    group_a: "aldehyde", group_b: "thiol",
+    reaction: "Thioacetal Formation",
+    effect: "Loss of both thiol and aldehyde character; sulfurous off-notes possible",
+    severity: "high",
+    timeframe: "Hours to days",
+    mitigation: "Avoid combining; use hemithioacetal-stable alternatives"
+  },
+  {
+    group_a: "thiol", group_b: "alkene",
+    reaction: "Thiol-ene Reaction",
+    effect: "Loss of thiol sulfury notes; new thioether character",
+    severity: "medium",
+    timeframe: "Days to weeks",
+    mitigation: "Avoid combination or add radical inhibitor"
+  },
+  {
+    group_a: "carboxylic", group_b: "alcohol",
+    reaction: "Fischer Esterification",
+    effect: "Very slow at room temperature without catalyst; may produce fruity ester over months",
+    severity: "low",
+    timeframe: "Months to years (negligible at RT)",
+    mitigation: "Acceptable; monitor pH over time"
+  },
+  {
+    group_a: "ester", group_b: "alcohol",
+    reaction: "Transesterification",
+    effect: "Slow exchange of ester groups; subtle note shifts possible over long storage",
+    severity: "low",
+    timeframe: "Months",
+    mitigation: "Acceptable; avoid strong acid/base conditions"
+  },
+  {
+    group_a: "ketone", group_b: "primary_amine",
+    reaction: "Imine (Ketimine) Formation",
+    effect: "Similar to Schiff base but slower; color change possible",
+    severity: "medium",
+    timeframe: "Weeks to months",
+    mitigation: "Reduce concentration of one component; add stabilizer"
+  },
+  {
+    group_a: "phenol", group_b: "alkene",
+    reaction: "Oxidative Coupling",
+    effect: "Discoloration under light/air exposure; phenol polymerization",
+    severity: "medium",
+    timeframe: "Weeks (accelerated by light/heat)",
+    mitigation: "Store in dark; add UV stabilizer or antioxidant"
+  },
+  {
+    group_a: "aldehyde", group_b: "aldehyde",
+    reaction: "Aldol Condensation",
+    effect: "Self-condensation forming larger molecules; yellowing; viscosity increase",
+    severity: "medium",
+    timeframe: "Weeks to months",
+    mitigation: "Avoid high concentrations of mixed aldehydes; add antioxidant"
+  },
+  {
+    group_a: "nitro", group_b: "primary_amine",
+    reaction: "Nitro Reduction / Coupling",
+    effect: "Potential color instability; nitro musks are photosensitive",
+    severity: "medium",
+    timeframe: "Weeks (light-dependent)",
+    mitigation: "Store in dark; consider non-nitro musk alternatives"
+  },
+  {
+    group_a: "phenol", group_b: "aldehyde",
+    reaction: "Mannich-type Reaction",
+    effect: "Brown discoloration; possible precipitate formation in concentrated bases",
+    severity: "medium",
+    timeframe: "Weeks to months",
+    mitigation: "Dilute in solvent first; add chelating agent"
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// Blend Target Resolution Table
+// Maps shorthand names found in blends_with arrays to CAS
+// numbers. Covers common shorthand names that don't exactly
+// match any entry in DB by canonical name or synonym.
+// ─────────────────────────────────────────────────────────────
+const BLEND_TARGET_RESOLUTION = {
+  // Family / Group shorthands → representative material CAS
+  "amber":         "6790-58-5",   // Ambroxan as representative amber
+  "ambergris":     "6790-58-5",   // Ambroxan
+  "aldehydes":     null,           // Group — no single CAS; match any aldehydic material
+  "woods":         null,           // Group
+  "florals":       null,           // Group
+  "musks":         null,           // Group
+  "citrus oils":   null,           // Group
+
+  // Common shorthand → exact CAS
+  "lavender":      "8000-28-0",   // Lavender Oil
+  "rose":          "8007-01-0",   // Rose Oil
+  "jasmine":       "8022-96-6",   // Jasmine Oil
+  "ylang":         "8006-81-3",   // Ylang Ylang Oil
+  "ylang ylang":   "8006-81-3",
+  "bergamot":      "8007-75-8",   // Bergamot Oil
+  "patchouli":     "8014-09-3",   // Patchouli Oil
+  "vetiver":       "8016-96-4",   // Vetiver Oil
+  "sandalwood":    "8006-87-9",   // Sandalwood Oil
+  "cedarwood":     "8000-27-9",   // Cedarwood Oil
+  "cedar":         "8000-27-9",
+  "neroli":        "8016-38-4",   // Neroli Oil
+  "frankincense":  "8016-36-2",   // Frankincense Oil
+  "myrrh":         "8016-37-3",   // Myrrh Oil
+  "clove":         "8000-34-8",   // Clove Oil
+  "cinnamon":      "8015-91-6",   // Cinnamon Oil
+  "rosemary":      "8000-25-7",   // Rosemary Oil
+  "peppermint":    "8006-90-4",   // Peppermint Oil
+  "eucalyptus":    "8000-48-4",   // Eucalyptus Oil
+  "geranium":      "8000-46-2",   // Geranium Oil
+  "lemon":         "8008-56-8",   // Lemon Oil
+  "orange":        "8008-57-9",   // Sweet Orange Oil
+  "grapefruit":    "8016-20-4",   // Grapefruit Oil
+  "lime":          "8008-26-2",   // Lime Oil
+  "chamomile":     "8015-92-7",   // Chamomile Oil
+  "tea tree":      "68647-73-4",  // Tea Tree Oil
+  "oakmoss":       "9000-50-4",   // Oakmoss Absolute
+  "labdanum":      "8016-26-0",   // Labdanum Resin
+  "benzoin":       "9000-72-0",   // Benzoin Resin
+  "peru balsam":   "8007-00-9",   // Peru Balsam
+  "tolu balsam":   "9000-64-0",   // Tolu Balsam
+  "rosewood":      "78-70-6",     // Linalool (primary component)
+  "tonka":         "91-64-5",     // Coumarin (primary odorant of tonka bean)
+  "musk":          "541-91-3",    // Muscone as default musk
+};
