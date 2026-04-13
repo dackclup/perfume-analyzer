@@ -283,7 +283,7 @@ function checkIFRACompliance(materials, categoryId, fragPct) {
     } else if (ifraMax !== null) {
       compliant = pctInProduct <= ifraMax;
       margin = ifraMax > 0 ? roundN((ifraMax - pctInProduct) / ifraMax * 100, 1) : 0;
-      status = compliant ? (margin < 20 ? 'warn' : 'ok') : 'danger';
+      status = compliant ? 'ok' : 'danger';
     } else {
       // No specific IFRA limit found — check usage range against % in product
       if (usageRange.max !== null && pctInProduct > usageRange.max) {
