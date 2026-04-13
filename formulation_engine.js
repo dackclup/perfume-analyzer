@@ -747,20 +747,32 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
       pcts[i] = pcts[i] + lr * grad[i];
     }
 
-    // Project: clamp unlocked, re-normalize unlocked to fill remaining budget
+    // Project: clamp unlocked, re-normalize only non-IFRA-capped materials
     const lockedSum = materials.reduce((s, m, i) => s + (locked.has(m.cas) ? pcts[i] : 0), 0);
     const targetUnlocked = Math.max(100 - lockedSum, 0);
+    const ifraCapped = new Set();
     for (let i = 0; i < n; i++) {
       if (locked.has(materials[i].cas)) continue;
+      const before = pcts[i];
       pcts[i] = clamp(pcts[i], Math.min(0.01, ifraMaxes[i]), ifraMaxes[i]);
+      if (pcts[i] < before) ifraCapped.add(i);
     }
-    const unlockedSum = pcts.reduce((s, v, i) => s + (locked.has(materials[i].cas) ? 0 : v), 0);
-    if (unlockedSum > 0 && targetUnlocked > 0) {
+    // Exclude IFRA-capped materials from re-normalization so they stay within limits
+    const cappedSum = [...ifraCapped].reduce((s, i) => s + pcts[i], 0);
+    const remainTarget = targetUnlocked - cappedSum;
+    const remainSum = pcts.reduce((s, v, i) => s + (!locked.has(materials[i].cas) && !ifraCapped.has(i) ? v : 0), 0);
+    if (remainSum > 0 && remainTarget > 0) {
       for (let i = 0; i < n; i++) {
-        if (locked.has(materials[i].cas)) continue;
-        pcts[i] = pcts[i] / unlockedSum * targetUnlocked;
+        if (locked.has(materials[i].cas) || ifraCapped.has(i)) continue;
+        pcts[i] = pcts[i] / remainSum * remainTarget;
       }
     }
+  }
+
+  // Final IFRA clamp after optimization loop
+  for (let i = 0; i < n; i++) {
+    if (locked.has(materials[i].cas)) continue;
+    pcts[i] = Math.min(pcts[i], ifraMaxes[i]);
   }
 
   // Round and fix sum to exactly 100%
