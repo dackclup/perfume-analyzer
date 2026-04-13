@@ -877,15 +877,16 @@ function classifyNote(note) {
   return '';
 }
 
+// Cache empty state HTML before first render overwrites it
+const _emptyStateHTML = document.getElementById('matEmpty') ? document.getElementById('matEmpty').outerHTML : '<div class="empty-state"><p>No materials yet</p></div>';
+
 function renderMaterialList() {
   const list = document.getElementById('matList');
-  const empty = document.getElementById('matEmpty');
   const total = document.getElementById('matTotal');
   const count = document.getElementById('matCount');
 
   if (!formulation.materials.length) {
-    list.innerHTML = '';
-    list.appendChild(empty.cloneNode(true));
+    list.innerHTML = _emptyStateHTML;
     total.style.display = 'none';
     count.textContent = '(0)';
     const pctEl = document.getElementById('matTotalPct');
