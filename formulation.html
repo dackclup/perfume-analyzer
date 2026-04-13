@@ -864,7 +864,7 @@ const formulation = {
       pct = parseFloat(pct);
       if (isNaN(pct) || pct < 0) pct = 0;
       if (pct > 100) pct = 100;
-      m.pct = Math.round(pct * 10) / 10;
+      m.pct = Math.round(pct * 100) / 100;
     }
     if (this._batching) return;
     this._onPctChange(cas);
@@ -932,7 +932,7 @@ const formulation = {
   _updateTotalDisplay() {
     if (!this.materials.length) return;
     const rawPct = this.totalPct();
-    const pct = isNaN(rawPct) ? 0 : Math.round(rawPct * 10) / 10;
+    const pct = isNaN(rawPct) ? 0 : Math.round(rawPct * 100) / 100;
     const pctEl = document.getElementById('matTotalPct');
     const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
     const batchUnit = document.getElementById('batchUnit').value;
@@ -1028,7 +1028,7 @@ function renderMaterialList() {
     html += `<span class="mat-name" title="${safeName}">${safeName}</span>`;
     html += warnHtml;
     html += `<span class="mat-grams">${amtStr}${unit}</span>`;
-    html += `<input type="number" class="mat-pct" value="${m.pct}" min="0" max="100" step="0.1"
+    html += `<input type="number" class="mat-pct" value="${m.pct}" min="0" max="100" step="0.01"
       onchange="formulation.updatePct('${safeCas}',this.value)"
       onblur="if(this.value==='')this.value=0;formulation.updatePct('${safeCas}',this.value)">`;
     html += `<span style="font-size:0.75em;color:var(--text2)">%</span>`;
