@@ -1173,7 +1173,7 @@ modalSearch.addEventListener('input', () => {
   if (q.length < 2) { modalResults.innerHTML = ''; return; }
   const matches = [];
   for (const [cas, entry] of Object.entries(DB)) {
-    if (!entry.note) continue; // hide non-fragrance materials (solvents, carriers, etc.)
+    if (!entry.note || !/top|middle|mid|base/i.test(entry.note)) continue; // hide non-fragrance materials
     if (formulation.materials.find(m => m.cas === cas)) continue;
     const haystack = (entry.name + ' ' + cas + ' ' + (entry.synonyms || []).join(' ')).toLowerCase();
     if (haystack.includes(q)) matches.push(entry);
@@ -1190,7 +1190,7 @@ modalSearch.addEventListener('input', () => {
 function addFromDB(cas) {
   const entry = DB[cas];
   if (!entry) return;
-  if (!entry.note) { alert('Cannot add: this material has no note classification (Top/Middle/Base).'); return; }
+  if (!entry.note || !/top|middle|mid|base/i.test(entry.note)) return;
   // A1: Merge MATERIAL_PROPERTIES enrichment data
   const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[cas] || {} : {};
   formulation.addMaterial(cas, entry.name, 10, {
