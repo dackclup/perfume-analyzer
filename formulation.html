@@ -1869,8 +1869,21 @@ function updatePresetHighlight() {
 }
 
 // ===== Batch & Carrier change triggers =====
-document.getElementById('batchSize').addEventListener('input', () => renderMaterialList());
-document.getElementById('batchUnit').addEventListener('change', () => renderMaterialList());
+document.getElementById('batchSize').addEventListener('input', () => {
+  const el = document.getElementById('batchSize');
+  if (parseFloat(el.value) < 1 && el.value !== '') el.value = 1;
+  renderMaterialList();
+});
+document.getElementById('batchUnit').addEventListener('change', () => {
+  // Convert batch size between g and ml (avg fragrance density ~0.9)
+  const el = document.getElementById('batchSize');
+  const val = parseFloat(el.value) || 100;
+  const unit = document.getElementById('batchUnit').value;
+  const density = 0.9; // average fragrance density
+  if (unit === 'ml') el.value = Math.round(val / density);
+  else el.value = Math.round(val * density);
+  renderMaterialList();
+});
 document.getElementById('carrierSelect').addEventListener('change', () => renderActiveTab());
 
 // ===== Save/Load Formulations =====
