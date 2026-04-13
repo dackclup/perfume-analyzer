@@ -1095,7 +1095,7 @@ function renderCompatTab() {
   const harmony = computeHarmonyScore(selected, graph);
   const balance = analyzeNoteBalance(mats);
   const suggestions = findCompatibleMaterials(selected, graph, DB, 10);
-  const allocation = suggestAllocation(mats);
+  const allocation = suggestAllocation(mats, parseInt(document.getElementById('fragPct').value) || 18);
   const optimized = optimizeAllocation(mats, graph, catId, fragPct, 50, lockedMaterials);
 
   let html = '';
@@ -1190,7 +1190,7 @@ function applyAllocation(type) {
 
   let alloc;
   if (type === 'suggested') {
-    alloc = suggestAllocation(mats);
+    alloc = suggestAllocation(mats, parseInt(document.getElementById('fragPct').value) || 18);
     alloc.forEach(a => formulation.updatePct(a.cas, a.suggestedPct));
   } else {
     alloc = optimizeAllocation(mats, graph, catId, fragPct);
@@ -1724,7 +1724,7 @@ function exportJSON() {
     payload.analysis.compatibility = {
       harmony: computeHarmonyScore(mats.map(m => m.cas), graph),
       noteBalance: analyzeNoteBalance(mats),
-      suggestedAllocation: suggestAllocation(mats),
+      suggestedAllocation: suggestAllocation(mats, parseInt(document.getElementById('fragPct').value) || 18),
     };
     payload.analysis.thermodynamics = {
       vpTable: buildVPTable(mats, tempC),
