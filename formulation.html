@@ -280,10 +280,10 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
       </select>
     </div>
 
-    <!-- Temperature -->
-    <div class="control-group">
+    <!-- Temperature (hidden — fixed at 25°C average) -->
+    <div class="control-group" style="display:none">
       <div class="control-label"><span>Temperature</span><output id="tempOut">25 &deg;C</output></div>
-      <input type="range" id="tempSlider" min="15" max="40" value="25" oninput="document.getElementById('tempOut').innerHTML=this.value+' &deg;C'">
+      <input type="range" id="tempSlider" min="15" max="40" value="25">
     </div>
 
     <!-- Batch Size -->
