@@ -1871,9 +1871,11 @@ function updatePresetHighlight() {
 }
 
 // ===== Batch & Carrier change triggers =====
-document.getElementById('batchSize').addEventListener('input', () => {
+document.getElementById('batchSize').addEventListener('input', () => renderMaterialList());
+document.getElementById('batchSize').addEventListener('blur', () => {
   const el = document.getElementById('batchSize');
-  if (parseFloat(el.value) < 0.001 && el.value !== '') el.value = 0.001;
+  const v = parseFloat(el.value);
+  if (isNaN(v) || v < 0.001) el.value = 0.001;
   renderMaterialList();
 });
 document.getElementById('batchUnit').addEventListener('change', () => {
