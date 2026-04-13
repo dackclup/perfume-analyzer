@@ -291,6 +291,12 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <input type="hidden" id="fragPct" value="18">
     <output id="fragPctOut" style="display:none">18%</output>
 
+    <!-- Auto-Allocate -->
+    <div style="display:flex;gap:4px;margin-top:6px">
+      <button class="btn" id="btnSuggested" style="flex:1;font-size:0.75em" onclick="applyAllocation('suggested')">Apply Suggested</button>
+      <button class="btn" id="btnOptimized" style="flex:1;font-size:0.75em" onclick="applyAllocation('optimized')">Apply Optimized</button>
+    </div>
+
     <!-- Carrier / Solvent — material list -->
     <select id="carrierSelect" style="display:none"><option value="ethanol">Ethanol</option></select>
     <div class="control-group">
@@ -309,12 +315,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <div class="control-group" style="display:none">
       <div class="control-label"><span>Temperature</span><output id="tempOut">25 &deg;C</output></div>
       <input type="range" id="tempSlider" min="15" max="40" value="25">
-    </div>
-
-    <!-- Auto-Allocate -->
-    <div style="display:flex;gap:4px;margin-top:6px">
-      <button class="btn" id="btnSuggested" style="flex:1;font-size:0.75em" onclick="applyAllocation('suggested')">Apply Suggested</button>
-      <button class="btn" id="btnOptimized" style="flex:1;font-size:0.75em" onclick="applyAllocation('optimized')">Apply Optimized</button>
     </div>
 
     <hr>
