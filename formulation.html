@@ -1313,9 +1313,10 @@ function applyAllocation(type) {
   const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
   const graph = getCompatGraph();
 
-  // Always optimize from original percentages (not current)
+  // Use original percentages for unlocked materials, current for locked
   const originalMats = mats.map(m => ({
-    ...m, pct: _originalPcts[m.cas] != null ? _originalPcts[m.cas] : m.pct,
+    ...m, pct: lockedMaterials.has(m.cas) ? m.pct
+      : (_originalPcts[m.cas] != null ? _originalPcts[m.cas] : m.pct),
   }));
 
   formulation.batchUpdate(() => {
