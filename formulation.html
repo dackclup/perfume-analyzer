@@ -835,10 +835,12 @@ const formulation = {
     if (pct > 100) pct = 100;
     this.materials.push({ cas, name, pct: pct || 10, data: data || {} });
     this.onChange();
+    storeOriginalPcts();
     return true;
   },
   removeMaterial(cas) {
     this.materials = this.materials.filter(m => m.cas !== cas);
+    delete _originalPcts[cas];
     this.onChange();
   },
   updatePct(cas, pct) {
@@ -1182,18 +1184,32 @@ function renderCompatTab() {
 }
 
 // Apply suggested or optimized allocation
+// Store original percentages when materials are first set
+let _originalPcts = {};
+
+function storeOriginalPcts() {
+  _originalPcts = {};
+  formulation.materials.forEach(m => { _originalPcts[m.cas] = m.pct; });
+}
+
 function applyAllocation(type) {
   const mats = formulation.materials;
+  if (!mats.length) return;
   const catId = document.getElementById('productCategory').value;
-  const fragPct = parseInt(document.getElementById('fragPct').value);
+  const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
   const graph = getCompatGraph();
+
+  // Always optimize from original percentages (not current)
+  const originalMats = mats.map(m => ({
+    ...m, pct: _originalPcts[m.cas] != null ? _originalPcts[m.cas] : m.pct,
+  }));
 
   let alloc;
   if (type === 'suggested') {
-    alloc = suggestAllocation(mats, parseInt(document.getElementById('fragPct').value) || 18);
+    alloc = suggestAllocation(originalMats, fragPct);
     alloc.forEach(a => formulation.updatePct(a.cas, a.suggestedPct));
   } else {
-    alloc = optimizeAllocation(mats, graph, catId, fragPct);
+    alloc = optimizeAllocation(originalMats, graph, catId, fragPct, 50, lockedMaterials);
     alloc.forEach(a => formulation.updatePct(a.cas, a.optimizedPct));
   }
 }
@@ -2021,6 +2037,7 @@ document.getElementById('savedFormulas').addEventListener('change', () => {
     if (s.batchUnit) document.getElementById('batchUnit').value = s.batchUnit;
   }
   formulation.onChange();
+  storeOriginalPcts();
 });
 
 // ===== Manage Saved Formulas Modal =====
