@@ -299,7 +299,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
         <div class="empty-state" style="padding:12px;font-size:0.8em;color:var(--text2);text-align:center">No carrier yet — click + Add below</div>
       </div>
       <div id="carrierTotal" style="display:none;justify-content:space-between;align-items:center;padding:4px 8px;font-size:0.78em;font-weight:600">
-        <span>Carrier Total</span>
+        <span>Total</span>
         <span id="carrierTotalAmt">0g</span>
       </div>
       <button class="btn" id="btnAddCarrier" style="width:100%;margin-top:4px;font-size:0.75em">+ Add Carrier</button>
@@ -1230,7 +1230,7 @@ function renderCarrierList() {
   const unit = batchUnit === 'ml' ? 'ml' : 'g';
   const amtEl = document.getElementById('carrierTotalAmt');
   const fmtV = v => v === 0 ? '0' : v < 0.1 ? v.toFixed(3) : v < 10 ? v.toFixed(2) : roundN(v, 1).toString();
-  amtEl.textContent = totalPct + '% / ' + fmtV(totalAmt) + unit + ' of ' + fmtV(batchUnit === 'ml' ? carrierGrams / 0.9 : carrierGrams) + unit + ' carrier';
+  amtEl.textContent = totalPct + '% / ' + fmtV(totalAmt) + unit + ' of ' + fmtV(batchUnit === 'ml' ? carrierGrams / 0.9 : carrierGrams) + unit;
   amtEl.style.color = totalPct > 100 ? 'var(--danger)' : totalPct < 100 ? 'var(--text2)' : 'var(--ok)';
   totalEl.style.display = 'flex';
 
