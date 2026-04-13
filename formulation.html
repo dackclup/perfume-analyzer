@@ -2071,18 +2071,13 @@ function deleteSavedFormula(idx) {
   const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
   const formula = saved[idx];
   if (!formula) return;
-  if (!confirm('Delete "' + (formula.name || 'formula') + '"? This cannot be undone.')) return;
+  if (!confirm('Delete "' + (formula.name || 'formula') + '"?')) return;
   saved.splice(idx, 1);
   localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
   populateSavedList();
   formulation.materials = [];
   formulation.onChange();
-  // Close modal if no saved formulas left
-  if (!saved.length) {
-    manageModal.classList.remove('open');
-  } else {
-    renderManageList();
-  }
+  manageModal.classList.remove('open');
 }
 
 document.getElementById('btnNew').addEventListener('click', () => {
