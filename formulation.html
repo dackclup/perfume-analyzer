@@ -1559,6 +1559,76 @@ function applyAllocation(type) {
       });
     }
   });
+
+  // Auto-populate carrier list from dilution solvents
+  autoPopulateCarriers();
+}
+
+function autoPopulateCarriers() {
+  const mats = formulation.materials;
+  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
+  const fragGrams = batchSize * (fragPct / 100);
+  const batchUnit = document.getElementById('batchUnit').value;
+
+  // Collect dilution solvents and their solvent amounts
+  const solventNeeds = {};
+  for (const m of mats) {
+    const d = m.dilution || 100;
+    if (d < 100 && m.dilutionSolvent) {
+      let pure = (m.pct / 100) * fragGrams;
+      if (batchUnit === 'ml') pure = pure / (m.data?.density || 0.9);
+      const weigh = calcWeighAmount(pure, d, m.dilutionSolvent);
+      solventNeeds[m.dilutionSolvent] = (solventNeeds[m.dilutionSolvent] || 0) + (weigh - pure);
+    }
+  }
+
+  // Add any dilution solvents not yet in carrier list
+  for (const cas of Object.keys(solventNeeds)) {
+    if (!carrierMaterials.find(c => c.cas === cas)) {
+      const entry = DB[cas];
+      if (entry) carrierMaterials.push({ cas, name: entry.name, pct: 0 });
+    }
+  }
+
+  // If no carriers at all, add default Ethanol
+  if (!carrierMaterials.length) {
+    const ethCas = Object.keys(DB).find(k => DB[k].name === 'Ethanol');
+    if (ethCas) {
+      carrierMaterials.push({ cas: ethCas, name: 'Ethanol', pct: 100 });
+    }
+  }
+
+  // Calculate carrier percentages based on remaining budget
+  const carrierGramsFull = batchUnit === 'ml' ? (batchSize - fragGrams) / 0.9 : batchSize - fragGrams;
+  let totalSolventUsed = Object.values(solventNeeds).reduce((s, v) => s + v, 0);
+  if (batchUnit === 'ml') totalSolventUsed = totalSolventUsed / 0.9;
+  const remainingCarrier = Math.max(0, carrierGramsFull - totalSolventUsed);
+
+  // Distribute: solvents get their needed %, rest splits remaining
+  const carrierTotal = carrierGramsFull || 1;
+  for (const c of carrierMaterials) {
+    const solventAmt = solventNeeds[c.cas] || 0;
+    const solventAmtUnit = batchUnit === 'ml' ? solventAmt / 0.9 : solventAmt;
+    if (solventAmt > 0) {
+      // This carrier is used as dilution solvent — set % to cover its share
+      c.pct = Math.round((solventAmtUnit / carrierTotal) * 100 * 100) / 100;
+    } else if (remainingCarrier > 0) {
+      // Non-dilution carrier — fill remaining
+      const nonDilCarriers = carrierMaterials.filter(x => !solventNeeds[x.cas]);
+      c.pct = Math.round((remainingCarrier / nonDilCarriers.length / carrierTotal) * 100 * 100) / 100;
+    } else {
+      c.pct = 0;
+    }
+  }
+
+  // Normalize to 100%
+  const totalPct = carrierMaterials.reduce((s, c) => s + c.pct, 0);
+  if (totalPct > 0 && Math.abs(totalPct - 100) > 0.1) {
+    carrierMaterials.forEach(c => c.pct = Math.round(c.pct / totalPct * 100 * 100) / 100);
+  }
+
+  renderCarrierList();
 }
 // ===== Tab 3: Evaporation & Thermodynamics (System 1) =====
 let _evapChart = null;
