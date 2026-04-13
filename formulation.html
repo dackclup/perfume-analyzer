@@ -785,12 +785,27 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 // ===== Tab Navigation =====
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    // Flush any pending debounced updates so tab content is fresh
+    if (formulation._scheduleCommit) formulation._scheduleCommit.flush();
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(btn.dataset.tab).classList.add('active');
+    renderActiveTab();
   });
 });
+
+// ===== Click Timing Optimization =====
+function debounce(fn, delay) {
+  let timer = null;
+  const debounced = function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => { timer = null; fn.apply(this, args); }, delay);
+  };
+  debounced.cancel = () => { clearTimeout(timer); timer = null; };
+  debounced.flush = () => { if (timer !== null) { clearTimeout(timer); timer = null; fn(); } };
+  return debounced;
+}
 
 // ===== Formulation State =====
 // ===== A4: Undo/Redo System =====
@@ -851,10 +866,92 @@ const formulation = {
       if (pct > 100) pct = 100;
       m.pct = Math.round(pct * 10) / 10;
     }
+    if (this._batching) return;
+    this._onPctChange(cas);
+  },
+  _batching: false,
+  // Batch multiple updatePct calls into a single render (used by applyAllocation)
+  batchUpdate(fn) {
+    this._batching = true;
+    fn();
+    this._batching = false;
     this.onChange();
   },
+  // Fast path: update display in-place without DOM rebuild, debounce expensive work
+  _onPctChange(cas) {
+    this._updateMaterialDisplay(cas);
+    this._updateTotalDisplay();
+    this._scheduleCommit();
+  },
+  // Update a single material's display elements without innerHTML rebuild
+  _updateMaterialDisplay(cas) {
+    const m = this.materials.find(m => m.cas === cas);
+    if (!m) return;
+    const el = document.querySelector('.mat-item[data-cas="' + CSS.escape(cas) + '"]');
+    if (!el) { this.onChange(); return; } // fallback to full render if element not found
+
+    const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+    const batchUnit = document.getElementById('batchUnit').value;
+    const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
+    const fragGrams = batchSize * (fragPct / 100);
+
+    let amount = (m.pct / 100) * fragGrams;
+    if (batchUnit === 'ml') amount = amount / (m.data?.density || 0.9);
+    const unit = batchUnit === 'ml' ? 'ml' : 'g';
+    const amtStr = amount === 0 ? '0' : amount < 0.001 ? amount.toExponential(1) : amount < 0.1 ? amount.toFixed(4) : amount < 1 ? amount.toFixed(3) : amount < 10 ? amount.toFixed(2) : amount.toFixed(1);
+
+    const gramsEl = el.querySelector('.mat-grams');
+    if (gramsEl) gramsEl.textContent = amtStr + unit;
+
+    // Don't overwrite input value if user is actively editing it
+    const input = el.querySelector('.mat-pct');
+    if (input && document.activeElement !== input) input.value = m.pct;
+
+    // Update use-rate warning
+    const usageRange = parseUsageRange(m.data?.usage_levels);
+    const pctInProduct = m.pct * (fragPct / 100);
+    const existingWarn = el.querySelector('.mat-warn');
+    if (usageRange.max != null && pctInProduct > usageRange.max) {
+      const warnTitle = 'Max ' + usageRange.max + '% in product, actual ' + pctInProduct.toFixed(1) + '%';
+      if (existingWarn) {
+        existingWarn.textContent = '! ' + usageRange.max + '%';
+        existingWarn.title = warnTitle;
+      } else {
+        const span = document.createElement('span');
+        span.className = 'mat-warn';
+        span.title = warnTitle;
+        span.textContent = '! ' + usageRange.max + '%';
+        const nameEl = el.querySelector('.mat-name');
+        if (nameEl) nameEl.after(span);
+      }
+    } else if (existingWarn) {
+      existingWarn.remove();
+    }
+  },
+  // Update total percentage display without full re-render
+  _updateTotalDisplay() {
+    if (!this.materials.length) return;
+    const rawPct = this.totalPct();
+    const pct = isNaN(rawPct) ? 0 : Math.round(rawPct * 10) / 10;
+    const pctEl = document.getElementById('matTotalPct');
+    const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+    const batchUnit = document.getElementById('batchUnit').value;
+    const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
+    const fragGrams = batchSize * (fragPct / 100);
+    function fmtAmt(v) { return v === 0 ? '0' : v < 0.001 ? v.toExponential(1) : v < 0.1 ? v.toFixed(4) : v < 1 ? v.toFixed(3) : v < 10 ? v.toFixed(2) : roundN(v, 1).toString(); }
+    const fragVal = batchUnit === 'ml' ? fragGrams / 0.9 : fragGrams;
+    const fragUnit = batchUnit === 'ml' ? 'ml' : 'g';
+    const fragDisplay = fmtAmt(fragVal) + fragUnit;
+    pctEl.textContent = pct + '%' + (pct > 100 ? ' (over!)' : '') + ' / ' + fragDisplay + ' Fragrance in Product';
+    pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
+    document.getElementById('matTotal').style.display = 'flex';
+  },
+  // Debounced commit — initialized after object creation
+  _scheduleCommit: null,
   totalPct() { return this.materials.reduce((s, m) => s + m.pct, 0); },
   onChange() {
+    // Cancel any pending debounced commit since we're doing a full render now
+    if (this._scheduleCommit) this._scheduleCommit.cancel();
     formulationHistory.push(this.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, data: m.data })));
     renderMaterialList();
     renderActiveTab();
@@ -862,6 +959,11 @@ const formulation = {
 };
 // Push initial empty state
 formulationHistory.push([]);
+// Initialize debounced commit for rapid percentage changes (coalesces rapid clicks)
+formulation._scheduleCommit = debounce(() => {
+  formulationHistory.push(formulation.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, data: m.data })));
+  renderActiveTab();
+}, 300);
 
 // ===== Render Material List =====
 // Escape HTML to prevent XSS from material names
@@ -1204,14 +1306,16 @@ function applyAllocation(type) {
     ...m, pct: _originalPcts[m.cas] != null ? _originalPcts[m.cas] : m.pct,
   }));
 
-  let alloc;
-  if (type === 'suggested') {
-    alloc = suggestAllocation(originalMats, fragPct);
-    alloc.forEach(a => formulation.updatePct(a.cas, a.suggestedPct));
-  } else {
-    alloc = optimizeAllocation(originalMats, graph, catId, fragPct, 50, lockedMaterials);
-    alloc.forEach(a => formulation.updatePct(a.cas, a.optimizedPct));
-  }
+  formulation.batchUpdate(() => {
+    let alloc;
+    if (type === 'suggested') {
+      alloc = suggestAllocation(originalMats, fragPct);
+      alloc.forEach(a => formulation.updatePct(a.cas, a.suggestedPct));
+    } else {
+      alloc = optimizeAllocation(originalMats, graph, catId, fragPct, 50, lockedMaterials);
+      alloc.forEach(a => formulation.updatePct(a.cas, a.optimizedPct));
+    }
+  });
 }
 // ===== Tab 3: Evaporation & Thermodynamics (System 1) =====
 let _evapChart = null;
@@ -1894,14 +1998,14 @@ document.querySelectorAll('.preset-chip').forEach(chip => {
   });
 });
 
-// Custom input handler
+// Custom input handler (debounce expensive renders, keep label updates instant)
+const _debouncedFragRender = debounce(() => { renderMaterialList(); renderActiveTab(); }, 200);
 document.getElementById('fragPctCustom').addEventListener('input', () => {
   let val = parseFloat(document.getElementById('fragPctCustom').value);
   if (!isNaN(val) && val >= 1 && val <= 100) {
     document.getElementById('fragPct').value = val;
     document.getElementById('fragPctOut').textContent = val + '%';
-    renderMaterialList();
-    renderActiveTab();
+    _debouncedFragRender();
   }
 });
 document.getElementById('fragPctCustom').addEventListener('blur', () => {
@@ -1926,7 +2030,7 @@ function updatePresetHighlight() {
 }
 
 // ===== Batch & Carrier change triggers =====
-document.getElementById('batchSize').addEventListener('input', () => renderMaterialList());
+document.getElementById('batchSize').addEventListener('input', debounce(() => renderMaterialList(), 150));
 document.getElementById('batchSize').addEventListener('blur', () => {
   const el = document.getElementById('batchSize');
   const v = parseFloat(el.value);
