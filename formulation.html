@@ -256,6 +256,18 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
       </select>
     </div>
 
+    <!-- Batch Size (moved above Product Type) -->
+    <div class="control-group">
+      <div class="control-label"><span>Batch Size</span></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="number" id="batchSize" value="100" min="0.1" max="100000" step="any" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-family:inherit;font-size:0.85em;text-align:right">
+        <select id="batchUnit" style="width:auto;padding:6px 8px;font-size:0.85em">
+          <option value="g">grams</option>
+          <option value="ml">ml</option>
+        </select>
+      </div>
+    </div>
+
     <!-- Product Type Presets -->
     <div class="control-group">
       <div class="control-label"><span>Product Type</span></div>
@@ -279,33 +291,24 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <input type="hidden" id="fragPct" value="18">
     <output id="fragPctOut" style="display:none">18%</output>
 
-    <!-- Carrier/Solvent -->
+    <!-- Carrier / Solvent — material list -->
+    <select id="carrierSelect" style="display:none"><option value="ethanol">Ethanol</option></select>
     <div class="control-group">
-      <div class="control-label"><span>Carrier / Solvent</span></div>
-      <select id="carrierSelect">
-        <option value="ethanol">Ethanol (ALCOHOL DENAT.)</option>
-        <option value="dpg">DPG (Dipropylene Glycol)</option>
-        <option value="ipm">IPM (Isopropyl Myristate)</option>
-        <option value="coconut_oil">Fractionated Coconut Oil</option>
-      </select>
+      <div class="control-label"><span>CARRIER / SOLVENT</span> <span id="carrierCount" style="font-size:0.8em;color:var(--text2)">(0)</span></div>
+      <div class="mat-list" id="carrierList">
+        <div class="empty-state" style="padding:12px;font-size:0.8em;color:var(--text2);text-align:center">No carrier yet — click + Add below</div>
+      </div>
+      <div id="carrierTotal" style="display:none;justify-content:space-between;align-items:center;padding:4px 8px;font-size:0.78em;font-weight:600">
+        <span>Carrier Total</span>
+        <span id="carrierTotalAmt">0g</span>
+      </div>
+      <button class="btn" id="btnAddCarrier" style="width:100%;margin-top:4px;font-size:0.75em">+ Add Carrier</button>
     </div>
 
     <!-- Temperature (hidden — fixed at 25°C average) -->
     <div class="control-group" style="display:none">
       <div class="control-label"><span>Temperature</span><output id="tempOut">25 &deg;C</output></div>
       <input type="range" id="tempSlider" min="15" max="40" value="25">
-    </div>
-
-    <!-- Batch Size -->
-    <div class="control-group">
-      <div class="control-label"><span>Batch Size</span></div>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input type="number" id="batchSize" value="100" min="0.1" max="100000" step="any" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-family:inherit;font-size:0.85em;text-align:right">
-        <select id="batchUnit" style="width:auto;padding:6px 8px;font-size:0.85em">
-          <option value="g">grams</option>
-          <option value="ml">ml</option>
-        </select>
-      </div>
     </div>
 
     <!-- Auto-Allocate -->
@@ -1154,6 +1157,104 @@ function renderMaterialList() {
   }
 }
 
+// ===== Carrier / Solvent Materials =====
+const carrierMaterials = [];
+
+function addCarrierMaterial(cas) {
+  const entry = DB[cas];
+  if (!entry) return;
+  if (carrierMaterials.find(m => m.cas === cas)) return;
+  carrierMaterials.push({ cas, name: entry.name, pct: 100 });
+  renderCarrierList();
+}
+
+function removeCarrierMaterial(cas) {
+  const idx = carrierMaterials.findIndex(m => m.cas === cas);
+  if (idx >= 0) carrierMaterials.splice(idx, 1);
+  renderCarrierList();
+}
+
+function updateCarrierPct(cas, pct) {
+  const m = carrierMaterials.find(m => m.cas === cas);
+  if (m) {
+    pct = parseFloat(pct);
+    if (isNaN(pct) || pct < 0) pct = 0;
+    if (pct > 100) pct = 100;
+    m.pct = Math.round(pct * 100) / 100;
+  }
+  renderCarrierList();
+}
+
+function renderCarrierList() {
+  const list = document.getElementById('carrierList');
+  const totalEl = document.getElementById('carrierTotal');
+  const countEl = document.getElementById('carrierCount');
+
+  if (!carrierMaterials.length) {
+    list.innerHTML = '<div class="empty-state" style="padding:12px;font-size:0.8em;color:var(--text2);text-align:center">No carrier yet — click + Add below</div>';
+    totalEl.style.display = 'none';
+    countEl.textContent = '(0)';
+    // Update hidden carrierSelect to first carrier or default
+    document.getElementById('carrierSelect').value = 'ethanol';
+    return;
+  }
+
+  countEl.textContent = '(' + carrierMaterials.length + ')';
+  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const batchUnit = document.getElementById('batchUnit').value;
+  const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
+  const carrierGrams = batchSize * (1 - fragPct / 100);
+
+  let html = '';
+  for (const m of carrierMaterials) {
+    const safeName = escHtml(m.name);
+    const safeCas = escHtml(m.cas);
+    let amount = (m.pct / 100) * carrierGrams;
+    if (batchUnit === 'ml') amount = amount / 0.9;
+    const unit = batchUnit === 'ml' ? 'ml' : 'g';
+    const amtStr = amount === 0 ? '0' : amount < 0.001 ? amount.toExponential(1) : amount < 0.1 ? amount.toFixed(3) : amount < 1 ? amount.toFixed(3) : amount < 10 ? amount.toFixed(2) : amount.toFixed(1);
+    html += '<div class="mat-item" data-carrier-cas="' + safeCas + '">';
+    html += '<span class="mat-name" title="' + safeName + '">' + safeName + '</span>';
+    html += '<span class="mat-grams">' + amtStr + unit + '</span>';
+    html += '<input type="number" class="mat-pct" value="' + m.pct + '" min="0" max="100" step="1" onchange="updateCarrierPct(\'' + safeCas + '\',this.value)" onblur="if(this.value===\'\')this.value=0;updateCarrierPct(\'' + safeCas + '\',this.value)">';
+    html += '<span style="font-size:0.75em;color:var(--text2)">%</span>';
+    html += '<button class="mat-del" onclick="removeCarrierMaterial(\'' + safeCas + '\')" title="Remove">&times;</button>';
+    html += '</div>';
+  }
+  list.innerHTML = html;
+
+  // Total
+  const totalPct = carrierMaterials.reduce((s, m) => s + m.pct, 0);
+  let totalAmt = (totalPct / 100) * carrierGrams;
+  if (batchUnit === 'ml') totalAmt = totalAmt / 0.9;
+  const unit = batchUnit === 'ml' ? 'ml' : 'g';
+  const amtEl = document.getElementById('carrierTotalAmt');
+  const fmtV = v => v === 0 ? '0' : v < 0.1 ? v.toFixed(3) : v < 10 ? v.toFixed(2) : roundN(v, 1).toString();
+  amtEl.textContent = totalPct + '% / ' + fmtV(totalAmt) + unit + ' of ' + fmtV(batchUnit === 'ml' ? carrierGrams / 0.9 : carrierGrams) + unit + ' carrier';
+  amtEl.style.color = totalPct > 100 ? 'var(--danger)' : totalPct < 100 ? 'var(--text2)' : 'var(--ok)';
+  totalEl.style.display = 'flex';
+
+  // Update hidden carrierSelect for INCI export compatibility
+  const first = carrierMaterials[0];
+  const nameL = (first?.name || '').toLowerCase();
+  if (nameL.includes('ethanol')) document.getElementById('carrierSelect').value = 'ethanol';
+  else if (nameL.includes('dipropylene') || nameL.includes('dpg')) document.getElementById('carrierSelect').value = 'dpg';
+  else if (nameL.includes('isopropyl myristate') || nameL.includes('ipm')) document.getElementById('carrierSelect').value = 'ipm';
+  else if (nameL.includes('coconut')) document.getElementById('carrierSelect').value = 'coconut_oil';
+  else document.getElementById('carrierSelect').value = 'ethanol';
+}
+
+// Carrier Add Modal
+document.getElementById('btnAddCarrier').addEventListener('click', () => {
+  const modal = document.getElementById('addModal');
+  modal.classList.add('open');
+  const search = document.getElementById('modalSearch');
+  search.value = '';
+  document.getElementById('modalResults').innerHTML = '';
+  search.dataset.mode = 'carrier';
+  setTimeout(() => search.focus(), 50);
+});
+
 // ===== Add Material Modal =====
 const addModal = document.getElementById('addModal');
 const modalSearch = document.getElementById('modalSearch');
@@ -1163,24 +1264,33 @@ document.getElementById('btnAddMat').addEventListener('click', () => {
   addModal.classList.add('open');
   modalSearch.value = '';
   modalResults.innerHTML = '';
+  modalSearch.dataset.mode = 'fragrance';
   setTimeout(() => modalSearch.focus(), 50);
 });
-document.getElementById('modalClose').addEventListener('click', () => addModal.classList.remove('open'));
-addModal.addEventListener('click', e => { if (e.target === addModal) addModal.classList.remove('open'); });
+document.getElementById('modalClose').addEventListener('click', () => { addModal.classList.remove('open'); delete modalSearch.dataset.mode; });
+addModal.addEventListener('click', e => { if (e.target === addModal) { addModal.classList.remove('open'); delete modalSearch.dataset.mode; } });
 
 modalSearch.addEventListener('input', () => {
   const q = modalSearch.value.trim().toLowerCase();
   if (q.length < 2) { modalResults.innerHTML = ''; return; }
+  const isCarrier = modalSearch.dataset.mode === 'carrier';
   const matches = [];
   for (const [cas, entry] of Object.entries(DB)) {
-    if (!entry.note || !/top|middle|mid|base/i.test(entry.note)) continue; // hide non-fragrance materials
-    if (formulation.materials.find(m => m.cas === cas)) continue;
+    const hasFragNote = entry.note && /top|middle|mid|base/i.test(entry.note);
+    if (isCarrier) {
+      if (hasFragNote) continue; // carrier mode: show only non-fragrance
+      if (carrierMaterials.find(m => m.cas === cas)) continue;
+    } else {
+      if (!hasFragNote) continue; // fragrance mode: show only fragrance
+      if (formulation.materials.find(m => m.cas === cas)) continue;
+    }
     const haystack = (entry.name + ' ' + cas + ' ' + (entry.synonyms || []).join(' ')).toLowerCase();
     if (haystack.includes(q)) matches.push(entry);
     if (matches.length >= 20) break;
   }
+  const clickFn = isCarrier ? 'addCarrierFromModal' : 'addFromDB';
   modalResults.innerHTML = matches.map(e =>
-    `<li onclick="addFromDB('${escHtml(e.cas)}')">
+    `<li onclick="${clickFn}('${escHtml(e.cas)}')">
       <span class="mr-name">${escHtml(e.name)}</span>
       <span class="mr-meta">${escHtml(e.cas)}</span>
     </li>`
@@ -1217,6 +1327,12 @@ function addFromDB(cas) {
     regulatory: [],
   });
   addModal.classList.remove('open');
+}
+
+function addCarrierFromModal(cas) {
+  addCarrierMaterial(cas);
+  addModal.classList.remove('open');
+  delete modalSearch.dataset.mode;
 }
 
 // ===== Import from Analyzer (localStorage) =====
@@ -2107,6 +2223,7 @@ function setFragPct(val) {
   document.getElementById('fragPctOut').textContent = val + '%';
   document.getElementById('fragPctCustom').value = val;
   renderMaterialList();
+  renderCarrierList();
   renderActiveTab();
 }
 
@@ -2154,15 +2271,17 @@ function updatePresetHighlight() {
 }
 
 // ===== Batch & Carrier change triggers =====
-document.getElementById('batchSize').addEventListener('input', debounce(() => renderMaterialList(), 150));
+document.getElementById('batchSize').addEventListener('input', debounce(() => { renderMaterialList(); renderCarrierList(); }, 150));
 document.getElementById('batchSize').addEventListener('blur', () => {
   const el = document.getElementById('batchSize');
   const v = parseFloat(el.value);
   if (isNaN(v) || v < 0.1) el.value = 0.1;
   renderMaterialList();
+  renderCarrierList();
 });
 document.getElementById('batchUnit').addEventListener('change', () => {
   renderMaterialList();
+  renderCarrierList();
 });
 document.getElementById('carrierSelect').addEventListener('change', () => renderActiveTab());
 
