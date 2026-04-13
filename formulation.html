@@ -986,28 +986,8 @@ const formulation = {
     pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
     document.getElementById('matTotal').style.display = 'flex';
 
-    // Dilution solvent summary
-    let dilSolvent = 0;
-    for (const m of this.materials) {
-      const d = m.dilution || 100;
-      if (d < 100) {
-        let pure = (m.pct / 100) * fragGrams;
-        if (batchUnit === 'ml') pure = pure / (m.data?.density || 0.9);
-        dilSolvent += pure / (d / 100) - pure;
-      }
-    }
-    const dilEl = document.getElementById('matDilSolvent');
-    if (dilEl) {
-      if (dilSolvent > 0) {
-        const dUnit = batchUnit === 'ml' ? 'ml' : 'g';
-        const carrierTotal = batchUnit === 'ml' ? (batchSize - fragGrams) / 0.9 : batchSize - fragGrams;
-        const carrierNeeded = Math.max(0, carrierTotal - dilSolvent);
-        dilEl.innerHTML = 'add <b>' + fmtAmt(carrierNeeded) + dUnit + '</b> (total ' + fmtAmt(carrierTotal) + dUnit + ' − ' + fmtAmt(dilSolvent) + dUnit + ' solvent in dilutions)';
-        dilEl.style.display = '';
-      } else {
-        dilEl.style.display = 'none';
-      }
-    }
+    // Trigger carrier update (budget depends on dilution)
+    renderCarrierList();
   },
   // Debounced commit — initialized after object creation
   _scheduleCommit: null,
@@ -1095,6 +1075,7 @@ function renderMaterialList() {
     html += `<span class="mat-name" title="${safeName}">${safeName}</span>`;
     html += warnHtml;
     html += `<span class="mat-grams">${amtStr}${unit}</span>`;
+    if (amount > batchSize) html += `<span class="mat-warn" title="Weigh amount ${amtStr}${unit} exceeds batch ${batchSize}${unit}">! over</span>`;
     html += `<input type="number" class="mat-pct" value="${m.pct}" min="0" max="100" step="0.01"
       onchange="formulation.updatePct('${safeCas}',this.value)"
       onblur="if(this.value==='')this.value=0;formulation.updatePct('${safeCas}',this.value)">`;
@@ -1133,32 +1114,8 @@ function renderMaterialList() {
   pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
   total.style.display = 'flex';
 
-  // Dilution solvent summary
-  let dilSolvent = 0;
-  for (const m of formulation.materials) {
-    const d = m.dilution || 100;
-    if (d < 100) {
-      let pure = (m.pct / 100) * fragGrams;
-      if (batchUnit === 'ml') pure = pure / (m.data?.density || 0.9);
-      dilSolvent += pure / (d / 100) - pure;
-    }
-  }
-  let dilEl = document.getElementById('matDilSolvent');
-  if (!dilEl) {
-    dilEl = document.createElement('div');
-    dilEl.id = 'matDilSolvent';
-    dilEl.style.cssText = 'font-size:0.72em;color:var(--text2);padding:2px 8px;text-align:right';
-    total.after(dilEl);
-  }
-  if (dilSolvent > 0) {
-    const dUnit = batchUnit === 'ml' ? 'ml' : 'g';
-    const carrierTotal = batchUnit === 'ml' ? (batchSize - fragGrams) / 0.9 : batchSize - fragGrams;
-    const carrierNeeded = Math.max(0, carrierTotal - dilSolvent);
-    dilEl.innerHTML = 'add <b>' + fmtAmt(carrierNeeded) + dUnit + '</b> (total ' + fmtAmt(carrierTotal) + dUnit + ' − ' + fmtAmt(dilSolvent) + dUnit + ' solvent in dilutions)';
-    dilEl.style.display = '';
-  } else {
-    dilEl.style.display = 'none';
-  }
+  // Trigger carrier list update (carrier budget depends on dilution solvent)
+  renderCarrierList();
 }
 
 // ===== Carrier / Solvent Materials =====
