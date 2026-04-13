@@ -622,7 +622,8 @@ function suggestAllocation(materials, fragPct) {
   const sum = alphas.reduce((a, b) => a + b, 0);
   let pcts = materials.map((mat, i) => roundN((alphas[i] / sum) * 100, 1));
 
-  // Clamp to IFRA limits (convert to max % in concentrate)
+  // Clamp to IFRA/usage limits (convert to max % in concentrate)
+  const clamped = new Set();
   for (let i = 0; i < materials.length; i++) {
     const mat = materials[i];
     const ifra51 = parseIFRA51(mat.data?.usage_levels);
@@ -632,13 +633,20 @@ function suggestAllocation(materials, fragPct) {
       for (const v of Object.values(ifra51)) { if (v < maxInProduct) maxInProduct = v; }
     }
     const maxInConcentrate = maxInProduct / (fragPct / 100);
-    if (pcts[i] > maxInConcentrate) pcts[i] = roundN(maxInConcentrate * 0.9, 1); // 90% of limit for safety margin
+    if (pcts[i] > maxInConcentrate) {
+      pcts[i] = roundN(maxInConcentrate * 0.9, 1); // 90% safety margin
+      clamped.add(i);
+    }
   }
 
-  // Re-normalize to sum to 100%
-  const pctSum = pcts.reduce((a, b) => a + b, 0);
-  if (pctSum > 0 && Math.abs(pctSum - 100) > 0.5) {
-    pcts = pcts.map(p => roundN(p / pctSum * 100, 1));
+  // Re-normalize ONLY unclamped materials to fill remaining budget to 100%
+  const clampedSum = [...clamped].reduce((s, i) => s + pcts[i], 0);
+  const unclampedTarget = 100 - clampedSum;
+  const unclampedSum = pcts.reduce((s, p, i) => s + (clamped.has(i) ? 0 : p), 0);
+  if (unclampedSum > 0 && unclampedTarget > 0) {
+    for (let i = 0; i < pcts.length; i++) {
+      if (!clamped.has(i)) pcts[i] = roundN(pcts[i] / unclampedSum * unclampedTarget, 1);
+    }
   }
 
   return materials.map((mat, i) => ({
