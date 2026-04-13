@@ -600,33 +600,51 @@ function analyzeNoteBalance(materials) {
  * @param {Array} materials - [{cas, name, data:{note, odor_strength}}]
  * @returns {Array} [{cas, name, suggestedPct}]
  */
-function suggestAllocation(materials) {
+function suggestAllocation(materials, fragPct) {
   if (!materials.length) return [];
+  fragPct = fragPct || 18;
 
   const alphas = materials.map(mat => {
     const note = (mat.data?.note || '').toLowerCase();
     const strength = odorStrengthScale(mat.data?.odor_strength) || 3;
 
-    // Base alpha by note tier
     let baseAlpha;
     if (note.includes('base'))        baseAlpha = 5.0;
     else if (note.includes('middle')) baseAlpha = 3.5;
     else if (note.includes('top'))    baseAlpha = 2.0;
-    else                              baseAlpha = 3.0; // functional/unknown
+    else                              baseAlpha = 3.0;
 
-    // Inverse strength: stronger materials need less
-    // strength 1 (Low) → multiply by 3, strength 5 (Very High) → multiply by 0.6
     const strengthFactor = 3 / clamp(strength, 0.5, 5);
-
     return baseAlpha * strengthFactor;
   });
 
   // Normalize to sum to 100%
   const sum = alphas.reduce((a, b) => a + b, 0);
+  let pcts = materials.map((mat, i) => roundN((alphas[i] / sum) * 100, 1));
+
+  // Clamp to IFRA limits (convert to max % in concentrate)
+  for (let i = 0; i < materials.length; i++) {
+    const mat = materials[i];
+    const ifra51 = parseIFRA51(mat.data?.usage_levels);
+    const usageRange = parseUsageRange(mat.data?.usage_levels);
+    let maxInProduct = usageRange.max || 100;
+    if (ifra51) {
+      for (const v of Object.values(ifra51)) { if (v < maxInProduct) maxInProduct = v; }
+    }
+    const maxInConcentrate = maxInProduct / (fragPct / 100);
+    if (pcts[i] > maxInConcentrate) pcts[i] = roundN(maxInConcentrate * 0.9, 1); // 90% of limit for safety margin
+  }
+
+  // Re-normalize to sum to 100%
+  const pctSum = pcts.reduce((a, b) => a + b, 0);
+  if (pctSum > 0 && Math.abs(pctSum - 100) > 0.5) {
+    pcts = pcts.map(p => roundN(p / pctSum * 100, 1));
+  }
+
   return materials.map((mat, i) => ({
     cas: mat.cas,
     name: mat.name,
-    suggestedPct: roundN((alphas[i] / sum) * 100, 1),
+    suggestedPct: pcts[i],
   }));
 }
 
@@ -737,10 +755,22 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
     }
   }
 
+  // Round and fix sum to exactly 100%
+  let rounded = pcts.map(p => roundN(p, 1));
+  const roundedSum = rounded.reduce((a, b) => a + b, 0);
+  if (roundedSum > 0 && Math.abs(roundedSum - 100) > 0.05) {
+    // Adjust the largest unlocked material to compensate rounding error
+    let maxIdx = 0, maxVal = 0;
+    for (let i = 0; i < rounded.length; i++) {
+      if (!locked.has(materials[i].cas) && rounded[i] > maxVal) { maxVal = rounded[i]; maxIdx = i; }
+    }
+    rounded[maxIdx] = roundN(rounded[maxIdx] + (100 - roundedSum), 1);
+  }
+
   return materials.map((m, i) => ({
     cas: m.cas,
     name: m.name,
-    optimizedPct: roundN(pcts[i], 1),
+    optimizedPct: rounded[i],
     locked: locked.has(m.cas),
   }));
 }
