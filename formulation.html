@@ -340,7 +340,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <div style="display:flex;gap:4px;align-items:center">
       <button class="btn" id="btnSave" style="white-space:nowrap">Save</button>
       <select id="savedFormulas" style="font-size:0.78em;flex:1;min-width:0"><option value="">-- Saved --</option></select>
-      <button class="btn" id="btnLoad">Load</button>
       <button class="btn" id="btnManage" style="font-size:0.75em">&#9881;</button>
       <button class="btn" id="btnNew">New</button>
     </div>
@@ -2002,14 +2001,13 @@ document.getElementById('btnSave').addEventListener('click', () => {
   alert('Saved "' + name + '"!');
 });
 
-document.getElementById('btnLoad').addEventListener('click', () => {
+document.getElementById('savedFormulas').addEventListener('change', () => {
   const idx = document.getElementById('savedFormulas').value;
-  if (idx === '') { alert('Select a saved formula.'); return; }
+  if (idx === '') return;
   const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
   const formula = saved[parseInt(idx)];
-  if (!formula) { alert('Formula not found.'); return; }
+  if (!formula) return;
 
-  // Support both old flat format and new versioned format (B1)
   let materials, settings;
   if (formula.versions) {
     const ver = formula.versions[formula.currentVersion || 0];
