@@ -894,10 +894,11 @@ function renderMaterialList() {
     const noteLabel = noteClass === 'top' ? 'T' : noteClass === 'mid' ? 'M' : noteClass === 'base' ? 'B' : '';
     const safeName = escHtml(m.name);
     const safeCas = escHtml(m.cas);
-    // Batch grams: material % of fragrance portion (not total batch)
-    let grams = (m.pct / 100) * fragGrams;
-    if (batchUnit === 'ml') grams *= (m.data?.density || 0.95);
-    const gramsStr = grams < 0.1 ? grams.toFixed(3) : grams < 1 ? grams.toFixed(2) : grams.toFixed(1);
+    // Material amount: % of fragrance portion; convert g→ml if needed
+    let amount = (m.pct / 100) * fragGrams;
+    if (batchUnit === 'ml') amount = amount / (m.data?.density || 0.9);
+    const unit = batchUnit === 'ml' ? 'ml' : 'g';
+    const amtStr = amount < 0.1 ? amount.toFixed(3) : amount < 1 ? amount.toFixed(2) : amount.toFixed(1);
     // Use-rate warning — compare % in product (not concentrate)
     const usageRange = parseUsageRange(m.data?.usage_levels);
     const pctInProduct = m.pct * (fragPct / 100);
@@ -909,7 +910,7 @@ function renderMaterialList() {
     if (noteLabel) html += `<span class="mat-note ${noteClass}">${noteLabel}</span>`;
     html += `<span class="mat-name" title="${safeName}">${safeName}</span>`;
     html += warnHtml;
-    html += `<span class="mat-grams">${gramsStr}g</span>`;
+    html += `<span class="mat-grams">${amtStr}${unit}</span>`;
     html += `<input type="number" class="mat-pct" value="${m.pct}" min="0" max="100" step="0.1"
       onchange="formulation.updatePct('${safeCas}',this.value)"
       onblur="if(this.value==='')this.value=0;formulation.updatePct('${safeCas}',this.value)">`;
@@ -923,7 +924,8 @@ function renderMaterialList() {
   const rawPct = formulation.totalPct();
   const pct = isNaN(rawPct) ? 0 : Math.round(rawPct * 10) / 10;
   const pctEl = document.getElementById('matTotalPct');
-  pctEl.textContent = pct + '%' + (pct > 100 ? ' (over!)' : '') + ' / ' + roundN(fragGrams, 1) + 'g Fragrance in Product';
+  const fragDisplay = batchUnit === 'ml' ? roundN(fragGrams / 0.9, 1) + 'ml' : roundN(fragGrams, 1) + 'g';
+  pctEl.textContent = pct + '%' + (pct > 100 ? ' (over!)' : '') + ' / ' + fragDisplay + ' Fragrance in Product';
   pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
   total.style.display = 'flex';
 }
@@ -1875,13 +1877,6 @@ document.getElementById('batchSize').addEventListener('input', () => {
   renderMaterialList();
 });
 document.getElementById('batchUnit').addEventListener('change', () => {
-  // Convert batch size between g and ml (avg fragrance density ~0.9)
-  const el = document.getElementById('batchSize');
-  const val = parseFloat(el.value) || 100;
-  const unit = document.getElementById('batchUnit').value;
-  const density = 0.9; // average fragrance density
-  if (unit === 'ml') el.value = Math.round(val / density);
-  else el.value = Math.round(val * density);
   renderMaterialList();
 });
 document.getElementById('carrierSelect').addEventListener('change', () => renderActiveTab());
