@@ -1845,3 +1845,113 @@ function calculateFormulaCost(materials, batchSizeG, carrier, fragPct) {
     currency: 'USD',
   };
 }
+
+// ─────────────────────────────────────────────────────────────
+// B2: Multi-Dimensional Substitution Engine
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Build an 18-dimensional feature vector for a material.
+ * 12 radar axes + 3 note one-hot + logVP + strength + cost tier
+ */
+function buildMaterialVector(cas, entry) {
+  const radar = materialToRadarWeights({
+    odor_type: entry.odor?.type || entry.odor_type,
+    primaryFamilies: [], secondaryFamilies: [], facets: [],
+  });
+  const noteVec = noteOneHot(entry.note);
+  const strength = odorStrengthScale(entry.odor?.strength || entry.odor_strength) || 3;
+  const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[cas] : null;
+  const bp = entry.boiling_point || (mp && mp.bp) || null;
+  const logVP = bp ? Math.log10(Math.max(clausiusClapeyronVP(bp, 25)?.vp_mmHg || 0.001, 0.001)) : 0;
+  const costEntry = (typeof MATERIAL_COSTS !== 'undefined') ? MATERIAL_COSTS[cas] : null;
+  const costTier = costEntry ? { solvent: 0, commodity: 0.2, standard: 0.4, specialty: 0.6, precious: 1.0 }[costEntry.tier] || 0.4 : 0.4;
+
+  return [
+    ...RADAR_AXES.map(a => radar[a] || 0),  // 12 dims
+    noteVec.is_top ? 1 : 0,                  // 3 dims
+    noteVec.is_middle ? 1 : 0,
+    noteVec.is_base ? 1 : 0,
+    clamp(logVP / 3, -1, 1),                 // 1 dim (normalized)
+    strength / 5,                             // 1 dim
+    costTier,                                 // 1 dim
+  ]; // total: 18
+}
+
+/**
+ * Cosine similarity between two vectors.
+ */
+function cosineSimilarity(a, b) {
+  let dot = 0, magA = 0, magB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    magA += a[i] * a[i];
+    magB += b[i] * b[i];
+  }
+  return (magA && magB) ? dot / (Math.sqrt(magA) * Math.sqrt(magB)) : 0;
+}
+
+/**
+ * Find multi-dimensional substitutes for a material.
+ * @param {string} cas - CAS of material to substitute
+ * @param {Object} db - material database
+ * @param {Set} exclude - CAS numbers already in formulation
+ * @param {number} maxResults
+ * @returns {Array} [{cas, name, similarity, note, odorType, tier}]
+ */
+function suggestSubstitutionMulti(cas, db, exclude, maxResults) {
+  maxResults = maxResults || 10;
+  exclude = exclude || new Set();
+  const entry = db[cas];
+  if (!entry) return [];
+
+  const targetVec = buildMaterialVector(cas, entry);
+  const candidates = [];
+
+  for (const [candCAS, candEntry] of Object.entries(db)) {
+    if (candCAS === cas || exclude.has(candCAS)) continue;
+    if (!candEntry.note) continue;
+    const candVec = buildMaterialVector(candCAS, candEntry);
+    const sim = cosineSimilarity(targetVec, candVec);
+    if (sim > 0.3) {
+      candidates.push({
+        cas: candCAS,
+        name: candEntry.name,
+        similarity: roundN(sim, 3),
+        note: candEntry.note,
+        odorType: candEntry.odor?.type || null,
+        tier: (typeof MATERIAL_COSTS !== 'undefined' && MATERIAL_COSTS[candCAS]) ? MATERIAL_COSTS[candCAS].tier : 'unknown',
+      });
+    }
+  }
+
+  return candidates.sort((a, b) => b.similarity - a.similarity).slice(0, maxResults);
+}
+
+// ─────────────────────────────────────────────────────────────
+// B4: Formula Comparison
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Compare two formulations — diff materials and percentages.
+ * @param {Array} formulaA - [{cas, name, pct}]
+ * @param {Array} formulaB - [{cas, name, pct}]
+ * @returns {Array} [{cas, name, pctA, pctB, delta, status:'added'|'removed'|'changed'|'unchanged'}]
+ */
+function compareFormulations(formulaA, formulaB) {
+  const allCAS = new Set([...formulaA.map(m => m.cas), ...formulaB.map(m => m.cas)]);
+  const diffs = [];
+  for (const cas of allCAS) {
+    const a = formulaA.find(m => m.cas === cas);
+    const b = formulaB.find(m => m.cas === cas);
+    const pctA = a ? a.pct : 0;
+    const pctB = b ? b.pct : 0;
+    const delta = roundN(pctB - pctA, 1);
+    let status = 'unchanged';
+    if (!a) status = 'added';
+    else if (!b) status = 'removed';
+    else if (Math.abs(delta) > 0.05) status = 'changed';
+    diffs.push({ cas, name: (a || b).name, pctA, pctB, delta, status });
+  }
+  return diffs.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+}

@@ -334,6 +334,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
       </select>
       <button class="btn" id="btnLoad">Load</button>
       <button class="btn" id="btnNew">New</button>
+      <button class="btn" id="btnCompare">Compare</button>
     </div>
     <div class="sidebar-actions" style="margin-top:4px">
       <button class="btn" id="btnLoadJSON">Load JSON File</button>
@@ -352,6 +353,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
       <button class="tab-btn" data-tab="tab-odor">Odor Profile</button>
       <button class="tab-btn" data-tab="tab-stability">Stability</button>
       <button class="tab-btn" data-tab="tab-mood">Mood</button>
+      <button class="tab-btn" data-tab="tab-wheel">Wheel</button>
     </div>
 
     <!-- Tab 1: Safety & Compliance (System 5) -->
@@ -407,6 +409,15 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
         <div class="empty-state"><p>Add materials to see mood analysis</p></div>
       </div>
     </div>
+
+    <!-- Tab 7: Fragrance Wheel (B3) -->
+    <div class="tab-panel" id="tab-wheel">
+      <h3>Fragrance Wheel</h3>
+      <p class="panel-desc">Michael Edwards classification — click a segment to filter materials by olfactive family.</p>
+      <div id="wheelContent">
+        <div class="empty-state"><p>Visual fragrance classification wheel</p></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -418,6 +429,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
       <a id="btnExportJSON">Save.JSON</a>
       <a id="btnExportCSV">Save.CSV</a>
       <a id="btnExportPDF">Save.PDF</a>
+      <a id="btnExportXLSX">Save.XLSX</a>
     </div>
   </div>
   <a href="index.html" class="analyzer-link">&larr; Analyzer</a>
@@ -433,6 +445,26 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <div class="modal-body">
       <input type="text" class="modal-search" id="modalSearch" placeholder="Search by name or CAS..." autocomplete="off">
       <ul class="modal-results" id="modalResults"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===== B4: Compare Modal ===== -->
+<div class="modal-overlay" id="compareModal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <h3>Compare Formulations</h3>
+      <button class="modal-close" id="compareClose">&times;</button>
+    </div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <div style="flex:1"><div class="control-label"><span>Formula A</span></div>
+          <select id="compareA" style="width:100%;font-size:0.85em"></select></div>
+        <div style="flex:1"><div class="control-label"><span>Formula B (current)</span></div>
+          <select id="compareB" style="width:100%;font-size:0.85em"><option value="__current__">Current Formulation</option></select></div>
+      </div>
+      <button class="btn btn-primary" id="compareRun" style="width:100%">Compare</button>
+      <div id="compareResults" style="margin-top:12px"></div>
     </div>
   </div>
 </div>
@@ -934,6 +966,7 @@ function renderActiveTab() {
   if (id === 'tab-odor')      renderOdorTab();
   if (id === 'tab-stability') renderStabilityTab();
   if (id === 'tab-mood')      renderMoodTab();
+  if (id === 'tab-wheel')     renderWheelTab();
 }
 
 // Stub renderers for tabs not yet implemented
@@ -1274,6 +1307,19 @@ function renderStabilityTab() {
     html += '</div>';
   }
 
+  // B2: Substitution suggestions for each material
+  if (mats.length) {
+    html += '<div class="analysis-card"><h4>Find Substitutes</h4>';
+    html += '<p class="panel-desc">Multi-dimensional similarity search (odor family + note + volatility + strength + cost).</p>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">';
+    for (const m of mats) {
+      html += '<button class="btn btn-sm" onclick="document.getElementById(\'subResult\').innerHTML=showSubstitutes(\'' + escHtml(m.cas) + '\')">' + escHtml(m.name) + '</button>';
+    }
+    html += '</div>';
+    html += '<div id="subResult" style="margin-top:12px"></div>';
+    html += '</div>';
+  }
+
   el.innerHTML = html;
 }
 // ===== Tab 6: Mood & Aromachology (System 6) =====
@@ -1527,6 +1573,7 @@ document.addEventListener('click', ev => { if (!ev.target.closest('.dl-wrap')) c
 document.getElementById('btnExportJSON').addEventListener('click', () => { exportJSON(); closeDlMenu(); });
 document.getElementById('btnExportCSV').addEventListener('click', () => { exportCSV(); closeDlMenu(); });
 document.getElementById('btnExportPDF').addEventListener('click', () => { exportPDF(); closeDlMenu(); });
+document.getElementById('btnExportXLSX').addEventListener('click', () => { exportXLSX(); closeDlMenu(); });
 
 function exportJSON() {
   const mats = formulation.materials;
@@ -1745,29 +1792,60 @@ function populateSavedList() {
   const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
   sel.innerHTML = '<option value="">-- Load Saved (' + saved.length + ') --</option>';
   saved.forEach((s, i) => {
-    sel.innerHTML += '<option value="' + i + '">' + escHtml(s.name) + ' (' + s.materials.length + ' mats)</option>';
+    // Support both old flat format and new versioned format
+    const matCount = s.versions ? s.versions[s.currentVersion || 0].materials.length : (s.materials || []).length;
+    const verCount = s.versions ? s.versions.length : 1;
+    const label = escHtml(s.name) + ' (' + matCount + ' mats' + (verCount > 1 ? ', v' + verCount : '') + ')';
+    sel.innerHTML += '<option value="' + i + '">' + label + '</option>';
   });
 }
 populateSavedList();
 
+// B1: Save with version tracking
+function getCurrentSettings() {
+  return {
+    categoryId: document.getElementById('productCategory').value,
+    fragPct: parseInt(document.getElementById('fragPct').value),
+    tempC: parseInt(document.getElementById('tempSlider').value),
+    carrier: document.getElementById('carrierSelect').value,
+    batchSize: parseFloat(document.getElementById('batchSize').value),
+    batchUnit: document.getElementById('batchUnit').value,
+  };
+}
+
+function makeSnapshot(mats) {
+  return mats.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, data: m.data }));
+}
+
 document.getElementById('btnSave').addEventListener('click', () => {
   const mats = formulation.materials;
   if (!mats.length) { alert('Add materials first.'); return; }
+  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  const sel = document.getElementById('savedFormulas').value;
+
+  // If a formula is selected, save as new version
+  if (sel !== '') {
+    const idx = parseInt(sel);
+    const formula = saved[idx];
+    if (formula && formula.versions) {
+      const note = prompt('Version note:', 'v' + (formula.versions.length + 1));
+      if (note === null) return;
+      formula.versions.push({ date: new Date().toISOString(), note, materials: makeSnapshot(mats), settings: getCurrentSettings() });
+      formula.currentVersion = formula.versions.length - 1;
+      localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
+      populateSavedList();
+      alert('Saved version ' + formula.versions.length + ' of "' + formula.name + '"');
+      return;
+    }
+  }
+
+  // New formula
   const name = prompt('Formula name:', 'My Formula ' + new Date().toLocaleDateString());
   if (!name) return;
-  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
   saved.push({
     name,
-    date: new Date().toISOString(),
-    materials: mats.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, data: m.data })),
-    settings: {
-      categoryId: document.getElementById('productCategory').value,
-      fragPct: parseInt(document.getElementById('fragPct').value),
-      tempC: parseInt(document.getElementById('tempSlider').value),
-      carrier: document.getElementById('carrierSelect').value,
-      batchSize: parseFloat(document.getElementById('batchSize').value),
-      batchUnit: document.getElementById('batchUnit').value,
-    }
+    versions: [{ date: new Date().toISOString(), note: 'v1', materials: makeSnapshot(mats), settings: getCurrentSettings() }],
+    currentVersion: 0,
   });
   localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
   populateSavedList();
@@ -1780,12 +1858,24 @@ document.getElementById('btnLoad').addEventListener('click', () => {
   const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
   const formula = saved[parseInt(idx)];
   if (!formula) { alert('Formula not found.'); return; }
+
+  // Support both old flat format and new versioned format (B1)
+  let materials, settings;
+  if (formula.versions) {
+    const ver = formula.versions[formula.currentVersion || 0];
+    materials = ver.materials;
+    settings = ver.settings;
+  } else {
+    materials = formula.materials;
+    settings = formula.settings;
+  }
+
   formulation.materials = [];
-  for (const m of formula.materials) {
+  for (const m of materials) {
     formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct, data: m.data || {} });
   }
-  if (formula.settings) {
-    const s = formula.settings;
+  if (settings) {
+    const s = settings;
     if (s.categoryId) document.getElementById('productCategory').value = s.categoryId;
     if (s.fragPct) { document.getElementById('fragPct').value = s.fragPct; document.getElementById('fragPctOut').textContent = s.fragPct + '%'; updatePresetHighlight(); }
     if (s.tempC) { document.getElementById('tempSlider').value = s.tempC; document.getElementById('tempOut').innerHTML = s.tempC + ' &deg;C'; }
@@ -1979,6 +2069,220 @@ function applyBriefFormula() {
     formulation.updatePct(r.cas, r.suggestedPct);
   }
   briefModal.classList.remove('open');
+}
+
+// ===== B2: Substitution UI =====
+function showSubstitutes(cas) {
+  const exclude = new Set(formulation.materials.map(m => m.cas));
+  const results = suggestSubstitutionMulti(cas, DB, exclude, 8);
+  const matName = DB[cas]?.name || cas;
+  let html = '<div class="analysis-card"><h4>Substitutes for ' + escHtml(matName) + '</h4>';
+  if (!results.length) { html += '<p style="color:var(--text2)">No similar materials found.</p></div>'; return html; }
+  html += '<table class="data-table"><thead><tr><th>Material</th><th>Note</th><th>Type</th><th>Similarity</th><th>Tier</th><th></th></tr></thead><tbody>';
+  for (const r of results) {
+    const simPct = Math.round(r.similarity * 100);
+    const cls = simPct >= 80 ? 'badge-ok' : simPct >= 60 ? 'badge-warn' : 'badge-danger';
+    html += '<tr><td>' + escHtml(r.name) + '</td><td>' + escHtml(r.note || '-') + '</td>';
+    html += '<td>' + escHtml(r.odorType || '-') + '</td>';
+    html += '<td><span class="badge ' + cls + '">' + simPct + '%</span></td>';
+    html += '<td>' + r.tier + '</td>';
+    html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + escHtml(r.cas) + '\')">Add</button></td></tr>';
+  }
+  html += '</tbody></table></div>';
+  return html;
+}
+
+// ===== B3: Fragrance Wheel Renderer =====
+function renderWheelTab() {
+  const el = document.getElementById('wheelContent');
+  const segments = FRAGRANCE_WHEEL.segments;
+  const mats = formulation.materials;
+  const segDeg = 360 / segments.length;
+  const cx = 200, cy = 200, outerR = 180, innerR = 80;
+
+  let svg = '<svg viewBox="0 0 400 400" style="max-width:400px;margin:0 auto;display:block">';
+
+  // Draw segments
+  for (let i = 0; i < segments.length; i++) {
+    const s = segments[i];
+    const a1 = (s.angle - segDeg/2) * Math.PI / 180;
+    const a2 = (s.angle + segDeg/2) * Math.PI / 180;
+    const x1o = cx + outerR * Math.cos(a1), y1o = cy + outerR * Math.sin(a1);
+    const x2o = cx + outerR * Math.cos(a2), y2o = cy + outerR * Math.sin(a2);
+    const x1i = cx + innerR * Math.cos(a2), y1i = cy + innerR * Math.sin(a2);
+    const x2i = cx + innerR * Math.cos(a1), y2i = cy + innerR * Math.sin(a1);
+    const large = segDeg > 180 ? 1 : 0;
+    const path = 'M ' + x1o + ' ' + y1o + ' A ' + outerR + ' ' + outerR + ' 0 ' + large + ' 1 ' + x2o + ' ' + y2o +
+      ' L ' + x1i + ' ' + y1i + ' A ' + innerR + ' ' + innerR + ' 0 ' + large + ' 0 ' + x2i + ' ' + y2i + ' Z';
+
+    // Check if any formulation material is in this segment
+    const hasActive = mats.some(m => {
+      const families = getMaterialFamilies(m.data || {});
+      return families.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === s.id);
+    });
+
+    svg += '<path d="' + path + '" fill="' + s.color + '" fill-opacity="' + (hasActive ? '0.9' : '0.4') + '" ';
+    svg += 'stroke="var(--bg)" stroke-width="2" style="cursor:pointer" ';
+    svg += 'onclick="filterByWheelSegment(\'' + s.id + '\')" ';
+    svg += '><title>' + s.id.replace(/_/g, ' ') + ' (' + s.quadrant + ')</title></path>';
+
+    // Label
+    const labelR = (outerR + innerR) / 2;
+    const aM = s.angle * Math.PI / 180;
+    const lx = cx + labelR * Math.cos(aM), ly = cy + labelR * Math.sin(aM);
+    svg += '<text x="' + lx + '" y="' + ly + '" text-anchor="middle" dominant-baseline="middle" ';
+    svg += 'font-size="9" fill="var(--text)" style="pointer-events:none">' + s.id.replace(/_/g, ' ') + '</text>';
+  }
+
+  // Center label
+  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (innerR - 5) + '" fill="var(--card-bg)" stroke="var(--border)"/>';
+  svg += '<text x="' + cx + '" y="' + cy + '" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="var(--text2)">Fragrance</text>';
+  svg += '<text x="' + cx + '" y="' + (cy + 15) + '" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="var(--text2)">Wheel</text>';
+  svg += '</svg>';
+
+  // Material count per segment
+  let legend = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;justify-content:center">';
+  for (const s of segments) {
+    const count = Object.values(DB).filter(e => {
+      const fams = getMaterialFamilies({ odor_type: e.odor?.type, primaryFamilies: [], secondaryFamilies: [], facets: [] });
+      return fams.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === s.id);
+    }).length;
+    legend += '<span class="badge" style="background:' + s.color + '33;color:' + s.color + ';font-size:0.72em">' + s.id.replace(/_/g, ' ') + ' (' + count + ')</span>';
+  }
+  legend += '</div>';
+
+  // Filtered results area
+  legend += '<div id="wheelFilterResults" style="margin-top:16px"></div>';
+
+  el.innerHTML = '<div class="analysis-card">' + svg + legend + '</div>';
+}
+
+function filterByWheelSegment(segId) {
+  const el = document.getElementById('wheelFilterResults');
+  if (!el) return;
+  const matches = [];
+  for (const [cas, e] of Object.entries(DB)) {
+    if (formulation.materials.find(m => m.cas === cas)) continue;
+    const fams = getMaterialFamilies({ odor_type: e.odor?.type, primaryFamilies: [], secondaryFamilies: [], facets: [] });
+    if (fams.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === segId)) {
+      matches.push(e);
+    }
+    if (matches.length >= 15) break;
+  }
+  let html = '<h4>' + segId.replace(/_/g, ' ') + ' — ' + matches.length + ' materials</h4>';
+  html += '<table class="data-table"><thead><tr><th>Material</th><th>Note</th><th>Odor</th><th></th></tr></thead><tbody>';
+  for (const m of matches) {
+    html += '<tr><td>' + escHtml(m.name) + '</td><td>' + escHtml(m.note || '-') + '</td>';
+    html += '<td>' + escHtml(m.odor?.type || '-') + '</td>';
+    html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + escHtml(m.cas) + '\')">+ Add</button></td></tr>';
+  }
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+// ===== B4: Compare Modal =====
+const compareModal = document.getElementById('compareModal');
+document.getElementById('btnCompare').addEventListener('click', () => {
+  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  const selA = document.getElementById('compareA');
+  const selB = document.getElementById('compareB');
+  selA.innerHTML = '';
+  selB.innerHTML = '<option value="__current__">Current Formulation</option>';
+  saved.forEach((s, i) => {
+    selA.innerHTML += '<option value="' + i + '">' + escHtml(s.name) + '</option>';
+    selB.innerHTML += '<option value="' + i + '">' + escHtml(s.name) + '</option>';
+  });
+  if (!saved.length) { alert('Save at least one formula first.'); return; }
+  compareModal.classList.add('open');
+  document.getElementById('compareResults').innerHTML = '';
+});
+document.getElementById('compareClose').addEventListener('click', () => compareModal.classList.remove('open'));
+compareModal.addEventListener('click', e => { if (e.target === compareModal) compareModal.classList.remove('open'); });
+
+document.getElementById('compareRun').addEventListener('click', () => {
+  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  const idxA = document.getElementById('compareA').value;
+  const idxB = document.getElementById('compareB').value;
+
+  function getMats(idx) {
+    if (idx === '__current__') return formulation.materials;
+    const f = saved[parseInt(idx)];
+    if (!f) return [];
+    return f.versions ? f.versions[f.currentVersion || 0].materials : (f.materials || []);
+  }
+
+  const matsA = getMats(idxA);
+  const matsB = getMats(idxB);
+  const diffs = compareFormulations(matsA, matsB);
+
+  let html = '<table class="data-table"><thead><tr><th>Material</th><th>A %</th><th>B %</th><th>Delta</th><th>Status</th></tr></thead><tbody>';
+  for (const d of diffs) {
+    const cls = d.status === 'added' ? 'badge-ok' : d.status === 'removed' ? 'badge-danger' : d.status === 'changed' ? 'badge-warn' : '';
+    const deltaStr = d.delta > 0 ? '+' + d.delta : d.delta === 0 ? '0' : String(d.delta);
+    html += '<tr><td>' + escHtml(d.name) + '</td>';
+    html += '<td>' + (d.pctA || '-') + '</td><td>' + (d.pctB || '-') + '</td>';
+    html += '<td>' + deltaStr + '%</td>';
+    html += '<td><span class="badge ' + cls + '">' + d.status + '</span></td></tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('compareResults').innerHTML = html;
+});
+
+// ===== B5: XLSX Export (Excel XML Spreadsheet 2003) =====
+function exportXLSX() {
+  const mats = formulation.materials;
+  if (!mats.length) { alert('Add materials first.'); return; }
+
+  const catId = document.getElementById('productCategory').value;
+  const fragPct = parseInt(document.getElementById('fragPct').value);
+  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const carrier = document.getElementById('carrierSelect').value;
+  const compliance = checkIFRACompliance(mats, catId, fragPct);
+
+  function xmlEsc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function cell(val, type) {
+    type = type || (typeof val === 'number' ? 'Number' : 'String');
+    return '<Cell><Data ss:Type="' + type + '">' + xmlEsc(val) + '</Data></Cell>';
+  }
+
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  xml += '<?mso-application progid="Excel.Sheet"?>\n';
+  xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n';
+  xml += ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n';
+
+  // Styles
+  xml += '<Styles><Style ss:ID="hdr"><Font ss:Bold="1"/><Interior ss:Color="#E8E8E8" ss:Pattern="Solid"/></Style></Styles>\n';
+
+  // Sheet 1: Formula
+  xml += '<Worksheet ss:Name="Formula"><Table>\n';
+  xml += '<Row ss:StyleID="hdr">' + ['#','Material','CAS','Note','%','Grams','IFRA Status','Odor Type','Strength'].map(h => cell(h)).join('') + '</Row>\n';
+  mats.forEach((m, i) => {
+    const r = compliance.find(c => c.cas === m.cas) || {};
+    const g = roundN((m.pct / 100) * batchSize, 2);
+    xml += '<Row>' + cell(i + 1, 'Number') + cell(m.name) + cell(m.cas) + cell(m.data?.note || '') + cell(m.pct, 'Number') + cell(g, 'Number') + cell(r.status || '') + cell(m.data?.odor_type || '') + cell(m.data?.odor_strength || '') + '</Row>\n';
+  });
+  xml += '</Table></Worksheet>\n';
+
+  // Sheet 2: Summary
+  xml += '<Worksheet ss:Name="Summary"><Table>\n';
+  xml += '<Row>' + cell('Product Category') + cell(IFRA_CATEGORIES[catId]?.name || catId) + '</Row>\n';
+  xml += '<Row>' + cell('Fragrance %') + cell(fragPct, 'Number') + '</Row>\n';
+  xml += '<Row>' + cell('Carrier') + cell((CARRIER_INCI[carrier] || carrier)) + '</Row>\n';
+  xml += '<Row>' + cell('Batch Size') + cell(batchSize, 'Number') + '</Row>\n';
+  xml += '<Row>' + cell('Total %') + cell(roundN(formulation.totalPct(), 1), 'Number') + '</Row>\n';
+  xml += '<Row>' + cell('Materials') + cell(mats.length, 'Number') + '</Row>\n';
+  xml += '<Row>' + cell('Date') + cell(new Date().toISOString()) + '</Row>\n';
+  xml += '</Table></Worksheet>\n';
+
+  xml += '</Workbook>';
+
+  const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'formulation_' + new Date().toISOString().slice(0, 10) + '.xls';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 </script>
 </body>
