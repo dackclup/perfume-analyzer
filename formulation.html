@@ -898,11 +898,12 @@ function renderMaterialList() {
     let grams = (m.pct / 100) * fragGrams;
     if (batchUnit === 'ml') grams *= (m.data?.density || 0.95);
     const gramsStr = grams < 0.1 ? grams.toFixed(3) : grams < 1 ? grams.toFixed(2) : grams.toFixed(1);
-    // Use-rate warning
+    // Use-rate warning — compare % in product (not concentrate)
     const usageRange = parseUsageRange(m.data?.usage_levels);
+    const pctInProduct = m.pct * (fragPct / 100);
     let warnHtml = '';
-    if (usageRange.max != null && m.pct > usageRange.max) {
-      warnHtml = `<span class="mat-warn" title="Typical max: ${usageRange.max}%">! ${usageRange.max}%</span>`;
+    if (usageRange.max != null && pctInProduct > usageRange.max) {
+      warnHtml = `<span class="mat-warn" title="Max ${usageRange.max}% in product, actual ${pctInProduct.toFixed(1)}%">! ${usageRange.max}%</span>`;
     }
     html += `<div class="mat-item" data-cas="${safeCas}">`;
     if (noteLabel) html += `<span class="mat-note ${noteClass}">${noteLabel}</span>`;
@@ -918,11 +919,13 @@ function renderMaterialList() {
   }
   list.innerHTML = html;
 
-  // Total
+  // Total — show % + total grams
   const rawPct = formulation.totalPct();
   const pct = isNaN(rawPct) ? 0 : Math.round(rawPct * 10) / 10;
+  const totalGrams = roundN(fragGrams * pct / 100, 1);
+  const carrierGrams = roundN(batchSize - fragGrams, 1);
   const pctEl = document.getElementById('matTotalPct');
-  pctEl.textContent = pct + '%' + (pct > 100 ? ' (over!)' : '');
+  pctEl.textContent = pct + '%' + (pct > 100 ? ' (over!)' : '') + '  \u2022 ' + totalGrams + 'g / ' + roundN(fragGrams, 1) + 'g frag + ' + carrierGrams + 'g carrier';
   pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
   total.style.display = 'flex';
 }
@@ -1581,20 +1584,21 @@ function renderSafetyTab() {
     html += '</tbody></table></div>';
   }
 
-  // Use-Rate Warnings
+  // Use-Rate Warnings — compare % in product (conc% × fragPct/100)
   const useRateWarnings = [];
   for (const mat of mats) {
     const range = parseUsageRange(mat.data?.usage_levels);
-    if (range.max != null && mat.pct > range.max) {
-      useRateWarnings.push({ name: mat.name, pct: mat.pct, max: range.max });
+    const pctInProd = mat.pct * (fragPct / 100);
+    if (range.max != null && pctInProd > range.max) {
+      useRateWarnings.push({ name: mat.name, pctConc: mat.pct, pctProd: roundN(pctInProd, 2), max: range.max });
     }
   }
   if (useRateWarnings.length) {
     html += '<div class="analysis-card"><h4>Use-Rate Warnings <span class="badge badge-warn">' + useRateWarnings.length + '</span></h4>';
-    html += '<table class="data-table"><thead><tr><th>Material</th><th>Current %</th><th>Typical Max %</th><th>Over By</th></tr></thead><tbody>';
+    html += '<table class="data-table"><thead><tr><th>Material</th><th>% in Product</th><th>Max %</th><th>Over By</th></tr></thead><tbody>';
     for (const w of useRateWarnings) {
-      html += '<tr><td>' + escHtml(w.name) + '</td><td>' + w.pct + '%</td>';
-      html += '<td>' + w.max + '%</td><td style="color:var(--danger)">' + roundN(w.pct - w.max, 1) + '%</td></tr>';
+      html += '<tr><td>' + escHtml(w.name) + '</td><td>' + w.pctProd + '%</td>';
+      html += '<td>' + w.max + '%</td><td style="color:var(--danger)">' + roundN(w.pctProd - w.max, 2) + '%</td></tr>';
     }
     html += '</tbody></table></div>';
   }
