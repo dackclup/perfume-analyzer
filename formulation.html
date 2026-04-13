@@ -714,10 +714,11 @@ function applyLangForm() {
   document.querySelector('.header .subtitle').textContent = t.subtitle;
   // Sidebar
   document.querySelectorAll('.sidebar h2')[0].textContent = t.workspace;
-  const labels = document.querySelectorAll('.control-label span:first-child');
+  const labels = document.querySelectorAll('.sidebar > .control-group > .control-label span:first-child');
+  // Sidebar control labels: 0=Product Category, 1=Product Type, 2=Fragrance, 3=Carrier, 4=Temperature(hidden), 5=Batch Size
   if (labels[0]) labels[0].textContent = t.productCategory;
-  if (labels[1]) labels[1].textContent = t.fragInProduct;
-  if (labels[2]) labels[2].textContent = t.temperature;
+  // labels[1] = Product Type (no translation needed, uses preset chips)
+  if (labels[2]) labels[2].textContent = t.fragInProduct;
   // Materials header
   const matH2 = document.querySelectorAll('.sidebar h2')[1];
   if (matH2) { const cnt = document.getElementById('matCount'); matH2.textContent = t.materials + ' '; matH2.appendChild(cnt); }
@@ -730,7 +731,7 @@ function applyLangForm() {
   document.getElementById('btnImport').textContent = t.importBtn;
   // Tabs
   const tabs = document.querySelectorAll('.tab-btn');
-  const tabKeys = ['tabSafety','tabCompat','tabThermo','tabOdor','tabStability','tabMood'];
+  const tabKeys = ['tabSafety','tabCompat','tabThermo','tabOdor','tabStability','tabMood','tabWheel','tabMap'];
   tabs.forEach((tab, i) => { if (tabKeys[i]) tab.textContent = t[tabKeys[i]]; });
   // Tab panels
   const panels = [
