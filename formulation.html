@@ -922,10 +922,8 @@ function renderMaterialList() {
   // Total — show % + total grams
   const rawPct = formulation.totalPct();
   const pct = isNaN(rawPct) ? 0 : Math.round(rawPct * 10) / 10;
-  const totalGrams = roundN(fragGrams * pct / 100, 1);
-  const carrierGrams = roundN(batchSize - fragGrams, 1);
   const pctEl = document.getElementById('matTotalPct');
-  pctEl.textContent = pct + '%' + (pct > 100 ? ' (over!)' : '') + '  \u2022 ' + totalGrams + 'g / ' + roundN(fragGrams, 1) + 'g frag + ' + carrierGrams + 'g carrier';
+  pctEl.textContent = pct + '%' + (pct > 100 ? ' (over!)' : '') + ' / ' + roundN(fragGrams, 1) + 'g frag';
   pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
   total.style.display = 'flex';
 }
