@@ -383,31 +383,34 @@ function aggregateAllergens(materials, fragPct, categoryId) {
  * @param {Object} allergenResult - output of aggregateAllergens()
  * @returns {string} INCI label text
  */
-function generateINCILabel(materials, allergenResult) {
-  // Main ingredients sorted by descending %
-  const sorted = [...materials].sort((a, b) => b.pct - a.pct);
+/**
+ * Carrier/solvent INCI name mapping.
+ */
+const CARRIER_INCI = {
+  ethanol: 'ALCOHOL DENAT.',
+  dpg: 'DIPROPYLENE GLYCOL',
+  ipm: 'ISOPROPYL MYRISTATE',
+  coconut_oil: 'CAPRYLIC/CAPRIC TRIGLYCERIDE',
+};
+
+function generateINCILabel(materials, allergenResult, carrier) {
+  // Fix 1E: EU INCI format — Carrier, PARFUM, then allergens
   const inciParts = [];
 
-  for (const mat of sorted) {
-    const inci = INCI_NAMES[mat.cas];
-    if (inci) {
-      inciParts.push(inci);
-    } else {
-      // Fallback: use material name in uppercase
-      inciParts.push(mat.name.toUpperCase());
-    }
-  }
+  // 1. Carrier/solvent first (largest component)
+  const carrierInci = CARRIER_INCI[carrier] || CARRIER_INCI.ethanol;
+  inciParts.push(carrierInci);
 
-  // Append declared allergens (exceeding threshold, not already listed)
+  // 2. PARFUM (fragrance compound)
+  inciParts.push('PARFUM');
+
+  // 3. Declared allergens (exceeding threshold) — sorted by total ppm descending
   if (allergenResult && allergenResult.allergens) {
-    const mainCASSet = new Set(materials.map(m => m.cas));
-    const declaredAllergens = allergenResult.allergens
-      .filter(a => a.exceedsThreshold && !mainCASSet.has(a.cas))
+    const declared = allergenResult.allergens
+      .filter(a => a.exceedsThreshold)
+      .sort((a, b) => b.totalPpm - a.totalPpm)
       .map(a => a.inci);
-
-    if (declaredAllergens.length) {
-      inciParts.push(...declaredAllergens);
-    }
+    inciParts.push(...declared);
   }
 
   // Remove duplicates while preserving order
@@ -554,17 +557,25 @@ function computeHarmonyScore(selectedCASes, graph) {
  */
 function analyzeNoteBalance(materials) {
   const tiers = { top: 0, middle: 0, base: 0 };
+  let unclassifiedPct = 0;
+  const unclassifiedMats = [];
 
   for (const mat of materials) {
     const note = mat.data?.note || '';
     const classified = classifyNoteTier(note);
-    for (const t of classified) {
-      tiers[t] += mat.pct;
+    if (classified.length === 0) {
+      unclassifiedPct += mat.pct;
+      unclassifiedMats.push({ cas: mat.cas, name: mat.name, pct: mat.pct });
+    } else {
+      // Fix 1B: split contribution evenly across tiers to prevent inflation
+      const share = mat.pct / classified.length;
+      for (const t of classified) {
+        tiers[t] += share;
+      }
     }
-    // If material spans two tiers, split was already counted for both
   }
 
-  const total = tiers.top + tiers.middle + tiers.base;
+  const total = tiers.top + tiers.middle + tiers.base + unclassifiedPct;
   const missing = [];
   if (tiers.top === 0) missing.push('top');
   if (tiers.middle === 0) missing.push('middle');
@@ -574,10 +585,11 @@ function analyzeNoteBalance(materials) {
     top:    roundN(tiers.top, 1),
     middle: roundN(tiers.middle, 1),
     base:   roundN(tiers.base, 1),
+    unclassified: roundN(unclassifiedPct, 1),
+    unclassifiedMats,
     total:  roundN(total, 1),
     missing,
     balanced: missing.length === 0,
-    // Ideal ranges (guidelines, not strict rules)
     ideal: { top: '15-30%', middle: '30-50%', base: '20-40%' },
   };
 }
@@ -627,68 +639,74 @@ function suggestAllocation(materials) {
  * @param {string} categoryId - IFRA category
  * @param {number} fragPct - fragrance concentration
  * @param {number} iterations - optimization steps (default 50)
+ * @param {Set} locked - CAS numbers to keep fixed (Fix 4C)
  * @returns {Array} [{cas, name, optimizedPct}]
  */
-function optimizeAllocation(materials, graph, categoryId, fragPct, iterations) {
+function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, locked) {
   iterations = iterations || 50;
+  locked = locked || new Set();
   if (materials.length < 2) {
     return materials.map(m => ({ cas: m.cas, name: m.name, optimizedPct: m.pct }));
   }
 
-  // Start from current allocation
   let pcts = materials.map(m => m.pct);
   const n = pcts.length;
 
-  // Get IFRA max limits per material
   const ifraMaxes = materials.map(mat => {
     const ifra51 = parseIFRA51(mat.data?.usage_levels);
     const cat = IFRA_CATEGORIES[categoryId];
     if (ifra51 && cat && cat.key && ifra51[cat.key] != null) {
-      // Convert from % in product to % in concentrate
       return ifra51[cat.key] / (fragPct / 100);
     }
     const range = parseUsageRange(mat.data?.usage_levels);
     return range.max || 100;
   });
 
-  // Iterative projected gradient
   const lr = 0.5;
   for (let iter = 0; iter < iterations; iter++) {
-    // Compute gradient: push toward better note balance
     const grad = new Array(n).fill(0);
 
-    // Note balance gradient
+    // Fix 1B: split dual-note contribution evenly in optimizer
     const tiers = { top: 0, middle: 0, base: 0 };
     const tierIdx = { top: [], middle: [], base: [] };
     for (let i = 0; i < n; i++) {
-      const note = (materials[i].data?.note || '').toLowerCase();
-      if (note.includes('top'))    { tiers.top += pcts[i]; tierIdx.top.push(i); }
-      if (note.includes('middle') || note.includes('mid')) { tiers.middle += pcts[i]; tierIdx.middle.push(i); }
-      if (note.includes('base'))   { tiers.base += pcts[i]; tierIdx.base.push(i); }
+      const classified = classifyNoteTier(materials[i].data?.note || '');
+      const share = classified.length > 0 ? pcts[i] / classified.length : 0;
+      for (const t of classified) {
+        tiers[t] += share;
+        tierIdx[t].push(i);
+      }
     }
 
+    // Fix 1C: targets sum to 100% (0.20 + 0.45 + 0.35)
     const total = pcts.reduce((a, b) => a + b, 0) || 1;
-    const targetTop = total * 0.22;
-    const targetMid = total * 0.40;
-    const targetBase = total * 0.30;
+    const targetTop = total * 0.20;
+    const targetMid = total * 0.45;
+    const targetBase = total * 0.35;
 
-    // Push tier members toward target
     for (const i of tierIdx.top)    grad[i] += (targetTop - tiers.top) / (tierIdx.top.length || 1) * 0.01;
     for (const i of tierIdx.middle) grad[i] += (targetMid - tiers.middle) / (tierIdx.middle.length || 1) * 0.01;
     for (const i of tierIdx.base)   grad[i] += (targetBase - tiers.base) / (tierIdx.base.length || 1) * 0.01;
 
-    // Apply gradient
+    // Fix 4C: skip locked materials
     for (let i = 0; i < n; i++) {
+      if (locked.has(materials[i].cas)) continue;
       pcts[i] = pcts[i] + lr * grad[i];
     }
 
-    // Project: clamp to [0.1, ifraMax], then re-normalize to sum=100
+    // Project: clamp unlocked, re-normalize unlocked to fill remaining budget
+    const lockedSum = materials.reduce((s, m, i) => s + (locked.has(m.cas) ? pcts[i] : 0), 0);
+    const targetUnlocked = Math.max(100 - lockedSum, 0);
     for (let i = 0; i < n; i++) {
+      if (locked.has(materials[i].cas)) continue;
       pcts[i] = clamp(pcts[i], 0.1, ifraMaxes[i]);
     }
-    const pctSum = pcts.reduce((a, b) => a + b, 0);
-    if (pctSum > 0) {
-      for (let i = 0; i < n; i++) pcts[i] = pcts[i] / pctSum * 100;
+    const unlockedSum = pcts.reduce((s, v, i) => s + (locked.has(materials[i].cas) ? 0 : v), 0);
+    if (unlockedSum > 0 && targetUnlocked > 0) {
+      for (let i = 0; i < n; i++) {
+        if (locked.has(materials[i].cas)) continue;
+        pcts[i] = pcts[i] / unlockedSum * targetUnlocked;
+      }
     }
   }
 
@@ -696,6 +714,7 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations) {
     cas: m.cas,
     name: m.name,
     optimizedPct: roundN(pcts[i], 1),
+    locked: locked.has(m.cas),
   }));
 }
 
@@ -886,20 +905,45 @@ function simulateEvaporation(materials, tempC, timePointsH) {
   for (const mat of materials) {
     const vpResult = getVaporPressure(mat.cas, tempC, mat.data);
     const vp = vpResult.vp_mmHg || 0;
-    const mw = mat.data?.molecular_weight || 150; // default MW
+    const mw = mat.data?.molecular_weight || 150;
     const density = mat.data?.density || 1.0;
+    const logP = mat.data?.xlogp || mat.data?.logp || null;
 
-    // Evaporation rate constant (normalized)
-    // Scale factor calibrated against real perfumery volatility:
-    // Limonene (top) fades in ~2h, Linalool (top/mid) in ~4-6h,
-    // Vanillin/Iso E Super (base) last >24h
     const k = evaporationRate(vp, mw, density) * 12;
 
-    // Initial headspace concentration proportional to initial VP contribution
-    const C0 = mat.pct * vp;
+    // Fix 3B: Skin absorption rate via Potts-Guy
+    const kp = pottsGuyKp(logP, mw);
+    const k_abs = kp ? kp * 3600 * 0.1 : 0;
+
+    // Fix 1A: Initial headspace concentration in ppb (Raoult's law)
+    const MW_REF = 150;
+    const P_ATM = 760;
+    const x_i = (mat.pct / 100) * (MW_REF / (mw || MW_REF));
+    const C0 = x_i * vp / P_ATM * 1e9; // ppb
+
+    // Fix 3A: Two-stage evaporation (Teixeira model approximation)
+    const PHASE1_END = 0.5;
+    const BURST_FACTOR = 2.5;
+    const k_total = k + k_abs;
 
     const concentrations = timePointsH.map(t => {
-      return roundN(C0 * Math.exp(-k * t), 6);
+      if (t <= PHASE1_END) {
+        const burstDecay = BURST_FACTOR * Math.exp(-(BURST_FACTOR * k_total) * t);
+        const steadyDecay = Math.exp(-k_total * t);
+        const blend = (1 - t / PHASE1_END);
+        const factor = blend * burstDecay + (1 - blend) * steadyDecay;
+        return roundN(C0 * Math.min(factor, BURST_FACTOR), 6);
+      } else {
+        const C_at_phase1_end = C0 * Math.exp(-k_total * PHASE1_END);
+        return roundN(C_at_phase1_end * Math.exp(-k_total * (t - PHASE1_END)), 6);
+      }
+    });
+
+    // Fix 3B: Skin retention curve
+    const skinRetention = timePointsH.map(t => {
+      if (!k_abs || k_abs <= 0) return 0;
+      const absorbed = C0 * (k_abs / k_total) * (1 - Math.exp(-k_total * t));
+      return roundN(absorbed, 6);
     });
 
     curves.push({
@@ -908,17 +952,22 @@ function simulateEvaporation(materials, tempC, timePointsH) {
       note: mat.data?.note || '',
       vpResult,
       k_evap: roundN(k, 6),
+      k_abs: roundN(k_abs, 8),
       C0: roundN(C0, 4),
       concentrations,
+      skinRetention,
     });
   }
 
-  // Totals per time point
   const totals = timePointsH.map((_, ti) =>
     roundN(curves.reduce((sum, c) => sum + c.concentrations[ti], 0), 4)
   );
 
-  return { timePoints: timePointsH, curves, totals };
+  const skinTotals = timePointsH.map((_, ti) =>
+    roundN(curves.reduce((sum, c) => sum + (c.skinRetention ? c.skinRetention[ti] : 0), 0), 4)
+  );
+
+  return { timePoints: timePointsH, curves, totals, skinTotals };
 }
 
 /**
@@ -1135,10 +1184,12 @@ function materialToRadarWeights(matData) {
  * @param {Array} materials
  * @param {number} tempC
  * @param {Array<number>} timePointsH
+ * @param {string} mixtureModel - 'sum' (default), 'strongest', 'hypo' (Fix 3C)
  * @returns {Object} {axes, datasets:[{label, timeH, data:[12 values]}]}
  */
-function buildRadarData(materials, tempC, timePointsH) {
+function buildRadarData(materials, tempC, timePointsH, mixtureModel) {
   timePointsH = timePointsH || [0, 1, 4, 12];
+  mixtureModel = mixtureModel || 'sum';
   const sim = simulateEvaporation(materials, tempC, timePointsH);
 
   const matInfo = materials.map((mat, i) => ({
@@ -1150,7 +1201,7 @@ function buildRadarData(materials, tempC, timePointsH) {
 
   const datasets = timePointsH.map((t, ti) => {
     const axisValues = RADAR_AXES.map(axis => {
-      let total = 0;
+      const contributions = [];
       for (let mi = 0; mi < materials.length; mi++) {
         const info = matInfo[mi];
         const weight = info.radarWeights[axis] || 0;
@@ -1158,7 +1209,23 @@ function buildRadarData(materials, tempC, timePointsH) {
         const conc = info.curve.concentrations[ti] || 0;
         const ov = calcOdorValue(conc, info.odt.ppb);
         const psi = hillPerceivedIntensity(ov, info.stevensN);
-        total += psi * weight;
+        contributions.push(psi * weight);
+      }
+      if (!contributions.length) return 0;
+
+      let total;
+      if (mixtureModel === 'strongest') {
+        // Strongest Component Model (Teixeira et al. AIChE 2010)
+        total = Math.max(...contributions);
+      } else if (mixtureModel === 'hypo') {
+        // Hypo-additive: sum with diminishing returns
+        contributions.sort((a, b) => b - a);
+        total = contributions[0] || 0;
+        for (let k = 1; k < contributions.length; k++) {
+          total += contributions[k] * Math.pow(0.7, k);
+        }
+      } else {
+        total = contributions.reduce((a, b) => a + b, 0);
       }
       return roundN(total, 2);
     });

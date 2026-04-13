@@ -97,6 +97,16 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
 .mat-pct { width:52px; padding:4px 6px; border:1px solid var(--border); border-radius:4px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:0.85em; background:var(--bg2); color:var(--text); }
 .mat-del { background:none; border:none; color:var(--text2); cursor:pointer; font-size:1em; padding:2px 4px; line-height:1; }
 .mat-del:hover { color:var(--danger); }
+.mat-grams { font-size:0.7em; color:var(--text2); font-family:'IBM Plex Mono',monospace; min-width:42px; text-align:right; }
+
+/* Preset Chips */
+.preset-chips { display:flex; flex-wrap:wrap; gap:4px; }
+.preset-chip { padding:4px 10px; border:1px solid var(--border); border-radius:16px; background:var(--bg2); color:var(--text2); font-size:0.75em; font-family:inherit; cursor:pointer; white-space:nowrap; font-weight:500; }
+.preset-chip:hover { border-color:var(--accent); color:var(--text); }
+.preset-chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+/* Use-rate warning badge */
+.mat-warn { font-size:0.7em; padding:1px 5px; border-radius:8px; background:var(--warn-bg); color:var(--warn); font-weight:600; white-space:nowrap; }
 
 /* Total bar */
 .mat-total { display:flex; justify-content:space-between; align-items:center; padding:8px; font-size:0.85em; font-weight:600; border-top:1px solid var(--border); margin-top:4px; }
@@ -241,16 +251,51 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
       </select>
     </div>
 
+    <!-- Product Type Presets -->
+    <div class="control-group">
+      <div class="control-label"><span>Product Type</span></div>
+      <div class="preset-chips" id="presetChips">
+        <button class="preset-chip" data-pct="25" data-type="Parfum">Parfum 25%</button>
+        <button class="preset-chip active" data-pct="18" data-type="EDP">EDP 18%</button>
+        <button class="preset-chip" data-pct="10" data-type="EDT">EDT 10%</button>
+        <button class="preset-chip" data-pct="5" data-type="EDC">EDC 5%</button>
+        <button class="preset-chip" data-pct="0" data-type="Custom">Custom</button>
+      </div>
+    </div>
+
     <!-- Fragrance Concentration -->
     <div class="control-group">
-      <div class="control-label"><span>Fragrance in Product</span><output id="fragPctOut">15%</output></div>
-      <input type="range" id="fragPct" min="1" max="30" value="15" oninput="document.getElementById('fragPctOut').textContent=this.value+'%'">
+      <div class="control-label"><span>Fragrance in Product</span><output id="fragPctOut">18%</output></div>
+      <input type="range" id="fragPct" min="1" max="30" value="18" oninput="document.getElementById('fragPctOut').textContent=this.value+'%'; updatePresetHighlight();">
+    </div>
+
+    <!-- Carrier/Solvent -->
+    <div class="control-group">
+      <div class="control-label"><span>Carrier / Solvent</span></div>
+      <select id="carrierSelect">
+        <option value="ethanol">Ethanol (ALCOHOL DENAT.)</option>
+        <option value="dpg">DPG (Dipropylene Glycol)</option>
+        <option value="ipm">IPM (Isopropyl Myristate)</option>
+        <option value="coconut_oil">Fractionated Coconut Oil</option>
+      </select>
     </div>
 
     <!-- Temperature -->
     <div class="control-group">
       <div class="control-label"><span>Temperature</span><output id="tempOut">25 &deg;C</output></div>
       <input type="range" id="tempSlider" min="15" max="40" value="25" oninput="document.getElementById('tempOut').innerHTML=this.value+' &deg;C'">
+    </div>
+
+    <!-- Batch Size -->
+    <div class="control-group">
+      <div class="control-label"><span>Batch Size</span></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="number" id="batchSize" value="100" min="1" max="100000" step="1" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-family:inherit;font-size:0.85em;text-align:right">
+        <select id="batchUnit" style="width:auto;padding:6px 8px;font-size:0.85em">
+          <option value="g">grams</option>
+          <option value="ml">ml</option>
+        </select>
+      </div>
     </div>
 
     <hr>
@@ -274,6 +319,23 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <div class="sidebar-actions">
       <button class="btn btn-primary" id="btnAddMat">+ Add</button>
       <button class="btn" id="btnImport">Import from Analyzer</button>
+    </div>
+
+    <hr>
+
+    <!-- Save/Load Formulas -->
+    <h2>Formulas</h2>
+    <div class="sidebar-actions">
+      <button class="btn" id="btnSave">Save Formula</button>
+      <select id="savedFormulas" style="font-size:0.82em">
+        <option value="">-- Load Saved --</option>
+      </select>
+      <button class="btn" id="btnLoad">Load</button>
+      <button class="btn" id="btnNew">New</button>
+    </div>
+    <div class="sidebar-actions" style="margin-top:4px">
+      <button class="btn" id="btnLoadJSON">Load JSON File</button>
+      <input type="file" id="jsonFileInput" accept=".json" style="display:none">
     </div>
   </div>
 
@@ -617,15 +679,29 @@ function renderMaterialList() {
   }
 
   count.textContent = `(${formulation.materials.length})`;
+  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const batchUnit = document.getElementById('batchUnit').value;
   let html = '';
   for (const m of formulation.materials) {
     const noteClass = classifyNote(m.data?.note);
     const noteLabel = noteClass === 'top' ? 'T' : noteClass === 'mid' ? 'M' : noteClass === 'base' ? 'B' : '';
     const safeName = escHtml(m.name);
     const safeCas = escHtml(m.cas);
+    // Batch grams calculation
+    let grams = (m.pct / 100) * batchSize;
+    if (batchUnit === 'ml') grams *= (m.data?.density || 0.95);
+    const gramsStr = grams < 0.1 ? grams.toFixed(3) : grams < 1 ? grams.toFixed(2) : grams.toFixed(1);
+    // Use-rate warning
+    const usageRange = parseUsageRange(m.data?.usage_levels);
+    let warnHtml = '';
+    if (usageRange.max != null && m.pct > usageRange.max) {
+      warnHtml = `<span class="mat-warn" title="Typical max: ${usageRange.max}%">! ${usageRange.max}%</span>`;
+    }
     html += `<div class="mat-item" data-cas="${safeCas}">`;
     if (noteLabel) html += `<span class="mat-note ${noteClass}">${noteLabel}</span>`;
     html += `<span class="mat-name" title="${safeName}">${safeName}</span>`;
+    html += warnHtml;
+    html += `<span class="mat-grams">${gramsStr}g</span>`;
     html += `<input type="number" class="mat-pct" value="${m.pct}" min="0" max="100" step="0.1"
       onchange="formulation.updatePct('${safeCas}',this.value)"
       onblur="if(this.value==='')this.value=0;formulation.updatePct('${safeCas}',this.value)">`;
@@ -786,7 +862,7 @@ function renderCompatTab() {
   const balance = analyzeNoteBalance(mats);
   const suggestions = findCompatibleMaterials(selected, graph, DB, 10);
   const allocation = suggestAllocation(mats);
-  const optimized = optimizeAllocation(mats, graph, catId, fragPct);
+  const optimized = optimizeAllocation(mats, graph, catId, fragPct, 50, lockedMaterials);
 
   let html = '';
 
@@ -810,10 +886,9 @@ function renderCompatTab() {
   const balClass = balance.balanced ? 'badge-ok' : 'badge-warn';
   html += '<div class="analysis-card"><h4>Fragrance Pyramid <span class="badge ' + balClass + '">' + (balance.balanced ? 'Balanced' : 'Missing: ' + balance.missing.join(', ')) + '</span></h4>';
   html += '<div style="display:flex;gap:20px;margin-top:10px;flex-wrap:wrap">';
-  // Pyramid visual
-  const maxBar = Math.max(balance.top, balance.middle, balance.base, 1);
+  const classifiedTotal = balance.top + balance.middle + balance.base;
   for (const [tier, val, color, ideal] of [['Top', balance.top, 'var(--badge-top-fg)', balance.ideal.top], ['Middle', balance.middle, 'var(--badge-mid-fg)', balance.ideal.middle], ['Base', balance.base, 'var(--badge-base-fg)', balance.ideal.base]]) {
-    const pct = Math.round(val / (balance.total || 1) * 100);
+    const pct = Math.round(val / (classifiedTotal || 1) * 100);
     html += '<div style="flex:1;min-width:80px;text-align:center">';
     html += '<div style="font-size:0.78em;color:var(--text2)">' + tier + ' (' + ideal + ')</div>';
     html += '<div style="height:60px;display:flex;align-items:flex-end;justify-content:center">';
@@ -822,17 +897,28 @@ function renderCompatTab() {
     html += '<div style="font-size:0.85em;font-weight:600">' + val + '% <span style="font-weight:400;color:var(--text2)">(' + pct + '%)</span></div>';
     html += '</div>';
   }
-  html += '</div></div>';
+  html += '</div>';
+  if (balance.unclassified > 0) {
+    html += '<div style="margin-top:8px;padding:8px 10px;background:var(--warn-bg);border-radius:6px;font-size:0.82em;color:var(--warn)">';
+    html += balance.unclassifiedMats.length + ' material(s) (' + balance.unclassified + '%) have no note classification: ';
+    html += balance.unclassifiedMats.map(m => escHtml(m.name)).join(', ');
+    html += '</div>';
+  }
+  html += '</div>';
 
   // Suggested Allocation
   html += '<div class="analysis-card"><h4>Suggested Allocation</h4>';
   html += '<p class="panel-desc">Dirichlet-weighted by note tier and inverse odor strength. Click "Apply" to use.</p>';
-  html += '<table class="data-table"><thead><tr><th>Material</th><th>Current %</th><th>Suggested %</th><th>Optimized %</th></tr></thead><tbody>';
+  html += '<table class="data-table"><thead><tr><th></th><th>Material</th><th>Current %</th><th>Suggested %</th><th>Optimized %</th></tr></thead><tbody>';
   for (let i = 0; i < mats.length; i++) {
     const m = mats[i];
     const sug = allocation.find(a => a.cas === m.cas);
     const opt = optimized.find(o => o.cas === m.cas);
-    html += '<tr><td>' + escHtml(m.name) + '</td><td>' + m.pct + '%</td>';
+    const isLocked = lockedMaterials.has(m.cas);
+    html += '<tr>';
+    html += '<td><button class="btn btn-sm" onclick="toggleLock(\'' + escHtml(m.cas) + '\')" title="' + (isLocked ? 'Unlock' : 'Lock') + '" style="font-size:0.75em;padding:2px 6px">' + (isLocked ? '&#128274;' : '&#128275;') + '</button></td>';
+    html += '<td>' + escHtml(m.name) + (isLocked ? ' <span style="color:var(--warn);font-size:0.8em">(locked)</span>' : '') + '</td>';
+    html += '<td>' + m.pct + '%</td>';
     html += '<td>' + (sug ? sug.suggestedPct : '—') + '%</td>';
     html += '<td>' + (opt ? opt.optimizedPct : '—') + '%</td></tr>';
   }
@@ -907,6 +993,7 @@ function renderThermoTab() {
 
   // Evaporation chart
   html += '<div class="analysis-card"><h4>Headspace Concentration Over Time (' + tempC + ' &deg;C)</h4>';
+  html += '<p class="panel-desc">Two-stage model: fast solvent burst (0-30min) then steady diffusion. Dashed line = skin retention.</p>';
   html += '<div class="chart-wrap wide"><canvas id="evapChart"></canvas></div></div>';
 
   // VP Table
@@ -945,6 +1032,19 @@ function renderThermoTab() {
       pointRadius: 2,
     };
   });
+  // Skin retention total as dashed line
+  if (sim.skinTotals && sim.skinTotals.some(v => v > 0)) {
+    datasets.push({
+      label: 'Skin Retention (total)',
+      data: sim.skinTotals,
+      borderColor: '#ef4444',
+      borderDash: [6, 3],
+      backgroundColor: '#ef444422',
+      fill: false,
+      tension: 0.3,
+      pointRadius: 2,
+    });
+  }
 
   _evapChart = new Chart(canvas, {
     type: 'line',
@@ -954,7 +1054,7 @@ function renderThermoTab() {
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
       scales: {
         x: { title: { display: true, text: 'Time (hours)' } },
-        y: { title: { display: true, text: 'Relative Headspace Conc.' }, beginAtZero: true },
+        y: { title: { display: true, text: 'Headspace Concentration (ppb)' }, beginAtZero: true },
       },
     },
   });
@@ -1193,12 +1293,13 @@ function renderSafetyTab() {
 
   const catId = document.getElementById('productCategory').value;
   const fragPct = parseInt(document.getElementById('fragPct').value);
+  const carrier = document.getElementById('carrierSelect').value;
 
   // Run engine
   const compliance = checkIFRACompliance(mats, catId, fragPct);
   const allergens = aggregateAllergens(mats, fragPct, catId);
   const summary = getSafetySummary(compliance, allergens);
-  const inci = generateINCILabel(mats, allergens);
+  const inci = generateINCILabel(mats, allergens, carrier);
 
   // Build HTML
   let html = '';
@@ -1251,13 +1352,42 @@ function renderSafetyTab() {
     html += '</tbody></table></div>';
   }
 
+  // Use-Rate Warnings
+  const useRateWarnings = [];
+  for (const mat of mats) {
+    const range = parseUsageRange(mat.data?.usage_levels);
+    if (range.max != null && mat.pct > range.max) {
+      useRateWarnings.push({ name: mat.name, pct: mat.pct, max: range.max });
+    }
+  }
+  if (useRateWarnings.length) {
+    html += '<div class="analysis-card"><h4>Use-Rate Warnings <span class="badge badge-warn">' + useRateWarnings.length + '</span></h4>';
+    html += '<table class="data-table"><thead><tr><th>Material</th><th>Current %</th><th>Typical Max %</th><th>Over By</th></tr></thead><tbody>';
+    for (const w of useRateWarnings) {
+      html += '<tr><td>' + escHtml(w.name) + '</td><td>' + w.pct + '%</td>';
+      html += '<td>' + w.max + '%</td><td style="color:var(--danger)">' + roundN(w.pct - w.max, 1) + '%</td></tr>';
+    }
+    html += '</tbody></table></div>';
+  }
+
+  // Multi-Category IFRA Check
+  const multiIFRA = buildMultiCategoryIFRA(mats, fragPct);
+  html += '<div class="analysis-card"><h4>Multi-Category IFRA Compatibility</h4>';
+  html += '<p class="panel-desc">Shows which product categories this formula can be used in.</p>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">';
+  for (const [cId, r] of Object.entries(multiIFRA)) {
+    const cls = r.status === 'ok' ? 'badge-ok' : r.status === 'warn' ? 'badge-warn' : 'badge-danger';
+    const icon = r.status === 'ok' ? '&#10003;' : r.bannedCount > 0 ? '&#10007;' : '!';
+    html += '<span class="badge ' + cls + '" style="font-size:0.72em">' + icon + ' ' + r.name + '</span>';
+  }
+  html += '</div></div>';
+
   // INCI Label
   html += '<div class="analysis-card"><h4>INCI Label</h4>';
   html += '<div style="background:var(--bg2);padding:12px;border-radius:6px;font-size:0.85em;line-height:1.6;word-break:break-word;user-select:all">';
   html += inci;
   html += '</div>';
   html += '<button class="btn btn-sm" style="margin-top:8px" id="copyInciBtn">Copy INCI</button>';
-  // Defer event binding to avoid inline script injection
   setTimeout(() => {
     const btn = document.getElementById('copyInciBtn');
     if (btn) btn.addEventListener('click', () => { navigator.clipboard.writeText(inci); btn.textContent = 'Copied!'; });
@@ -1284,14 +1414,21 @@ function exportJSON() {
   const catId = document.getElementById('productCategory').value;
   const fragPct = parseInt(document.getElementById('fragPct').value);
   const tempC = parseInt(document.getElementById('tempSlider').value);
+  const carrier = document.getElementById('carrierSelect').value;
+  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const batchUnit = document.getElementById('batchUnit').value;
 
   const payload = {
     meta: {
       title: 'Perfume Formulation',
       exported: new Date().toISOString(),
       productCategory: IFRA_CATEGORIES[catId]?.name || catId,
+      categoryId: catId,
       fragrancePct: fragPct,
       temperatureC: tempC,
+      carrier: carrier,
+      batchSize: batchSize,
+      batchUnit: batchUnit,
       totalPct: formulation.totalPct(),
     },
     materials: mats.map(m => ({
@@ -1310,7 +1447,7 @@ function exportJSON() {
     payload.analysis.safety = {
       compliance: checkIFRACompliance(mats, catId, fragPct),
       allergens: aggregateAllergens(mats, fragPct, catId),
-      inci: generateINCILabel(mats, aggregateAllergens(mats, fragPct, catId)),
+      inci: generateINCILabel(mats, aggregateAllergens(mats, fragPct, catId), document.getElementById('carrierSelect').value),
     };
     const graph = getCompatGraph();
     payload.analysis.compatibility = {
@@ -1389,18 +1526,235 @@ function exportCSV() {
   URL.revokeObjectURL(url);
 }
 
+// Compact PDF Summary Export
 function exportPDF() {
   if (!formulation.materials.length) { alert('Add materials first.'); return; }
-  // Show all tabs for printing
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('active'));
-  // Render all tabs
-  renderSafetyTab();
-  renderCompatTab();
-  renderThermoTab();
-  renderOdorTab();
-  renderStabilityTab();
-  renderMoodTab();
-  setTimeout(() => window.print(), 300);
+
+  const mats = formulation.materials;
+  const catId = document.getElementById('productCategory').value;
+  const fragPct = parseInt(document.getElementById('fragPct').value);
+  const carrier = document.getElementById('carrierSelect').value;
+  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const batchUnit = document.getElementById('batchUnit').value;
+
+  const compliance = checkIFRACompliance(mats, catId, fragPct);
+  const allergens = aggregateAllergens(mats, fragPct, catId);
+  const summary = getSafetySummary(compliance, allergens);
+  const balance = analyzeNoteBalance(mats);
+  const inci = generateINCILabel(mats, allergens, carrier);
+
+  const printWin = window.open('', '_blank');
+  let h = '<!DOCTYPE html><html><head><title>Formulation Summary</title><style>';
+  h += 'body{font-family:Arial,Helvetica,sans-serif;font-size:11px;margin:20px;color:#222}';
+  h += 'h1{font-size:16px;margin:0 0 4px}h2{font-size:12px;margin:12px 0 4px;border-bottom:1px solid #ccc;padding-bottom:2px}';
+  h += 'table{border-collapse:collapse;width:100%;margin:4px 0}th,td{border:1px solid #ccc;padding:3px 6px;text-align:left;font-size:10px}';
+  h += 'th{background:#f0f0f0;font-weight:600}.ok{color:#16a34a}.warn{color:#d97706}.danger{color:#dc2626}';
+  h += '.meta{color:#666;font-size:10px}.inci{background:#f8f8f8;padding:8px;border:1px solid #ddd;font-size:10px;margin:4px 0;word-break:break-word}';
+  h += '@media print{body{margin:10mm}}';
+  h += '</style></head><body>';
+  h += '<h1>Perfume Formulation Summary</h1>';
+  h += '<div class="meta">' + IFRA_CATEGORIES[catId].name + ' | ' + fragPct + '% in product | ' + (CARRIER_INCI[carrier] || 'ETHANOL') + ' | Batch: ' + batchSize + batchUnit + ' | ' + new Date().toLocaleDateString() + '</div>';
+
+  h += '<h2>Formula (' + mats.length + ' materials, total ' + roundN(formulation.totalPct(), 1) + '%)</h2>';
+  h += '<table><tr><th>#</th><th>Material</th><th>CAS</th><th>Note</th><th>%</th><th>' + batchUnit + '</th><th>IFRA Status</th></tr>';
+  mats.forEach((m, i) => {
+    const r = compliance.find(c => c.cas === m.cas) || {};
+    let grams = (m.pct / 100) * batchSize;
+    if (batchUnit === 'ml') grams *= (m.data?.density || 0.95);
+    const cls = r.status === 'ok' ? 'ok' : r.status === 'warn' ? 'warn' : 'danger';
+    h += '<tr><td>' + (i+1) + '</td><td>' + escHtml(m.name) + '</td><td>' + m.cas + '</td>';
+    h += '<td>' + (m.data?.note || '-') + '</td><td>' + m.pct + '</td><td>' + grams.toFixed(2) + '</td>';
+    h += '<td class="' + cls + '">' + (r.status || '-') + '</td></tr>';
+  });
+  h += '</table>';
+
+  h += '<h2>Fragrance Pyramid</h2>';
+  h += '<div>Top: ' + balance.top + '% | Middle: ' + balance.middle + '% | Base: ' + balance.base + '%';
+  if (balance.unclassified > 0) h += ' | Unclassified: ' + balance.unclassified + '%';
+  h += '</div>';
+
+  const statusTxt = summary.overallStatus === 'ok' ? 'COMPLIANT' : summary.overallStatus === 'banned' ? 'BANNED MATERIAL' : 'OVER LIMIT';
+  h += '<h2>Safety Status: <span class="' + (summary.overallStatus === 'ok' ? 'ok' : 'danger') + '">' + statusTxt + '</span></h2>';
+  if (allergens.allergens.filter(a => a.exceedsThreshold).length) {
+    h += '<div>Allergens to declare: ' + allergens.allergens.filter(a => a.exceedsThreshold).map(a => a.inci).join(', ') + '</div>';
+  }
+
+  h += '<h2>INCI Label</h2><div class="inci">' + inci + '</div>';
+  h += '</body></html>';
+  printWin.document.write(h);
+  printWin.document.close();
+  setTimeout(() => { printWin.print(); }, 300);
+}
+
+// ===== Preset Chip Logic =====
+document.querySelectorAll('.preset-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const pct = parseInt(chip.dataset.pct);
+    if (pct > 0) {
+      document.getElementById('fragPct').value = pct;
+      document.getElementById('fragPctOut').textContent = pct + '%';
+    }
+    document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    renderActiveTab();
+  });
+});
+
+function updatePresetHighlight() {
+  const val = parseInt(document.getElementById('fragPct').value);
+  document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+  const match = document.querySelector('.preset-chip[data-pct="' + val + '"]');
+  if (match && val > 0) {
+    match.classList.add('active');
+  } else {
+    document.querySelector('.preset-chip[data-type="Custom"]').classList.add('active');
+  }
+}
+
+// ===== Batch & Carrier change triggers =====
+document.getElementById('batchSize').addEventListener('input', () => renderMaterialList());
+document.getElementById('batchUnit').addEventListener('change', () => renderMaterialList());
+document.getElementById('carrierSelect').addEventListener('change', () => renderActiveTab());
+
+// ===== Save/Load Formulations =====
+const SAVE_KEY = 'perfume_saved_formulations';
+
+function populateSavedList() {
+  const sel = document.getElementById('savedFormulas');
+  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  sel.innerHTML = '<option value="">-- Load Saved (' + saved.length + ') --</option>';
+  saved.forEach((s, i) => {
+    sel.innerHTML += '<option value="' + i + '">' + escHtml(s.name) + ' (' + s.materials.length + ' mats)</option>';
+  });
+}
+populateSavedList();
+
+document.getElementById('btnSave').addEventListener('click', () => {
+  const mats = formulation.materials;
+  if (!mats.length) { alert('Add materials first.'); return; }
+  const name = prompt('Formula name:', 'My Formula ' + new Date().toLocaleDateString());
+  if (!name) return;
+  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  saved.push({
+    name,
+    date: new Date().toISOString(),
+    materials: mats.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, data: m.data })),
+    settings: {
+      categoryId: document.getElementById('productCategory').value,
+      fragPct: parseInt(document.getElementById('fragPct').value),
+      tempC: parseInt(document.getElementById('tempSlider').value),
+      carrier: document.getElementById('carrierSelect').value,
+      batchSize: parseFloat(document.getElementById('batchSize').value),
+      batchUnit: document.getElementById('batchUnit').value,
+    }
+  });
+  localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
+  populateSavedList();
+  alert('Saved "' + name + '"!');
+});
+
+document.getElementById('btnLoad').addEventListener('click', () => {
+  const idx = document.getElementById('savedFormulas').value;
+  if (idx === '') { alert('Select a saved formula.'); return; }
+  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  const formula = saved[parseInt(idx)];
+  if (!formula) { alert('Formula not found.'); return; }
+  formulation.materials = [];
+  for (const m of formula.materials) {
+    formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct, data: m.data || {} });
+  }
+  if (formula.settings) {
+    const s = formula.settings;
+    if (s.categoryId) document.getElementById('productCategory').value = s.categoryId;
+    if (s.fragPct) { document.getElementById('fragPct').value = s.fragPct; document.getElementById('fragPctOut').textContent = s.fragPct + '%'; updatePresetHighlight(); }
+    if (s.tempC) { document.getElementById('tempSlider').value = s.tempC; document.getElementById('tempOut').innerHTML = s.tempC + ' &deg;C'; }
+    if (s.carrier) document.getElementById('carrierSelect').value = s.carrier;
+    if (s.batchSize) document.getElementById('batchSize').value = s.batchSize;
+    if (s.batchUnit) document.getElementById('batchUnit').value = s.batchUnit;
+  }
+  formulation.onChange();
+});
+
+document.getElementById('btnNew').addEventListener('click', () => {
+  if (formulation.materials.length && !confirm('Clear current formulation?')) return;
+  formulation.materials = [];
+  formulation.onChange();
+});
+
+// ===== Load JSON File =====
+document.getElementById('btnLoadJSON').addEventListener('click', () => {
+  document.getElementById('jsonFileInput').click();
+});
+
+document.getElementById('jsonFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.materials || !Array.isArray(data.materials)) {
+        alert('Invalid JSON: no materials array found.'); return;
+      }
+      formulation.materials = [];
+      for (const m of data.materials) {
+        if (!m.cas || !m.name) continue;
+        const dbEntry = DB[m.cas];
+        const matData = dbEntry ? {
+          cas: dbEntry.cas, name: dbEntry.name, note: dbEntry.note,
+          odor_type: dbEntry.odor?.type || null,
+          odor_strength: dbEntry.odor?.strength || null,
+          blends_with: dbEntry.blends_with || [],
+          usage_levels: dbEntry.safety?.usage || null,
+        } : (m.data || {});
+        formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct || 10, data: matData });
+      }
+      if (data.meta) {
+        if (data.meta.fragrancePct) {
+          document.getElementById('fragPct').value = data.meta.fragrancePct;
+          document.getElementById('fragPctOut').textContent = data.meta.fragrancePct + '%';
+          updatePresetHighlight();
+        }
+        if (data.meta.temperatureC) {
+          document.getElementById('tempSlider').value = data.meta.temperatureC;
+          document.getElementById('tempOut').innerHTML = data.meta.temperatureC + ' &deg;C';
+        }
+      }
+      formulation.onChange();
+      alert('Loaded ' + formulation.materials.length + ' material(s) from JSON.');
+    } catch (err) {
+      alert('Failed to parse JSON: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ===== Multi-Category IFRA Check =====
+function buildMultiCategoryIFRA(mats, fragPct) {
+  const results = {};
+  for (const catId of Object.keys(IFRA_CATEGORIES)) {
+    const compliance = checkIFRACompliance(mats, catId, fragPct);
+    const summary = getSafetySummary(compliance, null);
+    results[catId] = {
+      name: IFRA_CATEGORIES[catId].name,
+      status: summary.overallStatus,
+      bannedCount: summary.bannedCount,
+      dangerCount: summary.dangerCount,
+      warnCount: summary.warnCount,
+      okCount: summary.okCount,
+    };
+  }
+  return results;
+}
+
+// ===== Material Lock during Optimization =====
+const lockedMaterials = new Set();
+
+function toggleLock(cas) {
+  if (lockedMaterials.has(cas)) lockedMaterials.delete(cas);
+  else lockedMaterials.add(cas);
+  renderActiveTab();
 }
 </script>
 </body>
