@@ -929,7 +929,7 @@ const formulation = {
     if (batchUnit === 'ml') pureAmount = pureAmount / (m.data?.density || 0.9);
     const unit = batchUnit === 'ml' ? 'ml' : 'g';
     const dil = m.dilution || 100;
-    const amount = dil < 100 ? pureAmount / (dil / 100) : pureAmount;
+    const amount = calcWeighAmount(pureAmount, dil, m.dilutionSolvent);
     function fmtA(v) { return v === 0 ? '0' : v < 0.001 ? v.toExponential(1) : v < 0.1 ? v.toFixed(3) : v < 1 ? v.toFixed(3) : v < 10 ? v.toFixed(2) : v.toFixed(1); }
 
     const gramsEl = el.querySelector('.mat-grams');
@@ -1031,6 +1031,27 @@ function classifyNote(note) {
   return '';
 }
 
+// Get carrier budget (in grams) for a specific solvent CAS
+function getCarrierBudget(solventCas) {
+  if (!solventCas) return 0;
+  const carrier = carrierMaterials.find(c => c.cas === solventCas);
+  if (!carrier) return 0;
+  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
+  return (carrier.pct / 100) * batchSize * (1 - fragPct / 100);
+}
+
+// Calculate weigh amount for a diluted material, capping if solvent replaces carrier
+function calcWeighAmount(pureAmount, dilution, dilutionSolventCas) {
+  if (!dilution || dilution >= 100) return pureAmount;
+  const uncapped = pureAmount / (dilution / 100);
+  if (!dilutionSolventCas) return uncapped;
+  const carrierBudget = getCarrierBudget(dilutionSolventCas);
+  if (carrierBudget <= 0) return uncapped;
+  const maxWeigh = pureAmount + carrierBudget;
+  return Math.min(uncapped, maxWeigh);
+}
+
 // Cache empty state HTML before first render overwrites it
 const _emptyStateHTML = document.getElementById('matEmpty') ? document.getElementById('matEmpty').outerHTML : '<div class="empty-state"><p>No materials yet</p></div>';
 
@@ -1066,9 +1087,10 @@ function renderMaterialList() {
     if (batchUnit === 'ml') pureAmount = pureAmount / (m.data?.density || 0.9);
     const unit = batchUnit === 'ml' ? 'ml' : 'g';
     const dil = m.dilution || 100;
-    const amount = dil < 100 ? pureAmount / (dil / 100) : pureAmount;
-    const amtStr = amount === 0 ? '0' : amount < 0.001 ? amount.toExponential(1) : amount < 0.1 ? amount.toFixed(3) : amount < 1 ? amount.toFixed(3) : amount < 10 ? amount.toFixed(2) : amount.toFixed(1);
-    const pureStr = pureAmount === 0 ? '0' : pureAmount < 0.001 ? pureAmount.toExponential(1) : pureAmount < 0.1 ? pureAmount.toFixed(3) : pureAmount < 1 ? pureAmount.toFixed(3) : pureAmount < 10 ? pureAmount.toFixed(2) : pureAmount.toFixed(1);
+    const amount = calcWeighAmount(pureAmount, dil, m.dilutionSolvent);
+    function fmtG(v) { return v === 0 ? '0' : v < 0.001 ? v.toExponential(1) : v < 0.1 ? v.toFixed(3) : v < 1 ? v.toFixed(3) : v < 10 ? v.toFixed(2) : v.toFixed(1); }
+    const amtStr = fmtG(amount);
+    const pureStr = fmtG(pureAmount);
     // Use-rate warning — compare % in product (not concentrate)
     const usageRange = parseUsageRange(m.data?.usage_levels);
     const pctInProduct = m.pct * (fragPct / 100);
@@ -1081,7 +1103,6 @@ function renderMaterialList() {
     html += `<span class="mat-name" title="${safeName}">${safeName}</span>`;
     html += warnHtml;
     html += `<span class="mat-grams">${amtStr}${unit}</span>`;
-    if (amount > batchSize) html += `<span class="mat-warn" title="Weigh amount ${amtStr}${unit} exceeds batch ${batchSize}${unit}">! over</span>`;
     html += `<input type="number" class="mat-pct" value="${m.pct}" min="0" max="100" step="0.01"
       onchange="formulation.updatePct('${safeCas}',this.value)"
       onblur="if(this.value==='')this.value=0;formulation.updatePct('${safeCas}',this.value)">`;
@@ -1179,18 +1200,18 @@ function renderCarrierList() {
   const fragGrams = batchSize * (fragPct / 100);
   const carrierGramsFull = batchSize * (1 - fragPct / 100);
 
-  // Calculate dilution solvent per carrier CAS
+  // Calculate dilution solvent per carrier CAS (using capped weigh amounts)
   const dilSolventByCarrier = {};
   let dilSolventTotal = 0;
   for (const m of formulation.materials) {
     const d = m.dilution || 100;
-    if (d < 100) {
+    if (d < 100 && m.dilutionSolvent) {
       let pure = (m.pct / 100) * fragGrams;
       if (batchUnit === 'ml') pure = pure / (m.data?.density || 0.9);
-      const solventAmt = pure / (d / 100) - pure;
+      const weigh = calcWeighAmount(pure, d, m.dilutionSolvent);
+      const solventAmt = weigh - pure;
       dilSolventTotal += solventAmt;
-      const sCas = m.dilutionSolvent || '';
-      if (sCas) dilSolventByCarrier[sCas] = (dilSolventByCarrier[sCas] || 0) + solventAmt;
+      dilSolventByCarrier[m.dilutionSolvent] = (dilSolventByCarrier[m.dilutionSolvent] || 0) + solventAmt;
     }
   }
 
