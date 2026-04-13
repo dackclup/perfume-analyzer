@@ -338,7 +338,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <div style="display:flex;gap:4px;align-items:center">
       <button class="btn" id="btnSave" style="white-space:nowrap">Save</button>
       <select id="savedFormulas" style="font-size:0.78em;flex:1;min-width:0"><option value="">-- Saved --</option></select>
-      <button class="btn" id="btnManage" style="font-size:0.75em">&#9881;</button>
+      <button class="btn" id="btnDelete" style="color:var(--danger);white-space:nowrap">Del</button>
       <button class="btn" id="btnNew">New</button>
     </div>
     <div style="display:flex;gap:4px;margin-top:4px">
@@ -461,19 +461,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <div class="modal-body">
       <input type="text" class="modal-search" id="modalSearch" placeholder="Search by name or CAS..." autocomplete="off">
       <ul class="modal-results" id="modalResults"></ul>
-    </div>
-  </div>
-</div>
-
-<!-- ===== Manage Saved Formulas Modal ===== -->
-<div class="modal-overlay" id="manageModal">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-header">
-      <h3>Saved Formulas</h3>
-      <button class="modal-close" id="manageClose">&times;</button>
-    </div>
-    <div class="modal-body" style="max-height:60vh;overflow-y:auto">
-      <div id="manageList"></div>
     </div>
   </div>
 </div>
@@ -2036,49 +2023,19 @@ document.getElementById('savedFormulas').addEventListener('change', () => {
 });
 
 // ===== Manage Saved Formulas Modal =====
-const manageModal = document.getElementById('manageModal');
-document.getElementById('btnManage').addEventListener('click', () => {
+document.getElementById('btnDelete').addEventListener('click', () => {
+  const idx = document.getElementById('savedFormulas').value;
+  if (idx === '') { alert('Select a saved formula to delete.'); return; }
   const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
-  if (!saved.length) return; // nothing to manage
-  renderManageList();
-  manageModal.classList.add('open');
-});
-document.getElementById('manageClose').addEventListener('click', () => manageModal.classList.remove('open'));
-manageModal.addEventListener('click', e => { if (e.target === manageModal) manageModal.classList.remove('open'); });
-
-function renderManageList() {
-  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
-  const el = document.getElementById('manageList');
-  if (!saved.length) { el.innerHTML = '<p style="color:var(--text2)">No saved formulas.</p>'; return; }
-  let html = '';
-  saved.forEach((s, i) => {
-    const matCount = s.versions ? s.versions[s.currentVersion || 0].materials.length : (s.materials || []).length;
-    const verCount = s.versions ? s.versions.length : 1;
-    const date = s.versions ? s.versions[0].date : (s.date || '');
-    const dateStr = date ? new Date(date).toLocaleDateString() : '';
-    html += '<div style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;background:var(--bg2)">';
-    html += '<div style="flex:1;min-width:0">';
-    html += '<div style="font-weight:500;font-size:0.9em">' + escHtml(s.name) + '</div>';
-    html += '<div style="font-size:0.75em;color:var(--text2)">' + matCount + ' materials' + (verCount > 1 ? ' \u2022 ' + verCount + ' versions' : '') + (dateStr ? ' \u2022 ' + dateStr : '') + '</div>';
-    html += '</div>';
-    html += '<button class="btn btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="deleteSavedFormula(' + i + ')">Delete</button>';
-    html += '</div>';
-  });
-  el.innerHTML = html;
-}
-
-function deleteSavedFormula(idx) {
-  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
-  const formula = saved[idx];
+  const formula = saved[parseInt(idx)];
   if (!formula) return;
   if (!confirm('Delete "' + (formula.name || 'formula') + '"?')) return;
-  saved.splice(idx, 1);
+  saved.splice(parseInt(idx), 1);
   localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
   populateSavedList();
   formulation.materials = [];
   formulation.onChange();
-  manageModal.classList.remove('open');
-}
+});
 
 document.getElementById('btnNew').addEventListener('click', () => {
   if (formulation.materials.length && !confirm('Clear current formulation?')) return;
