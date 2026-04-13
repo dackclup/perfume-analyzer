@@ -996,7 +996,7 @@ const formulation = {
         const dUnit = batchUnit === 'ml' ? 'ml' : 'g';
         const carrierTotal = batchUnit === 'ml' ? (batchSize - fragGrams) / 0.9 : batchSize - fragGrams;
         const carrierNeeded = Math.max(0, carrierTotal - dilSolvent);
-        dilEl.textContent = 'Solvent in dilutions: ' + fmtAmt(dilSolvent) + dUnit + ' → Carrier to add: ' + fmtAmt(carrierNeeded) + dUnit + ' (of ' + fmtAmt(carrierTotal) + dUnit + ')';
+        dilEl.innerHTML = 'Add carrier: <b>' + fmtAmt(carrierNeeded) + dUnit + '</b> (total ' + fmtAmt(carrierTotal) + dUnit + ' − ' + fmtAmt(dilSolvent) + dUnit + ' solvent in dilutions)';
         dilEl.style.display = '';
       } else {
         dilEl.style.display = 'none';
@@ -1147,7 +1147,7 @@ function renderMaterialList() {
     const dUnit = batchUnit === 'ml' ? 'ml' : 'g';
     const carrierTotal = batchUnit === 'ml' ? (batchSize - fragGrams) / 0.9 : batchSize - fragGrams;
     const carrierNeeded = Math.max(0, carrierTotal - dilSolvent);
-    dilEl.textContent = 'Solvent in dilutions: ' + fmtAmt(dilSolvent) + dUnit + ' → Carrier to add: ' + fmtAmt(carrierNeeded) + dUnit + ' (of ' + fmtAmt(carrierTotal) + dUnit + ')';
+    dilEl.innerHTML = 'Add carrier: <b>' + fmtAmt(carrierNeeded) + dUnit + '</b> (total ' + fmtAmt(carrierTotal) + dUnit + ' − ' + fmtAmt(dilSolvent) + dUnit + ' solvent in dilutions)';
     dilEl.style.display = '';
   } else {
     dilEl.style.display = 'none';
