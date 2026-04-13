@@ -1234,6 +1234,32 @@ const MATERIAL_PROPERTIES = {
 // B3: Fragrance Wheel (Michael Edwards taxonomy)
 // 4 quadrants × 3-4 subcategories = 14 segments
 // ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// C4: Family-specific optimal note ratios
+// Professional perfumers adjust pyramid balance by olfactive family.
+// Sources: Perfumery techniques literature, Michael Edwards
+// ─────────────────────────────────────────────────────────────
+const FAMILY_NOTE_RATIOS = {
+  'citrus':   { top: 0.35, mid: 0.35, base: 0.30 },
+  'fresh':    { top: 0.35, mid: 0.35, base: 0.30 },
+  'green':    { top: 0.30, mid: 0.40, base: 0.30 },
+  'aquatic':  { top: 0.30, mid: 0.40, base: 0.30 },
+  'fruity':   { top: 0.30, mid: 0.40, base: 0.30 },
+  'floral':   { top: 0.20, mid: 0.50, base: 0.30 },
+  'soft_floral':{ top: 0.15, mid: 0.50, base: 0.35 },
+  'oriental': { top: 0.10, mid: 0.35, base: 0.55 },
+  'spicy':    { top: 0.15, mid: 0.40, base: 0.45 },
+  'gourmand': { top: 0.10, mid: 0.40, base: 0.50 },
+  'woody':    { top: 0.15, mid: 0.35, base: 0.50 },
+  'mossy':    { top: 0.15, mid: 0.35, base: 0.50 },
+  'dry_woods':{ top: 0.10, mid: 0.35, base: 0.55 },
+  'aromatic': { top: 0.25, mid: 0.40, base: 0.35 },
+  'amber':    { top: 0.10, mid: 0.35, base: 0.55 },
+  'musk':     { top: 0.15, mid: 0.40, base: 0.45 },
+  'animalic': { top: 0.10, mid: 0.30, base: 0.60 },
+  'default':  { top: 0.20, mid: 0.45, base: 0.35 },
+};
+
 const FRAGRANCE_WHEEL = {
   segments: [
     { id: 'citrus',          quadrant: 'Fresh',    angle: 0,   color: '#fbbf24' },

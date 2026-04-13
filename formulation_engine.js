@@ -642,6 +642,30 @@ function suggestAllocation(materials) {
  * @param {Set} locked - CAS numbers to keep fixed (Fix 4C)
  * @returns {Array} [{cas, name, optimizedPct}]
  */
+/**
+ * C4: Detect the dominant olfactive family of a formulation.
+ * Weighted by percentage — the family with highest total % wins.
+ */
+function detectDominantFamily(materials) {
+  const familyPct = {};
+  for (const mat of materials) {
+    const families = getMaterialFamilies(mat.data || {});
+    const share = mat.pct / (families.length || 1);
+    for (const f of families) {
+      const fl = f.toLowerCase();
+      // Map to wheel segment names
+      const seg = (typeof FRAGRANCE_WHEEL !== 'undefined' && FRAGRANCE_WHEEL.familyToSegment)
+        ? FRAGRANCE_WHEEL.familyToSegment[fl] || fl : fl;
+      familyPct[seg] = (familyPct[seg] || 0) + share;
+    }
+  }
+  let best = 'default', bestPct = 0;
+  for (const [fam, pct] of Object.entries(familyPct)) {
+    if (pct > bestPct) { best = fam; bestPct = pct; }
+  }
+  return best;
+}
+
 function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, locked) {
   iterations = iterations || 50;
   locked = locked || new Set();
@@ -678,11 +702,14 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
       }
     }
 
-    // Fix 1C: targets sum to 100% (0.20 + 0.45 + 0.35)
+    // C4: Use family-specific note ratios if available
     const total = pcts.reduce((a, b) => a + b, 0) || 1;
-    const targetTop = total * 0.20;
-    const targetMid = total * 0.45;
-    const targetBase = total * 0.35;
+    const dominantFamily = detectDominantFamily(materials);
+    const ratios = (typeof FAMILY_NOTE_RATIOS !== 'undefined' && FAMILY_NOTE_RATIOS[dominantFamily])
+      ? FAMILY_NOTE_RATIOS[dominantFamily] : { top: 0.20, mid: 0.45, base: 0.35 };
+    const targetTop = total * ratios.top;
+    const targetMid = total * ratios.mid;
+    const targetBase = total * ratios.base;
 
     for (const i of tierIdx.top)    grad[i] += (targetTop - tiers.top) / (tierIdx.top.length || 1) * 0.01;
     for (const i of tierIdx.middle) grad[i] += (targetMid - tiers.middle) / (tierIdx.middle.length || 1) * 0.01;
@@ -1789,6 +1816,145 @@ function generateFromBrief(brief, db, graph) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// C3: AI-Assisted Formula Suggestion (Philyra-lite)
+// Given a target 12-axis radar profile + 8-axis mood profile,
+// select materials that collectively approximate the target.
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Suggest a formula that matches a target odor + mood profile.
+ * Uses greedy residual-minimization: pick the material that most
+ * reduces the distance between current blend and target.
+ * @param {number[]} targetRadar - 12 values for RADAR_AXES (0-100 each)
+ * @param {number[]} targetMood - 8 values for mood dims (0-5 each)
+ * @param {Object} db - material database
+ * @param {number} maxIngredients - max materials to select
+ * @returns {Array} [{cas, name, suggestedPct, note}]
+ */
+function suggestFromProfile(targetRadar, targetMood, db, maxIngredients) {
+  maxIngredients = maxIngredients || 10;
+  if (!targetRadar || targetRadar.length !== 12) return [];
+
+  const selected = [];
+  const selectedSet = new Set();
+  // Normalize target to unit vector
+  const targetMag = Math.sqrt(targetRadar.reduce((s, v) => s + v * v, 0)) || 1;
+  const tNorm = targetRadar.map(v => v / targetMag);
+
+  // Current blend profile starts at zero
+  let currentRadar = new Array(12).fill(0);
+
+  for (let round = 0; round < maxIngredients; round++) {
+    let bestCAS = null, bestScore = -Infinity, bestRadar = null;
+
+    for (const [cas, entry] of Object.entries(db)) {
+      if (selectedSet.has(cas) || !entry.note) continue;
+
+      const matRadar = materialToRadarWeights({
+        odor_type: entry.odor?.type, primaryFamilies: [], secondaryFamilies: [], facets: [],
+      });
+      const matVec = RADAR_AXES.map(a => (matRadar[a] || 0) * 50); // scale to ~0-50
+
+      // Simulate adding this material (equal weight for scoring)
+      const trial = currentRadar.map((v, j) => v + matVec[j]);
+      const trialMag = Math.sqrt(trial.reduce((s, v) => s + v * v, 0)) || 1;
+      const trialNorm = trial.map(v => v / trialMag);
+
+      // Cosine similarity with target
+      let sim = 0;
+      for (let j = 0; j < 12; j++) sim += trialNorm[j] * tNorm[j];
+
+      // Mood bonus
+      if (targetMood && typeof AROMACHOLOGY_SCORES !== 'undefined') {
+        const moods = AROMACHOLOGY_SCORES[cas];
+        if (moods) {
+          const MOOD_DIMS = ['relaxing','energizing','focusing','uplifting','sensual','calming','grounding','refreshing'];
+          let moodSim = 0;
+          for (let j = 0; j < MOOD_DIMS.length; j++) {
+            moodSim += ((moods[MOOD_DIMS[j]] || 0) / 5) * ((targetMood[j] || 0) / 5);
+          }
+          sim += moodSim * 0.3; // mood is 30% of score
+        }
+      }
+
+      if (sim > bestScore) { bestScore = sim; bestCAS = cas; bestRadar = matVec; }
+    }
+
+    if (!bestCAS) break;
+    selected.push({ cas: bestCAS, name: db[bestCAS].name, note: db[bestCAS].note });
+    selectedSet.add(bestCAS);
+    currentRadar = currentRadar.map((v, j) => v + bestRadar[j]);
+  }
+
+  if (!selected.length) return [];
+
+  // Assign percentages
+  const matArray = selected.map(s => ({ cas: s.cas, name: s.name, data: { note: s.note, odor_strength: 'Medium' } }));
+  const allocation = suggestAllocation(matArray);
+  return selected.map((s, i) => ({
+    cas: s.cas, name: s.name, note: s.note,
+    suggestedPct: allocation[i]?.suggestedPct || roundN(100 / selected.length, 1),
+  }));
+}
+
+// ─────────────────────────────────────────────────────────────
+// C1: Odor Map — 2D projection of material space
+// Uses PCA-like approach: project 12-axis radar onto 2 axes
+// that capture the most variance (Fresh↔Oriental, Floral↔Woody)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Compute 2D coordinates for all materials in the database.
+ * Axis 1 (x): Fresh/Citrus/Green ← → Oriental/Amber/Spicy
+ * Axis 2 (y): Floral/Fruity ← → Woody/Earthy/Musk
+ * @param {Object} db - material database
+ * @returns {Array} [{cas, name, x, y, note, family, inFormulation}]
+ */
+function buildOdorMap(db, formulationCAS) {
+  formulationCAS = formulationCAS || new Set();
+  const points = [];
+
+  // Axis weights: each radar axis contributes to x and y
+  const xWeights = { citrus: -1, green: -0.8, fresh: -0.9, aquatic: -0.7, fruity: -0.3,
+    floral: 0, spicy: 0.7, amber: 0.9, gourmand: 0.6, woody: 0.3, musk: 0.5, animalic: 0.8, powdery: 0.2 };
+  const yWeights = { citrus: 0.3, green: 0.5, fresh: 0.2, aquatic: -0.2, fruity: 0.7,
+    floral: 1, spicy: -0.3, amber: -0.5, gourmand: -0.6, woody: -0.9, musk: -0.7, animalic: -0.8, powdery: 0.4 };
+
+  for (const [cas, entry] of Object.entries(db)) {
+    const radar = materialToRadarWeights({
+      odor_type: entry.odor?.type, primaryFamilies: [], secondaryFamilies: [], facets: [],
+    });
+    let x = 0, y = 0;
+    for (const axis of RADAR_AXES) {
+      const w = radar[axis] || 0;
+      x += w * (xWeights[axis] || 0);
+      y += w * (yWeights[axis] || 0);
+    }
+    // Add small jitter to prevent overlap
+    x += (Math.sin(cas.length * 37 + cas.charCodeAt(0)) * 0.15);
+    y += (Math.cos(cas.length * 53 + cas.charCodeAt(1 % cas.length)) * 0.15);
+
+    const families = getMaterialFamilies({ odor_type: entry.odor?.type, primaryFamilies: [], secondaryFamilies: [], facets: [] });
+    const primaryFamily = families[0] || 'other';
+    const segment = (typeof FRAGRANCE_WHEEL !== 'undefined' && FRAGRANCE_WHEEL.familyToSegment)
+      ? FRAGRANCE_WHEEL.familyToSegment[primaryFamily.toLowerCase()] || 'woody' : 'woody';
+    const segData = (typeof FRAGRANCE_WHEEL !== 'undefined')
+      ? FRAGRANCE_WHEEL.segments.find(s => s.id === segment) : null;
+
+    points.push({
+      cas, name: entry.name,
+      x: roundN(x, 3), y: roundN(y, 3),
+      note: entry.note || '',
+      family: primaryFamily,
+      color: segData ? segData.color : '#888',
+      inFormulation: formulationCAS.has(cas),
+    });
+  }
+
+  return points;
+}
+
 // A5: Cost Calculation Engine
 // ─────────────────────────────────────────────────────────────
 
