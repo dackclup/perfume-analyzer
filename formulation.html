@@ -893,6 +893,12 @@ const formulation = {
     renderCarrierList();
     this._scheduleCommit();
   },
+  setDilutionSolvent(cas, solventCas) {
+    const m = this.materials.find(m => m.cas === cas);
+    if (m) m.dilutionSolvent = solventCas || '';
+    renderCarrierList();
+    this._scheduleCommit();
+  },
   _batching: false,
   // Batch multiple updatePct calls into a single render (used by applyAllocation)
   batchUpdate(fn) {
@@ -995,7 +1001,7 @@ const formulation = {
   onChange() {
     // Cancel any pending debounced commit since we're doing a full render now
     if (this._scheduleCommit) this._scheduleCommit.cancel();
-    formulationHistory.push(this.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, data: m.data })));
+    formulationHistory.push(this.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data })));
     renderMaterialList();
     renderCarrierList();
     renderActiveTab();
@@ -1005,7 +1011,7 @@ const formulation = {
 formulationHistory.push([]);
 // Initialize debounced commit for rapid percentage changes (coalesces rapid clicks)
 formulation._scheduleCommit = debounce(() => {
-  formulationHistory.push(formulation.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, data: m.data })));
+  formulationHistory.push(formulation.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data })));
   renderActiveTab();
 }, 300);
 
@@ -1083,12 +1089,18 @@ function renderMaterialList() {
     html += `<button class="mat-del" onclick="formulation.removeMaterial('${safeCas}')" title="Remove">&times;</button>`;
     html += `<button class="mat-dil-btn${dil < 100 ? ' active' : ''}" onclick="toggleDilution('${safeCas}')" title="Dilution">${dil < 100 ? dil + '%' : 'dil'}</button>`;
     if (dil < 100) {
+      const dilSolventCas = m.dilutionSolvent || '';
+      let solventOpts = '<option value="">(unspecified)</option>';
+      for (const c of carrierMaterials) {
+        solventOpts += '<option value="' + escHtml(c.cas) + '"' + (c.cas === dilSolventCas ? ' selected' : '') + '>' + escHtml(c.name) + '</option>';
+      }
       html += `<div class="mat-dil-row">`;
       html += `<span>Dilution:</span>`;
       html += `<input type="number" class="mat-dil" value="${dil}" min="1" max="100" step="1"
         onchange="formulation.updateDilution('${safeCas}',this.value)"
         onblur="if(!this.value||this.value==='0'){this.value=100;formulation.updateDilution('${safeCas}',100)}">`;
-      html += `<span>%</span>`;
+      html += `<span>% in</span>`;
+      html += `<select class="mat-dil" style="width:auto;font-size:0.9em" onchange="formulation.setDilutionSolvent('${safeCas}',this.value)">${solventOpts}</select>`;
       html += `<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace">(pure: ${pureStr}${unit})</span>`;
       html += `</div>`;
     }
@@ -1167,29 +1179,40 @@ function renderCarrierList() {
   const fragGrams = batchSize * (fragPct / 100);
   const carrierGramsFull = batchSize * (1 - fragPct / 100);
 
-  // Subtract dilution solvent from carrier budget
-  let dilSolvent = 0;
+  // Calculate dilution solvent per carrier CAS
+  const dilSolventByCarrier = {};
+  let dilSolventTotal = 0;
   for (const m of formulation.materials) {
     const d = m.dilution || 100;
     if (d < 100) {
       let pure = (m.pct / 100) * fragGrams;
       if (batchUnit === 'ml') pure = pure / (m.data?.density || 0.9);
-      dilSolvent += pure / (d / 100) - pure;
+      const solventAmt = pure / (d / 100) - pure;
+      dilSolventTotal += solventAmt;
+      const sCas = m.dilutionSolvent || '';
+      if (sCas) dilSolventByCarrier[sCas] = (dilSolventByCarrier[sCas] || 0) + solventAmt;
     }
   }
-  const carrierGrams = Math.max(0, carrierGramsFull - dilSolvent);
 
   let html = '';
+  let totalActual = 0;
   for (const m of carrierMaterials) {
     const safeName = escHtml(m.name);
     const safeCas = escHtml(m.cas);
-    let amount = (m.pct / 100) * carrierGrams;
-    if (batchUnit === 'ml') amount = amount / 0.9;
+    // Base amount from carrier budget (% of full carrier portion)
+    let baseAmount = (m.pct / 100) * carrierGramsFull;
+    if (batchUnit === 'ml') baseAmount = baseAmount / 0.9;
+    // Subtract dilution solvent attributed to this carrier
+    const dilFromThis = dilSolventByCarrier[m.cas] || 0;
+    const dilFromThisUnit = batchUnit === 'ml' ? dilFromThis / 0.9 : dilFromThis;
+    const amount = Math.max(0, baseAmount - dilFromThisUnit);
+    totalActual += amount;
     const unit = batchUnit === 'ml' ? 'ml' : 'g';
     const amtStr = amount === 0 ? '0' : amount < 0.001 ? amount.toExponential(1) : amount < 0.1 ? amount.toFixed(3) : amount < 1 ? amount.toFixed(3) : amount < 10 ? amount.toFixed(2) : amount.toFixed(1);
+    const dilNote = dilFromThis > 0 ? ' <span style="font-size:0.65em;color:var(--text2)">(-' + (dilFromThisUnit < 10 ? dilFromThisUnit.toFixed(1) : Math.round(dilFromThisUnit)) + ' dil)</span>' : '';
     html += '<div class="mat-item" data-carrier-cas="' + safeCas + '">';
     html += '<span class="mat-name" title="' + safeName + '">' + safeName + '</span>';
-    html += '<span class="mat-grams">' + amtStr + unit + '</span>';
+    html += '<span class="mat-grams">' + amtStr + unit + dilNote + '</span>';
     html += '<input type="number" class="mat-pct" value="' + m.pct + '" min="0" max="100" step="1" onchange="updateCarrierPct(\'' + safeCas + '\',this.value)" onblur="if(this.value===\'\')this.value=0;updateCarrierPct(\'' + safeCas + '\',this.value)">';
     html += '<span style="font-size:0.75em;color:var(--text2)">%</span>';
     html += '<button class="mat-del" onclick="removeCarrierMaterial(\'' + safeCas + '\')" title="Remove">&times;</button>';
@@ -1198,14 +1221,11 @@ function renderCarrierList() {
   list.innerHTML = html;
 
   // Total
-  const totalPct = carrierMaterials.reduce((s, m) => s + m.pct, 0);
-  let totalAmt = (totalPct / 100) * carrierGrams;
-  if (batchUnit === 'ml') totalAmt = totalAmt / 0.9;
   const unit = batchUnit === 'ml' ? 'ml' : 'g';
   const amtEl = document.getElementById('carrierTotalAmt');
   const fmtV = v => v === 0 ? '0' : v < 0.1 ? v.toFixed(3) : v < 10 ? v.toFixed(2) : roundN(v, 1).toString();
-  const availableAmt = batchUnit === 'ml' ? carrierGrams / 0.9 : carrierGrams;
-  amtEl.textContent = totalPct + '% / ' + fmtV(totalAmt) + unit + ' of ' + fmtV(availableAmt) + unit + (dilSolvent > 0 ? ' (after dilution)' : '');
+  const fullAmt = batchUnit === 'ml' ? carrierGramsFull / 0.9 : carrierGramsFull;
+  amtEl.textContent = fmtV(totalActual) + unit + ' of ' + fmtV(fullAmt) + unit + (dilSolventTotal > 0 ? ' (after dilution)' : '');
   amtEl.style.color = totalPct > 100 ? 'var(--danger)' : totalPct < 100 ? 'var(--text2)' : 'var(--ok)';
   totalEl.style.display = 'flex';
 
@@ -2290,7 +2310,7 @@ function getCurrentSettings() {
 }
 
 function makeSnapshot(mats) {
-  return mats.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, data: m.data }));
+  return mats.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data }));
 }
 
 document.getElementById('btnSave').addEventListener('click', () => {
@@ -2347,7 +2367,7 @@ document.getElementById('savedFormulas').addEventListener('change', () => {
 
   formulation.materials = [];
   for (const m of materials) {
-    formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, data: m.data || {} });
+    formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data || {} });
   }
   if (settings) {
     const s = settings;
@@ -2410,7 +2430,7 @@ document.getElementById('jsonFileInput').addEventListener('change', (e) => {
           blends_with: dbEntry.blends_with || [],
           usage_levels: dbEntry.safety?.usage || null,
         } : (m.data || {});
-        formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct || 10, dilution: m.dilution || 100, data: matData });
+        formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct || 10, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: matData });
       }
       if (data.meta) {
         if (data.meta.fragrancePct) {
