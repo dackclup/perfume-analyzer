@@ -2038,6 +2038,8 @@ document.getElementById('savedFormulas').addEventListener('change', () => {
 // ===== Manage Saved Formulas Modal =====
 const manageModal = document.getElementById('manageModal');
 document.getElementById('btnManage').addEventListener('click', () => {
+  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  if (!saved.length) return; // nothing to manage
   renderManageList();
   manageModal.classList.add('open');
 });
@@ -2073,10 +2075,14 @@ function deleteSavedFormula(idx) {
   saved.splice(idx, 1);
   localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
   populateSavedList();
-  renderManageList();
-  // Clear materials if the deleted formula was loaded
   formulation.materials = [];
   formulation.onChange();
+  // Close modal if no saved formulas left
+  if (!saved.length) {
+    manageModal.classList.remove('open');
+  } else {
+    renderManageList();
+  }
 }
 
 document.getElementById('btnNew').addEventListener('click', () => {
