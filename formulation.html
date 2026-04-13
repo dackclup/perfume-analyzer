@@ -87,7 +87,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
 
 /* Material List */
 .mat-list { margin-top:12px; }
-.mat-item { display:flex; align-items:center; gap:6px; padding:8px; border:1px solid var(--border); border-radius:6px; margin-bottom:6px; background:var(--card-bg); font-size:0.82em; }
+.mat-item { display:flex; align-items:center; gap:6px; padding:8px; border:1px solid var(--border); border-radius:6px; margin-bottom:6px; background:var(--card-bg); font-size:0.82em; flex-wrap:wrap; }
 .mat-item .mat-name { flex:1; min-width:0; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .mat-item .mat-cas { color:var(--text2); font-size:0.85em; font-family:'IBM Plex Mono',monospace; }
 .mat-note { padding:1px 6px; border-radius:8px; font-size:0.7em; font-weight:600; }
@@ -98,6 +98,11 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
 .mat-del { background:none; border:none; color:var(--text2); cursor:pointer; font-size:1em; padding:2px 4px; line-height:1; }
 .mat-del:hover { color:var(--danger); }
 .mat-grams { font-size:0.7em; color:var(--text2); font-family:'IBM Plex Mono',monospace; min-width:42px; text-align:right; }
+.mat-dil-btn { background:none; border:1px solid var(--border); border-radius:4px; color:var(--text2); cursor:pointer; font-size:0.7em; padding:2px 5px; font-family:'IBM Plex Mono',monospace; line-height:1; }
+.mat-dil-btn:hover { border-color:var(--accent); color:var(--text); }
+.mat-dil-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.mat-dil-row { display:flex; align-items:center; gap:4px; width:100%; padding:4px 0 0 28px; font-size:0.78em; color:var(--text2); }
+.mat-dil { width:42px; padding:3px 4px; border:1px solid var(--border); border-radius:4px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:1em; background:var(--bg2); color:var(--text); }
 
 /* Preset Chips */
 .preset-chips { display:flex; flex-wrap:wrap; gap:4px; }
@@ -848,7 +853,7 @@ const formulation = {
     pct = parseFloat(pct);
     if (isNaN(pct) || pct < 0) pct = 0;
     if (pct > 100) pct = 100;
-    this.materials.push({ cas, name, pct: pct || 10, data: data || {} });
+    this.materials.push({ cas, name, pct: pct || 10, dilution: 100, data: data || {} });
     this.onChange();
     storeOriginalPcts();
     return true;
@@ -868,6 +873,19 @@ const formulation = {
     }
     if (this._batching) return;
     this._onPctChange(cas);
+  },
+  updateDilution(cas, dil) {
+    const m = this.materials.find(m => m.cas === cas);
+    if (m) {
+      dil = parseFloat(dil);
+      if (isNaN(dil) || dil <= 0) dil = 100;
+      if (dil > 100) dil = 100;
+      m.dilution = Math.round(dil * 100) / 100;
+    }
+    if (this._batching) return;
+    this._updateMaterialDisplay(cas);
+    this._updateTotalDisplay();
+    this._scheduleCommit();
   },
   _batching: false,
   // Batch multiple updatePct calls into a single render (used by applyAllocation)
@@ -895,17 +913,27 @@ const formulation = {
     const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
     const fragGrams = batchSize * (fragPct / 100);
 
-    let amount = (m.pct / 100) * fragGrams;
-    if (batchUnit === 'ml') amount = amount / (m.data?.density || 0.9);
+    let pureAmount = (m.pct / 100) * fragGrams;
+    if (batchUnit === 'ml') pureAmount = pureAmount / (m.data?.density || 0.9);
     const unit = batchUnit === 'ml' ? 'ml' : 'g';
-    const amtStr = amount === 0 ? '0' : amount < 0.001 ? amount.toExponential(1) : amount < 0.1 ? amount.toFixed(3) : amount < 1 ? amount.toFixed(3) : amount < 10 ? amount.toFixed(2) : amount.toFixed(1);
+    const dil = m.dilution || 100;
+    const amount = dil < 100 ? pureAmount / (dil / 100) : pureAmount;
+    function fmtA(v) { return v === 0 ? '0' : v < 0.001 ? v.toExponential(1) : v < 0.1 ? v.toFixed(3) : v < 1 ? v.toFixed(3) : v < 10 ? v.toFixed(2) : v.toFixed(1); }
 
     const gramsEl = el.querySelector('.mat-grams');
-    if (gramsEl) gramsEl.textContent = amtStr + unit;
+    if (gramsEl) gramsEl.textContent = fmtA(amount) + unit;
 
     // Don't overwrite input value if user is actively editing it
     const input = el.querySelector('.mat-pct');
     if (input && document.activeElement !== input) input.value = m.pct;
+
+    // Update dilution sub-row elements if they exist
+    const dilInput = el.querySelector('.mat-dil');
+    if (dilInput && document.activeElement !== dilInput) dilInput.value = dil;
+    const dilPure = el.querySelector('.mat-dil-row span:last-child');
+    if (dilPure && dil < 100) dilPure.textContent = '(pure: ' + fmtA(pureAmount) + unit + ')';
+    const dilBtn = el.querySelector('.mat-dil-btn');
+    if (dilBtn) { dilBtn.textContent = dil < 100 ? dil + '%' : 'dil'; dilBtn.classList.toggle('active', dil < 100); }
 
     // Update use-rate warning
     const usageRange = parseUsageRange(m.data?.usage_levels);
@@ -951,6 +979,27 @@ const formulation = {
     }
     pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
     document.getElementById('matTotal').style.display = 'flex';
+
+    // Dilution solvent summary
+    let dilSolvent = 0;
+    for (const m of this.materials) {
+      const d = m.dilution || 100;
+      if (d < 100) {
+        let pure = (m.pct / 100) * fragGrams;
+        if (batchUnit === 'ml') pure = pure / (m.data?.density || 0.9);
+        dilSolvent += pure / (d / 100) - pure;
+      }
+    }
+    const dilEl = document.getElementById('matDilSolvent');
+    if (dilEl) {
+      if (dilSolvent > 0) {
+        const dUnit = batchUnit === 'ml' ? 'ml' : 'g';
+        dilEl.textContent = 'Solvent in dilutions: ' + fmtAmt(dilSolvent) + dUnit + ' (reduce carrier by this amount)';
+        dilEl.style.display = '';
+      } else {
+        dilEl.style.display = 'none';
+      }
+    }
   },
   // Debounced commit — initialized after object creation
   _scheduleCommit: null,
@@ -958,7 +1007,7 @@ const formulation = {
   onChange() {
     // Cancel any pending debounced commit since we're doing a full render now
     if (this._scheduleCommit) this._scheduleCommit.cancel();
-    formulationHistory.push(this.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, data: m.data })));
+    formulationHistory.push(this.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, data: m.data })));
     renderMaterialList();
     renderActiveTab();
   }
@@ -967,7 +1016,7 @@ const formulation = {
 formulationHistory.push([]);
 // Initialize debounced commit for rapid percentage changes (coalesces rapid clicks)
 formulation._scheduleCommit = debounce(() => {
-  formulationHistory.push(formulation.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, data: m.data })));
+  formulationHistory.push(formulation.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, data: m.data })));
   renderActiveTab();
 }, 300);
 
@@ -1018,10 +1067,13 @@ function renderMaterialList() {
     const safeName = escHtml(m.name);
     const safeCas = escHtml(m.cas);
     // Material amount: % of fragrance portion; convert g→ml if needed
-    let amount = (m.pct / 100) * fragGrams;
-    if (batchUnit === 'ml') amount = amount / (m.data?.density || 0.9);
+    let pureAmount = (m.pct / 100) * fragGrams;
+    if (batchUnit === 'ml') pureAmount = pureAmount / (m.data?.density || 0.9);
     const unit = batchUnit === 'ml' ? 'ml' : 'g';
+    const dil = m.dilution || 100;
+    const amount = dil < 100 ? pureAmount / (dil / 100) : pureAmount;
     const amtStr = amount === 0 ? '0' : amount < 0.001 ? amount.toExponential(1) : amount < 0.1 ? amount.toFixed(3) : amount < 1 ? amount.toFixed(3) : amount < 10 ? amount.toFixed(2) : amount.toFixed(1);
+    const pureStr = pureAmount === 0 ? '0' : pureAmount < 0.001 ? pureAmount.toExponential(1) : pureAmount < 0.1 ? pureAmount.toFixed(3) : pureAmount < 1 ? pureAmount.toFixed(3) : pureAmount < 10 ? pureAmount.toFixed(2) : pureAmount.toFixed(1);
     // Use-rate warning — compare % in product (not concentrate)
     const usageRange = parseUsageRange(m.data?.usage_levels);
     const pctInProduct = m.pct * (fragPct / 100);
@@ -1039,6 +1091,17 @@ function renderMaterialList() {
       onblur="if(this.value==='')this.value=0;formulation.updatePct('${safeCas}',this.value)">`;
     html += `<span style="font-size:0.75em;color:var(--text2)">%</span>`;
     html += `<button class="mat-del" onclick="formulation.removeMaterial('${safeCas}')" title="Remove">&times;</button>`;
+    html += `<button class="mat-dil-btn${dil < 100 ? ' active' : ''}" onclick="toggleDilution('${safeCas}')" title="Dilution">${dil < 100 ? dil + '%' : 'dil'}</button>`;
+    if (dil < 100) {
+      html += `<div class="mat-dil-row">`;
+      html += `<span>Dilution:</span>`;
+      html += `<input type="number" class="mat-dil" value="${dil}" min="1" max="100" step="1"
+        onchange="formulation.updateDilution('${safeCas}',this.value)"
+        onblur="if(!this.value||this.value==='0'){this.value=100;formulation.updateDilution('${safeCas}',100)}">`;
+      html += `<span>%</span>`;
+      html += `<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace">(pure: ${pureStr}${unit})</span>`;
+      html += `</div>`;
+    }
     html += `</div>`;
   }
   list.innerHTML = html;
@@ -1060,6 +1123,31 @@ function renderMaterialList() {
   }
   pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
   total.style.display = 'flex';
+
+  // Dilution solvent summary
+  let dilSolvent = 0;
+  for (const m of formulation.materials) {
+    const d = m.dilution || 100;
+    if (d < 100) {
+      let pure = (m.pct / 100) * fragGrams;
+      if (batchUnit === 'ml') pure = pure / (m.data?.density || 0.9);
+      dilSolvent += pure / (d / 100) - pure;
+    }
+  }
+  let dilEl = document.getElementById('matDilSolvent');
+  if (!dilEl) {
+    dilEl = document.createElement('div');
+    dilEl.id = 'matDilSolvent';
+    dilEl.style.cssText = 'font-size:0.72em;color:var(--text2);padding:2px 8px;text-align:right';
+    total.after(dilEl);
+  }
+  if (dilSolvent > 0) {
+    const dUnit = batchUnit === 'ml' ? 'ml' : 'g';
+    dilEl.textContent = 'Solvent in dilutions: ' + fmtAmt(dilSolvent) + dUnit + ' (reduce carrier by this amount)';
+    dilEl.style.display = '';
+  } else {
+    dilEl.style.display = 'none';
+  }
 }
 
 // ===== Add Material Modal =====
@@ -1843,6 +1931,7 @@ function exportJSON() {
       cas: m.cas,
       name: m.name,
       pct: m.pct,
+      dilution: m.dilution || 100,
       note: m.data?.note || null,
       odorType: m.data?.odor_type || null,
       odorStrength: m.data?.odor_strength || null,
@@ -1898,15 +1987,27 @@ function exportCSV() {
   const allergens = aggregateAllergens(mats, fragPct, catId);
 
   // CSV header
-  const rows = [['Name','CAS','%','Note','Odor Type','Odor Strength','% in Product','IFRA Max','IFRA Status'].join(',')];
+  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const batchUnit = document.getElementById('batchUnit').value;
+  const fragGrams = batchSize * (fragPct / 100);
+
+  const rows = [['Name','CAS','%','Dilution %','Pure Amount','Weigh Amount','Note','Odor Type','Odor Strength','% in Product','IFRA Max','IFRA Status'].join(',')];
 
   for (const mat of mats) {
     const r = compliance.find(c => c.cas === mat.cas) || {};
     const csvEsc = s => '"' + String(s || '').replace(/"/g, '""') + '"';
+    let pure = (mat.pct / 100) * fragGrams;
+    if (batchUnit === 'ml') pure = pure / (mat.data?.density || 0.9);
+    const dil = mat.dilution || 100;
+    const weigh = dil < 100 ? pure / (dil / 100) : pure;
+    const unit = batchUnit === 'ml' ? 'ml' : 'g';
     rows.push([
       csvEsc(mat.name),
       csvEsc(mat.cas),
       mat.pct,
+      dil,
+      roundN(pure, 3) + unit,
+      roundN(weigh, 3) + unit,
       csvEsc(mat.data?.note),
       csvEsc(mat.data?.odor_type),
       csvEsc(mat.data?.odor_strength),
@@ -2089,7 +2190,7 @@ function getCurrentSettings() {
 }
 
 function makeSnapshot(mats) {
-  return mats.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, data: m.data }));
+  return mats.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, data: m.data }));
 }
 
 document.getElementById('btnSave').addEventListener('click', () => {
@@ -2146,7 +2247,7 @@ document.getElementById('savedFormulas').addEventListener('change', () => {
 
   formulation.materials = [];
   for (const m of materials) {
-    formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct, data: m.data || {} });
+    formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, data: m.data || {} });
   }
   if (settings) {
     const s = settings;
@@ -2209,7 +2310,7 @@ document.getElementById('jsonFileInput').addEventListener('change', (e) => {
           blends_with: dbEntry.blends_with || [],
           usage_levels: dbEntry.safety?.usage || null,
         } : (m.data || {});
-        formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct || 10, data: matData });
+        formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct || 10, dilution: m.dilution || 100, data: matData });
       }
       if (data.meta) {
         if (data.meta.fragrancePct) {
@@ -2257,6 +2358,22 @@ function toggleLock(cas) {
   if (lockedMaterials.has(cas)) lockedMaterials.delete(cas);
   else lockedMaterials.add(cas);
   renderActiveTab();
+}
+
+function toggleDilution(cas) {
+  const m = formulation.materials.find(m => m.cas === cas);
+  if (!m) return;
+  if ((m.dilution || 100) < 100) {
+    m.dilution = 100;
+  } else {
+    const val = prompt('Dilution % (e.g. 10 = 10% active, 90% solvent):', '10');
+    if (val === null) return;
+    let dil = parseFloat(val);
+    if (isNaN(dil) || dil <= 0) dil = 10;
+    if (dil > 100) dil = 100;
+    m.dilution = Math.round(dil * 100) / 100;
+  }
+  formulation.onChange();
 }
 
 // ===== A4: Undo/Redo Handlers =====
@@ -2542,11 +2659,16 @@ function exportXLSX() {
 
   // Sheet 1: Formula
   xml += '<Worksheet ss:Name="Formula"><Table>\n';
-  xml += '<Row ss:StyleID="hdr">' + ['#','Material','CAS','Note','%','Grams','IFRA Status','Odor Type','Strength'].map(h => cell(h)).join('') + '</Row>\n';
+  const batchUnit = document.getElementById('batchUnit').value;
+  xml += '<Row ss:StyleID="hdr">' + ['#','Material','CAS','Note','%','Dilution %','Pure (g)','Weigh (g)','IFRA Status','Odor Type','Strength'].map(h => cell(h)).join('') + '</Row>\n';
   mats.forEach((m, i) => {
     const r = compliance.find(c => c.cas === m.cas) || {};
-    const g = roundN((m.pct / 100) * batchSize * (fragPct / 100), 2);
-    xml += '<Row>' + cell(i + 1, 'Number') + cell(m.name) + cell(m.cas) + cell(m.data?.note || '') + cell(m.pct, 'Number') + cell(g, 'Number') + cell(r.status || '') + cell(m.data?.odor_type || '') + cell(m.data?.odor_strength || '') + '</Row>\n';
+    const fragGrams = batchSize * (fragPct / 100);
+    let pure = (m.pct / 100) * fragGrams;
+    if (batchUnit === 'ml') pure = pure / (m.data?.density || 0.9);
+    const dil = m.dilution || 100;
+    const weigh = dil < 100 ? pure / (dil / 100) : pure;
+    xml += '<Row>' + cell(i + 1, 'Number') + cell(m.name) + cell(m.cas) + cell(m.data?.note || '') + cell(m.pct, 'Number') + cell(dil, 'Number') + cell(roundN(pure, 3), 'Number') + cell(roundN(weigh, 3), 'Number') + cell(r.status || '') + cell(m.data?.odor_type || '') + cell(m.data?.odor_strength || '') + '</Row>\n';
   });
   xml += '</Table></Worksheet>\n';
 
