@@ -290,7 +290,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <div class="control-group">
       <div class="control-label"><span>Batch Size</span></div>
       <div style="display:flex;gap:6px;align-items:center">
-        <input type="number" id="batchSize" value="100" min="0.01" max="100000" step="any" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-family:inherit;font-size:0.85em;text-align:right">
+        <input type="number" id="batchSize" value="100" min="0.1" max="100000" step="any" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-family:inherit;font-size:0.85em;text-align:right">
         <select id="batchUnit" style="width:auto;padding:6px 8px;font-size:0.85em">
           <option value="g">grams</option>
           <option value="ml">ml</option>
@@ -1878,7 +1878,7 @@ document.getElementById('batchSize').addEventListener('input', () => renderMater
 document.getElementById('batchSize').addEventListener('blur', () => {
   const el = document.getElementById('batchSize');
   const v = parseFloat(el.value);
-  if (isNaN(v) || v < 0.01) el.value = 0.01;
+  if (isNaN(v) || v < 0.1) el.value = 0.1;
   renderMaterialList();
 });
 document.getElementById('batchUnit').addEventListener('change', () => {
