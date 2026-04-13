@@ -264,10 +264,15 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     </div>
 
     <!-- Fragrance Concentration -->
-    <div class="control-group">
-      <div class="control-label"><span>Fragrance in Product</span><output id="fragPctOut">18%</output></div>
-      <input type="range" id="fragPct" min="1" max="30" value="18" oninput="document.getElementById('fragPctOut').textContent=this.value+'%'; updatePresetHighlight();">
+    <div class="control-group" id="fragCustomGroup" style="display:none">
+      <div class="control-label"><span>Fragrance in Product</span></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="number" id="fragPctCustom" min="1" max="100" step="0.1" value="18" style="width:70px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-family:inherit;font-size:0.85em;text-align:right">
+        <span style="font-size:0.85em;color:var(--text2)">%</span>
+      </div>
     </div>
+    <input type="hidden" id="fragPct" value="18">
+    <output id="fragPctOut" style="display:none">18%</output>
 
     <!-- Carrier/Solvent -->
     <div class="control-group">
@@ -1045,7 +1050,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => renderActiveTab());
 });
 document.getElementById('productCategory').addEventListener('change', () => renderActiveTab());
-document.getElementById('fragPct').addEventListener('input', () => renderActiveTab());
 document.getElementById('tempSlider').addEventListener('input', () => renderActiveTab());
 
 function renderActiveTab() {
@@ -1849,27 +1853,54 @@ function exportPDF() {
 }
 
 // ===== Preset Chip Logic =====
+function setFragPct(val) {
+  document.getElementById('fragPct').value = val;
+  document.getElementById('fragPctOut').textContent = val + '%';
+  document.getElementById('fragPctCustom').value = val;
+  renderMaterialList();
+  renderActiveTab();
+}
+
 document.querySelectorAll('.preset-chip').forEach(chip => {
   chip.addEventListener('click', () => {
     const pct = parseInt(chip.dataset.pct);
-    if (pct > 0) {
-      document.getElementById('fragPct').value = pct;
-      document.getElementById('fragPctOut').textContent = pct + '%';
-    }
+    const isCustom = chip.dataset.type === 'Custom';
     document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
     chip.classList.add('active');
-    renderActiveTab();
+    // Show/hide custom input
+    document.getElementById('fragCustomGroup').style.display = isCustom ? '' : 'none';
+    if (!isCustom && pct > 0) setFragPct(pct);
   });
 });
 
+// Custom input handler
+document.getElementById('fragPctCustom').addEventListener('input', () => {
+  let val = parseFloat(document.getElementById('fragPctCustom').value);
+  if (!isNaN(val) && val >= 1 && val <= 100) {
+    document.getElementById('fragPct').value = val;
+    document.getElementById('fragPctOut').textContent = val + '%';
+    renderMaterialList();
+    renderActiveTab();
+  }
+});
+document.getElementById('fragPctCustom').addEventListener('blur', () => {
+  let val = parseFloat(document.getElementById('fragPctCustom').value);
+  if (isNaN(val) || val < 1) { val = 1; document.getElementById('fragPctCustom').value = 1; }
+  if (val > 100) { val = 100; document.getElementById('fragPctCustom').value = 100; }
+  setFragPct(val);
+});
+
 function updatePresetHighlight() {
-  const val = parseInt(document.getElementById('fragPct').value);
+  const val = parseFloat(document.getElementById('fragPct').value);
   document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
   const match = document.querySelector('.preset-chip[data-pct="' + val + '"]');
   if (match && val > 0) {
     match.classList.add('active');
+    document.getElementById('fragCustomGroup').style.display = 'none';
   } else {
     document.querySelector('.preset-chip[data-type="Custom"]').classList.add('active');
+    document.getElementById('fragCustomGroup').style.display = '';
+    document.getElementById('fragPctCustom').value = val;
   }
 }
 
