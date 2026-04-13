@@ -620,7 +620,7 @@ function suggestAllocation(materials, fragPct) {
 
   // Normalize to sum to 100%
   const sum = alphas.reduce((a, b) => a + b, 0);
-  let pcts = materials.map((mat, i) => roundN((alphas[i] / sum) * 100, 1));
+  let pcts = materials.map((mat, i) => roundN((alphas[i] / sum) * 100, 2));
 
   // Clamp to IFRA/usage limits (convert to max % in concentrate)
   const clamped = new Set();
@@ -634,7 +634,7 @@ function suggestAllocation(materials, fragPct) {
     }
     const maxInConcentrate = maxInProduct / (fragPct / 100);
     if (pcts[i] > maxInConcentrate) {
-      pcts[i] = roundN(maxInConcentrate * 0.9, 1); // 90% safety margin
+      pcts[i] = roundN(maxInConcentrate * 0.9, 2); // 90% safety margin
       clamped.add(i);
     }
   }
@@ -645,7 +645,7 @@ function suggestAllocation(materials, fragPct) {
   const unclampedSum = pcts.reduce((s, p, i) => s + (clamped.has(i) ? 0 : p), 0);
   if (unclampedSum > 0 && unclampedTarget > 0) {
     for (let i = 0; i < pcts.length; i++) {
-      if (!clamped.has(i)) pcts[i] = roundN(pcts[i] / unclampedSum * unclampedTarget, 1);
+      if (!clamped.has(i)) pcts[i] = roundN(pcts[i] / unclampedSum * unclampedTarget, 2);
     }
   }
 
@@ -709,7 +709,7 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
       return ifra51[cat.key] / (fragPct / 100);
     }
     const range = parseUsageRange(mat.data?.usage_levels);
-    return range.max || 100;
+    return (range.max != null ? range.max : 100) / (fragPct / 100);
   });
 
   const lr = 0.5;
@@ -752,7 +752,7 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
     const targetUnlocked = Math.max(100 - lockedSum, 0);
     for (let i = 0; i < n; i++) {
       if (locked.has(materials[i].cas)) continue;
-      pcts[i] = clamp(pcts[i], 0.1, ifraMaxes[i]);
+      pcts[i] = clamp(pcts[i], Math.min(0.01, ifraMaxes[i]), ifraMaxes[i]);
     }
     const unlockedSum = pcts.reduce((s, v, i) => s + (locked.has(materials[i].cas) ? 0 : v), 0);
     if (unlockedSum > 0 && targetUnlocked > 0) {
@@ -764,15 +764,15 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
   }
 
   // Round and fix sum to exactly 100%
-  let rounded = pcts.map(p => roundN(p, 1));
+  let rounded = pcts.map(p => roundN(p, 2));
   const roundedSum = rounded.reduce((a, b) => a + b, 0);
-  if (roundedSum > 0 && Math.abs(roundedSum - 100) > 0.05) {
+  if (roundedSum > 0 && Math.abs(roundedSum - 100) > 0.005) {
     // Adjust the largest unlocked material to compensate rounding error
     let maxIdx = 0, maxVal = 0;
     for (let i = 0; i < rounded.length; i++) {
       if (!locked.has(materials[i].cas) && rounded[i] > maxVal) { maxVal = rounded[i]; maxIdx = i; }
     }
-    rounded[maxIdx] = roundN(rounded[maxIdx] + (100 - roundedSum), 1);
+    rounded[maxIdx] = roundN(rounded[maxIdx] + (100 - roundedSum), 2);
   }
 
   return materials.map((m, i) => ({
