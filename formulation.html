@@ -303,6 +303,12 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
       </div>
     </div>
 
+    <!-- Auto-Allocate -->
+    <div style="display:flex;gap:4px;margin-top:6px">
+      <button class="btn" id="btnSuggested" style="flex:1;font-size:0.75em" onclick="applyAllocation('suggested')">Apply Suggested</button>
+      <button class="btn" id="btnOptimized" style="flex:1;font-size:0.75em" onclick="applyAllocation('optimized')">Apply Optimized</button>
+    </div>
+
     <hr>
 
     <!-- Material List -->
@@ -1149,10 +1155,7 @@ function renderCompatTab() {
     html += '<td>' + (opt ? opt.optimizedPct : '—') + '%</td></tr>';
   }
   html += '</tbody></table>';
-  html += '<div style="margin-top:8px;display:flex;gap:6px">';
-  html += '<button class="btn btn-sm" onclick="applyAllocation(\'suggested\')">Apply Suggested</button>';
-  html += '<button class="btn btn-sm" onclick="applyAllocation(\'optimized\')">Apply Optimized</button>';
-  html += '</div></div>';
+  html += '</div>';
 
   // Compatible Material Suggestions
   if (suggestions.length) {
