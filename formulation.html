@@ -901,6 +901,9 @@ function renderMaterialList() {
     list.appendChild(empty.cloneNode(true));
     total.style.display = 'none';
     count.textContent = '(0)';
+    const pctEl = document.getElementById('matTotalPct');
+    pctEl.textContent = '0%';
+    pctEl.className = 'pct-val under';
     return;
   }
 
@@ -2079,6 +2082,7 @@ function deleteSavedFormula(idx) {
 document.getElementById('btnNew').addEventListener('click', () => {
   if (formulation.materials.length && !confirm('Clear current formulation?')) return;
   formulation.materials = [];
+  document.getElementById('savedFormulas').value = '';
   formulation.onChange();
 });
 
