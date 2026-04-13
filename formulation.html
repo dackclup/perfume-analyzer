@@ -885,14 +885,17 @@ function renderMaterialList() {
   count.textContent = `(${formulation.materials.length})`;
   const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
   const batchUnit = document.getElementById('batchUnit').value;
+  const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
+  // Fragrance grams = batchSize × fragPct/100; material grams = pct% of fragrance portion
+  const fragGrams = batchSize * (fragPct / 100);
   let html = '';
   for (const m of formulation.materials) {
     const noteClass = classifyNote(m.data?.note);
     const noteLabel = noteClass === 'top' ? 'T' : noteClass === 'mid' ? 'M' : noteClass === 'base' ? 'B' : '';
     const safeName = escHtml(m.name);
     const safeCas = escHtml(m.cas);
-    // Batch grams calculation
-    let grams = (m.pct / 100) * batchSize;
+    // Batch grams: material % of fragrance portion (not total batch)
+    let grams = (m.pct / 100) * fragGrams;
     if (batchUnit === 'ml') grams *= (m.data?.density || 0.95);
     const gramsStr = grams < 0.1 ? grams.toFixed(3) : grams < 1 ? grams.toFixed(2) : grams.toFixed(1);
     // Use-rate warning
@@ -1811,7 +1814,7 @@ function exportPDF() {
   h += '<table><tr><th>#</th><th>Material</th><th>CAS</th><th>Note</th><th>%</th><th>' + batchUnit + '</th><th>IFRA Status</th></tr>';
   mats.forEach((m, i) => {
     const r = compliance.find(c => c.cas === m.cas) || {};
-    let grams = (m.pct / 100) * batchSize;
+    let grams = (m.pct / 100) * batchSize * (fragPct / 100);
     if (batchUnit === 'ml') grams *= (m.data?.density || 0.95);
     const cls = r.status === 'ok' ? 'ok' : r.status === 'warn' ? 'warn' : 'danger';
     h += '<tr><td>' + (i+1) + '</td><td>' + escHtml(m.name) + '</td><td>' + m.cas + '</td>';
@@ -2342,7 +2345,7 @@ function exportXLSX() {
   xml += '<Row ss:StyleID="hdr">' + ['#','Material','CAS','Note','%','Grams','IFRA Status','Odor Type','Strength'].map(h => cell(h)).join('') + '</Row>\n';
   mats.forEach((m, i) => {
     const r = compliance.find(c => c.cas === m.cas) || {};
-    const g = roundN((m.pct / 100) * batchSize, 2);
+    const g = roundN((m.pct / 100) * batchSize * (fragPct / 100), 2);
     xml += '<Row>' + cell(i + 1, 'Number') + cell(m.name) + cell(m.cas) + cell(m.data?.note || '') + cell(m.pct, 'Number') + cell(g, 'Number') + cell(r.status || '') + cell(m.data?.odor_type || '') + cell(m.data?.odor_strength || '') + '</Row>\n';
   });
   xml += '</Table></Worksheet>\n';
