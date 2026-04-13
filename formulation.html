@@ -315,31 +315,28 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
       <span class="pct-val" id="matTotalPct">0%</span>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="sidebar-actions">
-      <button class="btn btn-primary" id="btnAddMat">+ Add</button>
-      <button class="btn" id="btnImport">Import from Analyzer</button>
-      <button class="btn" id="btnUndo" disabled title="Ctrl+Z">&#x21A9; Undo</button>
-      <button class="btn" id="btnRedo" disabled title="Ctrl+Shift+Z">Redo &#x21AA;</button>
+    <!-- Action Buttons — compact -->
+    <div style="display:flex;gap:4px;margin-top:8px">
+      <button class="btn btn-primary" id="btnAddMat" style="flex:1">+ Add</button>
+      <button class="btn btn-primary" id="btnBrief" style="flex:1">&#9733; Brief</button>
+      <button class="btn" id="btnUndo" disabled title="Ctrl+Z" style="width:36px;padding:6px 0;text-align:center">&#x21A9;</button>
+      <button class="btn" id="btnRedo" disabled title="Ctrl+Shift+Z" style="width:36px;padding:6px 0;text-align:center">&#x21AA;</button>
     </div>
 
     <hr>
 
-    <!-- Save/Load Formulas -->
-    <h2>Formulas</h2>
-    <div class="sidebar-actions">
-      <button class="btn" id="btnSave">Save Formula</button>
-      <select id="savedFormulas" style="font-size:0.82em">
-        <option value="">-- Load Saved --</option>
-      </select>
+    <!-- Save/Load — compact -->
+    <div style="display:flex;gap:4px;align-items:center">
+      <button class="btn" id="btnSave" style="white-space:nowrap">Save</button>
+      <select id="savedFormulas" style="font-size:0.78em;flex:1;min-width:0"><option value="">-- Saved --</option></select>
       <button class="btn" id="btnLoad">Load</button>
       <button class="btn" id="btnNew">New</button>
-      <button class="btn" id="btnCompare">Compare</button>
     </div>
-    <div class="sidebar-actions" style="margin-top:4px">
-      <button class="btn" id="btnLoadJSON">Load JSON File</button>
+    <div style="display:flex;gap:4px;margin-top:4px">
+      <button class="btn" id="btnImport" style="flex:1;font-size:0.75em">Import</button>
+      <button class="btn" id="btnLoadJSON" style="flex:1;font-size:0.75em">JSON</button>
+      <button class="btn" id="btnCompare" style="flex:1;font-size:0.75em">Compare</button>
       <input type="file" id="jsonFileInput" accept=".json" style="display:none">
-      <button class="btn btn-primary" id="btnBrief" style="margin-top:6px;width:100%">&#9733; Generate from Brief</button>
     </div>
   </div>
 
