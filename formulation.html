@@ -898,7 +898,7 @@ function renderMaterialList() {
     let amount = (m.pct / 100) * fragGrams;
     if (batchUnit === 'ml') amount = amount / (m.data?.density || 0.9);
     const unit = batchUnit === 'ml' ? 'ml' : 'g';
-    const amtStr = amount < 0.1 ? amount.toFixed(3) : amount < 1 ? amount.toFixed(2) : amount.toFixed(1);
+    const amtStr = amount === 0 ? '0' : amount < 0.001 ? amount.toExponential(1) : amount < 0.1 ? amount.toFixed(4) : amount < 1 ? amount.toFixed(3) : amount < 10 ? amount.toFixed(2) : amount.toFixed(1);
     // Use-rate warning — compare % in product (not concentrate)
     const usageRange = parseUsageRange(m.data?.usage_levels);
     const pctInProduct = m.pct * (fragPct / 100);
@@ -924,7 +924,10 @@ function renderMaterialList() {
   const rawPct = formulation.totalPct();
   const pct = isNaN(rawPct) ? 0 : Math.round(rawPct * 10) / 10;
   const pctEl = document.getElementById('matTotalPct');
-  const fragDisplay = batchUnit === 'ml' ? roundN(fragGrams / 0.9, 1) + 'ml' : roundN(fragGrams, 1) + 'g';
+  function fmtAmt(v) { return v === 0 ? '0' : v < 0.001 ? v.toExponential(1) : v < 0.1 ? v.toFixed(4) : v < 1 ? v.toFixed(3) : v < 10 ? v.toFixed(2) : roundN(v, 1).toString(); }
+  const fragVal = batchUnit === 'ml' ? fragGrams / 0.9 : fragGrams;
+  const fragUnit = batchUnit === 'ml' ? 'ml' : 'g';
+  const fragDisplay = fmtAmt(fragVal) + fragUnit;
   pctEl.textContent = pct + '%' + (pct > 100 ? ' (over!)' : '') + ' / ' + fragDisplay + ' Fragrance in Product';
   pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
   total.style.display = 'flex';
