@@ -290,7 +290,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <div class="control-group">
       <div class="control-label"><span>Batch Size</span></div>
       <div style="display:flex;gap:6px;align-items:center">
-        <input type="number" id="batchSize" value="100" min="1" max="100000" step="1" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-family:inherit;font-size:0.85em;text-align:right">
+        <input type="number" id="batchSize" value="100" min="0.001" max="100000" step="any" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-family:inherit;font-size:0.85em;text-align:right">
         <select id="batchUnit" style="width:auto;padding:6px 8px;font-size:0.85em">
           <option value="g">grams</option>
           <option value="ml">ml</option>
@@ -1873,7 +1873,7 @@ function updatePresetHighlight() {
 // ===== Batch & Carrier change triggers =====
 document.getElementById('batchSize').addEventListener('input', () => {
   const el = document.getElementById('batchSize');
-  if (parseFloat(el.value) < 1 && el.value !== '') el.value = 1;
+  if (parseFloat(el.value) < 0.001 && el.value !== '') el.value = 0.001;
   renderMaterialList();
 });
 document.getElementById('batchUnit').addEventListener('change', () => {
