@@ -897,29 +897,70 @@ function evaporationRate(vp_mmHg, mw, density) {
  * @param {Array<number>} timePointsH - hours [0, 0.5, 1, 2, 4, 8, 12, 24]
  * @returns {Object} {timePoints, curves: [{cas, name, note, concentrations:[]}], totals:[]}
  */
-function simulateEvaporation(materials, tempC, timePointsH) {
+function simulateEvaporation(materials, tempC, timePointsH, useActivityCoeff) {
   timePointsH = timePointsH || [0, 0.25, 0.5, 1, 2, 4, 8, 12, 24];
+  useActivityCoeff = useActivityCoeff !== false; // default ON
 
   const curves = [];
 
-  for (const mat of materials) {
+  // A1: Helper to get enriched properties (MATERIAL_PROPERTIES fallback)
+  function getProps(cas, matData) {
+    const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[cas] : null;
+    return {
+      mw: matData?.molecular_weight || (mp && mp.mw) || 150,
+      density: matData?.density || (mp && mp.density) || 1.0,
+      logP: matData?.xlogp || matData?.logp || (mp && mp.logP) || null,
+      bp: matData?.boiling_point || (mp && mp.bp) || null,
+    };
+  }
+
+  // A2: Pre-compute mixture Hildebrand solubility parameter for activity coefficients
+  const matProps = materials.map(mat => getProps(mat.cas, mat.data));
+  let delta_mix = 15; // default if computation fails
+  if (useActivityCoeff) {
+    const solParams = matProps.map(p => ({
+      delta: hildebrandSolParam(p.bp, p.mw, p.density, tempC),
+      Vm: p.mw / p.density,
+    }));
+    const totalVol = materials.reduce((s, m, i) =>
+      s + (m.pct / 100) * (solParams[i].Vm || 150), 0);
+    if (totalVol > 0) {
+      delta_mix = materials.reduce((s, m, i) => {
+        const phi = (m.pct / 100) * (solParams[i].Vm || 150) / totalVol;
+        return s + phi * (solParams[i].delta || 15);
+      }, 0);
+    }
+  }
+
+  for (let idx = 0; idx < materials.length; idx++) {
+    const mat = materials[idx];
+    const props = matProps[idx];
     const vpResult = getVaporPressure(mat.cas, tempC, mat.data);
     const vp = vpResult.vp_mmHg || 0;
-    const mw = mat.data?.molecular_weight || 150;
-    const density = mat.data?.density || 1.0;
-    const logP = mat.data?.xlogp || mat.data?.logp || null;
+    const mw = props.mw;
+    const density = props.density;
+    const logP = props.logP;
 
     const k = evaporationRate(vp, mw, density) * 12;
 
-    // Fix 3B: Skin absorption rate via Potts-Guy
+    // Skin absorption rate via Potts-Guy
     const kp = pottsGuyKp(logP, mw);
     const k_abs = kp ? kp * 3600 * 0.1 : 0;
 
-    // Fix 1A: Initial headspace concentration in ppb (Raoult's law)
+    // A2: Activity coefficient (Hildebrand/Scatchard-regular solution)
+    let gamma = 1.0;
+    if (useActivityCoeff && props.bp) {
+      const delta_i = hildebrandSolParam(props.bp, mw, density, tempC);
+      const Vm = mw / density;
+      if (delta_i) gamma = activityCoefficient(delta_i, delta_mix, Vm, tempC);
+      gamma = clamp(gamma, 0.5, 5.0); // sanity bounds
+    }
+
+    // Headspace concentration in ppb (modified Raoult's law with activity coefficient)
     const MW_REF = 150;
     const P_ATM = 760;
     const x_i = (mat.pct / 100) * (MW_REF / (mw || MW_REF));
-    const C0 = x_i * vp / P_ATM * 1e9; // ppb
+    const C0 = x_i * gamma * vp / P_ATM * 1e9; // ppb — gamma=1 for ideal
 
     // Fix 3A: Two-stage evaporation (Teixeira model approximation)
     const PHASE1_END = 0.5;
@@ -953,6 +994,7 @@ function simulateEvaporation(materials, tempC, timePointsH) {
       vpResult,
       k_evap: roundN(k, 6),
       k_abs: roundN(k_abs, 8),
+      gamma: roundN(gamma, 3),
       C0: roundN(C0, 4),
       concentrations,
       skinRetention,
@@ -979,9 +1021,11 @@ function simulateEvaporation(materials, tempC, timePointsH) {
 function buildVPTable(materials, tempC) {
   return materials.map(mat => {
     const vpResult = getVaporPressure(mat.cas, tempC, mat.data);
-    const mw = mat.data?.molecular_weight || null;
-    const logP = mat.data?.xlogp || mat.data?.logp || null;
-    const density = mat.data?.density || null;
+    // A1: Use MATERIAL_PROPERTIES enrichment
+    const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[mat.cas] : null;
+    const mw = mat.data?.molecular_weight || (mp && mp.mw) || null;
+    const logP = mat.data?.xlogp || mat.data?.logp || (mp && mp.logP) || null;
+    const density = mat.data?.density || (mp && mp.density) || null;
     const kp = pottsGuyKp(logP, mw);
     const k_evap = vpResult.vp_mmHg ? evaporationRate(vpResult.vp_mmHg, mw || 150, density || 1.0) : null;
 
@@ -1626,5 +1670,178 @@ function describeMood(profile) {
     primary: { dimension: primary.dim, score: primary.val },
     secondary: { dimension: secondary.dim, score: secondary.val },
     description,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// A3: Consumer Brief → Formula Generator
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Generate a starting formula from a creative brief.
+ * @param {Object} brief - { family, moods[], notePct:{top,mid,base}, longevityH, maxIngredients, exclude[] }
+ * @param {Object} db - material database (CAS → entry)
+ * @param {Map} graph - compatibility graph
+ * @returns {Array} [{cas, name, suggestedPct, scores:{family, mood, compat}}]
+ */
+function generateFromBrief(brief, db, graph) {
+  const {
+    family = 'floral',
+    moods = [],
+    notePct = { top: 20, mid: 45, base: 35 },
+    longevityH = 8,
+    maxIngredients = 10,
+    exclude = [],
+  } = brief;
+
+  const excludeSet = new Set(exclude);
+  const familyLower = family.toLowerCase();
+
+  // Score every material
+  const scored = [];
+  for (const [cas, entry] of Object.entries(db)) {
+    if (excludeSet.has(cas)) continue;
+    if (!entry.note) continue; // skip materials without note classification
+
+    // Family score: how well does this material match the target family?
+    const radarWeights = materialToRadarWeights({
+      odor_type: entry.odor?.type,
+      primaryFamilies: [], secondaryFamilies: [], facets: [],
+    });
+    const familyScore = radarWeights[familyLower] || 0;
+
+    // Mood score: overlap with target moods
+    let moodScore = 0;
+    if (moods.length && typeof AROMACHOLOGY_SCORES !== 'undefined') {
+      const matMoods = AROMACHOLOGY_SCORES[cas];
+      if (matMoods) {
+        for (const dim of moods) {
+          moodScore += (matMoods[dim] || 0) / 5;
+        }
+        moodScore /= moods.length;
+      }
+    }
+
+    // Note tier
+    const noteTier = primaryNoteTier(entry.note);
+
+    // Longevity alignment: top notes for short, base for long
+    let longevityScore = 0;
+    if (longevityH <= 3 && noteTier === 'top') longevityScore = 1;
+    else if (longevityH <= 8 && noteTier === 'middle') longevityScore = 1;
+    else if (longevityH > 8 && noteTier === 'base') longevityScore = 1;
+    else longevityScore = 0.4;
+
+    const totalScore = familyScore * 3 + moodScore * 2 + longevityScore;
+    if (totalScore > 0) {
+      scored.push({ cas, name: entry.name, note: entry.note, noteTier, totalScore, familyScore, moodScore });
+    }
+  }
+
+  // Sort by score
+  scored.sort((a, b) => b.totalScore - a.totalScore);
+
+  // Greedy selection by tier
+  const selected = [];
+  const tierTargets = {
+    base: Math.max(1, Math.round(maxIngredients * notePct.base / 100)),
+    middle: Math.max(1, Math.round(maxIngredients * notePct.mid / 100)),
+    top: Math.max(1, Math.round(maxIngredients * notePct.top / 100)),
+  };
+  const tierCounts = { top: 0, middle: 0, base: 0 };
+  const selectedCAS = new Set();
+
+  for (const mat of scored) {
+    if (selected.length >= maxIngredients) break;
+    const tier = mat.noteTier || 'middle';
+    if (tierCounts[tier] >= (tierTargets[tier] || 3)) continue;
+
+    // Check compatibility with already selected
+    let compatOK = true;
+    if (graph && selectedCAS.size > 0) {
+      const neighbors = graph.get(mat.cas) || new Set();
+      const compatCount = [...selectedCAS].filter(c => neighbors.has(c)).length;
+      if (selectedCAS.size >= 2 && compatCount === 0) compatOK = false; // skip if no documented compat
+    }
+    if (!compatOK) continue;
+
+    selected.push(mat);
+    selectedCAS.add(mat.cas);
+    tierCounts[tier]++;
+  }
+
+  if (!selected.length) return [];
+
+  // Assign percentages using suggestAllocation logic
+  const matArray = selected.map(s => ({
+    cas: s.cas, name: s.name,
+    data: { note: s.note, odor_strength: 'Medium' },
+  }));
+  const allocation = suggestAllocation(matArray);
+
+  return selected.map((s, i) => ({
+    cas: s.cas,
+    name: s.name,
+    note: s.note,
+    suggestedPct: allocation[i]?.suggestedPct || roundN(100 / selected.length, 1),
+    scores: { family: roundN(s.familyScore, 2), mood: roundN(s.moodScore, 2), total: roundN(s.totalScore, 2) },
+  }));
+}
+
+// ─────────────────────────────────────────────────────────────
+// A5: Cost Calculation Engine
+// ─────────────────────────────────────────────────────────────
+
+const CARRIER_COSTS = {
+  ethanol: 0.005, dpg: 0.010, ipm: 0.025, coconut_oil: 0.020
+};
+
+/**
+ * Calculate formula cost breakdown.
+ * @param {Array} materials - [{cas, name, pct, data}]
+ * @param {number} batchSizeG - batch size in grams
+ * @param {string} carrier - carrier type
+ * @param {number} fragPct - fragrance concentration %
+ * @returns {Object} cost breakdown
+ */
+function calculateFormulaCost(materials, batchSizeG, carrier, fragPct) {
+  let fragCost = 0;
+  let pricedCount = 0;
+  const unpricedMats = [];
+  const perMaterial = [];
+
+  const fragGrams = batchSizeG * (fragPct / 100);
+
+  for (const mat of materials) {
+    const costEntry = (typeof MATERIAL_COSTS !== 'undefined') ? MATERIAL_COSTS[mat.cas] : null;
+    const grams = (mat.pct / 100) * fragGrams;
+    if (costEntry) {
+      const cost = grams * costEntry.cost_g;
+      fragCost += cost;
+      pricedCount++;
+      perMaterial.push({ cas: mat.cas, name: mat.name, grams: roundN(grams, 2), cost: roundN(cost, 3), tier: costEntry.tier, cost_g: costEntry.cost_g });
+    } else {
+      unpricedMats.push(mat.name);
+      perMaterial.push({ cas: mat.cas, name: mat.name, grams: roundN(grams, 2), cost: null, tier: 'unknown', cost_g: null });
+    }
+  }
+
+  const carrierGrams = batchSizeG * (1 - fragPct / 100);
+  const carrierCostPerG = CARRIER_COSTS[carrier] || 0.005;
+  const carrierCost = carrierGrams * carrierCostPerG;
+  const totalCost = fragCost + carrierCost;
+  const avgDensity = 0.9;
+
+  return {
+    totalCost: roundN(totalCost, 2),
+    fragCost: roundN(fragCost, 2),
+    carrierCost: roundN(carrierCost, 2),
+    costPerMl: roundN(totalCost / (batchSizeG / avgDensity), 3),
+    costPerKg: roundN(totalCost / (batchSizeG / 1000), 2),
+    pricedCount,
+    totalCount: materials.length,
+    unpricedMats,
+    perMaterial,
+    currency: 'USD',
   };
 }
