@@ -890,6 +890,7 @@ const formulation = {
     if (this._batching) return;
     this._updateMaterialDisplay(cas);
     this._updateTotalDisplay();
+    renderCarrierList();
     this._scheduleCommit();
   },
   _batching: false,
@@ -1016,6 +1017,7 @@ const formulation = {
     if (this._scheduleCommit) this._scheduleCommit.cancel();
     formulationHistory.push(this.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, data: m.data })));
     renderMaterialList();
+    renderCarrierList();
     renderActiveTab();
   }
 };
@@ -1205,7 +1207,20 @@ function renderCarrierList() {
   const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
   const batchUnit = document.getElementById('batchUnit').value;
   const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
-  const carrierGrams = batchSize * (1 - fragPct / 100);
+  const fragGrams = batchSize * (fragPct / 100);
+  const carrierGramsFull = batchSize * (1 - fragPct / 100);
+
+  // Subtract dilution solvent from carrier budget
+  let dilSolvent = 0;
+  for (const m of formulation.materials) {
+    const d = m.dilution || 100;
+    if (d < 100) {
+      let pure = (m.pct / 100) * fragGrams;
+      if (batchUnit === 'ml') pure = pure / (m.data?.density || 0.9);
+      dilSolvent += pure / (d / 100) - pure;
+    }
+  }
+  const carrierGrams = Math.max(0, carrierGramsFull - dilSolvent);
 
   let html = '';
   for (const m of carrierMaterials) {
@@ -1232,7 +1247,8 @@ function renderCarrierList() {
   const unit = batchUnit === 'ml' ? 'ml' : 'g';
   const amtEl = document.getElementById('carrierTotalAmt');
   const fmtV = v => v === 0 ? '0' : v < 0.1 ? v.toFixed(3) : v < 10 ? v.toFixed(2) : roundN(v, 1).toString();
-  amtEl.textContent = totalPct + '% / ' + fmtV(totalAmt) + unit + ' of ' + fmtV(batchUnit === 'ml' ? carrierGrams / 0.9 : carrierGrams) + unit;
+  const availableAmt = batchUnit === 'ml' ? carrierGrams / 0.9 : carrierGrams;
+  amtEl.textContent = totalPct + '% / ' + fmtV(totalAmt) + unit + ' of ' + fmtV(availableAmt) + unit + (dilSolvent > 0 ? ' (after dilution)' : '');
   amtEl.style.color = totalPct > 100 ? 'var(--danger)' : totalPct < 100 ? 'var(--text2)' : 'var(--ok)';
   totalEl.style.display = 'flex';
 
