@@ -1173,6 +1173,7 @@ modalSearch.addEventListener('input', () => {
   if (q.length < 2) { modalResults.innerHTML = ''; return; }
   const matches = [];
   for (const [cas, entry] of Object.entries(DB)) {
+    if (!entry.note) continue; // hide non-fragrance materials (solvents, carriers, etc.)
     if (formulation.materials.find(m => m.cas === cas)) continue;
     const haystack = (entry.name + ' ' + cas + ' ' + (entry.synonyms || []).join(' ')).toLowerCase();
     if (haystack.includes(q)) matches.push(entry);
