@@ -319,6 +319,8 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <div class="sidebar-actions">
       <button class="btn btn-primary" id="btnAddMat">+ Add</button>
       <button class="btn" id="btnImport">Import from Analyzer</button>
+      <button class="btn" id="btnUndo" disabled title="Ctrl+Z">&#x21A9; Undo</button>
+      <button class="btn" id="btnRedo" disabled title="Ctrl+Shift+Z">Redo &#x21AA;</button>
     </div>
 
     <hr>
@@ -336,6 +338,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <div class="sidebar-actions" style="margin-top:4px">
       <button class="btn" id="btnLoadJSON">Load JSON File</button>
       <input type="file" id="jsonFileInput" accept=".json" style="display:none">
+      <button class="btn btn-primary" id="btnBrief" style="margin-top:6px;width:100%">&#9733; Generate from Brief</button>
     </div>
   </div>
 
@@ -430,6 +433,56 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <div class="modal-body">
       <input type="text" class="modal-search" id="modalSearch" placeholder="Search by name or CAS..." autocomplete="off">
       <ul class="modal-results" id="modalResults"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Creative Brief Modal ===== -->
+<div class="modal-overlay" id="briefModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3>Creative Brief</h3>
+      <button class="modal-close" id="briefClose">&times;</button>
+    </div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+      <div class="control-group">
+        <div class="control-label"><span>Olfactive Family</span></div>
+        <select id="briefFamily">
+          <option value="floral">Floral</option>
+          <option value="woody">Woody</option>
+          <option value="fresh">Fresh / Citrus</option>
+          <option value="spicy">Oriental / Spicy</option>
+          <option value="fruity">Fruity</option>
+          <option value="gourmand">Gourmand</option>
+          <option value="green">Green / Herbal</option>
+          <option value="musk">Musk / Clean</option>
+          <option value="amber">Amber / Balsamic</option>
+          <option value="animalic">Animalic / Leather</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <div class="control-label"><span>Mood Targets</span></div>
+        <div id="briefMoods" style="display:flex;flex-wrap:wrap;gap:4px">
+          <label style="font-size:0.8em"><input type="checkbox" value="relaxing"> Relaxing</label>
+          <label style="font-size:0.8em"><input type="checkbox" value="energizing"> Energizing</label>
+          <label style="font-size:0.8em"><input type="checkbox" value="focusing"> Focusing</label>
+          <label style="font-size:0.8em"><input type="checkbox" value="uplifting"> Uplifting</label>
+          <label style="font-size:0.8em"><input type="checkbox" value="sensual"> Sensual</label>
+          <label style="font-size:0.8em"><input type="checkbox" value="calming"> Calming</label>
+          <label style="font-size:0.8em"><input type="checkbox" value="grounding"> Grounding</label>
+          <label style="font-size:0.8em"><input type="checkbox" value="refreshing"> Refreshing</label>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label"><span>Longevity Target</span><output id="briefLongevityOut">8h</output></div>
+        <input type="range" id="briefLongevity" min="2" max="24" value="8" oninput="document.getElementById('briefLongevityOut').textContent=this.value+'h'">
+      </div>
+      <div class="control-group">
+        <div class="control-label"><span>Max Ingredients</span><output id="briefMaxOut">10</output></div>
+        <input type="range" id="briefMaxIngredients" min="5" max="20" value="10" oninput="document.getElementById('briefMaxOut').textContent=this.value">
+      </div>
+      <button class="btn btn-primary" id="briefGenerate" style="width:100%;margin-top:12px">Generate Formula</button>
+      <div id="briefResults" style="margin-top:12px"></div>
     </div>
   </div>
 </div>
@@ -616,8 +669,39 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // ===== Formulation State =====
+// ===== A4: Undo/Redo System =====
+const formulationHistory = {
+  _stack: [],
+  _pointer: -1,
+  _maxSize: 50,
+  _skipPush: false,
+
+  push(snapshot) {
+    if (this._skipPush) return;
+    this._stack = this._stack.slice(0, this._pointer + 1);
+    this._stack.push(JSON.parse(JSON.stringify(snapshot)));
+    if (this._stack.length > this._maxSize) this._stack.shift();
+    this._pointer = this._stack.length - 1;
+  },
+
+  undo() {
+    if (this._pointer <= 0) return null;
+    this._pointer--;
+    return JSON.parse(JSON.stringify(this._stack[this._pointer]));
+  },
+
+  redo() {
+    if (this._pointer >= this._stack.length - 1) return null;
+    this._pointer++;
+    return JSON.parse(JSON.stringify(this._stack[this._pointer]));
+  },
+
+  canUndo() { return this._pointer > 0; },
+  canRedo() { return this._pointer < this._stack.length - 1; },
+};
+
 const formulation = {
-  materials: [],  // { cas, name, pct, data:{...from localStorage or DB...} }
+  materials: [],
   addMaterial(cas, name, pct, data) {
     if (!cas || !name) return false;
     if (this.materials.find(m => m.cas === cas)) return false;
@@ -636,17 +720,22 @@ const formulation = {
   updatePct(cas, pct) {
     const m = this.materials.find(m => m.cas === cas);
     if (m) {
-      // Validate: must be number, 0-100 range
       pct = parseFloat(pct);
       if (isNaN(pct) || pct < 0) pct = 0;
       if (pct > 100) pct = 100;
-      m.pct = Math.round(pct * 10) / 10; // max 1 decimal
+      m.pct = Math.round(pct * 10) / 10;
     }
     this.onChange();
   },
   totalPct() { return this.materials.reduce((s, m) => s + m.pct, 0); },
-  onChange() { renderMaterialList(); renderActiveTab(); }
+  onChange() {
+    formulationHistory.push(this.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, data: m.data })));
+    renderMaterialList();
+    renderActiveTab();
+  }
 };
+// Push initial empty state
+formulationHistory.push([]);
 
 // ===== Render Material List =====
 // Escape HTML to prevent XSS from material names
@@ -755,6 +844,8 @@ modalSearch.addEventListener('input', () => {
 function addFromDB(cas) {
   const entry = DB[cas];
   if (!entry) return;
+  // A1: Merge MATERIAL_PROPERTIES enrichment data
+  const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[cas] || {} : {};
   formulation.addMaterial(cas, entry.name, 10, {
     cas: entry.cas,
     name: entry.name,
@@ -767,6 +858,11 @@ function addFromDB(cas) {
     blends_with: entry.blends_with || [],
     ifra_guideline: entry.safety?.ifra || null,
     usage_levels: entry.safety?.usage || null,
+    molecular_weight: mp.mw || null,
+    density: mp.density || null,
+    xlogp: mp.logP || null,
+    boiling_point: mp.bp || null,
+    smiles: mp.smiles || null,
     primaryFamilies: [],
     secondaryFamilies: [],
     facets: [],
@@ -1370,6 +1466,31 @@ function renderSafetyTab() {
     html += '</tbody></table></div>';
   }
 
+  // Cost Summary (A5)
+  const batchSizeG = parseFloat(document.getElementById('batchSize').value) || 100;
+  const costData = calculateFormulaCost(mats, batchSizeG, carrier, fragPct);
+  html += '<div class="analysis-card"><h4>Cost Estimate <span class="badge badge-ok">$' + costData.totalCost + '</span></h4>';
+  html += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.85em;color:var(--text2);margin-top:6px">';
+  html += '<span>Fragrance: $' + costData.fragCost + '</span>';
+  html += '<span>Carrier: $' + costData.carrierCost + '</span>';
+  html += '<span>Per ml: $' + costData.costPerMl + '</span>';
+  html += '<span>Per kg: $' + costData.costPerKg + '</span>';
+  if (costData.unpricedMats.length) html += '<span style="color:var(--warn)">Unpriced: ' + costData.unpricedMats.length + ' materials</span>';
+  html += '</div>';
+  if (costData.perMaterial.some(m => m.cost !== null)) {
+    html += '<table class="data-table" style="margin-top:8px"><thead><tr><th>Material</th><th>Grams</th><th>$/g</th><th>Cost</th><th>Tier</th></tr></thead><tbody>';
+    for (const pm of costData.perMaterial) {
+      const tierCls = pm.tier === 'precious' ? 'badge-danger' : pm.tier === 'specialty' ? 'badge-warn' : 'badge-ok';
+      html += '<tr><td>' + escHtml(pm.name) + '</td>';
+      html += '<td>' + pm.grams + 'g</td>';
+      html += '<td>' + (pm.cost_g != null ? '$' + pm.cost_g : '\u2014') + '</td>';
+      html += '<td>' + (pm.cost != null ? '$' + pm.cost : '\u2014') + '</td>';
+      html += '<td><span class="badge ' + tierCls + '">' + pm.tier + '</span></td></tr>';
+    }
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+
   // Multi-Category IFRA Check
   const multiIFRA = buildMultiCategoryIFRA(mats, fragPct);
   html += '<div class="analysis-card"><h4>Multi-Category IFRA Compatibility</h4>';
@@ -1755,6 +1876,109 @@ function toggleLock(cas) {
   if (lockedMaterials.has(cas)) lockedMaterials.delete(cas);
   else lockedMaterials.add(cas);
   renderActiveTab();
+}
+
+// ===== A4: Undo/Redo Handlers =====
+function performUndo() {
+  const snapshot = formulationHistory.undo();
+  if (!snapshot) return;
+  formulationHistory._skipPush = true;
+  formulation.materials = snapshot;
+  renderMaterialList();
+  renderActiveTab();
+  formulationHistory._skipPush = false;
+  updateUndoRedoButtons();
+}
+
+function performRedo() {
+  const snapshot = formulationHistory.redo();
+  if (!snapshot) return;
+  formulationHistory._skipPush = true;
+  formulation.materials = snapshot;
+  renderMaterialList();
+  renderActiveTab();
+  formulationHistory._skipPush = false;
+  updateUndoRedoButtons();
+}
+
+function updateUndoRedoButtons() {
+  document.getElementById('btnUndo').disabled = !formulationHistory.canUndo();
+  document.getElementById('btnRedo').disabled = !formulationHistory.canRedo();
+}
+
+document.getElementById('btnUndo').addEventListener('click', performUndo);
+document.getElementById('btnRedo').addEventListener('click', performRedo);
+
+// Keyboard shortcuts: Ctrl+Z = undo, Ctrl+Shift+Z = redo
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault();
+    performUndo();
+  } else if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+    e.preventDefault();
+    performRedo();
+  }
+});
+
+// Update buttons after every formulation change
+const _origOnChange = formulation.onChange.bind(formulation);
+formulation.onChange = function() {
+  _origOnChange();
+  updateUndoRedoButtons();
+};
+
+// ===== A3: Creative Brief Modal =====
+const briefModal = document.getElementById('briefModal');
+document.getElementById('btnBrief').addEventListener('click', () => {
+  briefModal.classList.add('open');
+  document.getElementById('briefResults').innerHTML = '';
+});
+document.getElementById('briefClose').addEventListener('click', () => briefModal.classList.remove('open'));
+briefModal.addEventListener('click', e => { if (e.target === briefModal) briefModal.classList.remove('open'); });
+
+document.getElementById('briefGenerate').addEventListener('click', () => {
+  const family = document.getElementById('briefFamily').value;
+  const moods = [...document.querySelectorAll('#briefMoods input:checked')].map(c => c.value);
+  const longevityH = parseInt(document.getElementById('briefLongevity').value);
+  const maxIngredients = parseInt(document.getElementById('briefMaxIngredients').value);
+
+  const brief = { family, moods, longevityH, maxIngredients, notePct: { top: 20, mid: 45, base: 35 }, exclude: [] };
+  const graph = getCompatGraph();
+  const results = generateFromBrief(brief, DB, graph);
+
+  const el = document.getElementById('briefResults');
+  if (!results.length) {
+    el.innerHTML = '<p style="color:var(--warn)">No matching materials found. Try different settings.</p>';
+    return;
+  }
+
+  let html = '<table class="data-table" style="font-size:0.82em"><thead><tr><th>Material</th><th>Note</th><th>%</th><th>Score</th><th></th></tr></thead><tbody>';
+  for (const r of results) {
+    html += '<tr><td>' + escHtml(r.name) + '</td><td>' + escHtml(r.note) + '</td>';
+    html += '<td>' + r.suggestedPct + '%</td>';
+    html += '<td>' + r.scores.total + '</td>';
+    html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + escHtml(r.cas) + '\');this.disabled=true;this.textContent=\'Added\'">Add</button></td></tr>';
+  }
+  html += '</tbody></table>';
+  html += '<button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="applyBriefFormula()">Apply All (' + results.length + ' materials)</button>';
+  el.innerHTML = html;
+
+  // Store results for "Apply All"
+  el._briefResults = results;
+});
+
+function applyBriefFormula() {
+  const results = document.getElementById('briefResults')._briefResults;
+  if (!results) return;
+  if (formulation.materials.length && !confirm('Replace current formulation with brief results?')) return;
+  formulation.materials = [];
+  for (const r of results) {
+    const entry = DB[r.cas];
+    if (!entry) continue;
+    addFromDB(r.cas);
+    formulation.updatePct(r.cas, r.suggestedPct);
+  }
+  briefModal.classList.remove('open');
 }
 </script>
 </body>

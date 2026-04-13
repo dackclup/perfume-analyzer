@@ -1087,3 +1087,310 @@ const REACTIVE_PAIRS = [
     colorChange: { from: "#f5f0e0", to: "#6B4226" },
   },
 ];
+
+// ─────────────────────────────────────────────────────────────
+// A1: Material Properties Enrichment Table
+// MW (g/mol), density (g/mL @20°C), logP, BP (°C), canonical SMILES
+// Sources: PubChem, RIFM, Sigma-Aldrich, Leffingwell
+// ─────────────────────────────────────────────────────────────
+const MATERIAL_PROPERTIES = {
+  // ── Top notes: Citrus / Fresh ──
+  "5989-27-5":  { mw: 136.23, density: 0.842, logP: 4.57, bp: 176, smiles: "CC1=CCC(CC1)C(=C)C" },
+  "80-56-8":    { mw: 136.23, density: 0.858, logP: 4.44, bp: 155, smiles: "CC1=CCC2CC1C2(C)C" },
+  "127-91-3":   { mw: 136.23, density: 0.872, logP: 4.16, bp: 166, smiles: "CC1=CCC2CC1C2(C)C" },
+  "123-35-3":   { mw: 136.23, density: 0.794, logP: 4.17, bp: 167, smiles: "CC(=CCCC(=CC)C)C" },
+  "79-92-5":    { mw: 136.23, density: 0.842, logP: 4.22, bp: 159, smiles: "CC1(C2CC1C(=C)C2)C" },
+  "586-62-9":   { mw: 136.23, density: 0.863, logP: 4.47, bp: 185, smiles: "CC1=CCC(=CC1)C(C)C" },
+  "99-83-2":    { mw: 136.23, density: 0.846, logP: 3.38, bp: 171, smiles: "CC1=CCC(=CC1)C(C)C" },
+  "3387-41-5":  { mw: 136.23, density: 0.844, logP: 4.16, bp: 163, smiles: "CC1=CCC2(CC1)C(C2)C" },
+  "13877-91-3": { mw: 136.23, density: 0.800, logP: 4.17, bp: 177, smiles: "CC(=CCC=C(C)C)C=C" },
+  "470-82-6":   { mw: 154.25, density: 0.922, logP: 2.74, bp: 176, smiles: "CC1(C)OC2CC(CC1C2)C" },
+  "124-13-0":   { mw: 128.21, density: 0.821, logP: 2.78, bp: 171, smiles: "CCCCCCCC=O" },
+  "124-19-6":   { mw: 142.24, density: 0.827, logP: 3.27, bp: 191, smiles: "CCCCCCCCC=O" },
+  "112-31-2":   { mw: 156.27, density: 0.830, logP: 3.76, bp: 208, smiles: "CCCCCCCCCC=O" },
+  "112-44-7":   { mw: 170.29, density: 0.830, logP: 4.26, bp: 223, smiles: "CCCCCCCCCCC=O" },
+  "112-54-9":   { mw: 184.32, density: 0.831, logP: 4.75, bp: 238, smiles: "CCCCCCCCCCCC=O" },
+  "141-78-6":   { mw: 88.11, density: 0.902, logP: 0.73, bp: 77, smiles: "CCOC(C)=O" },
+  "123-92-2":   { mw: 130.18, density: 0.876, logP: 2.25, bp: 142, smiles: "CC(C)CCOC(C)=O" },
+  "628-63-7":   { mw: 130.18, density: 0.876, logP: 2.30, bp: 149, smiles: "CCCCCOC(C)=O" },
+  "142-92-7":   { mw: 144.21, density: 0.878, logP: 2.83, bp: 171, smiles: "CCCCCCOC(C)=O" },
+  "928-96-1":   { mw: 100.16, density: 0.847, logP: 1.61, bp: 157, smiles: "CC/C=C\\CCO" },
+  "5392-40-5":  { mw: 152.23, density: 0.893, logP: 3.45, bp: 229, smiles: "CC(=CCCC(=CC=O)C)C" },
+  "106-23-0":   { mw: 154.25, density: 0.855, logP: 3.53, bp: 207, smiles: "CC(CCCC(C)C=O)C" },
+  // ── Top/Middle notes: Floral / Fresh ──
+  "78-70-6":    { mw: 154.25, density: 0.870, logP: 2.97, bp: 198, smiles: "CC(=CCC(/C)(C=C)O)C" },
+  "106-22-9":   { mw: 156.27, density: 0.855, logP: 3.91, bp: 225, smiles: "CC(CCCC(C)O)CC=C" },
+  "106-24-1":   { mw: 154.25, density: 0.889, logP: 3.56, bp: 230, smiles: "CC(=CCCC(=CCO)C)C" },
+  "106-25-2":   { mw: 154.25, density: 0.876, logP: 3.47, bp: 225, smiles: "CC(=CCCC(=C/CO)\\C)C" },
+  "98-55-5":    { mw: 154.25, density: 0.935, logP: 2.98, bp: 219, smiles: "CC1=CCC(CC1)C(C)(C)O" },
+  "562-74-3":   { mw: 154.25, density: 0.933, logP: 2.30, bp: 212, smiles: "CC1=CCC(CC1O)C(C)C" },
+  "115-95-7":   { mw: 196.29, density: 0.895, logP: 3.56, bp: 220, smiles: "CC(=CCC(/C)(C=C)OC(C)=O)C" },
+  "105-87-3":   { mw: 196.29, density: 0.907, logP: 4.04, bp: 242, smiles: "CC(=CCCC(=CCOC(C)=O)C)C" },
+  "141-12-8":   { mw: 196.29, density: 0.911, logP: 3.56, bp: 240, smiles: "CC(=CCC/C(=C\\COC(C)=O)C)C" },
+  "150-84-5":   { mw: 198.30, density: 0.890, logP: 4.04, bp: 244, smiles: "CC(CCCC(C)OC(C)=O)CC=C" },
+  "140-11-4":   { mw: 150.17, density: 1.054, logP: 1.96, bp: 213, smiles: "CC(=O)OCc1ccccc1" },
+  "103-45-7":   { mw: 164.20, density: 1.030, logP: 2.30, bp: 232, smiles: "CC(=O)OCCc1ccccc1" },
+  "18479-58-8": { mw: 156.27, density: 0.830, logP: 3.47, bp: 192, smiles: "CC(CCCC(C)(C)O)C=C" },
+  "16409-43-1": { mw: 154.25, density: 0.947, logP: 2.51, bp: 210, smiles: "CC1CCC(OC1)C(=C)C" },
+  "107-75-5":   { mw: 172.27, density: 0.918, logP: 2.19, bp: 241, smiles: "CC(CCCC(C)(CC=O)O)CC" },
+  "60-12-8":    { mw: 122.16, density: 1.020, logP: 1.36, bp: 219, smiles: "OCCc1ccccc1" },
+  "122-78-1":   { mw: 120.15, density: 1.027, logP: 1.78, bp: 195, smiles: "O=CCc1ccccc1" },
+  "134-20-3":   { mw: 151.16, density: 1.168, logP: 1.89, bp: 256, smiles: "COC(=O)c1ccccc1N" },
+  "104-55-2":   { mw: 132.16, density: 1.050, logP: 1.98, bp: 248, smiles: "O=C/C=C/c1ccccc1" },
+  "104-54-1":   { mw: 134.17, density: 1.044, logP: 1.95, bp: 257, smiles: "OC/C=C/c1ccccc1" },
+  "89-78-1":    { mw: 156.27, density: 0.890, logP: 3.38, bp: 212, smiles: "CC1CCC(C(C1)O)C(C)C" },
+  "89-80-5":    { mw: 154.25, density: 0.895, logP: 2.96, bp: 207, smiles: "CC1CCC(C(=O)C1)C(C)C" },
+  "76-22-2":    { mw: 152.23, density: 0.992, logP: 2.38, bp: 204, smiles: "CC1(C)C2CCC1(C)C(=O)C2" },
+  "507-70-0":   { mw: 154.25, density: 1.011, logP: 2.71, bp: 213, smiles: "CC1(C)C2CCC1(C)C(O)C2" },
+  "76-49-3":    { mw: 196.29, density: 1.008, logP: 3.36, bp: 227, smiles: "CC1(C)C2CCC1(C)C(OC(C)=O)C2" },
+  "1632-73-1":  { mw: 154.25, density: 0.940, logP: 2.12, bp: 201, smiles: "CC1(C)C2CC(O)C1(C)CC2" },
+  "1195-79-5":  { mw: 152.23, density: 0.946, logP: 2.13, bp: 193, smiles: "CC1(C)C2CC(=O)C1(C)CC2" },
+  "99-49-0":    { mw: 150.22, density: 0.960, logP: 2.74, bp: 231, smiles: "CC1=CC(=O)C(CC1)C(=C)C" },
+  "89-83-8":    { mw: 150.22, density: 0.965, logP: 3.30, bp: 233, smiles: "Cc1ccc(C(C)C)c(O)c1" },
+  "499-75-2":   { mw: 150.22, density: 0.976, logP: 3.49, bp: 237, smiles: "Cc1ccc(O)c(C(C)C)c1" },
+  "104-46-1":   { mw: 148.20, density: 0.988, logP: 3.39, bp: 235, smiles: "COc1ccc(/C=C/C)cc1" },
+  "140-67-0":   { mw: 148.20, density: 0.965, logP: 3.47, bp: 216, smiles: "COc1ccc(CC=C)cc1" },
+  "119-36-8":   { mw: 152.15, density: 1.174, logP: 2.55, bp: 222, smiles: "COC(=O)c1ccccc1O" },
+  "100-51-6":   { mw: 108.14, density: 1.045, logP: 1.10, bp: 205, smiles: "OCc1ccccc1" },
+  "100-52-7":   { mw: 106.12, density: 1.044, logP: 1.48, bp: 178, smiles: "O=Cc1ccccc1" },
+  "123-11-5":   { mw: 136.15, density: 1.119, logP: 1.76, bp: 248, smiles: "COc1ccc(C=O)cc1" },
+  "105-13-5":   { mw: 138.16, density: 1.113, logP: 0.86, bp: 259, smiles: "COc1ccc(CO)cc1" },
+  "93-58-3":    { mw: 136.15, density: 1.094, logP: 2.12, bp: 199, smiles: "COC(=O)c1ccccc1" },
+  "90-05-1":    { mw: 124.14, density: 1.129, logP: 1.32, bp: 205, smiles: "COc1ccccc1O" },
+  // ── Middle notes: Floral / Fruity ──
+  "91-64-5":    { mw: 146.14, density: 0.935, logP: 1.39, bp: 301, smiles: "O=c1ccc2ccccc2o1" },
+  "97-53-0":    { mw: 164.20, density: 1.067, logP: 2.27, bp: 254, smiles: "COc1cc(CC=C)ccc1O" },
+  "97-54-1":    { mw: 164.20, density: 1.084, logP: 2.58, bp: 266, smiles: "COc1cc(/C=C/C)ccc1O" },
+  "93-15-2":    { mw: 178.23, density: 1.036, logP: 2.72, bp: 255, smiles: "COc1cc(CC=C)cc(OC)c1O" },
+  "120-57-0":   { mw: 150.13, density: 1.337, logP: 1.05, bp: 263, smiles: "O=Cc1ccc2OCOc2c1" },
+  "127-41-3":   { mw: 192.30, density: 0.932, logP: 3.70, bp: 230, smiles: "CC1=CC(=O)CC(C1)C=CC(C)(C)C" },
+  "14901-07-6": { mw: 192.30, density: 0.946, logP: 4.42, bp: 243, smiles: "CC1=CC(=O)C(C)(C)C=C1/C=C/C(C)C" },
+  "127-42-4":   { mw: 206.32, density: 0.933, logP: 4.30, bp: 237, smiles: null },
+  "127-51-5":   { mw: 206.32, density: 0.928, logP: 4.60, bp: 250, smiles: null },
+  "103-26-4":   { mw: 162.19, density: 1.042, logP: 2.62, bp: 261, smiles: "COC(=O)/C=C/c1ccccc1" },
+  "122-40-7":   { mw: 202.29, density: 0.963, logP: 4.24, bp: 290, smiles: "CCCCCC(C=O)=Cc1ccccc1" },
+  "101-86-0":   { mw: 216.32, density: 0.954, logP: 4.82, bp: 305, smiles: "CCCCCCC(C=O)=Cc1ccccc1" },
+  "103-95-7":   { mw: 184.28, density: 0.946, logP: 3.66, bp: 270, smiles: null },
+  "18127-01-0": { mw: 204.31, density: 0.953, logP: 3.80, bp: 293, smiles: null },
+  "1205-17-0":  { mw: 192.21, density: 1.180, logP: 1.80, bp: 290, smiles: "OCCC=Cc1ccc2OCOc2c1" },
+  "24851-98-7": { mw: 226.31, density: 0.953, logP: 3.30, bp: 290, smiles: "COC(=O)CC1CCC(=O)C1CC" },
+  "706-14-9":   { mw: 170.25, density: 0.950, logP: 2.61, bp: 281, smiles: "CCCCCC1OC(=O)CC1" },
+  "104-67-6":   { mw: 184.28, density: 0.940, logP: 3.09, bp: 297, smiles: "CCCCCCC1OC(=O)CC1" },
+  "705-86-2":   { mw: 170.25, density: 0.949, logP: 2.66, bp: 280, smiles: "CCCCCC1OC(=O)CCC1" },
+  "104-61-0":   { mw: 156.22, density: 0.958, logP: 2.14, bp: 264, smiles: "CCCCC1OC(=O)CC1" },
+  "118-71-8":   { mw: 126.11, density: 1.270, logP: -0.23, bp: 265, smiles: "CC1=C(O)C(=O)C=CO1" },
+  "4940-11-8":  { mw: 140.14, density: 1.210, logP: 0.03, bp: 275, smiles: "CCC1=C(O)C(=O)C=CO1" },
+  "103-82-2":   { mw: 136.15, density: 1.091, logP: 1.41, bp: 266, smiles: "OC(=O)Cc1ccccc1" },
+  "111-12-6":   { mw: 154.21, density: 0.923, logP: 2.66, bp: 226, smiles: "CCCCCCC#CCOC(=O)C" },
+  "6259-76-3":  { mw: 222.28, density: 1.036, logP: 5.07, bp: 300, smiles: "CCCCCCOC(=O)c1ccccc1O" },
+  "120-51-4":   { mw: 212.24, density: 1.118, logP: 3.97, bp: 323, smiles: "O=C(OCc1ccccc1)c1ccccc1" },
+  "118-58-1":   { mw: 228.24, density: 1.176, logP: 4.31, bp: 320, smiles: "O=C(OCc1ccccc1)c1ccccc1O" },
+  "43052-87-5": { mw: 192.30, density: 0.928, logP: 3.90, bp: 253, smiles: null },
+  "23726-91-2": { mw: 192.30, density: 0.934, logP: 4.20, bp: 260, smiles: null },
+  "23696-85-7": { mw: 190.28, density: 0.952, logP: 3.60, bp: 274, smiles: null },
+  "28940-11-6": { mw: 192.26, density: 1.030, logP: 2.22, bp: 261, smiles: null },
+  "116-26-7":   { mw: 150.22, density: 0.973, logP: 2.60, bp: 253, smiles: "CC1=C(C=O)C(C)(C)CC1" },
+  "4602-84-0":  { mw: 222.37, density: 0.887, logP: 5.77, bp: 283, smiles: "CC(=CCCC(=CCCC(=CCO)C)C)C" },
+  "7212-44-4":  { mw: 222.37, density: 0.878, logP: 5.32, bp: 276, smiles: "CC(=CCCC(C)(C=C)CC=C(C)CCC=C(C)C)O" },
+  "120-72-9":   { mw: 117.15, density: 1.220, logP: 2.14, bp: 254, smiles: "c1ccc2[nH]ccc2c1" },
+  "83-34-1":    { mw: 131.17, density: 1.070, logP: 2.60, bp: 266, smiles: "Cc1c[nH]c2ccccc12" },
+  "106-44-5":   { mw: 108.14, density: 1.034, logP: 1.94, bp: 202, smiles: "Cc1ccc(O)cc1" },
+  // ── Base notes: Woody / Amber / Musk ──
+  "121-33-5":   { mw: 152.15, density: 1.056, logP: 1.21, bp: 285, smiles: "COc1cc(C=O)ccc1O" },
+  "121-32-4":   { mw: 166.17, density: 1.110, logP: 1.58, bp: 295, smiles: "CCOc1cc(C=O)ccc1O" },
+  "54464-57-2": { mw: 234.38, density: 0.960, logP: 4.73, bp: 285, smiles: null },
+  "1222-05-5":  { mw: 258.40, density: 1.040, logP: 5.90, bp: 285, smiles: null },
+  "33704-61-9": { mw: 206.32, density: 0.980, logP: 3.44, bp: 265, smiles: null },
+  "6790-58-5":  { mw: 236.40, density: 0.980, logP: 4.34, bp: 280, smiles: null },
+  "3738-00-9":  { mw: 236.40, density: 1.000, logP: 4.50, bp: 290, smiles: null },
+  "21145-77-7": { mw: 258.40, density: 1.063, logP: 5.70, bp: 300, smiles: null },
+  "81-14-1":    { mw: 294.30, density: 1.160, logP: 3.87, bp: 350, smiles: null },
+  "541-91-3":   { mw: 238.41, density: 0.920, logP: 5.50, bp: 327, smiles: null },
+  "105-95-3":   { mw: 256.38, density: 0.969, logP: 4.95, bp: 332, smiles: null },
+  "106-02-5":   { mw: 240.38, density: 0.946, logP: 5.67, bp: 318, smiles: null },
+  "34902-57-3": { mw: 238.37, density: 0.945, logP: 5.23, bp: 315, smiles: null },
+  "77-53-2":    { mw: 222.37, density: 1.008, logP: 4.53, bp: 291, smiles: null },
+  "77-54-3":    { mw: 264.40, density: 1.009, logP: 5.00, bp: 285, smiles: null },
+  "515-69-5":   { mw: 222.37, density: 0.929, logP: 5.07, bp: 315, smiles: null },
+  "5986-55-0":  { mw: 222.37, density: 0.990, logP: 3.84, bp: 295, smiles: null },
+  "65113-99-7": { mw: 210.36, density: 0.908, logP: 4.22, bp: 290, smiles: null },
+  "198404-98-7":{ mw: 210.31, density: 0.978, logP: 3.40, bp: 285, smiles: null },
+  "4674-50-4":  { mw: 218.33, density: 0.980, logP: 4.03, bp: 270, smiles: null },
+  // ── Solvents & carriers ──
+  "64-17-5":    { mw: 46.07,  density: 0.789, logP: -0.31, bp: 78, smiles: "CCO" },
+  "57-55-6":    { mw: 76.09,  density: 1.036, logP: -0.92, bp: 188, smiles: "CC(O)CO" },
+  "25265-71-8": { mw: 134.17, density: 1.023, logP: -0.64, bp: 232, smiles: "CC(O)COCC(C)O" },
+  "110-27-0":   { mw: 270.45, density: 0.853, logP: 7.17, bp: 315, smiles: "CC(C)OC(=O)CCCCCCCCCCCCC" },
+  "84-66-2":    { mw: 222.24, density: 1.118, logP: 2.42, bp: 298, smiles: "CCOC(=O)c1ccccc1C(=O)OCC" },
+  "77-93-0":    { mw: 276.28, density: 1.135, logP: 0.33, bp: 294, smiles: "CCOC(=O)CC(CC(=O)OCC)(OC(=O)CC)O" },
+  "102-76-1":   { mw: 218.21, density: 1.160, logP: -0.25, bp: 259, smiles: "CC(=O)OCC(COC(C)=O)OC(C)=O" },
+  "111-01-3":   { mw: 422.81, density: 0.810, logP: 14.12, bp: 350, smiles: null },
+  "128-37-0":   { mw: 220.35, density: 1.048, logP: 5.10, bp: 265, smiles: "Cc1cc(C(C)(C)C)c(O)c(C(C)(C)C)c1" },
+};
+
+// ─────────────────────────────────────────────────────────────
+// A5: Material Cost Database
+// Approximate hobby/small-batch pricing in USD per gram.
+// Sources: PerfumersWorld, Pell Wall, Creating Perfume, supplier catalogs.
+// Tiers: solvent, commodity, standard, specialty, precious
+// ─────────────────────────────────────────────────────────────
+const MATERIAL_COSTS = {
+  // Solvents & carriers
+  "64-17-5":    { cost_g: 0.005, tier: "solvent" },      // Ethanol
+  "57-55-6":    { cost_g: 0.008, tier: "solvent" },      // Propylene Glycol
+  "25265-71-8": { cost_g: 0.010, tier: "solvent" },      // DPG
+  "110-27-0":   { cost_g: 0.025, tier: "solvent" },      // IPM
+  "84-66-2":    { cost_g: 0.012, tier: "solvent" },      // DEP
+  "77-93-0":    { cost_g: 0.015, tier: "solvent" },      // Triethyl Citrate
+  "102-76-1":   { cost_g: 0.010, tier: "solvent" },      // Triacetin
+  "111-01-3":   { cost_g: 0.030, tier: "solvent" },      // Squalane
+  // Commodity aroma chemicals
+  "78-70-6":    { cost_g: 0.08, tier: "commodity" },     // Linalool
+  "5989-27-5":  { cost_g: 0.05, tier: "commodity" },     // Limonene
+  "106-22-9":   { cost_g: 0.10, tier: "commodity" },     // Citronellol
+  "106-24-1":   { cost_g: 0.12, tier: "commodity" },     // Geraniol
+  "97-53-0":    { cost_g: 0.08, tier: "commodity" },     // Eugenol
+  "80-56-8":    { cost_g: 0.06, tier: "commodity" },     // Alpha Pinene
+  "127-91-3":   { cost_g: 0.06, tier: "commodity" },     // Beta Pinene
+  "470-82-6":   { cost_g: 0.07, tier: "commodity" },     // Eucalyptol
+  "89-78-1":    { cost_g: 0.10, tier: "commodity" },     // Menthol
+  "100-51-6":   { cost_g: 0.06, tier: "commodity" },     // Benzyl Alcohol
+  "100-52-7":   { cost_g: 0.06, tier: "commodity" },     // Benzaldehyde
+  "115-95-7":   { cost_g: 0.10, tier: "commodity" },     // Linalyl Acetate
+  "140-11-4":   { cost_g: 0.08, tier: "commodity" },     // Benzyl Acetate
+  "119-36-8":   { cost_g: 0.06, tier: "commodity" },     // Methyl Salicylate
+  "123-35-3":   { cost_g: 0.05, tier: "commodity" },     // Myrcene
+  "141-78-6":   { cost_g: 0.04, tier: "commodity" },     // Ethyl Acetate
+  "79-92-5":    { cost_g: 0.06, tier: "commodity" },     // Camphene
+  "76-22-2":    { cost_g: 0.06, tier: "commodity" },     // Camphor
+  // Standard aroma chemicals
+  "54464-57-2": { cost_g: 0.12, tier: "standard" },     // Iso E Super
+  "24851-98-7": { cost_g: 0.15, tier: "standard" },     // Hedione
+  "91-64-5":    { cost_g: 0.15, tier: "standard" },     // Coumarin
+  "121-33-5":   { cost_g: 0.12, tier: "standard" },     // Vanillin
+  "121-32-4":   { cost_g: 0.18, tier: "standard" },     // Ethyl Vanillin
+  "18479-58-8": { cost_g: 0.10, tier: "standard" },     // Dihydromyrcenol
+  "120-51-4":   { cost_g: 0.08, tier: "standard" },     // Benzyl Benzoate
+  "118-58-1":   { cost_g: 0.12, tier: "standard" },     // Benzyl Salicylate
+  "60-12-8":    { cost_g: 0.10, tier: "standard" },     // PEA
+  "98-55-5":    { cost_g: 0.10, tier: "standard" },     // Alpha Terpineol
+  "104-55-2":   { cost_g: 0.10, tier: "standard" },     // Cinnamaldehyde
+  "107-75-5":   { cost_g: 0.15, tier: "standard" },     // Hydroxycitronellal
+  "120-57-0":   { cost_g: 0.15, tier: "standard" },     // Heliotropin
+  "104-54-1":   { cost_g: 0.12, tier: "standard" },     // Cinnamic Alcohol
+  "105-87-3":   { cost_g: 0.12, tier: "standard" },     // Geranyl Acetate
+  "103-45-7":   { cost_g: 0.12, tier: "standard" },     // Phenylethyl Acetate
+  "106-23-0":   { cost_g: 0.10, tier: "standard" },     // Citronellal
+  "106-25-2":   { cost_g: 0.15, tier: "standard" },     // Nerol
+  "5392-40-5":  { cost_g: 0.12, tier: "standard" },     // Citral
+  "150-84-5":   { cost_g: 0.12, tier: "standard" },     // Citronellyl Acetate
+  "141-12-8":   { cost_g: 0.14, tier: "standard" },     // Neryl Acetate
+  "142-92-7":   { cost_g: 0.08, tier: "standard" },     // Hexyl Acetate
+  "628-63-7":   { cost_g: 0.08, tier: "standard" },     // Amyl Acetate
+  "123-92-2":   { cost_g: 0.08, tier: "standard" },     // Isoamyl Acetate
+  "89-83-8":    { cost_g: 0.10, tier: "standard" },     // Thymol
+  "90-05-1":    { cost_g: 0.08, tier: "standard" },     // Guaiacol
+  "93-58-3":    { cost_g: 0.08, tier: "standard" },     // Methyl Benzoate
+  "104-46-1":   { cost_g: 0.10, tier: "standard" },     // Anethole
+  "134-20-3":   { cost_g: 0.15, tier: "standard" },     // Methyl Anthranilate
+  "103-82-2":   { cost_g: 0.10, tier: "standard" },     // Phenylacetic Acid
+  "562-74-3":   { cost_g: 0.12, tier: "standard" },     // Terpinen-4-ol
+  "99-49-0":    { cost_g: 0.10, tier: "standard" },     // Carvone
+  "507-70-0":   { cost_g: 0.12, tier: "standard" },     // Borneol
+  "76-49-3":    { cost_g: 0.10, tier: "standard" },     // Bornyl Acetate
+  "89-80-5":    { cost_g: 0.10, tier: "standard" },     // Menthone
+  "928-96-1":   { cost_g: 0.15, tier: "standard" },     // cis-3-Hexenol
+  "118-71-8":   { cost_g: 0.20, tier: "standard" },     // Maltol
+  "4940-11-8":  { cost_g: 0.25, tier: "standard" },     // Ethyl Maltol
+  "103-26-4":   { cost_g: 0.12, tier: "standard" },     // Methyl Cinnamate
+  "112-31-2":   { cost_g: 0.12, tier: "standard" },     // Decanal
+  "112-44-7":   { cost_g: 0.15, tier: "standard" },     // Undecanal
+  "112-54-9":   { cost_g: 0.15, tier: "standard" },     // Dodecanal
+  "124-13-0":   { cost_g: 0.10, tier: "standard" },     // Octanal
+  "124-19-6":   { cost_g: 0.10, tier: "standard" },     // Nonanal
+  "122-78-1":   { cost_g: 0.12, tier: "standard" },     // Phenylacetaldehyde
+  "122-40-7":   { cost_g: 0.15, tier: "standard" },     // Amyl Cinnamic Aldehyde
+  "101-86-0":   { cost_g: 0.15, tier: "standard" },     // Hexyl Cinnamic Aldehyde
+  "6259-76-3":  { cost_g: 0.15, tier: "standard" },     // Hexyl Salicylate
+  "111-12-6":   { cost_g: 0.15, tier: "standard" },     // Methyl 2-Octynoate
+  "123-11-5":   { cost_g: 0.10, tier: "standard" },     // Anisaldehyde
+  "105-13-5":   { cost_g: 0.12, tier: "standard" },     // Anisyl Alcohol
+  "140-67-0":   { cost_g: 0.10, tier: "standard" },     // Estragole
+  "586-62-9":   { cost_g: 0.08, tier: "standard" },     // Terpinolene
+  "106-44-5":   { cost_g: 0.10, tier: "standard" },     // Para-Cresol
+  // Specialty aroma chemicals
+  "1222-05-5":  { cost_g: 0.20, tier: "specialty" },    // Galaxolide
+  "33704-61-9": { cost_g: 0.25, tier: "specialty" },    // Cashmeran
+  "81-14-1":    { cost_g: 0.30, tier: "specialty" },    // Musk Ketone
+  "16409-43-1": { cost_g: 0.25, tier: "specialty" },    // Rose Oxide
+  "65113-99-7": { cost_g: 0.35, tier: "specialty" },    // Sandalore
+  "127-41-3":   { cost_g: 0.30, tier: "specialty" },    // Alpha Ionone
+  "14901-07-6": { cost_g: 0.25, tier: "specialty" },    // Beta Ionone
+  "127-42-4":   { cost_g: 0.25, tier: "specialty" },    // Methyl Ionone Alpha
+  "127-51-5":   { cost_g: 0.25, tier: "specialty" },    // Alpha Isomethyl Ionone
+  "515-69-5":   { cost_g: 0.40, tier: "specialty" },    // Alpha Bisabolol
+  "77-53-2":    { cost_g: 0.25, tier: "specialty" },    // Cedrol
+  "77-54-3":    { cost_g: 0.20, tier: "specialty" },    // Cedryl Acetate
+  "120-72-9":   { cost_g: 0.30, tier: "specialty" },    // Indole
+  "83-34-1":    { cost_g: 0.35, tier: "specialty" },    // Skatole
+  "103-95-7":   { cost_g: 0.20, tier: "specialty" },    // Cyclamal
+  "18127-01-0": { cost_g: 0.25, tier: "specialty" },    // Bourgeonal
+  "1205-17-0":  { cost_g: 0.30, tier: "specialty" },    // Helional
+  "28940-11-6": { cost_g: 0.40, tier: "specialty" },    // Calone
+  "21145-77-7": { cost_g: 0.25, tier: "specialty" },    // Tonalide
+  "105-95-3":   { cost_g: 0.25, tier: "specialty" },    // Ethylene Brassylate
+  "106-02-5":   { cost_g: 0.30, tier: "specialty" },    // Exaltolide
+  "43052-87-5": { cost_g: 0.35, tier: "specialty" },    // Alpha Damascone
+  "23726-91-2": { cost_g: 0.40, tier: "specialty" },    // Beta Damascone
+  "23696-85-7": { cost_g: 0.50, tier: "specialty" },    // Damascenone
+  "706-14-9":   { cost_g: 0.25, tier: "specialty" },    // Gamma Decalactone
+  "104-67-6":   { cost_g: 0.25, tier: "specialty" },    // Gamma Undecalactone
+  "705-86-2":   { cost_g: 0.30, tier: "specialty" },    // Delta Decalactone
+  "104-61-0":   { cost_g: 0.25, tier: "specialty" },    // Gamma Nonalactone
+  "116-26-7":   { cost_g: 0.45, tier: "specialty" },    // Safranal
+  "4602-84-0":  { cost_g: 0.30, tier: "specialty" },    // Farnesol
+  "7212-44-4":  { cost_g: 0.30, tier: "specialty" },    // Nerolidol
+  "4674-50-4":  { cost_g: 0.50, tier: "specialty" },    // Nootkatone
+  "97-54-1":    { cost_g: 0.15, tier: "specialty" },    // Isoeugenol
+  // Precious / expensive
+  "6790-58-5":  { cost_g: 0.80, tier: "precious" },     // Ambroxan
+  "3738-00-9":  { cost_g: 0.70, tier: "precious" },     // Cetalox
+  "541-91-3":   { cost_g: 3.00, tier: "precious" },     // Muscone
+  "198404-98-7":{ cost_g: 0.90, tier: "precious" },     // Javanol
+  "5986-55-0":  { cost_g: 0.50, tier: "precious" },     // Patchoulol
+  "34902-57-3": { cost_g: 0.80, tier: "precious" },     // Habanolide
+  // Essential oils & absolutes
+  "8000-28-0":  { cost_g: 0.30, tier: "standard" },     // Lavender Oil
+  "8007-01-0":  { cost_g: 8.50, tier: "precious" },     // Rose Oil
+  "8014-09-3":  { cost_g: 0.60, tier: "specialty" },    // Patchouli Oil
+  "8006-81-3":  { cost_g: 0.80, tier: "specialty" },    // Ylang Ylang Oil
+  "8016-38-4":  { cost_g: 4.00, tier: "precious" },     // Neroli Oil
+  "8016-96-4":  { cost_g: 0.70, tier: "specialty" },    // Vetiver Oil
+  "8022-96-6":  { cost_g: 6.00, tier: "precious" },     // Jasmine Oil
+  "8000-46-2":  { cost_g: 0.50, tier: "specialty" },    // Geranium Oil
+  "8008-56-8":  { cost_g: 0.15, tier: "commodity" },    // Lemon Oil
+  "8008-57-9":  { cost_g: 0.10, tier: "commodity" },    // Sweet Orange Oil
+  "8016-20-4":  { cost_g: 0.20, tier: "standard" },     // Grapefruit Oil
+  "8007-75-8":  { cost_g: 0.35, tier: "standard" },     // Bergamot Oil
+  "8000-48-4":  { cost_g: 0.12, tier: "commodity" },    // Eucalyptus Oil
+  "8000-25-7":  { cost_g: 0.15, tier: "commodity" },    // Rosemary Oil
+  "8016-63-5":  { cost_g: 0.40, tier: "standard" },     // Clary Sage Oil
+  "8000-34-8":  { cost_g: 0.20, tier: "standard" },     // Clove Oil
+  "8015-91-6":  { cost_g: 0.25, tier: "standard" },     // Cinnamon Oil
+  "8000-66-6":  { cost_g: 0.40, tier: "standard" },     // Cardamom Oil
+  "8006-82-4":  { cost_g: 0.35, tier: "standard" },     // Black Pepper Oil
+  "8007-02-1":  { cost_g: 0.12, tier: "commodity" },    // Lemongrass Oil
+  "8014-19-5":  { cost_g: 0.15, tier: "commodity" },    // Palmarosa Oil
+  "68647-73-4": { cost_g: 0.15, tier: "commodity" },    // Tea Tree Oil
+  "8016-36-2":  { cost_g: 0.60, tier: "specialty" },    // Frankincense Oil
+  "8016-37-3":  { cost_g: 0.80, tier: "specialty" },    // Myrrh Oil
+  "8006-87-9":  { cost_g: 12.0, tier: "precious" },     // Sandalwood Oil
+  "9000-50-4":  { cost_g: 3.00, tier: "precious" },     // Oakmoss Absolute
+  "8024-55-3":  { cost_g: 8.00, tier: "precious" },     // Tuberose Absolute
+  "8002-73-1":  { cost_g: 15.0, tier: "precious" },     // Orris Absolute
+  "8046-22-8":  { cost_g: 2.50, tier: "precious" },     // Tonka Bean Absolute
+  "93685-97-3": { cost_g: 4.00, tier: "precious" },     // Mimosa Absolute
+  "8024-06-4":  { cost_g: 1.50, tier: "precious" },     // Vanilla CO2
+  "8016-26-0":  { cost_g: 1.20, tier: "precious" },     // Labdanum
+  "128-37-0":   { cost_g: 0.02, tier: "commodity" },    // BHT
+};
