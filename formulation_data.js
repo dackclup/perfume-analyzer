@@ -1230,6 +1230,43 @@ const MATERIAL_PROPERTIES = {
 
 // ─────────────────────────────────────────────────────────────
 // A5: Material Cost Database
+// ─────────────────────────────────────────────────────────────
+// B3: Fragrance Wheel (Michael Edwards taxonomy)
+// 4 quadrants × 3-4 subcategories = 14 segments
+// ─────────────────────────────────────────────────────────────
+const FRAGRANCE_WHEEL = {
+  segments: [
+    { id: 'citrus',          quadrant: 'Fresh',    angle: 0,   color: '#fbbf24' },
+    { id: 'green',           quadrant: 'Fresh',    angle: 26,  color: '#84cc16' },
+    { id: 'aquatic',         quadrant: 'Fresh',    angle: 51,  color: '#22d3ee' },
+    { id: 'fruity',          quadrant: 'Fresh',    angle: 77,  color: '#f97316' },
+    { id: 'floral',          quadrant: 'Floral',   angle: 103, color: '#ec4899' },
+    { id: 'soft_floral',     quadrant: 'Floral',   angle: 129, color: '#f9a8d4' },
+    { id: 'floral_oriental', quadrant: 'Floral',   angle: 154, color: '#c084fc' },
+    { id: 'oriental',        quadrant: 'Oriental', angle: 180, color: '#a855f7' },
+    { id: 'spicy',           quadrant: 'Oriental', angle: 206, color: '#ef4444' },
+    { id: 'gourmand',        quadrant: 'Oriental', angle: 231, color: '#b45309' },
+    { id: 'woody',           quadrant: 'Woody',    angle: 257, color: '#78716c' },
+    { id: 'mossy',           quadrant: 'Woody',    angle: 283, color: '#65a30d' },
+    { id: 'dry_woods',       quadrant: 'Woody',    angle: 308, color: '#92400e' },
+    { id: 'aromatic',        quadrant: 'Woody',    angle: 334, color: '#0d9488' },
+  ],
+  familyToSegment: {
+    'citrus': 'citrus', 'fresh': 'citrus', 'green': 'green', 'herbal': 'aromatic',
+    'aquatic': 'aquatic', 'marine': 'aquatic', 'ozonic': 'aquatic',
+    'fruity': 'fruity', 'floral': 'floral', 'rose': 'soft_floral',
+    'jasmine': 'floral', 'powdery': 'soft_floral', 'muguet': 'soft_floral',
+    'oriental': 'oriental', 'amber': 'oriental', 'balsamic': 'oriental',
+    'spicy': 'spicy', 'gourmand': 'gourmand', 'vanilla': 'gourmand',
+    'sweet': 'gourmand', 'lactonic': 'gourmand',
+    'woody': 'woody', 'earthy': 'mossy', 'leather': 'dry_woods',
+    'smoky': 'dry_woods', 'tobacco': 'dry_woods',
+    'camphoraceous': 'aromatic', 'aromatic': 'aromatic',
+    'musk': 'oriental', 'animalic': 'oriental',
+    'aldehydic': 'soft_floral', 'clean': 'aquatic',
+  },
+};
+
 // Approximate hobby/small-batch pricing in USD per gram.
 // Sources: PerfumersWorld, Pell Wall, Creating Perfume, supplier catalogs.
 // Tiers: solvent, commodity, standard, specialty, precious
