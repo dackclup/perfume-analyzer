@@ -923,7 +923,7 @@ function renderMaterialList() {
   const rawPct = formulation.totalPct();
   const pct = isNaN(rawPct) ? 0 : Math.round(rawPct * 10) / 10;
   const pctEl = document.getElementById('matTotalPct');
-  pctEl.textContent = pct + '%' + (pct > 100 ? ' (over!)' : '') + ' / ' + roundN(fragGrams, 1) + 'g frag';
+  pctEl.textContent = pct + '%' + (pct > 100 ? ' (over!)' : '') + ' / ' + roundN(fragGrams, 1) + 'g Fragrance in Product';
   pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
   total.style.display = 'flex';
 }
