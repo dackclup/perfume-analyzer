@@ -1189,6 +1189,7 @@ modalSearch.addEventListener('input', () => {
 function addFromDB(cas) {
   const entry = DB[cas];
   if (!entry) return;
+  if (!entry.note) { alert('Cannot add: this material has no note classification (Top/Middle/Base).'); return; }
   // A1: Merge MATERIAL_PROPERTIES enrichment data
   const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[cas] || {} : {};
   formulation.addMaterial(cas, entry.name, 10, {
