@@ -1826,7 +1826,7 @@ function exportPDF() {
   mats.forEach((m, i) => {
     const r = compliance.find(c => c.cas === m.cas) || {};
     let grams = (m.pct / 100) * batchSize * (fragPct / 100);
-    if (batchUnit === 'ml') grams *= (m.data?.density || 0.95);
+    if (batchUnit === 'ml') grams /= (m.data?.density || 0.9);
     const cls = r.status === 'ok' ? 'ok' : r.status === 'warn' ? 'warn' : 'danger';
     h += '<tr><td>' + (i+1) + '</td><td>' + escHtml(m.name) + '</td><td>' + m.cas + '</td>';
     h += '<td>' + (m.data?.note || '-') + '</td><td>' + m.pct + '</td><td>' + grams.toFixed(2) + '</td>';
