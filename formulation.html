@@ -1309,11 +1309,15 @@ function applyAllocation(type) {
   formulation.batchUpdate(() => {
     let alloc;
     if (type === 'suggested') {
-      alloc = suggestAllocation(originalMats, fragPct);
-      alloc.forEach(a => formulation.updatePct(a.cas, a.suggestedPct));
+      alloc = suggestAllocation(originalMats, fragPct, lockedMaterials);
+      alloc.forEach(a => {
+        if (!lockedMaterials.has(a.cas)) formulation.updatePct(a.cas, a.suggestedPct);
+      });
     } else {
       alloc = optimizeAllocation(originalMats, graph, catId, fragPct, 50, lockedMaterials);
-      alloc.forEach(a => formulation.updatePct(a.cas, a.optimizedPct));
+      alloc.forEach(a => {
+        if (!lockedMaterials.has(a.cas)) formulation.updatePct(a.cas, a.optimizedPct);
+      });
     }
   });
 }

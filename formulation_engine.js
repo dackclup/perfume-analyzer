@@ -600,9 +600,10 @@ function analyzeNoteBalance(materials) {
  * @param {Array} materials - [{cas, name, data:{note, odor_strength}}]
  * @returns {Array} [{cas, name, suggestedPct}]
  */
-function suggestAllocation(materials, fragPct) {
+function suggestAllocation(materials, fragPct, locked) {
   if (!materials.length) return [];
   fragPct = fragPct || 18;
+  locked = locked || new Set();
 
   const alphas = materials.map(mat => {
     const note = (mat.data?.note || '').toLowerCase();
@@ -622,9 +623,15 @@ function suggestAllocation(materials, fragPct) {
   const sum = alphas.reduce((a, b) => a + b, 0);
   let pcts = materials.map((mat, i) => roundN((alphas[i] / sum) * 100, 2));
 
-  // Clamp to IFRA/usage limits (convert to max % in concentrate)
-  const clamped = new Set();
+  // Keep locked materials at their current percentage
   for (let i = 0; i < materials.length; i++) {
+    if (locked.has(materials[i].cas)) pcts[i] = materials[i].pct;
+  }
+
+  // Clamp to IFRA/usage limits (convert to max % in concentrate)
+  const fixed = new Set(); // locked + IFRA-clamped
+  for (let i = 0; i < materials.length; i++) {
+    if (locked.has(materials[i].cas)) { fixed.add(i); continue; }
     const mat = materials[i];
     const ifra51 = parseIFRA51(mat.data?.usage_levels);
     const usageRange = parseUsageRange(mat.data?.usage_levels);
@@ -635,17 +642,17 @@ function suggestAllocation(materials, fragPct) {
     const maxInConcentrate = maxInProduct / (fragPct / 100);
     if (pcts[i] > maxInConcentrate) {
       pcts[i] = roundN(maxInConcentrate * 0.9, 2); // 90% safety margin
-      clamped.add(i);
+      fixed.add(i);
     }
   }
 
-  // Re-normalize ONLY unclamped materials to fill remaining budget to 100%
-  const clampedSum = [...clamped].reduce((s, i) => s + pcts[i], 0);
-  const unclampedTarget = 100 - clampedSum;
-  const unclampedSum = pcts.reduce((s, p, i) => s + (clamped.has(i) ? 0 : p), 0);
-  if (unclampedSum > 0 && unclampedTarget > 0) {
+  // Re-normalize ONLY non-fixed materials to fill remaining budget
+  const fixedSum = [...fixed].reduce((s, i) => s + pcts[i], 0);
+  const remainTarget = 100 - fixedSum;
+  const remainSum = pcts.reduce((s, p, i) => s + (fixed.has(i) ? 0 : p), 0);
+  if (remainSum > 0 && remainTarget > 0) {
     for (let i = 0; i < pcts.length; i++) {
-      if (!clamped.has(i)) pcts[i] = roundN(pcts[i] / unclampedSum * unclampedTarget, 2);
+      if (!fixed.has(i)) pcts[i] = roundN(pcts[i] / remainSum * remainTarget, 2);
     }
   }
 
