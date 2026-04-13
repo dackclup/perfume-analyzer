@@ -330,8 +330,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <div style="display:flex;gap:4px;margin-top:8px">
       <button class="btn btn-primary" id="btnAddMat" style="flex:1">+ Add</button>
       <button class="btn btn-primary" id="btnBrief" style="flex:1">&#9733; Brief</button>
-      <button class="btn" id="btnUndo" disabled title="Ctrl+Z" style="width:36px;padding:6px 0;text-align:center">&#x21A9;</button>
-      <button class="btn" id="btnRedo" disabled title="Ctrl+Shift+Z" style="width:36px;padding:6px 0;text-align:center">&#x21AA;</button>
     </div>
 
     <hr>
@@ -2184,12 +2182,8 @@ function performRedo() {
 }
 
 function updateUndoRedoButtons() {
-  document.getElementById('btnUndo').disabled = !formulationHistory.canUndo();
-  document.getElementById('btnRedo').disabled = !formulationHistory.canRedo();
+  // Undo/Redo via Ctrl+Z / Ctrl+Shift+Z only (no visible buttons)
 }
-
-document.getElementById('btnUndo').addEventListener('click', performUndo);
-document.getElementById('btnRedo').addEventListener('click', performRedo);
 
 // Keyboard shortcuts: Ctrl+Z = undo, Ctrl+Shift+Z = redo
 document.addEventListener('keydown', (e) => {
