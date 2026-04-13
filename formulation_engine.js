@@ -656,6 +656,16 @@ function suggestAllocation(materials, fragPct, locked) {
     }
   }
 
+  // Fix rounding drift: adjust largest non-fixed material so total is exactly 100%
+  const finalSum = pcts.reduce((a, b) => a + b, 0);
+  if (Math.abs(finalSum - 100) > 0.005) {
+    let maxIdx = -1, maxVal = 0;
+    for (let i = 0; i < pcts.length; i++) {
+      if (!fixed.has(i) && pcts[i] > maxVal) { maxVal = pcts[i]; maxIdx = i; }
+    }
+    if (maxIdx >= 0) pcts[maxIdx] = roundN(pcts[maxIdx] + (100 - finalSum), 2);
+  }
+
   return materials.map((mat, i) => ({
     cas: mat.cas,
     name: mat.name,

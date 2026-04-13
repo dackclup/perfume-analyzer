@@ -1211,7 +1211,7 @@ function renderCompatTab() {
   const harmony = computeHarmonyScore(selected, graph);
   const balance = analyzeNoteBalance(mats);
   const suggestions = findCompatibleMaterials(selected, graph, DB, 10);
-  const allocation = suggestAllocation(mats, parseInt(document.getElementById('fragPct').value) || 18);
+  const allocation = suggestAllocation(mats, parseInt(document.getElementById('fragPct').value) || 18, lockedMaterials);
   const optimized = optimizeAllocation(mats, graph, catId, fragPct, 50, lockedMaterials);
 
   let html = '';
