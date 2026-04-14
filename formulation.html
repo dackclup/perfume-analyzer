@@ -1650,79 +1650,9 @@ function applyAllocation(type) {
     }
   });
 
-  // Suggest/optimize carrier mix based on IFRA category, then auto-populate
-  applyCarrierSuggestion(type, catId);
+  // Re-balance existing carrier percentages against updated dilution needs.
+  // Does NOT auto-add new carriers — user controls the carrier list manually.
   autoPopulateCarriers();
-}
-
-// Category-based carrier mix recommendations (by IFRA category)
-// Returns array of { nameHint, pct } — resolved to CAS via DB lookup
-function suggestCarrierMix(catId) {
-  // Alcoholic / skin-safe fine fragrance
-  if (catId === '4' || catId === '3' || catId === '11') {
-    return [{ nameHint: 'Ethanol', pct: 90 }, { nameHint: 'Dipropylene Glycol', pct: 10 }];
-  }
-  // Deodorant / antiperspirant — alcohol + PG for spreadability
-  if (catId === '2') {
-    return [{ nameHint: 'Ethanol', pct: 85 }, { nameHint: 'Propylene Glycol', pct: 15 }];
-  }
-  // Leave-on cream / lotion / baby / lip — oil-soluble, non-alcoholic
-  if (catId === '1' || catId === '5A' || catId === '5B' || catId === '5C' || catId === '5D' || catId === '8') {
-    return [{ nameHint: 'Dipropylene Glycol', pct: 60 }, { nameHint: 'Isopropyl Myristate', pct: 40 }];
-  }
-  // Mouthwash / rinse-off — water-miscible PG
-  if (catId === '6') {
-    return [{ nameHint: 'Propylene Glycol', pct: 100 }];
-  }
-  // Rinse-off hair / body wash
-  if (catId === '7' || catId === '9') {
-    return [{ nameHint: 'Dipropylene Glycol', pct: 70 }, { nameHint: 'Propylene Glycol', pct: 30 }];
-  }
-  // Household / no skin contact — default to ethanol
-  if (catId === '10') {
-    return [{ nameHint: 'Ethanol', pct: 70 }, { nameHint: 'Dipropylene Glycol', pct: 30 }];
-  }
-  // Fallback: ethanol
-  return [{ nameHint: 'Ethanol', pct: 100 }];
-}
-
-function _findCasByName(name) {
-  const lower = name.toLowerCase();
-  return Object.keys(DB).find(k => (DB[k].name || '').toLowerCase() === lower);
-}
-
-function applyCarrierSuggestion(type, catId) {
-  const suggestion = suggestCarrierMix(catId).map(s => {
-    const cas = _findCasByName(s.nameHint);
-    if (!cas) return null;
-    return { cas, name: DB[cas].name, pct: s.pct };
-  }).filter(Boolean);
-  if (!suggestion.length) return;
-
-  // Preserve any carrier currently used as a dilution solvent by unlocked materials
-  const preservedDilutionCas = new Set();
-  for (const m of formulation.materials) {
-    if ((m.dilution || 100) < 100 && m.dilutionSolvent) {
-      preservedDilutionCas.add(m.dilutionSolvent);
-    }
-  }
-
-  const hadCarriers = carrierMaterials.length > 0;
-
-  // Apply Suggested: only fill in if no carriers exist yet (soft — respects user's manual setup)
-  // Apply Optimized: reset carrier list to category-optimal mix (hard — but keeps dilution solvents)
-  if (type === 'optimized' || !hadCarriers) {
-    const preserved = carrierMaterials.filter(c => preservedDilutionCas.has(c.cas))
-      .map(c => ({ cas: c.cas, name: c.name, pct: 0 }));
-    carrierMaterials.length = 0;
-    preserved.forEach(p => carrierMaterials.push(p));
-    for (const s of suggestion) {
-      if (!carrierMaterials.find(c => c.cas === s.cas)) {
-        carrierMaterials.push({ cas: s.cas, name: s.name, pct: s.pct });
-      }
-    }
-  }
-  // autoPopulateCarriers() (called after this) will normalize percentages
 }
 
 function autoPopulateCarriers() {
@@ -1744,18 +1674,15 @@ function autoPopulateCarriers() {
     }
   }
 
-  // Add any dilution solvents not yet in carrier list
+  // Add any dilution solvents not yet in carrier list (e.g., after loading a
+  // saved formula whose dilutionSolvent references a carrier that got lost).
+  // This is required for correctness — users cannot manually resolve orphaned
+  // dilutionSolvent refs without this safety net.
   for (const cas of Object.keys(solventNeeds)) {
     if (!carrierMaterials.find(c => c.cas === cas)) {
       const entry = DB[cas];
       if (entry) carrierMaterials.push({ cas, name: entry.name, pct: 0 });
     }
-  }
-
-  // If no carriers at all, add default Ethanol
-  if (!carrierMaterials.length) {
-    const ethCas = Object.keys(DB).find(k => DB[k].name === 'Ethanol');
-    if (ethCas) carrierMaterials.push({ cas: ethCas, name: 'Ethanol', pct: 100 });
   }
 
   if (!carrierMaterials.length) { renderCarrierList(); return; }
