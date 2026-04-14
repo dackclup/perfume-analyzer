@@ -3110,16 +3110,18 @@ function toggleLock(cas) {
 }
 
 // Clicking the "! 0.5%" usage-range warning pill reduces the material's
-// concentrate % so its finished-product % equals the recommended max:
-//   maxInConcentrate = usageRange.max * 100 / fragPct
+// concentrate % so its finished-product % stays strictly at or below the
+// recommended max. Uses Math.floor at 2-decimal precision so the rounded
+// value never exceeds the limit (Math.round could push it back over and
+// keep the warning visible).
 function applyUsageCap(cas) {
   const m = formulation.materials.find(x => x.cas === cas);
   if (!m) return;
   const range = parseUsageRange(m.data?.usage_levels);
   if (range.max == null) return;
   const fragPct = validateFragPct(document.getElementById('fragPct').value);
-  const maxInConcentrate = Math.max(0, (range.max / fragPct) * 100);
-  const rounded = Math.round(maxInConcentrate * 10000) / 10000;
+  const maxInConcentrate = (range.max / fragPct) * 100;
+  const rounded = Math.max(0, Math.floor(maxInConcentrate * 100) / 100);
   formulation.updatePct(cas, rounded);
   formulation.onChange();
 }
