@@ -1738,8 +1738,31 @@ function renderThermoTab() {
   if (!mats.length) { el.innerHTML = '<div class="empty-state"><p>Add materials to see evaporation analysis</p></div>'; return; }
 
   const tempC = parseInt(document.getElementById('tempSlider').value);
-  const vpTable = buildVPTable(mats, tempC);
-  const sim = simulateEvaporation(mats, tempC);
+  const fragPct = validateFragPct(document.getElementById('fragPct').value);
+
+  // Build merged list: materials use % of fragrance portion, carriers use % of carrier portion.
+  // Normalize both to "% of whole batch" so the evaporation model compares apples-to-apples.
+  const mergedMats = mats.map(m => ({
+    cas: m.cas,
+    name: m.name,
+    pct: m.pct * (fragPct / 100), // scale to whole-batch basis
+    data: m.data,
+    _isCarrier: false,
+  }));
+  for (const c of carrierMaterials) {
+    const dbEntry = DB[c.cas];
+    mergedMats.push({
+      cas: c.cas,
+      name: c.name,
+      pct: c.pct * ((100 - fragPct) / 100),
+      data: dbEntry || {},
+      _isCarrier: true,
+    });
+  }
+
+  const vpTable = buildVPTable(mergedMats, tempC);
+  const sim = simulateEvaporation(mergedMats, tempC);
+  // Longevity uses fragrance materials only (carrier burn-off doesn't define fragrance lifespan)
   const longevity = estimateLongevity(mats, tempC);
 
   let html = '';
@@ -1763,10 +1786,13 @@ function renderThermoTab() {
   // VP Table
   html += '<div class="analysis-card"><h4>Vapor Pressure at ' + tempC + ' &deg;C</h4>';
   html += '<table class="data-table"><thead><tr><th>Material</th><th>VP (mmHg)</th><th>Method</th><th>MW</th><th>LogP</th><th>Kp (cm/s)</th></tr></thead><tbody>';
-  for (const r of vpTable) {
+  for (let i = 0; i < vpTable.length; i++) {
+    const r = vpTable[i];
+    const isCarrier = mergedMats[i] && mergedMats[i]._isCarrier;
     const confDot = r.confidence === 'high' ? 'high' : r.confidence === 'medium' ? 'med' : 'low';
+    const carrierTag = isCarrier ? ' <span style="font-size:0.7em;padding:1px 5px;background:var(--bg2);border-radius:4px;color:var(--text2)">carrier</span>' : '';
     html += '<tr>';
-    html += '<td>' + escHtml(r.name) + ' <span class="conf-dot ' + confDot + '"></span></td>';
+    html += '<td>' + escHtml(r.name) + carrierTag + ' <span class="conf-dot ' + confDot + '"></span></td>';
     html += '<td>' + (r.vp_mmHg != null ? r.vp_mmHg.toExponential(3) : '—') + '</td>';
     html += '<td>' + r.method + '</td>';
     html += '<td>' + (r.mw || '—') + '</td>';
@@ -1784,14 +1810,16 @@ function renderThermoTab() {
   if (_evapChart) _evapChart.destroy();
 
   const noteColors = { top: '#eab308', middle: '#3b82f6', base: '#8b5cf6' };
-  const datasets = sim.curves.map(c => {
+  const datasets = sim.curves.map((c, i) => {
     const tier = classifyNote(c.note);
+    const isCarrier = mergedMats[i] && mergedMats[i]._isCarrier;
     return {
-      label: c.name,
+      label: c.name + (isCarrier ? ' (carrier)' : ''),
       data: c.concentrations,
-      borderColor: noteColors[tier] || 'var(--text2)',
-      backgroundColor: (noteColors[tier] || '#888') + '22',
-      fill: true,
+      borderColor: isCarrier ? '#64748b' : (noteColors[tier] || 'var(--text2)'),
+      backgroundColor: isCarrier ? '#64748b22' : ((noteColors[tier] || '#888') + '22'),
+      borderDash: isCarrier ? [5, 4] : [],
+      fill: !isCarrier,
       tension: 0.3,
       pointRadius: 2,
     };
@@ -1940,6 +1968,30 @@ function renderStabilityTab() {
       html += '</div>';
     }
     html += '</div>';
+  }
+
+  // Carrier stability notes
+  if (carrierMaterials.length) {
+    html += '<div class="analysis-card"><h4>Carrier Stability Notes</h4>';
+    html += '<p class="panel-desc">Common perfume carriers are anhydrous and olfactively inert. Listed below for completeness.</p>';
+    html += '<table class="data-table" style="margin-top:6px"><thead><tr><th>Carrier</th><th>Interaction with materials</th></tr></thead><tbody>';
+    for (const c of carrierMaterials) {
+      const nameL = c.name.toLowerCase();
+      let note;
+      if (nameL.includes('ethanol') || nameL.includes('alcohol')) {
+        note = 'Anhydrous — stable with most aldehydes, esters, ketones. Monitor for acetal formation with aldehydes on long storage (>6 mo).';
+      } else if (nameL.includes('dipropylene glycol') || nameL.includes('dpg')) {
+        note = 'Very stable; high-boiling, non-reactive. Safe with all fragrance families.';
+      } else if (nameL.includes('isopropyl myristate') || nameL.includes('ipm')) {
+        note = 'Stable ester; inert carrier. Watch for migration with highly polar materials.';
+      } else if (nameL.includes('water') || nameL.includes('aqua')) {
+        note = '&#9888; Aqueous — may hydrolyze esters/acetals/Schiff bases. Check pH and material water tolerance.';
+      } else {
+        note = 'No specific interaction data — generally treat as inert.';
+      }
+      html += '<tr><td>' + escHtml(c.name) + '</td><td style="font-size:0.82em;color:var(--text2)">' + note + '</td></tr>';
+    }
+    html += '</tbody></table></div>';
   }
 
   // B2: Substitution suggestions for each material
@@ -2184,6 +2236,42 @@ function renderSafetyTab() {
     html += '<span class="badge ' + cls + '" style="font-size:0.72em">' + icon + ' ' + r.name + '</span>';
   }
   html += '</div></div>';
+
+  // Carrier Summary
+  if (carrierMaterials.length) {
+    const batchSize = validateBatchSize(document.getElementById('batchSize').value);
+    const carrierGramsFull = batchSize * (1 - fragPct / 100);
+    const carrierPctSum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
+    const totalWithFrag = fragPct + carrierPctSum * (1 - fragPct / 100);
+    html += '<div class="analysis-card"><h4>Carrier Summary</h4>';
+    html += '<p class="panel-desc">Solvents/carriers are not subject to fragrance IFRA limits but are shown here for formulation overview.</p>';
+    html += '<table class="data-table" style="margin-top:8px"><thead><tr><th>Carrier</th><th>%</th><th>Grams</th><th>IFRA note</th></tr></thead><tbody>';
+    for (const c of carrierMaterials) {
+      const grams = (c.pct / 100) * carrierGramsFull;
+      const dbEntry = DB[c.cas] || {};
+      const ifraNote = dbEntry.safety?.ifra || dbEntry.safety?.usage || '—';
+      html += '<tr>';
+      html += '<td>' + escHtml(c.name) + '</td>';
+      html += '<td>' + (Math.round(c.pct * 100) / 100) + '%</td>';
+      html += '<td>' + (grams < 0.1 ? grams.toFixed(3) : grams < 10 ? grams.toFixed(2) : grams.toFixed(1)) + 'g</td>';
+      html += '<td style="font-size:0.8em;color:var(--text2)">' + escHtml(String(ifraNote).slice(0, 80)) + '</td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+    // Warnings
+    const ethanolCas = Object.keys(DB).find(k => DB[k].name === 'Ethanol');
+    const ethCarrier = carrierMaterials.find(c => c.cas === ethanolCas);
+    const warns = [];
+    if (Math.abs(carrierPctSum - 100) > 0.1) warns.push('Carrier % does not sum to 100 (' + (Math.round(carrierPctSum * 100) / 100) + '%)');
+    if (ethCarrier && ethCarrier.pct > 95 && carrierMaterials.length === 1) warns.push('Ethanol >95% — typical perfume uses 70–95% denatured alcohol');
+    if (Math.abs(totalWithFrag - 100) > 0.1) warns.push('Fragrance + carrier does not equal 100% of batch');
+    if (warns.length) {
+      html += '<div style="margin-top:10px;padding:8px 10px;background:var(--warn-bg,rgba(234,179,8,0.1));border-left:3px solid var(--warn);border-radius:4px;font-size:0.82em">';
+      html += warns.map(w => '&#9888; ' + escHtml(w)).join('<br>');
+      html += '</div>';
+    }
+    html += '</div>';
+  }
 
   // INCI Label
   html += '<div class="analysis-card"><h4>INCI Label</h4>';
