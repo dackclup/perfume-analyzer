@@ -1723,6 +1723,31 @@ function materialProfileShift(mats) {
   };
 }
 
+// Typical max % for functional additives in the finished formula.
+// These are common industry limits for safety/regulation — they do NOT apply
+// to actual solvents/carriers (which fill the remainder). Values for
+// antioxidants, preservatives, and bittering agents.
+function getCarrierMaxPct(name) {
+  const n = (name || '').toLowerCase();
+  // Antioxidants
+  if (n.includes('bht') || n.includes('butylated hydroxytoluene')) return 0.1;
+  if (n.includes('bha') || n.includes('butylated hydroxyanisole')) return 0.1;
+  if (n.includes('tocopherol') || n.includes('vitamin e')) return 1;
+  if (n.includes('ascorbyl')) return 0.5;
+  // Preservatives
+  if (n.includes('phenoxyethanol')) return 1;
+  if (n.includes('sodium benzoate')) return 0.5;
+  if (n.includes('potassium sorbate')) return 0.5;
+  if (n.includes('parab')) return 0.4;
+  if (n.includes('benzyl alcohol')) return 1;
+  // Bittering / denaturant
+  if (n.includes('denatonium')) return 0.001;
+  // UV filters
+  if (n.includes('benzophenone')) return 0.5;
+  // Default for 'other' additives (conservative)
+  return null;
+}
+
 function rebalanceExistingCarriers(type, catId) {
   if (!carrierMaterials.length) return;
 
@@ -1736,16 +1761,26 @@ function rebalanceExistingCarriers(type, catId) {
     targetRatio.ester   = Math.max(0, Math.min(100, targetRatio.ester  + shift.ester));
   }
 
+  // Step A: cap each 'other' additive to its typical max (BHT → 0.1%, etc.)
+  // before reserving its budget. Prevents 33%-BHT-style configurations from
+  // dominating the formula after Apply.
+  for (const c of carrierMaterials) {
+    if (classifyCarrier(c.name) === 'other') {
+      const maxPct = getCarrierMaxPct(c.name);
+      if (maxPct != null && c.pct > maxPct) c.pct = maxPct;
+    }
+  }
+
   // Group user's existing carriers by type. 'other' items (BHT, Denatonium,
   // antioxidants, etc.) are NOT carriers — they are functional additives with
-  // their own dose. Preserve whatever % the user set for them; only rebalance
-  // the actual solvent/carrier budget around them.
+  // their own dose. Preserve whatever % the user set for them (now capped);
+  // only rebalance the actual solvent/carrier budget around them.
   const groups = { alcohol: [], glycol: [], ester: [], water: [], other: [] };
   for (const c of carrierMaterials) {
     groups[classifyCarrier(c.name)].push(c);
   }
 
-  // Reserve 'other' additives' current total %
+  // Reserve 'other' additives' total % (post-cap)
   const otherPctReserved = groups.other.reduce((s, c) => s + (c.pct || 0), 0);
   const remainingBudget = Math.max(0, 100 - otherPctReserved);
 
@@ -2386,6 +2421,15 @@ function renderSafetyTab() {
     if (Math.abs(carrierPctSum - 100) > 0.1) warns.push('Carrier % does not sum to 100 (' + (Math.round(carrierPctSum * 100) / 100) + '%)');
     if (ethCarrier && ethCarrier.pct > 95 && carrierMaterials.length === 1) warns.push('Ethanol >95% — typical perfume uses 70–95% denatured alcohol');
     if (Math.abs(totalWithFrag - 100) > 0.1) warns.push('Fragrance + carrier does not equal 100% of batch');
+    // Over-limit additives
+    for (const c of carrierMaterials) {
+      if (classifyCarrier(c.name) === 'other') {
+        const maxPct = getCarrierMaxPct(c.name);
+        if (maxPct != null && c.pct > maxPct + 0.01) {
+          warns.push(c.name + ' at ' + (Math.round(c.pct * 100) / 100) + '% exceeds typical max of ' + maxPct + '% — press Apply to cap');
+        }
+      }
+    }
     if (warns.length) {
       html += '<div style="margin-top:10px;padding:8px 10px;background:var(--warn-bg,rgba(234,179,8,0.1));border-left:3px solid var(--warn);border-radius:4px;font-size:0.82em">';
       html += warns.map(w => '&#9888; ' + escHtml(w)).join('<br>');
