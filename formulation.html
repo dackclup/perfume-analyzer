@@ -1646,9 +1646,20 @@ function renderCompatTab() {
   }
   html += '</div>';
 
-  // Note Balance
+  // Note Balance — badge reflects BOTH missing tiers and tiers outside
+  // their conventional ideal range (15-30 / 30-50 / 20-40 of classified total)
   const balClass = balance.balanced ? 'badge-ok' : 'badge-warn';
-  html += '<div class="analysis-card"><h4>Fragrance Pyramid <span class="badge ' + balClass + '">' + (balance.balanced ? 'Balanced' : 'Missing: ' + balance.missing.join(', ')) + '</span></h4>';
+  let balLabel;
+  if (balance.balanced) {
+    balLabel = 'Balanced';
+  } else if (balance.missing.length) {
+    balLabel = 'Missing: ' + balance.missing.join(', ');
+  } else {
+    balLabel = balance.outOfRange.map(o =>
+      o.tier.charAt(0).toUpperCase() + o.tier.slice(1) + ' ' + (o.direction === 'high' ? 'high' : 'low')
+    ).join(', ');
+  }
+  html += '<div class="analysis-card"><h4>Fragrance Pyramid <span class="badge ' + balClass + '">' + balLabel + '</span></h4>';
   html += '<div style="display:flex;gap:20px;margin-top:10px;flex-wrap:wrap">';
   const classifiedTotal = balance.top + balance.middle + balance.base;
   for (const [tier, val, color, ideal] of [['Top', balance.top, 'var(--badge-top-fg)', balance.ideal.top], ['Middle', balance.middle, 'var(--badge-mid-fg)', balance.ideal.middle], ['Base', balance.base, 'var(--badge-base-fg)', balance.ideal.base]]) {

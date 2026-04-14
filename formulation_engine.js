@@ -594,6 +594,25 @@ function analyzeNoteBalance(materials) {
   if (tiers.middle === 0) missing.push('middle');
   if (tiers.base === 0) missing.push('base');
 
+  // Conventional balanced ranges (of classified total). A formula is only
+  // "balanced" when every tier is both present AND within its ideal range —
+  // having all three tiers at wildly off proportions (e.g., 10/28/62) is
+  // still visibly imbalanced, even though nothing is missing.
+  const idealRanges = {
+    top:    { min: 15, max: 30 },
+    middle: { min: 30, max: 50 },
+    base:   { min: 20, max: 40 },
+  };
+  const classifiedTotal = tiers.top + tiers.middle + tiers.base;
+  const pctOf = v => classifiedTotal > 0 ? (v / classifiedTotal) * 100 : 0;
+  const tierPct = { top: pctOf(tiers.top), middle: pctOf(tiers.middle), base: pctOf(tiers.base) };
+  const outOfRange = [];
+  for (const t of ['top', 'middle', 'base']) {
+    if (tiers[t] === 0) continue; // already captured in `missing`
+    if (tierPct[t] < idealRanges[t].min) outOfRange.push({ tier: t, actual: roundN(tierPct[t], 1), direction: 'low', ideal: idealRanges[t] });
+    else if (tierPct[t] > idealRanges[t].max) outOfRange.push({ tier: t, actual: roundN(tierPct[t], 1), direction: 'high', ideal: idealRanges[t] });
+  }
+
   return {
     top:    roundN(tiers.top, 1),
     middle: roundN(tiers.middle, 1),
@@ -602,8 +621,10 @@ function analyzeNoteBalance(materials) {
     unclassifiedMats,
     total:  roundN(total, 1),
     missing,
-    balanced: missing.length === 0,
+    outOfRange,
+    balanced: missing.length === 0 && outOfRange.length === 0,
     ideal: { top: '15-30%', middle: '30-50%', base: '20-40%' },
+    idealRanges,
   };
 }
 
