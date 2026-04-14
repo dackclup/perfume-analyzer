@@ -574,7 +574,9 @@ function detectDiscord(familiesA, familiesB) {
   return maxSeverity;
 }
 
-function computeHarmonyScore(materialsOrCases, graph) {
+function computeHarmonyScore(materialsOrCases, graph, opts) {
+  opts = opts || {};
+  const fastMode = !!opts.fastMode;
   // Backward-compat: accept either an array of CAS strings (legacy) or an
   // array of material objects { cas, pct, data }. Legacy falls back to the
   // simple binary-graph behavior; modern call path uses the multi-factor
@@ -605,8 +607,11 @@ function computeHarmonyScore(materialsOrCases, graph) {
     return { score: 100, connectedPairs: 0, totalPairs: 0, pairs: [], method: 'multi-factor' };
   }
 
-  // Pre-compute radar-axis weight vector + family list for each material
-  const radars = materials.map(m => {
+  // Pre-compute heavy per-material data. In fastMode we skip the radar
+  // cosine-similarity calculation entirely — connectivity + discord + pct
+  // weight are the dominant signals and inner hill-climb iterations don't
+  // need the extra precision.
+  const radars = fastMode ? null : materials.map(m => {
     const w = materialToRadarWeights(m.data || {});
     return RADAR_AXES.map(a => w[a] || 0);
   });
@@ -642,8 +647,8 @@ function computeHarmonyScore(materialsOrCases, graph) {
       if (connected) connectedCount++;
       connMatrix[i][j] = connMatrix[j][i] = !!connected;
 
-      // Factor 2 — descriptor cosine similarity (soft affinity)
-      const sim = cosSim(radars[i], radars[j]);
+      // Factor 2 — descriptor cosine similarity (skipped in fastMode)
+      const sim = fastMode ? 0 : cosSim(radars[i], radars[j]);
 
       // Factor 3 — discord penalty (known bad family pairs)
       const discordSev = detectDiscord(familiesList[i], familiesList[j]);
@@ -651,6 +656,8 @@ function computeHarmonyScore(materialsOrCases, graph) {
       // Combined pair score: explicit connection = 1.0; otherwise scale
       // descriptor sim into 0.3..1.0 so unrelated materials don't tank
       // the score when the DB graph is sparse. Discord reduces up to 50%.
+      // In fastMode (sim=0) unrelated pairs score 0.3 which is still a
+      // valid gradient signal.
       let pairScore = connected ? 1.0 : 0.3 + 0.7 * sim;
       pairScore = Math.max(0, pairScore - 0.5 * discordSev);
 
@@ -659,13 +666,15 @@ function computeHarmonyScore(materialsOrCases, graph) {
 
       weightedSum += pairScore * w;
       totalWeight += w;
-      pairs.push({
-        a: a.cas, b: b.cas, connected,
-        descriptorSim: roundN(sim, 2),
-        discord: roundN(discordSev, 2),
-        pairScore: roundN(pairScore, 2),
-        weight: roundN(w, 2),
-      });
+      if (!fastMode) {
+        pairs.push({
+          a: a.cas, b: b.cas, connected,
+          descriptorSim: roundN(sim, 2),
+          discord: roundN(discordSev, 2),
+          pairScore: roundN(pairScore, 2),
+          weight: roundN(w, 2),
+        });
+      }
       if (discordSev > 0) {
         discords.push({ a: a.cas, b: b.cas, nameA: a.name, nameB: b.name, severity: roundN(discordSev, 2) });
       }
@@ -945,7 +954,7 @@ function computeFormulaFitness(materials, opts) {
   }
 
   // 1. Harmony (0–100)
-  const harm = computeHarmonyScore(materials, opts.graph || new Map());
+  const harm = computeHarmonyScore(materials, opts.graph || new Map(), { fastMode: !!opts.fastMode });
   const harmony = harm.score || 0;
 
   // 2. Pyramid alignment (0–100) — 100 if balanced, penalty grows with
@@ -1034,6 +1043,7 @@ function _hillClimbFitness(pctsIn, materials, unlockedIdx, ifraMaxes, opts, iter
   // perturbations, so the final local optimum is essentially the same.
   const hcOpts = Object.assign({}, opts, { fastMode: true });
   let bestFitness = computeFormulaFitness(matsWithPct(), hcOpts).score;
+  let stagnant = 0; // consecutive no-improvement passes
 
   for (let iter = 0; iter < iters; iter++) {
     const progress = iter / iters;
@@ -1091,8 +1101,12 @@ function _hillClimbFitness(pctsIn, materials, unlockedIdx, ifraMaxes, opts, iter
       }
     }
 
-    // Early exit if no improvement in last pass after cooling phase
-    if (!improvedAny && progress > 0.6) break;
+    // Stronger early exit: stop after 3 consecutive stagnant passes
+    // (4 in the first 30% to let the optimizer warm up)
+    if (improvedAny) stagnant = 0;
+    else stagnant++;
+    const allowed = progress < 0.3 ? 4 : 3;
+    if (stagnant >= allowed) break;
   }
   return { pcts, fitness: bestFitness };
 }
@@ -1235,7 +1249,7 @@ function suggestAllocation(materials, fragPct, locked) {
         return mp / (fragPct / 100);
       });
       const result = _hillClimbFitness(pcts, materials, unlockedIdx, ifraMaxes,
-        { catId: null, fragPct: fragPct, tempC: 25, graph: null }, 40);
+        { catId: null, fragPct: fragPct, tempC: 25, graph: null }, 25);
       for (let i = 0; i < materials.length; i++) pcts[i] = roundN(result.pcts[i], 2);
 
       // Re-fix sum to 100 after rounding
@@ -1386,16 +1400,16 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
   if (unlockedIdx.length >= 2) {
     const fitnessOpts = { catId: categoryId, fragPct: fragPct, tempC: 25, graph: graph };
 
-    // Run 3 starting points: current pcts, + two perturbed variants
+    // Run 2 starting points: current pcts + one perturbed variant. More
+    // restarts gave marginal fitness gains (<1 point) at 50%+ time cost,
+    // so 2 is the sweet spot for interactive feel.
     const starts = [pcts.slice()];
-    for (let restart = 0; restart < 2; restart++) {
+    {
       const noisy = pcts.slice();
       for (const i of unlockedIdx) {
-        // ±15% noise on unlocked pct, clamped by IFRA
         const noise = (Math.random() * 2 - 1) * 0.15 * Math.max(1, noisy[i]);
         noisy[i] = Math.max(0.1, Math.min(ifraMaxes[i], noisy[i] + noise));
       }
-      // Re-normalize noisy to preserve lockedSum
       const ls = materials.reduce((s, m, i) => s + (locked.has(m.cas) ? noisy[i] : 0), 0);
       const target = Math.max(0, 100 - ls);
       const unSum = unlockedIdx.reduce((s, i) => s + noisy[i], 0) || 1;
@@ -1405,7 +1419,7 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
 
     let bestPcts = null, bestFit = -Infinity;
     for (const startPcts of starts) {
-      const result = _hillClimbFitness(startPcts, materials, unlockedIdx, ifraMaxes, fitnessOpts, 80);
+      const result = _hillClimbFitness(startPcts, materials, unlockedIdx, ifraMaxes, fitnessOpts, 50);
       if (result.fitness > bestFit) { bestFit = result.fitness; bestPcts = result.pcts; }
     }
     for (let i = 0; i < n; i++) pcts[i] = bestPcts[i];
@@ -2783,5 +2797,52 @@ function compareFormulations(formulaA, formulaB) {
     buildOdorValueTable = _memoize(_raw,
       (materials, tempC) => _materialsKey(materials) + '|' + (tempC || 25),
       8);
+  }
+  if (typeof analyzeNoteBalancePerception === 'function') {
+    const _raw = analyzeNoteBalancePerception;
+    analyzeNoteBalancePerception = _memoize(_raw,
+      (materials, tempC) => _materialsKey(materials) + '|' + (tempC || 25),
+      8);
+  }
+  // computeHarmonyScore: legacy path uses CAS-string array, new path uses
+  // material objects. Build a key that handles both shapes + the optional
+  // opts.fastMode flag (fast and full results differ, must cache separately).
+  if (typeof computeHarmonyScore === 'function') {
+    const _raw = computeHarmonyScore;
+    computeHarmonyScore = _memoize(_raw,
+      (moc, _graph, opts) => {
+        const mode = opts && opts.fastMode ? 'f' : 'p';
+        if (!moc || !moc.length) return mode + ':<empty>';
+        if (typeof moc[0] === 'string') return mode + ':cas:' + moc.join(',');
+        return mode + ':obj:' + _materialsKey(moc);
+      },
+      16);
+  }
+  if (typeof findCompatibleMaterials === 'function') {
+    const _raw = findCompatibleMaterials;
+    findCompatibleMaterials = _memoize(_raw,
+      (selected, graph, db, maxResults) => (selected || []).join(',') + '|' + (maxResults || 10),
+      6);
+  }
+  // Allocators — the Compat tab renders them purely for the 'Suggested %' and
+  // 'Optimized %' columns, which don't change unless materials / fragPct /
+  // category / lock state change. Caching here skips the expensive hill-climb
+  // on every tab switch.
+  if (typeof suggestAllocation === 'function') {
+    const _raw = suggestAllocation;
+    suggestAllocation = _memoize(_raw,
+      (materials, fragPct, locked) =>
+        _materialsKey(materials) + '|f' + (fragPct || 18) +
+        '|l' + (locked ? [...locked].sort().join(',') : ''),
+      6);
+  }
+  if (typeof optimizeAllocation === 'function') {
+    const _raw = optimizeAllocation;
+    optimizeAllocation = _memoize(_raw,
+      (materials, graph, categoryId, fragPct, iterations, locked) =>
+        _materialsKey(materials) + '|c' + (categoryId || '') + '|f' + (fragPct || 18) +
+        '|i' + (iterations || 50) +
+        '|l' + (locked ? [...locked].sort().join(',') : ''),
+      6);
   }
 })();
