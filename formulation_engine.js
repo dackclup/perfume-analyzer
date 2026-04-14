@@ -539,27 +539,95 @@ function findCompatibleMaterials(selectedCASes, graph, db, maxResults) {
  * @param {Map} graph
  * @returns {Object} {score: 0-100, pairs, connectedPairs, totalPairs}
  */
-function computeHarmonyScore(selectedCASes, graph) {
-  if (selectedCASes.length < 2) return { score: 100, connectedPairs: 0, totalPairs: 0, pairs: [] };
+function computeHarmonyScore(materialsOrCases, graph) {
+  // Backward-compat: accept either an array of CAS strings (legacy) or an
+  // array of material objects { cas, pct, data }. Legacy falls back to the
+  // simple binary-graph behavior; modern call path uses the multi-factor
+  // weighted score below.
+  const isLegacy = materialsOrCases.length > 0 && typeof materialsOrCases[0] === 'string';
+  if (isLegacy) {
+    const selectedCASes = materialsOrCases;
+    if (selectedCASes.length < 2) return { score: 100, connectedPairs: 0, totalPairs: 0, pairs: [], method: 'graph-binary' };
+    const pairs = [];
+    let connectedPairs = 0, totalPairs = 0;
+    for (let i = 0; i < selectedCASes.length; i++) {
+      for (let j = i + 1; j < selectedCASes.length; j++) {
+        totalPairs++;
+        const a = selectedCASes[i], b = selectedCASes[j];
+        const neighbors = graph.get(a);
+        const connected = neighbors ? neighbors.has(b) : false;
+        if (connected) connectedPairs++;
+        pairs.push({ a, b, connected });
+      }
+    }
+    const score = totalPairs > 0 ? Math.round(connectedPairs / totalPairs * 100) : 100;
+    return { score, connectedPairs, totalPairs, pairs, method: 'graph-binary' };
+  }
+
+  // Multi-factor weighted harmony
+  const materials = materialsOrCases;
+  if (materials.length < 2) {
+    return { score: 100, connectedPairs: 0, totalPairs: 0, pairs: [], method: 'multi-factor' };
+  }
+
+  // Pre-compute radar-axis weight vector for each material (for cosine sim)
+  const radars = materials.map(m => {
+    const w = materialToRadarWeights(m.data || {});
+    return RADAR_AXES.map(a => w[a] || 0);
+  });
+
+  function cosSim(v1, v2) {
+    let dot = 0, n1 = 0, n2 = 0;
+    for (let k = 0; k < v1.length; k++) {
+      dot += v1[k] * v2[k];
+      n1  += v1[k] * v1[k];
+      n2  += v2[k] * v2[k];
+    }
+    if (n1 === 0 || n2 === 0) return 0;
+    return dot / (Math.sqrt(n1) * Math.sqrt(n2));
+  }
 
   const pairs = [];
-  let connectedPairs = 0;
-  let totalPairs = 0;
+  let connectedCount = 0;
+  let weightedSum = 0;
+  let totalWeight  = 0;
 
-  for (let i = 0; i < selectedCASes.length; i++) {
-    for (let j = i + 1; j < selectedCASes.length; j++) {
-      totalPairs++;
-      const a = selectedCASes[i];
-      const b = selectedCASes[j];
-      const neighbors = graph.get(a);
-      const connected = neighbors ? neighbors.has(b) : false;
-      if (connected) connectedPairs++;
-      pairs.push({ a, b, connected });
+  for (let i = 0; i < materials.length; i++) {
+    for (let j = i + 1; j < materials.length; j++) {
+      const a = materials[i], b = materials[j];
+
+      // Factor 1 — graph connectivity (explicit blends_with, symmetric)
+      const nA = graph.get(a.cas);
+      const nB = graph.get(b.cas);
+      const connected = (nA && nA.has(b.cas)) || (nB && nB.has(a.cas));
+      if (connected) connectedCount++;
+
+      // Factor 2 — descriptor cosine similarity (soft affinity)
+      const sim = cosSim(radars[i], radars[j]);
+
+      // Combined pair score: explicit connection is strong signal (1.0);
+      // otherwise scale descriptor sim into 0.3..1.0 so unrelated materials
+      // don't tank the score when the DB graph is sparse.
+      const pairScore = connected ? 1.0 : 0.3 + 0.7 * sim;
+
+      // Weight by geometric mean of pct — significant pairs matter more.
+      // Floor at 0.01 so zero-pct materials still contribute something.
+      const w = Math.max(0.01, Math.sqrt((a.pct || 0) * (b.pct || 0)));
+
+      weightedSum += pairScore * w;
+      totalWeight += w;
+      pairs.push({ a: a.cas, b: b.cas, connected, descriptorSim: roundN(sim, 2), pairScore: roundN(pairScore, 2), weight: roundN(w, 2) });
     }
   }
 
-  const score = totalPairs > 0 ? Math.round(connectedPairs / totalPairs * 100) : 100;
-  return { score, connectedPairs, totalPairs, pairs };
+  const score = totalWeight > 0 ? Math.round((weightedSum / totalWeight) * 100) : 100;
+  return {
+    score,
+    connectedPairs: connectedCount,
+    totalPairs: pairs.length,
+    pairs,
+    method: 'multi-factor',
+  };
 }
 
 /**

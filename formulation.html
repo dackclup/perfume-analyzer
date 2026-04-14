@@ -1622,7 +1622,7 @@ function renderCompatTab() {
   const catId = document.getElementById('productCategory').value;
   const fragPct = parseInt(document.getElementById('fragPct').value);
 
-  const harmony = computeHarmonyScore(selected, graph);
+  const harmony = computeHarmonyScore(mats, graph);
   // Perception-based pyramid (integrates headspace PSI over time windows).
   // Automatically falls back to label-based analyzeNoteBalance when ODT
   // coverage is < 50% of materials.
@@ -1634,17 +1634,23 @@ function renderCompatTab() {
 
   let html = '';
 
-  // Harmony Score
+  // Harmony Score (multi-factor: graph + descriptor similarity, pct-weighted)
   const harmClass = harmony.score >= 70 ? 'badge-ok' : harmony.score >= 40 ? 'badge-warn' : 'badge-danger';
   html += '<div class="analysis-card"><h4>Harmony Score <span class="badge ' + harmClass + '">' + harmony.score + '%</span></h4>';
-  html += '<p class="panel-desc">' + harmony.connectedPairs + ' of ' + harmony.totalPairs + ' material pairs have documented compatibility.</p>';
+  html += '<p class="panel-desc">' + harmony.connectedPairs + ' of ' + harmony.totalPairs
+    + ' pairs have documented compatibility; remaining pairs scored by odor-descriptor similarity, weighted by √(pct_a × pct_b).</p>';
   if (harmony.pairs.length && harmony.pairs.length <= 15) {
     html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">';
     for (const p of harmony.pairs) {
       const nA = DB[p.a] ? DB[p.a].name : p.a;
       const nB = DB[p.b] ? DB[p.b].name : p.b;
-      const cls = p.connected ? 'badge-ok' : 'badge-warn';
-      html += '<span class="badge ' + cls + '" style="font-size:0.72em">' + escHtml(nA) + ' + ' + escHtml(nB) + '</span>';
+      // Badge color: green if graph-connected, amber if descriptor-close, red if neither
+      let cls;
+      if (p.connected) cls = 'badge-ok';
+      else if (p.descriptorSim != null && p.descriptorSim >= 0.4) cls = 'badge-warn';
+      else cls = 'badge-danger';
+      const simStr = p.connected ? '★' : (p.descriptorSim != null ? (' ~' + Math.round(p.descriptorSim * 100) + '%') : '');
+      html += '<span class="badge ' + cls + '" style="font-size:0.72em" title="pair score ' + (p.pairScore || 0) + '">' + escHtml(nA) + ' + ' + escHtml(nB) + simStr + '</span>';
     }
     html += '</div>';
   }
