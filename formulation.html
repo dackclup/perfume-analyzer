@@ -1141,7 +1141,7 @@ function renderMaterialList() {
     const pctInProduct = m.pct * (fragPct / 100);
     let warnHtml = '';
     if (usageRange.max != null && pctInProduct > usageRange.max) {
-      warnHtml = `<span class="mat-warn" title="Max ${usageRange.max}% in product, actual ${pctInProduct.toFixed(1)}%">! ${usageRange.max}%</span>`;
+      warnHtml = `<span class="mat-warn" style="cursor:pointer" title="Max ${usageRange.max}% in product, actual ${pctInProduct.toFixed(1)}% — click to reduce" onclick="applyUsageCap('${safeCas}')">! ${usageRange.max}%</span>`;
     }
     html += `<div class="mat-item" data-cas="${safeCas}">`;
     // Show one badge per tier for multi-tier materials (e.g., "Top / Middle"
@@ -1156,8 +1156,8 @@ function renderMaterialList() {
       onchange="formulation.updatePct('${safeCas}',this.value)"
       onblur="if(this.value==='')this.value=0;formulation.updatePct('${safeCas}',this.value)">`;
     html += `<span style="font-size:0.75em;color:var(--text2)">%</span>`;
-    html += `<button class="mat-del" onclick="formulation.removeMaterial('${safeCas}')" title="Remove">&times;</button>`;
     html += `<button class="mat-dil-btn${dil < 100 ? ' active' : ''}" onclick="toggleDilution('${safeCas}')" title="Dilution">${dil < 100 ? dil + '%' : 'dil'}</button>`;
+    html += `<button class="mat-del" onclick="formulation.removeMaterial('${safeCas}')" title="Remove">&times;</button>`;
     if (dil < 100) {
       // Only offer actual solvents/carriers as dilution media — exclude 'other'
       // category items like BHT (antioxidant), Denatonium (bittering agent), etc.
@@ -3107,6 +3107,21 @@ function toggleLock(cas) {
   if (lockedMaterials.has(cas)) lockedMaterials.delete(cas);
   else lockedMaterials.add(cas);
   renderActiveTab();
+}
+
+// Clicking the "! 0.5%" usage-range warning pill reduces the material's
+// concentrate % so its finished-product % equals the recommended max:
+//   maxInConcentrate = usageRange.max * 100 / fragPct
+function applyUsageCap(cas) {
+  const m = formulation.materials.find(x => x.cas === cas);
+  if (!m) return;
+  const range = parseUsageRange(m.data?.usage_levels);
+  if (range.max == null) return;
+  const fragPct = validateFragPct(document.getElementById('fragPct').value);
+  const maxInConcentrate = Math.max(0, (range.max / fragPct) * 100);
+  const rounded = Math.round(maxInConcentrate * 10000) / 10000;
+  formulation.updatePct(cas, rounded);
+  formulation.onChange();
 }
 
 function toggleDilution(cas) {
