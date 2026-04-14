@@ -938,9 +938,9 @@ const formulation = {
     const el = document.querySelector('.mat-item[data-cas="' + CSS.escape(cas) + '"]');
     if (!el) { this.onChange(); return; } // fallback to full render if element not found
 
-    const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+    const batchSize = validateBatchSize(document.getElementById('batchSize').value);
     const batchUnit = document.getElementById('batchUnit').value;
-    const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
+    const fragPct = validateFragPct(document.getElementById('fragPct').value);
     const fragGrams = batchSize * (fragPct / 100);
 
     let pureAmount = (m.pct / 100) * fragGrams;
@@ -992,9 +992,9 @@ const formulation = {
     const rawPct = this.totalPct();
     const pct = isNaN(rawPct) ? 0 : Math.round(rawPct * 100) / 100;
     const pctEl = document.getElementById('matTotalPct');
-    const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+    const batchSize = validateBatchSize(document.getElementById('batchSize').value);
     const batchUnit = document.getElementById('batchUnit').value;
-    const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
+    const fragPct = validateFragPct(document.getElementById('fragPct').value);
     const fragGrams = batchSize * (fragPct / 100);
     function fmtAmt(v) { return v === 0 ? '0' : v < 0.001 ? v.toExponential(1) : v < 0.1 ? v.toFixed(3) : v < 1 ? v.toFixed(3) : v < 10 ? v.toFixed(2) : roundN(v, 1).toString(); }
     const fragVal = batchUnit === 'ml' ? fragGrams / 0.9 : fragGrams;
@@ -1101,9 +1101,9 @@ function renderMaterialList() {
   }
 
   count.textContent = `(${formulation.materials.length})`;
-  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const batchSize = validateBatchSize(document.getElementById('batchSize').value);
   const batchUnit = document.getElementById('batchUnit').value;
-  const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
+  const fragPct = validateFragPct(document.getElementById('fragPct').value);
   // Fragrance grams = batchSize × fragPct/100; material grams = pct% of fragrance portion
   const fragGrams = batchSize * (fragPct / 100);
   let html = '';
@@ -1264,9 +1264,9 @@ function renderCarrierList() {
   }
 
   countEl.textContent = '(' + carrierMaterials.length + ')';
-  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const batchSize = validateBatchSize(document.getElementById('batchSize').value);
   const batchUnit = document.getElementById('batchUnit').value;
-  const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
+  const fragPct = validateFragPct(document.getElementById('fragPct').value);
   const fragGrams = batchSize * (fragPct / 100);
   const carrierGramsFull = batchSize * (1 - fragPct / 100);
 
@@ -1290,13 +1290,15 @@ function renderCarrierList() {
     }
   }
   // Spread unspecified solvent proportionally by each carrier's base weight
+  // Cap the total at totalCarrierBase so carriers can't go negative even when over-committed
   const totalCarrierBase = carrierMaterials.reduce((s, c) => s + (c.pct / 100) * carrierGramsFull, 0);
+  const cappedUnspecified = Math.min(unspecifiedSolvent, totalCarrierBase);
   function unspecShareFor(cas) {
-    if (unspecifiedSolvent <= 0 || totalCarrierBase <= 0) return 0;
+    if (cappedUnspecified <= 0 || totalCarrierBase <= 0) return 0;
     const c = carrierMaterials.find(x => x.cas === cas);
     if (!c) return 0;
     const base = (c.pct / 100) * carrierGramsFull;
-    return unspecifiedSolvent * (base / totalCarrierBase);
+    return cappedUnspecified * (base / totalCarrierBase);
   }
 
   let html = '';
@@ -1318,7 +1320,7 @@ function renderCarrierList() {
     html += '<div class="mat-item" data-carrier-cas="' + safeCas + '">';
     html += '<span class="mat-name" title="' + safeName + '">' + safeName + '</span>';
     html += '<span class="mat-grams">' + amtStr + unit + dilNote + '</span>';
-    html += '<input type="number" class="mat-pct" value="' + m.pct + '" min="0" max="100" step="1" onchange="updateCarrierPct(\'' + safeCas + '\',this.value)" onblur="if(this.value===\'\')this.value=0;updateCarrierPct(\'' + safeCas + '\',this.value)">';
+    html += '<input type="number" class="mat-pct" value="' + m.pct + '" min="0" max="100" step="1" onchange="updateCarrierPct(\'' + safeCas + '\',this.value)" onblur="if(this.value===\'\'){this.value=0;updateCarrierPct(\'' + safeCas + '\',0);}">';
     html += '<span style="font-size:0.75em;color:var(--text2)">%</span>';
     html += '<button class="mat-del" onclick="removeCarrierMaterial(\'' + safeCas + '\')" title="Remove">&times;</button>';
     html += '</div>';
@@ -1523,7 +1525,7 @@ function renderCompatTab() {
   const harmony = computeHarmonyScore(selected, graph);
   const balance = analyzeNoteBalance(mats);
   const suggestions = findCompatibleMaterials(selected, graph, DB, 10);
-  const allocation = suggestAllocation(mats, parseInt(document.getElementById('fragPct').value) || 18, lockedMaterials);
+  const allocation = suggestAllocation(mats, validateFragPct(document.getElementById('fragPct').value), lockedMaterials);
   const optimized = optimizeAllocation(mats, graph, catId, fragPct, 50, lockedMaterials);
 
   let html = '';
@@ -2147,7 +2149,7 @@ function renderSafetyTab() {
   }
 
   // Cost Summary (A5)
-  const batchSizeG = parseFloat(document.getElementById('batchSize').value) || 100;
+  const batchSizeG = validateBatchSize(document.getElementById('batchSize').value);
   const costData = calculateFormulaCost(mats, batchSizeG, carrier, fragPct);
   html += '<div class="analysis-card"><h4>Cost Estimate <span class="badge badge-ok">$' + costData.totalCost + '</span></h4>';
   html += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.85em;color:var(--text2);margin-top:6px">';
@@ -2217,7 +2219,7 @@ function exportJSON() {
   const fragPct = parseInt(document.getElementById('fragPct').value);
   const tempC = parseInt(document.getElementById('tempSlider').value);
   const carrier = document.getElementById('carrierSelect').value;
-  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const batchSize = validateBatchSize(document.getElementById('batchSize').value);
   const batchUnit = document.getElementById('batchUnit').value;
 
   const payload = {
@@ -2258,7 +2260,7 @@ function exportJSON() {
     payload.analysis.compatibility = {
       harmony: computeHarmonyScore(mats.map(m => m.cas), graph),
       noteBalance: analyzeNoteBalance(mats),
-      suggestedAllocation: suggestAllocation(mats, parseInt(document.getElementById('fragPct').value) || 18),
+      suggestedAllocation: suggestAllocation(mats, validateFragPct(document.getElementById('fragPct').value)),
     };
     payload.analysis.thermodynamics = {
       vpTable: buildVPTable(mats, tempC),
@@ -2295,7 +2297,7 @@ function exportCSV() {
   const allergens = aggregateAllergens(mats, fragPct, catId);
 
   // CSV header
-  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const batchSize = validateBatchSize(document.getElementById('batchSize').value);
   const batchUnit = document.getElementById('batchUnit').value;
   const fragGrams = batchSize * (fragPct / 100);
 
@@ -2351,7 +2353,7 @@ function exportPDF() {
   const catId = document.getElementById('productCategory').value;
   const fragPct = parseInt(document.getElementById('fragPct').value);
   const carrier = document.getElementById('carrierSelect').value;
-  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const batchSize = validateBatchSize(document.getElementById('batchSize').value);
   const batchUnit = document.getElementById('batchUnit').value;
 
   const compliance = checkIFRACompliance(mats, catId, fragPct);
@@ -2690,6 +2692,9 @@ function toggleDilution(cas) {
   const m = formulation.materials.find(m => m.cas === cas);
   if (!m) return;
   if ((m.dilution || 100) < 100) {
+    // Turning OFF — remember previous dilution for restore
+    m._prevDilution = m.dilution;
+    m._prevDilutionSolvent = m.dilutionSolvent || '';
     m.dilution = 100;
     m.dilutionSolvent = '';
   } else {
@@ -2697,13 +2702,19 @@ function toggleDilution(cas) {
       alert('Please add a carrier in SOLVENT/CARRIER/OTHER first.');
       return;
     }
-    const val = prompt('Dilution % (1-100, e.g. 10 = 10% active, 90% solvent):', '10');
+    const defaultVal = (m._prevDilution && m._prevDilution < 100) ? String(m._prevDilution) : '10';
+    const val = prompt('Dilution % (1-100, e.g. 10 = 10% active, 90% solvent):', defaultVal);
     if (val === null) return;
     const dil = validateDilution(val);
     if (dil >= 100) return; // user effectively disabled dilution
     m.dilution = dil;
-    // Default dilutionSolvent to first carrier if not set
-    if (!m.dilutionSolvent) m.dilutionSolvent = carrierMaterials[0].cas;
+    // Restore previous solvent if still exists, else default to first carrier
+    const prev = m._prevDilutionSolvent;
+    if (prev && carrierMaterials.find(c => c.cas === prev)) {
+      m.dilutionSolvent = prev;
+    } else if (!m.dilutionSolvent || !carrierMaterials.find(c => c.cas === m.dilutionSolvent)) {
+      m.dilutionSolvent = carrierMaterials[0].cas;
+    }
   }
   formulation.onChange();
 }
@@ -2984,7 +2995,7 @@ function exportXLSX() {
 
   const catId = document.getElementById('productCategory').value;
   const fragPct = parseInt(document.getElementById('fragPct').value);
-  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
+  const batchSize = validateBatchSize(document.getElementById('batchSize').value);
   const carrier = document.getElementById('carrierSelect').value;
   const compliance = checkIFRACompliance(mats, catId, fragPct);
 
