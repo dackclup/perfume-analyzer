@@ -539,6 +539,50 @@ function findCompatibleMaterials(selectedCASes, graph, db, maxResults) {
  * @param {Map} graph
  * @returns {Object} {score: 0-100, pairs, connectedPairs, totalPairs}
  */
+// Common perfumery discords — family pairs that tend to clash at significant
+// concentration. Severity 0-1 reduces the pair score by up to 50% when both
+// families appear in a pair of materials at non-trivial pct.
+// Sources: Arctander, Calkin & Jellinek, Poucher — standard perfumery texts.
+const DISCORD_PAIRS = [
+  // Cool aromatic ↔ warm cloying
+  { a: 'mint',       b: 'gourmand',   severity: 0.7 },
+  { a: 'mint',       b: 'amber',      severity: 0.5 },
+  { a: 'mint',       b: 'oriental',   severity: 0.5 },
+  { a: 'camphor',    b: 'gourmand',   severity: 0.7 },
+  { a: 'camphor',    b: 'floral',     severity: 0.5 },
+  { a: 'eucalyptol', b: 'floral',     severity: 0.5 },
+  { a: 'medicinal',  b: 'floral',     severity: 0.6 },
+  { a: 'medicinal',  b: 'gourmand',   severity: 0.6 },
+  // Animalic / fecal ↔ delicate light
+  { a: 'fecal',      b: 'citrus',     severity: 0.6 },
+  { a: 'fecal',      b: 'fresh',      severity: 0.7 },
+  { a: 'animalic',   b: 'aquatic',    severity: 0.5 },
+  // Ozonic / aquatic ↔ heavy oriental / gourmand
+  { a: 'aquatic',    b: 'oriental',   severity: 0.5 },
+  { a: 'aquatic',    b: 'gourmand',   severity: 0.5 },
+  { a: 'aquatic',    b: 'resinous',   severity: 0.5 },
+  // Green / galbanum ↔ sweet gourmand
+  { a: 'green',      b: 'gourmand',   severity: 0.4 },
+  // Sharp spice ↔ delicate aldehyde
+  { a: 'spicy',      b: 'aldehydic',  severity: 0.4 },
+  // Rubbery / phenolic ↔ sweet floral
+  { a: 'phenolic',   b: 'floral',     severity: 0.5 },
+  { a: 'rubbery',    b: 'gourmand',   severity: 0.4 },
+];
+
+function detectDiscord(familiesA, familiesB) {
+  if (!familiesA || !familiesB || !familiesA.length || !familiesB.length) return 0;
+  const aSet = new Set(familiesA.map(f => String(f).toLowerCase().trim()));
+  const bSet = new Set(familiesB.map(f => String(f).toLowerCase().trim()));
+  let maxSeverity = 0;
+  for (const d of DISCORD_PAIRS) {
+    if ((aSet.has(d.a) && bSet.has(d.b)) || (aSet.has(d.b) && bSet.has(d.a))) {
+      if (d.severity > maxSeverity) maxSeverity = d.severity;
+    }
+  }
+  return maxSeverity;
+}
+
 function computeHarmonyScore(materialsOrCases, graph) {
   // Backward-compat: accept either an array of CAS strings (legacy) or an
   // array of material objects { cas, pct, data }. Legacy falls back to the
@@ -570,11 +614,12 @@ function computeHarmonyScore(materialsOrCases, graph) {
     return { score: 100, connectedPairs: 0, totalPairs: 0, pairs: [], method: 'multi-factor' };
   }
 
-  // Pre-compute radar-axis weight vector for each material (for cosine sim)
+  // Pre-compute radar-axis weight vector + family list for each material
   const radars = materials.map(m => {
     const w = materialToRadarWeights(m.data || {});
     return RADAR_AXES.map(a => w[a] || 0);
   });
+  const familiesList = materials.map(m => getMaterialFamilies(m.data || {}));
 
   function cosSim(v1, v2) {
     let dot = 0, n1 = 0, n2 = 0;
@@ -588,43 +633,93 @@ function computeHarmonyScore(materialsOrCases, graph) {
   }
 
   const pairs = [];
+  const discords = [];
   let connectedCount = 0;
   let weightedSum = 0;
   let totalWeight  = 0;
+  // Per-pair connectivity matrix — used for triangle synergy detection
+  const connMatrix = Array.from({ length: materials.length }, () => new Array(materials.length).fill(false));
 
   for (let i = 0; i < materials.length; i++) {
     for (let j = i + 1; j < materials.length; j++) {
       const a = materials[i], b = materials[j];
 
       // Factor 1 — graph connectivity (explicit blends_with, symmetric)
-      const nA = graph.get(a.cas);
-      const nB = graph.get(b.cas);
+      const nA = graph && graph.get ? graph.get(a.cas) : null;
+      const nB = graph && graph.get ? graph.get(b.cas) : null;
       const connected = (nA && nA.has(b.cas)) || (nB && nB.has(a.cas));
       if (connected) connectedCount++;
+      connMatrix[i][j] = connMatrix[j][i] = !!connected;
 
       // Factor 2 — descriptor cosine similarity (soft affinity)
       const sim = cosSim(radars[i], radars[j]);
 
-      // Combined pair score: explicit connection is strong signal (1.0);
-      // otherwise scale descriptor sim into 0.3..1.0 so unrelated materials
-      // don't tank the score when the DB graph is sparse.
-      const pairScore = connected ? 1.0 : 0.3 + 0.7 * sim;
+      // Factor 3 — discord penalty (known bad family pairs)
+      const discordSev = detectDiscord(familiesList[i], familiesList[j]);
+
+      // Combined pair score: explicit connection = 1.0; otherwise scale
+      // descriptor sim into 0.3..1.0 so unrelated materials don't tank
+      // the score when the DB graph is sparse. Discord reduces up to 50%.
+      let pairScore = connected ? 1.0 : 0.3 + 0.7 * sim;
+      pairScore = Math.max(0, pairScore - 0.5 * discordSev);
 
       // Weight by geometric mean of pct — significant pairs matter more.
-      // Floor at 0.01 so zero-pct materials still contribute something.
       const w = Math.max(0.01, Math.sqrt((a.pct || 0) * (b.pct || 0)));
 
       weightedSum += pairScore * w;
       totalWeight += w;
-      pairs.push({ a: a.cas, b: b.cas, connected, descriptorSim: roundN(sim, 2), pairScore: roundN(pairScore, 2), weight: roundN(w, 2) });
+      pairs.push({
+        a: a.cas, b: b.cas, connected,
+        descriptorSim: roundN(sim, 2),
+        discord: roundN(discordSev, 2),
+        pairScore: roundN(pairScore, 2),
+        weight: roundN(w, 2),
+      });
+      if (discordSev > 0) {
+        discords.push({ a: a.cas, b: b.cas, nameA: a.name, nameB: b.name, severity: roundN(discordSev, 2) });
+      }
     }
   }
 
-  const score = totalWeight > 0 ? Math.round((weightedSum / totalWeight) * 100) : 100;
+  // Triangle synergy — fraction of fully-connected 3-material triples,
+  // capped to a small bonus so it can't overwhelm the pairwise signal.
+  let fullTriangles = 0, totalTriangles = 0;
+  for (let i = 0; i < materials.length; i++) {
+    for (let j = i + 1; j < materials.length; j++) {
+      for (let k = j + 1; k < materials.length; k++) {
+        totalTriangles++;
+        if (connMatrix[i][j] && connMatrix[j][k] && connMatrix[i][k]) fullTriangles++;
+      }
+    }
+  }
+  const triangleBonus = totalTriangles > 0 ? (fullTriangles / totalTriangles) * 5 : 0; // up to +5
+
+  // Note-tier diversity — classical perfumery prefers top+middle+base coverage.
+  // Missing a tier hurts; all three present gets the full multiplier.
+  const tiersPresent = { top: false, middle: false, base: false };
+  for (const m of materials) {
+    const ts = classifyNoteTier(m.data?.note || '');
+    for (const t of ts) tiersPresent[t] = true;
+  }
+  const tierCount = (tiersPresent.top ? 1 : 0) + (tiersPresent.middle ? 1 : 0) + (tiersPresent.base ? 1 : 0);
+  // 0 → 0.85, 1 → 0.90, 2 → 0.95, 3 → 1.00
+  const diversityFactor = 0.85 + 0.05 * tierCount;
+
+  const baseScore = totalWeight > 0 ? (weightedSum / totalWeight) * 100 : 100;
+  const finalScore = Math.max(0, Math.min(100, Math.round((baseScore + triangleBonus) * diversityFactor)));
+
   return {
-    score,
+    score: finalScore,
+    baseScore: Math.round(baseScore),
+    triangleBonus: roundN(triangleBonus, 1),
+    diversityFactor: roundN(diversityFactor, 2),
+    tierCount,
+    tiersPresent,
     connectedPairs: connectedCount,
     totalPairs: pairs.length,
+    fullTriangles,
+    totalTriangles,
+    discords,
     pairs,
     method: 'multi-factor',
   };
