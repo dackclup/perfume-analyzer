@@ -1761,7 +1761,10 @@ function renderCompatTab() {
   for (const [tier, val, color, ideal] of [['Top', balance.top, 'var(--badge-top-fg)', balance.ideal.top], ['Middle', balance.middle, 'var(--badge-mid-fg)', balance.ideal.middle], ['Base', balance.base, 'var(--badge-base-fg)', balance.ideal.base]]) {
     const pct = Math.round(val / (classifiedTotal || 1) * 100);
     html += '<div style="flex:1;min-width:80px;text-align:center">';
-    html += '<div style="font-size:0.78em;color:var(--text2)">' + tier + ' (' + ideal + ')</div>';
+    // Reserve 2 lines of height on the label so the "Middle (25-45%)" case,
+    // which wraps on narrow viewports, doesn't push its bar container lower
+    // than the Top / Base columns — misaligning the bar bottoms.
+    html += '<div style="font-size:0.78em;color:var(--text2);line-height:1.25;min-height:2.5em;display:flex;align-items:flex-end;justify-content:center">' + tier + ' (' + ideal + ')</div>';
     html += '<div style="height:60px;display:flex;align-items:flex-end;justify-content:center">';
     html += '<div style="width:40px;height:' + Math.max(pct * 0.6, 4) + 'px;background:' + color + ';border-radius:3px 3px 0 0;opacity:0.8"></div>';
     html += '</div>';
