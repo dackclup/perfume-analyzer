@@ -503,18 +503,47 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
       <button class="modal-close" id="briefClose">&times;</button>
     </div>
     <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+      <!-- Product Category (sync with main workspace) -->
+      <div class="control-group">
+        <div class="control-label"><span>Product Category</span></div>
+        <select id="briefCategory">
+          <option value="4">Fine Fragrance (Cat.4)</option>
+          <option value="1">Lip Products (Cat.1)</option>
+          <option value="2">Deodorant / Antiperspirant (Cat.2)</option>
+          <option value="3">Hydroalcoholic — Shaved Skin (Cat.3)</option>
+          <option value="5A">Body Lotion (Cat.5A)</option>
+          <option value="5B">Face Cream (Cat.5B)</option>
+          <option value="5C">Hand Cream (Cat.5C)</option>
+          <option value="5D">Baby Products (Cat.5D)</option>
+          <option value="6">Mouthwash / Toothpaste (Cat.6)</option>
+          <option value="7">Rinse-off Hair (Cat.7)</option>
+          <option value="8">Leave-on Hair (Cat.8)</option>
+          <option value="9">Bar Soap (Cat.9)</option>
+          <option value="10">Household Cleaners (Cat.10)</option>
+          <option value="11">Candles / Air Care (Cat.11)</option>
+          <option value="12">Other (Cat.12)</option>
+        </select>
+      </div>
       <div class="control-group">
         <div class="control-label"><span>Olfactive Family</span></div>
         <select id="briefFamily">
-          <option value="floral">Floral</option>
-          <option value="woody">Woody</option>
-          <option value="fresh">Fresh / Citrus</option>
-          <option value="spicy">Oriental / Spicy</option>
-          <option value="fruity">Fruity</option>
-          <option value="gourmand">Gourmand</option>
+          <option value="citrus">Citrus</option>
+          <option value="fresh">Fresh / Aquatic</option>
+          <option value="aquatic">Aquatic / Marine</option>
           <option value="green">Green / Herbal</option>
-          <option value="musk">Musk / Clean</option>
+          <option value="aromatic">Aromatic / Fougère</option>
+          <option value="fruity">Fruity</option>
+          <option value="floral">Floral</option>
+          <option value="soft_floral">Soft Floral / Powdery</option>
+          <option value="floral_oriental">Floral Oriental</option>
+          <option value="oriental">Oriental / Amber</option>
+          <option value="spicy">Spicy</option>
+          <option value="gourmand">Gourmand</option>
+          <option value="woody">Woody</option>
+          <option value="mossy">Mossy / Chypre</option>
+          <option value="dry_woods">Dry Woods / Leather</option>
           <option value="amber">Amber / Balsamic</option>
+          <option value="musk">Musk / Clean</option>
           <option value="animalic">Animalic / Leather</option>
         </select>
       </div>
@@ -3352,11 +3381,26 @@ formulation.onChange = function() {
 // ===== A3: Creative Brief Modal =====
 const briefModal = document.getElementById('briefModal');
 document.getElementById('btnBrief').addEventListener('click', () => {
+  // Initialise Creative Brief's Product Category from the current workspace
+  // selection so the two controls are in sync when the modal opens.
+  document.getElementById('briefCategory').value =
+    document.getElementById('productCategory').value;
   briefModal.classList.add('open');
   document.getElementById('briefResults').innerHTML = '';
 });
 document.getElementById('briefClose').addEventListener('click', () => briefModal.classList.remove('open'));
 briefModal.addEventListener('click', e => { if (e.target === briefModal) briefModal.classList.remove('open'); });
+
+// Sync Creative Brief's Product Category → main workspace Product Category
+// so downstream filters (IFRA caps, carriers, Add-modal search) stay aligned
+// with the user's brief selection.
+document.getElementById('briefCategory').addEventListener('change', (e) => {
+  const mainCat = document.getElementById('productCategory');
+  if (mainCat.value !== e.target.value) {
+    mainCat.value = e.target.value;
+    mainCat.dispatchEvent(new Event('change'));
+  }
+});
 
 document.getElementById('briefGenerate').addEventListener('click', () => {
   const family = document.getElementById('briefFamily').value;
@@ -3369,7 +3413,14 @@ document.getElementById('briefGenerate').addEventListener('click', () => {
   // Forward current workspace context so the engine's fitness-guided greedy
   // can (a) filter banned-for-category materials, (b) compute pct caps
   // correctly, (c) pick fragPct-appropriate defaults.
-  const catId = document.getElementById('productCategory').value;
+  // Pull the category from the Creative Brief's own control and mirror it to
+  // the main workspace so downstream filters stay consistent.
+  const catId = document.getElementById('briefCategory').value;
+  const mainCat = document.getElementById('productCategory');
+  if (mainCat.value !== catId) {
+    mainCat.value = catId;
+    mainCat.dispatchEvent(new Event('change'));
+  }
   const fragPct = validateFragPct(document.getElementById('fragPct').value);
 
   const brief = { family, moods, longevityH, maxIngredients, notePct: { top: 20, mid: 45, base: 35 }, exclude: [], catId, fragPct };
