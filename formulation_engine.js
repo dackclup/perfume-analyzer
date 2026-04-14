@@ -636,6 +636,140 @@ function analyzeNoteBalance(materials) {
       base:   Math.round(idealRanges.base.min) + '-' + Math.round(idealRanges.base.max) + '%',
     },
     idealRanges,
+    method: 'label',
+  };
+}
+
+/**
+ * Perception-based note balance — the tier % reflect integrated perceived
+ * intensity over time windows (what an observer actually smells), not the
+ * static label on each material. Uses simulated headspace concentration,
+ * ODT, Stevens exponent, and Hill saturation.
+ *
+ * Windows (hours): top 0–0.5, middle 0.5–4, base 4–12.
+ *
+ * Falls back to the label-based analyzeNoteBalance when ODT coverage is
+ * poor (< 50% of materials have ODT data) or the simulation yields no
+ * signal.
+ *
+ * @param {Array} materials - [{cas, name, pct, data:{note,...}}]
+ * @param {number} tempC - skin/ambient temperature
+ * @returns same shape as analyzeNoteBalance plus { method, odtCoverage }
+ */
+function analyzeNoteBalancePerception(materials, tempC) {
+  if (!materials || !materials.length) {
+    return analyzeNoteBalance(materials || []);
+  }
+
+  // Data-quality gate: if most materials have no ODT, the integral would
+  // be dominated by a few noisy entries — use the label method instead.
+  let withODT = 0;
+  for (const mat of materials) {
+    const odt = getODT(mat.cas, mat.data);
+    if (odt && odt.ppb != null && isFinite(odt.ppb) && odt.ppb > 0) withODT++;
+  }
+  const odtCoverage = withODT / materials.length;
+  if (odtCoverage < 0.5) {
+    return Object.assign({}, analyzeNoteBalance(materials), { method: 'label', odtCoverage: roundN(odtCoverage, 2) });
+  }
+
+  // Dense sample points so trapezoidal integration captures the top burst
+  const times = [0, 0.083, 0.25, 0.5, 1, 2, 4, 6, 8, 12];
+  const sim = simulateEvaporation(materials, tempC || 25, times);
+  const windows = { top: [0, 0.5], middle: [0.5, 4], base: [4, 12] };
+  const integrals = { top: 0, middle: 0, base: 0 };
+
+  for (let mi = 0; mi < materials.length; mi++) {
+    const mat = materials[mi];
+    const odt = getODT(mat.cas, mat.data);
+    const n = getStevensExponent(mat.data);
+    const curve = sim.curves[mi];
+    if (!odt || odt.ppb == null || !(odt.ppb > 0) || !curve) continue;
+
+    const psi = times.map((t, ti) => {
+      const conc = curve.concentrations[ti] || 0;
+      const ov = calcOdorValue(conc, odt.ppb);
+      return hillPerceivedIntensity(ov, n);
+    });
+
+    // Trapezoidal integrate over each window
+    for (const tier of Object.keys(windows)) {
+      const [tMin, tMax] = windows[tier];
+      let integral = 0;
+      for (let i = 0; i < times.length - 1; i++) {
+        const t1 = times[i], t2 = times[i + 1];
+        if (t2 <= tMin) continue;
+        if (t1 >= tMax) break;
+        const a = Math.max(t1, tMin);
+        const b = Math.min(t2, tMax);
+        if (b <= a) continue;
+        // Linear-interpolate PSI at window boundaries
+        const frac1 = (a - t1) / (t2 - t1);
+        const frac2 = (b - t1) / (t2 - t1);
+        const psi_a = psi[i] + (psi[i + 1] - psi[i]) * frac1;
+        const psi_b = psi[i] + (psi[i + 1] - psi[i]) * frac2;
+        integral += (psi_a + psi_b) * 0.5 * (b - a);
+      }
+      integrals[tier] += integral;
+    }
+  }
+
+  const total = integrals.top + integrals.middle + integrals.base;
+  if (total <= 0) {
+    // Simulation produced no perceivable intensity — fall back to label
+    return Object.assign({}, analyzeNoteBalance(materials), { method: 'label', odtCoverage: roundN(odtCoverage, 2) });
+  }
+
+  const pct = {
+    top:    (integrals.top    / total) * 100,
+    middle: (integrals.middle / total) * 100,
+    base:   (integrals.base   / total) * 100,
+  };
+
+  // Family-specific ideal ranges (same as label method)
+  const dominantFamily = detectDominantFamily(materials);
+  const center = (typeof FAMILY_NOTE_RATIOS !== 'undefined' && FAMILY_NOTE_RATIOS[dominantFamily])
+    ? FAMILY_NOTE_RATIOS[dominantFamily]
+    : { top: 0.225, mid: 0.40, base: 0.30 };
+  const band = 10;
+  const clamp01 = v => Math.max(0, Math.min(100, v));
+  const idealRanges = {
+    top:    { min: clamp01(center.top * 100 - band),  max: clamp01(center.top * 100 + band) },
+    middle: { min: clamp01(center.mid * 100 - band),  max: clamp01(center.mid * 100 + band) },
+    base:   { min: clamp01(center.base * 100 - band), max: clamp01(center.base * 100 + band) },
+  };
+
+  const missing = [];
+  if (pct.top < 0.5)    missing.push('top');
+  if (pct.middle < 0.5) missing.push('middle');
+  if (pct.base < 0.5)   missing.push('base');
+
+  const outOfRange = [];
+  for (const t of ['top', 'middle', 'base']) {
+    if (pct[t] < 0.5) continue;
+    if (pct[t] < idealRanges[t].min) outOfRange.push({ tier: t, actual: roundN(pct[t], 1), direction: 'low', ideal: idealRanges[t] });
+    else if (pct[t] > idealRanges[t].max) outOfRange.push({ tier: t, actual: roundN(pct[t], 1), direction: 'high', ideal: idealRanges[t] });
+  }
+
+  return {
+    top:    roundN(pct.top, 1),
+    middle: roundN(pct.middle, 1),
+    base:   roundN(pct.base, 1),
+    unclassified: 0,
+    unclassifiedMats: [],
+    total: 100,
+    missing,
+    outOfRange,
+    balanced: missing.length === 0 && outOfRange.length === 0,
+    family: dominantFamily,
+    ideal: {
+      top:    Math.round(idealRanges.top.min) + '-' + Math.round(idealRanges.top.max) + '%',
+      middle: Math.round(idealRanges.middle.min) + '-' + Math.round(idealRanges.middle.max) + '%',
+      base:   Math.round(idealRanges.base.min) + '-' + Math.round(idealRanges.base.max) + '%',
+    },
+    idealRanges,
+    method: 'perception',
+    odtCoverage: roundN(odtCoverage, 2),
   };
 }
 

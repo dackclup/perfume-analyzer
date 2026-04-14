@@ -1623,7 +1623,11 @@ function renderCompatTab() {
   const fragPct = parseInt(document.getElementById('fragPct').value);
 
   const harmony = computeHarmonyScore(selected, graph);
-  const balance = analyzeNoteBalance(mats);
+  // Perception-based pyramid (integrates headspace PSI over time windows).
+  // Automatically falls back to label-based analyzeNoteBalance when ODT
+  // coverage is < 50% of materials.
+  const tempC = parseInt(document.getElementById('tempSlider').value) || 25;
+  const balance = analyzeNoteBalancePerception(mats, tempC);
   const suggestions = findCompatibleMaterials(selected, graph, DB, 10);
   const allocation = suggestAllocation(mats, validateFragPct(document.getElementById('fragPct').value), lockedMaterials);
   const optimized = optimizeAllocation(mats, graph, catId, fragPct, 50, lockedMaterials);
@@ -1660,9 +1664,15 @@ function renderCompatTab() {
     ).join(', ');
   }
   html += '<div class="analysis-card"><h4>Fragrance Pyramid <span class="badge ' + balClass + '">' + balLabel + '</span></h4>';
+  // Method + family subtitle
+  const methodLabel = balance.method === 'perception'
+    ? 'Perception-weighted (time-integrated PSI)'
+    : 'Label-based (fallback — ODT coverage ' + Math.round((balance.odtCoverage || 0) * 100) + '%)';
+  let subtitle = methodLabel;
   if (balance.family && balance.family !== 'default') {
-    html += '<p class="panel-desc">Target ranges for <strong>' + escHtml(balance.family) + '</strong> family (different from generic pyramid).</p>';
+    subtitle += ' · target ranges for <strong>' + escHtml(balance.family) + '</strong> family';
   }
+  html += '<p class="panel-desc">' + subtitle + '</p>';
   html += '<div style="display:flex;gap:20px;margin-top:10px;flex-wrap:wrap">';
   const classifiedTotal = balance.top + balance.middle + balance.base;
   for (const [tier, val, color, ideal] of [['Top', balance.top, 'var(--badge-top-fg)', balance.ideal.top], ['Middle', balance.middle, 'var(--badge-mid-fg)', balance.ideal.middle], ['Base', balance.base, 'var(--badge-base-fg)', balance.ideal.base]]) {
