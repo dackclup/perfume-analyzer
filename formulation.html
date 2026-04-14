@@ -2023,7 +2023,8 @@ function materialProfileShift(mats) {
 // Typical max % for functional additives in the finished formula.
 // These are common industry limits for safety/regulation — they do NOT apply
 // to actual solvents/carriers (which fill the remainder). Values for
-// antioxidants, preservatives, and bittering agents.function getCarrierMaxPct(name) {
+// antioxidants, preservatives, and bittering agents.
+function getCarrierMaxPct(name) {
   const n = (name || '').toLowerCase();
   // Antioxidants
   if (n.includes('bht') || n.includes('butylated hydroxytoluene')) return 0.1;
