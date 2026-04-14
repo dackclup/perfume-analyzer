@@ -1691,11 +1691,20 @@ function capMaterialsToIFRA(catId, fragPct) {
         if (m.pct > 0) { excess += m.pct; m.pct = 0; }
         continue;
       }
+      // Effective max: prefer structured IFRA 51 limit; fall back to the
+      // usage-range max parsed from safety.usage text (e.g., Skatole
+      // "0.001–0.01 %", for which no IFRA 51 row exists).
+      let effectiveMax = null;
       if (c.ifraMax != null && c.ifraMax >= 0) {
-        const maxInConcentrate = (c.ifraMax / fragPct) * 100;
+        effectiveMax = c.ifraMax;
+      } else if (c.usageRange && c.usageRange.max != null) {
+        effectiveMax = c.usageRange.max;
+      }
+      if (effectiveMax != null) {
+        const maxInConcentrate = (effectiveMax / fragPct) * 100;
         if (m.pct > maxInConcentrate + 0.01) {
           excess += m.pct - maxInConcentrate;
-          m.pct = Math.round(maxInConcentrate * 100) / 100;
+          m.pct = Math.round(maxInConcentrate * 10000) / 10000;
         } else if (m.pct < maxInConcentrate - 0.01) {
           uncappedIdx.push(i);
         }
