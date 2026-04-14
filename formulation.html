@@ -1744,10 +1744,30 @@ function renderCompatTab() {
   }
   html += '</div>';
 
-  // Suggested Allocation
+  // Suggested Allocation — combined MATERIALS + SOLVENT/CARRIER/OTHER
   html += '<div class="analysis-card"><h4>Suggested Allocation</h4>';
-  html += '<p class="panel-desc">Dirichlet-weighted by note tier and inverse odor strength. Click "Apply" to use.</p>';
-  html += '<table class="data-table"><thead><tr><th></th><th>Material</th><th>Current %</th><th>Suggested %</th><th>Optimized %</th></tr></thead><tbody>';
+  html += '<p class="panel-desc">Materials use Dirichlet weights by note tier and inverse odor strength. Carriers rebalance by IFRA category (locked rows are preserved). Click "Apply" to use.</p>';
+
+  // Locked summary banner (materials + carriers)
+  const lockedMatObjs = mats.filter(m => lockedMaterials.has(m.cas));
+  const lockedCarrierObjs = carrierMaterials.filter(c => lockedCarriers.has(c.cas));
+  if (lockedMatObjs.length || lockedCarrierObjs.length) {
+    html += '<div style="margin-top:8px;padding:8px 10px;background:rgba(234,179,8,0.08);border-left:3px solid var(--warn,#eab308);border-radius:4px;font-size:0.82em">';
+    html += '&#128274; <strong>Locked (' + (lockedMatObjs.length + lockedCarrierObjs.length) + '):</strong> ';
+    const parts = [];
+    if (lockedMatObjs.length) {
+      parts.push('Materials — ' + lockedMatObjs.map(m => escHtml(m.name) + ' (' + m.pct + '%)').join(', '));
+    }
+    if (lockedCarrierObjs.length) {
+      parts.push('Carriers — ' + lockedCarrierObjs.map(c => escHtml(c.name) + ' (' + c.pct + '%)').join(', '));
+    }
+    html += parts.join(' &middot; ');
+    html += '<br><span style="color:var(--text2)">Apply Suggested / Optimized will preserve these values and only redistribute the remaining budget.</span>';
+    html += '</div>';
+  }
+
+  // Materials section
+  html += '<table class="data-table" style="margin-top:10px"><thead><tr><th></th><th>Material</th><th>Current %</th><th>Suggested %</th><th>Optimized %</th></tr></thead><tbody>';
   for (let i = 0; i < mats.length; i++) {
     const m = mats[i];
     const sug = allocation.find(a => a.cas === m.cas);
@@ -1761,6 +1781,23 @@ function renderCompatTab() {
     html += '<td>' + (opt ? opt.optimizedPct : '—') + '%</td></tr>';
   }
   html += '</tbody></table>';
+
+  // Carriers section — locks live in lockedCarriers, pct handled by rebalanceExistingCarriers
+  if (carrierMaterials.length) {
+    html += '<h5 style="margin-top:14px;margin-bottom:6px;font-size:0.9em;color:var(--text2)">SOLVENT / CARRIER / OTHER</h5>';
+    html += '<table class="data-table"><thead><tr><th></th><th>Carrier</th><th>Current %</th><th>Type</th></tr></thead><tbody>';
+    for (const c of carrierMaterials) {
+      const isLocked = lockedCarriers.has(c.cas);
+      const type = classifyCarrier(c.name);
+      html += '<tr>';
+      html += '<td><button class="btn btn-sm" onclick="toggleCarrierLock(\'' + escHtml(c.cas) + '\');renderActiveTab()" title="' + (isLocked ? 'Unlock' : 'Lock') + '" style="font-size:0.75em;padding:2px 6px">' + (isLocked ? '&#128274;' : '&#128275;') + '</button></td>';
+      html += '<td>' + escHtml(c.name) + (isLocked ? ' <span style="color:var(--warn);font-size:0.8em">(locked)</span>' : '') + '</td>';
+      html += '<td>' + c.pct + '%</td>';
+      html += '<td style="font-size:0.82em;color:var(--text2)">' + type + '</td></tr>';
+    }
+    html += '</tbody></table>';
+  }
+
   html += '</div>';
 
   // Compatible Material Suggestions
