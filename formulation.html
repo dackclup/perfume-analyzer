@@ -1289,8 +1289,15 @@ function renderCarrierList() {
       }
     }
   }
-  // Spread unspecified solvent equally across all carriers (average)
-  const unspecPerCarrier = carrierMaterials.length > 0 ? unspecifiedSolvent / carrierMaterials.length : 0;
+  // Spread unspecified solvent proportionally by each carrier's base weight
+  const totalCarrierBase = carrierMaterials.reduce((s, c) => s + (c.pct / 100) * carrierGramsFull, 0);
+  function unspecShareFor(cas) {
+    if (unspecifiedSolvent <= 0 || totalCarrierBase <= 0) return 0;
+    const c = carrierMaterials.find(x => x.cas === cas);
+    if (!c) return 0;
+    const base = (c.pct / 100) * carrierGramsFull;
+    return unspecifiedSolvent * (base / totalCarrierBase);
+  }
 
   let html = '';
   let totalActual = 0;
@@ -1300,8 +1307,8 @@ function renderCarrierList() {
     // Base amount from carrier budget (% of full carrier portion)
     let baseAmount = (m.pct / 100) * carrierGramsFull;
     if (batchUnit === 'ml') baseAmount = baseAmount / 0.9;
-    // Subtract dilution solvent attributed to this carrier + share of unspecified
-    const dilFromThis = (dilSolventByCarrier[m.cas] || 0) + unspecPerCarrier;
+    // Subtract dilution solvent attributed to this carrier + proportional share of unspecified
+    const dilFromThis = (dilSolventByCarrier[m.cas] || 0) + unspecShareFor(m.cas);
     const dilFromThisUnit = batchUnit === 'ml' ? dilFromThis / 0.9 : dilFromThis;
     const amount = Math.max(0, baseAmount - dilFromThisUnit);
     totalActual += amount;
