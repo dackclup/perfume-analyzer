@@ -1749,15 +1749,14 @@ function renderCompatTab() {
   html += '<div class="analysis-card"><h4>Suggested Allocation</h4>';
   html += '<p class="panel-desc">Materials use Dirichlet weights by note tier and inverse odor strength. Carriers rebalance by IFRA category (locked rows are preserved). Click "Apply" to use.</p>';
 
-  // Materials section
-  html += '<table class="data-table" style="margin-top:10px"><thead><tr><th></th><th>Material</th><th>Current %</th><th>Suggested %</th><th>Optimized %</th></tr></thead><tbody>';
+  // Materials section — lock buttons live on the main MATERIALS list
+  html += '<table class="data-table" style="margin-top:10px"><thead><tr><th>Material</th><th>Current %</th><th>Suggested %</th><th>Optimized %</th></tr></thead><tbody>';
   for (let i = 0; i < mats.length; i++) {
     const m = mats[i];
     const sug = allocation.find(a => a.cas === m.cas);
     const opt = optimized.find(o => o.cas === m.cas);
     const isLocked = lockedMaterials.has(m.cas);
     html += '<tr>';
-    html += '<td><button class="btn btn-sm" onclick="toggleLock(\'' + escHtml(m.cas) + '\')" title="' + (isLocked ? 'Unlock' : 'Lock') + '" style="font-size:0.75em;padding:2px 6px">' + (isLocked ? '&#128274;' : '&#128275;') + '</button></td>';
     html += '<td>' + escHtml(m.name) + (isLocked ? ' <span style="color:var(--warn);font-size:0.8em">(locked)</span>' : '') + '</td>';
     html += '<td>' + m.pct + '%</td>';
     html += '<td>' + (sug ? sug.suggestedPct : '—') + '%</td>';
@@ -1765,15 +1764,14 @@ function renderCompatTab() {
   }
   html += '</tbody></table>';
 
-  // Carriers section — locks live in lockedCarriers, pct handled by rebalanceExistingCarriers
+  // Carriers section — lock buttons live on the main SOLVENT/CARRIER/OTHER list
   if (carrierMaterials.length) {
     html += '<h5 style="margin-top:14px;margin-bottom:6px;font-size:0.9em;color:var(--text2)">SOLVENT / CARRIER / OTHER</h5>';
-    html += '<table class="data-table"><thead><tr><th></th><th>Carrier</th><th>Current %</th><th>Type</th></tr></thead><tbody>';
+    html += '<table class="data-table"><thead><tr><th>Carrier</th><th>Current %</th><th>Type</th></tr></thead><tbody>';
     for (const c of carrierMaterials) {
       const isLocked = lockedCarriers.has(c.cas);
       const type = classifyCarrier(c.name);
       html += '<tr>';
-      html += '<td><button class="btn btn-sm" onclick="toggleCarrierLock(\'' + escHtml(c.cas) + '\');renderActiveTab()" title="' + (isLocked ? 'Unlock' : 'Lock') + '" style="font-size:0.75em;padding:2px 6px">' + (isLocked ? '&#128274;' : '&#128275;') + '</button></td>';
       html += '<td>' + escHtml(c.name) + (isLocked ? ' <span style="color:var(--warn);font-size:0.8em">(locked)</span>' : '') + '</td>';
       html += '<td>' + c.pct + '%</td>';
       html += '<td style="font-size:0.82em;color:var(--text2)">' + type + '</td></tr>';
