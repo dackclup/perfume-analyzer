@@ -1140,9 +1140,15 @@ function renderMaterialList() {
     html += `<button class="mat-del" onclick="formulation.removeMaterial('${safeCas}')" title="Remove">&times;</button>`;
     html += `<button class="mat-dil-btn${dil < 100 ? ' active' : ''}" onclick="toggleDilution('${safeCas}')" title="Dilution">${dil < 100 ? dil + '%' : 'dil'}</button>`;
     if (dil < 100) {
-      const dilSolventCas = m.dilutionSolvent || '';
+      // Only offer actual solvents/carriers as dilution media — exclude 'other'
+      // category items like BHT (antioxidant), Denatonium (bittering agent), etc.
+      const validSolvents = carrierMaterials.filter(c => classifyCarrier(c.name) !== 'other');
+      // If current dilutionSolvent points to an 'other' carrier (or a deleted one),
+      // silently treat it as unspecified in the dropdown.
+      const dilSolventCas = (m.dilutionSolvent && validSolvents.find(c => c.cas === m.dilutionSolvent))
+        ? m.dilutionSolvent : '';
       let solventOpts = '<option value="">(unspecified)</option>';
-      for (const c of carrierMaterials) {
+      for (const c of validSolvents) {
         solventOpts += '<option value="' + escHtml(c.cas) + '"' + (c.cas === dilSolventCas ? ' selected' : '') + '>' + escHtml(c.name) + '</option>';
       }
       html += `<div class="mat-dil-row">`;
@@ -2888,8 +2894,11 @@ function toggleDilution(cas) {
     m.dilution = 100;
     m.dilutionSolvent = '';
   } else {
-    if (!carrierMaterials.length) {
-      alert('Please add a carrier in SOLVENT/CARRIER/OTHER first.');
+    // Only actual solvent/carrier types (alcohol/glycol/ester/water) can be
+    // dilution media — exclude 'other' additives like BHT, Denatonium, etc.
+    const validSolvents = carrierMaterials.filter(c => classifyCarrier(c.name) !== 'other');
+    if (!validSolvents.length) {
+      alert('Please add a solvent/carrier (e.g., Ethanol, Dipropylene Glycol) in SOLVENT/CARRIER/OTHER first.');
       return;
     }
     const defaultVal = (m._prevDilution && m._prevDilution < 100) ? String(m._prevDilution) : '10';
@@ -2898,12 +2907,14 @@ function toggleDilution(cas) {
     const dil = validateDilution(val);
     if (dil >= 100) return; // user effectively disabled dilution
     m.dilution = dil;
-    // Restore previous solvent if still exists, else default to first carrier
+    // Restore previous solvent if still a valid solvent carrier, else use first valid one
     const prev = m._prevDilutionSolvent;
-    if (prev && carrierMaterials.find(c => c.cas === prev)) {
+    const prevStillValid = prev && validSolvents.find(c => c.cas === prev);
+    const currentStillValid = m.dilutionSolvent && validSolvents.find(c => c.cas === m.dilutionSolvent);
+    if (prevStillValid) {
       m.dilutionSolvent = prev;
-    } else if (!m.dilutionSolvent || !carrierMaterials.find(c => c.cas === m.dilutionSolvent)) {
-      m.dilutionSolvent = carrierMaterials[0].cas;
+    } else if (!currentStillValid) {
+      m.dilutionSolvent = validSolvents[0].cas;
     }
   }
   formulation.onChange();
