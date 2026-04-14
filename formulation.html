@@ -1654,6 +1654,10 @@ function applyAllocation(type) {
         if (!lockedMaterials.has(a.cas)) formulation.updatePct(a.cas, a.optimizedPct);
       });
     }
+    // Cap each material to its IFRA max for the selected category.
+    // Over-limit materials are clamped; the excess is redistributed
+    // proportionally to unlocked materials that still have headroom.
+    capMaterialsToIFRA(catId, fragPct);
   });
 
   // Rebalance existing carrier %s based on category + material profile, then
@@ -1661,6 +1665,64 @@ function applyAllocation(type) {
   // the user's carrier list stays exactly as they set it up manually.
   rebalanceExistingCarriers(type, catId);
   autoPopulateCarriers();
+}
+
+// Cap fragrance materials to their IFRA max for the selected category.
+// ifraMax is a % of the FINISHED product; the stored m.pct is % of the
+// fragrance concentrate, so the cap in concentrate terms is:
+//   maxInConcentrate = ifraMax * 100 / fragPct
+// Redistributes capped-away pct to uncapped unlocked materials (up to a
+// few passes to handle chain-capping).
+function capMaterialsToIFRA(catId, fragPct) {
+  if (!catId || !fragPct || fragPct <= 0) return;
+  if (!formulation.materials.length) return;
+
+  for (let pass = 0; pass < 5; pass++) {
+    const compliance = checkIFRACompliance(formulation.materials, catId, fragPct);
+    let excess = 0;
+    const uncappedIdx = [];
+
+    for (let i = 0; i < formulation.materials.length; i++) {
+      const m = formulation.materials[i];
+      const c = compliance[i];
+      if (lockedMaterials.has(m.cas)) continue;
+
+      if (c.banStatus === 'banned') {
+        if (m.pct > 0) { excess += m.pct; m.pct = 0; }
+        continue;
+      }
+      if (c.ifraMax != null && c.ifraMax >= 0) {
+        const maxInConcentrate = (c.ifraMax / fragPct) * 100;
+        if (m.pct > maxInConcentrate + 0.01) {
+          excess += m.pct - maxInConcentrate;
+          m.pct = Math.round(maxInConcentrate * 100) / 100;
+        } else if (m.pct < maxInConcentrate - 0.01) {
+          uncappedIdx.push(i);
+        }
+      } else {
+        uncappedIdx.push(i);
+      }
+    }
+
+    if (excess < 0.01) break;
+    if (!uncappedIdx.length) break; // nothing to redistribute to
+
+    // Redistribute proportionally to current pct of uncapped materials
+    const uncappedSum = uncappedIdx.reduce((s, i) => s + formulation.materials[i].pct, 0);
+    if (uncappedSum <= 0) {
+      // All at zero — split evenly
+      const each = excess / uncappedIdx.length;
+      uncappedIdx.forEach(i => {
+        formulation.materials[i].pct = Math.round(each * 100) / 100;
+      });
+    } else {
+      uncappedIdx.forEach(i => {
+        const m = formulation.materials[i];
+        m.pct = Math.round((m.pct + excess * (m.pct / uncappedSum)) * 100) / 100;
+      });
+    }
+    // Loop again to re-check (redistribution may have pushed someone over)
+  }
 }
 
 // ===== Carrier classification + category target ratios =====
