@@ -1772,7 +1772,7 @@ function renderCompatTab() {
       const isLocked = lockedCarriers.has(c.cas);
       const type = classifyCarrier(c.name);
       html += '<tr>';
-      html += '<td><button class="btn btn-sm" onclick="toggleCarrierLock(\'' + escHtml(c.cas) + '\');renderActiveTab()" title="' + (isLocked ? 'Unlock' : 'Lock') + '" style="font-size:0.75em;padding:2px 6px">' + (isLocked ? '&#128274;' : '&#128275;') + '</button></td>';
+      html += '<td><button class="btn btn-sm" onclick="toggleCarrierLock(\'' + escHtml(c.cas) + '\')" title="' + (isLocked ? 'Unlock' : 'Lock') + '" style="font-size:0.75em;padding:2px 6px">' + (isLocked ? '&#128274;' : '&#128275;') + '</button></td>';
       html += '<td>' + escHtml(c.name) + (isLocked ? ' <span style="color:var(--warn);font-size:0.8em">(locked)</span>' : '') + '</td>';
       html += '<td>' + c.pct + '%</td>';
       html += '<td style="font-size:0.82em;color:var(--text2)">' + type + '</td></tr>';
@@ -3262,6 +3262,7 @@ const lockedCarriers = new Set();
 function toggleLock(cas) {
   if (lockedMaterials.has(cas)) lockedMaterials.delete(cas);
   else lockedMaterials.add(cas);
+  renderMaterialList(); // refresh '(locked)' indicator on the main row
   renderActiveTab();
 }
 
@@ -3269,6 +3270,7 @@ function toggleCarrierLock(cas) {
   if (lockedCarriers.has(cas)) lockedCarriers.delete(cas);
   else lockedCarriers.add(cas);
   renderCarrierList();
+  renderActiveTab(); // keep Suggested Allocation table in sync
 }
 
 // Clicking the "! 0.5%" usage-range warning pill reduces the material's
