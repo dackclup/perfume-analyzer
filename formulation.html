@@ -1230,17 +1230,21 @@ function removeCarrierMaterial(cas) {
   const idx = carrierMaterials.findIndex(m => m.cas === cas);
   if (idx < 0) return;
   carrierMaterials.splice(idx, 1);
+  lockedCarriers.delete(cas); // cleanup lock for removed carrier
   // Cleanup orphaned dilutionSolvent references
   for (const m of formulation.materials) {
     if (m.dilutionSolvent === cas) m.dilutionSolvent = '';
   }
-  // Re-normalize remaining carriers to 100%
-  const sum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
-  if (sum > 0 && carrierMaterials.length) {
-    carrierMaterials.forEach(c => c.pct = Math.round(c.pct / sum * 10000) / 100);
+  // Re-normalize remaining unlocked carriers; locked ones stay pinned.
+  const lockedPct = carrierMaterials.reduce((s, c) => lockedCarriers.has(c.cas) ? s + (c.pct || 0) : s, 0);
+  const unlocked = carrierMaterials.filter(c => !lockedCarriers.has(c.cas));
+  const unlockedSum = unlocked.reduce((s, c) => s + c.pct, 0);
+  const target = Math.max(0, 100 - lockedPct);
+  if (unlocked.length && unlockedSum > 0) {
+    unlocked.forEach(c => c.pct = Math.round((c.pct / unlockedSum) * target * 100) / 100);
     const newSum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
     if (Math.abs(newSum - 100) > 0.001) {
-      carrierMaterials[0].pct = Math.round((carrierMaterials[0].pct + (100 - newSum)) * 100) / 100;
+      unlocked[0].pct = Math.round((unlocked[0].pct + (100 - newSum)) * 100) / 100;
     }
   }
   renderMaterialList();
@@ -1251,21 +1255,23 @@ function removeCarrierMaterial(cas) {
 function updateCarrierPct(cas, pct) {
   const m = carrierMaterials.find(m => m.cas === cas);
   if (!m) { renderCarrierList(); return; }
+  if (lockedCarriers.has(cas)) { renderCarrierList(); return; } // input was disabled; ignore
   pct = parseFloat(pct);
   if (isNaN(pct) || pct < 0) pct = 0;
   if (pct > 100) pct = 100;
   m.pct = Math.round(pct * 100) / 100;
-  // Auto-scale other carriers to keep sum = 100%
-  const others = carrierMaterials.filter(c => c.cas !== cas);
+  // Auto-scale OTHER UNLOCKED carriers to keep sum = 100%; locked peers stay.
+  const lockedPct = carrierMaterials.reduce((s, c) => lockedCarriers.has(c.cas) ? s + (c.pct || 0) : s, 0);
+  const others = carrierMaterials.filter(c => c.cas !== cas && !lockedCarriers.has(c.cas));
   const otherSum = others.reduce((s, c) => s + c.pct, 0);
-  const remaining = 100 - m.pct;
+  const remaining = Math.max(0, 100 - m.pct - lockedPct);
   if (others.length && otherSum > 0) {
     others.forEach(c => c.pct = Math.round(c.pct / otherSum * remaining * 100) / 100);
   } else if (others.length && remaining > 0) {
     const each = Math.round(remaining / others.length * 100) / 100;
     others.forEach(c => c.pct = each);
   }
-  // Fix drift
+  // Fix drift on unlocked carriers only
   const sum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
   if (Math.abs(sum - 100) > 0.001 && others.length) {
     others[0].pct = Math.round((others[0].pct + (100 - sum)) * 100) / 100;
@@ -1342,11 +1348,13 @@ function renderCarrierList() {
     const unit = batchUnit === 'ml' ? 'ml' : 'g';
     const amtStr = amount === 0 ? '0' : amount < 0.001 ? amount.toExponential(1) : amount < 0.1 ? amount.toFixed(3) : amount < 1 ? amount.toFixed(3) : amount < 10 ? amount.toFixed(2) : amount.toFixed(1);
     const dilNote = dilFromThis > 0 ? ' <span style="font-size:0.65em;color:var(--text2)">(-' + (dilFromThisUnit < 10 ? dilFromThisUnit.toFixed(1) : Math.round(dilFromThisUnit)) + ' dil)</span>' : '';
-    html += '<div class="mat-item" data-carrier-cas="' + safeCas + '">';
+    const isCarrierLocked = lockedCarriers.has(m.cas);
+    html += '<div class="mat-item" data-carrier-cas="' + safeCas + '"' + (isCarrierLocked ? ' style="opacity:0.85"' : '') + '>';
     html += '<span class="mat-name" title="' + safeName + '">' + safeName + '</span>';
     html += '<span class="mat-grams">' + amtStr + unit + dilNote + '</span>';
-    html += '<input type="number" class="mat-pct" value="' + m.pct + '" min="0" max="100" step="1" onchange="updateCarrierPct(\'' + safeCas + '\',this.value)" onblur="if(this.value===\'\'){this.value=0;updateCarrierPct(\'' + safeCas + '\',0);}">';
+    html += '<input type="number" class="mat-pct" value="' + m.pct + '" min="0" max="100" step="1"' + (isCarrierLocked ? ' disabled' : '') + ' onchange="updateCarrierPct(\'' + safeCas + '\',this.value)" onblur="if(this.value===\'\'){this.value=0;updateCarrierPct(\'' + safeCas + '\',0);}">';
     html += '<span style="font-size:0.75em;color:var(--text2)">%</span>';
+    html += '<button class="mat-dil-btn" onclick="toggleCarrierLock(\'' + safeCas + '\')" title="' + (isCarrierLocked ? 'Unlock — let Apply re-balance' : 'Lock — keep this % during Apply') + '" style="font-size:0.85em">' + (isCarrierLocked ? '&#128274;' : '&#128275;') + '</button>';
     html += '<button class="mat-del" onclick="removeCarrierMaterial(\'' + safeCas + '\')" title="Remove">&times;</button>';
     html += '</div>';
   }
@@ -2000,9 +2008,10 @@ function rebalanceExistingCarriers(type, catId) {
   }
 
   // Step A: cap each 'other' additive to its typical max (BHT → 0.1%, etc.)
-  // before reserving its budget. Prevents 33%-BHT-style configurations from
-  // dominating the formula after Apply.
+  // before reserving its budget. Skip locked items — the user explicitly
+  // pinned their value.
   for (const c of carrierMaterials) {
+    if (lockedCarriers.has(c.cas)) continue;
     if (classifyCarrier(c.name) === 'other') {
       const maxPct = getCarrierMaxPct(c.name);
       if (maxPct != null && c.pct > maxPct) c.pct = maxPct;
@@ -2018,35 +2027,44 @@ function rebalanceExistingCarriers(type, catId) {
     groups[classifyCarrier(c.name)].push(c);
   }
 
-  // Reserve 'other' additives' total % (post-cap)
+  // Reserve 'other' additives AND any locked carriers — their current % stays
+  // as-is and is subtracted from the redistributable budget.
   const otherPctReserved = groups.other.reduce((s, c) => s + (c.pct || 0), 0);
-  const remainingBudget = Math.max(0, 100 - otherPctReserved);
+  const lockedSolventPctReserved = carrierMaterials.reduce((s, c) => {
+    if (!lockedCarriers.has(c.cas)) return s;
+    if (classifyCarrier(c.name) === 'other') return s; // already in otherPctReserved
+    return s + (c.pct || 0);
+  }, 0);
+  const remainingBudget = Math.max(0, 100 - otherPctReserved - lockedSolventPctReserved);
 
-  // Solvent/carrier types the user actually added (alcohol/glycol/ester/water)
+  // Solvent/carrier types the user added, containing at least one UNLOCKED
+  // carrier — those are the only ones we'll redistribute the budget across.
   const solventTypes = ['alcohol', 'glycol', 'ester', 'water'];
-  const availableTypes = solventTypes.filter(t => groups[t].length > 0);
+  const unlockedGroup = t => groups[t].filter(c => !lockedCarriers.has(c.cas));
+  const availableTypes = solventTypes.filter(t => unlockedGroup(t).length > 0);
 
-  // Edge case: only 'other' items exist — can't rebalance without a carrier,
-  // leave everything as-is
+  // Edge case: everything is locked or only 'other' items exist — nothing to
+  // redistribute, leave as-is.
   if (!availableTypes.length) return;
 
-  // Total target over available solvent types
+  // Total target over available unlocked solvent types
   const totalTarget = availableTypes.reduce((s, t) => s + (targetRatio[t] || 0), 0);
 
-  // Edge case: category wants none of the solvent types the user added
-  // (e.g., only Ester-type for Cat 4 which targets alcohol) — split the
-  // remaining budget equally across available solvents
+  // Edge case: category wants none of the unlocked types (e.g., user locked
+  // all alcohol-type carriers and only ester-type is unlocked for Cat 4
+  // which targets alcohol) — split remainingBudget equally across unlocked
+  // solvents.
   if (totalTarget <= 0) {
-    const totalSolventCarriers = availableTypes.reduce((s, t) => s + groups[t].length, 0);
-    const each = Math.round((remainingBudget / totalSolventCarriers) * 100) / 100;
-    availableTypes.forEach(t => groups[t].forEach(c => c.pct = each));
+    const totalUnlocked = availableTypes.reduce((s, t) => s + unlockedGroup(t).length, 0);
+    const each = Math.round((remainingBudget / totalUnlocked) * 100) / 100;
+    availableTypes.forEach(t => unlockedGroup(t).forEach(c => c.pct = each));
     return;
   }
 
-  // Distribute the remaining budget across solvent types by category ratio,
-  // then split evenly within each type
+  // Distribute the remaining budget across unlocked solvent types by category
+  // ratio, then split evenly within each type (locked carriers untouched).
   for (const t of availableTypes) {
-    const g = groups[t];
+    const g = unlockedGroup(t);
     const typeBudget = (targetRatio[t] / totalTarget) * remainingBudget;
     const each = Math.round((typeBudget / g.length) * 100) / 100;
     g.forEach(c => c.pct = each);
@@ -2097,8 +2115,11 @@ function autoPopulateCarriers() {
   }
 
   // Step 1: ensure every dilution-solvent carrier has AT LEAST the pct needed
-  // to cover its dilution contribution (don't overwrite existing higher targets).
+  // to cover its dilution contribution. Never touch locked carriers — their
+  // pct is user-pinned, even if a material's dilution technically needs more
+  // (the resulting over-subtraction will surface as a negative display).
   for (const c of carrierMaterials) {
+    if (lockedCarriers.has(c.cas)) continue;
     const needed = solventNeeds[c.cas] || 0;
     if (needed > 0) {
       const minPct = Math.round((needed / carrierGramsFull) * 10000) / 100;
@@ -2106,20 +2127,30 @@ function autoPopulateCarriers() {
     }
   }
 
-  // Step 2: normalize to 100% while preserving relative ratios
-  const sum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
-  if (sum <= 0) {
-    // All zero — equal split as last resort
-    const each = Math.round((100 / carrierMaterials.length) * 100) / 100;
-    carrierMaterials.forEach(c => c.pct = each);
-  } else if (Math.abs(sum - 100) > 0.001) {
-    carrierMaterials.forEach(c => c.pct = Math.round((c.pct / sum) * 10000) / 100);
+  // Step 2: normalize to 100% while preserving relative ratios. Locked
+  // carriers' pct is reserved; unlocked ones absorb the remainder.
+  const lockedPct = carrierMaterials.reduce((s, c) => lockedCarriers.has(c.cas) ? s + (c.pct || 0) : s, 0);
+  const unlockedList = carrierMaterials.filter(c => !lockedCarriers.has(c.cas));
+  const unlockedSum = unlockedList.reduce((s, c) => s + c.pct, 0);
+  const unlockedTarget = Math.max(0, 100 - lockedPct);
+
+  if (unlockedList.length === 0) {
+    // Everything is locked — can't normalize; leave as user pinned.
+  } else if (unlockedSum <= 0) {
+    // All unlocked are at zero — spread the unlocked target equally.
+    const each = Math.round((unlockedTarget / unlockedList.length) * 100) / 100;
+    unlockedList.forEach(c => c.pct = each);
+  } else if (Math.abs(lockedPct + unlockedSum - 100) > 0.001) {
+    // Scale unlocked carriers so locked + unlocked sum to 100.
+    unlockedList.forEach(c => c.pct = Math.round((c.pct / unlockedSum) * unlockedTarget * 100) / 100);
   }
 
-  // Fix rounding drift — give any remainder to first carrier
+  // Fix rounding drift — give any remainder to the first UNLOCKED carrier
+  // (never the locked one, whose pct must be preserved exactly).
   const finalSum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
-  if (Math.abs(finalSum - 100) > 0.001 && carrierMaterials.length) {
-    carrierMaterials[0].pct = Math.round((carrierMaterials[0].pct + (100 - finalSum)) * 100) / 100;
+  const firstUnlocked = carrierMaterials.find(c => !lockedCarriers.has(c.cas));
+  if (Math.abs(finalSum - 100) > 0.001 && firstUnlocked) {
+    firstUnlocked.pct = Math.round((firstUnlocked.pct + (100 - finalSum)) * 100) / 100;
   }
 
   renderCarrierList();
@@ -3055,7 +3086,7 @@ document.getElementById('savedFormulas').addEventListener('change', () => {
     formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data || {} });
   }
   // Restore carriers
-  carrierMaterials.length = 0;
+  carrierMaterials.length = 0; lockedCarriers.clear();
   if (Array.isArray(carriers)) {
     carriers.forEach(c => carrierMaterials.push({ cas: c.cas, name: c.name, pct: c.pct }));
   }
@@ -3084,14 +3115,14 @@ document.getElementById('btnDelete').addEventListener('click', () => {
   localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
   populateSavedList();
   formulation.materials = [];
-  carrierMaterials.length = 0;
+  carrierMaterials.length = 0; lockedCarriers.clear();
   formulation.onChange();
 });
 
 document.getElementById('btnNew').addEventListener('click', () => {
   if ((formulation.materials.length || carrierMaterials.length) && !confirm('Clear current formulation?')) return;
   formulation.materials = [];
-  carrierMaterials.length = 0;
+  carrierMaterials.length = 0; lockedCarriers.clear();
   document.getElementById('savedFormulas').value = '';
   formulation.onChange();
 });
@@ -3112,7 +3143,7 @@ document.getElementById('jsonFileInput').addEventListener('change', (e) => {
         alert('Invalid JSON: no materials array found.'); return;
       }
       formulation.materials = [];
-      carrierMaterials.length = 0;
+      carrierMaterials.length = 0; lockedCarriers.clear();
       for (const m of data.materials) {
         if (!m.cas || !m.name) continue;
         const dbEntry = DB[m.cas];
@@ -3170,13 +3201,20 @@ function buildMultiCategoryIFRA(mats, fragPct) {
   return results;
 }
 
-// ===== Material Lock during Optimization =====
+// ===== Material / Carrier Lock during Optimization =====
 const lockedMaterials = new Set();
+const lockedCarriers = new Set();
 
 function toggleLock(cas) {
   if (lockedMaterials.has(cas)) lockedMaterials.delete(cas);
   else lockedMaterials.add(cas);
   renderActiveTab();
+}
+
+function toggleCarrierLock(cas) {
+  if (lockedCarriers.has(cas)) lockedCarriers.delete(cas);
+  else lockedCarriers.add(cas);
+  renderCarrierList();
 }
 
 // Clicking the "! 0.5%" usage-range warning pill reduces the material's
@@ -3239,7 +3277,7 @@ function _applySnapshot(snapshot) {
     formulation.materials = snapshot;
   } else {
     formulation.materials = snapshot.materials || [];
-    carrierMaterials.length = 0;
+    carrierMaterials.length = 0; lockedCarriers.clear();
     (snapshot.carriers || []).forEach(c => carrierMaterials.push({ cas: c.cas, name: c.name, pct: c.pct }));
   }
 }
