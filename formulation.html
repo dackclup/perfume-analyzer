@@ -1402,13 +1402,46 @@ modalSearch.addEventListener('input', () => {
     if (matches.length >= 20) break;
   }
   const clickFn = isCarrier ? 'addCarrierFromModal' : 'addFromDB';
-  modalResults.innerHTML = matches.map(e =>
-    `<li onclick="${clickFn}('${escHtml(e.cas)}')">
-      <span class="mr-name">${escHtml(e.name)}</span>
+  modalResults.innerHTML = matches.map(e => {
+    const badge = isCarrier ? '' : safetyBadgeForSearch(e, catId);
+    return `<li onclick="${clickFn}('${escHtml(e.cas)}')">
+      <span class="mr-name">${escHtml(e.name)}${badge}</span>
       <span class="mr-meta">${escHtml(e.cas)}</span>
-    </li>`
-  ).join('');
+    </li>`;
+  }).join('');
 });
+
+// Return a small status badge HTML for a material in the Add-modal search.
+// Indicates the confidence of safety data so users can tell apart:
+//   - IFRA 51 verified with a structured limit for the selected category
+//   - Restricted via usage-range text only (e.g., Skatole '0.001–0.01 %')
+//   - No safety data available (use with caution)
+//   - Banned materials are already filtered out upstream
+function safetyBadgeForSearch(entry, catId) {
+  const usage = entry.safety?.usage || '';
+  const ifraText = entry.safety?.ifra || '';
+  // Structured IFRA 51 with an entry for the selected category?
+  let hasIfra51Row = false;
+  if (catId && typeof parseIFRA51 === 'function' && typeof IFRA_CATEGORIES !== 'undefined') {
+    const tbl = parseIFRA51(usage);
+    const cat = IFRA_CATEGORIES[catId];
+    if (tbl && cat && cat.key && tbl[cat.key] != null) hasIfra51Row = true;
+  }
+  if (hasIfra51Row) {
+    return ' <span style="font-size:0.68em;padding:1px 5px;background:rgba(34,197,94,0.15);color:#22c55e;border-radius:4px;margin-left:6px">IFRA&nbsp;51</span>';
+  }
+  // Restricted via text (but not banned)
+  const both = (ifraText + ' ' + usage).toLowerCase()
+    .replace(/no\s+restrict\w*/g, '').replace(/not\s+restrict\w*/g, '');
+  if (/\brestrict|\blimited\b|\bregulated/.test(both)) {
+    return ' <span style="font-size:0.68em;padding:1px 5px;background:rgba(234,179,8,0.15);color:#eab308;border-radius:4px;margin-left:6px" title="Restricted — check usage range">restricted</span>';
+  }
+  // Has a usage range but no explicit restriction keyword
+  if (/\d/.test(usage)) {
+    return ' <span style="font-size:0.68em;padding:1px 5px;background:rgba(100,116,139,0.2);color:var(--text2);border-radius:4px;margin-left:6px" title="Usage range specified">range</span>';
+  }
+  return ' <span style="font-size:0.68em;padding:1px 5px;background:rgba(100,116,139,0.15);color:var(--text2);border-radius:4px;margin-left:6px" title="No IFRA/usage data available">no&nbsp;data</span>';
+}
 
 // Hide materials that are banned globally or forbidden for the selected
 // IFRA category. Reuses the same banned-keyword heuristics as
