@@ -1796,10 +1796,14 @@ function capMaterialsToIFRA(catId, fragPct) {
       }
       if (effectiveMax != null) {
         const maxInConcentrate = (effectiveMax / fragPct) * 100;
-        if (m.pct > maxInConcentrate + 0.01) {
-          excess += m.pct - maxInConcentrate;
-          m.pct = Math.round(maxInConcentrate * 10000) / 10000;
-        } else if (m.pct < maxInConcentrate - 0.01) {
+        // Use Math.floor at 2-decimal precision so the rounded value is
+        // strictly ≤ maxInConcentrate. Math.round can push the result
+        // back over the limit and leave the "! X%" warning visible.
+        const cappedPct = Math.max(0, Math.floor(maxInConcentrate * 100) / 100);
+        if (m.pct > cappedPct + 0.0001) {
+          excess += m.pct - cappedPct;
+          m.pct = cappedPct;
+        } else if (m.pct < cappedPct - 0.01) {
           uncappedIdx.push(i);
         }
       } else {
