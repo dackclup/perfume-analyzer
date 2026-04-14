@@ -2635,13 +2635,26 @@ const CARRIER_COSTS = {
  * @param {number} fragPct - fragrance concentration %
  * @returns {Object} cost breakdown
  */
-function calculateFormulaCost(materials, batchSizeG, carrier, fragPct) {
+/**
+ * Calculate formula cost breakdown.
+ * @param {Array} materials - fragrance materials [{cas, name, pct, data}]
+ * @param {number} batchSizeG - batch size in grams
+ * @param {string|Array} carrierArg - legacy carrier type string (e.g. "ethanol")
+ *        OR the workspace carrierMaterials array [{cas, name, pct}]. When an
+ *        array is passed each entry is priced individually from MATERIAL_COSTS
+ *        (solvents, functional additives, everything) and shown in the cost
+ *        breakdown table. The string form is kept as a fallback for older
+ *        callers that only had a single carrier type.
+ * @param {number} fragPct - fragrance concentration in finished product
+ */
+function calculateFormulaCost(materials, batchSizeG, carrierArg, fragPct) {
   let fragCost = 0;
   let pricedCount = 0;
   const unpricedMats = [];
   const perMaterial = [];
 
   const fragGrams = batchSizeG * (fragPct / 100);
+  const carrierGramsFull = batchSizeG * (1 - fragPct / 100);
 
   for (const mat of materials) {
     const costEntry = (typeof MATERIAL_COSTS !== 'undefined') ? MATERIAL_COSTS[mat.cas] : null;
@@ -2650,16 +2663,37 @@ function calculateFormulaCost(materials, batchSizeG, carrier, fragPct) {
       const cost = grams * costEntry.cost_g;
       fragCost += cost;
       pricedCount++;
-      perMaterial.push({ cas: mat.cas, name: mat.name, grams: roundN(grams, 2), cost: roundN(cost, 3), tier: costEntry.tier, cost_g: costEntry.cost_g });
+      perMaterial.push({ cas: mat.cas, name: mat.name, grams: roundN(grams, 2), cost: roundN(cost, 3), tier: costEntry.tier, cost_g: costEntry.cost_g, isCarrier: false });
     } else {
       unpricedMats.push(mat.name);
-      perMaterial.push({ cas: mat.cas, name: mat.name, grams: roundN(grams, 2), cost: null, tier: 'unknown', cost_g: null });
+      perMaterial.push({ cas: mat.cas, name: mat.name, grams: roundN(grams, 2), cost: null, tier: 'unknown', cost_g: null, isCarrier: false });
     }
   }
 
-  const carrierGrams = batchSizeG * (1 - fragPct / 100);
-  const carrierCostPerG = CARRIER_COSTS[carrier] || 0.005;
-  const carrierCost = carrierGrams * carrierCostPerG;
+  // Carrier cost: either a dynamic list (preferred — every solvent/carrier/
+  // other additive is priced from MATERIAL_COSTS using its own CAS) or the
+  // legacy string form that assumed the carrier was 100 % of the non-fragrance
+  // volume at a single per-gram rate.
+  let carrierCost = 0;
+  if (Array.isArray(carrierArg) && carrierArg.length) {
+    for (const c of carrierArg) {
+      const costEntry = (typeof MATERIAL_COSTS !== 'undefined') ? MATERIAL_COSTS[c.cas] : null;
+      const grams = ((c.pct || 0) / 100) * carrierGramsFull;
+      if (costEntry) {
+        const cost = grams * costEntry.cost_g;
+        carrierCost += cost;
+        pricedCount++;
+        perMaterial.push({ cas: c.cas, name: c.name, grams: roundN(grams, 2), cost: roundN(cost, 3), tier: costEntry.tier, cost_g: costEntry.cost_g, isCarrier: true });
+      } else {
+        unpricedMats.push(c.name);
+        perMaterial.push({ cas: c.cas, name: c.name, grams: roundN(grams, 2), cost: null, tier: 'unknown', cost_g: null, isCarrier: true });
+      }
+    }
+  } else {
+    const carrierCostPerG = CARRIER_COSTS[carrierArg] || 0.005;
+    carrierCost = carrierGramsFull * carrierCostPerG;
+  }
+
   const totalCost = fragCost + carrierCost;
   const avgDensity = 0.9;
 
@@ -2670,7 +2704,7 @@ function calculateFormulaCost(materials, batchSizeG, carrier, fragPct) {
     costPerMl: roundN(totalCost / (batchSizeG / avgDensity), 3),
     costPerKg: roundN(totalCost / (batchSizeG / 1000), 2),
     pricedCount,
-    totalCount: materials.length,
+    totalCount: materials.length + (Array.isArray(carrierArg) ? carrierArg.length : 0),
     unpricedMats,
     perMaterial,
     currency: 'USD',

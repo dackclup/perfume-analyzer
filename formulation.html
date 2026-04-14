@@ -2709,9 +2709,10 @@ function renderSafetyTab() {
     html += '</tbody></table></div>';
   }
 
-  // Cost Summary (A5)
+  // Cost Summary (A5) — carrierMaterials is passed so every solvent/carrier/
+  // other additive is priced individually from MATERIAL_COSTS using its CAS.
   const batchSizeG = validateBatchSize(document.getElementById('batchSize').value);
-  const costData = calculateFormulaCost(mats, batchSizeG, carrier, fragPct);
+  const costData = calculateFormulaCost(mats, batchSizeG, carrierMaterials, fragPct);
   html += '<div class="analysis-card"><h4>Cost Estimate <span class="badge badge-ok">$' + costData.totalCost + '</span></h4>';
   html += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.85em;color:var(--text2);margin-top:6px">';
   html += '<span>Fragrance: $' + costData.fragCost + '</span>';
@@ -2724,7 +2725,8 @@ function renderSafetyTab() {
     html += '<table class="data-table" style="margin-top:8px"><thead><tr><th>Material</th><th>Grams</th><th>$/g</th><th>Cost</th><th>Tier</th></tr></thead><tbody>';
     for (const pm of costData.perMaterial) {
       const tierCls = pm.tier === 'precious' ? 'badge-danger' : pm.tier === 'specialty' ? 'badge-warn' : 'badge-ok';
-      html += '<tr><td>' + escHtml(pm.name) + '</td>';
+      const carrierTag = pm.isCarrier ? ' <span style="font-size:0.7em;padding:1px 5px;background:var(--bg2);border-radius:4px;color:var(--text2)">carrier</span>' : '';
+      html += '<tr><td>' + escHtml(pm.name) + carrierTag + '</td>';
       html += '<td>' + pm.grams + 'g</td>';
       html += '<td>' + (pm.cost_g != null ? '$' + pm.cost_g : '\u2014') + '</td>';
       html += '<td>' + (pm.cost != null ? '$' + pm.cost : '\u2014') + '</td>';
