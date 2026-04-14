@@ -594,14 +594,20 @@ function analyzeNoteBalance(materials) {
   if (tiers.middle === 0) missing.push('middle');
   if (tiers.base === 0) missing.push('base');
 
-  // Conventional balanced ranges (of classified total). A formula is only
-  // "balanced" when every tier is both present AND within its ideal range —
-  // having all three tiers at wildly off proportions (e.g., 10/28/62) is
-  // still visibly imbalanced, even though nothing is missing.
+  // Ideal tier ranges depend on fragrance family — an oriental or woody
+  // scent is legitimately base-heavy (~55% base) and shouldn't be flagged
+  // against a floral/general-purpose range. Use FAMILY_NOTE_RATIOS as the
+  // center target and apply a ±10% window around each center.
+  const dominantFamily = detectDominantFamily(materials);
+  const center = (typeof FAMILY_NOTE_RATIOS !== 'undefined' && FAMILY_NOTE_RATIOS[dominantFamily])
+    ? FAMILY_NOTE_RATIOS[dominantFamily]
+    : { top: 0.225, mid: 0.40, base: 0.30 }; // 15–30 / 30–50 / 20–40 general default
+  const band = 10; // ±10% window
+  const clamp01 = (v) => Math.max(0, Math.min(100, v));
   const idealRanges = {
-    top:    { min: 15, max: 30 },
-    middle: { min: 30, max: 50 },
-    base:   { min: 20, max: 40 },
+    top:    { min: clamp01(center.top * 100 - band),  max: clamp01(center.top * 100 + band) },
+    middle: { min: clamp01(center.mid * 100 - band),  max: clamp01(center.mid * 100 + band) },
+    base:   { min: clamp01(center.base * 100 - band), max: clamp01(center.base * 100 + band) },
   };
   const classifiedTotal = tiers.top + tiers.middle + tiers.base;
   const pctOf = v => classifiedTotal > 0 ? (v / classifiedTotal) * 100 : 0;
@@ -623,7 +629,12 @@ function analyzeNoteBalance(materials) {
     missing,
     outOfRange,
     balanced: missing.length === 0 && outOfRange.length === 0,
-    ideal: { top: '15-30%', middle: '30-50%', base: '20-40%' },
+    family: dominantFamily,
+    ideal: {
+      top:    Math.round(idealRanges.top.min) + '-' + Math.round(idealRanges.top.max) + '%',
+      middle: Math.round(idealRanges.middle.min) + '-' + Math.round(idealRanges.middle.max) + '%',
+      base:   Math.round(idealRanges.base.min) + '-' + Math.round(idealRanges.base.max) + '%',
+    },
     idealRanges,
   };
 }

@@ -1660,6 +1660,9 @@ function renderCompatTab() {
     ).join(', ');
   }
   html += '<div class="analysis-card"><h4>Fragrance Pyramid <span class="badge ' + balClass + '">' + balLabel + '</span></h4>';
+  if (balance.family && balance.family !== 'default') {
+    html += '<p class="panel-desc">Target ranges for <strong>' + escHtml(balance.family) + '</strong> family (different from generic pyramid).</p>';
+  }
   html += '<div style="display:flex;gap:20px;margin-top:10px;flex-wrap:wrap">';
   const classifiedTotal = balance.top + balance.middle + balance.base;
   for (const [tier, val, color, ideal] of [['Top', balance.top, 'var(--badge-top-fg)', balance.ideal.top], ['Middle', balance.middle, 'var(--badge-mid-fg)', balance.ideal.middle], ['Base', balance.base, 'var(--badge-base-fg)', balance.ideal.base]]) {
