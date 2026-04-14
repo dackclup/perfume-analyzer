@@ -817,6 +817,31 @@ function debounce(fn, delay) {
   return debounced;
 }
 
+// ===== Input Validation Helpers =====
+function validateFragPct(val) {
+  const v = parseFloat(val);
+  if (isNaN(v) || v < 1) return 1;
+  if (v > 100) return 100;
+  return v;
+}
+function validateBatchSize(val) {
+  const v = parseFloat(val);
+  if (isNaN(v) || v < 0.1) return 0.1;
+  return v;
+}
+function validateDilution(val) {
+  const v = parseFloat(val);
+  if (isNaN(v) || v < 1) return 100;
+  if (v > 100) return 100;
+  return Math.round(v * 100) / 100;
+}
+function validateMaterialPct(val) {
+  const v = parseFloat(val);
+  if (isNaN(v) || v < 0) return 0;
+  if (v > 100) return 100;
+  return Math.round(v * 100) / 100;
+}
+
 // ===== Formulation State =====
 // ===== A4: Undo/Redo System =====
 const formulationHistory = {
@@ -851,14 +876,14 @@ const formulationHistory = {
 
 const formulation = {
   materials: [],
-  addMaterial(cas, name, pct, data) {
+  addMaterial(cas, name, pct, data, dilution, dilutionSolvent) {
     if (!cas || !name) return false;
     if (this.materials.find(m => m.cas === cas)) return false;
     if (this.materials.length >= 30) { alert('Maximum 30 materials per formulation.'); return false; }
-    pct = parseFloat(pct);
-    if (isNaN(pct) || pct < 0) pct = 0;
-    if (pct > 100) pct = 100;
-    this.materials.push({ cas, name, pct: pct || 10, dilution: 100, data: data || {} });
+    pct = validateMaterialPct(pct === undefined || pct === null || pct === '' ? 10 : pct);
+    const dil = (dilution != null) ? validateDilution(dilution) : 100;
+    const dilSolv = (dil < 100 && dilutionSolvent) ? String(dilutionSolvent) : '';
+    this.materials.push({ cas, name, pct: pct || 10, dilution: dil, dilutionSolvent: dilSolv, data: data || {} });
     this.onChange();
     storeOriginalPcts();
     return true;
@@ -870,22 +895,15 @@ const formulation = {
   },
   updatePct(cas, pct) {
     const m = this.materials.find(m => m.cas === cas);
-    if (m) {
-      pct = parseFloat(pct);
-      if (isNaN(pct) || pct < 0) pct = 0;
-      if (pct > 100) pct = 100;
-      m.pct = Math.round(pct * 100) / 100;
-    }
+    if (m) m.pct = validateMaterialPct(pct);
     if (this._batching) return;
     this._onPctChange(cas);
   },
   updateDilution(cas, dil) {
     const m = this.materials.find(m => m.cas === cas);
     if (m) {
-      dil = parseFloat(dil);
-      if (isNaN(dil) || dil <= 0) dil = 100;
-      if (dil > 100) dil = 100;
-      m.dilution = Math.round(dil * 100) / 100;
+      m.dilution = validateDilution(dil);
+      if (m.dilution >= 100) m.dilutionSolvent = '';
     }
     if (this._batching) return;
     this._updateMaterialDisplay(cas);
@@ -1001,17 +1019,23 @@ const formulation = {
   onChange() {
     // Cancel any pending debounced commit since we're doing a full render now
     if (this._scheduleCommit) this._scheduleCommit.cancel();
-    formulationHistory.push(this.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data })));
+    formulationHistory.push({
+      materials: this.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data })),
+      carriers: carrierMaterials.map(c => ({ cas: c.cas, name: c.name, pct: c.pct })),
+    });
     renderMaterialList();
     renderCarrierList();
     renderActiveTab();
   }
 };
 // Push initial empty state
-formulationHistory.push([]);
+formulationHistory.push({ materials: [], carriers: [] });
 // Initialize debounced commit for rapid percentage changes (coalesces rapid clicks)
 formulation._scheduleCommit = debounce(() => {
-  formulationHistory.push(formulation.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data })));
+  formulationHistory.push({
+    materials: formulation.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data })),
+    carriers: carrierMaterials.map(c => ({ cas: c.cas, name: c.name, pct: c.pct })),
+  });
   renderActiveTab();
 }, 300);
 
@@ -1036,14 +1060,15 @@ function getCarrierBudget(solventCas) {
   if (!solventCas) return 0;
   const carrier = carrierMaterials.find(c => c.cas === solventCas);
   if (!carrier) return 0;
-  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
-  const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
-  return (carrier.pct / 100) * batchSize * (1 - fragPct / 100);
+  const batchSize = validateBatchSize(document.getElementById('batchSize').value);
+  const fragPct = validateFragPct(document.getElementById('fragPct').value);
+  if (fragPct >= 100) return 0;
+  return Math.max(0, (carrier.pct / 100) * batchSize * (1 - fragPct / 100));
 }
 
 // Calculate weigh amount for a diluted material, capping if solvent replaces carrier
 function calcWeighAmount(pureAmount, dilution, dilutionSolventCas) {
-  if (!dilution || dilution >= 100) return pureAmount;
+  if (!dilution || dilution <= 0 || dilution >= 100) return pureAmount;
   const uncapped = pureAmount / (dilution / 100);
   if (!dilutionSolventCas) return uncapped;
   const carrierBudget = getCarrierBudget(dilutionSolventCas);
@@ -1157,26 +1182,66 @@ const carrierMaterials = [];
 function addCarrierMaterial(cas) {
   const entry = DB[cas];
   if (!entry) return;
-  if (carrierMaterials.find(m => m.cas === cas)) return;
-  carrierMaterials.push({ cas, name: entry.name, pct: 100 });
+  if (carrierMaterials.find(m => m.cas === cas)) { alert('Already added.'); return; }
+  carrierMaterials.push({ cas, name: entry.name, pct: 0 });
+  // Auto-distribute evenly among all carriers
+  const each = Math.round(10000 / carrierMaterials.length) / 100;
+  carrierMaterials.forEach(c => c.pct = each);
+  // Fix rounding drift — give remainder to first
+  const sum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
+  if (Math.abs(sum - 100) > 0.001 && carrierMaterials.length) {
+    carrierMaterials[0].pct = Math.round((carrierMaterials[0].pct + (100 - sum)) * 100) / 100;
+  }
   renderCarrierList();
+  formulation._scheduleCommit && formulation._scheduleCommit();
 }
 
 function removeCarrierMaterial(cas) {
   const idx = carrierMaterials.findIndex(m => m.cas === cas);
-  if (idx >= 0) carrierMaterials.splice(idx, 1);
+  if (idx < 0) return;
+  carrierMaterials.splice(idx, 1);
+  // Cleanup orphaned dilutionSolvent references
+  for (const m of formulation.materials) {
+    if (m.dilutionSolvent === cas) m.dilutionSolvent = '';
+  }
+  // Re-normalize remaining carriers to 100%
+  const sum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
+  if (sum > 0 && carrierMaterials.length) {
+    carrierMaterials.forEach(c => c.pct = Math.round(c.pct / sum * 10000) / 100);
+    const newSum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
+    if (Math.abs(newSum - 100) > 0.001) {
+      carrierMaterials[0].pct = Math.round((carrierMaterials[0].pct + (100 - newSum)) * 100) / 100;
+    }
+  }
+  renderMaterialList();
   renderCarrierList();
+  formulation._scheduleCommit && formulation._scheduleCommit();
 }
 
 function updateCarrierPct(cas, pct) {
   const m = carrierMaterials.find(m => m.cas === cas);
-  if (m) {
-    pct = parseFloat(pct);
-    if (isNaN(pct) || pct < 0) pct = 0;
-    if (pct > 100) pct = 100;
-    m.pct = Math.round(pct * 100) / 100;
+  if (!m) { renderCarrierList(); return; }
+  pct = parseFloat(pct);
+  if (isNaN(pct) || pct < 0) pct = 0;
+  if (pct > 100) pct = 100;
+  m.pct = Math.round(pct * 100) / 100;
+  // Auto-scale other carriers to keep sum = 100%
+  const others = carrierMaterials.filter(c => c.cas !== cas);
+  const otherSum = others.reduce((s, c) => s + c.pct, 0);
+  const remaining = 100 - m.pct;
+  if (others.length && otherSum > 0) {
+    others.forEach(c => c.pct = Math.round(c.pct / otherSum * remaining * 100) / 100);
+  } else if (others.length && remaining > 0) {
+    const each = Math.round(remaining / others.length * 100) / 100;
+    others.forEach(c => c.pct = each);
+  }
+  // Fix drift
+  const sum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
+  if (Math.abs(sum - 100) > 0.001 && others.length) {
+    others[0].pct = Math.round((others[0].pct + (100 - sum)) * 100) / 100;
   }
   renderCarrierList();
+  formulation._scheduleCommit && formulation._scheduleCommit();
 }
 
 function renderCarrierList() {
@@ -1242,12 +1307,14 @@ function renderCarrierList() {
   list.innerHTML = html;
 
   // Total
+  const totalPct = carrierMaterials.reduce((s, c) => s + c.pct, 0);
+  const totalPctRounded = Math.round(totalPct * 100) / 100;
   const unit = batchUnit === 'ml' ? 'ml' : 'g';
   const amtEl = document.getElementById('carrierTotalAmt');
   const fmtV = v => v === 0 ? '0' : v < 0.1 ? v.toFixed(3) : v < 10 ? v.toFixed(2) : roundN(v, 1).toString();
   const fullAmt = batchUnit === 'ml' ? carrierGramsFull / 0.9 : carrierGramsFull;
-  amtEl.textContent = fmtV(totalActual) + unit + ' of ' + fmtV(fullAmt) + unit + (dilSolventTotal > 0 ? ' (after dilution)' : '');
-  amtEl.style.color = totalPct > 100 ? 'var(--danger)' : totalPct < 100 ? 'var(--text2)' : 'var(--ok)';
+  amtEl.textContent = totalPctRounded + '% / ' + fmtV(totalActual) + unit + ' of ' + fmtV(fullAmt) + unit + (dilSolventTotal > 0 ? ' (after dil)' : '');
+  amtEl.style.color = totalPctRounded > 100.01 ? 'var(--danger)' : totalPctRounded < 99.99 ? 'var(--text2)' : 'var(--ok)';
   totalEl.style.display = 'flex';
 
   // Update hidden carrierSelect for INCI export compatibility
@@ -1399,7 +1466,7 @@ function importFromAnalyzer() {
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => renderActiveTab());
 });
-document.getElementById('productCategory').addEventListener('change', () => renderActiveTab());
+document.getElementById('productCategory').addEventListener('change', () => { renderCarrierList(); renderActiveTab(); });
 document.getElementById('tempSlider').addEventListener('input', () => renderActiveTab());
 
 function renderActiveTab() {
@@ -1534,9 +1601,11 @@ function storeOriginalPcts() {
 
 function applyAllocation(type) {
   const mats = formulation.materials;
-  if (!mats.length) return;
+  if (!mats.length) { alert('Add materials first.'); return; }
+  const unlockedCount = mats.filter(m => !lockedMaterials.has(m.cas)).length;
+  if (unlockedCount === 0) { alert('All materials are locked — nothing to allocate.'); return; }
   const catId = document.getElementById('productCategory').value;
-  const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
+  const fragPct = validateFragPct(document.getElementById('fragPct').value);
   const graph = getCompatGraph();
 
   // Use original percentages for unlocked materials, current for locked
@@ -1566,12 +1635,12 @@ function applyAllocation(type) {
 
 function autoPopulateCarriers() {
   const mats = formulation.materials;
-  const batchSize = parseFloat(document.getElementById('batchSize').value) || 100;
-  const fragPct = parseInt(document.getElementById('fragPct').value) || 18;
+  const batchSize = validateBatchSize(document.getElementById('batchSize').value);
+  const fragPct = validateFragPct(document.getElementById('fragPct').value);
   const fragGrams = batchSize * (fragPct / 100);
   const batchUnit = document.getElementById('batchUnit').value;
 
-  // Collect dilution solvents and their solvent amounts
+  // Collect dilution solvents and their solvent amounts (in grams)
   const solventNeeds = {};
   for (const m of mats) {
     const d = m.dilution || 100;
@@ -1594,38 +1663,48 @@ function autoPopulateCarriers() {
   // If no carriers at all, add default Ethanol
   if (!carrierMaterials.length) {
     const ethCas = Object.keys(DB).find(k => DB[k].name === 'Ethanol');
-    if (ethCas) {
-      carrierMaterials.push({ cas: ethCas, name: 'Ethanol', pct: 100 });
-    }
+    if (ethCas) carrierMaterials.push({ cas: ethCas, name: 'Ethanol', pct: 100 });
   }
 
-  // Calculate carrier percentages based on remaining budget
-  const carrierGramsFull = batchUnit === 'ml' ? (batchSize - fragGrams) / 0.9 : batchSize - fragGrams;
-  let totalSolventUsed = Object.values(solventNeeds).reduce((s, v) => s + v, 0);
-  if (batchUnit === 'ml') totalSolventUsed = totalSolventUsed / 0.9;
-  const remainingCarrier = Math.max(0, carrierGramsFull - totalSolventUsed);
+  if (!carrierMaterials.length) { renderCarrierList(); return; }
 
-  // Distribute: solvents get their needed %, rest splits remaining
-  const carrierTotal = carrierGramsFull || 1;
+  // carrierGramsFull is the carrier portion of the batch (always in grams here)
+  const carrierGramsFull = batchSize * (1 - fragPct / 100);
+
+  if (carrierGramsFull <= 0) {
+    // No carrier space (fragPct = 100%)
+    carrierMaterials.forEach(c => c.pct = 0);
+    if (carrierMaterials.length) carrierMaterials[0].pct = 100; // placeholder
+    renderCarrierList();
+    return;
+  }
+
+  // Step 1: set solvent carriers to their needed share of carrier portion
+  const nonDilCarriers = carrierMaterials.filter(c => !solventNeeds[c.cas]);
+  let solventPctSum = 0;
   for (const c of carrierMaterials) {
-    const solventAmt = solventNeeds[c.cas] || 0;
-    const solventAmtUnit = batchUnit === 'ml' ? solventAmt / 0.9 : solventAmt;
-    if (solventAmt > 0) {
-      // This carrier is used as dilution solvent — set % to cover its share
-      c.pct = Math.round((solventAmtUnit / carrierTotal) * 100 * 100) / 100;
-    } else if (remainingCarrier > 0) {
-      // Non-dilution carrier — fill remaining
-      const nonDilCarriers = carrierMaterials.filter(x => !solventNeeds[x.cas]);
-      c.pct = Math.round((remainingCarrier / nonDilCarriers.length / carrierTotal) * 100 * 100) / 100;
-    } else {
-      c.pct = 0;
+    const needed = solventNeeds[c.cas] || 0;
+    if (needed > 0) {
+      c.pct = Math.round((needed / carrierGramsFull) * 10000) / 100;
+      solventPctSum += c.pct;
     }
   }
 
-  // Normalize to 100%
-  const totalPct = carrierMaterials.reduce((s, c) => s + c.pct, 0);
-  if (totalPct > 0 && Math.abs(totalPct - 100) > 0.1) {
-    carrierMaterials.forEach(c => c.pct = Math.round(c.pct / totalPct * 100 * 100) / 100);
+  // Step 2: distribute remaining budget across non-dilution carriers
+  const remainPct = Math.max(0, 100 - solventPctSum);
+  if (nonDilCarriers.length > 0) {
+    const each = Math.round((remainPct / nonDilCarriers.length) * 100) / 100;
+    nonDilCarriers.forEach(c => c.pct = each);
+  } else if (solventPctSum < 100 && carrierMaterials.length) {
+    // No non-dilution carriers — scale up solvent carriers to fill 100%
+    const scale = 100 / (solventPctSum || 1);
+    carrierMaterials.forEach(c => c.pct = Math.round(c.pct * scale * 100) / 100);
+  }
+
+  // Fix rounding drift — give any remainder to first carrier
+  const sum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
+  if (Math.abs(sum - 100) > 0.001 && carrierMaterials.length) {
+    carrierMaterials[0].pct = Math.round((carrierMaterials[0].pct + (100 - sum)) * 100) / 100;
   }
 
   renderCarrierList();
@@ -2140,10 +2219,12 @@ function exportJSON() {
       name: m.name,
       pct: m.pct,
       dilution: m.dilution || 100,
+      dilutionSolvent: m.dilutionSolvent || '',
       note: m.data?.note || null,
       odorType: m.data?.odor_type || null,
       odorStrength: m.data?.odor_strength || null,
     })),
+    carriers: carrierMaterials.map(c => ({ cas: c.cas, name: c.name, pct: c.pct })),
     analysis: {},
   };
 
@@ -2305,6 +2386,7 @@ function exportPDF() {
 
 // ===== Preset Chip Logic =====
 function setFragPct(val) {
+  val = validateFragPct(val);
   document.getElementById('fragPct').value = val;
   document.getElementById('fragPctOut').textContent = val + '%';
   document.getElementById('fragPctCustom').value = val;
@@ -2326,7 +2408,7 @@ document.querySelectorAll('.preset-chip').forEach(chip => {
 });
 
 // Custom input handler (debounce expensive renders, keep label updates instant)
-const _debouncedFragRender = debounce(() => { renderMaterialList(); renderActiveTab(); }, 200);
+const _debouncedFragRender = debounce(() => { renderMaterialList(); renderCarrierList(); renderActiveTab(); }, 200);
 document.getElementById('fragPctCustom').addEventListener('input', () => {
   let val = parseFloat(document.getElementById('fragPctCustom').value);
   if (!isNaN(val) && val >= 1 && val <= 100) {
@@ -2336,9 +2418,8 @@ document.getElementById('fragPctCustom').addEventListener('input', () => {
   }
 });
 document.getElementById('fragPctCustom').addEventListener('blur', () => {
-  let val = parseFloat(document.getElementById('fragPctCustom').value);
-  if (isNaN(val) || val < 1) { val = 1; document.getElementById('fragPctCustom').value = 1; }
-  if (val > 100) { val = 100; document.getElementById('fragPctCustom').value = 100; }
+  const val = validateFragPct(document.getElementById('fragPctCustom').value);
+  document.getElementById('fragPctCustom').value = val;
   setFragPct(val);
 });
 
@@ -2360,8 +2441,7 @@ function updatePresetHighlight() {
 document.getElementById('batchSize').addEventListener('input', debounce(() => { renderMaterialList(); renderCarrierList(); }, 150));
 document.getElementById('batchSize').addEventListener('blur', () => {
   const el = document.getElementById('batchSize');
-  const v = parseFloat(el.value);
-  if (isNaN(v) || v < 0.1) el.value = 0.1;
+  el.value = validateBatchSize(el.value);
   renderMaterialList();
   renderCarrierList();
 });
@@ -2417,7 +2497,7 @@ document.getElementById('btnSave').addEventListener('click', () => {
     if (formula && formula.versions) {
       const note = prompt('Version note:', 'v' + (formula.versions.length + 1));
       if (note === null) return;
-      formula.versions.push({ date: new Date().toISOString(), note, materials: makeSnapshot(mats), settings: getCurrentSettings() });
+      formula.versions.push({ date: new Date().toISOString(), note, materials: makeSnapshot(mats), carriers: carrierMaterials.map(c => ({ cas: c.cas, name: c.name, pct: c.pct })), settings: getCurrentSettings() });
       formula.currentVersion = formula.versions.length - 1;
       localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
       populateSavedList();
@@ -2431,7 +2511,7 @@ document.getElementById('btnSave').addEventListener('click', () => {
   if (!name) return;
   saved.push({
     name,
-    versions: [{ date: new Date().toISOString(), note: 'v1', materials: makeSnapshot(mats), settings: getCurrentSettings() }],
+    versions: [{ date: new Date().toISOString(), note: 'v1', materials: makeSnapshot(mats), carriers: carrierMaterials.map(c => ({ cas: c.cas, name: c.name, pct: c.pct })), settings: getCurrentSettings() }],
     currentVersion: 0,
   });
   localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
@@ -2446,19 +2526,26 @@ document.getElementById('savedFormulas').addEventListener('change', () => {
   const formula = saved[parseInt(idx)];
   if (!formula) return;
 
-  let materials, settings;
+  let materials, settings, carriers;
   if (formula.versions) {
     const ver = formula.versions[formula.currentVersion || 0];
     materials = ver.materials;
     settings = ver.settings;
+    carriers = ver.carriers;
   } else {
     materials = formula.materials;
     settings = formula.settings;
+    carriers = formula.carriers;
   }
 
   formulation.materials = [];
   for (const m of materials) {
     formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data || {} });
+  }
+  // Restore carriers
+  carrierMaterials.length = 0;
+  if (Array.isArray(carriers)) {
+    carriers.forEach(c => carrierMaterials.push({ cas: c.cas, name: c.name, pct: c.pct }));
   }
   if (settings) {
     const s = settings;
@@ -2485,12 +2572,14 @@ document.getElementById('btnDelete').addEventListener('click', () => {
   localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
   populateSavedList();
   formulation.materials = [];
+  carrierMaterials.length = 0;
   formulation.onChange();
 });
 
 document.getElementById('btnNew').addEventListener('click', () => {
-  if (formulation.materials.length && !confirm('Clear current formulation?')) return;
+  if ((formulation.materials.length || carrierMaterials.length) && !confirm('Clear current formulation?')) return;
   formulation.materials = [];
+  carrierMaterials.length = 0;
   document.getElementById('savedFormulas').value = '';
   formulation.onChange();
 });
@@ -2511,6 +2600,7 @@ document.getElementById('jsonFileInput').addEventListener('change', (e) => {
         alert('Invalid JSON: no materials array found.'); return;
       }
       formulation.materials = [];
+      carrierMaterials.length = 0;
       for (const m of data.materials) {
         if (!m.cas || !m.name) continue;
         const dbEntry = DB[m.cas];
@@ -2522,6 +2612,12 @@ document.getElementById('jsonFileInput').addEventListener('change', (e) => {
           usage_levels: dbEntry.safety?.usage || null,
         } : (m.data || {});
         formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct || 10, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: matData });
+      }
+      // Restore carriers if present
+      if (Array.isArray(data.carriers)) {
+        for (const c of data.carriers) {
+          if (c.cas && c.name) carrierMaterials.push({ cas: c.cas, name: c.name, pct: c.pct || 0 });
+        }
       }
       if (data.meta) {
         if (data.meta.fragrancePct) {
@@ -2576,24 +2672,42 @@ function toggleDilution(cas) {
   if (!m) return;
   if ((m.dilution || 100) < 100) {
     m.dilution = 100;
+    m.dilutionSolvent = '';
   } else {
-    const val = prompt('Dilution % (e.g. 10 = 10% active, 90% solvent):', '10');
+    if (!carrierMaterials.length) {
+      alert('Please add a carrier in SOLVENT/CARRIER/OTHER first.');
+      return;
+    }
+    const val = prompt('Dilution % (1-100, e.g. 10 = 10% active, 90% solvent):', '10');
     if (val === null) return;
-    let dil = parseFloat(val);
-    if (isNaN(dil) || dil <= 0) dil = 10;
-    if (dil > 100) dil = 100;
-    m.dilution = Math.round(dil * 100) / 100;
+    const dil = validateDilution(val);
+    if (dil >= 100) return; // user effectively disabled dilution
+    m.dilution = dil;
+    // Default dilutionSolvent to first carrier if not set
+    if (!m.dilutionSolvent) m.dilutionSolvent = carrierMaterials[0].cas;
   }
   formulation.onChange();
 }
 
 // ===== A4: Undo/Redo Handlers =====
+function _applySnapshot(snapshot) {
+  // Support old flat-array shape + new {materials, carriers} shape
+  if (Array.isArray(snapshot)) {
+    formulation.materials = snapshot;
+  } else {
+    formulation.materials = snapshot.materials || [];
+    carrierMaterials.length = 0;
+    (snapshot.carriers || []).forEach(c => carrierMaterials.push({ cas: c.cas, name: c.name, pct: c.pct }));
+  }
+}
+
 function performUndo() {
   const snapshot = formulationHistory.undo();
   if (!snapshot) return;
   formulationHistory._skipPush = true;
-  formulation.materials = snapshot;
+  _applySnapshot(snapshot);
   renderMaterialList();
+  renderCarrierList();
   renderActiveTab();
   formulationHistory._skipPush = false;
   updateUndoRedoButtons();
@@ -2603,8 +2717,9 @@ function performRedo() {
   const snapshot = formulationHistory.redo();
   if (!snapshot) return;
   formulationHistory._skipPush = true;
-  formulation.materials = snapshot;
+  _applySnapshot(snapshot);
   renderMaterialList();
+  renderCarrierList();
   renderActiveTab();
   formulationHistory._skipPush = false;
   updateUndoRedoButtons();
