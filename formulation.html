@@ -1149,7 +1149,8 @@ function renderMaterialList() {
     for (const t of tiers) {
       html += `<span class="mat-note ${t}">${tierLabels[t]}</span>`;
     }
-    html += `<span class="mat-name" title="${safeName}">${safeName}</span>`;
+    const isMatLocked = lockedMaterials.has(m.cas);
+    html += `<span class="mat-name" title="${safeName}">${safeName}${isMatLocked ? ' <span style="color:var(--warn,#eab308);font-size:0.75em;font-weight:500">(locked)</span>' : ''}</span>`;
     html += warnHtml;
     html += `<span class="mat-grams">${amtStr}${unit}</span>`;
     html += `<input type="number" class="mat-pct" value="${m.pct}" min="0" max="100" step="0.01"
@@ -1350,7 +1351,7 @@ function renderCarrierList() {
     const dilNote = dilFromThis > 0 ? ' <span style="font-size:0.65em;color:var(--text2)">(-' + (dilFromThisUnit < 10 ? dilFromThisUnit.toFixed(1) : Math.round(dilFromThisUnit)) + ' dil)</span>' : '';
     const isCarrierLocked = lockedCarriers.has(m.cas);
     html += '<div class="mat-item" data-carrier-cas="' + safeCas + '"' + (isCarrierLocked ? ' style="opacity:0.85"' : '') + '>';
-    html += '<span class="mat-name" title="' + safeName + '">' + safeName + '</span>';
+    html += '<span class="mat-name" title="' + safeName + '">' + safeName + (isCarrierLocked ? ' <span style="color:var(--warn,#eab308);font-size:0.75em;font-weight:500">(locked)</span>' : '') + '</span>';
     html += '<span class="mat-grams">' + amtStr + unit + dilNote + '</span>';
     html += '<input type="number" class="mat-pct" value="' + m.pct + '" min="0" max="100" step="1"' + (isCarrierLocked ? ' disabled' : '') + ' onchange="updateCarrierPct(\'' + safeCas + '\',this.value)" onblur="if(this.value===\'\'){this.value=0;updateCarrierPct(\'' + safeCas + '\',0);}">';
     html += '<span style="font-size:0.75em;color:var(--text2)">%</span>';
@@ -1747,24 +1748,6 @@ function renderCompatTab() {
   // Suggested Allocation — combined MATERIALS + SOLVENT/CARRIER/OTHER
   html += '<div class="analysis-card"><h4>Suggested Allocation</h4>';
   html += '<p class="panel-desc">Materials use Dirichlet weights by note tier and inverse odor strength. Carriers rebalance by IFRA category (locked rows are preserved). Click "Apply" to use.</p>';
-
-  // Locked summary banner (materials + carriers)
-  const lockedMatObjs = mats.filter(m => lockedMaterials.has(m.cas));
-  const lockedCarrierObjs = carrierMaterials.filter(c => lockedCarriers.has(c.cas));
-  if (lockedMatObjs.length || lockedCarrierObjs.length) {
-    html += '<div style="margin-top:8px;padding:8px 10px;background:rgba(234,179,8,0.08);border-left:3px solid var(--warn,#eab308);border-radius:4px;font-size:0.82em">';
-    html += '&#128274; <strong>Locked (' + (lockedMatObjs.length + lockedCarrierObjs.length) + '):</strong> ';
-    const parts = [];
-    if (lockedMatObjs.length) {
-      parts.push('Materials — ' + lockedMatObjs.map(m => escHtml(m.name) + ' (' + m.pct + '%)').join(', '));
-    }
-    if (lockedCarrierObjs.length) {
-      parts.push('Carriers — ' + lockedCarrierObjs.map(c => escHtml(c.name) + ' (' + c.pct + '%)').join(', '));
-    }
-    html += parts.join(' &middot; ');
-    html += '<br><span style="color:var(--text2)">Apply Suggested / Optimized will preserve these values and only redistribute the remaining budget.</span>';
-    html += '</div>';
-  }
 
   // Materials section
   html += '<table class="data-table" style="margin-top:10px"><thead><tr><th></th><th>Material</th><th>Current %</th><th>Suggested %</th><th>Optimized %</th></tr></thead><tbody>';
