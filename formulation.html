@@ -3471,10 +3471,11 @@ document.getElementById('briefGenerate').addEventListener('click', () => {
 
   let html = '<table class="data-table" style="font-size:0.82em"><thead><tr><th>Material</th><th>Note</th><th>%</th><th>Score</th><th></th></tr></thead><tbody>';
   for (const r of results) {
+    const inFormula = !!formulation.materials.find(m => m.cas === r.cas);
     html += '<tr><td>' + escHtml(r.name) + '</td><td>' + escHtml(r.note) + '</td>';
     html += '<td>' + r.suggestedPct + '%</td>';
     html += '<td>' + r.scores.total + '</td>';
-    html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + escHtml(r.cas) + '\');this.disabled=true;this.textContent=\'Added\'">Add</button></td></tr>';
+    html += '<td><button class="btn btn-sm ' + (inFormula ? '' : 'btn-primary') + '" data-cas="' + escHtml(r.cas) + '" data-pct="' + r.suggestedPct + '" onclick="briefToggleMaterial(this)">' + (inFormula ? 'Remove' : 'Add') + '</button></td></tr>';
   }
   html += '</tbody></table>';
   html += '<button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="applyBriefFormula()">Apply All (' + results.length + ' materials)</button>';
@@ -3484,10 +3485,54 @@ document.getElementById('briefGenerate').addEventListener('click', () => {
   el._briefResults = results;
 });
 
+// Toggle a single brief-result material in/out of the formulation.
+// Called from the per-row Add button in the brief results table. Swaps
+// button label/class in place so the user doesn't need to regenerate to
+// see the new state, and reuses the MATERIAL_PROPERTIES enrichment pattern
+// from applyBriefFormula so the Pyramid / VP calcs get full data.
+function briefToggleMaterial(btn) {
+  const cas = btn.dataset.cas;
+  if (!cas) return;
+  const already = formulation.materials.find(m => m.cas === cas);
+  if (already) {
+    formulation.removeMaterial(cas);
+    btn.textContent = 'Add';
+    btn.classList.add('btn-primary');
+    return;
+  }
+  const entry = DB[cas];
+  if (!entry) return;
+  const pct = parseFloat(btn.dataset.pct);
+  const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[cas] || {} : {};
+  const enriched = {
+    cas: entry.cas,
+    name: entry.name,
+    note: entry.note || '',
+    odor_type: entry.odor?.type || null,
+    odor_strength: entry.odor?.strength || null,
+    odor_description: entry.odor?.description || null,
+    tenacity: entry.performance?.tenacity || null,
+    tenacity_hours: entry.performance?.duration || null,
+    blends_with: entry.blends_with || [],
+    ifra_guideline: entry.safety?.ifra || null,
+    usage_levels: entry.safety?.usage || null,
+    molecular_weight: mp.mw || null,
+    density: mp.density || null,
+    xlogp: mp.logP || null,
+    boiling_point: mp.bp || null,
+    smiles: mp.smiles || null,
+    primaryFamilies: [], secondaryFamilies: [], facets: [], functions: [], regulatory: [],
+  };
+  const ok = formulation.addMaterial(cas, entry.name, isFinite(pct) && pct > 0 ? pct : 0, enriched);
+  if (ok) {
+    btn.textContent = 'Remove';
+    btn.classList.remove('btn-primary');
+  }
+}
+
 function applyBriefFormula() {
   const results = document.getElementById('briefResults')._briefResults;
   if (!results || !results.length) return;
-  if (formulation.materials.length && !confirm('Replace current formulation with brief results?')) return;
 
   // ── 1. Full workspace reset ──────────────────────────────────────────
   // Clear every piece of state that could leak an older formulation into
