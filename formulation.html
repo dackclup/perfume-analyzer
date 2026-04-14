@@ -2020,8 +2020,7 @@ function materialProfileShift(mats) {
 // Typical max % for functional additives in the finished formula.
 // These are common industry limits for safety/regulation — they do NOT apply
 // to actual solvents/carriers (which fill the remainder). Values for
-// antioxidants, preservatives, and bittering agents.
-function getCarrierMaxPct(name) {
+// antioxidants, preservatives, and bittering agents.function getCarrierMaxPct(name) {
   const n = (name || '').toLowerCase();
   // Antioxidants
   if (n.includes('bht') || n.includes('butylated hydroxytoluene')) return 0.1;
@@ -2203,6 +2202,39 @@ function autoPopulateCarriers() {
 
   renderCarrierList();
 }
+
+// Default carrier CAS per type, picked by preference. Used when seeding a
+// fresh carrier panel (e.g., Creative Brief → Apply All). Entries must exist
+// in the DB; we filter at call time to skip ones that don't. Water has no
+// DB entry so that type is intentionally empty — categories that want water
+// carrier (none at time of writing) fall through to the next type.
+const CARRIER_DEFAULTS_BY_TYPE = {
+  alcohol: ['64-17-5'],                         // Ethanol
+  glycol:  ['25265-71-8', '57-55-6'],           // Dipropylene Glycol, Propylene Glycol
+  ester:   ['110-27-0', '77-93-0', '84-66-2'],  // IPM, Triethyl Citrate, DEP
+  water:   [],
+};
+
+// Seed the carrier panel with category-appropriate solvents when it's empty
+// (or missing a required type). Only adds — never removes or overwrites. The
+// subsequent rebalanceExistingCarriers() call sets the actual percentages
+// from CATEGORY_CARRIER_RATIO. Returns the CAS list that was seeded.
+function seedDefaultCarriers(catId) {
+  const ratio = CATEGORY_CARRIER_RATIO[catId] || CATEGORY_CARRIER_RATIO['4'];
+  const seeded = [];
+  for (const type of ['alcohol', 'glycol', 'ester', 'water']) {
+    if ((ratio[type] || 0) <= 0) continue;
+    const candidates = CARRIER_DEFAULTS_BY_TYPE[type] || [];
+    const cas = candidates.find(c => DB[c]);
+    if (!cas) continue;
+    if (carrierMaterials.find(c => c.cas === cas)) continue;
+    if (carrierMaterials.some(c => classifyCarrier(c.name) === type)) continue;
+    carrierMaterials.push({ cas, name: DB[cas].name, pct: 0 });
+    seeded.push(cas);
+  }
+  return seeded;
+}
+
 // ===== Tab 3: Evaporation & Thermodynamics (System 1) =====
 let _evapChart = null;
 function renderThermoTab() {
@@ -3453,31 +3485,78 @@ function applyBriefFormula() {
   if (!results || !results.length) return;
   if (formulation.materials.length && !confirm('Replace current formulation with brief results?')) return;
 
-  // Clear full workspace state — materials, carriers, locks — so nothing
-  // from the previous formula leaks into the new one.
+  // ── 1. Full workspace reset ──────────────────────────────────────────
+  // Clear every piece of state that could leak an older formulation into
+  // the new one: materials, carriers, locks, AND the original-pct map used
+  // by the Reset button. `formulation.materials = []` bypasses any per-
+  // material unwind side-effects (history push etc.) — that's deliberate;
+  // we'll fire a single onChange at the end.
   formulation.materials = [];
   carrierMaterials.length = 0;
   lockedMaterials.clear();
   lockedCarriers.clear();
+  _originalPcts = {};
 
+  // ── 2. Add every brief result directly ───────────────────────────────
+  // Previous implementation called addFromDB(), which refuses any material
+  // whose DB note doesn't match /top|middle|mid|base/. Brief results are
+  // already curated by the scoring engine, so bypass that filter and
+  // construct the enriched entry inline. This fixes the "Apply All only
+  // added one material" bug where most picks were silently rejected.
   const seen = new Set();
+  const skipped = [];
   for (const r of results) {
-    if (!r || !r.cas) continue;
-    if (seen.has(r.cas)) continue; // dedupe defensively
+    if (!r || !r.cas) { skipped.push({ reason: 'no-cas', r }); continue; }
+    if (seen.has(r.cas)) { skipped.push({ cas: r.cas, reason: 'dup' }); continue; }
     seen.add(r.cas);
     const entry = DB[r.cas];
-    if (!entry) continue;
-    if (!addFromDB(r.cas)) continue; // skip silently if DB lookup fails
-    const pct = (typeof r.suggestedPct === 'number' && !isNaN(r.suggestedPct)) ? r.suggestedPct : 0;
-    formulation.updatePct(r.cas, pct);
+    if (!entry) { skipped.push({ cas: r.cas, reason: 'not-in-db' }); continue; }
+    const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[r.cas] || {} : {};
+    const enriched = {
+      cas: entry.cas,
+      name: entry.name,
+      note: entry.note || r.note || '',
+      odor_type: entry.odor?.type || null,
+      odor_strength: entry.odor?.strength || null,
+      odor_description: entry.odor?.description || null,
+      tenacity: entry.performance?.tenacity || null,
+      tenacity_hours: entry.performance?.duration || null,
+      blends_with: entry.blends_with || [],
+      ifra_guideline: entry.safety?.ifra || null,
+      usage_levels: entry.safety?.usage || null,
+      molecular_weight: mp.mw || null,
+      density: mp.density || null,
+      xlogp: mp.logP || null,
+      boiling_point: mp.bp || null,
+      smiles: mp.smiles || null,
+      primaryFamilies: [], secondaryFamilies: [], facets: [], functions: [], regulatory: [],
+    };
+    const pct = (typeof r.suggestedPct === 'number' && isFinite(r.suggestedPct) && r.suggestedPct > 0)
+      ? r.suggestedPct : 0;
+    const ok = formulation.addMaterial(r.cas, entry.name, pct, enriched);
+    if (!ok) skipped.push({ cas: r.cas, reason: 'add-failed' });
+  }
+  if (skipped.length) {
+    console.warn('Creative Brief Apply All — skipped:', skipped);
   }
 
-  // Post-apply: clamp to current category IFRA + rebalance carriers.
-  // The engine's hill-climb already enforces IFRA for brief.fragPct, but the
-  // user may have changed the workspace fragPct/category since generating.
+  // ── 3. Post-apply state sync ─────────────────────────────────────────
   const catId = document.getElementById('productCategory').value;
   const fragPct = validateFragPct(document.getElementById('fragPct').value);
+
+  // 3a. Clamp any brief % above the current IFRA ceiling. The hill-climb
+  //     already enforced limits for brief.fragPct/catId, but the user may
+  //     have changed those in the workspace since Generate.
   capMaterialsToIFRA(catId, fragPct);
+
+  // 3b. Seed category-appropriate carriers (Alcohol / Glycol / Ester /
+  //     Water) into the empty carrier panel. Without this the rebalance
+  //     below has nothing to distribute across and the user ends up with
+  //     no solvent phase after Apply All.
+  seedDefaultCarriers(catId);
+
+  // 3c. Distribute the carrier budget by category ratio, then add any
+  //     missing dilution solvents the materials reference.
   rebalanceExistingCarriers('suggested', catId);
   autoPopulateCarriers();
 
