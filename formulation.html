@@ -1727,8 +1727,7 @@ function rebalanceExistingCarriers(type, catId) {
   if (!carrierMaterials.length) return;
 
   const baseRatio = CATEGORY_CARRIER_RATIO[catId] || CATEGORY_CARRIER_RATIO['4'];
-  // Copy so we can mutate
-  const targetRatio = { alcohol: baseRatio.alcohol, glycol: baseRatio.glycol, ester: baseRatio.ester, water: baseRatio.water, other: baseRatio.other };
+  const targetRatio = { alcohol: baseRatio.alcohol, glycol: baseRatio.glycol, ester: baseRatio.ester, water: baseRatio.water };
 
   if (type === 'optimized') {
     const shift = materialProfileShift(formulation.materials);
@@ -1737,31 +1736,45 @@ function rebalanceExistingCarriers(type, catId) {
     targetRatio.ester   = Math.max(0, Math.min(100, targetRatio.ester  + shift.ester));
   }
 
-  // Group user's existing carriers by type
+  // Group user's existing carriers by type. 'other' items (BHT, Denatonium,
+  // antioxidants, etc.) are NOT carriers — they are functional additives with
+  // their own dose. Preserve whatever % the user set for them; only rebalance
+  // the actual solvent/carrier budget around them.
   const groups = { alcohol: [], glycol: [], ester: [], water: [], other: [] };
   for (const c of carrierMaterials) {
     groups[classifyCarrier(c.name)].push(c);
   }
 
-  // Only available types (types the user actually added)
-  const availableTypes = Object.keys(groups).filter(t => groups[t].length > 0);
+  // Reserve 'other' additives' current total %
+  const otherPctReserved = groups.other.reduce((s, c) => s + (c.pct || 0), 0);
+  const remainingBudget = Math.max(0, 100 - otherPctReserved);
+
+  // Solvent/carrier types the user actually added (alcohol/glycol/ester/water)
+  const solventTypes = ['alcohol', 'glycol', 'ester', 'water'];
+  const availableTypes = solventTypes.filter(t => groups[t].length > 0);
+
+  // Edge case: only 'other' items exist — can't rebalance without a carrier,
+  // leave everything as-is
   if (!availableTypes.length) return;
 
-  // Total target over available types — re-normalize if category wants types the user didn't add
-  let totalTarget = availableTypes.reduce((s, t) => s + (targetRatio[t] || 0), 0);
+  // Total target over available solvent types
+  const totalTarget = availableTypes.reduce((s, t) => s + (targetRatio[t] || 0), 0);
 
-  // Edge case: category wants none of the types the user has (e.g., user added only 'other')
-  // → fall back to equal split across everything the user added
+  // Edge case: category wants none of the solvent types the user added
+  // (e.g., only Ester-type for Cat 4 which targets alcohol) — split the
+  // remaining budget equally across available solvents
   if (totalTarget <= 0) {
-    const each = Math.round((100 / carrierMaterials.length) * 100) / 100;
-    carrierMaterials.forEach(c => c.pct = each);
+    const totalSolventCarriers = availableTypes.reduce((s, t) => s + groups[t].length, 0);
+    const each = Math.round((remainingBudget / totalSolventCarriers) * 100) / 100;
+    availableTypes.forEach(t => groups[t].forEach(c => c.pct = each));
     return;
   }
 
-  // Distribute target within each available type (split evenly among carriers of that type)
+  // Distribute the remaining budget across solvent types by category ratio,
+  // then split evenly within each type
   for (const t of availableTypes) {
     const g = groups[t];
-    const typeBudget = (targetRatio[t] / totalTarget) * 100;
+    const typeBudget = (targetRatio[t] / totalTarget) * remainingBudget;
     const each = Math.round((typeBudget / g.length) * 100) / 100;
     g.forEach(c => c.pct = each);
   }
