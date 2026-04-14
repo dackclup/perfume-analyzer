@@ -937,6 +937,81 @@ function analyzeNoteBalancePerception(materials, tempC) {
 }
 
 /**
+ * Combined fitness score for a formulation — merges harmony, pyramid
+ * alignment, IFRA compliance, and discord-free state into a single
+ * 0–100 objective. Used by Apply Suggested / Apply Optimized / ★ Brief
+ * as the optimization target, and reported as a before/after delta in
+ * the UI so users can see the button actually improved the formula.
+ *
+ * @param {Array} materials - [{cas, name, pct, data}]
+ * @param {Object} opts - { catId, fragPct, tempC, graph }
+ * @returns {{ score, harmony, pyramid, ifra, discordFree, breakdown }}
+ */
+function computeFormulaFitness(materials, opts) {
+  opts = opts || {};
+  if (!materials || !materials.length) {
+    return { score: 0, harmony: 0, pyramid: 0, ifra: 100, discordFree: 100, breakdown: null };
+  }
+
+  // 1. Harmony (0–100)
+  const harm = computeHarmonyScore(materials, opts.graph || new Map());
+  const harmony = harm.score || 0;
+
+  // 2. Pyramid alignment (0–100) — 100 if balanced, penalty grows with
+  //    out-of-range distance as a fraction of the ideal window width.
+  let pyramid = 100;
+  if (materials.length >= 2) {
+    const bal = analyzeNoteBalancePerception(materials, opts.tempC || 25);
+    if (bal.missing && bal.missing.length) pyramid -= bal.missing.length * 20;
+    if (bal.outOfRange && bal.outOfRange.length) {
+      const classifiedTotal = (bal.top || 0) + (bal.middle || 0) + (bal.base || 0);
+      for (const o of bal.outOfRange) {
+        const actualPct = classifiedTotal > 0 ? (bal[o.tier] / classifiedTotal) * 100 : 0;
+        const range = o.ideal;
+        const dist = o.direction === 'low'
+          ? Math.max(0, range.min - actualPct)
+          : Math.max(0, actualPct - range.max);
+        const windowW = Math.max(1, range.max - range.min);
+        pyramid -= Math.min(30, (dist / windowW) * 30);
+      }
+    }
+    pyramid = Math.max(0, Math.min(100, pyramid));
+  }
+
+  // 3. IFRA compliance (0–100) — % of materials compliant for the category
+  let ifra = 100;
+  if (opts.catId && opts.fragPct) {
+    const comp = checkIFRACompliance(materials, opts.catId, opts.fragPct);
+    const total = comp.length || 1;
+    const violators = comp.filter(c => c.compliant === false || c.banStatus === 'banned').length;
+    ifra = Math.max(0, Math.min(100, ((total - violators) / total) * 100));
+  }
+
+  // 4. Discord-free (0–100) — 100 if no discord, else 100 − 100×max severity
+  let discordFree = 100;
+  if (harm.discords && harm.discords.length) {
+    const maxSev = harm.discords.reduce((m, d) => Math.max(m, d.severity || 0), 0);
+    discordFree = Math.max(0, Math.min(100, 100 - maxSev * 100));
+  }
+
+  const score = Math.round(
+    0.40 * harmony +
+    0.35 * pyramid +
+    0.15 * ifra +
+    0.10 * discordFree
+  );
+
+  return {
+    score: Math.max(0, Math.min(100, score)),
+    harmony: Math.round(harmony),
+    pyramid: Math.round(pyramid),
+    ifra: Math.round(ifra),
+    discordFree: Math.round(discordFree),
+    breakdown: { harmWeight: 0.40, pyrWeight: 0.35, ifraWeight: 0.15, discWeight: 0.10 },
+  };
+}
+
+/**
  * Suggest initial percentage allocation using Dirichlet-inspired priors.
  * Stronger materials get lower %, base notes get more than top notes.
  * @param {Array} materials - [{cas, name, data:{note, odor_strength}}]
@@ -965,6 +1040,52 @@ function suggestAllocation(materials, fragPct, locked) {
     const strengthFactor = 3 / clamp(strength, 0.5, 5);
     return baseAlpha * strengthFactor;
   });
+
+  // ─── Harmony-aware reweighting of priors ─────────────────────────────
+  // For each material, adjust its Dirichlet alpha based on how it relates
+  // to the rest of the formula via descriptor similarity and known discord
+  // family pairs. Also boost tiers that are missing so the suggestion
+  // spreads across top/mid/base when possible.
+  if (materials.length >= 2) {
+    const radars = materials.map(m => {
+      const w = materialToRadarWeights(m.data || {});
+      return RADAR_AXES.map(a => w[a] || 0);
+    });
+    const famList = materials.map(m => getMaterialFamilies(m.data || {}));
+    for (let i = 0; i < materials.length; i++) {
+      let bonus = 0;
+      for (let j = 0; j < materials.length; j++) {
+        if (i === j) continue;
+        // descriptor cosine similarity
+        let dot = 0, n1 = 0, n2 = 0;
+        for (let k = 0; k < radars[i].length; k++) {
+          dot += radars[i][k] * radars[j][k];
+          n1  += radars[i][k] * radars[i][k];
+          n2  += radars[j][k] * radars[j][k];
+        }
+        const sim = (n1 > 0 && n2 > 0) ? dot / (Math.sqrt(n1) * Math.sqrt(n2)) : 0;
+        bonus += sim * 0.15;
+        // Discord penalty
+        const disc = detectDiscord(famList[i], famList[j]);
+        if (disc > 0) bonus -= disc * 0.3;
+      }
+      alphas[i] = Math.max(0.1, alphas[i] * (1 + bonus / Math.max(1, materials.length - 1)));
+    }
+    // Tier-missing boost: if a tier has no material, skip (nothing to boost);
+    // if it has few, slightly increase their alphas so suggestion tilts toward
+    // the underrepresented tier.
+    const tierCount = { top: 0, middle: 0, base: 0 };
+    const tierMats = { top: [], middle: [], base: [] };
+    for (let i = 0; i < materials.length; i++) {
+      const ts = classifyNoteTier(materials[i].data?.note || '');
+      for (const t of ts) { tierCount[t]++; tierMats[t].push(i); }
+    }
+    for (const t of ['top', 'middle', 'base']) {
+      if (tierCount[t] > 0 && tierCount[t] <= Math.ceil(materials.length / 4)) {
+        for (const i of tierMats[t]) alphas[i] *= 1.2;
+      }
+    }
+  }
 
   // Normalize to sum to 100%
   const sum = alphas.reduce((a, b) => a + b, 0);
@@ -1137,6 +1258,58 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
   for (let i = 0; i < n; i++) {
     if (locked.has(materials[i].cas)) continue;
     pcts[i] = Math.min(pcts[i], ifraMaxes[i]);
+  }
+
+  // ─── Phase 2: harmony/pyramid-aware hill climb ────────────────────────
+  // Refine tier-balanced allocation by maximizing computeFormulaFitness —
+  // perturb one unlocked pct at a time, redistribute to preserve sum=100,
+  // accept if overall fitness improves. Decays step size over iterations.
+  const unlockedIdx = [];
+  for (let i = 0; i < n; i++) if (!locked.has(materials[i].cas)) unlockedIdx.push(i);
+
+  if (unlockedIdx.length >= 2) {
+    const matsWithPct = () => materials.map((m, i) => ({ cas: m.cas, name: m.name, pct: pcts[i], data: m.data }));
+    const fitnessOpts = { catId: categoryId, fragPct: fragPct, tempC: 25, graph: graph };
+    let bestFitness = computeFormulaFitness(matsWithPct(), fitnessOpts).score;
+
+    const hillIters = 30;
+    for (let iter = 0; iter < hillIters; iter++) {
+      const delta = 2.0 * (1 - iter / hillIters) + 0.5; // 2.5 → 0.5
+      for (const i of unlockedIdx) {
+        for (const sign of [1, -1]) {
+          const step = sign * delta;
+          const newPctI = Math.min(ifraMaxes[i], Math.max(0, pcts[i] + step));
+          const diff = newPctI - pcts[i];
+          if (Math.abs(diff) < 1e-6) continue;
+
+          // Redistribute the opposite of diff across the OTHER unlocked
+          // non-IFRA-capped materials proportionally to their current pct
+          const peers = unlockedIdx.filter(k => k !== i && pcts[k] > 0 && pcts[k] < ifraMaxes[k] - 0.001);
+          if (!peers.length) continue;
+          const peerSum = peers.reduce((s, k) => s + pcts[k], 0);
+          if (peerSum <= 0) continue;
+
+          const savedI = pcts[i];
+          const saved = peers.map(k => pcts[k]);
+          pcts[i] = newPctI;
+          for (const k of peers) pcts[k] = Math.max(0, pcts[k] - diff * (pcts[k] / peerSum));
+
+          const newFitness = computeFormulaFitness(matsWithPct(), fitnessOpts).score;
+          if (newFitness > bestFitness + 0.01) {
+            bestFitness = newFitness;
+            break; // keep this perturbation, move to next i
+          } else {
+            pcts[i] = savedI;
+            peers.forEach((k, idx) => { pcts[k] = saved[idx]; });
+          }
+        }
+      }
+    }
+    // Final IFRA clamp after hill-climb (peer redistribution could edge past)
+    for (let i = 0; i < n; i++) {
+      if (locked.has(materials[i].cas)) continue;
+      pcts[i] = Math.min(pcts[i], ifraMaxes[i]);
+    }
   }
 
   // Round and fix sum to exactly 100%
@@ -2197,23 +2370,62 @@ function generateFromBrief(brief, db, graph) {
   const tierCounts = { top: 0, middle: 0, base: 0 };
   const selectedCAS = new Set();
 
-  for (const mat of scored) {
-    if (selected.length >= maxIngredients) break;
-    const tier = mat.noteTier || 'middle';
-    if (tierCounts[tier] >= (tierTargets[tier] || 3)) continue;
+  // Fitness-guided greedy selection. Each round re-ranks remaining
+  // candidates by (briefScore + fitness_delta) against the partial formula.
+  // Hard constraint: skip candidates that form a strong discord (severity >
+  // 0.6) with any already-selected material.
+  const selectedFamilies = [];
+  const fitnessOpts = { catId: brief.catId || null, fragPct: brief.fragPct || 18, tempC: 25, graph: graph };
 
-    // Check compatibility with already selected
-    let compatOK = true;
-    if (graph && selectedCAS.size > 0) {
-      const neighbors = graph.get(mat.cas) || new Set();
-      const compatCount = [...selectedCAS].filter(c => neighbors.has(c)).length;
-      if (selectedCAS.size >= 2 && compatCount === 0) compatOK = false; // skip if no documented compat
+  const remaining = scored.slice();
+  while (selected.length < maxIngredients && remaining.length) {
+    let bestIdx = -1, bestScore = -Infinity, bestMat = null;
+    const partialMats = selected.map(s => ({ cas: s.cas, name: s.name, pct: 100 / Math.max(1, selected.length), data: { note: s.note, odor_type: db[s.cas]?.odor?.type } }));
+    const baseFitness = selected.length ? computeFormulaFitness(partialMats, fitnessOpts).score : 50;
+
+    for (let k = 0; k < remaining.length; k++) {
+      const mat = remaining[k];
+      const tier = mat.noteTier || 'middle';
+      if (tierCounts[tier] >= (tierTargets[tier] || 3)) continue;
+
+      // Hard constraint: no strong discord with any selected material
+      const matFams = getMaterialFamilies({ odor_type: db[mat.cas]?.odor?.type });
+      let hardReject = false;
+      for (const sf of selectedFamilies) {
+        if (detectDiscord(matFams, sf) > 0.6) { hardReject = true; break; }
+      }
+      if (hardReject) continue;
+
+      // Compatibility check (existing)
+      if (graph && selectedCAS.size >= 2) {
+        const neighbors = graph.get(mat.cas) || new Set();
+        const compatCount = [...selectedCAS].filter(c => neighbors.has(c)).length;
+        if (compatCount === 0) continue;
+      }
+
+      // Estimate fitness delta
+      const trial = partialMats.concat([{ cas: mat.cas, name: mat.name, pct: 100 / (selected.length + 1), data: { note: mat.note, odor_type: db[mat.cas]?.odor?.type } }]);
+      // Rebalance so pct sums to 100
+      const trialN = trial.length;
+      trial.forEach(t => t.pct = 100 / trialN);
+      const trialFitness = computeFormulaFitness(trial, fitnessOpts).score;
+      const fitnessDelta = trialFitness - baseFitness;
+
+      const combined = 0.5 * mat.totalScore + 0.5 * (fitnessDelta / 2); // scale delta into similar range
+      if (combined > bestScore) {
+        bestScore = combined;
+        bestIdx = k;
+        bestMat = mat;
+      }
     }
-    if (!compatOK) continue;
 
-    selected.push(mat);
-    selectedCAS.add(mat.cas);
+    if (bestIdx < 0) break;
+    const tier = bestMat.noteTier || 'middle';
+    selected.push(bestMat);
+    selectedCAS.add(bestMat.cas);
+    selectedFamilies.push(getMaterialFamilies({ odor_type: db[bestMat.cas]?.odor?.type }));
     tierCounts[tier]++;
+    remaining.splice(bestIdx, 1);
   }
 
   if (!selected.length) return [];

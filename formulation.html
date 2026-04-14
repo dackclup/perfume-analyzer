@@ -1820,7 +1820,12 @@ function applyAllocation(type) {
   if (unlockedCount === 0) { alert('All materials are locked — nothing to allocate.'); return; }
   const catId = document.getElementById('productCategory').value;
   const fragPct = validateFragPct(document.getElementById('fragPct').value);
+  const tempC = parseInt(document.getElementById('tempSlider').value) || 25;
   const graph = getCompatGraph();
+
+  // Snapshot fitness BEFORE applying — shown as a delta in the toast so
+  // users can see the button actually improved the formula.
+  const fitnessBefore = computeFormulaFitness(mats, { catId, fragPct, tempC, graph });
 
   // Use original percentages for unlocked materials, current for locked
   const originalMats = mats.map(m => ({
@@ -1842,16 +1847,46 @@ function applyAllocation(type) {
       });
     }
     // Cap each material to its IFRA max for the selected category.
-    // Over-limit materials are clamped; the excess is redistributed
-    // proportionally to unlocked materials that still have headroom.
     capMaterialsToIFRA(catId, fragPct);
   });
 
-  // Rebalance existing carrier %s based on category + material profile, then
-  // normalize against dilution minimums. Does NOT add or remove any carrier —
-  // the user's carrier list stays exactly as they set it up manually.
+  // Rebalance existing carrier %s, then normalize against dilution minimums.
   rebalanceExistingCarriers(type, catId);
   autoPopulateCarriers();
+
+  // Snapshot fitness AFTER + show delta toast
+  const fitnessAfter = computeFormulaFitness(formulation.materials, { catId, fragPct, tempC, graph });
+  showFitnessToast(type === 'optimized' ? 'Apply Optimized' : 'Apply Suggested', fitnessBefore, fitnessAfter);
+}
+
+// Small toast banner that shows the Harmony / Pyramid / Fitness delta after
+// Apply Suggested / Apply Optimized / ★ Brief apply, so users can see the
+// quantitative impact of pressing the button.
+function showFitnessToast(action, before, after) {
+  let el = document.getElementById('fitnessToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'fitnessToast';
+    el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--bg2,#1e293b);border:1px solid var(--border,#334155);border-radius:8px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,0.35);z-index:9999;font-size:0.85em;max-width:92vw;';
+    document.body.appendChild(el);
+  }
+  const delta = (after.score || 0) - (before.score || 0);
+  const arrow = delta > 0 ? '↑' : delta < 0 ? '↓' : '→';
+  const color = delta > 0 ? 'var(--ok,#22c55e)' : delta < 0 ? 'var(--danger,#ef4444)' : 'var(--text2)';
+  const part = (label, b, a) => {
+    const d = (a || 0) - (b || 0);
+    const dSign = d > 0 ? '+' : '';
+    return '<span style="color:var(--text2);font-size:0.88em">' + label + '</span> ' + b + '→' + a + ' <span style="color:' + (d > 0 ? 'var(--ok,#22c55e)' : d < 0 ? 'var(--danger,#ef4444)' : 'var(--text2)') + ';font-size:0.82em">(' + dSign + d + ')</span>';
+  };
+  el.innerHTML = '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
+    + '<strong>' + escHtml(action) + '</strong>'
+    + '<span>' + part('Harmony', before.harmony, after.harmony) + '</span>'
+    + '<span>' + part('Pyramid', before.pyramid, after.pyramid) + '</span>'
+    + '<span style="border-left:1px solid var(--border,#334155);padding-left:10px">Fitness <strong>' + before.score + ' → ' + after.score + '</strong> <span style="color:' + color + '">' + arrow + Math.abs(delta) + '</span></span>'
+    + '</div>';
+  el.style.display = 'block';
+  clearTimeout(showFitnessToast._t);
+  showFitnessToast._t = setTimeout(() => { el.style.display = 'none'; }, 5000);
 }
 
 // Cap fragrance materials to their IFRA max for the selected category.
@@ -3391,6 +3426,12 @@ function applyBriefFormula() {
   const results = document.getElementById('briefResults')._briefResults;
   if (!results) return;
   if (formulation.materials.length && !confirm('Replace current formulation with brief results?')) return;
+  const catId = document.getElementById('productCategory').value;
+  const fragPct = validateFragPct(document.getElementById('fragPct').value);
+  const tempC = parseInt(document.getElementById('tempSlider').value) || 25;
+  const graph = getCompatGraph();
+  const fitnessBefore = computeFormulaFitness(formulation.materials, { catId, fragPct, tempC, graph });
+
   formulation.materials = [];
   for (const r of results) {
     const entry = DB[r.cas];
@@ -3399,6 +3440,9 @@ function applyBriefFormula() {
     formulation.updatePct(r.cas, r.suggestedPct);
   }
   briefModal.classList.remove('open');
+
+  const fitnessAfter = computeFormulaFitness(formulation.materials, { catId, fragPct, tempC, graph });
+  showFitnessToast('★ Brief', fitnessBefore, fitnessAfter);
 }
 
 // ===== B2: Substitution UI =====
