@@ -1750,7 +1750,7 @@ function renderCompatTab() {
   // Method + family subtitle
   const methodLabel = balance.method === 'perception'
     ? 'Perception-weighted (time-integrated PSI)'
-    : 'Label-based (fallback — ODT coverage ' + Math.round((balance.odtCoverage || 0) * 100) + '%)';
+    : 'Label-based (fallback — ODT coverage ' + Math.round((balance.odtCoverage || 0) * 100) + '%, VP coverage ' + Math.round((balance.vpCoverage || 0) * 100) + '%)';
   let subtitle = methodLabel;
   if (balance.family && balance.family !== 'default') {
     subtitle += ' · target ranges for <strong>' + escHtml(balance.family) + '</strong> family';

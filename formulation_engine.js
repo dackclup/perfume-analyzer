@@ -824,16 +824,32 @@ function analyzeNoteBalancePerception(materials, tempC) {
     return analyzeNoteBalance(materials || []);
   }
 
-  // Data-quality gate: if most materials have no ODT, the integral would
-  // be dominated by a few noisy entries — use the label method instead.
+  // Data-quality gate: the perception integral is only meaningful when
+  // BOTH the odor threshold AND the vapor pressure are well-characterised.
+  //  - ODT via QSAR/strength-estimate fallbacks is coarse but acceptable.
+  //  - VP via Clausius-Clapeyron from a boiling point alone (Kistiakowsky
+  //    ΔHvap) systematically overestimates VP by 1–2 orders of magnitude
+  //    for heavy polar aroma chemicals (e.g. ionones, Iso E Super's
+  //    cousins) because it ignores polarity corrections over a 200 °C
+  //    extrapolation. That causes mid/base notes to behave like top notes
+  //    and collapses the pyramid to ~100 % Top. We therefore require an
+  //    Antoine-grade VP for the material to count toward vpCoverage.
   let withODT = 0;
+  let withVP = 0;
   for (const mat of materials) {
     const odt = getODT(mat.cas, mat.data);
     if (odt && odt.ppb != null && isFinite(odt.ppb) && odt.ppb > 0) withODT++;
+    const vp = getVaporPressure(mat.cas, tempC || 25, mat.data);
+    if (vp && vp.method === 'antoine' && vp.vp_mmHg > 0 && isFinite(vp.vp_mmHg)) withVP++;
   }
   const odtCoverage = withODT / materials.length;
-  if (odtCoverage < 0.5) {
-    return Object.assign({}, analyzeNoteBalance(materials), { method: 'label', odtCoverage: roundN(odtCoverage, 2) });
+  const vpCoverage  = withVP  / materials.length;
+  if (odtCoverage < 0.5 || vpCoverage < 0.5) {
+    return Object.assign({}, analyzeNoteBalance(materials), {
+      method: 'label',
+      odtCoverage: roundN(odtCoverage, 2),
+      vpCoverage:  roundN(vpCoverage,  2),
+    });
   }
 
   // Dense sample points so trapezoidal integration captures the top burst
@@ -933,6 +949,7 @@ function analyzeNoteBalancePerception(materials, tempC) {
     idealRanges,
     method: 'perception',
     odtCoverage: roundN(odtCoverage, 2),
+    vpCoverage:  roundN(vpCoverage,  2),
   };
 }
 
