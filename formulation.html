@@ -1650,8 +1650,79 @@ function applyAllocation(type) {
     }
   });
 
-  // Auto-populate carrier list from dilution solvents
+  // Suggest/optimize carrier mix based on IFRA category, then auto-populate
+  applyCarrierSuggestion(type, catId);
   autoPopulateCarriers();
+}
+
+// Category-based carrier mix recommendations (by IFRA category)
+// Returns array of { nameHint, pct } — resolved to CAS via DB lookup
+function suggestCarrierMix(catId) {
+  // Alcoholic / skin-safe fine fragrance
+  if (catId === '4' || catId === '3' || catId === '11') {
+    return [{ nameHint: 'Ethanol', pct: 90 }, { nameHint: 'Dipropylene Glycol', pct: 10 }];
+  }
+  // Deodorant / antiperspirant — alcohol + PG for spreadability
+  if (catId === '2') {
+    return [{ nameHint: 'Ethanol', pct: 85 }, { nameHint: 'Propylene Glycol', pct: 15 }];
+  }
+  // Leave-on cream / lotion / baby / lip — oil-soluble, non-alcoholic
+  if (catId === '1' || catId === '5A' || catId === '5B' || catId === '5C' || catId === '5D' || catId === '8') {
+    return [{ nameHint: 'Dipropylene Glycol', pct: 60 }, { nameHint: 'Isopropyl Myristate', pct: 40 }];
+  }
+  // Mouthwash / rinse-off — water-miscible PG
+  if (catId === '6') {
+    return [{ nameHint: 'Propylene Glycol', pct: 100 }];
+  }
+  // Rinse-off hair / body wash
+  if (catId === '7' || catId === '9') {
+    return [{ nameHint: 'Dipropylene Glycol', pct: 70 }, { nameHint: 'Propylene Glycol', pct: 30 }];
+  }
+  // Household / no skin contact — default to ethanol
+  if (catId === '10') {
+    return [{ nameHint: 'Ethanol', pct: 70 }, { nameHint: 'Dipropylene Glycol', pct: 30 }];
+  }
+  // Fallback: ethanol
+  return [{ nameHint: 'Ethanol', pct: 100 }];
+}
+
+function _findCasByName(name) {
+  const lower = name.toLowerCase();
+  return Object.keys(DB).find(k => (DB[k].name || '').toLowerCase() === lower);
+}
+
+function applyCarrierSuggestion(type, catId) {
+  const suggestion = suggestCarrierMix(catId).map(s => {
+    const cas = _findCasByName(s.nameHint);
+    if (!cas) return null;
+    return { cas, name: DB[cas].name, pct: s.pct };
+  }).filter(Boolean);
+  if (!suggestion.length) return;
+
+  // Preserve any carrier currently used as a dilution solvent by unlocked materials
+  const preservedDilutionCas = new Set();
+  for (const m of formulation.materials) {
+    if ((m.dilution || 100) < 100 && m.dilutionSolvent) {
+      preservedDilutionCas.add(m.dilutionSolvent);
+    }
+  }
+
+  const hadCarriers = carrierMaterials.length > 0;
+
+  // Apply Suggested: only fill in if no carriers exist yet (soft — respects user's manual setup)
+  // Apply Optimized: reset carrier list to category-optimal mix (hard — but keeps dilution solvents)
+  if (type === 'optimized' || !hadCarriers) {
+    const preserved = carrierMaterials.filter(c => preservedDilutionCas.has(c.cas))
+      .map(c => ({ cas: c.cas, name: c.name, pct: 0 }));
+    carrierMaterials.length = 0;
+    preserved.forEach(p => carrierMaterials.push(p));
+    for (const s of suggestion) {
+      if (!carrierMaterials.find(c => c.cas === s.cas)) {
+        carrierMaterials.push({ cas: s.cas, name: s.name, pct: s.pct });
+      }
+    }
+  }
+  // autoPopulateCarriers() (called after this) will normalize percentages
 }
 
 function autoPopulateCarriers() {
@@ -1700,32 +1771,30 @@ function autoPopulateCarriers() {
     return;
   }
 
-  // Step 1: set solvent carriers to their needed share of carrier portion
-  const nonDilCarriers = carrierMaterials.filter(c => !solventNeeds[c.cas]);
-  let solventPctSum = 0;
+  // Step 1: ensure every dilution-solvent carrier has AT LEAST the pct needed
+  // to cover its dilution contribution (don't overwrite existing higher targets).
   for (const c of carrierMaterials) {
     const needed = solventNeeds[c.cas] || 0;
     if (needed > 0) {
-      c.pct = Math.round((needed / carrierGramsFull) * 10000) / 100;
-      solventPctSum += c.pct;
+      const minPct = Math.round((needed / carrierGramsFull) * 10000) / 100;
+      if (c.pct < minPct) c.pct = minPct;
     }
   }
 
-  // Step 2: distribute remaining budget across non-dilution carriers
-  const remainPct = Math.max(0, 100 - solventPctSum);
-  if (nonDilCarriers.length > 0) {
-    const each = Math.round((remainPct / nonDilCarriers.length) * 100) / 100;
-    nonDilCarriers.forEach(c => c.pct = each);
-  } else if (solventPctSum < 100 && carrierMaterials.length) {
-    // No non-dilution carriers — scale up solvent carriers to fill 100%
-    const scale = 100 / (solventPctSum || 1);
-    carrierMaterials.forEach(c => c.pct = Math.round(c.pct * scale * 100) / 100);
+  // Step 2: normalize to 100% while preserving relative ratios
+  const sum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
+  if (sum <= 0) {
+    // All zero — equal split as last resort
+    const each = Math.round((100 / carrierMaterials.length) * 100) / 100;
+    carrierMaterials.forEach(c => c.pct = each);
+  } else if (Math.abs(sum - 100) > 0.001) {
+    carrierMaterials.forEach(c => c.pct = Math.round((c.pct / sum) * 10000) / 100);
   }
 
   // Fix rounding drift — give any remainder to first carrier
-  const sum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
-  if (Math.abs(sum - 100) > 0.001 && carrierMaterials.length) {
-    carrierMaterials[0].pct = Math.round((carrierMaterials[0].pct + (100 - sum)) * 100) / 100;
+  const finalSum = carrierMaterials.reduce((s, c) => s + c.pct, 0);
+  if (Math.abs(finalSum - 100) > 0.001 && carrierMaterials.length) {
+    carrierMaterials[0].pct = Math.round((carrierMaterials[0].pct + (100 - finalSum)) * 100) / 100;
   }
 
   renderCarrierList();
