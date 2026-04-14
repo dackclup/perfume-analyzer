@@ -1384,6 +1384,7 @@ modalSearch.addEventListener('input', () => {
   const q = modalSearch.value.trim().toLowerCase();
   if (q.length < 2) { modalResults.innerHTML = ''; return; }
   const isCarrier = modalSearch.dataset.mode === 'carrier';
+  const catId = document.getElementById('productCategory').value;
   const matches = [];
   for (const [cas, entry] of Object.entries(DB)) {
     const hasFragNote = entry.note && /top|middle|mid|base/i.test(entry.note);
@@ -1393,6 +1394,8 @@ modalSearch.addEventListener('input', () => {
     } else {
       if (!hasFragNote) continue; // fragrance mode: show only fragrance
       if (formulation.materials.find(m => m.cas === cas)) continue;
+      // Hide materials banned globally or explicitly 0% for the selected category
+      if (isMaterialBannedForCategory(entry, catId)) continue;
     }
     const haystack = (entry.name + ' ' + cas + ' ' + (entry.synonyms || []).join(' ')).toLowerCase();
     if (haystack.includes(q)) matches.push(entry);
@@ -1406,6 +1409,37 @@ modalSearch.addEventListener('input', () => {
     </li>`
   ).join('');
 });
+
+// Hide materials that are banned globally or forbidden for the selected
+// IFRA category. Reuses the same banned-keyword heuristics as
+// checkIFRACompliance so the Add modal stays consistent with the Safety tab.
+function isMaterialBannedForCategory(entry, catId) {
+  const ifraText = (entry.safety?.ifra || '').toLowerCase();
+  const usageText = (entry.safety?.usage || '').toLowerCase();
+  // Strip negations so "No restriction", "not banned" etc. don't false-positive
+  const both = (ifraText + ' ' + usageText)
+    .replace(/no\s+restrict\w*/g, '')
+    .replace(/not\s+restrict\w*/g, '')
+    .replace(/no\s+prohibit\w*/g, '')
+    .replace(/not\s+banned/g, '')
+    .replace(/unregulated/g, '')
+    .replace(/no\s+limit/g, '');
+  if (/\bbanned\b|\bprohibit/.test(both) ||
+      /must not be used/.test(both) ||
+      /must be removed/.test(both)) {
+    return true;
+  }
+  // Structured IFRA 51 table with explicit 0 for this category
+  if (catId && typeof parseIFRA51 === 'function' && typeof IFRA_CATEGORIES !== 'undefined') {
+    const ifra51 = parseIFRA51(entry.safety?.usage || '');
+    const cat = IFRA_CATEGORIES[catId];
+    if (ifra51 && cat && cat.key) {
+      const max = ifra51[cat.key];
+      if (max === 0) return true;
+    }
+  }
+  return false;
+}
 
 function addFromDB(cas) {
   const entry = DB[cas];
@@ -1493,7 +1527,12 @@ function importFromAnalyzer() {
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => renderActiveTab());
 });
-document.getElementById('productCategory').addEventListener('change', () => { renderCarrierList(); renderActiveTab(); });
+document.getElementById('productCategory').addEventListener('change', () => {
+  renderCarrierList();
+  renderActiveTab();
+  // Re-run Add-modal search if open, so banned-for-category items update
+  if (addModal.classList.contains('open')) modalSearch.dispatchEvent(new Event('input'));
+});
 document.getElementById('tempSlider').addEventListener('input', () => renderActiveTab());
 
 function renderActiveTab() {
