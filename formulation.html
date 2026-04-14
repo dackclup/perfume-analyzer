@@ -1593,7 +1593,9 @@ document.getElementById('productCategory').addEventListener('change', () => {
   // Re-run Add-modal search if open, so banned-for-category items update
   if (addModal.classList.contains('open')) modalSearch.dispatchEvent(new Event('input'));
 });
-document.getElementById('tempSlider').addEventListener('input', () => renderActiveTab());
+// Debounce tempSlider drag — fires ~100 events/sec otherwise, each triggering
+// a full tab render (incl. simulateEvaporation). 200ms feels responsive.
+document.getElementById('tempSlider').addEventListener('input', debounce(() => renderActiveTab(), 200));
 
 function renderActiveTab() {
   const active = document.querySelector('.tab-panel.active');
