@@ -1012,6 +1012,92 @@ function computeFormulaFitness(materials, opts) {
 }
 
 /**
+ * Hill-climb on computeFormulaFitness. Shared between suggestAllocation,
+ * optimizeAllocation, and generateFromBrief so all three end at a local
+ * optimum of the same objective.
+ *
+ * Uses two move types per iteration:
+ *   A. single-index ±δ with proportional peer redistribution
+ *   B. pairwise transfer — shift k% from i to j directly
+ * Step size δ decays over iterations.
+ *
+ * @param {Array<number>} pctsIn - starting pcts (will not be mutated)
+ * @param {Array} materials - full material list (for .cas, .data, etc.)
+ * @param {Array<number>} unlockedIdx - indices allowed to change
+ * @param {Array<number>} ifraMaxes - per-material IFRA cap in concentrate
+ * @param {Object} opts - { catId, fragPct, tempC, graph } for fitness
+ * @param {number} iters - total iterations
+ * @returns {{ pcts: Array<number>, fitness: number }}
+ */
+function _hillClimbFitness(pctsIn, materials, unlockedIdx, ifraMaxes, opts, iters) {
+  iters = iters || 50;
+  const pcts = pctsIn.slice();
+  const matsWithPct = () => materials.map((m, i) => ({ cas: m.cas, name: m.name, pct: pcts[i], data: m.data }));
+  let bestFitness = computeFormulaFitness(matsWithPct(), opts).score;
+
+  for (let iter = 0; iter < iters; iter++) {
+    const progress = iter / iters;
+    const delta = 2.5 * (1 - progress) + 0.5; // 3.0 → 0.5
+    let improvedAny = false;
+
+    // Move A — single-index ±δ with proportional peer redistribution
+    for (const i of unlockedIdx) {
+      for (const sign of [1, -1]) {
+        const step = sign * delta;
+        const newI = Math.min(ifraMaxes[i], Math.max(0, pcts[i] + step));
+        const diff = newI - pcts[i];
+        if (Math.abs(diff) < 1e-6) continue;
+        const peers = unlockedIdx.filter(k => k !== i && pcts[k] > 0 && pcts[k] < ifraMaxes[k] - 0.001);
+        if (!peers.length) continue;
+        const peerSum = peers.reduce((s, k) => s + pcts[k], 0);
+        if (peerSum <= 0) continue;
+
+        const savedI = pcts[i];
+        const saved = peers.map(k => pcts[k]);
+        pcts[i] = newI;
+        for (const k of peers) pcts[k] = Math.max(0, pcts[k] - diff * (pcts[k] / peerSum));
+        const newFit = computeFormulaFitness(matsWithPct(), opts).score;
+        if (newFit > bestFitness + 0.01) {
+          bestFitness = newFit;
+          improvedAny = true;
+          break;
+        } else {
+          pcts[i] = savedI;
+          peers.forEach((k, idx) => { pcts[k] = saved[idx]; });
+        }
+      }
+    }
+
+    // Move B — pairwise transfer (i → j). Skip early when few unlocked.
+    if (unlockedIdx.length >= 3 && iter % 2 === 0) {
+      // Only try a subset of pairs to keep per-iter cost bounded
+      for (let a = 0; a < unlockedIdx.length; a++) {
+        const i = unlockedIdx[a];
+        const j = unlockedIdx[(a + 1 + (iter % (unlockedIdx.length - 1))) % unlockedIdx.length];
+        if (i === j) continue;
+        const k = delta; // transfer amount
+        if (pcts[i] - k < 0 || pcts[j] + k > ifraMaxes[j]) continue;
+        const savedI = pcts[i], savedJ = pcts[j];
+        pcts[i] -= k;
+        pcts[j] += k;
+        const newFit = computeFormulaFitness(matsWithPct(), opts).score;
+        if (newFit > bestFitness + 0.01) {
+          bestFitness = newFit;
+          improvedAny = true;
+        } else {
+          pcts[i] = savedI;
+          pcts[j] = savedJ;
+        }
+      }
+    }
+
+    // Early exit if no improvement in last pass after cooling phase
+    if (!improvedAny && progress > 0.6) break;
+  }
+  return { pcts, fitness: bestFitness };
+}
+
+/**
  * Suggest initial percentage allocation using Dirichlet-inspired priors.
  * Stronger materials get lower %, base notes get more than top notes.
  * @param {Array} materials - [{cas, name, data:{note, odor_strength}}]
@@ -1132,6 +1218,34 @@ function suggestAllocation(materials, fragPct, locked) {
       if (!fixed.has(i) && pcts[i] > maxVal) { maxVal = pcts[i]; maxIdx = i; }
     }
     if (maxIdx >= 0) pcts[maxIdx] = roundN(pcts[maxIdx] + (100 - finalSum), 2);
+  }
+
+  // ─── Polish: 40-iter hill-climb on fitness ───────────────────────────
+  // Same objective as Apply Optimized but fewer iterations — turns the
+  // Dirichlet priors into a genuine local optimum of harmony + pyramid.
+  if (materials.length >= 2) {
+    const unlockedIdx = [];
+    for (let i = 0; i < materials.length; i++) if (!fixed.has(i)) unlockedIdx.push(i);
+    if (unlockedIdx.length >= 2) {
+      const ifraMaxes = materials.map((mat, i) => {
+        const ifra51 = parseIFRA51(mat.data?.usage_levels);
+        const range = parseUsageRange(mat.data?.usage_levels);
+        let mp = range.max != null ? range.max : 100;
+        if (ifra51) for (const v of Object.values(ifra51)) if (v < mp) mp = v;
+        return mp / (fragPct / 100);
+      });
+      const result = _hillClimbFitness(pcts, materials, unlockedIdx, ifraMaxes,
+        { catId: null, fragPct: fragPct, tempC: 25, graph: null }, 40);
+      for (let i = 0; i < materials.length; i++) pcts[i] = roundN(result.pcts[i], 2);
+
+      // Re-fix sum to 100 after rounding
+      const s2 = pcts.reduce((a, b) => a + b, 0);
+      if (Math.abs(s2 - 100) > 0.005) {
+        let mi = -1, mv = 0;
+        for (let i = 0; i < pcts.length; i++) if (!fixed.has(i) && pcts[i] > mv) { mv = pcts[i]; mi = i; }
+        if (mi >= 0) pcts[mi] = roundN(pcts[mi] + (100 - s2), 2);
+      }
+    }
   }
 
   return materials.map((mat, i) => ({
@@ -1260,52 +1374,43 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
     pcts[i] = Math.min(pcts[i], ifraMaxes[i]);
   }
 
-  // ─── Phase 2: harmony/pyramid-aware hill climb ────────────────────────
-  // Refine tier-balanced allocation by maximizing computeFormulaFitness —
-  // perturb one unlocked pct at a time, redistribute to preserve sum=100,
-  // accept if overall fitness improves. Decays step size over iterations.
+  // ─── Phase 2: harmony/pyramid-aware hill climb + random restarts ──────
+  // Tries multiple starting points (gradient-descent result + perturbations)
+  // and returns the best across all. Each run uses two move types:
+  //   A. single-index ±δ with proportional peer redistribution
+  //   B. pairwise swap — transfer k% from material i to material j
+  // This escapes local optima the single-index move can't exit.
   const unlockedIdx = [];
   for (let i = 0; i < n; i++) if (!locked.has(materials[i].cas)) unlockedIdx.push(i);
 
   if (unlockedIdx.length >= 2) {
-    const matsWithPct = () => materials.map((m, i) => ({ cas: m.cas, name: m.name, pct: pcts[i], data: m.data }));
     const fitnessOpts = { catId: categoryId, fragPct: fragPct, tempC: 25, graph: graph };
-    let bestFitness = computeFormulaFitness(matsWithPct(), fitnessOpts).score;
 
-    const hillIters = 30;
-    for (let iter = 0; iter < hillIters; iter++) {
-      const delta = 2.0 * (1 - iter / hillIters) + 0.5; // 2.5 → 0.5
+    // Run 3 starting points: current pcts, + two perturbed variants
+    const starts = [pcts.slice()];
+    for (let restart = 0; restart < 2; restart++) {
+      const noisy = pcts.slice();
       for (const i of unlockedIdx) {
-        for (const sign of [1, -1]) {
-          const step = sign * delta;
-          const newPctI = Math.min(ifraMaxes[i], Math.max(0, pcts[i] + step));
-          const diff = newPctI - pcts[i];
-          if (Math.abs(diff) < 1e-6) continue;
-
-          // Redistribute the opposite of diff across the OTHER unlocked
-          // non-IFRA-capped materials proportionally to their current pct
-          const peers = unlockedIdx.filter(k => k !== i && pcts[k] > 0 && pcts[k] < ifraMaxes[k] - 0.001);
-          if (!peers.length) continue;
-          const peerSum = peers.reduce((s, k) => s + pcts[k], 0);
-          if (peerSum <= 0) continue;
-
-          const savedI = pcts[i];
-          const saved = peers.map(k => pcts[k]);
-          pcts[i] = newPctI;
-          for (const k of peers) pcts[k] = Math.max(0, pcts[k] - diff * (pcts[k] / peerSum));
-
-          const newFitness = computeFormulaFitness(matsWithPct(), fitnessOpts).score;
-          if (newFitness > bestFitness + 0.01) {
-            bestFitness = newFitness;
-            break; // keep this perturbation, move to next i
-          } else {
-            pcts[i] = savedI;
-            peers.forEach((k, idx) => { pcts[k] = saved[idx]; });
-          }
-        }
+        // ±15% noise on unlocked pct, clamped by IFRA
+        const noise = (Math.random() * 2 - 1) * 0.15 * Math.max(1, noisy[i]);
+        noisy[i] = Math.max(0.1, Math.min(ifraMaxes[i], noisy[i] + noise));
       }
+      // Re-normalize noisy to preserve lockedSum
+      const ls = materials.reduce((s, m, i) => s + (locked.has(m.cas) ? noisy[i] : 0), 0);
+      const target = Math.max(0, 100 - ls);
+      const unSum = unlockedIdx.reduce((s, i) => s + noisy[i], 0) || 1;
+      for (const i of unlockedIdx) noisy[i] = noisy[i] / unSum * target;
+      starts.push(noisy);
     }
-    // Final IFRA clamp after hill-climb (peer redistribution could edge past)
+
+    let bestPcts = null, bestFit = -Infinity;
+    for (const startPcts of starts) {
+      const result = _hillClimbFitness(startPcts, materials, unlockedIdx, ifraMaxes, fitnessOpts, 80);
+      if (result.fitness > bestFit) { bestFit = result.fitness; bestPcts = result.pcts; }
+    }
+    for (let i = 0; i < n; i++) pcts[i] = bestPcts[i];
+
+    // Final IFRA clamp (peer redistribution could edge past)
     for (let i = 0; i < n; i++) {
       if (locked.has(materials[i].cas)) continue;
       pcts[i] = Math.min(pcts[i], ifraMaxes[i]);
@@ -2430,18 +2535,60 @@ function generateFromBrief(brief, db, graph) {
 
   if (!selected.length) return [];
 
-  // Assign percentages using suggestAllocation logic
-  const matArray = selected.map(s => ({
+  // Initial pct allocation via Dirichlet priors
+  const matArrayForAlloc = selected.map(s => ({
     cas: s.cas, name: s.name,
     data: { note: s.note, odor_strength: 'Medium' },
   }));
-  const allocation = suggestAllocation(matArray);
+  const allocation = suggestAllocation(matArrayForAlloc, brief.fragPct || 18);
+  let pcts = allocation.map((a, i) => a?.suggestedPct || (100 / selected.length));
+
+  // ─── Post-selection polish: hill-climb with full DB context ──────────
+  // suggestAllocation already runs a 40-iter polish, but it lacks catId,
+  // graph, and odor_type on each material. Re-run with brief's full
+  // context (DB entry data, catId, graph) so harmony pairs + pyramid
+  // use complete information.
+  if (selected.length >= 2) {
+    const fullMats = selected.map(s => {
+      const entry = db[s.cas] || {};
+      return {
+        cas: s.cas, name: s.name, pct: 0,
+        data: {
+          note: s.note,
+          odor_type: entry.odor?.type || null,
+          odor_strength: entry.odor?.strength || null,
+          usage_levels: entry.safety?.usage || null,
+          ifra_guideline: entry.safety?.ifra || null,
+          molecular_weight: entry.weight || null,
+        },
+      };
+    });
+    const fragPct = brief.fragPct || 18;
+    const ifraMaxes = fullMats.map(m => {
+      const ifra51 = parseIFRA51(m.data.usage_levels);
+      const range = parseUsageRange(m.data.usage_levels);
+      let mp = range.max != null ? range.max : 100;
+      if (ifra51) for (const v of Object.values(ifra51)) if (v < mp) mp = v;
+      return mp / (fragPct / 100);
+    });
+    const unlockedIdx = selected.map((_, i) => i);
+    const result = _hillClimbFitness(pcts, fullMats, unlockedIdx, ifraMaxes,
+      { catId: brief.catId || null, fragPct: fragPct, tempC: 25, graph: graph }, 60);
+    pcts = result.pcts.map(p => roundN(p, 2));
+    // Renormalize to 100
+    const s2 = pcts.reduce((a, b) => a + b, 0);
+    if (Math.abs(s2 - 100) > 0.005 && pcts.length) {
+      let mi = 0, mv = 0;
+      for (let i = 0; i < pcts.length; i++) if (pcts[i] > mv) { mv = pcts[i]; mi = i; }
+      pcts[mi] = roundN(pcts[mi] + (100 - s2), 2);
+    }
+  }
 
   return selected.map((s, i) => ({
     cas: s.cas,
     name: s.name,
     note: s.note,
-    suggestedPct: allocation[i]?.suggestedPct || roundN(100 / selected.length, 1),
+    suggestedPct: pcts[i] != null ? pcts[i] : roundN(100 / selected.length, 1),
     scores: { family: roundN(s.familyScore, 2), mood: roundN(s.moodScore, 2), total: roundN(s.totalScore, 2) },
   }));
 }
