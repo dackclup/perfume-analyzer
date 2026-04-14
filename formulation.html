@@ -1070,7 +1070,12 @@ function getCarrierBudget(solventCas) {
 function calcWeighAmount(pureAmount, dilution, dilutionSolventCas) {
   if (!dilution || dilution <= 0 || dilution >= 100) return pureAmount;
   const uncapped = pureAmount / (dilution / 100);
-  if (!dilutionSolventCas) return uncapped;
+  if (!dilutionSolventCas) {
+    // Unspecified: cap by total carrier budget (all carriers contribute)
+    const totalCarrierBudget = carrierMaterials.reduce((s, c) => s + getCarrierBudget(c.cas), 0);
+    if (totalCarrierBudget <= 0) return uncapped;
+    return Math.min(uncapped, pureAmount + totalCarrierBudget);
+  }
   const carrierBudget = getCarrierBudget(dilutionSolventCas);
   if (carrierBudget <= 0) return uncapped;
   const maxWeigh = pureAmount + carrierBudget;
@@ -1268,17 +1273,24 @@ function renderCarrierList() {
   // Calculate dilution solvent per carrier CAS (using capped weigh amounts)
   const dilSolventByCarrier = {};
   let dilSolventTotal = 0;
+  let unspecifiedSolvent = 0;
   for (const m of formulation.materials) {
     const d = m.dilution || 100;
-    if (d < 100 && m.dilutionSolvent) {
+    if (d < 100) {
       let pure = (m.pct / 100) * fragGrams;
       if (batchUnit === 'ml') pure = pure / (m.data?.density || 0.9);
       const weigh = calcWeighAmount(pure, d, m.dilutionSolvent);
       const solventAmt = weigh - pure;
       dilSolventTotal += solventAmt;
-      dilSolventByCarrier[m.dilutionSolvent] = (dilSolventByCarrier[m.dilutionSolvent] || 0) + solventAmt;
+      if (m.dilutionSolvent) {
+        dilSolventByCarrier[m.dilutionSolvent] = (dilSolventByCarrier[m.dilutionSolvent] || 0) + solventAmt;
+      } else {
+        unspecifiedSolvent += solventAmt;
+      }
     }
   }
+  // Spread unspecified solvent equally across all carriers (average)
+  const unspecPerCarrier = carrierMaterials.length > 0 ? unspecifiedSolvent / carrierMaterials.length : 0;
 
   let html = '';
   let totalActual = 0;
@@ -1288,8 +1300,8 @@ function renderCarrierList() {
     // Base amount from carrier budget (% of full carrier portion)
     let baseAmount = (m.pct / 100) * carrierGramsFull;
     if (batchUnit === 'ml') baseAmount = baseAmount / 0.9;
-    // Subtract dilution solvent attributed to this carrier
-    const dilFromThis = dilSolventByCarrier[m.cas] || 0;
+    // Subtract dilution solvent attributed to this carrier + share of unspecified
+    const dilFromThis = (dilSolventByCarrier[m.cas] || 0) + unspecPerCarrier;
     const dilFromThisUnit = batchUnit === 'ml' ? dilFromThis / 0.9 : dilFromThis;
     const amount = Math.max(0, baseAmount - dilFromThisUnit);
     totalActual += amount;
