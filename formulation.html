@@ -1498,7 +1498,10 @@ document.getElementById('tempSlider').addEventListener('input', () => renderActi
 
 function renderActiveTab() {
   const active = document.querySelector('.tab-panel.active');
-  if (!active || !formulation.materials.length) return;
+  if (!active) return;
+  // Each tab's render function handles the empty-materials case by showing
+  // its own empty-state panel — don't early-return here or stale content
+  // from the previous formulation will remain after clearing materials.
   const id = active.id;
   if (id === 'tab-safety')    renderSafetyTab();
   if (id === 'tab-compat')    renderCompatTab();
