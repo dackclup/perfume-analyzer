@@ -1046,13 +1046,28 @@ function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-function classifyNote(note) {
-  if (!note) return '';
+// Return the list of note tiers a material belongs to. Some DB entries
+// span multiple tiers like "Top / Middle" or "Middle / Base" — those
+// materials should contribute to every tier they name, not just the first.
+function classifyNoteTiers(note) {
+  if (!note) return [];
   const n = note.toLowerCase();
-  if (n.includes('top')) return 'top';
-  if (n.includes('middle') || n.includes('mid') || n.includes('heart')) return 'mid';
-  if (n.includes('base')) return 'base';
-  return '';
+  const tiers = [];
+  if (n.includes('top')) tiers.push('top');
+  if (n.includes('middle') || /\bmid\b/.test(n) || n.includes('heart')) tiers.push('mid');
+  if (n.includes('base')) tiers.push('base');
+  return tiers;
+}
+
+// Single-tier classifier kept for legacy callers (chart coloring, sorting).
+// Prefers the faster-evaporating tier when multiple are present.
+function classifyNote(note) {
+  const tiers = classifyNoteTiers(note);
+  if (!tiers.length) return '';
+  // Preference order: top > mid > base (primary tier for display)
+  if (tiers.includes('top')) return 'top';
+  if (tiers.includes('mid')) return 'mid';
+  return 'base';
 }
 
 // Get carrier budget (in grams) for a specific solvent CAS
@@ -1108,8 +1123,8 @@ function renderMaterialList() {
   const fragGrams = batchSize * (fragPct / 100);
   let html = '';
   for (const m of formulation.materials) {
-    const noteClass = classifyNote(m.data?.note);
-    const noteLabel = noteClass === 'top' ? 'T' : noteClass === 'mid' ? 'M' : noteClass === 'base' ? 'B' : '';
+    const tiers = classifyNoteTiers(m.data?.note);
+    const tierLabels = { top: 'T', mid: 'M', base: 'B' };
     const safeName = escHtml(m.name);
     const safeCas = escHtml(m.cas);
     // Material amount: % of fragrance portion; convert g→ml if needed
@@ -1129,7 +1144,11 @@ function renderMaterialList() {
       warnHtml = `<span class="mat-warn" title="Max ${usageRange.max}% in product, actual ${pctInProduct.toFixed(1)}%">! ${usageRange.max}%</span>`;
     }
     html += `<div class="mat-item" data-cas="${safeCas}">`;
-    if (noteLabel) html += `<span class="mat-note ${noteClass}">${noteLabel}</span>`;
+    // Show one badge per tier for multi-tier materials (e.g., "Top / Middle"
+    // renders as both T and M badges side-by-side).
+    for (const t of tiers) {
+      html += `<span class="mat-note ${t}">${tierLabels[t]}</span>`;
+    }
     html += `<span class="mat-name" title="${safeName}">${safeName}</span>`;
     html += warnHtml;
     html += `<span class="mat-grams">${amtStr}${unit}</span>`;
@@ -1851,11 +1870,14 @@ const CATEGORY_CARRIER_RATIO = {
 function materialProfileShift(mats) {
   let top = 0, mid = 0, base = 0;
   for (const m of mats) {
-    const note = (m.data?.note || '').toLowerCase();
-    const w = m.pct || 1;
-    if (/top/.test(note)) top += w;
-    else if (/middle|mid|heart/.test(note)) mid += w;
-    else if (/base/.test(note)) base += w;
+    const tiers = classifyNoteTiers(m.data?.note);
+    if (!tiers.length) continue;
+    // Split weight equally across the tiers a multi-tier material spans.
+    // E.g., "Top / Middle" at 10% → +5 to top, +5 to mid.
+    const w = (m.pct || 1) / tiers.length;
+    if (tiers.includes('top')) top += w;
+    if (tiers.includes('mid')) mid += w;
+    if (tiers.includes('base')) base += w;
   }
   const total = top + mid + base;
   if (total === 0) return { alcohol: 0, glycol: 0, ester: 0 };

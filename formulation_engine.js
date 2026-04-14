@@ -622,11 +622,16 @@ function suggestAllocation(materials, fragPct, locked) {
     const note = (mat.data?.note || '').toLowerCase();
     const strength = odorStrengthScale(mat.data?.odor_strength) || 3;
 
+    // Multi-tier notes ("Top / Middle", "Middle / Base") get the average of
+    // their tiers rather than whichever keyword appears first in the string.
+    const alphaByTier = { top: 2.0, middle: 3.5, base: 5.0 };
+    const tierKeys = classifyNoteTier(note);
     let baseAlpha;
-    if (note.includes('base'))        baseAlpha = 5.0;
-    else if (note.includes('middle')) baseAlpha = 3.5;
-    else if (note.includes('top'))    baseAlpha = 2.0;
-    else                              baseAlpha = 3.0;
+    if (tierKeys.length) {
+      baseAlpha = tierKeys.reduce((s, t) => s + alphaByTier[t], 0) / tierKeys.length;
+    } else {
+      baseAlpha = 3.0;
+    }
 
     const strengthFactor = 3 / clamp(strength, 0.5, 5);
     return baseAlpha * strengthFactor;
@@ -1396,10 +1401,15 @@ function estimateLongevity(materials, tempC) {
   const times = [0, 0.25, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 10, 12, 16, 20, 24, 36, 48];
   const sim = simulateEvaporation(materials, tempC, times);
 
+  // Materials with multi-tier notes ("Top / Middle", "Middle / Base") are
+  // added to every tier they span so longevity estimates reflect their full
+  // contribution rather than only the first-listed tier.
   const tierConc = { top: [], middle: [], base: [] };
   for (const curve of sim.curves) {
-    const tier = primaryNoteTier(curve.note);
-    if (tier && tierConc[tier] !== undefined) tierConc[tier].push(curve.concentrations);
+    const tiers = classifyNoteTier(curve.note);
+    for (const t of tiers) {
+      if (tierConc[t] !== undefined) tierConc[t].push(curve.concentrations);
+    }
   }
 
   function tierTotals(concArrays) {
