@@ -261,15 +261,28 @@ function checkIFRACompliance(materials, categoryId, fragPct) {
       }
     }
 
-    // Detect ban status from IFRA guideline text
+    // Detect ban status from IFRA guideline text AND usage text.
+    // Many banned materials (Lilial, Lyral, Musk Xylene/Ambrette, Bergaptene)
+    // have the "Prohibited"/"must not be used" phrasing in `safety.usage`
+    // rather than in `safety.ifra`, so we must check both.
     let banStatus = null;
-    if (ifraText) {
-      const ifraLower = ifraText.toLowerCase();
-      if (ifraLower.includes('banned') || ifraLower.includes('prohibition')) {
-        banStatus = 'banned';
-      } else if (ifraLower.includes('restricted') || ifraLower.includes('regulated')) {
-        banStatus = 'restricted';
-      }
+    const ifraLower = (ifraText || '').toLowerCase();
+    const usageLower = (usage || '').toLowerCase();
+    // Strip "no restriction"/"no restrictions"/"not restricted"/"not banned"
+    // so negations don't false-positive below.
+    const bothLower = (ifraLower + ' ' + usageLower)
+      .replace(/no\s+restrict\w*/g, '')
+      .replace(/not\s+restrict\w*/g, '')
+      .replace(/no\s+prohibit\w*/g, '')
+      .replace(/not\s+banned/g, '')
+      .replace(/unregulated/g, '')
+      .replace(/no\s+limit/g, '');
+    if (/\bbanned\b|\bprohibit/.test(bothLower) ||
+        /must not be used/.test(bothLower) ||
+        /must be removed/.test(bothLower)) {
+      banStatus = 'banned';
+    } else if (/\brestrict|\bregulated|\blimited\b/.test(bothLower)) {
+      banStatus = 'restricted';
     }
 
     // Compliance check
