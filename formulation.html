@@ -3651,7 +3651,36 @@ function renderWheelTab() {
   const segDeg = 360 / segments.length;
   const cx = 200, cy = 200, outerR = 180, innerR = 80;
 
+  // Human-readable labels for the wheel. Override where the auto-derived
+  // title-case (from snake_case id) misses a diacritic or conventional
+  // capitalisation; everything else falls through to the default.
+  const LABEL_OVERRIDES = { aromatic_fougere: 'Aromatic Fougère' };
+  const prettyLabel = id => LABEL_OVERRIDES[id] ||
+    id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
   let svg = '<svg viewBox="0 0 400 400" style="max-width:400px;margin:0 auto;display:block">';
+
+  // <defs> — one linearGradient per transitional subfamily so the slice
+  // can blend its two adjacent main-family colours. Gradient runs along
+  // the circumferential axis of the slice: counter-clockwise neighbour on
+  // the left edge, clockwise neighbour on the right.
+  let defs = '<defs>';
+  for (const s of segments) {
+    if (!s.transitional || !s.gradient) continue;
+    const a1 = (s.angle - segDeg/2) * Math.PI / 180;
+    const a2 = (s.angle + segDeg/2) * Math.PI / 180;
+    const rMid = (outerR + innerR) / 2;
+    const x1 = cx + rMid * Math.cos(a1), y1 = cy + rMid * Math.sin(a1);
+    const x2 = cx + rMid * Math.cos(a2), y2 = cy + rMid * Math.sin(a2);
+    defs += '<linearGradient id="grad_' + s.id + '" gradientUnits="userSpaceOnUse" '
+      + 'x1="' + x1.toFixed(2) + '" y1="' + y1.toFixed(2) + '" '
+      + 'x2="' + x2.toFixed(2) + '" y2="' + y2.toFixed(2) + '">'
+      + '<stop offset="0%" stop-color="' + s.gradient[0] + '"/>'
+      + '<stop offset="100%" stop-color="' + s.gradient[1] + '"/>'
+      + '</linearGradient>';
+  }
+  defs += '</defs>';
+  svg += defs;
 
   // Draw segments
   for (let i = 0; i < segments.length; i++) {
@@ -3672,17 +3701,20 @@ function renderWheelTab() {
       return families.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === s.id);
     });
 
-    svg += '<path d="' + path + '" fill="' + s.color + '" fill-opacity="' + (hasActive ? '0.9' : '0.4') + '" ';
+    const fill = s.transitional ? 'url(#grad_' + s.id + ')' : s.color;
+    const titleText = prettyLabel(s.id) + ' (' + s.quadrant + (s.transitional ? ' — transitional' : '') + ')';
+    svg += '<path d="' + path + '" fill="' + fill + '" fill-opacity="' + (hasActive ? '0.9' : '0.4') + '" ';
     svg += 'stroke="var(--bg)" stroke-width="2" style="cursor:pointer" ';
     svg += 'onclick="filterByWheelSegment(\'' + s.id + '\')" ';
-    svg += '><title>' + s.id.replace(/_/g, ' ') + ' (' + s.quadrant + ')</title></path>';
+    svg += '><title>' + titleText + '</title></path>';
 
-    // Label
+    // Label — transitionals render in italic so they're visually distinct.
     const labelR = (outerR + innerR) / 2;
     const aM = s.angle * Math.PI / 180;
     const lx = cx + labelR * Math.cos(aM), ly = cy + labelR * Math.sin(aM);
+    const fontStyle = s.transitional ? ' font-style="italic"' : '';
     svg += '<text x="' + lx + '" y="' + ly + '" text-anchor="middle" dominant-baseline="middle" ';
-    svg += 'font-size="9" fill="var(--text)" style="pointer-events:none">' + s.id.replace(/_/g, ' ') + '</text>';
+    svg += 'font-size="9"' + fontStyle + ' fill="var(--text)" style="pointer-events:none">' + prettyLabel(s.id) + '</text>';
   }
 
   // Center label
@@ -3691,14 +3723,20 @@ function renderWheelTab() {
   svg += '<text x="' + cx + '" y="' + (cy + 15) + '" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="var(--text2)">Wheel</text>';
   svg += '</svg>';
 
-  // Material count per segment
+  // Material count per segment. Transitional pills get a two-stop linear
+  // gradient background so their "bridge" nature reads at a glance.
   let legend = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;justify-content:center">';
   for (const s of segments) {
     const count = Object.values(DB).filter(e => {
       const fams = getMaterialFamilies({ odor_type: e.odor?.type, primaryFamilies: [], secondaryFamilies: [], facets: [] });
       return fams.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === s.id);
     }).length;
-    legend += '<span class="badge" style="background:' + s.color + '33;color:' + s.color + ';font-size:0.72em">' + s.id.replace(/_/g, ' ') + ' (' + count + ')</span>';
+    const pillBg = s.transitional && s.gradient
+      ? 'linear-gradient(90deg,' + s.gradient[0] + '33,' + s.gradient[1] + '33)'
+      : s.color + '33';
+    const pillFg = s.transitional && s.gradient ? s.gradient[0] : s.color;
+    const pillStyle = s.transitional ? ';font-style:italic' : '';
+    legend += '<span class="badge" style="background:' + pillBg + ';color:' + pillFg + ';font-size:0.72em' + pillStyle + '">' + prettyLabel(s.id) + ' (' + count + ')</span>';
   }
   legend += '</div>';
 
