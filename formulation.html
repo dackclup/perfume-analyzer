@@ -3975,14 +3975,19 @@ function renderMapTab() {
 
   if (!points.length) { el.innerHTML = '<div class="empty-state"><p>No materials in database</p></div>'; return; }
 
-  // Find bounds
+  // Centre the plot on data origin (x=0, y=0) so the drawn axes — which are
+  // anchored at screen centre — actually pass through zero. The previous
+  // scaling used raw min/max bounds, which put x=0 ~63px right of screen
+  // centre and misaligned the Fresh/Amber/Floral/Woody axis labels with the
+  // dashed cross-hairs.
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   for (const p of points) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }
-  const rangeX = maxX - minX || 1, rangeY = maxY - minY || 1;
+  const absX = Math.max(Math.abs(minX), Math.abs(maxX)) || 1;
+  const absY = Math.max(Math.abs(minY), Math.abs(maxY)) || 1;
   const W = 700, H = 500, pad = 40;
 
-  function toSVGX(x) { return pad + ((x - minX) / rangeX) * (W - 2 * pad); }
-  function toSVGY(y) { return pad + ((maxY - y) / rangeY) * (H - 2 * pad); } // invert Y
+  function toSVGX(x) { return (W/2) + (x / absX) * ((W - 2 * pad) / 2); }
+  function toSVGY(y) { return (H/2) - (y / absY) * ((H - 2 * pad) / 2); }
 
   let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;max-width:' + W + 'px;background:var(--bg2);border-radius:8px">';
 
