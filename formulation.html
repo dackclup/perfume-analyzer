@@ -3818,6 +3818,22 @@ function renderWheelTab() {
       + main.toUpperCase() + ' NOTES</textPath></text>';
   }
 
+  // ─── Cardinal divider lines at 12 / 3 / 6 / 9 o'clock ──────────────
+  // Edwards paints thin dark lines across the wheel at the four main-family
+  // quadrant boundaries. Draw them from the centre disc outward to the outer
+  // ring edge so users see exactly where one quadrant ends and the next
+  // begins. 270° = 12 o'clock, 0° = 3, 90° = 6, 180° = 9.
+  for (const cardinal of [270, 0, 90, 180]) {
+    const rad = cardinal * Math.PI / 180;
+    const x1 = cx + centerR * Math.cos(rad);
+    const y1 = cy + centerR * Math.sin(rad);
+    const x2 = cx + outerR  * Math.cos(rad);
+    const y2 = cy + outerR  * Math.sin(rad);
+    svg += '<line x1="' + x1.toFixed(2) + '" y1="' + y1.toFixed(2)
+      + '" x2="' + x2.toFixed(2) + '" y2="' + y2.toFixed(2)
+      + '" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>';
+  }
+
   // ─── Center white disc with "THE FRAGRANCE WHEEL" wordmark ───
   svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + centerR + '" fill="#fff" stroke="#ddd" stroke-width="1"/>';
   svg += '<text x="' + cx + '" y="' + (cy - 14) + '" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#666" letter-spacing="2">THE</text>';
