@@ -3701,20 +3701,25 @@ function renderWheelTab() {
       + '</linearGradient>';
   }
   // One arc path per main family so its label can run along the band's centre.
-  // Sweep direction chosen so text reads left-to-right from the viewer's POV
-  // (bottom half: clockwise; top half: counter-clockwise via swapped endpoints).
+  // SVG textPath places each character with the baseline on the path and its
+  // "top" on the side AWAY from the arc's centre of curvature — which, for a
+  // concentric arc, is AWAY from the wheel centre. So a +θ (clockwise) arc
+  // puts letter tops on the outside of the wheel.
+  //   • Top half of the screen (SVG midA 180–360, sin<0 so the band sits
+  //     above the centre): letter tops already point UP → readable as-is.
+  //   • Bottom half (SVG midA 0–180, sin>0, band below centre): letter tops
+  //     would point DOWN (upside-down). Flip the arc (swap endpoints +
+  //     sweep=0) so the arc traces in −θ, moving letter tops to the inside
+  //     of the curve = pointing UP in screen space.
   for (const [main, segs] of Object.entries(mainGroups)) {
     const minA = segs[0].angle - segDeg/2;
     const maxA = segs[segs.length - 1].angle + segDeg/2;
     const midA = (minA + maxA) / 2;
     const textR = (midR + innerR) / 2;
-    // Decide sweep — if the arc midpoint is on the top half of the circle
-    // (angle 180–360 in SVG where 270 is straight up), flip endpoints so the
-    // baseline runs along the outside of the curve and reads upright.
-    const isTop = midA > 180 && midA < 360;
-    const aStart = (isTop ? maxA : minA) * Math.PI / 180;
-    const aEnd   = (isTop ? minA : maxA) * Math.PI / 180;
-    const sweep = isTop ? 0 : 1;
+    const isBottom = midA > 0 && midA < 180;
+    const aStart = (isBottom ? maxA : minA) * Math.PI / 180;
+    const aEnd   = (isBottom ? minA : maxA) * Math.PI / 180;
+    const sweep = isBottom ? 0 : 1;
     const x1 = cx + textR * Math.cos(aStart), y1 = cy + textR * Math.sin(aStart);
     const x2 = cx + textR * Math.cos(aEnd),   y2 = cy + textR * Math.sin(aEnd);
     defs += '<path id="arc_' + main + '" fill="none" d="M ' + x1.toFixed(2) + ' ' + y1.toFixed(2)
@@ -3756,10 +3761,22 @@ function renderWheelTab() {
     let rot = s.angle;
     if (s.angle > 90 && s.angle < 270) rot = s.angle + 180;
     const fontStyle = s.transitional ? ' font-style="italic"' : '';
-    svg += '<text x="' + lx.toFixed(2) + '" y="' + ly.toFixed(2) + '" text-anchor="middle" dominant-baseline="middle" '
+    // Wrap two-word labels ("Soft Floral", "Floral Amber", "Dry Woods" etc.)
+    // onto two stacked lines so they fit inside the slice. <tspan dy>
+    // offsets apply in the rotated local frame, so the stack is always
+    // perpendicular to the reading direction.
+    const words = prettyLabel(s.id).split(' ');
+    svg += '<text x="' + lx.toFixed(2) + '" y="' + ly.toFixed(2) + '" '
+      + 'text-anchor="middle" dominant-baseline="middle" '
       + 'transform="rotate(' + rot + ' ' + lx.toFixed(2) + ' ' + ly.toFixed(2) + ')" '
-      + 'font-size="12"' + fontStyle + ' fill="#2c1810" font-weight="500" style="pointer-events:none">'
-      + prettyLabel(s.id) + '</text>';
+      + 'font-size="12"' + fontStyle + ' fill="#2c1810" font-weight="500" style="pointer-events:none">';
+    if (words.length > 1) {
+      svg += '<tspan x="' + lx.toFixed(2) + '" dy="-0.35em">' + words[0] + '</tspan>';
+      svg += '<tspan x="' + lx.toFixed(2) + '" dy="1.1em">' + words.slice(1).join(' ') + '</tspan>';
+    } else {
+      svg += words[0];
+    }
+    svg += '</text>';
   }
 
   // ─── Inner ring: 4 main-family bands with curved "FAMILY NOTES" labels ──
