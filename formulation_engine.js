@@ -1958,6 +1958,75 @@ const FAMILY_TO_AXES = {
   dry_woods:        ['woody', 'animalic'],
   mossy_woods:      ['woody'],
   woods:            ['woody'],
+  // Secondary/descriptor tokens that appear in PERFUMERY_DATA odor.type
+  // strings after whitespace-splitting (e.g. "Fruity Apple" → [fruity, apple]).
+  // Route each to its closest radar axis so materials tagged with compound
+  // descriptors don't collapse to zero-signal at the origin of the Odor Map.
+  herbaceous:       ['green', 'fresh'],
+  coniferous:       ['woody', 'fresh'],
+  pine:             ['woody', 'fresh'],
+  cedar:            ['woody'],
+  sandalwood:       ['woody', 'amber'],
+  oud:              ['woody', 'animalic'],
+  vetiver:          ['woody'],
+  mossy:            ['woody'],
+  moss:             ['woody'],
+  tobacco:          ['woody', 'animalic'],
+  medicinal:        ['fresh'],
+  minty:            ['fresh'],
+  mint:             ['fresh'],
+  clean:            ['fresh'],
+  watery:           ['fresh'],
+  green_tea:        ['green', 'fresh'],
+  leafy:            ['green'],
+  tea:              ['green'],
+  violet:           ['floral', 'powdery'],
+  muguet:           ['floral'],
+  lily:             ['floral'],
+  orange_blossom:   ['floral'],
+  tuberose:         ['floral'],
+  ylang:            ['floral'],
+  iris:             ['powdery', 'floral'],
+  orris:            ['powdery', 'floral'],
+  aldehyde:         ['fresh', 'floral'],
+  waxy:             ['powdery'],
+  fatty:            ['powdery'],
+  creamy:           ['gourmand'],
+  milky:            ['gourmand'],
+  coconut:          ['gourmand', 'fruity'],
+  honey:            ['gourmand'],
+  caramel:          ['gourmand'],
+  chocolate:        ['gourmand'],
+  cocoa:            ['gourmand'],
+  coffee:           ['gourmand'],
+  almond:           ['gourmand'],
+  anise:            ['spicy'],
+  cinnamon:         ['spicy'],
+  clove:            ['spicy'],
+  pepper:           ['spicy'],
+  warm:             ['amber', 'spicy'],
+  tropical:         ['fruity'],
+  apple:            ['fruity'],
+  pear:             ['fruity'],
+  banana:           ['fruity'],
+  berry:            ['fruity'],
+  peach:            ['fruity'],
+  melon:            ['fruity'],
+  strawberry:       ['fruity'],
+  pineapple:        ['fruity'],
+  citrusy:          ['citrus'],
+  lemon:            ['citrus', 'fresh'],
+  orange:           ['citrus'],
+  bergamot:         ['citrus'],
+  grapefruit:       ['citrus'],
+  lime:             ['citrus'],
+  musky:            ['musk'],
+  animal:           ['animalic'],
+  civet:            ['animalic'],
+  ambergris:        ['amber', 'musk'],
+  mineral:          ['fresh'],
+  chypre:           ['woody', 'green'],
+  fougere:          ['green', 'fresh'],
 };
 
 function materialToRadarWeights(matData) {
@@ -2657,13 +2726,24 @@ function buildOdorMap(db, formulationCAS) {
   formulationCAS = formulationCAS || new Set();
   const points = [];
 
-  // Axis weights: each radar axis contributes to x and y
+  // Axis weights: each radar axis contributes to x and y. Water (aquatic)
+  // sits on the Fresh axis in the Edwards wheel — keep y near 0 so it
+  // doesn't drift into the Woody half.
   const xWeights = { citrus: -1, green: -0.8, fresh: -0.9, aquatic: -0.7, fruity: -0.3,
     floral: 0, spicy: 0.7, amber: 0.9, gourmand: 0.6, woody: 0.3, musk: 0.5, animalic: 0.8, powdery: 0.2 };
-  const yWeights = { citrus: 0.3, green: 0.5, fresh: 0.2, aquatic: -0.2, fruity: 0.7,
+  const yWeights = { citrus: 0.3, green: 0.5, fresh: 0.2, aquatic: 0, fruity: 0.7,
     floral: 1, spicy: -0.3, amber: -0.5, gourmand: -0.6, woody: -0.9, musk: -0.7, animalic: -0.8, powdery: 0.4 };
 
   for (const [cas, entry] of Object.entries(db)) {
+    // Skip pure-solvent / pure-carrier rows with no olfactive data. These
+    // would otherwise collapse to the origin with a fallback 'woods' colour
+    // and mislead users into thinking they belong to the Woody family.
+    const noteTxt = (entry.note || '').toString();
+    const odorTxt = (entry.odor?.type || '').toString();
+    const isNonAromatic =
+      !odorTxt &&
+      (!noteTxt || /^\s*N\/?A\b|solvent|carrier|fixative|additive|preservative|emulsifier|solubilizer/i.test(noteTxt));
+    if (isNonAromatic) continue;
     // Expand the default family tokens with space-split tokens from
     // odor_type so compound descriptors like "Woody Amber" or "Floral Green"
     // contribute to the projection instead of collapsing to 0,0.
