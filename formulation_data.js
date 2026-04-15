@@ -1316,44 +1316,50 @@ const _MAIN_COLORS = {
 };
 
 const FRAGRANCE_WHEEL = {
-  // Angles + widths follow Michael Edwards' published 2021 layout. Each of
-  // the 4 main-family bands occupies exactly 90° of the wheel, regardless
-  // of how many subfamilies it holds. Subfamily slices within a band are
-  // uniform-width inside the band: FLORAL and FRESH (4 subs each) get 22.5°
-  // slices; AMBER and WOODY (3 subs each) get 30° slices. That reproduces
-  // the "narrow-on-the-floral/fresh-side, wide-on-the-amber/woody-side"
-  // look of the reference wheel.
+  // Angles follow Michael Edwards' published 2021 layout. All 14 outer
+  // subfamily slices are uniform width (360/14 = 25.71°). Three of them —
+  // Fruity, Aromatic Fougère, and Woods — are "pure" transitional slices
+  // that sit in the gap between two main-family inner bands (see `mainOf`
+  // below). The other two transitionals (Floral Amber, Woody Amber) stay
+  // inside their anchor bands but render with a blended gradient fill.
   //
-  // Reading clockwise from SVG angle 270° (12 o'clock):
-  //   AMBER   (270°–0°) : Soft Amber → Amber → Woody Amber
-  //   WOODY   (0°–90°)  : Woods → Mossy Woods → Dry Woods
-  //   FRESH   (90°–180°): Aromatic → Citrus → Water → Green
-  //   FLORAL  (180°–270°): Fruity → Floral → Soft Floral → Floral Amber
-  // which matches FLORAL top-left, AMBER top-right, WOODY bottom-right,
-  // FRESH bottom-left exactly as Edwards prints.
+  // Reading clockwise from SVG 270° (12 o'clock):
+  //   AMBER band (270°–347°): Soft Amber → Amber → Woody Amber
+  //   [gap]                  : Woods (transitional, at 3 o'clock)
+  //   WOODY band (26°–77°)   : Mossy Woods → Dry Woods
+  //   [gap]                  : Aromatic (transitional, at 6 o'clock)
+  //   FRESH band (116°–193°) : Citrus → Water → Green
+  //   [gap]                  : Fruity (transitional, at 9 o'clock)
+  //   FLORAL band (219°–296°): Floral → Soft Floral → Floral Amber
+  // reproducing FLORAL top-left, AMBER top-right, WOODY bottom-right,
+  // FRESH bottom-left exactly as Edwards publishes.
   segments: [
-    // FRESH quadrant (lower-left, SVG 90°–180°, 4 × 22.5° slices)
-    { id: 'aromatic_fougere', quadrant: 'Fresh',  angle: 101.25, width: 22.5, color: '#a8b8c2' },
-    { id: 'citrus',           quadrant: 'Fresh',  angle: 123.75, width: 22.5, color: '#c5cbd3' },
-    { id: 'water',            quadrant: 'Fresh',  angle: 146.25, width: 22.5, color: '#9fb8cc' },
-    { id: 'green',            quadrant: 'Fresh',  angle: 168.75, width: 22.5, color: '#adb7c5' },
-    // FLORAL quadrant (upper-left, SVG 180°–270°, 4 × 22.5° slices)
-    { id: 'fruity',           quadrant: 'Floral', angle: 191.25, width: 22.5, color: null,
+    // FRESH band — 3 subs @ 25.71°, inner "FRESH NOTES" label covers them
+    { id: 'citrus',           quadrant: 'Fresh',  angle: 128.57, color: '#c5cbd3' },
+    { id: 'water',            quadrant: 'Fresh',  angle: 154.29, color: '#9fb8cc' },
+    { id: 'green',            quadrant: 'Fresh',  angle: 180,    color: '#adb7c5' },
+    // Pure transitional Fresh↔Floral — sits in the gap, no inner band
+    { id: 'fruity',           quadrant: 'Fresh/Floral', angle: 205.71, color: null,
       transitional: true, gradient: [_MAIN_COLORS.fresh, _MAIN_COLORS.floral] },
-    { id: 'floral',           quadrant: 'Floral', angle: 213.75, width: 22.5, color: '#b95c7f' },
-    { id: 'soft_floral',      quadrant: 'Floral', angle: 236.25, width: 22.5, color: '#e8b5c5' },
-    { id: 'floral_amber',     quadrant: 'Floral', angle: 258.75, width: 22.5, color: null,
+    // FLORAL band — 3 subs
+    { id: 'floral',           quadrant: 'Floral', angle: 231.43, color: '#b95c7f' },
+    { id: 'soft_floral',      quadrant: 'Floral', angle: 257.14, color: '#e8b5c5' },
+    { id: 'floral_amber',     quadrant: 'Floral', angle: 282.86, color: null,
       transitional: true, gradient: [_MAIN_COLORS.floral, _MAIN_COLORS.amber] },
-    // AMBER quadrant (upper-right, SVG 270°–360°, 3 × 30° slices)
-    { id: 'soft_amber',       quadrant: 'Amber',  angle: 285,    width: 30,   color: '#f5b596' },
-    { id: 'amber',            quadrant: 'Amber',  angle: 315,    width: 30,   color: '#e8856a' },
-    { id: 'woody_amber',      quadrant: 'Amber',  angle: 345,    width: 30,   color: null,
+    // AMBER band — 3 subs
+    { id: 'soft_amber',       quadrant: 'Amber',  angle: 308.57, color: '#f5b596' },
+    { id: 'amber',            quadrant: 'Amber',  angle: 334.29, color: '#e8856a' },
+    { id: 'woody_amber',      quadrant: 'Amber',  angle: 360,    color: null,
       transitional: true, gradient: [_MAIN_COLORS.amber, _MAIN_COLORS.woody] },
-    // WOODY quadrant (lower-right, SVG 0°–90°, 3 × 30° slices). Clockwise
-    // order from the Amber boundary: Woods → Mossy Woods → Dry Woods.
-    { id: 'woods',            quadrant: 'Woody',  angle: 15,     width: 30,   color: '#b5bf95' },
-    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 45,     width: 30,   color: '#9aa876' },
-    { id: 'dry_woods',        quadrant: 'Woody',  angle: 75,     width: 30,   color: '#7d8a5a' },
+    // Pure transitional Amber↔Woody — sits in the gap, no inner band
+    { id: 'woods',            quadrant: 'Amber/Woody', angle: 25.71, color: null,
+      transitional: true, gradient: [_MAIN_COLORS.amber, _MAIN_COLORS.woody] },
+    // WOODY band — 2 subs
+    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 51.43,  color: '#9aa876' },
+    { id: 'dry_woods',        quadrant: 'Woody',  angle: 77.14,  color: '#7d8a5a' },
+    // Pure transitional Woody↔Fresh — sits in the gap, no inner band
+    { id: 'aromatic_fougere', quadrant: 'Woody/Fresh', angle: 102.86, color: null,
+      transitional: true, gradient: [_MAIN_COLORS.woody, _MAIN_COLORS.fresh] },
   ],
 
   // Main-family base hues — exposed so renderers don't need to reach into
@@ -1365,24 +1371,42 @@ const FRAGRANCE_WHEEL = {
     woody:  '#8a9662',
   },
 
-  // Transitional subfamilies → [counter-clockwise neighbour, clockwise neighbour]
-  // Used by generateFromBrief's family-match scoring and by the SVG renderer
-  // to locate the correct gradient stops.
+  // Transitional subfamilies → [counter-clockwise neighbour, clockwise neighbour].
+  // Used by generateFromBrief's family-match scoring (to give partial credit
+  // to both adjacent primaries) and by the SVG renderer to locate gradient
+  // stops. Edwards positions FIVE slices as transitional: Fruity between
+  // Fresh↔Floral, Floral Amber between Floral↔Amber, Woody Amber between
+  // Amber↔Woody, Woods between Amber↔Woody (Woody-anchored), and Aromatic
+  // between Fresh↔Woody (Fresh-anchored).
   transitional: {
-    fruity:       ['citrus', 'floral'],
-    floral_amber: ['floral', 'amber'],
-    woody_amber:  ['amber',  'woods'],
+    fruity:           ['citrus',     'floral'],
+    floral_amber:     ['floral',     'amber'],
+    woody_amber:      ['amber',      'woods'],
+    woods:            ['woody_amber','mossy_woods'],
+    aromatic_fougere: ['dry_woods',  'citrus'],
   },
 
-  // Every subfamily → its owning main family
+  // Every NON-TRANSITIONAL subfamily → its owning main family. The three
+  // pure transitionals (Fruity, Aromatic, Woods) are intentionally absent
+  // from this map so they don't appear in any main-family arc band — the
+  // wheel renderer groups by mainOf, and a missing id produces an empty
+  // mainGroup slot, leaving that outer slice with no inner "NOTES" band
+  // behind it. This matches the published Edwards diagram where Fruity sits
+  // in the gap between FLORAL and FRESH, Aromatic in the gap between FRESH
+  // and WOODY, and Woods in the gap between WOODY and AMBER.
+  //
+  // Note: the other consumers that need a family-for-scoring (brief
+  // generator, detectDominantFamily, Odor Map colour) route through
+  // `familyToSegment` which still self-maps these ids — so brief scoring
+  // for "Fruity" picks Fruity materials, Odor Map colours them with their
+  // gradient[0], etc.
   mainOf: {
-    aromatic_fougere: 'fresh', citrus: 'fresh', water: 'fresh', green: 'fresh',
-    fruity: 'floral', // transitional — primary anchor is Floral in Edwards 2021
+    citrus: 'fresh', water: 'fresh', green: 'fresh',
     floral: 'floral', soft_floral: 'floral',
     floral_amber: 'floral',
     soft_amber: 'amber', amber: 'amber',
     woody_amber: 'amber',
-    dry_woods: 'woody', mossy_woods: 'woody', woods: 'woody',
+    dry_woods: 'woody', mossy_woods: 'woody',
   },
 
   familyToSegment: {
