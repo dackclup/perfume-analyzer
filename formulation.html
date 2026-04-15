@@ -3687,6 +3687,11 @@ function renderWheelTab() {
   let svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
     + 'viewBox="0 0 ' + size + ' ' + size + '" style="max-width:560px;width:100%;margin:0 auto;display:block">';
 
+  // Cream/ivory backdrop disc — matches the warm base of Edwards' printed
+  // wheel so the muted pastel slice colours read correctly even on a dark
+  // UI theme. Drawn first so every slice renders on top of it.
+  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (outerR + 10) + '" fill="#f4efe4"/>';
+
   // ─── <defs>: transitional gradients + curved text-paths for main labels ───
   let defs = '<defs>';
   for (const s of segments) {
@@ -3757,7 +3762,9 @@ function renderWheelTab() {
     });
 
     const fill = s.transitional ? 'url(#grad_' + s.id + ')' : s.color;
-    svg += '<path d="' + path + '" fill="' + fill + '" fill-opacity="' + (hasActive ? '0.95' : '0.8') + '" ';
+    // Full opacity so the muted Edwards pastels aren't darkened by the dark
+    // theme background. Active / inactive is conveyed via slight dim only.
+    svg += '<path d="' + path + '" fill="' + fill + '" fill-opacity="' + (hasActive ? '1' : '0.95') + '" ';
     svg += 'stroke="#fff" stroke-width="2" style="cursor:pointer" ';
     svg += 'onclick="filterByWheelSegment(\'' + s.id + '\')" ';
     svg += '><title>' + prettyLabel(s.id) + ' (' + s.quadrant + (s.transitional ? ' — transitional' : '') + ')</title></path>';
@@ -3810,7 +3817,7 @@ function renderWheelTab() {
     const path = 'M ' + x1o + ' ' + y1o + ' A ' + midR + ' ' + midR + ' 0 ' + large + ' 1 ' + x2o + ' ' + y2o +
       ' L ' + x1i + ' ' + y1i + ' A ' + innerR + ' ' + innerR + ' 0 ' + large + ' 0 ' + x2i + ' ' + y2i + ' Z';
     const mainColor = (FRAGRANCE_WHEEL.mainColors && FRAGRANCE_WHEEL.mainColors[main]) || '#888';
-    svg += '<path d="' + path + '" fill="' + mainColor + '" fill-opacity="0.88" stroke="#fff" stroke-width="2"/>';
+    svg += '<path d="' + path + '" fill="' + mainColor + '" fill-opacity="1" stroke="#fff" stroke-width="2"/>';
 
     svg += '<text font-size="14" fill="#fff" font-weight="700" letter-spacing="3" style="pointer-events:none">';
     // href is SVG 2; xlink:href keeps older mobile WebKit happy.
