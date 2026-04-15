@@ -1316,43 +1316,44 @@ const _MAIN_COLORS = {
 };
 
 const FRAGRANCE_WHEEL = {
-  // Angles follow Michael Edwards' published wheel layout (2021). Reading
-  // clockwise from the top of the circle (SVG angle 270°) the subfamilies
-  // appear in this order:
-  //   Soft Amber (= Soft Oriental) → Amber → Woody Amber → Woods →
-  //   Mossy Woods → Dry Woods → Aromatic → Citrus → Water → Green →
-  //   Fruity → Floral → Soft Floral → Floral Amber → (back to Soft Amber)
-  // which places FLORAL on the upper-left, AMBER on the upper-right, WOODY
-  // on the lower-right, and FRESH on the lower-left quadrants exactly as the
-  // reference wheel. SVG angle 0° is 3 o'clock and +θ runs clockwise, so the
-  // slice centres below are offset so that Aromatic sits near 6 o'clock.
+  // Angles + widths follow Michael Edwards' published 2021 layout. Each of
+  // the 4 main-family bands occupies exactly 90° of the wheel, regardless
+  // of how many subfamilies it holds. Subfamily slices within a band are
+  // uniform-width inside the band: FLORAL and FRESH (4 subs each) get 22.5°
+  // slices; AMBER and WOODY (3 subs each) get 30° slices. That reproduces
+  // the "narrow-on-the-floral/fresh-side, wide-on-the-amber/woody-side"
+  // look of the reference wheel.
+  //
+  // Reading clockwise from SVG angle 270° (12 o'clock):
+  //   AMBER   (270°–0°) : Soft Amber → Amber → Woody Amber
+  //   WOODY   (0°–90°)  : Woods → Mossy Woods → Dry Woods
+  //   FRESH   (90°–180°): Aromatic → Citrus → Water → Green
+  //   FLORAL  (180°–270°): Fruity → Floral → Soft Floral → Floral Amber
+  // which matches FLORAL top-left, AMBER top-right, WOODY bottom-right,
+  // FRESH bottom-left exactly as Edwards prints.
   segments: [
-    // Fresh quadrant (lower-left, clockwise starting just past 6 o'clock)
-    { id: 'aromatic_fougere', quadrant: 'Fresh',  angle: 77,  color: '#a8b8c2' },
-    { id: 'citrus',           quadrant: 'Fresh',  angle: 103, color: '#c5cbd3' },
-    { id: 'water',            quadrant: 'Fresh',  angle: 129, color: '#9fb8cc' },
-    { id: 'green',            quadrant: 'Fresh',  angle: 154, color: '#adb7c5' },
-    // Transitional Fresh → Floral
-    { id: 'fruity',           quadrant: 'Floral', angle: 180, color: null,
+    // FRESH quadrant (lower-left, SVG 90°–180°, 4 × 22.5° slices)
+    { id: 'aromatic_fougere', quadrant: 'Fresh',  angle: 101.25, width: 22.5, color: '#a8b8c2' },
+    { id: 'citrus',           quadrant: 'Fresh',  angle: 123.75, width: 22.5, color: '#c5cbd3' },
+    { id: 'water',            quadrant: 'Fresh',  angle: 146.25, width: 22.5, color: '#9fb8cc' },
+    { id: 'green',            quadrant: 'Fresh',  angle: 168.75, width: 22.5, color: '#adb7c5' },
+    // FLORAL quadrant (upper-left, SVG 180°–270°, 4 × 22.5° slices)
+    { id: 'fruity',           quadrant: 'Floral', angle: 191.25, width: 22.5, color: null,
       transitional: true, gradient: [_MAIN_COLORS.fresh, _MAIN_COLORS.floral] },
-    // Floral quadrant (upper-left)
-    { id: 'floral',           quadrant: 'Floral', angle: 206, color: '#b95c7f' },
-    { id: 'soft_floral',      quadrant: 'Floral', angle: 231, color: '#e8b5c5' },
-    // Transitional Floral → Amber
-    { id: 'floral_amber',     quadrant: 'Floral', angle: 257, color: null,
+    { id: 'floral',           quadrant: 'Floral', angle: 213.75, width: 22.5, color: '#b95c7f' },
+    { id: 'soft_floral',      quadrant: 'Floral', angle: 236.25, width: 22.5, color: '#e8b5c5' },
+    { id: 'floral_amber',     quadrant: 'Floral', angle: 258.75, width: 22.5, color: null,
       transitional: true, gradient: [_MAIN_COLORS.floral, _MAIN_COLORS.amber] },
-    // Amber quadrant (upper-right)
-    { id: 'soft_amber',       quadrant: 'Amber',  angle: 283, color: '#f5b596' },
-    { id: 'amber',            quadrant: 'Amber',  angle: 309, color: '#e8856a' },
-    // Transitional Amber → Woody
-    { id: 'woody_amber',      quadrant: 'Amber',  angle: 334, color: null,
+    // AMBER quadrant (upper-right, SVG 270°–360°, 3 × 30° slices)
+    { id: 'soft_amber',       quadrant: 'Amber',  angle: 285,    width: 30,   color: '#f5b596' },
+    { id: 'amber',            quadrant: 'Amber',  angle: 315,    width: 30,   color: '#e8856a' },
+    { id: 'woody_amber',      quadrant: 'Amber',  angle: 345,    width: 30,   color: null,
       transitional: true, gradient: [_MAIN_COLORS.amber, _MAIN_COLORS.woody] },
-    // Woody quadrant (lower-right). Order reversed from the legacy layout to
-    // match Edwards: clockwise from the Amber boundary comes Woods first,
-    // then Mossy Woods, then Dry Woods (closest to Aromatic).
-    { id: 'woods',            quadrant: 'Woody',  angle: 360, color: '#b5bf95' },
-    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 26,  color: '#9aa876' },
-    { id: 'dry_woods',        quadrant: 'Woody',  angle: 51,  color: '#7d8a5a' },
+    // WOODY quadrant (lower-right, SVG 0°–90°, 3 × 30° slices). Clockwise
+    // order from the Amber boundary: Woods → Mossy Woods → Dry Woods.
+    { id: 'woods',            quadrant: 'Woody',  angle: 15,     width: 30,   color: '#b5bf95' },
+    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 45,     width: 30,   color: '#9aa876' },
+    { id: 'dry_woods',        quadrant: 'Woody',  angle: 75,     width: 30,   color: '#7d8a5a' },
   ],
 
   // Main-family base hues — exposed so renderers don't need to reach into
