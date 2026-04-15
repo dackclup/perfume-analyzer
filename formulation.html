@@ -3714,7 +3714,16 @@ function renderWheelTab() {
   for (const [main, segs] of Object.entries(mainGroups)) {
     const minA = segs[0].angle - segDeg/2;
     const maxA = segs[segs.length - 1].angle + segDeg/2;
-    const midA = (minA + maxA) / 2;
+    // When a main group crosses the 0°/360° wrap (e.g. Woody spans 347°→63°
+    // under the Edwards layout), maxA is numerically LESS than minA. The raw
+    // average would yield a phantom midpoint on the far side of the circle
+    // and flip the isBottom test the wrong way. Bump the wrapped endpoint
+    // by 360 before averaging, then normalise back into [0, 360) for the
+    // classifier. The arc endpoints used by SVG stay on the raw values —
+    // SVG arcs are defined by cartesian endpoints, so the fill path is
+    // unaffected by the wrap.
+    const maxAForMid = maxA < minA ? maxA + 360 : maxA;
+    const midA = ((minA + maxAForMid) / 2) % 360;
     const textR = (midR + innerR) / 2;
     const isBottom = midA > 0 && midA < 180;
     const aStart = (isBottom ? maxA : minA) * Math.PI / 180;
