@@ -1931,6 +1931,35 @@ const RADAR_AXES = [
  * @param {Object} matData
  * @returns {Object} {axis: weight 0-1}
  */
+// Family token → one or more of the 12 RADAR_AXES the material contributes to.
+// Hoisted out of materialToRadarWeights so scoreFamilyMatch() (brief scoring)
+// can reuse the same mapping for target-family lookup.
+const FAMILY_TO_AXES = {
+  // Legacy keys — materials in PERFUMERY_DATA still emit these tokens
+  citrus: ['citrus', 'fresh'], green: ['green', 'fresh'],
+  herbal: ['green', 'fresh'], aldehydic: ['fresh', 'floral'],
+  aquatic: ['fresh'], ozonic: ['fresh'], fresh: ['fresh'],
+  camphoraceous: ['fresh'], floral: ['floral'], fruity: ['fruity'],
+  sweet: ['gourmand'], gourmand: ['gourmand'],
+  lactonic: ['fruity', 'gourmand'], spicy: ['spicy'],
+  powdery: ['powdery'], woody: ['woody'],
+  balsamic: ['amber', 'woody'], resinous: ['amber', 'woody'],
+  amber: ['amber'], animalic: ['animalic'], leather: ['animalic'],
+  musk: ['musk'], smoky: ['woody', 'animalic'],
+  vanilla: ['gourmand'], rose: ['floral'], jasmine: ['floral'],
+  marine: ['fresh'], earthy: ['woody'],
+  // Michael Edwards 2021 subfamily IDs → existing 12 radar axes
+  aromatic_fougere: ['green', 'fresh'],
+  water:            ['fresh'],
+  soft_floral:      ['floral', 'powdery'],
+  floral_amber:     ['floral', 'amber'],
+  soft_amber:       ['gourmand', 'amber'],
+  woody_amber:      ['amber', 'woody', 'animalic'],
+  dry_woods:        ['woody', 'animalic'],
+  mossy_woods:      ['woody'],
+  woods:            ['woody'],
+};
+
 function materialToRadarWeights(matData) {
   const weights = {};
   RADAR_AXES.forEach(a => weights[a] = 0);
@@ -1938,39 +1967,48 @@ function materialToRadarWeights(matData) {
   const families = getMaterialFamilies(matData);
   if (!families.length) return weights;
 
-  const familyToAxes = {
-    // Legacy keys — materials in PERFUMERY_DATA still emit these tokens
-    citrus: ['citrus', 'fresh'], green: ['green', 'fresh'],
-    herbal: ['green', 'fresh'], aldehydic: ['fresh', 'floral'],
-    aquatic: ['fresh'], ozonic: ['fresh'], fresh: ['fresh'],
-    camphoraceous: ['fresh'], floral: ['floral'], fruity: ['fruity'],
-    sweet: ['gourmand'], gourmand: ['gourmand'],
-    lactonic: ['fruity', 'gourmand'], spicy: ['spicy'],
-    powdery: ['powdery'], woody: ['woody'],
-    balsamic: ['amber', 'woody'], resinous: ['amber', 'woody'],
-    amber: ['amber'], animalic: ['animalic'], leather: ['animalic'],
-    musk: ['musk'], smoky: ['woody', 'animalic'],
-    vanilla: ['gourmand'], rose: ['floral'], jasmine: ['floral'],
-    marine: ['fresh'], earthy: ['woody'],
-    // Michael Edwards 2021 subfamily IDs → existing 12 radar axes
-    aromatic_fougere: ['green', 'fresh'],
-    water:            ['fresh'],
-    soft_floral:      ['floral', 'powdery'],
-    floral_amber:     ['floral', 'amber'],
-    soft_amber:       ['gourmand', 'amber'],
-    woody_amber:      ['amber', 'woody', 'animalic'],
-    dry_woods:        ['woody', 'animalic'],
-    mossy_woods:      ['woody'],
-    woods:            ['woody'],
-  };
-
   for (const fam of families) {
-    const axes = familyToAxes[fam.toLowerCase()] || [];
+    const axes = FAMILY_TO_AXES[fam.toLowerCase()] || [];
     for (const ax of axes) {
       if (weights[ax] !== undefined) weights[ax] = Math.min(weights[ax] + 0.5, 1.0);
     }
   }
   return weights;
+}
+
+/**
+ * Score how well a material (given its radar-axis weights) matches a target
+ * family or subfamily. Brief-targets are often subfamily IDs that aren't
+ * themselves radar axes (e.g. floral_amber, woody_amber, soft_floral);
+ * translate via FAMILY_TO_AXES and take the max weight across the mapped
+ * axes. For transitional subfamilies, also grant half-credit to materials
+ * that strongly match either adjacent main family — so picking "Floral
+ * Amber" still surfaces good Floral or Amber candidates rather than nothing
+ * when the material lacks both tags.
+ *
+ * @param {string} target — target family or subfamily id (lower-case)
+ * @param {Object} radarWeights — material's 12-axis weights
+ * @returns {number} 0–1
+ */
+function scoreFamilyMatch(target, radarWeights) {
+  if (!target) return 0;
+  const lookup = (fam) => {
+    // Prefer subfamily → axes mapping. Fall back to treating target as a
+    // radar axis if it is one (citrus, floral, …).
+    const axes = FAMILY_TO_AXES[fam] || (radarWeights[fam] != null ? [fam] : []);
+    let best = 0;
+    for (const ax of axes) best = Math.max(best, radarWeights[ax] || 0);
+    return best;
+  };
+
+  const selfScore = lookup(target);
+  const transitional = (typeof FRAGRANCE_WHEEL !== 'undefined'
+    && FRAGRANCE_WHEEL.transitional) ? FRAGRANCE_WHEEL.transitional[target] : null;
+  if (transitional) {
+    const [left, right] = transitional;
+    return Math.max(selfScore, 0.5 * lookup(left), 0.5 * lookup(right));
+  }
+  return selfScore;
 }
 
 /**
@@ -2409,11 +2447,14 @@ function generateFromBrief(brief, db, graph) {
     if (!entry.note) continue; // skip materials without note classification
 
     // Family score: how well does this material match the target family?
+    // scoreFamilyMatch handles subfamily targets (e.g. floral_amber) that
+    // aren't radar axes, and gives partial credit to adjacent mains when the
+    // target is a transitional subfamily.
     const radarWeights = materialToRadarWeights({
       odor_type: entry.odor?.type,
       primaryFamilies: [], secondaryFamilies: [], facets: [],
     });
-    const familyScore = radarWeights[familyLower] || 0;
+    const familyScore = scoreFamilyMatch(familyLower, radarWeights);
 
     // Mood score: overlap with target moods
     let moodScore = 0;
