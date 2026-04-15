@@ -3654,7 +3654,10 @@ function renderWheelTab() {
   const el = document.getElementById('wheelContent');
   const segments = FRAGRANCE_WHEEL.segments;
   const mats = formulation.materials;
-  const segDeg = 360 / segments.length;
+  // Per-segment widths — Edwards' layout uses 22.5° for FLORAL/FRESH (4 subs)
+  // and 30° for AMBER/WOODY (3 subs). Fall back to a uniform 360/N if a data
+  // entry forgot to declare width so legacy wheels still render.
+  const segWidth = s => s.width || (360 / segments.length);
 
   // Geometry — larger than before so two rings + labels are legible.
   // outerR leaves a small margin inside the viewBox so subfamily labels
@@ -3688,8 +3691,9 @@ function renderWheelTab() {
   let defs = '<defs>';
   for (const s of segments) {
     if (!s.transitional || !s.gradient) continue;
-    const a1 = (s.angle - segDeg/2) * Math.PI / 180;
-    const a2 = (s.angle + segDeg/2) * Math.PI / 180;
+    const sw = segWidth(s);
+    const a1 = (s.angle - sw/2) * Math.PI / 180;
+    const a2 = (s.angle + sw/2) * Math.PI / 180;
     const rMid = (outerR + midR) / 2;
     const x1 = cx + rMid * Math.cos(a1), y1 = cy + rMid * Math.sin(a1);
     const x2 = cx + rMid * Math.cos(a2), y2 = cy + rMid * Math.sin(a2);
@@ -3712,8 +3716,8 @@ function renderWheelTab() {
   //     sweep=0) so the arc traces in −θ, moving letter tops to the inside
   //     of the curve = pointing UP in screen space.
   for (const [main, segs] of Object.entries(mainGroups)) {
-    const minA = segs[0].angle - segDeg/2;
-    const maxA = segs[segs.length - 1].angle + segDeg/2;
+    const minA = segs[0].angle - segWidth(segs[0])/2;
+    const maxA = segs[segs.length - 1].angle + segWidth(segs[segs.length - 1])/2;
     // When a main group crosses the 0°/360° wrap (e.g. Woody spans 347°→63°
     // under the Edwards layout), maxA is numerically LESS than minA. The raw
     // average would yield a phantom midpoint on the far side of the circle
@@ -3740,13 +3744,14 @@ function renderWheelTab() {
   // ─── Outer ring: subfamily slices ─────────────────────────────────────
   for (let i = 0; i < segments.length; i++) {
     const s = segments[i];
-    const a1 = (s.angle - segDeg/2) * Math.PI / 180;
-    const a2 = (s.angle + segDeg/2) * Math.PI / 180;
+    const sw = segWidth(s);
+    const a1 = (s.angle - sw/2) * Math.PI / 180;
+    const a2 = (s.angle + sw/2) * Math.PI / 180;
     const x1o = cx + outerR * Math.cos(a1), y1o = cy + outerR * Math.sin(a1);
     const x2o = cx + outerR * Math.cos(a2), y2o = cy + outerR * Math.sin(a2);
     const x1i = cx + midR   * Math.cos(a2), y1i = cy + midR   * Math.sin(a2);
     const x2i = cx + midR   * Math.cos(a1), y2i = cy + midR   * Math.sin(a1);
-    const large = segDeg > 180 ? 1 : 0;
+    const large = sw > 180 ? 1 : 0;
     const path = 'M ' + x1o + ' ' + y1o + ' A ' + outerR + ' ' + outerR + ' 0 ' + large + ' 1 ' + x2o + ' ' + y2o +
       ' L ' + x1i + ' ' + y1i + ' A ' + midR + ' ' + midR + ' 0 ' + large + ' 0 ' + x2i + ' ' + y2i + ' Z';
 
@@ -3790,8 +3795,8 @@ function renderWheelTab() {
 
   // ─── Inner ring: 4 main-family bands with curved "FAMILY NOTES" labels ──
   for (const [main, segs] of Object.entries(mainGroups)) {
-    const minA = segs[0].angle - segDeg/2;
-    const maxA = segs[segs.length - 1].angle + segDeg/2;
+    const minA = segs[0].angle - segWidth(segs[0])/2;
+    const maxA = segs[segs.length - 1].angle + segWidth(segs[segs.length - 1])/2;
     const a1 = minA * Math.PI / 180;
     const a2 = maxA * Math.PI / 180;
     const x1o = cx + midR   * Math.cos(a1), y1o = cy + midR   * Math.sin(a1);
