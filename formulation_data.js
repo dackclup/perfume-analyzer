@@ -1335,30 +1335,34 @@ const FRAGRANCE_WHEEL = {
   // FRESH bottom-left exactly as Edwards publishes.
   segments: [
     // FRESH band — 3 subs @ 25.71°, inner "FRESH NOTES" label covers them
-    { id: 'citrus',           quadrant: 'Fresh',  angle: 128.57, color: '#c5cbd3' },
-    { id: 'water',            quadrant: 'Fresh',  angle: 154.29, color: '#9fb8cc' },
-    { id: 'green',            quadrant: 'Fresh',  angle: 180,    color: '#adb7c5' },
-    // Pure transitional Fresh↔Floral — sits in the gap, no inner band
-    { id: 'fruity',           quadrant: 'Fresh/Floral', angle: 205.71, color: null,
+    { id: 'citrus',           quadrant: 'Fresh',  angle: 102.86, color: '#c5cbd3' },
+    { id: 'water',            quadrant: 'Fresh',  angle: 128.57, color: '#9fb8cc' },
+    { id: 'green',            quadrant: 'Fresh',  angle: 154.29, color: '#adb7c5' },
+    // Pure transitional Fresh↔Floral — sits in the gap, no inner band.
+    // Centre at 180° = 9 o'clock so it aligns with Edwards.
+    { id: 'fruity',           quadrant: 'Fresh/Floral', angle: 180, color: null,
       transitional: true, gradient: [_MAIN_COLORS.fresh, _MAIN_COLORS.floral] },
     // FLORAL band — 3 subs
-    { id: 'floral',           quadrant: 'Floral', angle: 231.43, color: '#b95c7f' },
-    { id: 'soft_floral',      quadrant: 'Floral', angle: 257.14, color: '#e8b5c5' },
-    { id: 'floral_amber',     quadrant: 'Floral', angle: 282.86, color: null,
+    { id: 'floral',           quadrant: 'Floral', angle: 205.71, color: '#b95c7f' },
+    { id: 'soft_floral',      quadrant: 'Floral', angle: 231.43, color: '#e8b5c5' },
+    // Floral Amber (= "Floral Oriental") sits just LEFT of 12 o'clock in
+    // Edwards' layout — not right of it.
+    { id: 'floral_amber',     quadrant: 'Floral', angle: 257.14, color: null,
       transitional: true, gradient: [_MAIN_COLORS.floral, _MAIN_COLORS.amber] },
-    // AMBER band — 3 subs
-    { id: 'soft_amber',       quadrant: 'Amber',  angle: 308.57, color: '#f5b596' },
-    { id: 'amber',            quadrant: 'Amber',  angle: 334.29, color: '#e8856a' },
-    { id: 'woody_amber',      quadrant: 'Amber',  angle: 360,    color: null,
+    // AMBER band — 3 subs. Soft Amber (= "Soft Oriental") is the FIRST
+    // slice clockwise past 12 o'clock.
+    { id: 'soft_amber',       quadrant: 'Amber',  angle: 282.86, color: '#f5b596' },
+    { id: 'amber',            quadrant: 'Amber',  angle: 308.57, color: '#e8856a' },
+    { id: 'woody_amber',      quadrant: 'Amber',  angle: 334.29, color: null,
       transitional: true, gradient: [_MAIN_COLORS.amber, _MAIN_COLORS.woody] },
-    // Pure transitional Amber↔Woody — sits in the gap, no inner band
-    { id: 'woods',            quadrant: 'Amber/Woody', angle: 25.71, color: null,
+    // Pure transitional Amber↔Woody — sits in the gap at 3 o'clock.
+    { id: 'woods',            quadrant: 'Amber/Woody', angle: 360, color: null,
       transitional: true, gradient: [_MAIN_COLORS.amber, _MAIN_COLORS.woody] },
     // WOODY band — 2 subs
-    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 51.43,  color: '#9aa876' },
-    { id: 'dry_woods',        quadrant: 'Woody',  angle: 77.14,  color: '#7d8a5a' },
-    // Pure transitional Woody↔Fresh — sits in the gap, no inner band
-    { id: 'aromatic_fougere', quadrant: 'Woody/Fresh', angle: 102.86, color: null,
+    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 25.71,  color: '#9aa876' },
+    { id: 'dry_woods',        quadrant: 'Woody',  angle: 51.43,  color: '#7d8a5a' },
+    // Pure transitional Woody↔Fresh — sits in the gap at 6 o'clock.
+    { id: 'aromatic_fougere', quadrant: 'Woody/Fresh', angle: 77.14, color: null,
       transitional: true, gradient: [_MAIN_COLORS.woody, _MAIN_COLORS.fresh] },
   ],
 
