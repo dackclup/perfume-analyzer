@@ -2655,17 +2655,27 @@ function buildOdorMap(db, formulationCAS) {
 
     const families = getMaterialFamilies({ odor_type: entry.odor?.type, primaryFamilies: [], secondaryFamilies: [], facets: [] });
     const primaryFamily = families[0] || 'other';
+    // Fallback id is 'woods' (plural) — the Edwards 2021 subfamily id for the
+    // Woody quadrant. Using 'woody' silently misses `.segments.find()` and
+    // every unclassified material rendered as the '#888' grey fallback.
     const segment = (typeof FRAGRANCE_WHEEL !== 'undefined' && FRAGRANCE_WHEEL.familyToSegment)
-      ? FRAGRANCE_WHEEL.familyToSegment[primaryFamily.toLowerCase()] || 'woody' : 'woody';
+      ? FRAGRANCE_WHEEL.familyToSegment[primaryFamily.toLowerCase()] || 'woods' : 'woods';
     const segData = (typeof FRAGRANCE_WHEEL !== 'undefined')
       ? FRAGRANCE_WHEEL.segments.find(s => s.id === segment) : null;
+    // Transitional segments expose `color: null` + a two-stop gradient. Fall
+    // back to the gradient's first stop so map dots for fruity / floral_amber
+    // / woody_amber materials don't render as `fill="null"` (= black/
+    // invisible on dark theme).
+    const color = segData
+      ? (segData.color || (segData.gradient && segData.gradient[0]) || '#888')
+      : '#888';
 
     points.push({
       cas, name: entry.name,
       x: roundN(x, 3), y: roundN(y, 3),
       note: entry.note || '',
       family: primaryFamily,
-      color: segData ? segData.color : '#888',
+      color,
       inFormulation: formulationCAS.has(cas),
     });
   }
