@@ -1316,31 +1316,43 @@ const _MAIN_COLORS = {
 };
 
 const FRAGRANCE_WHEEL = {
+  // Angles follow Michael Edwards' published wheel layout (2021). Reading
+  // clockwise from the top of the circle (SVG angle 270°) the subfamilies
+  // appear in this order:
+  //   Soft Amber (= Soft Oriental) → Amber → Woody Amber → Woods →
+  //   Mossy Woods → Dry Woods → Aromatic → Citrus → Water → Green →
+  //   Fruity → Floral → Soft Floral → Floral Amber → (back to Soft Amber)
+  // which places FLORAL on the upper-left, AMBER on the upper-right, WOODY
+  // on the lower-right, and FRESH on the lower-left quadrants exactly as the
+  // reference wheel. SVG angle 0° is 3 o'clock and +θ runs clockwise, so the
+  // slice centres below are offset so that Aromatic sits near 6 o'clock.
   segments: [
-    // Fresh quadrant (clockwise from top)
-    { id: 'aromatic_fougere', quadrant: 'Fresh',  angle: 0,   color: '#a8b8c2' },
-    { id: 'citrus',           quadrant: 'Fresh',  angle: 26,  color: '#c5cbd3' },
-    { id: 'water',            quadrant: 'Fresh',  angle: 51,  color: '#9fb8cc' },
-    { id: 'green',            quadrant: 'Fresh',  angle: 77,  color: '#adb7c5' },
+    // Fresh quadrant (lower-left, clockwise starting just past 6 o'clock)
+    { id: 'aromatic_fougere', quadrant: 'Fresh',  angle: 77,  color: '#a8b8c2' },
+    { id: 'citrus',           quadrant: 'Fresh',  angle: 103, color: '#c5cbd3' },
+    { id: 'water',            quadrant: 'Fresh',  angle: 129, color: '#9fb8cc' },
+    { id: 'green',            quadrant: 'Fresh',  angle: 154, color: '#adb7c5' },
     // Transitional Fresh → Floral
-    { id: 'fruity',           quadrant: 'Fresh',  angle: 103, color: null,
+    { id: 'fruity',           quadrant: 'Floral', angle: 180, color: null,
       transitional: true, gradient: [_MAIN_COLORS.fresh, _MAIN_COLORS.floral] },
-    // Floral quadrant
-    { id: 'floral',           quadrant: 'Floral', angle: 129, color: '#b95c7f' },
-    { id: 'soft_floral',      quadrant: 'Floral', angle: 154, color: '#e8b5c5' },
+    // Floral quadrant (upper-left)
+    { id: 'floral',           quadrant: 'Floral', angle: 206, color: '#b95c7f' },
+    { id: 'soft_floral',      quadrant: 'Floral', angle: 231, color: '#e8b5c5' },
     // Transitional Floral → Amber
-    { id: 'floral_amber',     quadrant: 'Floral', angle: 180, color: null,
+    { id: 'floral_amber',     quadrant: 'Floral', angle: 257, color: null,
       transitional: true, gradient: [_MAIN_COLORS.floral, _MAIN_COLORS.amber] },
-    // Amber quadrant
-    { id: 'soft_amber',       quadrant: 'Amber',  angle: 206, color: '#f5b596' },
-    { id: 'amber',            quadrant: 'Amber',  angle: 231, color: '#e8856a' },
+    // Amber quadrant (upper-right)
+    { id: 'soft_amber',       quadrant: 'Amber',  angle: 283, color: '#f5b596' },
+    { id: 'amber',            quadrant: 'Amber',  angle: 309, color: '#e8856a' },
     // Transitional Amber → Woody
-    { id: 'woody_amber',      quadrant: 'Amber',  angle: 257, color: null,
+    { id: 'woody_amber',      quadrant: 'Amber',  angle: 334, color: null,
       transitional: true, gradient: [_MAIN_COLORS.amber, _MAIN_COLORS.woody] },
-    // Woody quadrant
-    { id: 'dry_woods',        quadrant: 'Woody',  angle: 283, color: '#7d8a5a' },
-    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 308, color: '#9aa876' },
-    { id: 'woods',            quadrant: 'Woody',  angle: 334, color: '#b5bf95' },
+    // Woody quadrant (lower-right). Order reversed from the legacy layout to
+    // match Edwards: clockwise from the Amber boundary comes Woods first,
+    // then Mossy Woods, then Dry Woods (closest to Aromatic).
+    { id: 'woods',            quadrant: 'Woody',  angle: 360, color: '#b5bf95' },
+    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 26,  color: '#9aa876' },
+    { id: 'dry_woods',        quadrant: 'Woody',  angle: 51,  color: '#7d8a5a' },
   ],
 
   // Main-family base hues — exposed so renderers don't need to reach into
@@ -1364,7 +1376,7 @@ const FRAGRANCE_WHEEL = {
   // Every subfamily → its owning main family
   mainOf: {
     aromatic_fougere: 'fresh', citrus: 'fresh', water: 'fresh', green: 'fresh',
-    fruity: 'fresh', // transitional — primary anchor is Fresh
+    fruity: 'floral', // transitional — primary anchor is Floral in Edwards 2021
     floral: 'floral', soft_floral: 'floral',
     floral_amber: 'floral',
     soft_amber: 'amber', amber: 'amber',
