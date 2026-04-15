@@ -2618,12 +2618,13 @@ function generateFromBrief(brief, db, graph) {
 // ─────────────────────────────────────────────────────────────
 // C1: Odor Map — 2D projection of material space
 // Uses PCA-like approach: project 12-axis radar onto 2 axes
-// that capture the most variance (Fresh↔Oriental, Floral↔Woody)
+// that capture the most variance (Fresh↔Amber, Floral↔Woody).
+// Axis labels align with the Michael Edwards 2021 wheel quadrants.
 // ─────────────────────────────────────────────────────────────
 
 /**
  * Compute 2D coordinates for all materials in the database.
- * Axis 1 (x): Fresh/Citrus/Green ← → Oriental/Amber/Spicy
+ * Axis 1 (x): Fresh/Citrus/Green ← → Amber (gourmand/soft_amber/spicy)
  * Axis 2 (y): Floral/Fruity ← → Woody/Earthy/Musk
  * @param {Object} db - material database
  * @returns {Array} [{cas, name, x, y, note, family, inFormulation}]
