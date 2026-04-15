@@ -526,25 +526,32 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
       </div>
       <div class="control-group">
         <div class="control-label"><span>Olfactive Family</span></div>
+        <!-- Michael Edwards 2021–2026 Fragrance Wheel. 4 main families ×
+             14 subfamilies. Fruity / Floral Amber / Woody Amber are
+             transitional — they bridge two adjacent main families. -->
         <select id="briefFamily">
-          <option value="citrus">Citrus</option>
-          <option value="fresh">Fresh / Aquatic</option>
-          <option value="aquatic">Aquatic / Marine</option>
-          <option value="green">Green / Herbal</option>
-          <option value="aromatic">Aromatic / Fougère</option>
-          <option value="fruity">Fruity</option>
-          <option value="floral">Floral</option>
-          <option value="soft_floral">Soft Floral / Powdery</option>
-          <option value="floral_oriental">Floral Oriental</option>
-          <option value="oriental">Oriental / Amber</option>
-          <option value="spicy">Spicy</option>
-          <option value="gourmand">Gourmand</option>
-          <option value="woody">Woody</option>
-          <option value="mossy">Mossy / Chypre</option>
-          <option value="dry_woods">Dry Woods / Leather</option>
-          <option value="amber">Amber / Balsamic</option>
-          <option value="musk">Musk / Clean</option>
-          <option value="animalic">Animalic / Leather</option>
+          <optgroup label="Fresh">
+            <option value="aromatic_fougere">Aromatic Fougère</option>
+            <option value="citrus">Citrus</option>
+            <option value="water">Water</option>
+            <option value="green">Green</option>
+            <option value="fruity">Fruity (transitional)</option>
+          </optgroup>
+          <optgroup label="Floral">
+            <option value="floral">Floral</option>
+            <option value="soft_floral">Soft Floral</option>
+            <option value="floral_amber">Floral Amber (transitional)</option>
+          </optgroup>
+          <optgroup label="Amber">
+            <option value="soft_amber">Soft Amber</option>
+            <option value="amber">Amber</option>
+            <option value="woody_amber">Woody Amber (transitional)</option>
+          </optgroup>
+          <optgroup label="Woody">
+            <option value="dry_woods">Dry Woods</option>
+            <option value="mossy_woods">Mossy Woods</option>
+            <option value="woods">Woods</option>
+          </optgroup>
         </select>
       </div>
       <div class="control-group">
