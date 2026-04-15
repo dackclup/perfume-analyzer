@@ -439,7 +439,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
     <!-- Tab 8: Odor Map (C1) -->
     <div class="tab-panel" id="tab-map">
       <h3>Odor Map</h3>
-      <p class="panel-desc">CARTO-inspired 2D projection — 446 materials positioned by olfactive similarity. Formulation materials highlighted.</p>
+      <p class="panel-desc">CARTO-inspired 2D projection — aromatic materials positioned by olfactive similarity. Formulation materials highlighted.</p>
       <div id="mapContent">
         <div class="empty-state"><p>2D odor space visualization</p></div>
       </div>
@@ -4021,7 +4021,7 @@ function renderMapTab() {
   svg += '</svg>';
 
   let html = '<div class="analysis-card">' + svg;
-  html += '<p class="panel-desc" style="margin-top:8px">446 materials positioned by olfactive profile. ';
+  html += '<p class="panel-desc" style="margin-top:8px">' + points.length + ' aromatic materials positioned by olfactive profile. ';
   html += 'Large circles = your formulation. Click any dot to add it.</p>';
   html += '</div>';
 

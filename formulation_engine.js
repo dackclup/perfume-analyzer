@@ -2734,16 +2734,24 @@ function buildOdorMap(db, formulationCAS) {
   const yWeights = { citrus: 0.3, green: 0.5, fresh: 0.2, aquatic: 0, fruity: 0.7,
     floral: 1, spicy: -0.3, amber: -0.5, gourmand: -0.6, woody: -0.9, musk: -0.7, animalic: -0.8, powdery: 0.4 };
 
+  // Tokens that aren't olfactive families. If a row's odor_type consists
+  // ONLY of these, or is empty while the note flags a non-aromatic role,
+  // exclude the row from the map.
+  const nonAromaticRe = /^(solvent|carrier|fixative|additive|preservative|emulsifier|solubilizer|humectant|antioxidant)$/i;
+
   for (const [cas, entry] of Object.entries(db)) {
-    // Skip pure-solvent / pure-carrier rows with no olfactive data. These
-    // would otherwise collapse to the origin with a fallback 'woods' colour
-    // and mislead users into thinking they belong to the Woody family.
+    // A row is non-aromatic when either
+    //   (a) its odor.type exists but every whitespace/comma/slash token is
+    //       in the non-aromatic keyword set (e.g. "Solvent / Fixative" for
+    //       Triacetin, Triethyl Citrate, Diethyl Phthalate), OR
+    //   (b) its odor.type is empty and its note reads like a carrier tag
+    //       ("N/A — carrier", "Preservative", …).
     const noteTxt = (entry.note || '').toString();
     const odorTxt = (entry.odor?.type || '').toString();
-    const isNonAromatic =
-      !odorTxt &&
-      (!noteTxt || /^\s*N\/?A\b|solvent|carrier|fixative|additive|preservative|emulsifier|solubilizer/i.test(noteTxt));
-    if (isNonAromatic) continue;
+    const odorTokens = _tokenizeOdorType(odorTxt);
+    const odorAllNonAromatic = odorTokens.length > 0 && odorTokens.every(t => nonAromaticRe.test(t));
+    const noteLooksNonAromatic = !noteTxt || /^\s*N\/?A\b|solvent|carrier|fixative|additive|preservative|emulsifier|solubilizer/i.test(noteTxt);
+    if (odorAllNonAromatic || (!odorTxt && noteLooksNonAromatic)) continue;
     // Expand the default family tokens with space-split tokens from
     // odor_type so compound descriptors like "Woody Amber" or "Floral Green"
     // contribute to the projection instead of collapsing to 0,0.
