@@ -673,6 +673,47 @@ const PRIMARY_FAMILY_LABELS = {
   balsamic:'Balsamic', resinous:'Resinous', amber:'Amber', animalic:'Animalic',
   leather:'Leather', musk:'Musk', smoky:'Smoky'
 };
+
+// ── Michael Edwards 2021 filter buckets ─────────────────────────────
+// Collapse the 23 legacy PRIMARY_FAMILIES into the 4 main families + 3
+// transitional subfamilies of the Edwards wheel. The Primary Family filter
+// drawer renders one chip per Edwards bucket; each bucket absorbs a Set of
+// legacy tokens (resolved via the activeEdwardsFamilies → token expansion
+// before running the AND-within match). This keeps the stored
+// `primaryFamilies` / `secondaryFamilies` arrays on each material
+// unchanged — the aggregation happens only at filter time.
+const EDWARDS_FAMILIES = [
+  'floral_note', 'amber_note', 'woody_note', 'fresh_note',
+  'floral_fresh_note', 'woody_amber_note', 'fresh_woody_note',
+];
+const EDWARDS_FAMILY_LABELS = {
+  floral_note:       'Floral note',
+  amber_note:        'Amber note',
+  woody_note:        'Woody note',
+  fresh_note:        'Fresh note',
+  floral_fresh_note: 'Floral Fresh note',
+  woody_amber_note:  'Woody Amber note',
+  fresh_woody_note:  'Fresh Woody note',
+};
+const EDWARDS_TO_LEGACY = {
+  floral_note:       new Set(['floral']),
+  amber_note:        new Set(['amber', 'balsamic', 'resinous', 'spicy', 'gourmand', 'sweet', 'lactonic', 'musk', 'powdery']),
+  woody_note:        new Set(['woody', 'earthy', 'mossy', 'smoky', 'leather']),
+  fresh_note:        new Set(['fresh', 'citrus', 'green', 'aquatic', 'ozonic', 'aldehydic']),
+  floral_fresh_note: new Set(['fruity']),
+  woody_amber_note:  new Set(['animalic']),
+  fresh_woody_note:  new Set(['herbal', 'camphoraceous']),
+};
+// Given a material's legacy family set, return the Edwards buckets it
+// belongs to. Used for chip visibility ("show this bucket only if at
+// least one candidate material lands in it").
+function _edwardsBucketsForLegacy(legacySet) {
+  const out = new Set();
+  for (const [bucket, toks] of Object.entries(EDWARDS_TO_LEGACY)) {
+    for (const t of toks) if (legacySet.has(t)) { out.add(bucket); break; }
+  }
+  return out;
+}
 // Build a snake_case facet token into a presentable label.
 function facetLabel(t) {
   if (!t) return '';
@@ -1576,13 +1617,22 @@ function _axesFailedBy(fc, cas) {
   // Source (single-value)
   const sourceSet = _filterAxes.source.set;
   if (sourceSet.size && !sourceSet.has(fc.source)) failed.add('source');
-  // Primary Family — AND-within against primary ∪ secondary union.
+  // Primary Family — AND-within on Edwards buckets. Each active bucket is
+  // expanded to its legacy-token Set; the bucket is satisfied if ANY token
+  // from that Set appears in the material's primaryFamilies ∪ secondary.
+  // All active buckets must pass.
   if (activePrimaryFamilyFilters.size) {
     const combined = new Set([
       ...(fc.primaryFamilies || []),
       ...(fc.secondaryFamilies || [])
     ]);
-    for (const fam of activePrimaryFamilyFilters) if (!combined.has(fam)) { failed.add('primaryFamily'); break; }
+    for (const bucket of activePrimaryFamilyFilters) {
+      const toks = EDWARDS_TO_LEGACY[bucket];
+      if (!toks) continue;
+      let hit = false;
+      for (const t of toks) if (combined.has(t)) { hit = true; break; }
+      if (!hit) { failed.add('primaryFamily'); break; }
+    }
   }
   // Facet
   if (activeFacetFilters.size) {
@@ -1661,9 +1711,14 @@ function _updateFilterVisibility() {
   // Primary Family / Facet chip visibility — same "minus-self" logic
   // via the primaryFamHas / facetHas marker maps built above. Selected
   // chips are always kept visible so the user can deselect them.
-  document.querySelectorAll('#primaryFamilyFilters .odor-tag[data-fam]').forEach(btn => {
+  document.querySelectorAll('#primaryFamilyFilters .odor-tag[data-edwards]').forEach(btn => {
     if (btn.classList.contains('active')) { btn.style.display = ''; return; }
-    btn.style.display = primaryFamHas[btn.dataset.fam] ? '' : 'none';
+    // Chip is visible if any of its Edwards-bucket legacy tokens is
+    // still present among the filtered candidate set.
+    const toks = EDWARDS_TO_LEGACY[btn.dataset.edwards];
+    let keep = false;
+    if (toks) for (const t of toks) if (primaryFamHas[t]) { keep = true; break; }
+    btn.style.display = keep ? '' : 'none';
   });
   document.querySelectorAll('#facetFilters .odor-tag[data-facet]').forEach(btn => {
     if (btn.classList.contains('active')) { btn.style.display = ''; return; }
@@ -1707,7 +1762,7 @@ function _updatePrimaryFamSelected() {
   const sel = document.getElementById('primaryFamSelected');
   if (!sel) return;
   if (activePrimaryFamilyFilters.size) {
-    sel.textContent = [...activePrimaryFamilyFilters].map(f => PRIMARY_FAMILY_LABELS[f] || f).join(', ');
+    sel.textContent = [...activePrimaryFamilyFilters].map(b => EDWARDS_FAMILY_LABELS[b] || b).join(', ');
   } else { sel.textContent = 'All'; }
 }
 function _updateFacetSelected() {
@@ -1718,7 +1773,7 @@ function _updateFacetSelected() {
   } else { sel.textContent = 'All'; }
 }
 function togglePrimaryFamilyChip(el) {
-  const v = el.dataset.fam;
+  const v = el.dataset.edwards;
   if (!v) return;
   const allBtn = document.querySelector('#primaryFamilyFilters .odor-tag.active[onclick*="clearPrimaryFamilyFiltersUI"]');
   if (activePrimaryFamilyFilters.has(v)) { activePrimaryFamilyFilters.delete(v); el.classList.remove('active'); }
@@ -1862,17 +1917,21 @@ _buildPillFilter('source');
 // clickable chip in the drawer.
 {
   const container = document.getElementById('primaryFamilyChips');
-  const present = new Set();
+  const presentLegacy = new Set();
   for (const fc of FILTER_CACHE.values()) {
-    for (const fam of fc.primaryFamilies || []) present.add(fam);
-    for (const fam of fc.secondaryFamilies || []) present.add(fam);
+    for (const fam of fc.primaryFamilies || []) presentLegacy.add(fam);
+    for (const fam of fc.secondaryFamilies || []) presentLegacy.add(fam);
   }
-  for (const fam of PRIMARY_FAMILIES) {
-    if (!present.has(fam)) continue;
+  // Collapse legacy tokens → Edwards buckets, then render one chip per
+  // live bucket in Edwards' canonical order (4 mains followed by the 3
+  // transitionals).
+  const liveBuckets = _edwardsBucketsForLegacy(presentLegacy);
+  for (const bucket of EDWARDS_FAMILIES) {
+    if (!liveBuckets.has(bucket)) continue;
     const btn = document.createElement('span');
     btn.className = 'odor-tag';
-    btn.dataset.fam = fam;
-    btn.textContent = PRIMARY_FAMILY_LABELS[fam] || fam;
+    btn.dataset.edwards = bucket;
+    btn.textContent = EDWARDS_FAMILY_LABELS[bucket];
     btn.onclick = function() { togglePrimaryFamilyChip(this); };
     container.appendChild(btn);
   }
@@ -2030,19 +2089,19 @@ function matchesAllFilters(cas) {
       if (!fc.odorFamilies.has(f)) return false;
     }
   }
-  // Primary Family — multi-value on material. Unlike the other
-  // multi-value axes this one is AND-within, AND the axis checks
-  // against the UNION of primaryFamilies ∪ secondaryFamilies so
-  // that a material like Hedione (P=Floral, S=Fresh/Green/Citrus)
-  // can match Primary=[Floral, Fresh, Green, Citrus] — the user
-  // treats "primary + secondary" as one "family profile" axis.
+  // Primary Family — Edwards-bucket AND-within, tokens within a bucket
+  // OR-match. See passesAllFiltersExcept for the same logic.
   if (activePrimaryFamilyFilters.size) {
     const combined = new Set([
       ...(fc.primaryFamilies || []),
       ...(fc.secondaryFamilies || [])
     ]);
-    for (const fam of activePrimaryFamilyFilters) {
-      if (!combined.has(fam)) return false;
+    for (const bucket of activePrimaryFamilyFilters) {
+      const toks = EDWARDS_TO_LEGACY[bucket];
+      if (!toks) continue;
+      let hit = false;
+      for (const t of toks) if (combined.has(t)) { hit = true; break; }
+      if (!hit) return false;
     }
   }
   // Facet — multi-value on material. AND-within.
