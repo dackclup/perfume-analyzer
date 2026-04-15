@@ -1305,42 +1305,52 @@ const FAMILY_NOTE_RATIOS = {
 // ───────────────────────────────────────────────────────────────────────
 const WHEEL_VERSION = 'edwards-2021';
 
-// Colour palette — one base hue per main family; transitionals expose a
+// Colour palette — Edwards-style muted pastels, one base hue per main family.
+// Subfamilies sit as graded shades of their main's hue; transitionals expose a
 // two-stop gradient so the SVG renderer can blend adjacent mains.
 const _MAIN_COLORS = {
-  fresh:  '#22c55e', // green
-  floral: '#ec4899', // pink
-  amber:  '#f59e0b', // gold
-  woody:  '#78350f', // brown
+  fresh:  '#9fb8cc', // dusty blue
+  floral: '#b95c7f', // deep rose
+  amber:  '#e8856a', // coral
+  woody:  '#8a9662', // olive-green
 };
 
 const FRAGRANCE_WHEEL = {
   segments: [
     // Fresh quadrant (clockwise from top)
-    { id: 'aromatic_fougere', quadrant: 'Fresh',  angle: 0,   color: '#14b8a6' },
-    { id: 'citrus',           quadrant: 'Fresh',  angle: 26,  color: '#fbbf24' },
-    { id: 'water',            quadrant: 'Fresh',  angle: 51,  color: '#22d3ee' },
-    { id: 'green',            quadrant: 'Fresh',  angle: 77,  color: '#84cc16' },
+    { id: 'aromatic_fougere', quadrant: 'Fresh',  angle: 0,   color: '#a8b8c2' },
+    { id: 'citrus',           quadrant: 'Fresh',  angle: 26,  color: '#c5cbd3' },
+    { id: 'water',            quadrant: 'Fresh',  angle: 51,  color: '#9fb8cc' },
+    { id: 'green',            quadrant: 'Fresh',  angle: 77,  color: '#adb7c5' },
     // Transitional Fresh → Floral
     { id: 'fruity',           quadrant: 'Fresh',  angle: 103, color: null,
       transitional: true, gradient: [_MAIN_COLORS.fresh, _MAIN_COLORS.floral] },
     // Floral quadrant
-    { id: 'floral',           quadrant: 'Floral', angle: 129, color: '#ec4899' },
-    { id: 'soft_floral',      quadrant: 'Floral', angle: 154, color: '#f9a8d4' },
+    { id: 'floral',           quadrant: 'Floral', angle: 129, color: '#b95c7f' },
+    { id: 'soft_floral',      quadrant: 'Floral', angle: 154, color: '#e8b5c5' },
     // Transitional Floral → Amber
     { id: 'floral_amber',     quadrant: 'Floral', angle: 180, color: null,
       transitional: true, gradient: [_MAIN_COLORS.floral, _MAIN_COLORS.amber] },
     // Amber quadrant
-    { id: 'soft_amber',       quadrant: 'Amber',  angle: 206, color: '#fcd34d' },
-    { id: 'amber',            quadrant: 'Amber',  angle: 231, color: '#f59e0b' },
+    { id: 'soft_amber',       quadrant: 'Amber',  angle: 206, color: '#f5b596' },
+    { id: 'amber',            quadrant: 'Amber',  angle: 231, color: '#e8856a' },
     // Transitional Amber → Woody
     { id: 'woody_amber',      quadrant: 'Amber',  angle: 257, color: null,
       transitional: true, gradient: [_MAIN_COLORS.amber, _MAIN_COLORS.woody] },
     // Woody quadrant
-    { id: 'dry_woods',        quadrant: 'Woody',  angle: 283, color: '#92400e' },
-    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 308, color: '#65a30d' },
-    { id: 'woods',            quadrant: 'Woody',  angle: 334, color: '#78350f' },
+    { id: 'dry_woods',        quadrant: 'Woody',  angle: 283, color: '#7d8a5a' },
+    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 308, color: '#9aa876' },
+    { id: 'woods',            quadrant: 'Woody',  angle: 334, color: '#b5bf95' },
   ],
+
+  // Main-family base hues — exposed so renderers don't need to reach into
+  // the private `_MAIN_COLORS` table.
+  mainColors: {
+    fresh:  '#9fb8cc',
+    floral: '#b95c7f',
+    amber:  '#e8856a',
+    woody:  '#8a9662',
+  },
 
   // Transitional subfamilies → [counter-clockwise neighbour, clockwise neighbour]
   // Used by generateFromBrief's family-match scoring and by the SVG renderer
