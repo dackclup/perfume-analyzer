@@ -3692,23 +3692,10 @@ function renderWheelTab() {
   // UI theme. Drawn first so every slice renders on top of it.
   svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (outerR + 10) + '" fill="#f4efe4"/>';
 
-  // ─── <defs>: transitional gradients + curved text-paths for main labels ───
+  // ─── <defs>: curved text-paths for main labels ───────────────────────
+  // No linearGradients any more — every slice (transitional or not) uses a
+  // single solid `color` to match Edwards' printed wheel.
   let defs = '<defs>';
-  for (const s of segments) {
-    if (!s.transitional || !s.gradient) continue;
-    const sw = segWidth(s);
-    const a1 = (s.angle - sw/2) * Math.PI / 180;
-    const a2 = (s.angle + sw/2) * Math.PI / 180;
-    const rMid = (outerR + midR) / 2;
-    const x1 = cx + rMid * Math.cos(a1), y1 = cy + rMid * Math.sin(a1);
-    const x2 = cx + rMid * Math.cos(a2), y2 = cy + rMid * Math.sin(a2);
-    defs += '<linearGradient id="grad_' + s.id + '" gradientUnits="userSpaceOnUse" '
-      + 'x1="' + x1.toFixed(2) + '" y1="' + y1.toFixed(2) + '" '
-      + 'x2="' + x2.toFixed(2) + '" y2="' + y2.toFixed(2) + '">'
-      + '<stop offset="0%" stop-color="' + s.gradient[0] + '"/>'
-      + '<stop offset="100%" stop-color="' + s.gradient[1] + '"/>'
-      + '</linearGradient>';
-  }
   // One arc path per main family so its label can run along the band's centre.
   // SVG textPath places each character with the baseline on the path and its
   // "top" on the side AWAY from the arc's centre of curvature — which, for a
@@ -3761,10 +3748,10 @@ function renderWheelTab() {
       return families.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === s.id);
     });
 
-    const fill = s.transitional ? 'url(#grad_' + s.id + ')' : s.color;
-    // Full opacity so the muted Edwards pastels aren't darkened by the dark
-    // theme background. Active / inactive is conveyed via slight dim only.
-    svg += '<path d="' + path + '" fill="' + fill + '" fill-opacity="' + (hasActive ? '1' : '0.95') + '" ';
+    // Every slice uses a solid colour from `s.color` — transitional ones
+    // carry an intermediate hue (e.g. Fruity = lavender between Fresh blue
+    // and Floral rose) instead of a two-tone gradient fill.
+    svg += '<path d="' + path + '" fill="' + s.color + '" fill-opacity="' + (hasActive ? '1' : '0.95') + '" ';
     svg += 'stroke="#fff" stroke-width="2" style="cursor:pointer" ';
     svg += 'onclick="filterByWheelSegment(\'' + s.id + '\')" ';
     svg += '><title>' + prettyLabel(s.id) + ' (' + s.quadrant + (s.transitional ? ' — transitional' : '') + ')</title></path>';
@@ -3857,10 +3844,11 @@ function renderWheelTab() {
       const fams = getMaterialFamilies({ odor_type: e.odor?.type, primaryFamilies: [], secondaryFamilies: [], facets: [] });
       return fams.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === s.id);
     }).length;
-    const pillBg = s.transitional && s.gradient
-      ? 'linear-gradient(90deg,' + s.gradient[0] + '33,' + s.gradient[1] + '33)'
-      : s.color + '33';
-    const pillFg = s.transitional && s.gradient ? s.gradient[0] : s.color;
+    // Solid-colour pill for every subfamily (no more two-tone linear-
+    // gradient on transitionals). `+ '33'` appends ~20% alpha so the
+    // pill background reads as a translucent tint of the slice colour.
+    const pillBg = s.color + '33';
+    const pillFg = s.color;
     const pillStyle = s.transitional ? ';font-style:italic' : '';
     legend += '<span class="badge" style="background:' + pillBg + ';color:' + pillFg + ';font-size:0.72em' + pillStyle + '">' + prettyLabel(s.id) + ' (' + count + ')</span>';
   }
