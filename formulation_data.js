@@ -1316,53 +1316,70 @@ const _MAIN_COLORS = {
 };
 
 const FRAGRANCE_WHEEL = {
-  // Angles + widths follow Michael Edwards' published 2021 layout. Each of
-  // the four main-family bands occupies exactly 90° of the wheel (separated
-  // by dividing lines at 12, 3, 6, 9 o'clock). Subfamilies within a band
-  // share that 90° equally — 22.5° for FLORAL / FRESH (4 subs each) and
-  // 30° for AMBER / WOODY (3 subs each).
+  // Edwards' 2021 layout with the three "pure" transitional slices centred
+  // EXACTLY on the cardinal dividers. Each main-family inner band spans
+  // 90° (at SVG 180°/270°/0°/90° boundaries), and the three transitional
+  // slices straddle those boundaries — half of each sits in one main
+  // family, half in the adjacent one. Non-transitional slices fit into
+  // the remaining arc of each band, so slice widths vary:
   //
-  // Reading clockwise from SVG 180° (9 o'clock) — i.e. the start of the
-  // FLORAL quadrant:
-  //   FLORAL  (180°–270°): Fruity → Floral → Soft Floral → Floral Amber
-  //   AMBER   (270°–360°): Soft Amber → Amber → Woody Amber
-  //   WOODY   (  0°– 90°): Woods → Mossy Woods → Dry Woods
-  //   FRESH   ( 90°–180°): Aromatic → Citrus → Water → Green
-  // which matches Edwards: FLORAL top-left, AMBER top-right, WOODY
-  // bottom-right, FRESH bottom-left, with transitionals hugging the
-  // quadrant boundaries (Fruity at 9 o'clock-ish, Floral Amber just left
-  // of 12, Soft Amber just right of 12, Woody Amber near 3, Woods just
-  // past 3, Aromatic just past 6).
+  //   Fruity        centred at 180° (9 o'clock, Fresh↔Floral)   — 25.71°
+  //   Aromatic      centred at  90° (6 o'clock, Woody↔Fresh)    — 25.71°
+  //   Woody Amber   centred at 360° (3 o'clock, Amber↔Woody)    — 25.71°
+  //   Floral Amber  at 257.14° (just left of 12; Floral↔Amber)  — 25.71°
+  //     (12 o'clock stays a hard boundary — Floral Amber sits inside
+  //      FLORAL, Soft Amber inside AMBER, no straddling slice there.)
+  //
+  //   Inside FRESH  (90°–180°, minus half each of Aromatic + Fruity):
+  //     Citrus, Water, Green at 21.43° each
+  //   Inside FLORAL (180°–270°, minus half of Fruity):
+  //     Floral, Soft Floral, Floral Amber at 25.71° each
+  //   Inside AMBER  (270°–360°, minus half of Woody Amber):
+  //     Soft Amber, Amber at 38.57° each
+  //   Inside WOODY  (0°–90°, minus half each of Woody Amber + Aromatic):
+  //     Woods, Mossy Woods, Dry Woods at 21.43° each
   segments: [
-    // FRESH band (SVG 90°–180°, 4 × 22.5° slices). Aromatic at the Woody↔
-    // Fresh boundary is rendered as a transitional gradient to match the
-    // blended hue Edwards paints.
-    { id: 'aromatic_fougere', quadrant: 'Fresh',  angle: 101.25, width: 22.5, color: '#a8b8c2',
+    // FRESH band — Aromatic straddles the left edge (6 o'clock), Fruity
+    // straddles the right edge (9 o'clock); 3 fixed subs sit between.
+    { id: 'aromatic_fougere', quadrant: 'Woody/Fresh', angle: 90,     width: 25.71, color: '#a8b8c2',
       transitional: true, gradient: [_MAIN_COLORS.woody, _MAIN_COLORS.fresh] },
-    { id: 'citrus',           quadrant: 'Fresh',  angle: 123.75, width: 22.5, color: '#c5cbd3' },
-    { id: 'water',            quadrant: 'Fresh',  angle: 146.25, width: 22.5, color: '#9fb8cc' },
-    { id: 'green',            quadrant: 'Fresh',  angle: 168.75, width: 22.5, color: '#adb7c5' },
-    // FLORAL band (180°–270°, 4 × 22.5°). Fruity at the Fresh↔Floral
-    // boundary renders transitional.
-    { id: 'fruity',           quadrant: 'Floral', angle: 191.25, width: 22.5, color: null,
+    { id: 'citrus',           quadrant: 'Fresh',  angle: 113.57, width: 21.43, color: '#c5cbd3' },
+    { id: 'water',            quadrant: 'Fresh',  angle: 135,    width: 21.43, color: '#9fb8cc' },
+    { id: 'green',            quadrant: 'Fresh',  angle: 156.43, width: 21.43, color: '#adb7c5' },
+    // FLORAL band — Fruity straddles the left edge (9 o'clock); 3 fixed
+    // subs go from there to 12 o'clock (a hard boundary).
+    { id: 'fruity',           quadrant: 'Fresh/Floral', angle: 180, width: 25.71, color: null,
       transitional: true, gradient: [_MAIN_COLORS.fresh, _MAIN_COLORS.floral] },
-    { id: 'floral',           quadrant: 'Floral', angle: 213.75, width: 22.5, color: '#b95c7f' },
-    { id: 'soft_floral',      quadrant: 'Floral', angle: 236.25, width: 22.5, color: '#e8b5c5' },
-    { id: 'floral_amber',     quadrant: 'Floral', angle: 258.75, width: 22.5, color: null,
+    { id: 'floral',           quadrant: 'Floral', angle: 205.71, width: 25.71, color: '#b95c7f' },
+    { id: 'soft_floral',      quadrant: 'Floral', angle: 231.43, width: 25.71, color: '#e8b5c5' },
+    { id: 'floral_amber',     quadrant: 'Floral', angle: 257.14, width: 25.71, color: null,
       transitional: true, gradient: [_MAIN_COLORS.floral, _MAIN_COLORS.amber] },
-    // AMBER band (270°–360°, 3 × 30°). Woody Amber at the Amber↔Woody
-    // boundary renders transitional.
-    { id: 'soft_amber',       quadrant: 'Amber',  angle: 285,    width: 30,   color: '#f5b596' },
-    { id: 'amber',            quadrant: 'Amber',  angle: 315,    width: 30,   color: '#e8856a' },
-    { id: 'woody_amber',      quadrant: 'Amber',  angle: 345,    width: 30,   color: null,
+    // AMBER band — hard left boundary at 12 o'clock, Woody Amber
+    // straddles the right edge (3 o'clock).
+    { id: 'soft_amber',       quadrant: 'Amber',  angle: 289.29, width: 38.57, color: '#f5b596' },
+    { id: 'amber',            quadrant: 'Amber',  angle: 327.86, width: 38.57, color: '#e8856a' },
+    { id: 'woody_amber',      quadrant: 'Amber/Woody', angle: 360, width: 25.71, color: null,
       transitional: true, gradient: [_MAIN_COLORS.amber, _MAIN_COLORS.woody] },
-    // WOODY band (0°–90°, 3 × 30°). Woods at the Amber↔Woody boundary
-    // renders transitional.
-    { id: 'woods',            quadrant: 'Woody',  angle: 15,     width: 30,   color: '#b5bf95',
-      transitional: true, gradient: [_MAIN_COLORS.amber, _MAIN_COLORS.woody] },
-    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 45,     width: 30,   color: '#9aa876' },
-    { id: 'dry_woods',        quadrant: 'Woody',  angle: 75,     width: 30,   color: '#7d8a5a' },
+    // WOODY band — Woody Amber straddles the left edge (3 o'clock),
+    // Aromatic straddles the right edge (6 o'clock).
+    { id: 'woods',            quadrant: 'Woody',  angle: 23.57, width: 21.43, color: '#b5bf95' },
+    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 45,    width: 21.43, color: '#9aa876' },
+    { id: 'dry_woods',        quadrant: 'Woody',  angle: 66.43, width: 21.43, color: '#7d8a5a' },
   ],
+
+  // Main-family inner band arcs — hard-coded to the four 90° quadrants.
+  // The renderer used to derive these from the segment angles of each
+  // mainGroup, but with three transitional slices straddling the cardinal
+  // boundaries (Fruity at 9 o'clock, Aromatic at 6, Woody Amber at 3) a
+  // segment-derived arc would extend into the adjacent band by a half-
+  // slice width. Pinning the arcs to the cardinals keeps each inner
+  // "NOTES" band exactly 90° wide and touching its neighbours.
+  mainBands: {
+    fresh:  [90, 180],
+    floral: [180, 270],
+    amber:  [270, 360],
+    woody:  [0, 90],
+  },
 
   // Main-family base hues — exposed so renderers don't need to reach into
   // the private `_MAIN_COLORS` table.
