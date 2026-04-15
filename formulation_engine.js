@@ -1939,6 +1939,7 @@ function materialToRadarWeights(matData) {
   if (!families.length) return weights;
 
   const familyToAxes = {
+    // Legacy keys — materials in PERFUMERY_DATA still emit these tokens
     citrus: ['citrus', 'fresh'], green: ['green', 'fresh'],
     herbal: ['green', 'fresh'], aldehydic: ['fresh', 'floral'],
     aquatic: ['fresh'], ozonic: ['fresh'], fresh: ['fresh'],
@@ -1951,6 +1952,16 @@ function materialToRadarWeights(matData) {
     musk: ['musk'], smoky: ['woody', 'animalic'],
     vanilla: ['gourmand'], rose: ['floral'], jasmine: ['floral'],
     marine: ['fresh'], earthy: ['woody'],
+    // Michael Edwards 2021 subfamily IDs → existing 12 radar axes
+    aromatic_fougere: ['green', 'fresh'],
+    water:            ['fresh'],
+    soft_floral:      ['floral', 'powdery'],
+    floral_amber:     ['floral', 'amber'],
+    soft_amber:       ['gourmand', 'amber'],
+    woody_amber:      ['amber', 'woody', 'animalic'],
+    dry_woods:        ['woody', 'animalic'],
+    mossy_woods:      ['woody'],
+    woods:            ['woody'],
   };
 
   for (const fam of families) {
