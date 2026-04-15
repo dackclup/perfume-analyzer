@@ -1305,14 +1305,17 @@ const FAMILY_NOTE_RATIOS = {
 // ───────────────────────────────────────────────────────────────────────
 const WHEEL_VERSION = 'edwards-2021';
 
-// Colour palette — Edwards-style muted pastels, one base hue per main family.
-// Subfamilies sit as graded shades of their main's hue; transitionals expose a
-// two-stop gradient so the SVG renderer can blend adjacent mains.
+// Colour palette — tuned to match the Michael Edwards 2021 printed wheel.
+// Each main family has a soft, slightly desaturated base hue (mauve-rose,
+// peach-coral, sage-green, slate-blue); subfamilies within the band are
+// graded shades of that base. Transitionals expose a two-stop gradient so
+// the SVG renderer can blend adjacent mains where Edwards paints a blended
+// slice colour.
 const _MAIN_COLORS = {
-  fresh:  '#9fb8cc', // dusty blue
-  floral: '#b95c7f', // deep rose
-  amber:  '#e8856a', // coral
-  woody:  '#8a9662', // olive-green
+  fresh:  '#a9b6ba', // slate blue-gray
+  floral: '#a05d7a', // mauve rose
+  amber:  '#e89477', // peach coral
+  woody:  '#a7b799', // sage green
 };
 
 const FRAGRANCE_WHEEL = {
@@ -1339,35 +1342,35 @@ const FRAGRANCE_WHEEL = {
   //   Inside WOODY  (0°–90°, minus half each of Woody Amber + Aromatic):
   //     Woods, Mossy Woods, Dry Woods at 21.43° each
   segments: [
-    // FRESH band — Aromatic straddles the left edge (6 o'clock), Fruity
-    // straddles the right edge (9 o'clock); 3 fixed subs sit between.
-    { id: 'aromatic_fougere', quadrant: 'Woody/Fresh', angle: 90,     width: 25.71, color: '#a8b8c2',
+    // FRESH band — Aromatic straddles 6 o'clock, Fruity straddles 9 o'clock.
+    // Slate-blue progression from lighter (Citrus) to more periwinkle (Green)
+    // mirrors Edwards' Fresh palette.
+    { id: 'aromatic_fougere', quadrant: 'Woody/Fresh', angle: 90,     width: 25.71, color: '#a9b6ba',
       transitional: true, gradient: [_MAIN_COLORS.woody, _MAIN_COLORS.fresh] },
-    { id: 'citrus',           quadrant: 'Fresh',  angle: 113.57, width: 21.43, color: '#c5cbd3' },
-    { id: 'water',            quadrant: 'Fresh',  angle: 135,    width: 21.43, color: '#9fb8cc' },
-    { id: 'green',            quadrant: 'Fresh',  angle: 156.43, width: 21.43, color: '#adb7c5' },
-    // FLORAL band — Fruity straddles the left edge (9 o'clock); 3 fixed
-    // subs go from there to 12 o'clock (a hard boundary).
+    { id: 'citrus',           quadrant: 'Fresh',  angle: 113.57, width: 21.43, color: '#bbc6ca' },
+    { id: 'water',            quadrant: 'Fresh',  angle: 135,    width: 21.43, color: '#a5b4bd' },
+    { id: 'green',            quadrant: 'Fresh',  angle: 156.43, width: 21.43, color: '#8c9ab0' },
+    // FLORAL band — Fruity straddles 9 o'clock; 3 fixed subs go from there
+    // to 12 o'clock (a hard boundary with AMBER).
     { id: 'fruity',           quadrant: 'Fresh/Floral', angle: 180, width: 25.71, color: null,
       transitional: true, gradient: [_MAIN_COLORS.fresh, _MAIN_COLORS.floral] },
-    { id: 'floral',           quadrant: 'Floral', angle: 205.71, width: 25.71, color: '#b95c7f' },
-    { id: 'soft_floral',      quadrant: 'Floral', angle: 231.43, width: 25.71, color: '#e8b5c5' },
+    { id: 'floral',           quadrant: 'Floral', angle: 205.71, width: 25.71, color: '#a05d7a' },
+    { id: 'soft_floral',      quadrant: 'Floral', angle: 231.43, width: 25.71, color: '#c08a9d' },
     { id: 'floral_amber',     quadrant: 'Floral', angle: 257.14, width: 25.71, color: null,
       transitional: true, gradient: [_MAIN_COLORS.floral, _MAIN_COLORS.amber] },
-    // AMBER band — hard left boundary at 12 o'clock, Woods straddles the
-    // right edge (3 o'clock). Woody Amber sits INSIDE the band (transitional
-    // by colour, not by position) mirroring Floral Amber's role in FLORAL.
-    { id: 'soft_amber',       quadrant: 'Amber',  angle: 282.86, width: 25.71, color: '#f5b596' },
-    { id: 'amber',            quadrant: 'Amber',  angle: 308.57, width: 25.71, color: '#e8856a' },
+    // AMBER band — hard left boundary at 12 o'clock, Woods straddles 3
+    // o'clock. Woody Amber sits INSIDE the band (transitional by colour).
+    { id: 'soft_amber',       quadrant: 'Amber',  angle: 282.86, width: 25.71, color: '#edae96' },
+    { id: 'amber',            quadrant: 'Amber',  angle: 308.57, width: 25.71, color: '#e89477' },
     { id: 'woody_amber',      quadrant: 'Amber',  angle: 334.29, width: 25.71, color: null,
       transitional: true, gradient: [_MAIN_COLORS.amber, _MAIN_COLORS.woody] },
     // Pure transitional Amber↔Woody — straddles 3 o'clock.
     { id: 'woods',            quadrant: 'Amber/Woody', angle: 360, width: 25.71, color: null,
       transitional: true, gradient: [_MAIN_COLORS.amber, _MAIN_COLORS.woody] },
-    // WOODY band — Woods straddles the left edge (3 o'clock), Aromatic
-    // straddles the right edge (6 o'clock). Two fixed subs fit in between.
-    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 28.93, width: 32.14, color: '#9aa876' },
-    { id: 'dry_woods',        quadrant: 'Woody',  angle: 61.07, width: 32.14, color: '#7d8a5a' },
+    // WOODY band — Woods straddles 3, Aromatic straddles 6. Sage-green
+    // progression from paler (Mossy) to darker (Dry).
+    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 28.93, width: 32.14, color: '#a7b799' },
+    { id: 'dry_woods',        quadrant: 'Woody',  angle: 61.07, width: 32.14, color: '#94a687' },
   ],
 
   // Main-family inner band arcs — hard-coded to the four 90° quadrants.
@@ -1387,10 +1390,10 @@ const FRAGRANCE_WHEEL = {
   // Main-family base hues — exposed so renderers don't need to reach into
   // the private `_MAIN_COLORS` table.
   mainColors: {
-    fresh:  '#9fb8cc',
-    floral: '#b95c7f',
-    amber:  '#e8856a',
-    woody:  '#8a9662',
+    fresh:  '#a9b6ba',
+    floral: '#a05d7a',
+    amber:  '#e89477',
+    woody:  '#a7b799',
   },
 
   // Transitional subfamilies → [counter-clockwise neighbour, clockwise neighbour].
