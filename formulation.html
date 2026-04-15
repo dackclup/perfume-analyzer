@@ -3715,17 +3715,13 @@ function renderWheelTab() {
   //     would point DOWN (upside-down). Flip the arc (swap endpoints +
   //     sweep=0) so the arc traces in −θ, moving letter tops to the inside
   //     of the curve = pointing UP in screen space.
-  for (const [main, segs] of Object.entries(mainGroups)) {
-    const minA = segs[0].angle - segWidth(segs[0])/2;
-    const maxA = segs[segs.length - 1].angle + segWidth(segs[segs.length - 1])/2;
-    // When a main group crosses the 0°/360° wrap (e.g. Woody spans 347°→63°
-    // under the Edwards layout), maxA is numerically LESS than minA. The raw
-    // average would yield a phantom midpoint on the far side of the circle
-    // and flip the isBottom test the wrong way. Bump the wrapped endpoint
-    // by 360 before averaging, then normalise back into [0, 360) for the
-    // classifier. The arc endpoints used by SVG stay on the raw values —
-    // SVG arcs are defined by cartesian endpoints, so the fill path is
-    // unaffected by the wrap.
+  // Inner-band arc endpoints come from FRAGRANCE_WHEEL.mainBands rather
+  // than the segs because three transitional slices straddle the 9/6/3
+  // cardinals — a segs-derived arc would overshoot by a half-slice width.
+  for (const [main] of Object.entries(mainGroups)) {
+    const band = (FRAGRANCE_WHEEL.mainBands && FRAGRANCE_WHEEL.mainBands[main]) || [0, 90];
+    const minA = band[0];
+    const maxA = band[1];
     const maxAForMid = maxA < minA ? maxA + 360 : maxA;
     const midA = ((minA + maxAForMid) / 2) % 360;
     const textR = (midR + innerR) / 2;
@@ -3794,9 +3790,13 @@ function renderWheelTab() {
   }
 
   // ─── Inner ring: 4 main-family bands with curved "FAMILY NOTES" labels ──
-  for (const [main, segs] of Object.entries(mainGroups)) {
-    const minA = segs[0].angle - segWidth(segs[0])/2;
-    const maxA = segs[segs.length - 1].angle + segWidth(segs[segs.length - 1])/2;
+  // Band arcs come from FRAGRANCE_WHEEL.mainBands (fixed 90° arcs aligned
+  // with the cardinals) rather than the segment angles, because three
+  // transitional slices straddle the cardinal boundaries.
+  for (const [main] of Object.entries(mainGroups)) {
+    const band = (FRAGRANCE_WHEEL.mainBands && FRAGRANCE_WHEEL.mainBands[main]) || [0, 90];
+    const minA = band[0];
+    const maxA = band[1];
     const a1 = minA * Math.PI / 180;
     const a2 = maxA * Math.PI / 180;
     const x1o = cx + midR   * Math.cos(a1), y1o = cy + midR   * Math.sin(a1);
