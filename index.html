@@ -352,6 +352,15 @@ html { scroll-behavior:smooth; }
       </div>
     </div>
     <div class="sub-drawer">
+      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Sub-families <span class="sub-selected" id="subFamilySelected"></span></div>
+      <div class="sub-body" id="subFamilyFilters">
+        <div style="display:flex;flex-wrap:wrap;gap:4px">
+          <span class="odor-tag active" onclick="clearSubFamilyFiltersUI(this)">All</span>
+          <div class="sub-family-chips" id="subFamilyChips" style="display:contents"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Facet <span class="sub-selected" id="facetSelected"></span></div>
       <div class="sub-body" id="facetFilters">
         <div style="display:flex;justify-content:flex-start;margin-bottom:4px">
@@ -386,7 +395,9 @@ html { scroll-behavior:smooth; }
   <a class="formulate-link" onclick="sendToFormulator()">Formulate &#x2192;</a>
 </div>
 
-<script src="perfumery_data.js"></script>
+<!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
+     re-download instead of serving stale JS. -->
+<script src="perfumery_data.js?v=2026-04-15-edwards-solid"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -638,6 +649,7 @@ let activeOdorFilters = new Set();
 // Step 4: Primary Family + Facet multi-select Sets (populated from
 // the chip cloud UI wired in Step 5).
 let activePrimaryFamilyFilters = new Set();
+let activeSubFamilyFilters = new Set();
 let activeFacetFilters = new Set();
 
 // ═══════════════════════════════════════════════════════════════
@@ -714,6 +726,57 @@ function _edwardsBucketsForLegacy(legacySet) {
   }
   return out;
 }
+
+// ── Edwards 2021 sub-family filter (14 wheel subfamilies) ──────────
+// Second, finer-grained filter drawer beneath Primary Family. Each chip
+// maps to one of the 14 subfamilies on the Edwards wheel; the chip is
+// resolved to a Set of legacy PRIMARY_FAMILIES tokens at filter time
+// (same pattern as EDWARDS_TO_LEGACY above). Tokens inside a chip's
+// Set OR-match; chips AND-match between each other.
+const SUB_FAMILIES = [
+  'aromatic_fougere', 'citrus', 'water', 'green',
+  'fruity', 'floral', 'soft_floral', 'floral_amber',
+  'soft_amber', 'amber', 'woody_amber',
+  'woods', 'mossy_woods', 'dry_woods',
+];
+const SUB_FAMILY_LABELS = {
+  aromatic_fougere: 'Aromatic',
+  citrus:           'Citrus',
+  water:            'Water',
+  green:            'Green',
+  fruity:           'Fruity',
+  floral:           'Floral',
+  soft_floral:      'Soft Floral',
+  floral_amber:     'Floral Amber',
+  soft_amber:       'Soft Amber',
+  amber:            'Amber',
+  woody_amber:      'Woody Amber',
+  woods:            'Woods',
+  mossy_woods:      'Mossy Woods',
+  dry_woods:        'Dry Woods',
+};
+// Legacy PRIMARY_FAMILIES tokens that feed each Edwards subfamily.
+// Based on the familyToSegment table in formulation_data.js (not loaded
+// here, so kept inline). Subfamilies with no legacy backing (floral_amber
+// / mossy_woods — no single legacy token maps there today) stay as empty
+// Sets: their chips render but match nothing until richer taxonomy data
+// lands on the materials.
+const SUB_FAMILY_TO_LEGACY = {
+  aromatic_fougere: new Set(['herbal', 'camphoraceous']),
+  citrus:           new Set(['citrus', 'fresh']),
+  water:            new Set(['aquatic', 'ozonic']),
+  green:            new Set(['green']),
+  fruity:           new Set(['fruity', 'lactonic']),
+  floral:           new Set(['floral']),
+  soft_floral:      new Set(['aldehydic', 'powdery']),
+  floral_amber:     new Set(),
+  soft_amber:       new Set(['sweet', 'gourmand', 'musk']),
+  amber:            new Set(['amber', 'balsamic', 'resinous', 'spicy']),
+  woody_amber:      new Set(['animalic']),
+  woods:            new Set(['woody']),
+  mossy_woods:      new Set(),
+  dry_woods:        new Set(['leather', 'smoky']),
+};
 // Build a snake_case facet token into a presentable label.
 function facetLabel(t) {
   if (!t) return '';
@@ -1634,6 +1697,21 @@ function _axesFailedBy(fc, cas) {
       if (!hit) { failed.add('primaryFamily'); break; }
     }
   }
+  // Sub-family — same AND-within / OR-inside-chip pattern but against
+  // the finer-grained Edwards 14-subfamily buckets (SUB_FAMILY_TO_LEGACY).
+  if (activeSubFamilyFilters.size) {
+    const combined = new Set([
+      ...(fc.primaryFamilies || []),
+      ...(fc.secondaryFamilies || [])
+    ]);
+    for (const sub of activeSubFamilyFilters) {
+      const toks = SUB_FAMILY_TO_LEGACY[sub];
+      if (!toks) continue;
+      let hit = false;
+      for (const t of toks) if (combined.has(t)) { hit = true; break; }
+      if (!hit) { failed.add('subFamily'); break; }
+    }
+  }
   // Facet
   if (activeFacetFilters.size) {
     const fcFacets = fc.facets || [];
@@ -1791,6 +1869,31 @@ function clearPrimaryFamilyFiltersUI(el) {
   _updatePrimaryFamSelected();
   _refreshPills();
 }
+// ── Sub-family chip handlers (Edwards 14-subfamily filter) ─────────
+function _updateSubFamilySelected() {
+  const sel = document.getElementById('subFamilySelected');
+  if (!sel) return;
+  if (activeSubFamilyFilters.size) {
+    sel.textContent = [...activeSubFamilyFilters].map(s => SUB_FAMILY_LABELS[s] || s).join(', ');
+  } else { sel.textContent = 'All'; }
+}
+function toggleSubFamilyChip(el) {
+  const v = el.dataset.subfam;
+  if (!v) return;
+  if (activeSubFamilyFilters.has(v)) { activeSubFamilyFilters.delete(v); el.classList.remove('active'); }
+  else { activeSubFamilyFilters.add(v); el.classList.add('active'); }
+  const allReset = document.querySelector('#subFamilyFilters > div > .odor-tag:first-child');
+  if (allReset) allReset.classList.toggle('active', !activeSubFamilyFilters.size);
+  _updateSubFamilySelected();
+  _refreshPills();
+}
+function clearSubFamilyFiltersUI(el) {
+  activeSubFamilyFilters.clear();
+  document.querySelectorAll('#subFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  _updateSubFamilySelected();
+  _refreshPills();
+}
 function toggleFacetChip(el) {
   const v = el.dataset.facet;
   if (!v) return;
@@ -1849,15 +1952,19 @@ function resetAllFilters() {
   // Step 5: reset new Primary Family + Facet chip drawers (state +
   // DOM + summary labels).
   activePrimaryFamilyFilters.clear();
+  activeSubFamilyFilters.clear();
   activeFacetFilters.clear();
   document.querySelectorAll('#primaryFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#subFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('#facetFilters .odor-tag').forEach(b => b.classList.remove('active'));
   const _allPrim = document.querySelector('#primaryFamilyFilters > div > .odor-tag:first-child');
   if (_allPrim) _allPrim.classList.add('active');
+  const _allSub = document.querySelector('#subFamilyFilters > div > .odor-tag:first-child');
+  if (_allSub) _allSub.classList.add('active');
   const _allFacet = document.querySelector('#facetFilters > div > .odor-tag:first-child');
   if (_allFacet) _allFacet.classList.add('active');
   // Update labels
-  ['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','primaryFamSelected','facetSelected'].forEach(id => {
+  ['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','primaryFamSelected','subFamilySelected','facetSelected'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = 'All';
   });
   _refreshPills();
@@ -1933,6 +2040,21 @@ _buildPillFilter('source');
     btn.dataset.edwards = bucket;
     btn.textContent = EDWARDS_FAMILY_LABELS[bucket];
     btn.onclick = function() { togglePrimaryFamilyChip(this); };
+    container.appendChild(btn);
+  }
+}
+
+// Sub-family chips — one per Edwards 2021 wheel subfamily. Rendered in
+// wheel order (Fresh → Floral → Amber → Woody) so the drawer reads the
+// way users will trace a scent profile across the wheel.
+{
+  const container = document.getElementById('subFamilyChips');
+  for (const sub of SUB_FAMILIES) {
+    const btn = document.createElement('span');
+    btn.className = 'odor-tag';
+    btn.dataset.subfam = sub;
+    btn.textContent = SUB_FAMILY_LABELS[sub];
+    btn.onclick = function() { toggleSubFamilyChip(this); };
     container.appendChild(btn);
   }
 }
@@ -2020,7 +2142,7 @@ btn.addEventListener("click", () => { const v=input.value.trim(); if (v) doSearc
 // ═══════════════════════════════════════════════════════════════
 function _anyAxisActive() {
   for (const ax of Object.values(_filterAxes)) if (ax.set.size) return true;
-  return activeOdorFilters.size > 0 || activePrimaryFamilyFilters.size > 0 || activeFacetFilters.size > 0;
+  return activeOdorFilters.size > 0 || activePrimaryFamilyFilters.size > 0 || activeSubFamilyFilters.size > 0 || activeFacetFilters.size > 0;
 }
 
 function matchesAllFilters(cas) {
@@ -2098,6 +2220,20 @@ function matchesAllFilters(cas) {
     ]);
     for (const bucket of activePrimaryFamilyFilters) {
       const toks = EDWARDS_TO_LEGACY[bucket];
+      if (!toks) continue;
+      let hit = false;
+      for (const t of toks) if (combined.has(t)) { hit = true; break; }
+      if (!hit) return false;
+    }
+  }
+  // Sub-family — finer-grained Edwards 14-subfamily bucket match.
+  if (activeSubFamilyFilters.size) {
+    const combined = new Set([
+      ...(fc.primaryFamilies || []),
+      ...(fc.secondaryFamilies || [])
+    ]);
+    for (const sub of activeSubFamilyFilters) {
+      const toks = SUB_FAMILY_TO_LEGACY[sub];
       if (!toks) continue;
       let hit = false;
       for (const t of toks) if (combined.has(t)) { hit = true; break; }
