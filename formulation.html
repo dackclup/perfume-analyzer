@@ -3991,8 +3991,9 @@ function renderMapTab() {
   svg += '<line x1="' + (W/2) + '" y1="' + pad + '" x2="' + (W/2) + '" y2="' + (H-pad) + '" stroke="var(--border)" stroke-dasharray="4"/>';
   svg += '<text x="' + (W-pad-5) + '" y="' + (H/2-8) + '" text-anchor="end" font-size="10" fill="var(--text2)">Amber</text>';
   svg += '<text x="' + (pad+5) + '" y="' + (H/2-8) + '" font-size="10" fill="var(--text2)">Fresh</text>';
-  svg += '<text x="' + (W/2+5) + '" y="' + (pad+12) + '" font-size="10" fill="var(--text2)">Floral</text>';
-  svg += '<text x="' + (W/2+5) + '" y="' + (H-pad-5) + '" font-size="10" fill="var(--text2)">Woody</text>';
+  // Floral/Woody labels sit on the vertical axis — center them on x=W/2.
+  svg += '<text x="' + (W/2) + '" y="' + (pad+12) + '" text-anchor="middle" font-size="10" fill="var(--text2)">Floral</text>';
+  svg += '<text x="' + (W/2) + '" y="' + (H-pad-5) + '" text-anchor="middle" font-size="10" fill="var(--text2)">Woody</text>';
 
   // Draw all non-formulation points (small dots)
   for (const p of points) {

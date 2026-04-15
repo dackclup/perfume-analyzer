@@ -2622,6 +2622,30 @@ function generateFromBrief(brief, db, graph) {
 // Axis labels align with the Michael Edwards 2021 wheel quadrants.
 // ─────────────────────────────────────────────────────────────
 
+// djb2-style string hash — seeded so we can derive two independent pseudo-
+// random values per CAS. Used by the Odor Map jitter to spread points whose
+// hash inputs collide under naïve (length + charCodeAt(0-1)) mixing.
+function _hashCas(s, seed) {
+  let h = seed;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) + h + s.charCodeAt(i)) | 0; // h*33 + c
+  }
+  return h;
+}
+
+// Split material odor_type strings into family tokens. The DB uses "/" and
+// "," as family separators but sometimes stacks multiple family words in one
+// slash-segment (e.g. "Floral Green", "Woody Amber", "Fruity Apple"). Split
+// on whitespace too — every recognised family key in familyToAxes /
+// familyToSegment is a single word, so space-splitting only gains signal.
+function _tokenizeOdorType(odorType) {
+  if (!odorType) return [];
+  return odorType.toLowerCase()
+    .split(/\s*[\/,]\s*/)
+    .flatMap(seg => seg.trim().split(/\s+/))
+    .filter(Boolean);
+}
+
 /**
  * Compute 2D coordinates for all materials in the database.
  * Axis 1 (x): Fresh/Citrus/Green ← → Amber (gourmand/soft_amber/spicy)
@@ -2640,8 +2664,14 @@ function buildOdorMap(db, formulationCAS) {
     floral: 1, spicy: -0.3, amber: -0.5, gourmand: -0.6, woody: -0.9, musk: -0.7, animalic: -0.8, powdery: 0.4 };
 
   for (const [cas, entry] of Object.entries(db)) {
+    // Expand the default family tokens with space-split tokens from
+    // odor_type so compound descriptors like "Woody Amber" or "Floral Green"
+    // contribute to the projection instead of collapsing to 0,0.
+    const expandedTokens = _tokenizeOdorType(entry.odor?.type);
     const radar = materialToRadarWeights({
-      odor_type: entry.odor?.type, primaryFamilies: [], secondaryFamilies: [], facets: [],
+      odor_type: entry.odor?.type,
+      primaryFamilies: expandedTokens,
+      secondaryFamilies: [], facets: [],
     });
     let x = 0, y = 0;
     for (const axis of RADAR_AXES) {
@@ -2649,9 +2679,14 @@ function buildOdorMap(db, formulationCAS) {
       x += w * (xWeights[axis] || 0);
       y += w * (yWeights[axis] || 0);
     }
-    // Add small jitter to prevent overlap
-    x += (Math.sin(cas.length * 37 + cas.charCodeAt(0)) * 0.15);
-    y += (Math.cos(cas.length * 53 + cas.charCodeAt(1 % cas.length)) * 0.15);
+    // Jitter with a proper string hash so distinct CAS rarely collide.
+    // Two djb2 hashes with independent seeds produce a well-spread 2-D
+    // offset. ±0.15 matches the legacy amplitude so mapped materials keep
+    // roughly the same bounds.
+    const hx = _hashCas(cas, 5381);
+    const hy = _hashCas(cas, 52711);
+    x += ((hx & 0xffff) / 0xffff - 0.5) * 0.30;
+    y += ((hy & 0xffff) / 0xffff - 0.5) * 0.30;
 
     const families = getMaterialFamilies({ odor_type: entry.odor?.type, primaryFamilies: [], secondaryFamilies: [], facets: [] });
     const primaryFamily = families[0] || 'other';
