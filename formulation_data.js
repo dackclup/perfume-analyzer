@@ -1312,10 +1312,10 @@ const WHEEL_VERSION = 'edwards-2021';
 // the SVG renderer can blend adjacent mains where Edwards paints a blended
 // slice colour.
 const _MAIN_COLORS = {
-  fresh:  '#a9b6ba', // slate blue-gray
-  floral: '#a05d7a', // mauve rose
-  amber:  '#e89477', // peach coral
-  woody:  '#a7b799', // sage green
+  fresh:  '#a5b3bc', // slate blue-gray
+  floral: '#a66882', // mauve rose
+  amber:  '#e89578', // peach coral
+  woody:  '#a8b898', // sage green
 };
 
 const FRAGRANCE_WHEEL = {
@@ -1349,24 +1349,24 @@ const FRAGRANCE_WHEEL = {
     // intermediate hues. `transitional: true` is now a semantic marker only.
     //
     // FRESH band — Aromatic straddles 6 o'clock, Fruity straddles 9 o'clock.
-    { id: 'aromatic_fougere', quadrant: 'Woody/Fresh', angle: 90,     width: 25.71, color: '#b4c0c3', transitional: true },
-    { id: 'citrus',           quadrant: 'Fresh',  angle: 113.57, width: 21.43, color: '#bbc6ca' },
-    { id: 'water',            quadrant: 'Fresh',  angle: 135,    width: 21.43, color: '#a5b4bd' },
-    { id: 'green',            quadrant: 'Fresh',  angle: 156.43, width: 21.43, color: '#8c9ab0' },
+    { id: 'aromatic_fougere', quadrant: 'Woody/Fresh', angle: 90,     width: 25.71, color: '#b0bcbe', transitional: true },
+    { id: 'citrus',           quadrant: 'Fresh',  angle: 113.57, width: 21.43, color: '#b9c5c9' },
+    { id: 'water',            quadrant: 'Fresh',  angle: 135,    width: 21.43, color: '#a5b3bc' },
+    { id: 'green',            quadrant: 'Fresh',  angle: 156.43, width: 21.43, color: '#8d9bb0' },
     // FLORAL band — Fruity straddles 9 o'clock; 3 fixed subs to 12 o'clock.
-    { id: 'fruity',           quadrant: 'Fresh/Floral', angle: 180, width: 25.71, color: '#c6abc8', transitional: true },
-    { id: 'floral',           quadrant: 'Floral', angle: 205.71, width: 25.71, color: '#a05d7a' },
-    { id: 'soft_floral',      quadrant: 'Floral', angle: 231.43, width: 25.71, color: '#c08a9d' },
-    { id: 'floral_amber',     quadrant: 'Floral', angle: 257.14, width: 25.71, color: '#b48696', transitional: true },
+    { id: 'fruity',           quadrant: 'Fresh/Floral', angle: 180, width: 25.71, color: '#c5b0c8', transitional: true },
+    { id: 'floral',           quadrant: 'Floral', angle: 205.71, width: 25.71, color: '#a66882' },
+    { id: 'soft_floral',      quadrant: 'Floral', angle: 231.43, width: 25.71, color: '#c08a9c' },
+    { id: 'floral_amber',     quadrant: 'Floral', angle: 257.14, width: 25.71, color: '#b78595', transitional: true },
     // AMBER band — hard left at 12, Woods straddles 3. Woody Amber inside.
-    { id: 'soft_amber',       quadrant: 'Amber',  angle: 282.86, width: 25.71, color: '#edae96' },
-    { id: 'amber',            quadrant: 'Amber',  angle: 308.57, width: 25.71, color: '#e89477' },
-    { id: 'woody_amber',      quadrant: 'Amber',  angle: 334.29, width: 25.71, color: '#d6a08c', transitional: true },
+    { id: 'soft_amber',       quadrant: 'Amber',  angle: 282.86, width: 25.71, color: '#edb299' },
+    { id: 'amber',            quadrant: 'Amber',  angle: 308.57, width: 25.71, color: '#e89578' },
+    { id: 'woody_amber',      quadrant: 'Amber',  angle: 334.29, width: 25.71, color: '#dda994', transitional: true },
     // Pure transitional Amber↔Woody — straddles 3 o'clock.
-    { id: 'woods',            quadrant: 'Amber/Woody', angle: 360, width: 25.71, color: '#c0ceaa', transitional: true },
+    { id: 'woods',            quadrant: 'Amber/Woody', angle: 360, width: 25.71, color: '#bfcdaa', transitional: true },
     // WOODY band — Woods straddles 3, Aromatic straddles 6.
-    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 28.93, width: 32.14, color: '#a7b799' },
-    { id: 'dry_woods',        quadrant: 'Woody',  angle: 61.07, width: 32.14, color: '#94a687' },
+    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 28.93, width: 32.14, color: '#a8b898' },
+    { id: 'dry_woods',        quadrant: 'Woody',  angle: 61.07, width: 32.14, color: '#93a587' },
   ],
 
   // Main-family inner band arcs — hard-coded to the four 90° quadrants.
@@ -1386,10 +1386,10 @@ const FRAGRANCE_WHEEL = {
   // Main-family base hues — exposed so renderers don't need to reach into
   // the private `_MAIN_COLORS` table.
   mainColors: {
-    fresh:  '#a9b6ba',
-    floral: '#a05d7a',
-    amber:  '#e89477',
-    woody:  '#a7b799',
+    fresh:  '#a5b3bc',
+    floral: '#a66882',
+    amber:  '#e89578',
+    woody:  '#a8b898',
   },
 
   // Transitional subfamilies → [counter-clockwise neighbour, clockwise neighbour].

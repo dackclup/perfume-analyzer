@@ -582,9 +582,12 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
 </div>
 
 <!-- ===== Scripts ===== -->
-<script src="perfumery_data.js"></script>
-<script src="formulation_data.js"></script>
-<script src="formulation_engine.js"></script>
+<!-- ?v= query suffix busts browser cache whenever the wheel palette /
+     taxonomy changes. Bump this string on every deploy that touches
+     the three loaded scripts below. -->
+<script src="perfumery_data.js?v=2026-04-15-edwards-solid"></script>
+<script src="formulation_data.js?v=2026-04-15-edwards-solid"></script>
+<script src="formulation_engine.js?v=2026-04-15-edwards-solid"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
