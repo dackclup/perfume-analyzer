@@ -645,6 +645,7 @@ const QSAR_ODT_COEFFICIENTS = {
 // Sources: Stevens 1960, Cain 1969, Moskowitz 1977
 // ─────────────────────────────────────────────────────────────
 const STEVENS_EXPONENTS = {
+  // Legacy / perceptual keys (some materials still tag with these)
   citrus:     0.60,
   fresh:      0.58,
   green:      0.55,
@@ -668,6 +669,16 @@ const STEVENS_EXPONENTS = {
   marine:     0.55,
   ozonic:     0.55,
   earthy:     0.40,
+  // Michael Edwards 2021 subfamily IDs (not covered by legacy keys above)
+  aromatic_fougere: 0.55,
+  water:            0.55,
+  soft_floral:      0.45,
+  floral_amber:     0.45,
+  soft_amber:       0.40,
+  woody_amber:      0.38,
+  dry_woods:        0.38,
+  mossy_woods:      0.40,
+  woods:            0.42,
 };
 
 // Hill Equation half-max constant (K_half in OV units)
@@ -810,6 +821,17 @@ const FAMILY_MOOD_DEFAULTS = {
   leather:       [2, 0, 1, 0, 4, 1, 4, 0],
   musk:          [3, 0, 0, 1, 4, 3, 3, 0],
   smoky:         [2, 0, 1, 0, 2, 1, 4, 0],
+  // Michael Edwards 2021 subfamily IDs. Transitional values are element-wise
+  // means of their two adjacent mains; the rest copy their closest neighbour.
+  aromatic_fougere: [1, 3, 4, 2, 0, 2, 2, 3],
+  water:            [1, 2, 2, 3, 1, 1, 0, 4],
+  soft_floral:      [3, 1, 1, 2, 2, 3, 2, 1],
+  floral_amber:     [3, 0, 1, 2, 3, 3, 3, 1],
+  soft_amber:       [3, 0, 1, 2, 3, 3, 4, 0],
+  woody_amber:      [3, 0, 1, 1, 4, 2, 5, 0],
+  dry_woods:        [2, 0, 1, 0, 3, 1, 4, 0],
+  mossy_woods:      [3, 0, 2, 1, 2, 2, 5, 0],
+  woods:            [3, 0, 2, 1, 2, 3, 5, 0],
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -1240,6 +1262,8 @@ const MATERIAL_PROPERTIES = {
 // Sources: Perfumery techniques literature, Michael Edwards
 // ─────────────────────────────────────────────────────────────
 const FAMILY_NOTE_RATIOS = {
+  // ── Legacy keys kept for backward-compat (some material odor_type tokens
+  //    still hit these directly via getMaterialFamilies) ──────────────────
   'citrus':   { top: 0.35, mid: 0.35, base: 0.30 },
   'fresh':    { top: 0.35, mid: 0.35, base: 0.30 },
   'green':    { top: 0.30, mid: 0.40, base: 0.30 },
@@ -1257,39 +1281,138 @@ const FAMILY_NOTE_RATIOS = {
   'amber':    { top: 0.10, mid: 0.35, base: 0.55 },
   'musk':     { top: 0.15, mid: 0.40, base: 0.45 },
   'animalic': { top: 0.10, mid: 0.30, base: 0.60 },
+  // ── Michael Edwards 2021–2026 wheel — 14 subfamilies ──────────────────
+  //    Transitionals (fruity/floral_amber/woody_amber) are element-wise
+  //    means of their two adjacent mains; aromatic_fougere uses the old
+  //    'aromatic' anchor; soft_amber leans sweeter + base-heavy.
+  'aromatic_fougere': { top: 0.25, mid: 0.40, base: 0.35 },
+  'water':            { top: 0.30, mid: 0.40, base: 0.30 },
+  // fruity already defined above (Fresh↔Floral transitional:
+  // mean(citrus, floral) = { top 0.275, mid 0.425, base 0.30 } — legacy
+  // entry above is close; keep legacy value for consistency.)
+  'floral_amber':     { top: 0.15, mid: 0.425, base: 0.425 }, // mean(floral, amber)
+  'soft_amber':       { top: 0.10, mid: 0.40, base: 0.50 },
+  'woody_amber':      { top: 0.125, mid: 0.35, base: 0.525 }, // mean(amber, woods)
+  'mossy_woods':      { top: 0.15, mid: 0.35, base: 0.50 },
+  'woods':            { top: 0.15, mid: 0.35, base: 0.50 },
   'default':  { top: 0.20, mid: 0.45, base: 0.35 },
+};
+
+// ─── Michael Edwards 2021–2026 Fragrance Wheel ─────────────────────────
+// 4 Main Families × 14 Subfamilies. Fruity, Floral Amber, and Woody Amber
+// are transitional subfamilies that bridge two adjacent main families.
+// "Oriental" was renamed to "Amber" in the 2021 revision.
+// ───────────────────────────────────────────────────────────────────────
+const WHEEL_VERSION = 'edwards-2021';
+
+// Colour palette — one base hue per main family; transitionals expose a
+// two-stop gradient so the SVG renderer can blend adjacent mains.
+const _MAIN_COLORS = {
+  fresh:  '#22c55e', // green
+  floral: '#ec4899', // pink
+  amber:  '#f59e0b', // gold
+  woody:  '#78350f', // brown
 };
 
 const FRAGRANCE_WHEEL = {
   segments: [
-    { id: 'citrus',          quadrant: 'Fresh',    angle: 0,   color: '#fbbf24' },
-    { id: 'green',           quadrant: 'Fresh',    angle: 26,  color: '#84cc16' },
-    { id: 'aquatic',         quadrant: 'Fresh',    angle: 51,  color: '#22d3ee' },
-    { id: 'fruity',          quadrant: 'Fresh',    angle: 77,  color: '#f97316' },
-    { id: 'floral',          quadrant: 'Floral',   angle: 103, color: '#ec4899' },
-    { id: 'soft_floral',     quadrant: 'Floral',   angle: 129, color: '#f9a8d4' },
-    { id: 'floral_oriental', quadrant: 'Floral',   angle: 154, color: '#c084fc' },
-    { id: 'oriental',        quadrant: 'Oriental', angle: 180, color: '#a855f7' },
-    { id: 'spicy',           quadrant: 'Oriental', angle: 206, color: '#ef4444' },
-    { id: 'gourmand',        quadrant: 'Oriental', angle: 231, color: '#b45309' },
-    { id: 'woody',           quadrant: 'Woody',    angle: 257, color: '#78716c' },
-    { id: 'mossy',           quadrant: 'Woody',    angle: 283, color: '#65a30d' },
-    { id: 'dry_woods',       quadrant: 'Woody',    angle: 308, color: '#92400e' },
-    { id: 'aromatic',        quadrant: 'Woody',    angle: 334, color: '#0d9488' },
+    // Fresh quadrant (clockwise from top)
+    { id: 'aromatic_fougere', quadrant: 'Fresh',  angle: 0,   color: '#14b8a6' },
+    { id: 'citrus',           quadrant: 'Fresh',  angle: 26,  color: '#fbbf24' },
+    { id: 'water',            quadrant: 'Fresh',  angle: 51,  color: '#22d3ee' },
+    { id: 'green',            quadrant: 'Fresh',  angle: 77,  color: '#84cc16' },
+    // Transitional Fresh → Floral
+    { id: 'fruity',           quadrant: 'Fresh',  angle: 103, color: null,
+      transitional: true, gradient: [_MAIN_COLORS.fresh, _MAIN_COLORS.floral] },
+    // Floral quadrant
+    { id: 'floral',           quadrant: 'Floral', angle: 129, color: '#ec4899' },
+    { id: 'soft_floral',      quadrant: 'Floral', angle: 154, color: '#f9a8d4' },
+    // Transitional Floral → Amber
+    { id: 'floral_amber',     quadrant: 'Floral', angle: 180, color: null,
+      transitional: true, gradient: [_MAIN_COLORS.floral, _MAIN_COLORS.amber] },
+    // Amber quadrant
+    { id: 'soft_amber',       quadrant: 'Amber',  angle: 206, color: '#fcd34d' },
+    { id: 'amber',            quadrant: 'Amber',  angle: 231, color: '#f59e0b' },
+    // Transitional Amber → Woody
+    { id: 'woody_amber',      quadrant: 'Amber',  angle: 257, color: null,
+      transitional: true, gradient: [_MAIN_COLORS.amber, _MAIN_COLORS.woody] },
+    // Woody quadrant
+    { id: 'dry_woods',        quadrant: 'Woody',  angle: 283, color: '#92400e' },
+    { id: 'mossy_woods',      quadrant: 'Woody',  angle: 308, color: '#65a30d' },
+    { id: 'woods',            quadrant: 'Woody',  angle: 334, color: '#78350f' },
   ],
+
+  // Transitional subfamilies → [counter-clockwise neighbour, clockwise neighbour]
+  // Used by generateFromBrief's family-match scoring and by the SVG renderer
+  // to locate the correct gradient stops.
+  transitional: {
+    fruity:       ['citrus', 'floral'],
+    floral_amber: ['floral', 'amber'],
+    woody_amber:  ['amber',  'woods'],
+  },
+
+  // Every subfamily → its owning main family
+  mainOf: {
+    aromatic_fougere: 'fresh', citrus: 'fresh', water: 'fresh', green: 'fresh',
+    fruity: 'fresh', // transitional — primary anchor is Fresh
+    floral: 'floral', soft_floral: 'floral',
+    floral_amber: 'floral',
+    soft_amber: 'amber', amber: 'amber',
+    woody_amber: 'amber',
+    dry_woods: 'woody', mossy_woods: 'woody', woods: 'woody',
+  },
+
   familyToSegment: {
-    'citrus': 'citrus', 'fresh': 'citrus', 'green': 'green', 'herbal': 'aromatic',
-    'aquatic': 'aquatic', 'marine': 'aquatic', 'ozonic': 'aquatic',
-    'fruity': 'fruity', 'floral': 'floral', 'rose': 'soft_floral',
-    'jasmine': 'floral', 'powdery': 'soft_floral', 'muguet': 'soft_floral',
-    'oriental': 'oriental', 'amber': 'oriental', 'balsamic': 'oriental',
-    'spicy': 'spicy', 'gourmand': 'gourmand', 'vanilla': 'gourmand',
-    'sweet': 'gourmand', 'lactonic': 'gourmand',
-    'woody': 'woody', 'earthy': 'mossy', 'leather': 'dry_woods',
-    'smoky': 'dry_woods', 'tobacco': 'dry_woods',
-    'camphoraceous': 'aromatic', 'aromatic': 'aromatic',
-    'musk': 'oriental', 'animalic': 'oriental',
-    'aldehydic': 'soft_floral', 'clean': 'aquatic',
+    // Self-maps for every new subfamily id
+    aromatic_fougere: 'aromatic_fougere',
+    citrus: 'citrus',
+    water:  'water',
+    green:  'green',
+    fruity: 'fruity',
+    floral: 'floral',
+    soft_floral: 'soft_floral',
+    floral_amber: 'floral_amber',
+    soft_amber: 'soft_amber',
+    amber:  'amber',
+    woody_amber: 'woody_amber',
+    dry_woods: 'dry_woods',
+    mossy_woods: 'mossy_woods',
+    woods: 'woods',
+    // ── Legacy aliases ────────────────────────────────────────────────
+    // Fresh quadrant migrations
+    fresh:        'citrus',
+    aquatic:      'water',
+    marine:       'water',
+    ozonic:       'water',
+    clean:        'water',
+    aromatic:     'aromatic_fougere',
+    herbal:       'aromatic_fougere',
+    camphoraceous:'aromatic_fougere',
+    lactonic:     'fruity',
+    // Floral quadrant migrations
+    rose:         'floral',
+    jasmine:      'floral',
+    aldehydic:    'soft_floral',
+    powdery:      'soft_floral',
+    muguet:       'soft_floral',
+    floral_oriental: 'floral_amber',
+    // Amber (was Oriental) quadrant migrations
+    oriental:     'amber',
+    balsamic:     'amber',
+    resinous:     'amber',
+    spicy:        'amber',
+    gourmand:     'soft_amber',
+    vanilla:      'soft_amber',
+    sweet:        'soft_amber',
+    musk:         'soft_amber',
+    // Woody quadrant migrations
+    woody:        'woods',
+    mossy:        'mossy_woods',
+    earthy:       'mossy_woods',
+    animalic:     'woody_amber',
+    leather:      'woody_amber',
+    smoky:        'woody_amber',
+    tobacco:      'woody_amber',
   },
 };
 
