@@ -3656,13 +3656,15 @@ function renderWheelTab() {
   const mats = formulation.materials;
   const segDeg = 360 / segments.length;
 
-  // Geometry — larger than before so two rings + labels are legible
+  // Geometry — larger than before so two rings + labels are legible.
+  // outerR leaves a small margin inside the viewBox so subfamily labels
+  // (drawn at the midpoint of the outer ring) don't clip against the edge.
   const size = 520;
   const cx = size / 2, cy = size / 2;
-  const outerR = 250;   // outer edge of subfamily ring
-  const midR   = 165;   // inner edge of subfamily ring / outer edge of main ring
-  const innerR = 100;   // inner edge of main ring / outer edge of center disc
-  const centerR = 95;
+  const outerR = 240;   // outer edge of subfamily ring
+  const midR   = 160;   // inner edge of subfamily ring / outer edge of main ring
+  const innerR = 95;    // inner edge of main ring / outer edge of center disc
+  const centerR = 90;
 
   const LABEL_OVERRIDES = { aromatic_fougere: 'Aromatic Fougère' };
   const prettyLabel = id => LABEL_OVERRIDES[id] ||
@@ -3676,7 +3678,8 @@ function renderWheelTab() {
     (mainGroups[main] = mainGroups[main] || []).push(s);
   }
 
-  let svg = '<svg viewBox="0 0 ' + size + ' ' + size + '" style="max-width:560px;width:100%;margin:0 auto;display:block">';
+  let svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
+    + 'viewBox="0 0 ' + size + ' ' + size + '" style="max-width:560px;width:100%;margin:0 auto;display:block">';
 
   // ─── <defs>: transitional gradients + curved text-paths for main labels ───
   let defs = '<defs>';
@@ -3766,14 +3769,18 @@ function renderWheelTab() {
     const x2o = cx + midR   * Math.cos(a2), y2o = cy + midR   * Math.sin(a2);
     const x1i = cx + innerR * Math.cos(a2), y1i = cy + innerR * Math.sin(a2);
     const x2i = cx + innerR * Math.cos(a1), y2i = cy + innerR * Math.sin(a1);
-    const large = (maxA - minA) > Math.PI ? 1 : 0;
+    // `maxA - minA` is in degrees here, so the large-arc threshold is 180 —
+    // NOT Math.PI (which is 3.14 radians and trips for any arc > ~3°, making
+    // the fill sweep the long way and swallow the rest of the wheel).
+    const large = (maxA - minA) > 180 ? 1 : 0;
     const path = 'M ' + x1o + ' ' + y1o + ' A ' + midR + ' ' + midR + ' 0 ' + large + ' 1 ' + x2o + ' ' + y2o +
       ' L ' + x1i + ' ' + y1i + ' A ' + innerR + ' ' + innerR + ' 0 ' + large + ' 0 ' + x2i + ' ' + y2i + ' Z';
     const mainColor = (FRAGRANCE_WHEEL.mainColors && FRAGRANCE_WHEEL.mainColors[main]) || '#888';
     svg += '<path d="' + path + '" fill="' + mainColor + '" fill-opacity="0.88" stroke="#fff" stroke-width="2"/>';
 
     svg += '<text font-size="14" fill="#fff" font-weight="700" letter-spacing="3" style="pointer-events:none">';
-    svg += '<textPath href="#arc_' + main + '" startOffset="50%" text-anchor="middle">'
+    // href is SVG 2; xlink:href keeps older mobile WebKit happy.
+    svg += '<textPath href="#arc_' + main + '" xlink:href="#arc_' + main + '" startOffset="50%" text-anchor="middle">'
       + main.toUpperCase() + ' NOTES</textPath></text>';
   }
 
