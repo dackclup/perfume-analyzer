@@ -276,14 +276,15 @@
     regulatory: '09 Regulatory',
   };
 
-  // Only these axes get physical MOC pages in the vault. The remaining
-  // six axes (note, type, source, use, function, regulatory) still
-  // appear in material frontmatter and the tags array — Dataview can
-  // still query them — but they don't generate their own browse pages.
-  // Per user feedback the additional MOC folders were noise; the
-  // olfactory taxonomy (family / sub-family / facet) is what matters
-  // for browsing.
-  const MOC_AXES = new Set(['family', 'subfamily', 'facet']);
+  // All nine axes get physical MOC pages. Per user feedback the
+  // earlier narrow allowlist (family / sub-family / facet only) was
+  // too restrictive — even note / type / source / use / function /
+  // regulatory deserve their own browse pages. With this set every
+  // axis value a material references resolves to a real MOC file.
+  const MOC_AXES = new Set([
+    'family', 'subfamily', 'facet',
+    'note', 'type', 'source', 'use', 'function', 'regulatory',
+  ]);
 
   // Human-readable metadata for each axis — feeds axis Index titles,
   // per-value MOC subtitles, and the root navigation menu.
