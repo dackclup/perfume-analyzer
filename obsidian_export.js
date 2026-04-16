@@ -425,60 +425,177 @@
 
   // ---- Formulation renderer ---------------------------------------------
 
-  // Render a formulation as a single .md — no ZIP, no JSZip. The caller
-  // hands us a plain object so this module stays decoupled from the
-  // formulation engine.
+  // Render a formulation as a single markdown file — a recipe sheet
+  // with composition table, optional carrier list, parameters block,
+  // analysis (IFRA compliance / note balance / longevity), and a
+  // per-material detail section whose wikilinks point back into the
+  // materials vault.
   //
-  // Shape:
+  // Expected input shape (from formulation.html#exportObsidianMD):
   //   {
-  //     name: string,
-  //     date: ISO date string (defaults to today),
-  //     materials: [{
-  //       name, note, uses, functions, materialType, source,
-  //       regulatory, primaryFamilies, secondaryFamilies, facets
-  //     }],
+  //     name, date,
+  //     category, categoryId, fragrancePct,
+  //     batchSize, batchUnit, temperatureC,
+  //     totalPct,
+  //     materials: [{ cas, name, pct, dilution, dilutionSolvent,
+  //                   note, uses, functions, materialType, source,
+  //                   regulatory, primaryFamilies, secondaryFamilies,
+  //                   facets }],
+  //     carriers: [{ cas, name, pct }],
+  //     analysis: {
+  //       compliance?:  { passed, failures: [{name, max, current}], warnings: [...] },
+  //       noteBalance?: { top, middle, base, unclassifiedPct, missing },
+  //       longevity?:   { total, top: {end}, heart: {end}, base: {end} },
+  //     },
   //   }
   function formulationToMarkdown(input) {
     const f = input || {};
     const name = (f.name || 'Untitled Formulation').trim() || 'Untitled Formulation';
     const date = f.date || new Date().toISOString().slice(0, 10);
     const materials = Array.isArray(f.materials) ? f.materials : [];
+    const carriers  = Array.isArray(f.carriers)  ? f.carriers  : [];
+    const analysis  = f.analysis || {};
+    const totalPct  = typeof f.totalPct === 'number' ? f.totalPct : null;
 
-    const lines = [
-      '---',
+    // ---- Frontmatter ----------------------------------------------------
+    const fm = ['---',
+      'type: formulation',
       'name: ' + yamlScalar(name),
       'date: ' + yamlScalar(date),
-      'materials: ' + yamlScalar(materials.length),
-      '---',
-      '',
-      '# ' + name,
-      '',
     ];
+    if (f.category)            fm.push('category: '      + yamlScalar(f.category));
+    if (f.categoryId)          fm.push('category_id: '   + yamlScalar(f.categoryId));
+    if (f.fragrancePct != null)fm.push('fragrance_pct: ' + yamlScalar(f.fragrancePct));
+    if (f.batchSize != null)   fm.push('batch_size: '    + yamlScalar(f.batchSize));
+    if (f.batchUnit)           fm.push('batch_unit: '    + yamlScalar(f.batchUnit));
+    if (f.temperatureC != null)fm.push('temperature_c: ' + yamlScalar(f.temperatureC));
+    fm.push(
+      'materials: ' + yamlScalar(materials.length),
+    );
+    if (totalPct != null)      fm.push('total_pct: '     + yamlScalar(totalPct));
+    fm.push('tags: [formulation]', '---', '');
 
+    // ---- Body -----------------------------------------------------------
+    const body = ['# ' + name, ''];
     if (!materials.length) {
-      lines.push('_No materials in formulation._', '');
+      body.push('_No materials in formulation._', '');
+      return fm.join('\n') + body.join('\n');
     }
 
+    // Composition table — %, note, family, dilution, solvent. Each
+    // material links back to its note in the materials vault.
+    body.push('## 🎨 Composition', '');
+    body.push('| Material | % | Note | Family | Dilution | Solvent |');
+    body.push('|---|---:|---|---|---:|---|');
+    for (const m of materials) {
+      const mName    = m && m.name ? m.name : 'Untitled';
+      const pct      = (typeof m.pct === 'number') ? m.pct.toString() : '—';
+      const noteCell = m.note ? mocDisplay(m.note) : '—';
+      const fam      = Array.isArray(m.primaryFamilies) && m.primaryFamilies.length ? mocDisplay(m.primaryFamilies[0]) : '—';
+      const dil      = (typeof m.dilution === 'number') ? m.dilution + '%' : '—';
+      const sol      = m.dilutionSolvent || '—';
+      body.push(`| [[${safeFileName(mName)}]] | ${pct} | ${noteCell} | ${fam} | ${dil} | ${sol} |`);
+    }
+    if (totalPct != null) body.push('', `**Total:** ${totalPct}%`);
+    body.push('');
+
+    // Carriers (solvents / base) — only emit if present.
+    if (carriers.length) {
+      body.push('## 🧴 Carriers', '');
+      body.push('| Carrier | % |');
+      body.push('|---|---:|');
+      for (const c of carriers) {
+        const cName = c && c.name ? c.name : 'Untitled';
+        const cPct  = (typeof c.pct === 'number') ? c.pct.toString() : '—';
+        body.push(`| ${cName} | ${cPct} |`);
+      }
+      body.push('');
+    }
+
+    // Parameters — reproducibility block.
+    if (f.category || f.fragrancePct != null || f.batchSize != null || f.temperatureC != null) {
+      const parts = [];
+      if (f.category)             parts.push(`Category: **${f.category}**`);
+      if (f.fragrancePct != null) parts.push(`Fragrance: **${f.fragrancePct}%**`);
+      if (f.batchSize != null)    parts.push(`Batch: **${f.batchSize}${f.batchUnit ? ' ' + f.batchUnit : ''}**`);
+      if (f.temperatureC != null) parts.push(`Temperature: **${f.temperatureC}°C**`);
+      body.push('## 📋 Parameters', '', '- ' + parts.join(' · '), '');
+    }
+
+    // Analysis — three independent sub-sections, each guarded by
+    // presence of the corresponding analyser output.
+    const hasAny = analysis.compliance || analysis.noteBalance || analysis.longevity;
+    if (hasAny) {
+      body.push('## 📊 Analysis', '');
+
+      if (analysis.noteBalance) {
+        const nb = analysis.noteBalance;
+        body.push('### Note Balance');
+        const pct = v => (typeof v === 'number') ? Math.round(v * 10) / 10 + '%' : '—';
+        body.push(`- **Top:** ${pct(nb.top)} · **Middle:** ${pct(nb.middle)} · **Base:** ${pct(nb.base)}`);
+        if (nb.unclassifiedPct > 0) {
+          body.push(`- _Unclassified: ${pct(nb.unclassifiedPct)}_`);
+        }
+        if (Array.isArray(nb.missing) && nb.missing.length) {
+          body.push(`- ⚠️ Missing tiers: ${nb.missing.join(', ')}`);
+        }
+        body.push('');
+      }
+
+      if (analysis.compliance) {
+        const c = analysis.compliance;
+        const catLabel = f.category ? ` (${f.category}${f.fragrancePct != null ? ' @ ' + f.fragrancePct + '%' : ''})` : '';
+        body.push('### IFRA Compliance' + catLabel);
+        if (c.passed) {
+          body.push('✅ All materials within limits');
+        } else {
+          body.push('❌ Non-compliant materials:');
+          for (const fail of c.failures) {
+            body.push(`  - **${fail.name}** — current ${fail.current}%, max ${fail.max}%`);
+          }
+        }
+        if (Array.isArray(c.warnings) && c.warnings.length) {
+          body.push('', '⚠️ Warnings (soft usage-range overage):');
+          for (const w of c.warnings) {
+            body.push(`  - ${w.name} — current ${w.current}%, max ${w.max}%`);
+          }
+        }
+        body.push('');
+      }
+
+      if (analysis.longevity) {
+        const lo = analysis.longevity;
+        const t = (lo.top   && typeof lo.top.end === 'number')   ? lo.top.end   : '?';
+        const h = (lo.heart && typeof lo.heart.end === 'number') ? lo.heart.end : '?';
+        const b = (lo.base  && typeof lo.base.end === 'number')  ? lo.base.end  : '?';
+        body.push('### Estimated Longevity');
+        body.push(`- **Total:** ~${lo.total} h`);
+        body.push(`- Top → ${t} h · Heart → ${h} h · Base → ${b} h`);
+        body.push('');
+      }
+    }
+
+    // Per-material details — compact summary block for each material
+    // with a wikilink to the full note in the materials vault.
+    body.push('## 🧪 Materials detail', '');
     for (const m of materials) {
       const mName = m && m.name ? m.name : 'Untitled';
       const a = extractAxes(m);
-      lines.push(
-        `## [[${mName}]]`,
-        '',
-        `- Use: ${displayList(a.uses, { titleCase: true })}`,
-        `- Function: ${displayList(a.functions)}`,
-        `- Type: ${a.materialType ? titleCaseSlug(a.materialType) : '—'}`,
-        `- Source: ${a.source || '—'}`,
-        `- Regulatory: ${displayList(a.regulatory)}`,
-        `- Note: ${displayList(a.notes)}`,
-        `- Primary Family: ${displayList(a.primaryFamilies)}`,
-        `- Sub-families: ${displayList(a.secondaryFamilies)}`,
-        `- Facet: ${displayList(a.facets)}`,
-        '',
-      );
+      body.push(`### [[${safeFileName(mName)}]]`);
+      const facts = [];
+      if (a.primaryFamilies.length) facts.push('Family: ' + displayList(a.primaryFamilies.map(mocDisplay)));
+      if (a.facets.length)          facts.push('Facet: '  + displayList(a.facets.map(mocDisplay)));
+      if (facts.length) body.push('- ' + facts.join(' · '));
+      const meta2 = [];
+      if (a.notes.length)           meta2.push('Note: ' + displayList(a.notes.map(mocDisplay)));
+      if (a.materialType)           meta2.push('Type: ' + mocDisplay(a.materialType));
+      if (a.source)                 meta2.push('Source: ' + mocDisplay(a.source));
+      if (meta2.length) body.push('- ' + meta2.join(' · '));
+      if (a.regulatory.length)      body.push('- Regulatory: ' + displayList(a.regulatory.map(mocDisplay)));
+      body.push('');
     }
 
-    return lines.join('\n');
+    return fm.join('\n') + body.join('\n');
   }
 
   // ---- ZIP builder ------------------------------------------------------

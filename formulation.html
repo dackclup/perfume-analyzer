@@ -2837,10 +2837,14 @@ document.getElementById('btnExportPDF').addEventListener('click', () => { export
 document.getElementById('btnExportXLSX').addEventListener('click', () => { exportXLSX(); closeDlMenu(); });
 document.getElementById('btnExportObsidian').addEventListener('click', () => { exportObsidianMD(); closeDlMenu(); });
 
-// Single-file Obsidian export: just material names + which filter
-// categories each one is in. All the precomputed filter axes arrive
-// in `m.data` via sendToFormulator — we forward the 9 relevant fields
-// to ObsidianExport.formulationToMarkdown, which owns the rendering.
+// Obsidian single-file formulation export — produces a recipe sheet
+// with composition table, parameters, and analysis blocks (IFRA
+// compliance + note balance + longevity estimate). Each material links
+// back to its note in the materials vault via a wikilink.
+//
+// Analysis blocks are computed lazily inside try/catch so one broken
+// analyser doesn't sink the whole export — the section is simply
+// omitted from the payload.
 function exportObsidianMD() {
   const mats = formulation.materials;
   if (!mats.length) { alert('Add materials first.'); return; }
@@ -2855,11 +2859,71 @@ function exportObsidianMD() {
   if (rawName === null) return; // user cancelled
   const saveName = (rawName.trim() || defaultName);
 
+  // Pull the live UI parameters — these feed both the Parameters block
+  // in the note and the IFRA / longevity analysers.
+  const catId    = document.getElementById('productCategory').value;
+  const fragPct  = parseInt(document.getElementById('fragPct').value);
+  const tempC    = parseInt(document.getElementById('tempSlider').value);
+  const batchSz  = validateBatchSize(document.getElementById('batchSize').value);
+  const batchU   = document.getElementById('batchUnit').value;
+  const catName  = (typeof IFRA_CATEGORIES !== 'undefined' && IFRA_CATEGORIES[catId])
+                    ? IFRA_CATEGORIES[catId].name : catId;
+
+  // Compute analysis — one try per section so a single failing analyser
+  // drops only its block, not the whole export.
+  const analysis = {};
+  try {
+    const rows = checkIFRACompliance(mats, catId, fragPct);
+    if (Array.isArray(rows)) {
+      const failures = rows
+        .filter(r => r && (r.status === 'danger' || r.compliant === false))
+        .map(r => ({ name: r.name, max: r.ifraMax, current: r.pctInProduct, status: r.status }));
+      const warnings = rows
+        .filter(r => r && r.status === 'warn')
+        .map(r => ({ name: r.name, max: r.ifraMax, current: r.pctInProduct }));
+      analysis.compliance = { passed: failures.length === 0, failures, warnings };
+    }
+  } catch (_) { /* skip section */ }
+  try {
+    const nb = analyzeNoteBalance(mats);
+    if (nb) {
+      analysis.noteBalance = {
+        top:              nb.top,
+        middle:           nb.middle,
+        base:             nb.base,
+        unclassifiedPct:  nb.unclassifiedPct,
+        missing:          nb.missing,
+      };
+    }
+  } catch (_) { /* skip section */ }
+  try {
+    const lo = estimateLongevity(mats, tempC);
+    if (lo && typeof lo.totalHours === 'number') {
+      analysis.longevity = {
+        total:  lo.totalHours,
+        top:    lo.topPhase,
+        heart:  lo.heartPhase,
+        base:   lo.basePhase,
+      };
+    }
+  } catch (_) { /* skip section */ }
+
   const md = window.ObsidianExport.formulationToMarkdown({
     name: saveName,
     date: today,
+    category: catName,
+    categoryId: catId,
+    fragrancePct: fragPct,
+    batchSize: batchSz,
+    batchUnit: batchU,
+    temperatureC: tempC,
+    totalPct: formulation.totalPct(),
     materials: mats.map(m => ({
+      cas: m.cas,
       name: m.name,
+      pct: m.pct,
+      dilution: m.dilution || 100,
+      dilutionSolvent: m.dilutionSolvent || '',
       note:              m.data?.note              || null,
       uses:              m.data?.uses              || [],
       functions:         m.data?.functions         || [],
@@ -2870,6 +2934,8 @@ function exportObsidianMD() {
       secondaryFamilies: m.data?.secondaryFamilies || [],
       facets:            m.data?.facets            || [],
     })),
+    carriers: carrierMaterials.map(c => ({ cas: c.cas, name: c.name, pct: c.pct })),
+    analysis,
   });
 
   const fileName = window.ObsidianExport.safeFileName(saveName) + '.md';
