@@ -4484,6 +4484,12 @@ function sendToFormulator() {
           facets: fc ? [...(fc.facets || [])] : (src.classification?.facets || []),
           functions: fc ? [...(fc.functions || [])] : (src.classification?.functions || []),
           regulatory: fc ? [...(fc.regulatory || [])] : (src.classification?.regulatory || []),
+          // Phase 5 (simplified Obsidian export) — the remaining 3 filter
+          // axes so formulation.html can render full 9-axis membership
+          // without re-deriving anything.
+          uses:         fc ? [...(fc.uses || [])] : (src.classification?.uses         || []),
+          materialType: fc ? (fc.materialType || null) : (src.classification?.material_type || null),
+          source:       fc ? (fc.source || null)       : (src.classification?.source        || null),
         };
       });
       localStorage.setItem('perfume_formulation_materials', JSON.stringify(payload));
