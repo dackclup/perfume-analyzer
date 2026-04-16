@@ -5,9 +5,15 @@
 //   Use · Function · Type · Source · Regulatory · Note ·
 //   Primary Family · Sub-families · Facet
 //
-// buildMaterialVaultZip ships a flat ZIP — no folders, no index
-// pages, no README. formulationToMarkdown renders a single .md with
-// one H2 block per material listing the same 9 filter memberships.
+// buildMaterialVaultZip ships a two-level ZIP: material notes at the
+// root of PerfumeMaterials/, plus one "hub" note per (axis, value)
+// under PerfumeMaterials/_Filters/. Each material body holds a line
+// of `[[Axis-Value]]` wikilinks into the hubs so Obsidian's Graph
+// View renders real material → hub edges (instead of isolated dots)
+// and Backlinks on each hub auto-list every material in that filter.
+//
+// formulationToMarkdown renders a single .md with one H2 block per
+// material listing the same 9 filter memberships.
 //
 // Depends on:
 //   - JSZip (window.JSZip, loaded via CDN) for the ZIP path only.
@@ -134,6 +140,86 @@
     return tags;
   }
 
+  // ---- Hub note helpers -------------------------------------------------
+
+  // Turn a filter value into a display label. Slugs get title-cased,
+  // plain lowercase words pass through (e.g. "aromatic", "base", "top")
+  // so the on-page text matches the frontmatter values.
+  function hubDisplay(value) {
+    const s = String(value || '').trim();
+    if (!s) return '';
+    return /[_-]/.test(s) ? titleCaseSlug(s) : s;
+  }
+
+  // Produce the basename (no extension, no folder) for a hub note.
+  // Format: "Axis-Value" with spaces replaced by `-` so the whole
+  // basename is a single hyphen-joined token. Axis prefix prevents
+  // collisions between, say, `Family-Floral` and `Facet-Floral`.
+  function hubBaseName(axis, value) {
+    const axisPart  = titleCaseSlug(axis).replace(/\s+/g, '-');
+    const valuePart = hubDisplay(value).replace(/\s+/g, '-');
+    return `${axisPart}-${valuePart}`;
+  }
+
+  // Walk the 9 filter axes and call `visit(axis, value)` once per
+  // (axis, value) pair. Used by both materialToMarkdown (to emit the
+  // body wikilinks) and buildMaterialVaultZip (to collect the set of
+  // hub notes to create). Keeping this in one place guarantees the
+  // wikilinks from materials always resolve to hubs that exist.
+  function forEachAxisValue(a, visit) {
+    a.uses.forEach(v => visit('Use', v));
+    a.functions.forEach(v => visit('Function', v));
+    if (a.materialType) visit('Type', a.materialType);
+    if (a.source) visit('Source', a.source);
+    if (a.regulatory.length) a.regulatory.forEach(v => visit('Regulatory', v));
+    // Sentinel uses a plain space so hubDisplay returns lowercase
+    // "no regulatory" (matches the `regulatory: [no regulatory]`
+    // value in frontmatter). hubBaseName still converts to
+    // `Regulatory-no-regulatory` via the internal space → dash step.
+    else visit('Regulatory', 'no regulatory');
+    a.notes.forEach(v => visit('Note', v));
+    a.primaryFamilies.forEach(v => visit('Family', v));
+    a.secondaryFamilies.forEach(v => visit('Subfamily', v));
+    a.facets.forEach(v => visit('Facet', v));
+  }
+
+  // Compose the single line of wikilinks that lives in the material
+  // body. Each chip links to the hub note for that (axis, value) pair
+  // — Obsidian's graph view turns these into material → hub edges,
+  // and backlinks on a hub list every material in that filter.
+  function materialBodyLinks(a) {
+    const parts = [];
+    forEachAxisValue(a, (axis, value) => {
+      const base   = hubBaseName(axis, value);
+      const shown  = hubDisplay(value);
+      parts.push(`[[${base}|${shown}]]`);
+    });
+    return parts.join(' · ');
+  }
+
+  // Render a hub note. Minimal content — Obsidian's Backlinks panel
+  // does the real work of listing every material that points here.
+  // The `type: filter-hub` key lets Dataview / Bases filter hubs out
+  // of material queries.
+  function hubToMarkdown(axis, value) {
+    const axisKey = String(axis || '').toLowerCase();
+    const title   = hubDisplay(value);
+    const tag     = axisKey + '/' + tagSlug(value);
+    return [
+      '---',
+      'type: filter-hub',
+      'axis: ' + yamlScalar(axisKey),
+      'value: ' + yamlScalar(title),
+      'tags: [' + tag + ']',
+      '---',
+      '',
+      `# ${title} (${axisKey})`,
+      '',
+      `_Filter hub_ — รายการวัตถุดิบทั้งหมดใน ${axisKey} **${title}** ดูได้จาก Backlinks panel ทางขวา`,
+      '',
+    ].join('\n');
+  }
+
   // Normalise the 9 filter axes out of whatever shape the caller hands
   // us. `record.classification.*` (index.html mat.record path) and the
   // flattened `m.data.*` shape (formulation.html payload) both flow
@@ -163,13 +249,16 @@
     // Frontmatter carries every filter axis — Obsidian's Properties
     // panel renders it as a nice key/value block in Reading & Live
     // Preview, and Dataview / Bases can query these fields directly.
-    // The body only needs the H1 title; any rendered table below would
-    // just repeat what Properties already shows.
     //
     // `tags` mirrors the axes as nested tags (`use/...`, `family/...`)
     // so users can click through to the tag pane. Empty `regulatory`
     // emits a `no regulatory` sentinel so the Properties panel shows
     // a real chip instead of a greyed-out "No value" placeholder.
+    //
+    // The body holds one line of wikilinks to per-axis hub notes (see
+    // buildMaterialVaultZip). These are what connect the material to
+    // the rest of the vault in Graph View and power Backlinks lists
+    // on the hubs.
     const tags = buildTags(a);
     const lines = [
       '---',
@@ -190,6 +279,8 @@
       '---',
       '',
       '# ' + name,
+      '',
+      materialBodyLinks(a),
       '',
     ];
 
@@ -254,7 +345,7 @@
     return lines.join('\n');
   }
 
-  // ---- ZIP builder (flat layout) ----------------------------------------
+  // ---- ZIP builder ------------------------------------------------------
 
   // records: array of { record: ... } (mat.record shape from index.html).
   // Returns a Blob (application/zip). Caller triggers the download.
@@ -266,11 +357,18 @@
     }
     const zip = new window.JSZip();
     const root = zip.folder('PerfumeMaterials');
+    const filters = root.folder('_Filters');
 
-    // De-dupe by basename — Obsidian links by basename so collisions
-    // break wikilinks regardless of folder (not that we have folders
-    // anymore). Subsequent dupes get a " (CAS)" suffix.
+    // De-dupe material basenames — Obsidian links by basename so a
+    // collision would break wikilinks. Subsequent dupes get a " (CAS)"
+    // suffix.
     const usedNames = new Set();
+
+    // Collect unique (axis, value) pairs across all materials while we
+    // iterate. Keyed by the hub basename so the same pair is never
+    // emitted twice.
+    const hubsToEmit = new Map();
+
     const total = records.length;
     let done = 0;
 
@@ -284,10 +382,30 @@
       }
       usedNames.add(base.toLowerCase());
       root.file(base + '.md', materialToMarkdown(rec));
+
+      // Register every hub this material points to. `forEachAxisValue`
+      // mirrors the enumeration used by materialBodyLinks, so hubs and
+      // wikilinks stay in lock-step (no broken links).
+      const axes = extractAxes(rec);
+      forEachAxisValue(axes, (axis, value) => {
+        const hubBase = hubBaseName(axis, value);
+        if (!hubsToEmit.has(hubBase)) {
+          hubsToEmit.set(hubBase, { axis, value });
+        }
+      });
+
       done++;
       if (onProgress && (done % 25 === 0 || done === total)) {
         onProgress(Math.round((done / total) * 100));
       }
+    }
+
+    // Emit hub notes after all materials are processed. Name collisions
+    // between hub and material basenames can't happen — hubs always
+    // carry an axis prefix ("Family-", "Facet-", …) that plain material
+    // names don't use.
+    for (const [hubBase, { axis, value }] of hubsToEmit) {
+      filters.file(hubBase + '.md', hubToMarkdown(axis, value));
     }
 
     return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
