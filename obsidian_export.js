@@ -150,6 +150,116 @@
     return tags;
   }
 
+  // ---- Note Group (Edwards Fragrance Wheel, top tier) ------------------
+
+  // Seven high-level Note Groups aggregate the DB's ~24 primary family
+  // values into the Edwards wheel core plus three transition zones.
+  // They sit above 01 Families in the MOC hierarchy and receive
+  // wikilinks from every material, so graph-view node size tiers
+  // out: Note Group > Family > Sub-family > Facet > Material.
+  const FAMILY_GROUPS = {
+    floral: ['floral'],
+    amber:  ['amber', 'floral_amber', 'gourmand', 'balsamic', 'powdery',
+             'resinous', 'sweet', 'lactonic', 'spicy', 'animalic', 'musk'],
+    woody:  ['woody', 'leather', 'smoky'],
+    fresh:  ['citrus', 'green', 'herbal', 'aldehydic', 'aquatic', 'ozonic',
+             'fresh', 'camphoraceous', 'fruity'],
+  };
+
+  const NOTE_GROUPS = ['Floral', 'Amber', 'Woody', 'Fresh',
+                       'Floral Fresh', 'Woody Amber', 'Fresh Woody'];
+
+  const NOTE_GROUP_META = {
+    'Floral':       { emoji: '🌸', desc: 'Core Floral — flowers, petals, bouquet, heady blooms.' },
+    'Amber':        { emoji: '🔥', desc: 'Core Amber (Oriental) — resins, balsams, gourmands, spices, musks, animalic warmth.' },
+    'Woody':        { emoji: '🌲', desc: 'Core Woody — cedars, sandalwoods, smoky woods, leather.' },
+    'Fresh':        { emoji: '💧', desc: 'Core Fresh — citrus, aromatic herbs, green, aquatic, aldehydic, fruity.' },
+    'Floral Fresh': { emoji: '🌸💧', desc: 'Transition between Floral and Fresh — soft florals, hesperidic florals.' },
+    'Woody Amber':  { emoji: '🌲🔥', desc: 'Transition between Woody and Amber — oriental woods, ambery sandalwoods.' },
+    'Fresh Woody':  { emoji: '💧🌲', desc: 'Transition between Fresh and Woody — chypre, mossy & aromatic woods.' },
+  };
+
+  // Membership check against the three core-family sets; transition
+  // groups require presence in two sides.
+  function _inGroup(families, groupKey) {
+    const set = FAMILY_GROUPS[groupKey];
+    return families.some(f => set.includes(f));
+  }
+
+  // Given the material's primaryFamilies + secondaryFamilies slugs,
+  // return the array of Note Group labels it belongs to. Transition
+  // groups fire only when the family list spans both sides.
+  function detectNoteGroups(primaryFamilies, secondaryFamilies) {
+    const all = []
+      .concat(Array.isArray(primaryFamilies) ? primaryFamilies : [])
+      .concat(Array.isArray(secondaryFamilies) ? secondaryFamilies : [])
+      .map(v => String(v).toLowerCase());
+    if (!all.length) return [];
+    const inFloral = _inGroup(all, 'floral');
+    const inAmber  = _inGroup(all, 'amber');
+    const inWoody  = _inGroup(all, 'woody');
+    const inFresh  = _inGroup(all, 'fresh');
+    const out = [];
+    if (inFloral) out.push('Floral');
+    if (inAmber)  out.push('Amber');
+    if (inWoody)  out.push('Woody');
+    if (inFresh)  out.push('Fresh');
+    // Transition zones — require membership in both sides.
+    if (inFloral && inFresh) out.push('Floral Fresh');
+    if (inWoody  && inAmber) out.push('Woody Amber');
+    if (inFresh  && inWoody) out.push('Fresh Woody');
+    return out;
+  }
+
+  function noteGroupPath(group) {
+    return `_MOC/00 Note Groups/${safeFileName(group)}`;
+  }
+
+  function noteGroupLink(group) {
+    return `[[${noteGroupPath(group)}|${group}]]`;
+  }
+
+  function noteGroupLinkList(groups) {
+    if (!Array.isArray(groups) || !groups.length) return '—';
+    return groups.map(noteGroupLink).join(' · ');
+  }
+
+  // Render a Note Group MOC page — frontmatter + description +
+  // Dataview table. `notegroup/<slug>` tag is what materials use so
+  // the Dataview `FROM` line works.
+  function noteGroupPage(group) {
+    const meta = NOTE_GROUP_META[group] || { emoji: '', desc: '' };
+    const tag  = 'notegroup/' + tagSlug(group);
+    return [
+      '---',
+      'type: moc',
+      'axis: notegroup',
+      'value: ' + yamlScalar(group),
+      'tags: [moc/notegroup, ' + tag + ']',
+      '---',
+      '',
+      `# ${meta.emoji} ${group} (Note Group)`,
+      '',
+      meta.desc,
+      '',
+      '## 🧪 Materials in this Note Group',
+      '',
+      '```dataview',
+      'TABLE WITHOUT ID',
+      '  file.link AS Material,',
+      '  primary_family AS Family,',
+      '  note AS Note,',
+      '  source AS Source',
+      `FROM #${tag}`,
+      'WHERE type != "moc" AND type != "formulation"',
+      'SORT file.name ASC',
+      '```',
+      '',
+      '> ถ้า Dataview plugin ยังไม่ได้ติดตั้ง — เปิด **Backlinks panel** ทางขวาจะเห็นรายการวัตถุดิบที่ลิงก์มาหน้านี้ครบเหมือนกัน',
+      '',
+    ].join('\n');
+  }
+
   // ---- MOC (Map of Content) helpers ------------------------------------
 
   // One subfolder per filter axis. Numeric prefixes give a predictable
@@ -335,7 +445,8 @@
     const safety      = r.safety || {};
     const blendsWith  = Array.isArray(perf.blends_with) ? perf.blends_with : [];
     const a           = extractAxes(r);
-    const tags        = buildTags(a);
+    const noteGroups  = detectNoteGroups(a.primaryFamilies, a.secondaryFamilies);
+    const tags        = buildTags(a).concat(noteGroups.map(g => 'notegroup/' + tagSlug(g)));
 
     // ---- Frontmatter -----------------------------------------------------
     // Carries every filter axis + identity + odor + performance fields so
@@ -358,6 +469,7 @@
       'sub_families: '  + yamlArray(a.secondaryFamilies),
       'facet: '         + yamlArray(a.facets),
       'regulatory: '    + (a.regulatory.length ? yamlArray(a.regulatory) : yamlArray(['no regulatory'])),
+      'note_groups: '   + yamlArray(noteGroups),
     );
     if (perf.odor_type)      fm.push('odor_type: '     + yamlScalar(perf.odor_type));
     if (perf.odor_strength)  fm.push('odor_strength: ' + yamlScalar(perf.odor_strength));
@@ -398,7 +510,10 @@
     }
 
     // Classification — one bullet per axis, wikilinks to MOC pages.
+    // Note Group (Edwards wheel) is the top-most tier and gets listed
+    // first so the material is anchored to the broadest grouping.
     body.push('## 🎨 Classification',
+      '- **Note Group:** '   + noteGroupLinkList(noteGroups),
       '- **Family:** '       + mocLinkList('family',     a.primaryFamilies),
       '- **Sub-families:** ' + mocLinkList('subfamily',  a.secondaryFamilies),
       '- **Facets:** '       + mocLinkList('facet',      a.facets),
@@ -639,6 +754,9 @@
     // iterate. Keyed by the MOC file path so the same page is never
     // emitted twice.
     const mocsToEmit = new Map();
+    // Note Groups encountered across the whole batch — collected once
+    // so the writer below emits one MOC page per group.
+    const noteGroupsToEmit = new Set();
 
     const total = records.length;
     let done = 0;
@@ -667,6 +785,11 @@
         }
       });
 
+      // Register Note Group MOCs (the top tier of the hierarchy) based
+      // on this material's primary + secondary families.
+      const groups = detectNoteGroups(axes.primaryFamilies, axes.secondaryFamilies);
+      for (const g of groups) noteGroupsToEmit.add(g);
+
       done++;
       if (onProgress && (done % 25 === 0 || done === total)) {
         onProgress(Math.round((done / total) * 100));
@@ -679,6 +802,16 @@
     for (const [, { axis, value }] of mocsToEmit) {
       const folder = MOC_FOLDERS[axis];
       moc.folder(folder).file(mocFileName(value) + '.md', mocPage(axis, value));
+    }
+
+    // Emit Note Group MOC pages — the top tier. One file per group
+    // that any material matched.
+    if (noteGroupsToEmit.size) {
+      const ngFolder = moc.folder('00 Note Groups');
+      for (const group of NOTE_GROUPS) {
+        if (!noteGroupsToEmit.has(group)) continue;
+        ngFolder.file(safeFileName(group) + '.md', noteGroupPage(group));
+      }
     }
 
     // Per user feedback the Index.md pages (root + per-axis) were
