@@ -94,6 +94,46 @@
     return out;
   }
 
+  // Normalise any value into a safe Obsidian tag slug — lowercase,
+  // spaces/underscores collapsed to `-`, non-alphanumerics stripped
+  // (keeps `-` and `/` for nested tags).
+  function tagSlug(v) {
+    return String(v == null ? '' : v)
+      .trim()
+      .toLowerCase()
+      .replace(/[_\s]+/g, '-')
+      .replace(/[^a-z0-9/-]/g, '');
+  }
+
+  // Build the nested tag list for a material. Every filter axis gets
+  // its own prefix so "woody" as a sub-family (`subfamily/woody`) never
+  // collides with "woody" as a facet (`facet/woody`). Obsidian renders
+  // each as a clickable chip in the Properties panel and groups them
+  // in the tag pane.
+  function buildTags(a) {
+    const tags = [];
+    const push = (prefix, values) => {
+      for (const v of values) {
+        const s = tagSlug(v);
+        if (s) tags.push(prefix + '/' + s);
+      }
+    };
+    push('use', a.uses);
+    push('function', a.functions);
+    if (a.materialType) push('type', [a.materialType]);
+    if (a.source) push('source', [a.source]);
+    // Empty regulatory still emits a sentinel so the Properties panel
+    // shows an explicit "no regulatory" chip instead of collapsing to
+    // "No value" — makes it obvious the axis was considered.
+    if (a.regulatory.length) push('regulatory', a.regulatory);
+    else tags.push('regulatory/no-regulatory');
+    push('note', a.notes);
+    push('family', a.primaryFamilies);
+    push('subfamily', a.secondaryFamilies);
+    push('facet', a.facets);
+    return tags;
+  }
+
   // Normalise the 9 filter axes out of whatever shape the caller hands
   // us. `record.classification.*` (index.html mat.record path) and the
   // flattened `m.data.*` shape (formulation.html payload) both flow
@@ -125,6 +165,12 @@
     // Preview, and Dataview / Bases can query these fields directly.
     // The body only needs the H1 title; any rendered table below would
     // just repeat what Properties already shows.
+    //
+    // `tags` mirrors the axes as nested tags (`use/...`, `family/...`)
+    // so users can click through to the tag pane. Empty `regulatory`
+    // emits a `no regulatory` sentinel so the Properties panel shows
+    // a real chip instead of a greyed-out "No value" placeholder.
+    const tags = buildTags(a);
     const lines = [
       '---',
       'name: ' + yamlScalar(name),
@@ -132,11 +178,15 @@
       'function: ' + yamlArray(a.functions),
       'type: ' + (a.materialType ? yamlScalar(titleCaseSlug(a.materialType)) : '""'),
       'source: ' + (a.source ? yamlScalar(a.source) : '""'),
-      'regulatory: ' + yamlArray(a.regulatory),
+      'regulatory: ' + (a.regulatory.length ? yamlArray(a.regulatory) : yamlArray(['no regulatory'])),
       'note: ' + yamlArray(a.notes),
       'primary_family: ' + yamlArray(a.primaryFamilies),
       'sub_families: ' + yamlArray(a.secondaryFamilies),
       'facet: ' + yamlArray(a.facets),
+      // Tag slugs are pre-normalised (lowercase, a-z0-9/-) so we skip
+      // yamlScalar and emit the flow array directly — keeps the line
+      // clean without quotes around every entry.
+      'tags: ' + (tags.length ? '[' + tags.join(', ') + ']' : '[]'),
       '---',
       '',
       '# ' + name,
