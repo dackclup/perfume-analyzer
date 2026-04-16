@@ -1,24 +1,34 @@
-// ===== Obsidian Export (simplified) =====
-// Each material note carries the material name + which filter
-// categories it belongs to — nothing else. The 9 filter axes come
-// straight from the filter drawer in index.html:
-//   Use · Function · Type · Source · Regulatory · Note ·
-//   Primary Family · Sub-families · Facet
+// ===== Obsidian Knowledge Base Export =====
+// Build a well-classified Obsidian vault from the perfumery materials
+// app. Each material becomes a rich reference sheet (identity, odor
+// profile, classification, regulatory status, blends_with cross-
+// links). Per-axis MOC (Map of Content) pages organise the vault so
+// browsing by family / facet / note / type / source / use / function
+// / regulatory is a single click away.
 //
-// buildMaterialVaultZip ships a two-level ZIP: material notes at the
-// root of PerfumeMaterials/, plus one "hub" note per (axis, value)
-// under PerfumeMaterials/_Filters/. Each material body holds a line
-// of `[[Axis-Value]]` wikilinks into the hubs so Obsidian's Graph
-// View renders real material → hub edges (instead of isolated dots)
-// and Backlinks on each hub auto-list every material in that filter.
+// Vault layout (Phase 1 placeholders; Phase 2 fills MOC content):
+//   PerfumeMaterials/
+//   ├── 00 Index.md               ← root home
+//   ├── {Material}.md             ← rich material notes (flat root)
+//   └── _MOC/
+//       ├── 01 Families/          Index.md + {Value}.md per family
+//       ├── 02 Sub-families/
+//       ├── 03 Facets/
+//       ├── 04 Notes/             Top / Middle / Base
+//       ├── 05 Types/
+//       ├── 06 Sources/
+//       ├── 07 Uses/
+//       ├── 08 Functions/
+//       └── 09 Regulatory/
 //
-// formulationToMarkdown renders a single .md with one H2 block per
-// material listing the same 9 filter memberships.
+// Wikilinks from materials always use full paths
+// ([[_MOC/01 Families/Floral|Floral]]) because basenames collide
+// across axes (Floral exists as both Family and Facet). Material
+// synonyms go into the `aliases` frontmatter so `[[linalol]]`
+// resolves to `Linalool.md`.
 //
 // Depends on:
 //   - JSZip (window.JSZip, loaded via CDN) for the ZIP path only.
-//   - DB global from perfumery_data.js (read only by the safeFileName
-//     collision fallback when a record lacks a CAS).
 
 (function () {
   'use strict';
@@ -140,82 +150,94 @@
     return tags;
   }
 
-  // ---- Hub note helpers -------------------------------------------------
+  // ---- MOC (Map of Content) helpers ------------------------------------
 
-  // Turn a filter value into a display label. Slugs get title-cased,
-  // plain lowercase words pass through (e.g. "aromatic", "base", "top")
-  // so the on-page text matches the frontmatter values.
-  function hubDisplay(value) {
-    const s = String(value || '').trim();
+  // One subfolder per filter axis. Numeric prefixes give a predictable
+  // order in Obsidian's file explorer (Families first, Regulatory last).
+  const MOC_FOLDERS = {
+    family:     '01 Families',
+    subfamily:  '02 Sub-families',
+    facet:      '03 Facets',
+    note:       '04 Notes',
+    type:       '05 Types',
+    source:     '06 Sources',
+    use:        '07 Uses',
+    function:   '08 Functions',
+    regulatory: '09 Regulatory',
+  };
+
+  // Display label for a filter value. Always title-cased so MOC page
+  // titles read as proper headings in Obsidian — slugs like
+  // "fine_fragrance" become "Fine Fragrance"; plain lowercase words
+  // like "floral" or "top" become "Floral" / "Top".
+  function mocDisplay(value) {
+    const s = String(value == null ? '' : value).trim();
     if (!s) return '';
-    return /[_-]/.test(s) ? titleCaseSlug(s) : s;
+    if (/[_-]/.test(s)) return titleCaseSlug(s);
+    if (/\s/.test(s)) {
+      return s.split(/\s+/).map(w => w ? w.charAt(0).toUpperCase() + w.slice(1) : '').join(' ');
+    }
+    return s.charAt(0).toUpperCase() + s.slice(1);
   }
 
-  // Produce the basename (no extension, no folder) for a hub note.
-  // Format: "Axis-Value" with spaces replaced by `-` so the whole
-  // basename is a single hyphen-joined token. Axis prefix prevents
-  // collisions between, say, `Family-Floral` and `Facet-Floral`.
-  function hubBaseName(axis, value) {
-    const axisPart  = titleCaseSlug(axis).replace(/\s+/g, '-');
-    const valuePart = hubDisplay(value).replace(/\s+/g, '-');
-    return `${axisPart}-${valuePart}`;
+  // Filename for a MOC page (no extension, no folder). Spaces are
+  // preserved — Obsidian handles them in wikilinks just fine.
+  function mocFileName(value) {
+    return safeFileName(mocDisplay(value));
   }
 
-  // Walk the 9 filter axes and call `visit(axis, value)` once per
-  // (axis, value) pair. Used by both materialToMarkdown (to emit the
-  // body wikilinks) and buildMaterialVaultZip (to collect the set of
-  // hub notes to create). Keeping this in one place guarantees the
-  // wikilinks from materials always resolve to hubs that exist.
+  // Vault-relative path to a MOC page (with .md). Used as the wikilink
+  // target. Full path because basenames collide across axes
+  // (e.g. "Floral" exists as both Family and Facet).
+  function mocPath(axis, value) {
+    return `_MOC/${MOC_FOLDERS[axis]}/${mocFileName(value)}`;
+  }
+
+  // Wikilink to a MOC page with an aliased display label.
+  function mocLink(axis, value) {
+    return `[[${mocPath(axis, value)}|${mocDisplay(value)}]]`;
+  }
+
+  // Render multiple MOC links for one axis as a `·`-separated line.
+  // Empty array returns the em-dash placeholder.
+  function mocLinkList(axis, values) {
+    if (!Array.isArray(values) || !values.length) return '—';
+    return values.map(v => mocLink(axis, v)).join(' · ');
+  }
+
+  // Walk the 9 axes and call visit(axis, value) once per (axis, value)
+  // pair found on the material. Used by buildMaterialVaultZip to
+  // collect the unique set of MOC pages to emit.
   function forEachAxisValue(a, visit) {
-    a.uses.forEach(v => visit('Use', v));
-    a.functions.forEach(v => visit('Function', v));
-    if (a.materialType) visit('Type', a.materialType);
-    if (a.source) visit('Source', a.source);
-    if (a.regulatory.length) a.regulatory.forEach(v => visit('Regulatory', v));
-    // Sentinel uses a plain space so hubDisplay returns lowercase
-    // "no regulatory" (matches the `regulatory: [no regulatory]`
-    // value in frontmatter). hubBaseName still converts to
-    // `Regulatory-no-regulatory` via the internal space → dash step.
-    else visit('Regulatory', 'no regulatory');
-    a.notes.forEach(v => visit('Note', v));
-    a.primaryFamilies.forEach(v => visit('Family', v));
-    a.secondaryFamilies.forEach(v => visit('Subfamily', v));
-    a.facets.forEach(v => visit('Facet', v));
+    a.uses.forEach(v => visit('use', v));
+    a.functions.forEach(v => visit('function', v));
+    if (a.materialType) visit('type', a.materialType);
+    if (a.source) visit('source', a.source);
+    if (a.regulatory.length) a.regulatory.forEach(v => visit('regulatory', v));
+    else visit('regulatory', 'no regulatory');
+    a.notes.forEach(v => visit('note', v));
+    a.primaryFamilies.forEach(v => visit('family', v));
+    a.secondaryFamilies.forEach(v => visit('subfamily', v));
+    a.facets.forEach(v => visit('facet', v));
   }
 
-  // Compose the single line of wikilinks that lives in the material
-  // body. Each chip links to the hub note for that (axis, value) pair
-  // — Obsidian's graph view turns these into material → hub edges,
-  // and backlinks on a hub list every material in that filter.
-  function materialBodyLinks(a) {
-    const parts = [];
-    forEachAxisValue(a, (axis, value) => {
-      const base   = hubBaseName(axis, value);
-      const shown  = hubDisplay(value);
-      parts.push(`[[${base}|${shown}]]`);
-    });
-    return parts.join(' · ');
-  }
-
-  // Render a hub note. Minimal content — Obsidian's Backlinks panel
-  // does the real work of listing every material that points here.
-  // The `type: filter-hub` key lets Dataview / Bases filter hubs out
-  // of material queries.
-  function hubToMarkdown(axis, value) {
-    const axisKey = String(axis || '').toLowerCase();
-    const title   = hubDisplay(value);
-    const tag     = axisKey + '/' + tagSlug(value);
+  // Phase 1 placeholder for a MOC page — bare frontmatter + title +
+  // a one-line note. Phase 2 will fill these out with descriptions
+  // and Dataview queries; for now they exist so wikilinks resolve.
+  function mocPlaceholder(axis, value) {
+    const title = mocDisplay(value);
+    const tag   = axis + '/' + tagSlug(value);
     return [
       '---',
-      'type: filter-hub',
-      'axis: ' + yamlScalar(axisKey),
+      'type: moc',
+      'axis: ' + yamlScalar(axis),
       'value: ' + yamlScalar(title),
-      'tags: [' + tag + ']',
+      'tags: [moc/' + axis + ', ' + tag + ']',
       '---',
       '',
-      `# ${title} (${axisKey})`,
+      `# ${title}`,
       '',
-      `_Filter hub_ — รายการวัตถุดิบทั้งหมดใน ${axisKey} **${title}** ดูได้จาก Backlinks panel ทางขวา`,
+      `_${axis} MOC_ — รายการวัตถุดิบใน ${axis} นี้ดูได้จาก Backlinks panel ทางขวา (Phase 2: Dataview query)`,
       '',
     ].join('\n');
   }
@@ -242,49 +264,115 @@
 
   // ---- Material renderer -------------------------------------------------
 
+  // Render a material as a rich reference sheet — identity block,
+  // odor profile, full classification with wikilinks to the MOC
+  // pages, regulatory summary, and blends_with cross-links. Sections
+  // are emitted only when the underlying data is present so sparse
+  // records stay readable.
   function materialToMarkdown(record) {
-    const name = (record && record.names && record.names.canonical) || 'Untitled';
-    const a = extractAxes(record);
+    const r = record || {};
+    const name        = (r.names && r.names.canonical) || 'Untitled';
+    const ids         = r.identifiers || {};
+    const synonyms    = (r.names && Array.isArray(r.names.synonyms)) ? r.names.synonyms : [];
+    const perf        = r.perfumery || {};
+    const safety      = r.safety || {};
+    const blendsWith  = Array.isArray(perf.blends_with) ? perf.blends_with : [];
+    const a           = extractAxes(r);
+    const tags        = buildTags(a);
 
-    // Frontmatter carries every filter axis — Obsidian's Properties
-    // panel renders it as a nice key/value block in Reading & Live
-    // Preview, and Dataview / Bases can query these fields directly.
-    //
-    // `tags` mirrors the axes as nested tags (`use/...`, `family/...`)
-    // so users can click through to the tag pane. Empty `regulatory`
-    // emits a `no regulatory` sentinel so the Properties panel shows
-    // a real chip instead of a greyed-out "No value" placeholder.
-    //
-    // The body holds one line of wikilinks to per-axis hub notes (see
-    // buildMaterialVaultZip). These are what connect the material to
-    // the rest of the vault in Graph View and power Backlinks lists
-    // on the hubs.
-    const tags = buildTags(a);
-    const lines = [
-      '---',
+    // ---- Frontmatter -----------------------------------------------------
+    // Carries every filter axis + identity + odor + performance fields so
+    // Dataview / Bases can query any dimension without parsing the body.
+    // `aliases` uses Obsidian's built-in frontmatter key — typing
+    // `[[linalol]]` in any note resolves to `Linalool.md`.
+    const fm = ['---',
       'name: ' + yamlScalar(name),
-      'use: ' + yamlArray(a.uses.map(titleCaseSlug)),
-      'function: ' + yamlArray(a.functions),
-      'type: ' + (a.materialType ? yamlScalar(titleCaseSlug(a.materialType)) : '""'),
-      'source: ' + (a.source ? yamlScalar(a.source) : '""'),
-      'regulatory: ' + (a.regulatory.length ? yamlArray(a.regulatory) : yamlArray(['no regulatory'])),
-      'note: ' + yamlArray(a.notes),
-      'primary_family: ' + yamlArray(a.primaryFamilies),
-      'sub_families: ' + yamlArray(a.secondaryFamilies),
-      'facet: ' + yamlArray(a.facets),
-      // Tag slugs are pre-normalised (lowercase, a-z0-9/-) so we skip
-      // yamlScalar and emit the flow array directly — keeps the line
-      // clean without quotes around every entry.
-      'tags: ' + (tags.length ? '[' + tags.join(', ') + ']' : '[]'),
-      '---',
-      '',
-      '# ' + name,
-      '',
-      materialBodyLinks(a),
-      '',
     ];
+    if (synonyms.length)       fm.push('aliases: ' + yamlArray(synonyms));
+    if (ids.cas)               fm.push('cas: ' + yamlScalar(ids.cas));
+    if (ids.fema)              fm.push('fema: ' + yamlScalar(ids.fema));
+    fm.push(
+      'type: '          + (a.materialType ? yamlScalar(titleCaseSlug(a.materialType)) : '""'),
+      'source: '        + (a.source ? yamlScalar(a.source) : '""'),
+      'use: '           + yamlArray(a.uses.map(titleCaseSlug)),
+      'function: '      + yamlArray(a.functions),
+      'note: '          + yamlArray(a.notes),
+      'primary_family: '+ yamlArray(a.primaryFamilies),
+      'sub_families: '  + yamlArray(a.secondaryFamilies),
+      'facet: '         + yamlArray(a.facets),
+      'regulatory: '    + (a.regulatory.length ? yamlArray(a.regulatory) : yamlArray(['no regulatory'])),
+    );
+    if (perf.odor_type)      fm.push('odor_type: '     + yamlScalar(perf.odor_type));
+    if (perf.odor_strength)  fm.push('odor_strength: ' + yamlScalar(perf.odor_strength));
+    if (perf.tenacity)       fm.push('tenacity: '      + yamlScalar(perf.tenacity));
+    if (perf.tenacity_hours) fm.push('duration: '      + yamlScalar(perf.tenacity_hours));
+    // Tag slugs are pre-normalised so emit the flow array directly.
+    fm.push('tags: ' + (tags.length ? '[' + tags.join(', ') + ']' : '[]'), '---', '');
 
-    return lines.join('\n');
+    // ---- Body ------------------------------------------------------------
+    const body = ['# ' + name, ''];
+
+    // Blockquote: the headline odor description (one-line summary).
+    if (perf.odor_description) {
+      body.push('> ' + perf.odor_description, '');
+    }
+
+    // Identity — only emit if we have at least one identifier beyond name.
+    if (ids.cas || ids.fema || synonyms.length) {
+      body.push('## 🔬 Identity');
+      if (ids.cas)         body.push('- **CAS:** ' + ids.cas);
+      if (ids.fema)        body.push('- **FEMA:** ' + ids.fema);
+      if (synonyms.length) body.push('- **Aliases:** ' + synonyms.join(' · '));
+      body.push('');
+    }
+
+    // Odor profile — type/strength/tenacity/duration as a compact block.
+    if (perf.odor_type || perf.odor_strength || perf.tenacity) {
+      body.push('## 🌸 Odor Profile');
+      const line1 = [];
+      if (perf.odor_type)     line1.push('**Type:** ' + perf.odor_type);
+      if (perf.odor_strength) line1.push('**Strength:** ' + perf.odor_strength);
+      if (line1.length) body.push('- ' + line1.join(' · '));
+      if (perf.tenacity) {
+        const tn = perf.tenacity + (perf.tenacity_hours ? ` (${perf.tenacity_hours})` : '');
+        body.push('- **Tenacity:** ' + tn);
+      }
+      body.push('');
+    }
+
+    // Classification — one bullet per axis, wikilinks to MOC pages.
+    body.push('## 🎨 Classification',
+      '- **Family:** '       + mocLinkList('family',     a.primaryFamilies),
+      '- **Sub-families:** ' + mocLinkList('subfamily',  a.secondaryFamilies),
+      '- **Facets:** '       + mocLinkList('facet',      a.facets),
+      '- **Note:** '         + mocLinkList('note',       a.notes),
+      '- **Type:** '         + (a.materialType ? mocLink('type', a.materialType) : '—'),
+      '- **Source:** '       + (a.source ? mocLink('source', a.source) : '—'),
+      '- **Use:** '          + mocLinkList('use',        a.uses),
+      '- **Function:** '     + mocLinkList('function',   a.functions),
+      '',
+    );
+
+    // Regulatory — MOC links + raw IFRA text where available.
+    body.push('## ⚠️ Regulatory');
+    if (a.regulatory.length) {
+      body.push(mocLinkList('regulatory', a.regulatory), '');
+    } else {
+      body.push(mocLink('regulatory', 'no regulatory'), '');
+    }
+    if (safety.ifra_guideline) body.push('**IFRA:** ' + safety.ifra_guideline, '');
+    if (safety.usage_levels)   body.push('**Usage:** ' + safety.usage_levels, '');
+
+    // Blends well with — wikilinks to other material notes (resolve by
+    // basename). Broken links are fine — they still appear as graph
+    // nodes so the connection is visible even if the target doesn't exist.
+    if (blendsWith.length) {
+      body.push('## 🎯 Blends Well With',
+        blendsWith.map(b => `[[${safeFileName(b)}]]`).join(' · '),
+        '');
+    }
+
+    return fm.join('\n') + body.join('\n');
   }
 
   // ---- Formulation renderer ---------------------------------------------
@@ -347,6 +435,15 @@
 
   // ---- ZIP builder ------------------------------------------------------
 
+  // Vault layout:
+  //   PerfumeMaterials/
+  //   ├── 00 Index.md              (Phase 1: placeholder, Phase 2: real home)
+  //   ├── {Material}.md            (rich material notes, flat at root)
+  //   └── _MOC/
+  //       └── {NN Folder}/
+  //           ├── Index.md         (axis index, placeholder in Phase 1)
+  //           └── {Value}.md       (per-value MOC, placeholder in Phase 1)
+  //
   // records: array of { record: ... } (mat.record shape from index.html).
   // Returns a Blob (application/zip). Caller triggers the download.
   async function buildMaterialVaultZip(records, opts) {
@@ -357,7 +454,7 @@
     }
     const zip = new window.JSZip();
     const root = zip.folder('PerfumeMaterials');
-    const filters = root.folder('_Filters');
+    const moc  = root.folder('_MOC');
 
     // De-dupe material basenames — Obsidian links by basename so a
     // collision would break wikilinks. Subsequent dupes get a " (CAS)"
@@ -365,9 +462,9 @@
     const usedNames = new Set();
 
     // Collect unique (axis, value) pairs across all materials while we
-    // iterate. Keyed by the hub basename so the same pair is never
+    // iterate. Keyed by the MOC file path so the same page is never
     // emitted twice.
-    const hubsToEmit = new Map();
+    const mocsToEmit = new Map();
 
     const total = records.length;
     let done = 0;
@@ -383,14 +480,14 @@
       usedNames.add(base.toLowerCase());
       root.file(base + '.md', materialToMarkdown(rec));
 
-      // Register every hub this material points to. `forEachAxisValue`
-      // mirrors the enumeration used by materialBodyLinks, so hubs and
-      // wikilinks stay in lock-step (no broken links).
+      // Register every MOC page this material will link to. Shared
+      // enumeration with the renderer guarantees every wikilink the
+      // material body emits resolves to a page written below.
       const axes = extractAxes(rec);
       forEachAxisValue(axes, (axis, value) => {
-        const hubBase = hubBaseName(axis, value);
-        if (!hubsToEmit.has(hubBase)) {
-          hubsToEmit.set(hubBase, { axis, value });
+        const key = mocPath(axis, value);
+        if (!mocsToEmit.has(key)) {
+          mocsToEmit.set(key, { axis, value });
         }
       });
 
@@ -400,15 +497,70 @@
       }
     }
 
-    // Emit hub notes after all materials are processed. Name collisions
-    // between hub and material basenames can't happen — hubs always
-    // carry an axis prefix ("Family-", "Facet-", …) that plain material
-    // names don't use.
-    for (const [hubBase, { axis, value }] of hubsToEmit) {
-      filters.file(hubBase + '.md', hubToMarkdown(axis, value));
+    // Emit per-value MOC pages under their axis folder.
+    // Also track which axes are present so we can write axis Index
+    // placeholders only for axes that actually have MOC pages.
+    const axesPresent = new Set();
+    for (const [, { axis, value }] of mocsToEmit) {
+      axesPresent.add(axis);
+      const folder = MOC_FOLDERS[axis];
+      moc.folder(folder).file(mocFileName(value) + '.md', mocPlaceholder(axis, value));
     }
 
+    // Axis Index placeholders — Phase 2 fills these with Dataview queries.
+    for (const axis of axesPresent) {
+      const folder = MOC_FOLDERS[axis];
+      moc.folder(folder).file('Index.md', mocAxisIndexPlaceholder(axis));
+    }
+
+    // Root vault home — Phase 2 fills with stats + browse links.
+    root.file('00 Index.md', mocRootIndexPlaceholder());
+
     return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+  }
+
+  // Phase 1 placeholders for axis-index + vault-root pages. Phase 2
+  // will replace these with Dataview-powered navigation.
+  function mocAxisIndexPlaceholder(axis) {
+    return [
+      '---',
+      'type: moc',
+      'axis: ' + yamlScalar(axis),
+      'tags: [moc/' + axis + ']',
+      '---',
+      '',
+      `# ${titleCaseSlug(axis)} — Index`,
+      '',
+      `_Axis index_ — Phase 2 \u0e08\u0e30\u0e43\u0e2a\u0e48 Dataview query \u0e43\u0e19\u0e43\u0e19\u0e19\u0e35\u0e49 \u0e15\u0e2d\u0e19\u0e19\u0e35\u0e49 browse \u0e44\u0e14\u0e49\u0e08\u0e32\u0e01 file explorer`,
+      '',
+    ].join('\n');
+  }
+
+  function mocRootIndexPlaceholder() {
+    return [
+      '---',
+      'type: moc',
+      'axis: root',
+      'tags: [moc/root]',
+      '---',
+      '',
+      '# \ud83c\udf38 Perfume Materials Database',
+      '',
+      '\u0e10\u0e32\u0e19\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e34\u0e1a\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07\u0e2b\u0e2d\u0e21 \u2014 Phase 2 \u0e08\u0e30\u0e43\u0e2a\u0e48 stats + browse menu \u0e04\u0e23\u0e1a',
+      '',
+      '## Browse',
+      '',
+      '- [[_MOC/01 Families/Index|Primary Families]]',
+      '- [[_MOC/02 Sub-families/Index|Sub-families]]',
+      '- [[_MOC/03 Facets/Index|Facets]]',
+      '- [[_MOC/04 Notes/Index|Notes]]',
+      '- [[_MOC/05 Types/Index|Types]]',
+      '- [[_MOC/06 Sources/Index|Sources]]',
+      '- [[_MOC/07 Uses/Index|Uses]]',
+      '- [[_MOC/08 Functions/Index|Functions]]',
+      '- [[_MOC/09 Regulatory/Index|Regulatory]]',
+      '',
+    ].join('\n');
   }
 
   // ---- Public API -------------------------------------------------------
