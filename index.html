@@ -397,7 +397,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-16-floral-amber-materials"></script>
+<script src="perfumery_data.js?v=2026-04-16-floral-amber-facets"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -833,6 +833,10 @@ const FACET_TAGS = {
   violet:'floral', lily:'floral', osmanthus:'floral', honeysuckle:'floral',
   iris_flower:'floral', muguet:'floral', frangipani:'floral', boronia:'floral',
   cassie:'floral',
+  // ── floral amber (Edwards 2021 "Floral Oriental") ──
+  immortelle:'floral_amber', heliotrope:'floral_amber',
+  orange_blossom:'floral_amber', cinnamic_floral:'floral_amber',
+  ambery_floral:'floral_amber',
   // ── fruity ──
   apple:'fruity', pear:'fruity', peach:'fruity', apricot:'fruity',
   berry:'fruity', plum:'fruity', tropical:'fruity', pineapple:'fruity',
@@ -993,7 +997,7 @@ const FACET_GROUPS = [
   { label:'Soft Floral',  facets:[
     'aldehyde','waxy_aldehyde','waxy','fatty',
     'iris','iris_flower','orris','heliotrope','talc','velvety'] },
-  { label:'Floral Amber', facets:[] },
+  { label:'Floral Amber', facets:['immortelle','heliotrope','orange_blossom','cinnamic_floral','ambery_floral'] },
   { label:'Soft Amber',   facets:[
     'vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee','tonka','maple','hazelnut','almond','praline','biscuit','milk','rum','roasted','nutty','cereal','beeswax',
     'creamy','milky','buttery','cream'] },
@@ -1022,7 +1026,14 @@ const FACET_GROUPS = [
 const TAXONOMY_SYNONYMS = {
   // citrus
   orange_peel:'orange', sweet_orange:'orange', bitter_orange:'orange',
-  orange_blossom:'neroli',
+  // floral amber — Edwards 2021 transitional. Route compound phrases
+  // from material names / synonyms to the canonical facet tokens.
+  orange_flower:'orange_blossom', fleurs_d_oranger:'orange_blossom',
+  orange_blossom_absolute:'orange_blossom', orange_flower_absolute:'orange_blossom',
+  immortelle_absolute:'immortelle', everlasting_flower:'immortelle',
+  cinnamic:'cinnamic_floral', cinnamyl:'cinnamic_floral',
+  cinnamyl_benzoate:'cinnamic_floral', cinnamyl_cinnamate:'cinnamic_floral',
+  cinnamyl_acetate:'cinnamic_floral', cinnamyl_alcohol:'cinnamic_floral',
   // floral
   jasmin:'jasmine', jasmine_sambac:'jasmine', jasmine_grandiflorum:'jasmine',
   rose_otto:'rose', rose_absolute:'rose',
