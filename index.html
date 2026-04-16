@@ -390,9 +390,7 @@ html { scroll-behavior:smooth; }
       <a onclick="downloadCSV();closeDlMenu()">Save.CSV</a>
       <a onclick="preparePrint(false);closeDlMenu()">Save.PDF</a>
       <a onclick="preparePrint(true);closeDlMenu()">Save.PDF (Full)</a>
-      <a onclick="downloadObsidianVault();closeDlMenu()">Save.Obsidian.ZIP</a>
-      <a onclick="downloadObsidianVaultAll();closeDlMenu()">Save.Obsidian.ZIP (all)</a>
-      <a onclick="downloadObsidianMocPart();closeDlMenu()">Save.Obsidian.MOC…</a>
+      <a onclick="downloadObsidianMocPart();closeDlMenu()">Save.Obsidian.ZIP…</a>
     </div>
   </div>
   <a class="formulate-link" onclick="sendToFormulator()">Formulate &#x2192;</a>
@@ -4259,43 +4257,7 @@ function downloadCSV() {
   a.click();
 }
 
-// ===== Obsidian Vault Export (Phase 1) =====
-// Build a ZIP with one .md per searched material under PerfumeMaterials/Materials/.
-// Wikilinks for blends_with so notes graph in Obsidian. Hierarchical folders
-// + index pages land in Phase 2; "export all 451" lands in Phase 3.
-async function downloadObsidianVault() {
-  const found = results.filter(r => r.found);
-  if (!found.length) { return; }
-  if (!window.ObsidianExport || !window.JSZip) {
-    alert('Obsidian export module failed to load. Check your network connection (JSZip is fetched from a CDN).');
-    return;
-  }
-
-  // Reuse the menu link's text as a progress indicator, mirroring the
-  // pattern downloadJSON uses around line 3783.
-  const btn = document.querySelector('.dl-menu a[onclick*="downloadObsidianVault"]');
-  const orig = btn ? btn.textContent : null;
-  if (btn) { btn.style.pointerEvents = 'none'; btn.style.opacity = '0.4'; btn.textContent = '⏳ Preparing...'; }
-
-  try {
-    const blob = await window.ObsidianExport.buildMaterialVaultZip(found, {
-      onProgress: pct => { if (btn) btn.textContent = `⏳ ${pct}%`; }
-    });
-    const a = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    a.href = url;
-    a.download = 'perfume-materials-' + new Date().toISOString().slice(0, 10) + '.zip';
-    a.click();
-    URL.revokeObjectURL(url);
-  } catch (e) {
-    console.warn('Obsidian export failed:', e);
-    alert('Obsidian export failed: ' + (e && e.message ? e.message : e));
-  } finally {
-    if (btn) { btn.style.pointerEvents = ''; btn.style.opacity = ''; btn.textContent = orig; }
-  }
-}
-
-// ===== Obsidian Vault Export (Phase 3 — entire local DB) =====
+// ===== Obsidian Vault Export =====
 // Build a synthetic mat.record for every CAS in DB without touching
 // PubChem (pure offline). Mirrors the field shape applyPerfumery +
 // _computeClassification produce, but reads directly from DB[cas] +
@@ -4354,6 +4316,8 @@ async function downloadObsidianMocPart() {
   }
   const choice = window.prompt(
     'เลือก MOC ที่จะ download (เพิ่มทีละส่วนได้ ไม่ต้อง re-import ทั้ง vault):\n\n' +
+    '  a = ทั้งหมด (materials + ทุก MOC)\n' +
+    '  m = Materials only (ไม่รวม MOC)\n' +
     '  0 = Note Groups\n' +
     '  1 = Families\n' +
     '  2 = Sub-families\n' +
@@ -4363,14 +4327,15 @@ async function downloadObsidianMocPart() {
     '  6 = Sources\n' +
     '  7 = Uses\n' +
     '  8 = Functions\n' +
-    '  9 = Regulatory\n' +
-    '  m = Materials only (ไม่รวม MOC)\n\n' +
-    'ใส่หมายเลข / m:',
-    '0'
+    '  9 = Regulatory\n\n' +
+    'ใส่ตัวอักษร / หมายเลข:',
+    'a'
   );
   if (choice == null) return;
   const key = choice.trim().toLowerCase();
+  // `null` in parts means "full vault" (all axes + materials + notegroups).
   const partsByKey = {
+    'a': { parts: null,           label: 'all' },
     '0': { parts: ['notegroups'], label: 'note-groups' },
     '1': { parts: ['family'],     label: 'families' },
     '2': { parts: ['subfamily'],  label: 'sub-families' },
@@ -4419,48 +4384,6 @@ async function downloadObsidianMocPart() {
   }
 }
 
-async function downloadObsidianVaultAll() {
-  if (!window.ObsidianExport || !window.JSZip) {
-    alert('Obsidian export module failed to load. Check your network connection (JSZip is fetched from a CDN).');
-    return;
-  }
-  const cassList = Object.keys(DB);
-  if (!cassList.length) { return; }
-
-  const btn = document.querySelector('.dl-menu a[onclick*="downloadObsidianVaultAll"]');
-  const orig = btn ? btn.textContent : null;
-  if (btn) { btn.style.pointerEvents = 'none'; btn.style.opacity = '0.4'; btn.textContent = '⏳ Building records...'; }
-
-  try {
-    // Yield to the UI between batches so the progress text can paint on
-    // mobile (synchronous loop over 451 records would block ~50-100ms).
-    const items = [];
-    const BATCH = 50;
-    for (let i = 0; i < cassList.length; i += BATCH) {
-      for (let j = i; j < Math.min(i + BATCH, cassList.length); j++) {
-        const r = _buildOfflineRecord(cassList[j]);
-        if (r) items.push(r);
-      }
-      if (btn) btn.textContent = `⏳ ${Math.round((i + BATCH) / cassList.length * 100)}% built...`;
-      await new Promise(r => setTimeout(r, 0));
-    }
-
-    const blob = await window.ObsidianExport.buildMaterialVaultZip(items, {
-      onProgress: pct => { if (btn) btn.textContent = `⏳ ${pct}% zipped...`; }
-    });
-    const a = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    a.href = url;
-    a.download = 'perfume-materials-all-' + new Date().toISOString().slice(0, 10) + '.zip';
-    a.click();
-    URL.revokeObjectURL(url);
-  } catch (e) {
-    console.warn('Obsidian export (all) failed:', e);
-    alert('Obsidian export failed: ' + (e && e.message ? e.message : e));
-  } finally {
-    if (btn) { btn.style.pointerEvents = ''; btn.style.opacity = ''; btn.textContent = orig; }
-  }
-}
 
 // ===== Print / PDF =====
 async function preparePrint(full=true) {
@@ -4943,8 +4866,7 @@ const LANG_INDEX = {
     saveCSV: 'Save.CSV',
     savePDF: 'Save.PDF',
     savePDFFull: 'Save.PDF (Full)',
-    saveObsidian: 'Save.Obsidian.ZIP',
-    saveObsidianAll: 'Save.Obsidian.ZIP (all)',
+    saveObsidian: 'Save.Obsidian.ZIP\u2026',
     formulate: 'Formulate \u2192',
   },
   th: {
@@ -4960,8 +4882,7 @@ const LANG_INDEX = {
     saveCSV: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.CSV',
     savePDF: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.PDF',
     savePDFFull: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.PDF (\u0E09\u0E1A\u0E31\u0E1A\u0E40\u0E15\u0E47\u0E21)',
-    saveObsidian: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.Obsidian.ZIP',
-    saveObsidianAll: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.Obsidian.ZIP (\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14)',
+    saveObsidian: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.Obsidian.ZIP\u2026',
     formulate: '\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E2A\u0E39\u0E15\u0E23 \u2192',
   }
 };
@@ -4989,7 +4910,6 @@ function applyLangIndex() {
     dlMenuLinks[2].textContent = t.savePDF;
     dlMenuLinks[3].textContent = t.savePDFFull;
     if (dlMenuLinks.length >= 5 && t.saveObsidian) dlMenuLinks[4].textContent = t.saveObsidian;
-    if (dlMenuLinks.length >= 6 && t.saveObsidianAll) dlMenuLinks[5].textContent = t.saveObsidianAll;
   }
   const formulateLink = document.querySelector('.formulate-link');
   if (formulateLink) formulateLink.textContent = t.formulate;
