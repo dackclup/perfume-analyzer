@@ -120,8 +120,12 @@
     const name = (record && record.names && record.names.canonical) || 'Untitled';
     const a = extractAxes(record);
 
-    // Frontmatter — YAML values mirror the table below for searchability.
-    const fm = [
+    // Frontmatter carries every filter axis — Obsidian's Properties
+    // panel renders it as a nice key/value block in Reading & Live
+    // Preview, and Dataview / Bases can query these fields directly.
+    // The body only needs the H1 title; any rendered table below would
+    // just repeat what Properties already shows.
+    const lines = [
       '---',
       'name: ' + yamlScalar(name),
       'use: ' + yamlArray(a.uses.map(titleCaseSlug)),
@@ -135,29 +139,11 @@
       'facet: ' + yamlArray(a.facets),
       '---',
       '',
-    ];
-
-    // Body — single two-column table listing all 9 filter axes so the
-    // note opens in Obsidian as a one-screen answer to "which filters
-    // is this material in?".
-    const body = [
       '# ' + name,
       '',
-      '| Filter | Values |',
-      '|---|---|',
-      `| Use | ${displayList(a.uses, { titleCase: true })} |`,
-      `| Function | ${displayList(a.functions)} |`,
-      `| Type | ${a.materialType ? titleCaseSlug(a.materialType) : '—'} |`,
-      `| Source | ${a.source || '—'} |`,
-      `| Regulatory | ${displayList(a.regulatory)} |`,
-      `| Note | ${displayList(a.notes)} |`,
-      `| Primary Family | ${displayList(a.primaryFamilies)} |`,
-      `| Sub-families | ${displayList(a.secondaryFamilies)} |`,
-      `| Facet | ${displayList(a.facets)} |`,
-      '',
     ];
 
-    return fm.join('\n') + body.join('\n');
+    return lines.join('\n');
   }
 
   // ---- Formulation renderer ---------------------------------------------
