@@ -736,9 +736,25 @@
   //
   // records: array of { record: ... } (mat.record shape from index.html).
   // Returns a Blob (application/zip). Caller triggers the download.
+  //
+  // opts.parts — Set or array of vault parts to include. Default
+  // omits nothing (full vault). Recognised parts:
+  //   'materials'  — the per-material notes at the root
+  //   'notegroups' — _MOC/00 Note Groups/
+  //   'family', 'subfamily', 'facet', 'note', 'type', 'source',
+  //   'use', 'function', 'regulatory' — the per-axis MOC folders
+  //
+  // Partial exports let the user build up their Obsidian vault
+  // incrementally — download materials first, then add MOCs one
+  // folder at a time without breaking existing wikilinks (the
+  // underlying paths and tags never change).
   async function buildMaterialVaultZip(records, opts) {
     opts = opts || {};
     const onProgress = typeof opts.onProgress === 'function' ? opts.onProgress : null;
+    const parts = (opts.parts instanceof Set)
+      ? opts.parts
+      : (Array.isArray(opts.parts) ? new Set(opts.parts) : null);
+    const wants = (name) => parts == null ? true : parts.has(name);
     if (typeof window === 'undefined' || !window.JSZip) {
       throw new Error('JSZip not loaded. Add the CDN <script> tag before obsidian_export.js.');
     }
@@ -771,7 +787,12 @@
         base = cas ? `${base} (${cas})` : `${base} (${done + 1})`;
       }
       usedNames.add(base.toLowerCase());
-      root.file(base + '.md', materialToMarkdown(rec));
+      // Skip writing the material note when a partial export was
+      // requested. The record is still walked below so MOC pages
+      // still aggregate the correct values.
+      if (wants('materials')) {
+        root.file(base + '.md', materialToMarkdown(rec));
+      }
 
       // Register every MOC page this material will link to. Only axes
       // in the MOC_AXES allowlist (family / sub-family / facet) get a
@@ -797,17 +818,17 @@
       }
     }
 
-    // Emit per-value MOC pages under their axis folder. Only
-    // `family` / `subfamily` / `facet` axes reach this point — the
-    // other six axes live in frontmatter + tags only.
+    // Emit per-value MOC pages under their axis folder. Skip axes
+    // the caller opted out of via `opts.parts`.
     for (const [, { axis, value }] of mocsToEmit) {
+      if (!wants(axis)) continue;
       const folder = MOC_FOLDERS[axis];
       moc.folder(folder).file(mocFileName(value) + '.md', mocPage(axis, value));
     }
 
     // Emit Note Group MOC pages — the top tier. One file per group
     // that any material matched.
-    if (noteGroupsToEmit.size) {
+    if (noteGroupsToEmit.size && wants('notegroups')) {
       const ngFolder = moc.folder('00 Note Groups');
       for (const group of NOTE_GROUPS) {
         if (!noteGroupsToEmit.has(group)) continue;
