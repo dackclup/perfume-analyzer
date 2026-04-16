@@ -263,7 +263,6 @@
     const meta  = AXIS_META[axis] || { title: axis, singular: axis, emoji: '', desc: '' };
     const title = mocDisplay(value);
     const tag   = axis + '/' + tagSlug(value);
-    const folder = MOC_FOLDERS[axis];
     return [
       '---',
       'type: moc',
@@ -291,10 +290,6 @@
       '```',
       '',
       '> ถ้า Dataview plugin ยังไม่ได้ติดตั้ง — เปิด **Backlinks panel** ทางขวาจะเห็นรายการวัตถุดิบที่ลิงก์มาหน้านี้ครบเหมือนกัน',
-      '',
-      '## See also',
-      `- [[00 Index|🏠 Vault home]]`,
-      `- [[_MOC/${folder}/Index|${meta.emoji} All ${meta.title.toLowerCase()}]]`,
       '',
     ].join('\n');
   }
@@ -678,153 +673,20 @@
       }
     }
 
-    // Emit per-value MOC pages under their axis folder. Track the set
-    // of values per axis so the axis Index page can render the full
-    // list as a fallback (for users without Dataview).
-    const valuesByAxis = {};
+    // Emit per-value MOC pages under their axis folder. Only
+    // `family` / `subfamily` / `facet` axes reach this point — the
+    // other six axes live in frontmatter + tags only.
     for (const [, { axis, value }] of mocsToEmit) {
-      (valuesByAxis[axis] = valuesByAxis[axis] || []).push(value);
       const folder = MOC_FOLDERS[axis];
       moc.folder(folder).file(mocFileName(value) + '.md', mocPage(axis, value));
     }
 
-    // Axis Index pages — one per axis that has any values.
-    for (const axis of Object.keys(valuesByAxis)) {
-      const folder = MOC_FOLDERS[axis];
-      moc.folder(folder).file('Index.md', mocAxisIndex(axis, valuesByAxis[axis]));
-    }
-
-    // Root vault home — stats + browse menu + quick Dataview queries.
-    root.file('00 Index.md', mocRootIndex({
-      materialCount: usedNames.size,
-      generatedAt:   new Date().toISOString().slice(0, 10),
-      axesPresent:   Object.keys(valuesByAxis),
-    }));
+    // Per user feedback the Index.md pages (root + per-axis) were
+    // noise — browsing via the file explorer folder view already
+    // surfaces every MOC page alphabetically. So no 00 Index.md and
+    // no _MOC/*/Index.md.
 
     return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
-  }
-
-  // Render the axis-level index page — the "table of contents" for a
-  // single axis folder. Dataview LIST auto-populates as MOC pages are
-  // added/removed. The manual `### Known values` block is a fallback
-  // that shows when Dataview isn't installed (Obsidian renders the
-  // wikilinks directly).
-  function mocAxisIndex(axis, values) {
-    const meta = AXIS_META[axis] || { title: axis, emoji: '', desc: '' };
-    const folder = MOC_FOLDERS[axis];
-    const sortedValues = [...values].sort((a, b) =>
-      mocDisplay(a).localeCompare(mocDisplay(b), undefined, { sensitivity: 'base' }));
-    return [
-      '---',
-      'type: moc',
-      'axis: ' + yamlScalar(axis),
-      'tags: [moc/' + axis + ', moc/axis-index]',
-      '---',
-      '',
-      `# ${meta.emoji} ${meta.title}`,
-      '',
-      meta.desc,
-      '',
-      `## ค่า ${axis} ที่มีใน vault (${values.length})`,
-      '',
-      '```dataview',
-      'LIST',
-      `FROM #moc/${axis}`,
-      'WHERE !contains(tags, "moc/axis-index")',
-      'SORT file.name ASC',
-      '```',
-      '',
-      '### Known values (fallback when Dataview is off)',
-      '',
-      ...sortedValues.map(v => `- [[_MOC/${folder}/${mocFileName(v)}|${mocDisplay(v)}]]`),
-      '',
-      '## See also',
-      '- [[00 Index|🏠 Vault home]]',
-      '',
-    ].join('\n');
-  }
-
-  // Render the vault root home page — shows total material count,
-  // the full axis browse menu, and a handful of Dataview quick
-  // queries that showcase what the KB can do.
-  //
-  // Stats come from the build step so the count is baked in even
-  // when Dataview isn't installed.
-  function mocRootIndex(stats) {
-    const total = (stats && typeof stats.materialCount === 'number') ? stats.materialCount : 0;
-    const generatedAt = (stats && stats.generatedAt) || new Date().toISOString().slice(0, 10);
-    // Only list axes that actually have a MOC Index page in this build
-    // — otherwise the link would resolve to nothing. For full DB
-    // exports every axis is populated; smoke tests / partial builds
-    // may have fewer.
-    const present = (stats && Array.isArray(stats.axesPresent)) ? stats.axesPresent : Object.keys(AXIS_META);
-    // Browse menu only surfaces axes that have physical MOC pages.
-    // The other axes remain searchable via Dataview tag queries
-    // (#note/top, #regulatory/allergen, etc.) in the quick queries
-    // section below.
-    const browseLines = Object.keys(AXIS_META)
-      .filter(axis => MOC_AXES.has(axis) && present.includes(axis))
-      .map(axis => {
-        const meta = AXIS_META[axis];
-        return `- [[_MOC/${MOC_FOLDERS[axis]}/Index|${meta.emoji} ${meta.title}]] — ${meta.desc}`;
-      });
-    return [
-      '---',
-      'type: moc',
-      'axis: root',
-      'tags: [moc/root]',
-      '---',
-      '',
-      '# 🌸 Perfume Materials Database',
-      '',
-      `ฐานข้อมูลวัตถุดิบเครื่องหอม — **${total} วัตถุดิบ** จำแนกตาม ${Object.keys(AXIS_META).length} มิติ`,
-      '',
-      `_Generated ${generatedAt} · powered by [Obsidian](https://obsidian.md) + [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) (optional but recommended)_`,
-      '',
-      '## 📚 Browse by category',
-      '',
-      ...browseLines,
-      '',
-      '## 🔎 Quick queries',
-      '',
-      '### Top notes (all)',
-      '```dataview',
-      'LIST',
-      'FROM #note/top AND !#moc/axis-index',
-      'WHERE type != "moc" AND type != "formulation"',
-      'SORT file.name ASC',
-      '```',
-      '',
-      '### EU-26 allergens',
-      '```dataview',
-      'TABLE WITHOUT ID file.link AS Material, primary_family AS Family',
-      'FROM #regulatory/allergen',
-      'WHERE type != "moc"',
-      'SORT file.name ASC',
-      '```',
-      '',
-      '### Essential oils & absolutes',
-      '```dataview',
-      'LIST',
-      'FROM #type/essential-oil OR #type/absolute',
-      'WHERE type != "moc"',
-      'SORT file.name ASC',
-      '```',
-      '',
-      '## 📊 Stats',
-      '',
-      '```dataview',
-      'TABLE WITHOUT ID',
-      '  length(rows) AS "Materials"',
-      'FROM "" WHERE type != "moc" AND type != "formulation"',
-      'GROUP BY true',
-      '```',
-      '',
-      '---',
-      '',
-      '> 💡 **Tip**: เปิด Graph View (⚙️ → Core plugins) เพื่อดูความเชื่อมโยงระหว่างวัตถุดิบผ่าน MOC hubs — แต่ละ family / facet / note จะกลายเป็น cluster กลางของ graph',
-      '',
-    ].join('\n');
   }
 
   // ---- Public API -------------------------------------------------------
