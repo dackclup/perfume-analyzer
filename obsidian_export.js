@@ -166,6 +166,23 @@
     regulatory: '09 Regulatory',
   };
 
+  // Human-readable metadata for each axis — feeds axis Index titles,
+  // per-value MOC subtitles, and the root navigation menu.
+  // `title` is the plural label (used in Index pages and the browse
+  // menu); `singular` is the per-value subtitle ("Floral (Primary
+  // Family)").
+  const AXIS_META = {
+    family:     { title: 'Primary Families',   singular: 'Primary Family',   emoji: '👃', desc: 'Primary olfactory family — the dominant scent family a material belongs to.' },
+    subfamily:  { title: 'Sub-families',       singular: 'Sub-family',       emoji: '🌿', desc: 'Secondary olfactory families — supporting scent families a material exhibits alongside its primary.' },
+    facet:      { title: 'Facets',             singular: 'Facet',            emoji: '🎨', desc: 'Fine-grained odor descriptors — the specific notes and nuances reviewers pick out.' },
+    note:       { title: 'Note tiers',         singular: 'Note',             emoji: '🎵', desc: 'Evaporation tier on the fragrance pyramid (Top / Middle / Base).' },
+    type:       { title: 'Material types',     singular: 'Material Type',    emoji: '🧪', desc: 'Chemical or botanical classification (aroma chemical, essential oil, absolute, etc.).' },
+    source:     { title: 'Sources',            singular: 'Source',           emoji: '🌱', desc: 'How the material is produced — natural, synthetic, semi-synthetic, biotech.' },
+    use:        { title: 'Use cases',          singular: 'Use case',         emoji: '💼', desc: 'Intended downstream use (fine fragrance, personal care, home care, flavor).' },
+    function:   { title: 'Functions',          singular: 'Function',         emoji: '⚙️', desc: 'Functional role in a composition (aromatic, fixative, solvent, enhancer, etc.).' },
+    regulatory: { title: 'Regulatory status',  singular: 'Regulatory flag',  emoji: '⚠️', desc: 'Regulatory flags — allergen, sensitizer, restricted, banned, phototoxic.' },
+  };
+
   // Display label for a filter value. Always title-cased so MOC page
   // titles read as proper headings in Obsidian — slugs like
   // "fine_fragrance" become "Fine Fragrance"; plain lowercase words
@@ -221,12 +238,18 @@
     a.facets.forEach(v => visit('facet', v));
   }
 
-  // Phase 1 placeholder for a MOC page — bare frontmatter + title +
-  // a one-line note. Phase 2 will fill these out with descriptions
-  // and Dataview queries; for now they exist so wikilinks resolve.
-  function mocPlaceholder(axis, value) {
+  // Render a per-value MOC page — title, one-line description, a
+  // Dataview TABLE that auto-lists every material tagged with
+  // `{axis}/{value}`, and a "See also" block linking back to the
+  // axis index and vault home. If the user doesn't have the Dataview
+  // plugin installed, Obsidian's built-in Backlinks panel still
+  // lists the inbound links from every material — so the page is
+  // useful either way.
+  function mocPage(axis, value) {
+    const meta  = AXIS_META[axis] || { title: axis, singular: axis, emoji: '', desc: '' };
     const title = mocDisplay(value);
     const tag   = axis + '/' + tagSlug(value);
+    const folder = MOC_FOLDERS[axis];
     return [
       '---',
       'type: moc',
@@ -235,9 +258,29 @@
       'tags: [moc/' + axis + ', ' + tag + ']',
       '---',
       '',
-      `# ${title}`,
+      `# ${title} (${meta.singular})`,
       '',
-      `_${axis} MOC_ — รายการวัตถุดิบใน ${axis} นี้ดูได้จาก Backlinks panel ทางขวา (Phase 2: Dataview query)`,
+      meta.desc,
+      '',
+      '## 🧪 Materials in this filter',
+      '',
+      '```dataview',
+      'TABLE WITHOUT ID',
+      '  file.link AS Material,',
+      '  odor_type AS "Odor",',
+      '  note AS Note,',
+      '  tenacity AS Tenacity,',
+      '  source AS Source',
+      `FROM #${tag}`,
+      'WHERE type != "moc" AND type != "formulation"',
+      'SORT file.name ASC',
+      '```',
+      '',
+      '> ถ้า Dataview plugin ยังไม่ได้ติดตั้ง — เปิด **Backlinks panel** ทางขวาจะเห็นรายการวัตถุดิบที่ลิงก์มาหน้านี้ครบเหมือนกัน',
+      '',
+      '## See also',
+      `- [[00 Index|🏠 Vault home]]`,
+      `- [[_MOC/${folder}/Index|${meta.emoji} All ${meta.title.toLowerCase()}]]`,
       '',
     ].join('\n');
   }
@@ -502,46 +545,92 @@
       }
     }
 
-    // Emit per-value MOC pages under their axis folder.
-    // Also track which axes are present so we can write axis Index
-    // placeholders only for axes that actually have MOC pages.
-    const axesPresent = new Set();
+    // Emit per-value MOC pages under their axis folder. Track the set
+    // of values per axis so the axis Index page can render the full
+    // list as a fallback (for users without Dataview).
+    const valuesByAxis = {};
     for (const [, { axis, value }] of mocsToEmit) {
-      axesPresent.add(axis);
+      (valuesByAxis[axis] = valuesByAxis[axis] || []).push(value);
       const folder = MOC_FOLDERS[axis];
-      moc.folder(folder).file(mocFileName(value) + '.md', mocPlaceholder(axis, value));
+      moc.folder(folder).file(mocFileName(value) + '.md', mocPage(axis, value));
     }
 
-    // Axis Index placeholders — Phase 2 fills these with Dataview queries.
-    for (const axis of axesPresent) {
+    // Axis Index pages — one per axis that has any values.
+    for (const axis of Object.keys(valuesByAxis)) {
       const folder = MOC_FOLDERS[axis];
-      moc.folder(folder).file('Index.md', mocAxisIndexPlaceholder(axis));
+      moc.folder(folder).file('Index.md', mocAxisIndex(axis, valuesByAxis[axis]));
     }
 
-    // Root vault home — Phase 2 fills with stats + browse links.
-    root.file('00 Index.md', mocRootIndexPlaceholder());
+    // Root vault home — stats + browse menu + quick Dataview queries.
+    root.file('00 Index.md', mocRootIndex({
+      materialCount: usedNames.size,
+      generatedAt:   new Date().toISOString().slice(0, 10),
+      axesPresent:   Object.keys(valuesByAxis),
+    }));
 
     return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
   }
 
-  // Phase 1 placeholders for axis-index + vault-root pages. Phase 2
-  // will replace these with Dataview-powered navigation.
-  function mocAxisIndexPlaceholder(axis) {
+  // Render the axis-level index page — the "table of contents" for a
+  // single axis folder. Dataview LIST auto-populates as MOC pages are
+  // added/removed. The manual `### Known values` block is a fallback
+  // that shows when Dataview isn't installed (Obsidian renders the
+  // wikilinks directly).
+  function mocAxisIndex(axis, values) {
+    const meta = AXIS_META[axis] || { title: axis, emoji: '', desc: '' };
+    const folder = MOC_FOLDERS[axis];
+    const sortedValues = [...values].sort((a, b) =>
+      mocDisplay(a).localeCompare(mocDisplay(b), undefined, { sensitivity: 'base' }));
     return [
       '---',
       'type: moc',
       'axis: ' + yamlScalar(axis),
-      'tags: [moc/' + axis + ']',
+      'tags: [moc/' + axis + ', moc/axis-index]',
       '---',
       '',
-      `# ${titleCaseSlug(axis)} — Index`,
+      `# ${meta.emoji} ${meta.title}`,
       '',
-      `_Axis index_ — Phase 2 \u0e08\u0e30\u0e43\u0e2a\u0e48 Dataview query \u0e43\u0e19\u0e43\u0e19\u0e19\u0e35\u0e49 \u0e15\u0e2d\u0e19\u0e19\u0e35\u0e49 browse \u0e44\u0e14\u0e49\u0e08\u0e32\u0e01 file explorer`,
+      meta.desc,
+      '',
+      `## ค่า ${axis} ที่มีใน vault (${values.length})`,
+      '',
+      '```dataview',
+      'LIST',
+      `FROM #moc/${axis}`,
+      'WHERE !contains(tags, "moc/axis-index")',
+      'SORT file.name ASC',
+      '```',
+      '',
+      '### Known values (fallback when Dataview is off)',
+      '',
+      ...sortedValues.map(v => `- [[_MOC/${folder}/${mocFileName(v)}|${mocDisplay(v)}]]`),
+      '',
+      '## See also',
+      '- [[00 Index|🏠 Vault home]]',
       '',
     ].join('\n');
   }
 
-  function mocRootIndexPlaceholder() {
+  // Render the vault root home page — shows total material count,
+  // the full axis browse menu, and a handful of Dataview quick
+  // queries that showcase what the KB can do.
+  //
+  // Stats come from the build step so the count is baked in even
+  // when Dataview isn't installed.
+  function mocRootIndex(stats) {
+    const total = (stats && typeof stats.materialCount === 'number') ? stats.materialCount : 0;
+    const generatedAt = (stats && stats.generatedAt) || new Date().toISOString().slice(0, 10);
+    // Only list axes that actually have a MOC Index page in this build
+    // — otherwise the link would resolve to nothing. For full DB
+    // exports every axis is populated; smoke tests / partial builds
+    // may have fewer.
+    const present = (stats && Array.isArray(stats.axesPresent)) ? stats.axesPresent : Object.keys(AXIS_META);
+    const browseLines = Object.keys(AXIS_META)
+      .filter(axis => present.includes(axis))
+      .map(axis => {
+        const meta = AXIS_META[axis];
+        return `- [[_MOC/${MOC_FOLDERS[axis]}/Index|${meta.emoji} ${meta.title}]] — ${meta.desc}`;
+      });
     return [
       '---',
       'type: moc',
@@ -549,21 +638,54 @@
       'tags: [moc/root]',
       '---',
       '',
-      '# \ud83c\udf38 Perfume Materials Database',
+      '# 🌸 Perfume Materials Database',
       '',
-      '\u0e10\u0e32\u0e19\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e34\u0e1a\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07\u0e2b\u0e2d\u0e21 \u2014 Phase 2 \u0e08\u0e30\u0e43\u0e2a\u0e48 stats + browse menu \u0e04\u0e23\u0e1a',
+      `ฐานข้อมูลวัตถุดิบเครื่องหอม — **${total} วัตถุดิบ** จำแนกตาม ${Object.keys(AXIS_META).length} มิติ`,
       '',
-      '## Browse',
+      `_Generated ${generatedAt} · powered by [Obsidian](https://obsidian.md) + [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) (optional but recommended)_`,
       '',
-      '- [[_MOC/01 Families/Index|Primary Families]]',
-      '- [[_MOC/02 Sub-families/Index|Sub-families]]',
-      '- [[_MOC/03 Facets/Index|Facets]]',
-      '- [[_MOC/04 Notes/Index|Notes]]',
-      '- [[_MOC/05 Types/Index|Types]]',
-      '- [[_MOC/06 Sources/Index|Sources]]',
-      '- [[_MOC/07 Uses/Index|Uses]]',
-      '- [[_MOC/08 Functions/Index|Functions]]',
-      '- [[_MOC/09 Regulatory/Index|Regulatory]]',
+      '## 📚 Browse by category',
+      '',
+      ...browseLines,
+      '',
+      '## 🔎 Quick queries',
+      '',
+      '### Top notes (all)',
+      '```dataview',
+      'LIST',
+      'FROM #note/top AND !#moc/axis-index',
+      'WHERE type != "moc" AND type != "formulation"',
+      'SORT file.name ASC',
+      '```',
+      '',
+      '### EU-26 allergens',
+      '```dataview',
+      'TABLE WITHOUT ID file.link AS Material, primary_family AS Family',
+      'FROM #regulatory/allergen',
+      'WHERE type != "moc"',
+      'SORT file.name ASC',
+      '```',
+      '',
+      '### Essential oils & absolutes',
+      '```dataview',
+      'LIST',
+      'FROM #type/essential-oil OR #type/absolute',
+      'WHERE type != "moc"',
+      'SORT file.name ASC',
+      '```',
+      '',
+      '## 📊 Stats',
+      '',
+      '```dataview',
+      'TABLE WITHOUT ID',
+      '  length(rows) AS "Materials"',
+      'FROM "" WHERE type != "moc" AND type != "formulation"',
+      'GROUP BY true',
+      '```',
+      '',
+      '---',
+      '',
+      '> 💡 **Tip**: เปิด Graph View (⚙️ → Core plugins) เพื่อดูความเชื่อมโยงระหว่างวัตถุดิบผ่าน MOC hubs — แต่ละ family / facet / note จะกลายเป็น cluster กลางของ graph',
       '',
     ].join('\n');
   }
