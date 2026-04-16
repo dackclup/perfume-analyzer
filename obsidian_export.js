@@ -273,7 +273,12 @@
     const r = record || {};
     const name        = (r.names && r.names.canonical) || 'Untitled';
     const ids         = r.identifiers || {};
-    const synonyms    = (r.names && Array.isArray(r.names.synonyms)) ? r.names.synonyms : [];
+    // Filter self-referential synonyms (DB often lists the lowercase
+    // canonical name in synonyms too — Obsidian link resolution is
+    // case-insensitive so that entry is noise).
+    const rawSyns     = (r.names && Array.isArray(r.names.synonyms)) ? r.names.synonyms : [];
+    const nameLower   = name.toLowerCase();
+    const synonyms    = rawSyns.filter(s => s && s.toLowerCase() !== nameLower);
     const perf        = r.perfumery || {};
     const safety      = r.safety || {};
     const blendsWith  = Array.isArray(perf.blends_with) ? perf.blends_with : [];
