@@ -397,7 +397,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-16-edwards-facets"></script>
+<script src="perfumery_data.js?v=2026-04-16-floral-amber-materials"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -673,7 +673,12 @@ let activeFacetFilters = new Set();
 const PRIMARY_FAMILIES = [
   'citrus','green','herbal','aldehydic','aquatic','ozonic','fresh',
   'camphoraceous','floral','fruity','sweet','gourmand','lactonic','spicy','powdery',
-  'woody','balsamic','resinous','amber','animalic','leather','musk','smoky'
+  'woody','balsamic','resinous','amber','animalic','leather','musk','smoky',
+  // Edwards 2021 transitional subfamily — let materials self-declare
+  // "Floral Amber" / "Floral Oriental" as a first-class primary family so
+  // the Sub-families drawer can match them without requiring both floral
+  // AND amber tokens on every such material.
+  'floral_amber'
 ];
 // Display labels for the Step-2 primary family axis (used by the
 // Step-5 UI chips and result-card badges).
@@ -683,7 +688,8 @@ const PRIMARY_FAMILY_LABELS = {
   floral:'Floral', fruity:'Fruity', sweet:'Sweet', gourmand:'Gourmand',
   lactonic:'Lactonic', spicy:'Spicy', powdery:'Powdery', woody:'Woody',
   balsamic:'Balsamic', resinous:'Resinous', amber:'Amber', animalic:'Animalic',
-  leather:'Leather', musk:'Musk', smoky:'Smoky'
+  leather:'Leather', musk:'Musk', smoky:'Smoky',
+  floral_amber:'Floral Amber'
 };
 
 // ── Michael Edwards 2021 filter buckets ─────────────────────────────
@@ -708,7 +714,9 @@ const EDWARDS_FAMILY_LABELS = {
   fresh_woody_note:  'Fresh Woody note',
 };
 const EDWARDS_TO_LEGACY = {
-  floral_note:       new Set(['floral']),
+  // floral_amber belongs to the FLORAL main family in the 2021 wheel
+  // (transitional toward Amber), so it lands in the Floral note bucket.
+  floral_note:       new Set(['floral', 'floral_amber']),
   amber_note:        new Set(['amber', 'balsamic', 'resinous', 'spicy', 'gourmand', 'sweet', 'lactonic', 'musk', 'powdery']),
   woody_note:        new Set(['woody', 'earthy', 'mossy', 'smoky', 'leather']),
   fresh_note:        new Set(['fresh', 'citrus', 'green', 'aquatic', 'ozonic', 'aldehydic']),
@@ -769,7 +777,7 @@ const SUB_FAMILY_TO_LEGACY = {
   fruity:           new Set(['fruity', 'lactonic']),
   floral:           new Set(['floral']),
   soft_floral:      new Set(['aldehydic', 'powdery']),
-  floral_amber:     new Set(),
+  floral_amber:     new Set(['floral_amber']),
   soft_amber:       new Set(['sweet', 'gourmand', 'musk']),
   amber:            new Set(['amber', 'balsamic', 'resinous', 'spicy']),
   woody_amber:      new Set(['animalic']),
@@ -798,7 +806,7 @@ const FACET_TAGS = {
   balsamic:'balsamic', resinous:'resinous', amber:'amber', animalic:'animalic',
   musk:'musk', smoky:'smoky', leather:'leather',
   sweet:'sweet', ozonic:'ozonic', camphoraceous:'camphoraceous',
-  lactonic:'lactonic',
+  lactonic:'lactonic', floral_amber:'floral_amber',
   // ── camphoraceous ──
   camphor:'camphoraceous', camphor_oil:'camphoraceous', cooling:'camphoraceous',
   // ── aldehydic (incl. waxy / fatty) ──
@@ -1050,6 +1058,9 @@ const TAXONOMY_SYNONYMS = {
   // compound-phrase folds (prevent inner-token leak)
   peach_skin:'peach', peach_fuzz:'peach',
   coconut_milk:'milky',
+  // Floral Amber (Edwards 2021 = Floral Oriental pre-rename)
+  floral_oriental:'floral_amber', ambery_floral:'floral_amber',
+  floral_balsamic:'floral_amber',
   // lactonic / creamy
   creamy_milk:'milky', milky_creamy:'milky', milk_lactone:'lactonic',
   // aldehydic / waxy
