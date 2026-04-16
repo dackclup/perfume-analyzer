@@ -390,6 +390,7 @@ html { scroll-behavior:smooth; }
       <a onclick="downloadCSV();closeDlMenu()">Save.CSV</a>
       <a onclick="preparePrint(false);closeDlMenu()">Save.PDF</a>
       <a onclick="preparePrint(true);closeDlMenu()">Save.PDF (Full)</a>
+      <a onclick="downloadObsidianVault();closeDlMenu()">Save.Obsidian.ZIP</a>
     </div>
   </div>
   <a class="formulate-link" onclick="sendToFormulator()">Formulate &#x2192;</a>
@@ -398,6 +399,11 @@ html { scroll-behavior:smooth; }
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
 <script src="perfumery_data.js?v=2026-04-16-floral-amber-facets"></script>
+<!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
+     JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
+     formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="obsidian_export.js?v=2026-04-16-obsidian-phase1"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -4251,6 +4257,42 @@ function downloadCSV() {
   a.click();
 }
 
+// ===== Obsidian Vault Export (Phase 1) =====
+// Build a ZIP with one .md per searched material under PerfumeMaterials/Materials/.
+// Wikilinks for blends_with so notes graph in Obsidian. Hierarchical folders
+// + index pages land in Phase 2; "export all 451" lands in Phase 3.
+async function downloadObsidianVault() {
+  const found = results.filter(r => r.found);
+  if (!found.length) { return; }
+  if (!window.ObsidianExport || !window.JSZip) {
+    alert('Obsidian export module failed to load. Check your network connection (JSZip is fetched from a CDN).');
+    return;
+  }
+
+  // Reuse the menu link's text as a progress indicator, mirroring the
+  // pattern downloadJSON uses around line 3783.
+  const btn = document.querySelector('.dl-menu a[onclick*="downloadObsidianVault"]');
+  const orig = btn ? btn.textContent : null;
+  if (btn) { btn.style.pointerEvents = 'none'; btn.style.opacity = '0.4'; btn.textContent = '⏳ Preparing...'; }
+
+  try {
+    const blob = await window.ObsidianExport.buildMaterialVaultZip(found, {
+      onProgress: pct => { if (btn) btn.textContent = `⏳ ${pct}%`; }
+    });
+    const a = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = 'perfume-materials-' + new Date().toISOString().slice(0, 10) + '.zip';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.warn('Obsidian export failed:', e);
+    alert('Obsidian export failed: ' + (e && e.message ? e.message : e));
+  } finally {
+    if (btn) { btn.style.pointerEvents = ''; btn.style.opacity = ''; btn.textContent = orig; }
+  }
+}
+
 // ===== Print / PDF =====
 async function preparePrint(full=true) {
   if (full) {
@@ -4726,6 +4768,7 @@ const LANG_INDEX = {
     saveCSV: 'Save.CSV',
     savePDF: 'Save.PDF',
     savePDFFull: 'Save.PDF (Full)',
+    saveObsidian: 'Save.Obsidian.ZIP',
     formulate: 'Formulate \u2192',
   },
   th: {
@@ -4741,6 +4784,7 @@ const LANG_INDEX = {
     saveCSV: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.CSV',
     savePDF: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.PDF',
     savePDFFull: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.PDF (\u0E09\u0E1A\u0E31\u0E1A\u0E40\u0E15\u0E47\u0E21)',
+    saveObsidian: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.Obsidian.ZIP',
     formulate: '\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E2A\u0E39\u0E15\u0E23 \u2192',
   }
 };
@@ -4767,6 +4811,7 @@ function applyLangIndex() {
     dlMenuLinks[1].textContent = t.saveCSV;
     dlMenuLinks[2].textContent = t.savePDF;
     dlMenuLinks[3].textContent = t.savePDFFull;
+    if (dlMenuLinks.length >= 5 && t.saveObsidian) dlMenuLinks[4].textContent = t.saveObsidian;
   }
   const formulateLink = document.querySelector('.formulate-link');
   if (formulateLink) formulateLink.textContent = t.formulate;
