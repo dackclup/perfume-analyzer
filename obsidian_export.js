@@ -1,15 +1,17 @@
 // ===== Obsidian Vault Export =====
 // Phase 1: minimal ZIP export of search results as flat .md files.
-// One markdown file per material under Materials/ at the ZIP root.
-// Frontmatter + Obsidian wikilinks for blends_with.
+// Phase 2: hierarchical folders by primary family + _Index pages + README.
+//   - Materials/{Family}/{name}.md (Title Case folder, _Unclassified fallback)
+//   - _Index/All Materials.md, By Family.md, By Note.md, IFRA Restricted.md, Banned.md
+//   - README.md (TH+EN extract/install instructions)
 //
 // Depends on:
 //   - JSZip (window.JSZip, loaded via CDN before this script)
 //   - DB / NAME_TO_CAS globals from perfumery_data.js (always present in
 //     both index.html and formulation.html)
 //
-// Phases 2-4 will extend this module with hierarchical folders, index
-// pages, "export all" mode, and formulation export.
+// Phases 3-4 will extend this module with "export all" mode and
+// formulation export.
 
 (function () {
   'use strict';
@@ -250,7 +252,167 @@
     return out;
   }
 
-  // ---- ZIP builder (Phase 1: flat layout) --------------------------------
+  // ---- Folder placement (Phase 2) ----------------------------------------
+
+  // Compute the "Materials/{Family}/" folder for a record. primaryFamilies
+  // values are lowercase canonical slugs (e.g. "floral") — we Title Case
+  // them so the folder name reads naturally in Obsidian's file tree.
+  // Records lacking primary families (~5% of the local DB — vehicles,
+  // additives) drop into "_Unclassified" so they remain reachable.
+  function primaryFamilyFolder(record) {
+    const cls = (record && record.classification) || {};
+    const fams = Array.isArray(cls.primaryFamilies) ? cls.primaryFamilies : [];
+    const head = fams.length ? String(fams[0]).trim() : '';
+    if (!head) return '_Unclassified';
+    return head.charAt(0).toUpperCase() + head.slice(1).toLowerCase();
+  }
+
+  // ---- Index page generators (Phase 2) -----------------------------------
+
+  // Each index lives at PerfumeMaterials/_Index/*.md and references the
+  // material notes by basename. Obsidian resolves [[Name]] across folders
+  // by basename, so links keep working when materials are nested under
+  // Materials/{Family}/.
+  function _byCanonicalName(a, b) {
+    return (a.canonical || '').localeCompare(b.canonical || '', undefined, { sensitivity: 'base' });
+  }
+
+  // Pre-compute a flat list of {canonical, cas, family, note, banStatus}
+  // shared by every index generator so we walk the records once.
+  function _summarize(records) {
+    const out = [];
+    for (const item of records) {
+      const rec = item && item.record ? item.record : item;
+      if (!rec) continue;
+      const cls = rec.classification || {};
+      const reg = Array.isArray(cls.regulatory) ? cls.regulatory : [];
+      const banStatus = reg.some(r => /banned/i.test(r))
+        ? 'banned'
+        : reg.some(r => /restricted/i.test(r))
+          ? 'restricted'
+          : 'norestriction';
+      out.push({
+        canonical: (rec.names && rec.names.canonical) || (rec.identifiers && rec.identifiers.cas) || 'Untitled',
+        cas: rec.identifiers && rec.identifiers.cas,
+        family: primaryFamilyFolder(rec),
+        note: (rec.perfumery && rec.perfumery.note) || null,
+        banStatus,
+      });
+    }
+    return out;
+  }
+
+  function indexAllMaterials(summary) {
+    const sorted = [...summary].sort(_byCanonicalName);
+    const lines = ['# All Materials', '', `*${sorted.length} entries, sorted A–Z*`, ''];
+    for (const s of sorted) lines.push(`- [[${s.canonical}]]${s.cas ? ` — \`${s.cas}\`` : ''}`);
+    return lines.join('\n') + '\n';
+  }
+
+  function indexByFamily(summary) {
+    const groups = new Map();
+    for (const s of summary) {
+      if (!groups.has(s.family)) groups.set(s.family, []);
+      groups.get(s.family).push(s);
+    }
+    const families = [...groups.keys()].sort((a, b) => {
+      // _Unclassified always last
+      if (a === '_Unclassified') return 1;
+      if (b === '_Unclassified') return -1;
+      return a.localeCompare(b);
+    });
+    const lines = ['# By Family', '', `*${summary.length} materials across ${families.length} families*`, ''];
+    for (const fam of families) {
+      const items = groups.get(fam).sort(_byCanonicalName);
+      lines.push(`## ${fam} (${items.length})`, '');
+      for (const s of items) lines.push(`- [[${s.canonical}]]`);
+      lines.push('');
+    }
+    return lines.join('\n');
+  }
+
+  function indexByNote(summary) {
+    const buckets = { Top: [], Middle: [], Base: [], Other: [] };
+    for (const s of summary) {
+      const n = (s.note || '').toLowerCase();
+      // A material can sit in more than one tier (e.g. "Middle / Base").
+      let placed = false;
+      if (n.includes('top'))    { buckets.Top.push(s);    placed = true; }
+      if (n.includes('middle') || n.includes('heart')) { buckets.Middle.push(s); placed = true; }
+      if (n.includes('base'))   { buckets.Base.push(s);   placed = true; }
+      if (!placed) buckets.Other.push(s);
+    }
+    const lines = ['# By Note', '', '*Materials grouped by their tier in the fragrance pyramid. Some materials appear in multiple tiers.*', ''];
+    for (const tier of ['Top', 'Middle', 'Base', 'Other']) {
+      const items = buckets[tier].sort(_byCanonicalName);
+      if (!items.length) continue;
+      lines.push(`## ${tier} (${items.length})`, '');
+      for (const s of items) lines.push(`- [[${s.canonical}]]`);
+      lines.push('');
+    }
+    return lines.join('\n');
+  }
+
+  function indexFiltered(summary, predicate, title, subtitle) {
+    const items = summary.filter(predicate).sort(_byCanonicalName);
+    const lines = [`# ${title}`, '', subtitle ? `*${subtitle}*` : '', `*${items.length} entries*`, ''];
+    if (!items.length) lines.push('_None in current export._', '');
+    for (const s of items) lines.push(`- [[${s.canonical}]]${s.cas ? ` — \`${s.cas}\`` : ''}`);
+    return lines.join('\n') + '\n';
+  }
+
+  function readmeMarkdown(records) {
+    const today = new Date().toISOString().slice(0, 10);
+    return `# Perfume Materials — Obsidian Vault
+
+*Generated ${today} — ${records.length} materials*
+
+## วิธีใช้ (TH)
+
+1. แตกไฟล์ ZIP นี้ลงในตำแหน่งที่ต้องการ — เช่น \`Documents/PerfumeMaterials/\` บน Android (ใช้ ZArchiver, RAR, หรือ Files แตกได้)
+2. เปิด **Obsidian** → กด **Open folder as vault** → เลือกโฟลเดอร์ \`PerfumeMaterials\` ที่เพิ่งแตกออกมา
+3. Obsidian จะ index ไฟล์ทั้งหมด — ใช้เวลาไม่กี่วินาที
+4. เปิด \`_Index/All Materials.md\` หรือ \`_Index/By Family.md\` เพื่อ browse
+
+## How to use (EN)
+
+1. Extract this ZIP to a location of your choice — e.g. \`Documents/PerfumeMaterials/\` on Android (any unzip app works).
+2. Open **Obsidian** → tap **Open folder as vault** → select the freshly-extracted \`PerfumeMaterials\` folder.
+3. Obsidian will index everything in seconds.
+4. Start at \`_Index/All Materials.md\` or \`_Index/By Family.md\` to browse.
+
+## Vault layout
+
+\`\`\`
+PerfumeMaterials/
+├── README.md                    ← this file
+├── _Index/                      ← navigation pages (Dataview-style lists)
+│   ├── All Materials.md
+│   ├── By Family.md
+│   ├── By Note.md
+│   ├── IFRA Restricted.md
+│   └── Banned.md
+└── Materials/                   ← one .md per material, grouped by primary family
+    ├── Floral/
+    ├── Woody/
+    ├── Citrus/
+    ├── Amber/
+    ├── Fresh/
+    └── _Unclassified/           ← vehicles, additives, etc.
+\`\`\`
+
+## Tags & wikilinks
+
+- **Tags** use nested syntax — open Obsidian's tag pane to browse \`#fragrance/family/floral\`, \`#fragrance/note/middle\`, etc.
+- **Wikilinks** in \`Blends well with\` (e.g. \`[[Hedione]]\`) connect material notes for Graph view.
+
+## Source
+
+Generated by **Perfume Analyzer** — see \`perfumery_data.js\` for the underlying database. Re-export to refresh.
+`;
+  }
+
+  // ---- ZIP builder (Phase 2: hierarchical + index + README) --------------
 
   // records: array of { record: ... } (the same shape that downloadJSON
   // operates on — `mat.record` holds the canonical data).
@@ -265,9 +427,9 @@
     const root = zip.folder('PerfumeMaterials');
     const matFolder = root.folder('Materials');
 
-    // De-dupe by canonical name (since Obsidian links by basename, two
-    // notes with the same filename collide). Subsequent dupes get a
-    // " (CAS)" suffix to keep them addressable.
+    // De-dupe by canonical name across the entire vault (Obsidian links
+    // by basename, so duplicates collide regardless of folder). Dupes get
+    // a " (CAS)" suffix to stay addressable.
     const usedNames = new Set();
     const total = records.length;
     let done = 0;
@@ -278,15 +440,34 @@
       let base = safeFileName(rec.names && rec.names.canonical);
       if (usedNames.has(base.toLowerCase())) {
         const cas = rec.identifiers && rec.identifiers.cas;
-        base = cas ? `${base} (${cas})` : `${base} (${++done})`;
+        base = cas ? `${base} (${cas})` : `${base} (${done + 1})`;
       }
       usedNames.add(base.toLowerCase());
-      matFolder.file(base + '.md', materialToMarkdown(rec));
+      const family = primaryFamilyFolder(rec);
+      matFolder.folder(family).file(base + '.md', materialToMarkdown(rec));
       done++;
       if (onProgress && (done % 25 === 0 || done === total)) {
         onProgress(Math.round((done / total) * 100));
       }
     }
+
+    // Index pages + README share a single summary pass over records.
+    const summary = _summarize(records);
+    const indexFolder = root.folder('_Index');
+    indexFolder.file('All Materials.md', indexAllMaterials(summary));
+    indexFolder.file('By Family.md', indexByFamily(summary));
+    indexFolder.file('By Note.md', indexByNote(summary));
+    indexFolder.file('IFRA Restricted.md', indexFiltered(
+      summary, s => s.banStatus === 'restricted',
+      'IFRA Restricted',
+      'Materials with IFRA Standard 51 usage limits or other regulatory restrictions.'
+    ));
+    indexFolder.file('Banned.md', indexFiltered(
+      summary, s => s.banStatus === 'banned',
+      'Banned',
+      'Materials banned by IFRA or restricted markets — kept for reference only.'
+    ));
+    root.file('README.md', readmeMarkdown(records));
 
     return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
   }
@@ -295,9 +476,10 @@
 
   window.ObsidianExport = {
     safeFileName,
+    primaryFamilyFolder,
     materialToMarkdown,
     buildMaterialVaultZip,
-    // Phase 2-4 will extend here:
-    //   primaryFamilyFolder, buildIndexPages, formulationToMarkdown
+    // Phase 3-4 will extend here:
+    //   formulationToMarkdown
   };
 })();
