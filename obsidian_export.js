@@ -166,6 +166,15 @@
     regulatory: '09 Regulatory',
   };
 
+  // Only these axes get physical MOC pages in the vault. The remaining
+  // six axes (note, type, source, use, function, regulatory) still
+  // appear in material frontmatter and the tags array — Dataview can
+  // still query them — but they don't generate their own browse pages.
+  // Per user feedback the additional MOC folders were noise; the
+  // olfactory taxonomy (family / sub-family / facet) is what matters
+  // for browsing.
+  const MOC_AXES = new Set(['family', 'subfamily', 'facet']);
+
   // Human-readable metadata for each axis — feeds axis Index titles,
   // per-value MOC subtitles, and the root navigation menu.
   // `title` is the plural label (used in Index pages and the browse
@@ -210,9 +219,14 @@
     return `_MOC/${MOC_FOLDERS[axis]}/${mocFileName(value)}`;
   }
 
-  // Wikilink to a MOC page with an aliased display label.
+  // Wikilink to a MOC page with an aliased display label. If the axis
+  // isn't in the MOC_AXES allowlist the link gracefully degrades to
+  // plain text — the value still renders but doesn't point to a file
+  // that wasn't emitted.
   function mocLink(axis, value) {
-    return `[[${mocPath(axis, value)}|${mocDisplay(value)}]]`;
+    const display = mocDisplay(value);
+    if (!MOC_AXES.has(axis)) return display;
+    return `[[${mocPath(axis, value)}|${display}]]`;
   }
 
   // Render multiple MOC links for one axis as a `·`-separated line.
@@ -645,11 +659,13 @@
       usedNames.add(base.toLowerCase());
       root.file(base + '.md', materialToMarkdown(rec));
 
-      // Register every MOC page this material will link to. Shared
-      // enumeration with the renderer guarantees every wikilink the
-      // material body emits resolves to a page written below.
+      // Register every MOC page this material will link to. Only axes
+      // in the MOC_AXES allowlist (family / sub-family / facet) get a
+      // physical page — the other six axes live in frontmatter + tags
+      // only and their classification bullets render as plain text.
       const axes = extractAxes(rec);
       forEachAxisValue(axes, (axis, value) => {
+        if (!MOC_AXES.has(axis)) return;
         const key = mocPath(axis, value);
         if (!mocsToEmit.has(key)) {
           mocsToEmit.set(key, { axis, value });
@@ -742,8 +758,12 @@
     // exports every axis is populated; smoke tests / partial builds
     // may have fewer.
     const present = (stats && Array.isArray(stats.axesPresent)) ? stats.axesPresent : Object.keys(AXIS_META);
+    // Browse menu only surfaces axes that have physical MOC pages.
+    // The other axes remain searchable via Dataview tag queries
+    // (#note/top, #regulatory/allergen, etc.) in the quick queries
+    // section below.
     const browseLines = Object.keys(AXIS_META)
-      .filter(axis => present.includes(axis))
+      .filter(axis => MOC_AXES.has(axis) && present.includes(axis))
       .map(axis => {
         const meta = AXIS_META[axis];
         return `- [[_MOC/${MOC_FOLDERS[axis]}/Index|${meta.emoji} ${meta.title}]] — ${meta.desc}`;
