@@ -397,7 +397,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-15-edwards-solid"></script>
+<script src="perfumery_data.js?v=2026-04-16-edwards-facets"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -958,33 +958,52 @@ const FACET_KEYWORDS = {
 // Ordered grouping used by the facet chip renderer. Each entry defines
 // a labelled section in the Facet sub-drawer. Only facets with ≥1
 // material in FILTER_CACHE are rendered as chips.
+// ── Facet groups — bucketed by the 14 Edwards 2021 sub-families ────
+// Each facet chip under a group reads as "sub-family → specific note"
+// (e.g. Amber → cinnamon, Woods → sandalwood). The chip tokens themselves
+// are unchanged from the legacy FACET_TAGS vocabulary — only the parent
+// bucket label is remapped to an Edwards subfamily so the Facet drawer
+// matches the Sub-families drawer above it.
+// Floral Amber is kept as an explicit (empty) group for taxonomic
+// completeness; it renders no chips today but will accept future floral/
+// resinous hybrid tokens.
 const FACET_GROUPS = [
-  { label:'Citrus',           facets:['bergamot','lemon','orange','mandarin','grapefruit','lime','yuzu','tangerine','petitgrain','neroli','hesperidic'] },
-  { label:'Green',            facets:['leaf','leafy','grass','stem','violet_leaf','tomato_leaf','cut_grass','galbanum','cucumber'] },
-  { label:'Herbal',           facets:['lavender','sage','thyme','rosemary','basil','tarragon','fennel','chamomile','bay_laurel','artemisia','celery','parsley','medicinal','antiseptic','clover'] },
-  { label:'Mint',             facets:['mint','minty','peppermint','spearmint'] },
-  { label:'Tea',              facets:['tea','green_tea','black_tea','mate'] },
-  { label:'Floral',           facets:['rose','jasmine','ylang','tuberose','narcissus','orchid','magnolia','hyacinth','lilac','gardenia','mimosa','champaca','violet','lily','osmanthus','honeysuckle','iris_flower','muguet','frangipani','boronia','cassie','geranium','linden'] },
-  { label:'Fruity',           facets:['apple','pear','peach','apricot','berry','plum','tropical','pineapple','coconut','melon','raspberry','strawberry','blackcurrant','cassis','cherry','fig','banana','grape'] },
-  { label:'Aldehydic',        facets:['aldehyde','waxy_aldehyde','waxy','fatty'] },
-  { label:'Aquatic',          facets:['marine','sea','seaweed','oceanic','calone','water','watery','dewy','iodine'] },
-  { label:'Ozonic',           facets:['ozone','airy'] },
-  { label:'Fresh',            facets:['cool','crisp'] },
-  { label:'Camphoraceous',    facets:['camphor','camphor_oil','cooling'] },
-  { label:'Spicy',            facets:['cinnamon','clove','pepper','nutmeg','cardamom','saffron','ginger','anise','star_anise','allspice','coriander','licorice'] },
-  { label:'Sweet & Gourmand', facets:['vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee','tonka','maple','hazelnut','almond','praline','biscuit','milk','rum','roasted','nutty','cereal','beeswax'] },
-  { label:'Lactonic & Creamy',facets:['creamy','milky','buttery','cream'] },
-  { label:'Powdery',          facets:['iris','orris','heliotrope','talc','velvety'] },
-  { label:'Woody',            facets:['cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','pine','birch','oakmoss','cashmere_wood','rosewood','cedrol','coniferous','dry','earthy'] },
-  { label:'Balsamic',         facets:['balsam','tolu_balsam','peru_balsam','benzoin','styrax'] },
-  { label:'Resinous',         facets:['frankincense','myrrh','elemi','labdanum','olibanum','opoponax','copal','galbanum_resin'] },
-  { label:'Amber',            facets:['ambergris','ambrox','ambroxan','ambrette','mineral'] },
-  { label:'Animalic',         facets:['civet','castoreum','hyrax','skin','costus','sweaty'] },
-  { label:'Musk',             facets:['white_musk','muscone'] },
-  { label:'Tobacco & Hay',    facets:['tobacco','hay'] },
-  { label:'Smoky',            facets:['incense','tar','burn','burnt','smoke','birch_tar','cade','phenolic'] },
-  { label:'Leather',          facets:['leathery','suede'] },
-  { label:'Clean & Texture',  facets:['clean','soapy','metallic','laundry'] },
+  { label:'Aromatic',     facets:[
+    'lavender','sage','thyme','rosemary','basil','tarragon','fennel','chamomile','bay_laurel','artemisia','celery','parsley','medicinal','antiseptic','clover',
+    'mint','minty','peppermint','spearmint',
+    'camphor','camphor_oil','cooling','cool','crisp'] },
+  { label:'Citrus',       facets:['bergamot','lemon','orange','mandarin','grapefruit','lime','yuzu','tangerine','petitgrain','neroli','hesperidic'] },
+  { label:'Water',        facets:[
+    'marine','sea','seaweed','oceanic','calone','water','watery','dewy','iodine',
+    'ozone','airy',
+    'clean','soapy','metallic','laundry'] },
+  { label:'Green',        facets:[
+    'leaf','leafy','grass','stem','violet_leaf','tomato_leaf','cut_grass','galbanum','cucumber',
+    'tea','green_tea','black_tea','mate'] },
+  { label:'Fruity',       facets:['apple','pear','peach','apricot','berry','plum','tropical','pineapple','coconut','melon','raspberry','strawberry','blackcurrant','cassis','cherry','fig','banana','grape'] },
+  { label:'Floral',       facets:['rose','jasmine','ylang','tuberose','narcissus','orchid','magnolia','hyacinth','lilac','gardenia','mimosa','champaca','violet','lily','osmanthus','honeysuckle','muguet','frangipani','boronia','cassie','geranium','linden'] },
+  { label:'Soft Floral',  facets:[
+    'aldehyde','waxy_aldehyde','waxy','fatty',
+    'iris','iris_flower','orris','heliotrope','talc','velvety'] },
+  { label:'Floral Amber', facets:[] },
+  { label:'Soft Amber',   facets:[
+    'vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee','tonka','maple','hazelnut','almond','praline','biscuit','milk','rum','roasted','nutty','cereal','beeswax',
+    'creamy','milky','buttery','cream'] },
+  { label:'Amber',        facets:[
+    'ambergris','ambrox','ambroxan','ambrette','mineral',
+    'balsam','tolu_balsam','peru_balsam','benzoin','styrax',
+    'frankincense','myrrh','elemi','labdanum','olibanum','opoponax','copal','galbanum_resin',
+    'cinnamon','clove','pepper','nutmeg','cardamom','saffron','ginger','anise','star_anise','allspice','coriander','licorice'] },
+  { label:'Woody Amber',  facets:[
+    'civet','castoreum','hyrax','skin','costus','sweaty',
+    'white_musk','muscone'] },
+  { label:'Woods',        facets:[
+    'cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','pine','birch','cashmere_wood','rosewood','cedrol','coniferous','dry'] },
+  { label:'Mossy Woods',  facets:['oakmoss','earthy'] },
+  { label:'Dry Woods',    facets:[
+    'tobacco','hay',
+    'incense','tar','burn','burnt','smoke','birch_tar','cade','phenolic',
+    'leathery','suede'] },
 ];
 
 // Synonym → canonical-token map. The tokenizer hits raw text and many
