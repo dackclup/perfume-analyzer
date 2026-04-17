@@ -1120,11 +1120,10 @@ function facetLabel(t) {
 }
 
 // Reverse index: legacy PRIMARY_FAMILIES token → Edwards 2021 sub-family key.
-// Built once from SUB_FAMILY_TO_LEGACY so the result-card PRIMARY row can
-// render the same vocabulary the user sees in the Sub-families filter drawer
-// (e.g. legacy 'woody' → 'Woods', legacy 'powdery' → 'Soft Floral'). Keeps
-// the underlying primaryFamilies / secondaryFamilies arrays untouched so
-// filter matching logic is unaffected.
+// Built once from SUB_FAMILY_TO_LEGACY so downstream code can still resolve
+// a finer-grained sub-family label when needed. Card-level Primary row uses
+// the coarser EDWARDS_TO_LEGACY parent bucket instead — see
+// primaryFamilyFilterLabel below.
 const LEGACY_TO_SUB_FAMILY = (() => {
   const m = {};
   for (const [sub, legacySet] of Object.entries(SUB_FAMILY_TO_LEGACY)) {
@@ -1132,10 +1131,26 @@ const LEGACY_TO_SUB_FAMILY = (() => {
   }
   return m;
 })();
+// Reverse index: legacy PRIMARY_FAMILIES token → Edwards 2021 parent bucket
+// (floral_note / amber_note / woody_note / fresh_note / floral_fresh_note /
+// woody_amber_note / fresh_woody_note). Used by the card PRIMARY row so a
+// material classified as e.g. woody + amber + powdery shows a clean
+// "Woody • Amber" pair (powdery folds into amber_note, same as its chip in
+// the Primary Family filter drawer). Underlying primary/secondary arrays
+// are untouched so filter matching is unaffected.
+const LEGACY_TO_EDWARDS = (() => {
+  const m = {};
+  for (const [bucket, legacySet] of Object.entries(EDWARDS_TO_LEGACY)) {
+    for (const tok of legacySet) m[tok] = bucket;
+  }
+  return m;
+})();
 function primaryFamilyFilterLabel(legacyTok) {
   if (!legacyTok) return '';
-  const sub = LEGACY_TO_SUB_FAMILY[legacyTok];
-  if (sub && SUB_FAMILY_LABELS[sub]) return SUB_FAMILY_LABELS[sub];
+  const bucket = LEGACY_TO_EDWARDS[legacyTok];
+  if (bucket && EDWARDS_FAMILY_LABELS[bucket]) {
+    return EDWARDS_FAMILY_LABELS[bucket].replace(/\s*note$/i, '');
+  }
   return PRIMARY_FAMILY_LABELS[legacyTok] || legacyTok;
 }
 
