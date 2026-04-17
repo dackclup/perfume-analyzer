@@ -213,7 +213,6 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .card:hover { box-shadow:var(--shadow-sm); border-color:var(--border-strong); }
 .card-header { padding:var(--space-3) var(--space-4); cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:var(--surface); transition:background var(--dur) var(--ease); gap:var(--space-2); }
 .card-header:hover { background:var(--surface-hi); }
-.card-header:hover { background:var(--bg2); }
 .card-header h3 { font-size:1em; font-weight:500; }
 .card-arrow { font-size:0.8em; color:var(--text2); }
 .card-body { padding:0 16px 16px; display:none; }
@@ -248,7 +247,6 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 /* Sections */
 .sec-title { font-size:0.7em; text-transform:uppercase; letter-spacing:0.08em; color:var(--text2); font-weight:600; margin:12px 0 4px; }
 .odor-desc { font-style:italic; line-height:1.5; }
-.badge { display:inline-block; padding:3px 12px; border-radius:3px; font-size:0.8em; font-weight:500; margin:2px 4px; }
 .badge-top { background:var(--badge-top-bg); color:var(--badge-top-fg); }
 .badge-mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
 .badge-base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
@@ -4717,7 +4715,7 @@ async function preparePrint(full=true) {
 
     if (unloaded.length) {
       const status = document.createElement('div');
-      status.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:12px;background:#3D5A80;color:#fff;text-align:center;z-index:9999;font-size:0.9em;';
+      status.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:12px;background:var(--accent);color:#fff;text-align:center;z-index:9999;font-size:0.9em;';
       status.textContent = `Loading PubChem data (0/${unloaded.length})...`;
       document.body.appendChild(status);
 
