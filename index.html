@@ -4639,9 +4639,14 @@ async function downloadObsidianMocPart() {
     return;
   }
   const choice = window.prompt(
-    'เลือก MOC ที่จะ download (เพิ่มทีละส่วนได้ ไม่ต้อง re-import ทั้ง vault):\n\n' +
-    '  a = ทั้งหมด (materials + ทุก MOC)\n' +
-    '  m = Materials only (ไม่รวม MOC)\n' +
+    'PARA + Johnny.Decimal + Zettelkasten vault — เลือกส่วนที่จะ download\n' +
+    '(เพิ่มทีละส่วนได้ ไม่ต้อง re-import ทั้ง vault — Zettel id คงที่)\n\n' +
+    '  a = Vault เต็ม (materials + MOC + Areas + Reference + scaffold)\n' +
+    '  m = Materials only (3_Resources/40-49 Materials/)\n' +
+    '  r = Reference pages (3_Resources/50-59 Reference/)\n' +
+    '  s = Areas dashboards (2_Areas/20-29 Safety & Compliance/)\n' +
+    '  k = Scaffold — Projects/Archives empty folders\n' +
+    '\n  -- MOC axes (3_Resources/60-69 MOC/) --\n' +
     '  0 = Note Groups\n' +
     '  1 = Families\n' +
     '  2 = Sub-families\n' +
@@ -4657,9 +4662,9 @@ async function downloadObsidianMocPart() {
   );
   if (choice == null) return;
   const key = choice.trim().toLowerCase();
-  // `null` in parts means "full vault" (all axes + materials + notegroups).
+  // `null` in parts means "full vault" (all axes + materials + notegroups + areas + reference + scaffold).
   const partsByKey = {
-    'a': { parts: null,           label: 'all' },
+    'a': { parts: null,           label: 'vault-full' },
     '0': { parts: ['notegroups'], label: 'note-groups' },
     '1': { parts: ['family'],     label: 'families' },
     '2': { parts: ['subfamily'],  label: 'sub-families' },
@@ -4671,6 +4676,9 @@ async function downloadObsidianMocPart() {
     '8': { parts: ['function'],   label: 'functions' },
     '9': { parts: ['regulatory'], label: 'regulatory' },
     'm': { parts: ['materials'],  label: 'materials' },
+    'r': { parts: ['reference'],  label: 'reference' },
+    's': { parts: ['areas'],      label: 'areas' },
+    'k': { parts: ['scaffold'],   label: 'scaffold' },
   };
   const pick = partsByKey[key];
   if (!pick) { alert('ไม่พบตัวเลือก: ' + choice); return; }
