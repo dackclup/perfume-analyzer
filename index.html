@@ -1170,171 +1170,104 @@ const FACET_TAGS = {
   musk:'musk', smoky:'smoky', leather:'leather',
   sweet:'sweet', ozonic:'ozonic', camphoraceous:'camphoraceous',
   lactonic:'lactonic', floral_amber:'floral_amber',
-  // ── camphoraceous ──
-  camphor:'camphoraceous', camphor_oil:'camphoraceous', cooling:'camphoraceous',
-  // ── aldehydic (incl. waxy / fatty) ──
-  aldehyde:'aldehydic', waxy_aldehyde:'aldehydic', waxy:'aldehydic', fatty:'aldehydic',
-  // ── citrus ──
+
+  // ── AROMATIC (Fresh-Woody) ──
+  lavender:'herbal', lavandine:'herbal', sage:'herbal', thyme:'herbal',
+  rosemary:'herbal', basil:'herbal', tarragon:'herbal', fennel:'herbal',
+  chamomile:'herbal', artemisia:'herbal', celery:'herbal', parsley:'herbal',
+  medicinal:'herbal', clover:'herbal',
+  mint:'herbal', minty:'herbal', peppermint:'herbal', spearmint:'herbal',
+  camphor:'camphoraceous', camphor_oil:'camphoraceous',
+  cooling:'camphoraceous', cool:'camphoraceous', crisp:'camphoraceous',
+  fougere:'herbal', coumarin:'herbal', geosmin:'herbal',
+
+  // ── CITRUS ──
   bergamot:'citrus', lemon:'citrus', orange:'citrus', mandarin:'citrus',
   grapefruit:'citrus', lime:'citrus', yuzu:'citrus', tangerine:'citrus',
-  petitgrain:'citrus', neroli:'citrus', hesperidic:'citrus',
-  // ── green ──
-  galbanum:'green', leaf:'green', leafy:'green', grass:'green', stem:'green',
-  violet_leaf:'green', tomato_leaf:'green', cut_grass:'green', cucumber:'green',
-  // ── herbal (incl. tea / hay / mint / medicinal) ──
-  lavender:'herbal', mint:'herbal', peppermint:'herbal', spearmint:'herbal',
-  sage:'herbal', thyme:'herbal', rosemary:'herbal', basil:'herbal',
-  tarragon:'herbal', fennel:'herbal', chamomile:'herbal', bay_laurel:'herbal',
-  artemisia:'herbal', celery:'herbal', parsley:'herbal',
-  minty:'herbal', medicinal:'herbal', antiseptic:'herbal',
+  petitgrain:'citrus', neroli:'citrus', verbena:'citrus',
+  lemon_verbena:'citrus', litsea_cubeba:'citrus', cedrat:'citrus',
+  citron:'citrus', combava:'citrus', kaffir_lime:'citrus',
+
+  // ── WATER (aquatic + ozonic) ──
+  marine:'aquatic', sea:'aquatic', seaweed:'aquatic', calone:'aquatic',
+  watery:'aquatic', dewy:'aquatic', iodine:'aquatic',
+  ozone:'ozonic',
+  clean:'aquatic', soapy:'aquatic', metallic:'aquatic', laundry:'aquatic',
+  petrichor:'aquatic',
+
+  // ── GREEN ──
+  leaf:'green', leafy:'green', grass:'green', stem:'green',
+  violet_leaf:'green', tomato_leaf:'green', galbanum:'green', cucumber:'green',
   tea:'green', green_tea:'green', black_tea:'green', mate:'green',
-  oolong:'green', white_tea:'green', chai:'green',
-  hay:'smoky', clover:'herbal',
-  eucalyptus:'herbal', menthol:'herbal', oregano:'herbal', marjoram:'herbal',
-  verbena:'herbal', lemongrass:'herbal',
-  hyssop:'herbal', hops:'herbal', valerian:'herbal',
-  lemon_balm:'herbal', melissa:'herbal', yarrow:'herbal', lovage:'herbal',
-  dill:'herbal', cilantro:'herbal', savory:'herbal', rue:'herbal',
-  wormwood:'herbal',
-  angelica:'spicy', caraway:'spicy', fenugreek:'spicy',
-  // ── citrus additions ──
-  kumquat:'citrus', pomelo:'citrus',
-  clementine:'citrus', calamansi:'citrus', sudachi:'citrus',
-  bitter_orange:'citrus', blood_orange:'citrus', meyer_lemon:'citrus',
-  key_lime:'citrus', finger_lime:'citrus', buddha_hand:'citrus',
-  citron:'citrus', chinotto:'citrus', bigarade:'citrus',
-  // ── floral ──
-  rose:'floral', jasmine:'floral', ylang:'floral', tuberose:'floral', geranium:'floral', linden:'floral',
-  narcissus:'floral', orchid:'floral', magnolia:'floral', hyacinth:'floral',
-  lilac:'floral', gardenia:'floral', mimosa:'floral', champaca:'floral',
-  violet:'floral', lily:'floral', osmanthus:'floral', honeysuckle:'floral',
-  muguet:'floral', frangipani:'floral', boronia:'floral',
-  cassie:'floral',
-  peony:'floral', carnation:'floral', cherry_blossom:'floral', peach_blossom:'floral',
-  plumeria:'floral', tiare:'floral', wisteria:'floral', stephanotis:'floral',
-  freesia:'floral', daffodil:'floral', jonquil:'floral', hellebore:'floral',
-  sweet_pea:'floral', camellia:'floral', water_lily:'floral', lotus:'floral',
-  poppy:'floral', elderflower:'floral', broom:'floral', acacia:'floral',
-  tagetes:'floral', marigold:'floral', chrysanthemum:'floral', calendula:'floral',
-  hibiscus:'floral', datura:'floral', cistus:'floral',
-  bluebell:'floral', cowslip:'floral', primrose:'floral', daisy:'floral',
-  sunflower:'floral', heather:'floral', dianthus:'floral', wallflower:'floral',
-  // ── floral amber (Edwards 2021 "Floral Oriental") ──
-  immortelle:'floral_amber',
-  orange_blossom:'floral_amber', cinnamic_floral:'floral_amber',
-  ambery_floral:'floral_amber',
-  // ── fruity ──
+  fern:'green', nettle:'green',
+
+  // ── FRUITY ──
   apple:'fruity', pear:'fruity', peach:'fruity', apricot:'fruity',
   berry:'fruity', plum:'fruity', tropical:'fruity', pineapple:'fruity',
   coconut:'fruity', melon:'fruity', raspberry:'fruity', strawberry:'fruity',
-  blackcurrant:'fruity', cassis:'fruity', cherry:'fruity', fig:'fruity',
-  banana:'fruity', grape:'fruity',
-  lychee:'fruity', mango:'fruity', passion_fruit:'fruity', papaya:'fruity',
-  guava:'fruity', quince:'fruity', watermelon:'fruity', kiwi:'fruity',
-  date:'fruity', currant:'fruity', rhubarb:'fruity',
-  nectarine:'fruity', prune:'fruity', persimmon:'fruity', pomegranate:'fruity',
-  dragon_fruit:'fruity', jackfruit:'fruity', durian:'fruity', starfruit:'fruity',
-  loquat:'fruity', mulberry:'fruity', elderberry:'fruity', cranberry:'fruity',
-  blueberry:'fruity', mangosteen:'fruity', lingonberry:'fruity', gooseberry:'fruity',
-  jujube:'fruity', tamarind:'fruity', acai:'fruity', soursop:'fruity',
-  cherimoya:'fruity',
-  // ── aquatic ──
-  marine:'aquatic', sea:'aquatic', seaweed:'aquatic', oceanic:'aquatic',
-  calone:'aquatic', water:'aquatic', watery:'aquatic', dewy:'aquatic', iodine:'aquatic',
-  petrichor:'aquatic', saline:'aquatic',
-  aqueous:'aquatic', wet:'aquatic', mist:'aquatic', fog:'aquatic',
-  brine:'aquatic', kelp:'aquatic', spring_water:'aquatic', rain:'aquatic',
-  shower:'aquatic', chlorine:'aquatic', algae:'aquatic',
-  // ── green additions ──
-  fig_leaf:'green', ivy:'green', bamboo:'green', sap:'green', nettle:'green',
-  fern:'green', bud:'green',
-  sprout:'green', shoot:'green', ferny:'green',
-  vine:'green', lettuce:'green', arugula:'green', spinach:'green',
-  // ── ozonic (NOT fresh — distinct family) ──
-  ozone:'ozonic', airy:'ozonic',
-  // ── fresh ──
-  cool:'camphoraceous', crisp:'camphoraceous',
-  clean:'aquatic', soapy:'aquatic', metallic:'aquatic', laundry:'aquatic',
-  // ── spicy ──
-  cinnamon:'spicy', clove:'spicy', pepper:'spicy', nutmeg:'spicy',
-  cardamom:'spicy', saffron:'spicy', ginger:'spicy', anise:'spicy',
-  star_anise:'spicy', allspice:'spicy', coriander:'spicy', licorice:'spicy',
-  pink_pepper:'spicy', white_pepper:'spicy', sichuan_pepper:'spicy',
-  juniper:'spicy', turmeric:'spicy', cumin:'spicy', davana:'spicy',
-  cassia:'spicy', chili:'spicy', paprika:'spicy', sumac:'spicy',
-  mastic:'spicy', amyris:'spicy', sassafras:'spicy',
-  pepper_berry:'spicy', juniperberry:'spicy', rosehip:'spicy',
-  // ── balsamic / resinous additions ──
-  dragon_blood:'resinous', guggul:'resinous', labdanum_resin:'resinous',
-  // ── gourmand ──
+  blackcurrant:'fruity', cassis:'fruity', cherry:'fruity', banana:'fruity',
+  grape:'fruity', lychee:'fruity', fig:'fruity', mango:'fruity',
+  passion_fruit:'fruity', pomegranate:'fruity', rhubarb:'fruity', quince:'fruity',
+
+  // ── FLORAL ──
+  rose:'floral', jasmine:'floral', ylang:'floral', tuberose:'floral',
+  narcissus:'floral', orchid:'floral', hyacinth:'floral', lilac:'floral',
+  gardenia:'floral', mimosa:'floral', champaca:'floral', violet:'floral',
+  lily:'floral', osmanthus:'floral', honeysuckle:'floral', muguet:'floral',
+  frangipani:'floral', boronia:'floral', cassie:'floral', geranium:'floral',
+  linden:'floral', magnolia:'floral',
+  peony:'floral', freesia:'floral', carnation:'floral', lotus:'floral',
+  wisteria:'floral', heather:'floral',
+
+  // ── SOFT FLORAL (aldehydic / powdery; musk is self-ref) ──
+  aldehyde:'aldehydic', waxy_aldehyde:'aldehydic', waxy:'aldehydic', fatty:'aldehydic',
+  iris:'powdery', orris:'powdery', heliotrope:'powdery', velvety:'powdery',
+  powder:'powdery',
+
+  // ── FLORAL AMBER (heliotrope reused from powdery; dual-character) ──
+  immortelle:'floral_amber', orange_blossom:'floral_amber',
+  cinnamic_floral:'floral_amber',
+
+  // ── SOFT AMBER (gourmand) ──
   vanilla:'gourmand', vanillin:'gourmand', caramel:'gourmand',
   chocolate:'gourmand', cocoa:'gourmand', honey:'gourmand', coffee:'gourmand',
-  tonka:'gourmand', maple:'gourmand', hazelnut:'gourmand', almond:'gourmand',
-  praline:'gourmand', biscuit:'gourmand', milk:'gourmand', rum:'gourmand',
-  roasted:'gourmand', nutty:'gourmand', cereal:'gourmand', beeswax:'gourmand',
-  marshmallow:'gourmand', whisky:'gourmand', toffee:'gourmand', marzipan:'gourmand',
-  sugar:'gourmand', brown_sugar:'gourmand', molasses:'gourmand', caramelized:'gourmand',
-  custard:'gourmand', butterscotch:'gourmand', fudge:'gourmand', pudding:'gourmand',
-  bread:'gourmand', dough:'gourmand', cake:'gourmand', cookie:'gourmand',
-  jam:'gourmand', waffle:'gourmand', pastry:'gourmand', shortbread:'gourmand',
-  icing:'gourmand', meringue:'gourmand', cotton_candy:'gourmand', bubblegum:'gourmand',
-  candy:'gourmand', popcorn:'gourmand', peanut:'gourmand', pistachio:'gourmand',
-  pecan:'gourmand', macadamia:'gourmand', chestnut:'gourmand', cashew:'gourmand',
-  walnut:'gourmand', pine_nut:'gourmand', cognac:'gourmand', brandy:'gourmand',
-  wine:'gourmand', port:'gourmand', sake:'gourmand', ale:'gourmand',
-  beer:'gourmand', mead:'gourmand', sorbet:'gourmand', yogurt:'gourmand',
-  butter:'gourmand', condensed_milk:'gourmand', mascarpone:'gourmand',
-  tiramisu:'gourmand',
-  // ── lactonic / creamy gourmand ──
-  creamy:'gourmand', milky:'gourmand', buttery:'gourmand', cream:'gourmand',
-  // ── powdery ──
-  iris:'powdery', iris_flower:'powdery', orris:'powdery', heliotrope:'powdery', talc:'powdery', velvety:'powdery',
-  // ── woody ──
-  cedar:'woody', sandalwood:'woody', patchouli:'woody', vetiver:'woody',
-  guaiac:'woody', oud:'woody', agarwood:'woody', cypress:'woody',
-  fir:'woody', pine:'woody', birch:'woody', oakmoss:'woody', cashmere_wood:'woody',
-  rosewood:'woody', cedrol:'woody', coniferous:'woody', dry:'woody', earthy:'woody',
-  palo_santo:'woody', hinoki:'woody', teak:'woody', driftwood:'woody',
-  papyrus:'woody', fir_needle:'woody', treemoss:'woody', forest_floor:'woody',
-  atlas_cedar:'woody', virginia_cedar:'woody', himalayan_cedar:'woody',
-  mysore_sandalwood:'woody', haitian_vetiver:'woody', madagascar_vetiver:'woody',
-  swiss_pine:'woody', mountain_pine:'woody', yew:'woody', ebony:'woody',
-  mahogany:'woody', oak:'woody', beech:'woody', mesquite:'woody',
-  aged_wood:'woody', burnt_wood:'woody', damp:'woody', humus:'woody',
-  loam:'woody', peat:'woody', mushroom:'woody', truffle:'woody',
-  wet_stone:'woody', mineral_earth:'woody', leafmold:'woody',
-  // ── balsamic ──
+  tonka:'gourmand', almond:'gourmand', roasted:'gourmand', nutty:'gourmand',
+  beeswax:'gourmand',
+  creamy:'gourmand', milky:'gourmand', buttery:'gourmand',
+  praline:'gourmand', marshmallow:'gourmand', custard:'gourmand', maple:'gourmand',
+
+  // ── AMBER (amber / balsamic / resinous / spicy) ──
+  ambergris:'amber', ambrox:'amber', ambroxan:'amber', ambrette:'amber',
+  mineral:'amber',
   balsam:'balsamic', tolu_balsam:'balsamic', peru_balsam:'balsamic',
   benzoin:'balsamic', styrax:'balsamic',
-  // ── resinous ──
   frankincense:'resinous', myrrh:'resinous', elemi:'resinous',
   labdanum:'resinous', olibanum:'resinous', opoponax:'resinous',
-  copal:'resinous', galbanum_resin:'resinous',
-  // ── amber ──
-  ambergris:'amber', ambrox:'amber', ambroxan:'amber', ambrette:'amber', mineral:'amber',
-  // ── animalic ──
-  civet:'animalic', castoreum:'animalic', hyrax:'animalic', skin:'animalic',
-  costus:'animalic', sweaty:'animalic',
-  // ── musk ──
-  white_musk:'musk', muscone:'musk',
-  // ── smoky ──
-  tobacco:'smoky', incense:'smoky', tar:'smoky', burn:'smoky', burnt:'smoky',
-  smoke:'smoky', birch_tar:'smoky', cade:'smoky', phenolic:'smoky',
-  charcoal:'smoky',
-  pipe_tobacco:'smoky', tobacco_leaf:'smoky', shag:'smoky', pipe:'smoky',
-  bonfire:'smoky', campfire:'smoky', woodfire:'smoky', gunpowder:'smoky',
-  brimstone:'smoky', ash:'smoky', ember:'smoky',
-  // ── leather ──
-  leathery:'leather', suede:'leather',
-  aged_leather:'leather', saddle:'leather', bridle:'leather',
-  // ── powdery additions ──
-  powder:'powdery', baby_powder:'powdery', face_powder:'powdery', makeup:'powdery',
-  lipstick:'powdery', starch:'powdery', clay:'powdery', chalk:'powdery',
-  cotton:'powdery',
-  // ── animalic additions ──
-  choya:'animalic',
-  // ── musk additions ──
-  ambrettolide:'musk', galaxolide:'musk'
+  galbanum_resin:'resinous', incense:'resinous', resin:'resinous',
+  cinnamon:'spicy', clove:'spicy', pepper:'spicy', nutmeg:'spicy',
+  cardamom:'spicy', saffron:'spicy', ginger:'spicy', anise:'spicy',
+  coriander:'spicy', licorice:'spicy', cumin:'spicy', turmeric:'spicy',
+  fenugreek:'spicy',
+
+  // ── WOODY AMBER (animalic; musk / animalic / leather are self-refs) ──
+  civet:'animalic', castoreum:'animalic', skin:'animalic', sweaty:'animalic',
+  muscone:'animalic', indole:'animalic', skatole:'animalic',
+
+  // ── WOODS ──
+  cedar:'woody', sandalwood:'woody', patchouli:'woody', vetiver:'woody',
+  guaiac:'woody', oud:'woody', agarwood:'woody', cypress:'woody',
+  fir:'woody', pine:'woody', birch:'woody', cedrol:'woody',
+  coniferous:'woody', dry:'woody', hinoki:'woody', teak:'woody',
+  rosewood:'woody', pepperwood:'woody', cashmeran:'woody',
+
+  // ── MOSSY WOODS (parent 'woody' — mossy_woods sub-family has no legacy tokens) ──
+  oakmoss:'woody', earthy:'woody', moss:'woody', lichens:'woody',
+  forest:'woody', wet_earth:'woody', mushroom:'woody',
+
+  // ── DRY WOODS (smoky / leather) ──
+  tobacco:'smoky', hay:'smoky', tar:'smoky', birch_tar:'smoky',
+  cade:'smoky', phenolic:'smoky', smoke:'smoky', papyrus:'smoky',
+  leathery:'leather', suede:'leather'
 };
 
 // ── Nose-friendly keyword → facet regex map ──
@@ -1427,64 +1360,57 @@ const FACET_KEYWORDS = {
 // resinous hybrid tokens.
 const FACET_GROUPS = [
   { label:'Aromatic',     facets:[
-    'lavender','sage','thyme','rosemary','basil','tarragon','fennel','chamomile','bay_laurel','artemisia','celery','parsley','medicinal','antiseptic','clover',
-    'mint','minty','peppermint','spearmint','menthol',
-    'eucalyptus','oregano','marjoram','verbena','lemongrass',
-    'hyssop','hops','valerian','lemon_balm','melissa','yarrow','lovage','dill','cilantro','savory','rue','wormwood',
-    'camphor','camphor_oil','cooling','cool','crisp'] },
-  { label:'Citrus',       facets:['bergamot','lemon','orange','mandarin','grapefruit','lime','yuzu','tangerine','petitgrain','neroli','hesperidic',
-    'kumquat','pomelo','clementine','calamansi','sudachi','bitter_orange','blood_orange','meyer_lemon','key_lime','finger_lime','buddha_hand','citron','chinotto','bigarade'] },
+    'lavender','lavandine','sage','thyme','rosemary','basil','tarragon','fennel','chamomile','artemisia','celery','parsley',
+    'medicinal','clover',
+    'mint','minty','peppermint','spearmint',
+    'camphor','camphor_oil','cooling','cool','crisp',
+    'fougere','coumarin','geosmin'] },
+  { label:'Citrus',       facets:[
+    'bergamot','lemon','orange','mandarin','grapefruit','lime','yuzu','tangerine','petitgrain','neroli',
+    'verbena','lemon_verbena','litsea_cubeba','cedrat','citron','combava','kaffir_lime'] },
   { label:'Water',        facets:[
-    'marine','sea','seaweed','oceanic','calone','water','watery','dewy','iodine',
-    'petrichor','saline','aqueous','wet','mist','fog','brine','kelp','spring_water','rain','shower','chlorine','algae',
-    'ozone','airy',
-    'clean','soapy','metallic','laundry'] },
+    'marine','sea','seaweed','calone','watery','dewy','iodine',
+    'ozone','ozonic',
+    'clean','soapy','metallic','laundry',
+    'aquatic','petrichor'] },
   { label:'Green',        facets:[
-    'leaf','leafy','grass','stem','violet_leaf','tomato_leaf','cut_grass','galbanum','cucumber',
-    'fig_leaf','ivy','bamboo','sap','nettle',
-    'fern','bud','sprout','shoot','ferny','vine','lettuce','arugula','spinach',
-    'tea','green_tea','black_tea','mate','oolong','white_tea','chai'] },
-  { label:'Fruity',       facets:['apple','pear','peach','apricot','berry','plum','tropical','pineapple','coconut','melon','raspberry','strawberry','blackcurrant','cassis','cherry','fig','banana','grape','lychee','mango','passion_fruit','papaya','guava','quince','watermelon','kiwi','date','currant','rhubarb',
-    'nectarine','prune','persimmon','pomegranate','dragon_fruit','jackfruit','durian','starfruit','loquat','mulberry','elderberry','cranberry','blueberry','mangosteen','lingonberry','gooseberry','jujube','tamarind','acai','soursop','cherimoya'] },
-  { label:'Floral',       facets:['rose','jasmine','ylang','tuberose','narcissus','orchid','magnolia','hyacinth','lilac','gardenia','mimosa','champaca','violet','lily','osmanthus','honeysuckle','muguet','frangipani','boronia','cassie','geranium','linden',
-    'peony','carnation','cherry_blossom','peach_blossom','plumeria','tiare','wisteria','stephanotis',
-    'freesia','daffodil','jonquil','hellebore','sweet_pea','camellia','water_lily','lotus','poppy','elderflower','broom','acacia',
-    'tagetes','marigold','chrysanthemum','calendula','hibiscus','datura','cistus',
-    'bluebell','cowslip','primrose','daisy','sunflower','heather','dianthus','wallflower'] },
+    'leaf','leafy','grass','stem','violet_leaf','tomato_leaf','galbanum','cucumber',
+    'tea','green_tea','black_tea','mate',
+    'fern','nettle'] },
+  { label:'Fruity',       facets:[
+    'apple','pear','peach','apricot','berry','plum','tropical','pineapple','coconut','melon',
+    'raspberry','strawberry','blackcurrant','cassis','cherry','banana','grape',
+    'lychee','fig','mango','passion_fruit','pomegranate','rhubarb','quince'] },
+  { label:'Floral',       facets:[
+    'rose','jasmine','ylang','tuberose','narcissus','orchid','hyacinth','lilac','gardenia','mimosa','champaca','violet','lily','osmanthus','honeysuckle','muguet','frangipani','boronia','cassie','geranium','linden','magnolia',
+    'peony','freesia','carnation','lotus','wisteria','heather'] },
   { label:'Soft Floral',  facets:[
     'aldehyde','waxy_aldehyde','waxy','fatty',
-    'iris','iris_flower','orris','heliotrope','talc','velvety',
-    'powder','baby_powder','face_powder','makeup','lipstick','starch','clay','chalk','cotton'] },
-  { label:'Floral Amber', facets:['immortelle','orange_blossom','cinnamic_floral','ambery_floral'] },
+    'iris','orris','heliotrope','velvety',
+    'musk','powder'] },
+  { label:'Floral Amber', facets:[
+    'immortelle','heliotrope','orange_blossom','cinnamic_floral'] },
   { label:'Soft Amber',   facets:[
-    'vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee','tonka','maple','hazelnut','almond','praline','biscuit','milk','rum','roasted','nutty','cereal','beeswax',
-    'marshmallow','whisky','toffee','marzipan',
-    'sugar','brown_sugar','molasses','caramelized','custard','butterscotch','fudge','pudding','bread','dough','cake','cookie','jam','waffle','pastry','shortbread','icing','meringue','cotton_candy','bubblegum','candy','popcorn','peanut','pistachio','pecan','macadamia','chestnut','cashew','walnut','pine_nut',
-    'cognac','brandy','wine','port','sake','ale','beer','mead',
-    'sorbet','yogurt','butter','condensed_milk','mascarpone','tiramisu',
-    'creamy','milky','buttery','cream',
-    'white_musk','muscone','ambrettolide','galaxolide'] },
+    'vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee','tonka','almond','roasted','nutty','beeswax',
+    'creamy','milky','buttery',
+    'praline','marshmallow','custard','maple'] },
   { label:'Amber',        facets:[
     'ambergris','ambrox','ambroxan','ambrette','mineral',
     'balsam','tolu_balsam','peru_balsam','benzoin','styrax',
-    'frankincense','myrrh','elemi','labdanum','olibanum','opoponax','copal','galbanum_resin','dragon_blood','guggul','labdanum_resin',
-    'cinnamon','clove','pepper','nutmeg','cardamom','saffron','ginger','anise','star_anise','allspice','coriander','licorice',
-    'pink_pepper','white_pepper','sichuan_pepper','juniper','turmeric','cumin','davana',
-    'cassia','chili','paprika','sumac','mastic','amyris','sassafras','pepper_berry','juniperberry','rosehip',
-    'angelica','caraway','fenugreek'] },
+    'frankincense','myrrh','elemi','labdanum','olibanum','opoponax','galbanum_resin',
+    'cinnamon','clove','pepper','nutmeg','cardamom','saffron','ginger','anise','coriander','licorice',
+    'incense','resin','amber','cumin','turmeric','fenugreek'] },
   { label:'Woody Amber',  facets:[
-    'civet','castoreum','hyrax','choya','skin','costus','sweaty'] },
+    'civet','castoreum','skin','sweaty','muscone',
+    'animalic','musk','indole','skatole','leather'] },
   { label:'Woods',        facets:[
-    'cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','fir_needle','pine','birch','cashmere_wood','rosewood','cedrol','coniferous','dry',
-    'palo_santo','hinoki','teak','driftwood','papyrus',
-    'atlas_cedar','virginia_cedar','himalayan_cedar','mysore_sandalwood','haitian_vetiver','madagascar_vetiver','swiss_pine','mountain_pine','yew','ebony','mahogany','oak','beech','mesquite','aged_wood','burnt_wood'] },
-  { label:'Mossy Woods',  facets:['oakmoss','earthy','treemoss','forest_floor',
-    'damp','humus','loam','peat','mushroom','truffle','wet_stone','mineral_earth','leafmold'] },
+    'cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','pine','birch',
+    'cedrol','coniferous','dry','hinoki','teak','rosewood','pepperwood','cashmeran'] },
+  { label:'Mossy Woods',  facets:[
+    'oakmoss','earthy','moss','lichens','forest','wet_earth','mushroom'] },
   { label:'Dry Woods',    facets:[
-    'tobacco','hay',
-    'incense','tar','burn','burnt','smoke','birch_tar','cade','phenolic','charcoal',
-    'pipe_tobacco','tobacco_leaf','shag','pipe','bonfire','campfire','woodfire','gunpowder','brimstone','ash','ember',
-    'leathery','suede','aged_leather','saddle','bridle'] },
+    'tobacco','hay','tar','birch_tar','cade','phenolic',
+    'leathery','suede','smoke','papyrus'] },
 ];
 
 // Synonym → canonical-token map. The tokenizer hits raw text and many
