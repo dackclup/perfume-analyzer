@@ -684,6 +684,32 @@ html { scroll-behavior:smooth; }
   .landing__hero { min-height: 85vh; }
   .landing__cta { width: auto; }
 }
+.landing__ethos {
+  max-width: 36ch;
+  margin: var(--space-6) auto;
+  padding-block: var(--space-5);
+  border-block-start: 1px solid var(--hairline);
+  border-block-end: 1px solid var(--hairline);
+  text-align: center;
+}
+.landing__ethos-label {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--bronze-600);
+  margin-block-end: var(--space-3);
+}
+.landing__ethos-body {
+  font-family: var(--font-serif);
+  font-size: clamp(1.15rem, 3.6vw, 1.5rem);
+  line-height: 1.55;
+  color: var(--ink-900);
+  margin: 0;
+}
+@media (min-width: 1024px) {
+  .landing__ethos { max-width: 58ch; }
+}
 </style>
 </head>
 <body>
@@ -696,6 +722,10 @@ html { scroll-behavior:smooth; }
     <p class="landing__caption" data-i18n="archiveCaption">An archive of perfumery raw materials</p>
     <a class="landing__cta" href="#main-content" data-i18n="ctaPrimary">Enter the archive &darr;</a>
   </div>
+  <section class="landing__ethos" aria-label="Ethos">
+    <span class="landing__ethos-label" data-i18n="ethosLabel">Ethos</span>
+    <p class="landing__ethos-body" data-i18n="ethos">Every fragrance begins as a quiet conversation between molecules. This archive gathers that conversation &mdash; sourced, studied, indexed &mdash; so the craft of perfumery is never more than a search away.</p>
+  </section>
 </section>
 <div id="top"></div>
 <!-- SVG icon sprite (inline, no CDN, works over file://). Icons: Lucide (MIT). -->
