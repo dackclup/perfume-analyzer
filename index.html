@@ -755,6 +755,49 @@ html { scroll-behavior:smooth; }
   .landing__pillars { grid-template-columns: repeat(3, 1fr); }
   .landing__pillar:nth-child(n+2) { padding-inline-start: var(--space-6); }
 }
+.landing__featured {
+  max-width: 56rem;
+  margin: var(--space-7) auto var(--space-6);
+  text-align: center;
+}
+.landing__featured-label {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--bronze-600);
+  margin-block-end: var(--space-4);
+}
+.landing__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.landing__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.6rem 1.15rem;
+  background: var(--ivory-100);
+  color: var(--ink-900);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.landing__chip:hover,
+.landing__chip:focus-visible {
+  border-color: var(--bronze-600);
+  color: var(--bronze-600);
+}
 </style>
 </head>
 <body>
@@ -788,6 +831,17 @@ html { scroll-behavior:smooth; }
       <dd class="landing__pillar-desc" data-i18n="pillar3Body">A precise matching pipeline &mdash; CAS, canonical name, synonym, trade &mdash; so the ingredient you mean is the one you find.</dd>
     </div>
   </dl>
+  <section class="landing__featured" aria-label="Featured notes">
+    <span class="landing__featured-label" data-i18n="featuredLabel">Begin with a note</span>
+    <ul class="landing__chips" id="landingChips">
+      <li><button type="button" class="landing__chip" data-search="Hedione">Hedione</button></li>
+      <li><button type="button" class="landing__chip" data-search="Iso E Super">Iso E Super</button></li>
+      <li><button type="button" class="landing__chip" data-search="Ambroxan">Ambroxan</button></li>
+      <li><button type="button" class="landing__chip" data-search="Linalool">Linalool</button></li>
+      <li><button type="button" class="landing__chip" data-search="Calone">Calone</button></li>
+      <li><button type="button" class="landing__chip" data-search="Cashmeran">Cashmeran</button></li>
+    </ul>
+  </section>
 </section>
 <div id="top"></div>
 <!-- SVG icon sprite (inline, no CDN, works over file://). Icons: Lucide (MIT). -->
@@ -5447,6 +5501,23 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   localStorage.setItem('perfume_lang', _lang);
   applyLangIndex();
 });
+
+// Landing featured-note chips: reuse the existing search pipeline.
+(function initLandingChips() {
+  const row = document.getElementById('landingChips');
+  if (!row) return;
+  row.addEventListener('click', (e) => {
+    const chip = e.target.closest('.landing__chip');
+    if (!chip) return;
+    const term = chip.getAttribute('data-search');
+    if (!term) return;
+    const input = document.getElementById('searchInput');
+    if (input) { input.value = term; input.dispatchEvent(new Event('input')); }
+    if (typeof doSearch === 'function') doSearch(term);
+    const main = document.getElementById('main-content');
+    if (main) main.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+})();
 
 // ===== Theme Switch (dark/light) =====
 (function initTheme() {
