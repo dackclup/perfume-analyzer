@@ -2480,22 +2480,39 @@ _buildPillFilter('source');
     group.appendChild(chips);
     container.appendChild(group);
   };
-  // Explicit groups from FACET_GROUPS
-  for (const g of FACET_GROUPS) _renderGroup(g.label, g.facets);
-  // Catch-all: any facet with data but not in any group → parent-family bucket
-  const orphansByFamily = {};
+  // Collect facets not in any explicit FACET_GROUPS, bucketed by the
+  // Edwards sub-family their parent primary-family maps to. This keeps
+  // fallback chips grouped under the same sub-family label the user sees
+  // elsewhere in the drawer instead of a legacy label that doesn't match
+  // any existing group header.
+  const orphansBySubFamily = {};
+  const groupedFacetSet = new Set();
+  for (const g of FACET_GROUPS) for (const f of g.facets) groupedFacetSet.add(f);
   for (const [facet, family] of Object.entries(FACET_TAGS)) {
     if (facet === family) continue;
-    if (rendered.has(facet)) continue;
+    if (groupedFacetSet.has(facet)) continue;
     if (!facetCounts[facet]) continue;
-    if (!orphansByFamily[family]) orphansByFamily[family] = [];
-    orphansByFamily[family].push(facet);
+    const sub = LEGACY_TO_SUB_FAMILY[family] || family;
+    if (!orphansBySubFamily[sub]) orphansBySubFamily[sub] = [];
+    orphansBySubFamily[sub].push(facet);
   }
-  for (const family of PRIMARY_FAMILIES) {
-    const ofs = orphansByFamily[family];
-    if (!ofs || !ofs.length) continue;
+  // Render explicit groups in canonical order, merging in any orphan
+  // facets whose sub-family matches the group's label.
+  for (const g of FACET_GROUPS) {
+    const subKey = Object.keys(SUB_FAMILY_LABELS).find(k => SUB_FAMILY_LABELS[k] === g.label);
+    const extra = subKey && orphansBySubFamily[subKey] ? orphansBySubFamily[subKey] : [];
+    if (extra.length) { delete orphansBySubFamily[subKey]; }
+    const merged = extra.length ? [...g.facets, ...[...extra].sort()] : g.facets;
+    _renderGroup(g.label, merged);
+  }
+  // Any remaining orphans whose sub-family has no explicit group — render
+  // with the Edwards sub-family label (falls back to PRIMARY_FAMILY_LABELS
+  // only if the parent never mapped to a sub-family at all).
+  for (const [sub, ofs] of Object.entries(orphansBySubFamily)) {
+    if (!ofs.length) continue;
     ofs.sort();
-    _renderGroup(PRIMARY_FAMILY_LABELS[family] || family, ofs);
+    const label = SUB_FAMILY_LABELS[sub] || PRIMARY_FAMILY_LABELS[sub] || sub;
+    _renderGroup(label, ofs);
   }
 }
 
