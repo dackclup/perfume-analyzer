@@ -291,7 +291,7 @@
       '  note AS Note,',
       '  source AS Source',
       `FROM #${tag}`,
-      'WHERE type != "moc" AND type != "formulation"',
+      'WHERE type != "moc" AND type != "formulation" AND type != "hub"',
       'SORT file.name ASC',
       '```',
       '',
@@ -440,11 +440,170 @@
       '  tenacity AS Tenacity,',
       '  source AS Source',
       `FROM #${tag}`,
-      'WHERE type != "moc" AND type != "formulation"',
+      'WHERE type != "moc" AND type != "formulation" AND type != "hub"',
       'SORT file.name ASC',
       '```',
       '',
       '> ถ้า Dataview plugin ยังไม่ได้ติดตั้ง — เปิด **Backlinks panel** ทางขวาจะเห็นรายการวัตถุดิบที่ลิงก์มาหน้านี้ครบเหมือนกัน',
+      '',
+    ].join('\n');
+  }
+
+  // ---- Hub / Index pages ------------------------------------------------
+  // Hub pages give each PARA/JD folder a "home" note with a Dataview
+  // overview. They use the same basename as the containing folder so
+  // Obsidian's "folder as note" convention surfaces them automatically.
+
+  // Per-axis hub listing every MOC value under the axis, with material
+  // counts via backlinks.
+  function axisHubPage(axis) {
+    const meta = AXIS_META[axis] || { title: axis, emoji: '', desc: '' };
+    const folder = JD_MOC[axis];
+    return [
+      '---',
+      'type: hub',
+      'para: resources',
+      'jd: ' + yamlScalar(PARA.resources + '/' + MOC_ROOT + '/' + folder),
+      'title: ' + yamlScalar(folder),
+      'axis: ' + yamlScalar(axis),
+      'tags: [hub/moc, hub/' + axis + ']',
+      '---',
+      '',
+      `# ${meta.emoji} ${folder}`,
+      '',
+      meta.desc,
+      '',
+      '## 📇 All values',
+      '',
+      '```dataview',
+      'TABLE WITHOUT ID',
+      '  file.link AS Value,',
+      '  length(file.inlinks) AS "Materials"',
+      'FROM #moc/' + axis,
+      'WHERE type = "moc"',
+      'SORT file.name ASC',
+      '```',
+      '',
+    ].join('\n');
+  }
+
+  // Note Group hub — shares the axisHubPage shape but keys off the
+  // `moc/notegroup` tag rather than the axis slug.
+  function noteGroupHubPage() {
+    const folder = JD_MOC.notegroup;
+    return [
+      '---',
+      'type: hub',
+      'para: resources',
+      'jd: ' + yamlScalar(PARA.resources + '/' + MOC_ROOT + '/' + folder),
+      'title: ' + yamlScalar(folder),
+      'tags: [hub/moc, hub/notegroup]',
+      '---',
+      '',
+      `# 🎯 ${folder}`,
+      '',
+      'Edwards Fragrance Wheel — four core groups plus three transition zones.',
+      '',
+      '## 📇 Groups',
+      '',
+      '```dataview',
+      'TABLE WITHOUT ID',
+      '  file.link AS "Note Group",',
+      '  length(file.inlinks) AS "Materials"',
+      'FROM #moc/notegroup',
+      'WHERE type = "moc"',
+      'SORT file.name ASC',
+      '```',
+      '',
+    ].join('\n');
+  }
+
+  // MOC root hub — lists every axis with its material count.
+  function mocRootHubPage() {
+    const rows = Object.keys(JD_MOC).map(axis => {
+      const folder = JD_MOC[axis];
+      const meta = AXIS_META[axis];
+      const label = meta ? meta.title : 'Note Groups';
+      return `| [[${folder}]] | ${label} |`;
+    });
+    return [
+      '---',
+      'type: hub',
+      'para: resources',
+      'jd: ' + yamlScalar(PARA.resources + '/' + MOC_ROOT),
+      'title: ' + yamlScalar(MOC_ROOT),
+      'tags: [hub/moc]',
+      '---',
+      '',
+      '# 🗺️ ' + MOC_ROOT,
+      '',
+      'Map-of-Content hubs — ten classification axes plus the top-tier Note Groups.',
+      '',
+      '| Folder | Axis |',
+      '|---|---|',
+      ...rows,
+      '',
+    ].join('\n');
+  }
+
+  // Materials hub — source / material-type breakdown with counts.
+  function materialsHubPage() {
+    return [
+      '---',
+      'type: hub',
+      'para: resources',
+      'jd: ' + yamlScalar(PARA.resources + '/' + JD_MATERIALS_ROOT),
+      'title: ' + yamlScalar(JD_MATERIALS_ROOT),
+      'tags: [hub/materials]',
+      '---',
+      '',
+      '# 🧪 ' + JD_MATERIALS_ROOT,
+      '',
+      'Full material library — routed by `source` then `material_type`.',
+      '',
+      '## By source',
+      '',
+      '```dataview',
+      'TABLE WITHOUT ID source AS Source, length(rows) AS Count',
+      'FROM "' + PARA.resources + '/' + JD_MATERIALS_ROOT + '"',
+      'WHERE type != "hub"',
+      'GROUP BY source',
+      'SORT source ASC',
+      '```',
+      '',
+      '## By material type',
+      '',
+      '```dataview',
+      'TABLE WITHOUT ID type AS "Type", length(rows) AS Count',
+      'FROM "' + PARA.resources + '/' + JD_MATERIALS_ROOT + '"',
+      'WHERE type != "hub"',
+      'GROUP BY type',
+      'SORT type ASC',
+      '```',
+      '',
+    ].join('\n');
+  }
+
+  // Areas hub — one-line index of every monitoring dashboard.
+  function areasHubPage() {
+    const lines = AREAS_PAGES.map(p => {
+      const base = p.file.replace(/\.md$/, '');
+      return `- [[${base}]] — ${p.desc}`;
+    });
+    return [
+      '---',
+      'type: hub',
+      'para: areas',
+      'jd: ' + yamlScalar(PARA.areas + '/' + AREAS_FOLDER),
+      'title: ' + yamlScalar(AREAS_FOLDER),
+      'tags: [hub/area]',
+      '---',
+      '',
+      '# ⚠️ ' + AREAS_FOLDER,
+      '',
+      'Ongoing safety dashboards — auto-populated from material tags.',
+      '',
+      ...lines,
       '',
     ].join('\n');
   }
@@ -482,7 +641,11 @@
   }
 
   // Dataview-backed Area monitoring page for one regulatory tag.
+  // Cross-links back to the matching MOC regulatory page so the graph
+  // view shows Area → MOC → Material as a three-hop trail.
   function areaMonitoringPage(page) {
+    const regValue = page.tag.split('/')[1] || '';
+    const mocRegPath = mocPath('regulatory', regValue);
     return [
       '---',
       'type: area',
@@ -490,12 +653,15 @@
       'jd: ' + yamlScalar(PARA.areas + '/' + AREAS_FOLDER),
       'title: ' + yamlScalar(page.title),
       'monitors_tag: ' + yamlScalar('#' + page.tag),
+      'see_also: ' + yamlScalar(mocRegPath),
       'tags: [area/safety, area/compliance]',
       '---',
       '',
       '# ' + page.title,
       '',
       page.desc,
+      '',
+      `**See also:** [[${mocRegPath}|${mocDisplay(regValue)} (MOC)]]`,
       '',
       '## 🧪 Materials currently flagged',
       '',
@@ -507,7 +673,7 @@
       '  odor_strength AS Strength,',
       '  tenacity AS Tenacity',
       'FROM #' + page.tag,
-      'WHERE type != "moc" AND type != "formulation" AND type != "area"',
+      'WHERE type != "moc" AND type != "formulation" AND type != "area" AND type != "hub"',
       'SORT file.name ASC',
       '```',
       '',
@@ -550,6 +716,8 @@
     const perf        = r.perfumery || {};
     const safety      = r.safety || {};
     const blendsWith  = Array.isArray(perf.blends_with) ? perf.blends_with : [];
+    const industryTags = (r.classification && Array.isArray(r.classification.industry_tags))
+      ? r.classification.industry_tags : [];
     const a           = extractAxes(r);
     const noteGroups  = detectNoteGroups(a.primaryFamilies, a.secondaryFamilies);
     const tags        = buildTags(a).concat(noteGroups.map(g => 'notegroup/' + tagSlug(g)));
@@ -579,7 +747,17 @@
       'para: resources',
       'jd: ' + yamlScalar(folder),
     );
-    if (blendsWith.length) fm.push('related: ' + yamlArray(blendsWith));
+    if (industryTags.length) fm.push('industry_tags: ' + yamlArray(industryTags));
+    if (blendsWith.length) {
+      fm.push('related: ' + yamlArray(blendsWith));
+      fm.push('blends_count: ' + yamlScalar(blendsWith.length));
+    }
+    // Short odor description for quick scanning in Dataview tables —
+    // trimmed to the first sentence to keep table cells compact.
+    if (perf.odor_description) {
+      const short = String(perf.odor_description).split(/[.!?]/)[0].trim().slice(0, 160);
+      if (short) fm.push('odor_description: ' + yamlScalar(short));
+    }
     if (perf.odor_type)      fm.push('odor_type: '     + yamlScalar(perf.odor_type));
     if (perf.odor_strength)  fm.push('odor_strength: ' + yamlScalar(perf.odor_strength));
     if (perf.tenacity)       fm.push('tenacity: '      + yamlScalar(perf.tenacity));
@@ -911,10 +1089,20 @@
       }
     }
 
+    // Materials hub — overview of source/type breakdown at the folder root.
+    if (wants('materials')) {
+      root.folder(PARA.resources).folder(JD_MATERIALS_ROOT)
+        .file(JD_MATERIALS_ROOT + '.md', materialsHubPage());
+    }
+
     const mocRoot = root.folder(PARA.resources).folder(MOC_ROOT);
+    // Track which axis folders ended up with content so we only emit
+    // hubs for axes the user actually requested.
+    const axesEmitted = new Set();
     for (const [, { axis, value }] of mocsToEmit) {
       if (!wants(axis)) continue;
       mocRoot.folder(JD_MOC[axis]).file(mocFileName(value) + '.md', mocPage(axis, value));
+      axesEmitted.add(axis);
     }
     if (noteGroupsToEmit.size && wants('notegroups')) {
       const ngFolder = mocRoot.folder(JD_MOC.notegroup);
@@ -922,10 +1110,24 @@
         if (!noteGroupsToEmit.has(group)) continue;
         ngFolder.file(safeFileName(group) + '.md', noteGroupPage(group));
       }
+      axesEmitted.add('notegroup');
+    }
+    // Per-axis hub pages — emit one for each axis that got at least
+    // one MOC value. Name matches the folder so Obsidian's
+    // "folder-as-note" convention picks it up.
+    for (const axis of axesEmitted) {
+      const folder = JD_MOC[axis];
+      const content = axis === 'notegroup' ? noteGroupHubPage() : axisHubPage(axis);
+      mocRoot.folder(folder).file(folder + '.md', content);
+    }
+    // MOC root hub — emit when any axis was requested.
+    if (axesEmitted.size) {
+      mocRoot.file(MOC_ROOT + '.md', mocRootHubPage());
     }
 
     if (wants('areas')) {
       const areasFolder = root.folder(PARA.areas).folder(AREAS_FOLDER);
+      areasFolder.file(AREAS_FOLDER + '.md', areasHubPage());
       for (const page of AREAS_PAGES) {
         areasFolder.file(page.file, areaMonitoringPage(page));
       }
