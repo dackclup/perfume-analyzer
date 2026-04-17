@@ -297,10 +297,10 @@
       '',
       '> ถ้า Dataview plugin ยังไม่ได้ติดตั้ง — เปิด **Backlinks panel** ทางขวาจะเห็นรายการวัตถุดิบที่ลิงก์มาหน้านี้ครบเหมือนกัน',
       '',
+      `↑ [[${JD_MOC.notegroup}]]`,
+      '',
     ].join('\n');
   }
-
-  // ---- MOC (Map of Content) helpers ------------------------------------
 
   // MOC axis folders under `3_Resources/60-69 MOC/`. The numeric
   // prefixes follow the Johnny.Decimal convention: the first digit
@@ -447,6 +447,8 @@
       '',
       '> ถ้า Dataview plugin ยังไม่ได้ติดตั้ง — เปิด **Backlinks panel** ทางขวาจะเห็นรายการวัตถุดิบที่ลิงก์มาหน้านี้ครบเหมือนกัน',
       '',
+      `↑ [[${JD_MOC[axis]}]]`,
+      '',
     ].join('\n');
   }
 
@@ -460,6 +462,10 @@
   function axisHubPage(axis) {
     const meta = AXIS_META[axis] || { title: axis, emoji: '', desc: '' };
     const folder = JD_MOC[axis];
+    const siblings = Object.keys(JD_MOC)
+      .filter(a => a !== axis)
+      .map(a => `[[${JD_MOC[a]}]]`)
+      .join(' · ');
     return [
       '---',
       'type: hub',
@@ -484,6 +490,12 @@
       'WHERE type = "moc"',
       'SORT file.name ASC',
       '```',
+      '',
+      '## 🔗 Other axes',
+      '',
+      siblings,
+      '',
+      `↑ [[${JD_MATERIALS_ROOT}]]`,
       '',
     ].join('\n');
   }
@@ -522,6 +534,10 @@
       'GROUP BY type',
       'SORT type ASC',
       '```',
+      '',
+      '## 🔗 Browse by classification',
+      '',
+      Object.values(JD_MOC).map(f => `[[${f}]]`).join(' · '),
       '',
     ].join('\n');
   }
