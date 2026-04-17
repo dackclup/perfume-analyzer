@@ -816,6 +816,31 @@ html { scroll-behavior:smooth; }
   color: var(--ink-900);
   border-color: var(--bronze-600);
 }
+/* Light glass — subtle, editorial. Gated on support; disabled for print
+   and reduced-motion users below. Applied to the hero frame and the
+   featured-chip row only — intentionally restrained. */
+@supports (backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px)) {
+  .landing__hero {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-edge);
+    border-radius: 1.5rem;
+  }
+  .landing__chips {
+    padding: var(--space-4) var(--space-3);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-edge);
+    border-radius: 1.25rem;
+  }
+}
+.landing a:focus-visible,
+.landing button:focus-visible {
+  outline: 2px solid var(--bronze-600);
+  outline-offset: 3px;
+}
 </style>
 </head>
 <body>
