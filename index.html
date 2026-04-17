@@ -1918,7 +1918,6 @@ const FILTER_INDEX = {};
 // gaps are visible in the dev console without user-facing UI noise.
 {
   const _missingP = [], _missingF = [], _missingBoth = [];
-  let _okCount = 0;
   for (const [cas, fc] of FILTER_CACHE) {
     const isPerfCandidate = fc.hasRealOdor || MIXTURES.has(cas);
     if (!isPerfCandidate) continue;
@@ -1928,7 +1927,6 @@ const FILTER_INDEX = {};
     if (noP && noF) _missingBoth.push(name);
     else if (noP) _missingP.push(name);
     else if (noF) _missingF.push(name);
-    else _okCount++;
   }
   if (_missingBoth.length || _missingP.length || _missingF.length) {
     console.groupCollapsed('[taxonomy audit] coverage gaps (' +
@@ -1936,8 +1934,6 @@ const FILTER_INDEX = {};
     if (_missingBoth.length) console.warn('Missing BOTH primary+facets:', _missingBoth);
     if (_missingP.length)    console.warn('Missing primary only:', _missingP);
     if (_missingF.length)    console.warn('Missing facets only:', _missingF);
-    console.log('Full coverage:', _okCount, '| missing-primary:', _missingP.length,
-      '| missing-facets:', _missingF.length, '| missing-both:', _missingBoth.length);
     console.groupEnd();
   }
 }

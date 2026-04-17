@@ -172,7 +172,7 @@
         aroma_chemical:  '41.01 Aroma Chemicals',
         captive:         '41.02 Captives',
         isolate:         '41.03 Isolates',
-        single_molecule: '41.01 Aroma Chemicals',
+        single_molecule: '41.03 Isolates',
       },
     },
     semi_synthetic: { folder: '42 Semi-synthetics', fallback: '42.00 Semi-synthetics', sub: {} },
