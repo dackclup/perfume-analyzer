@@ -3505,9 +3505,33 @@ document.getElementById('carrierSelect').addEventListener('change', () => render
 // ===== Save/Load Formulations =====
 const SAVE_KEY = 'perfume_saved_formulations';
 
+let _warnedCorruptStorage = false;
+function loadSaved() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    if (!_warnedCorruptStorage) {
+      _warnedCorruptStorage = true;
+      console.warn('Saved formulations store is corrupted; starting empty.', e);
+    }
+    return [];
+  }
+}
+function saveAll(list) {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(list));
+    return true;
+  } catch (e) {
+    alert('Could not save: browser storage is full or disabled. Delete old formulas and try again.');
+    console.warn('localStorage.setItem failed:', e);
+    return false;
+  }
+}
+
 function populateSavedList() {
   const sel = document.getElementById('savedFormulas');
-  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  const saved = loadSaved();
   sel.innerHTML = '<option value="">-- Load Saved (' + saved.length + ') --</option>';
   saved.forEach((s, i) => {
     // Support both old flat format and new versioned format
@@ -3538,7 +3562,7 @@ function makeSnapshot(mats) {
 document.getElementById('btnSave').addEventListener('click', () => {
   const mats = formulation.materials;
   if (!mats.length) { alert('Add materials first.'); return; }
-  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  const saved = loadSaved();
   const sel = document.getElementById('savedFormulas').value;
 
   // If a formula is selected, save as new version
@@ -3550,7 +3574,7 @@ document.getElementById('btnSave').addEventListener('click', () => {
       if (note === null) return;
       formula.versions.push({ date: new Date().toISOString(), note, materials: makeSnapshot(mats), carriers: carrierMaterials.map(c => ({ cas: c.cas, name: c.name, pct: c.pct })), settings: getCurrentSettings() });
       formula.currentVersion = formula.versions.length - 1;
-      localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
+      if (!saveAll(saved)) return;
       populateSavedList();
       alert('Saved version ' + formula.versions.length + ' of "' + formula.name + '"');
       return;
@@ -3565,7 +3589,7 @@ document.getElementById('btnSave').addEventListener('click', () => {
     versions: [{ date: new Date().toISOString(), note: 'v1', materials: makeSnapshot(mats), carriers: carrierMaterials.map(c => ({ cas: c.cas, name: c.name, pct: c.pct })), settings: getCurrentSettings() }],
     currentVersion: 0,
   });
-  localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
+  if (!saveAll(saved)) return;
   populateSavedList();
   alert('Saved "' + name + '"!');
 });
@@ -3573,7 +3597,7 @@ document.getElementById('btnSave').addEventListener('click', () => {
 document.getElementById('savedFormulas').addEventListener('change', () => {
   const idx = document.getElementById('savedFormulas').value;
   if (idx === '') return;
-  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  const saved = loadSaved();
   const formula = saved[parseInt(idx)];
   if (!formula) return;
 
@@ -3615,12 +3639,12 @@ document.getElementById('savedFormulas').addEventListener('change', () => {
 document.getElementById('btnDelete').addEventListener('click', () => {
   const idx = document.getElementById('savedFormulas').value;
   if (idx === '') { alert('Select a saved formula to delete.'); return; }
-  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  const saved = loadSaved();
   const formula = saved[parseInt(idx)];
   if (!formula) return;
   if (!confirm('Delete "' + (formula.name || 'formula') + '"?')) return;
   saved.splice(parseInt(idx), 1);
-  localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
+  if (!saveAll(saved)) return;
   populateSavedList();
   formulation.materials = [];
   carrierMaterials.length = 0; lockedCarriers.clear(); lockedMaterials.clear();
@@ -3801,7 +3825,6 @@ function performUndo() {
   renderCarrierList();
   renderActiveTab();
   formulationHistory._skipPush = false;
-  updateUndoRedoButtons();
 }
 
 function performRedo() {
@@ -3813,11 +3836,6 @@ function performRedo() {
   renderCarrierList();
   renderActiveTab();
   formulationHistory._skipPush = false;
-  updateUndoRedoButtons();
-}
-
-function updateUndoRedoButtons() {
-  // Undo/Redo via Ctrl+Z / Ctrl+Shift+Z only (no visible buttons)
 }
 
 // Keyboard shortcuts: Ctrl+Z = undo, Ctrl+Shift+Z = redo
@@ -3830,13 +3848,6 @@ document.addEventListener('keydown', (e) => {
     performRedo();
   }
 });
-
-// Update buttons after every formulation change
-const _origOnChange = formulation.onChange.bind(formulation);
-formulation.onChange = function() {
-  _origOnChange();
-  updateUndoRedoButtons();
-};
 
 // ===== A3: Creative Brief Modal =====
 const briefModal = document.getElementById('briefModal');
@@ -4301,7 +4312,7 @@ function filterByWheelSegment(segId) {
 // ===== B4: Compare Modal =====
 const compareModal = document.getElementById('compareModal');
 document.getElementById('btnCompare').addEventListener('click', () => {
-  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  const saved = loadSaved();
   const selA = document.getElementById('compareA');
   const selB = document.getElementById('compareB');
   selA.innerHTML = '';
@@ -4318,7 +4329,7 @@ document.getElementById('compareClose').addEventListener('click', () => compareM
 compareModal.addEventListener('click', e => { if (e.target === compareModal) compareModal.classList.remove('open'); });
 
 document.getElementById('compareRun').addEventListener('click', () => {
-  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  const saved = loadSaved();
   const idxA = document.getElementById('compareA').value;
   const idxB = document.getElementById('compareB').value;
 
