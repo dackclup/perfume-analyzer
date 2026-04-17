@@ -336,6 +336,7 @@
   // menu); `singular` is the per-value subtitle ("Floral (Primary
   // Family)").
   const AXIS_META = {
+    notegroup:  { title: 'Note Groups',        singular: 'Note Group',       emoji: '🎯', desc: 'Edwards Fragrance Wheel — four core groups plus three transition zones.' },
     family:     { title: 'Primary Families',   singular: 'Primary Family',   emoji: '👃', desc: 'Primary olfactory family — the dominant scent family a material belongs to.' },
     subfamily:  { title: 'Sub-families',       singular: 'Sub-family',       emoji: '🌿', desc: 'Secondary olfactory families — supporting scent families a material exhibits alongside its primary.' },
     facet:      { title: 'Facets',             singular: 'Facet',            emoji: '🎨', desc: 'Fine-grained odor descriptors — the specific notes and nuances reviewers pick out.' },
@@ -487,65 +488,6 @@
     ].join('\n');
   }
 
-  // Note Group hub — shares the axisHubPage shape but keys off the
-  // `moc/notegroup` tag rather than the axis slug.
-  function noteGroupHubPage() {
-    const folder = JD_MOC.notegroup;
-    return [
-      '---',
-      'type: hub',
-      'para: resources',
-      'jd: ' + yamlScalar(PARA.resources + '/' + MOC_ROOT + '/' + folder),
-      'title: ' + yamlScalar(folder),
-      'tags: [hub/moc, hub/notegroup]',
-      '---',
-      '',
-      `# 🎯 ${folder}`,
-      '',
-      'Edwards Fragrance Wheel — four core groups plus three transition zones.',
-      '',
-      '## 📇 Groups',
-      '',
-      '```dataview',
-      'TABLE WITHOUT ID',
-      '  file.link AS "Note Group",',
-      '  length(file.inlinks) AS "Materials"',
-      'FROM #moc/notegroup',
-      'WHERE type = "moc"',
-      'SORT file.name ASC',
-      '```',
-      '',
-    ].join('\n');
-  }
-
-  // MOC root hub — lists every axis with its material count.
-  function mocRootHubPage() {
-    const rows = Object.keys(JD_MOC).map(axis => {
-      const folder = JD_MOC[axis];
-      const meta = AXIS_META[axis];
-      const label = meta ? meta.title : 'Note Groups';
-      return `| [[${folder}]] | ${label} |`;
-    });
-    return [
-      '---',
-      'type: hub',
-      'para: resources',
-      'jd: ' + yamlScalar(PARA.resources + '/' + MOC_ROOT),
-      'title: ' + yamlScalar(MOC_ROOT),
-      'tags: [hub/moc]',
-      '---',
-      '',
-      '# 🗺️ ' + MOC_ROOT,
-      '',
-      'Map-of-Content hubs — ten classification axes plus the top-tier Note Groups.',
-      '',
-      '| Folder | Axis |',
-      '|---|---|',
-      ...rows,
-      '',
-    ].join('\n');
-  }
-
   // Materials hub — source / material-type breakdown with counts.
   function materialsHubPage() {
     return [
@@ -580,30 +522,6 @@
       'GROUP BY type',
       'SORT type ASC',
       '```',
-      '',
-    ].join('\n');
-  }
-
-  // Areas hub — one-line index of every monitoring dashboard.
-  function areasHubPage() {
-    const lines = AREAS_PAGES.map(p => {
-      const base = p.file.replace(/\.md$/, '');
-      return `- [[${base}]] — ${p.desc}`;
-    });
-    return [
-      '---',
-      'type: hub',
-      'para: areas',
-      'jd: ' + yamlScalar(PARA.areas + '/' + AREAS_FOLDER),
-      'title: ' + yamlScalar(AREAS_FOLDER),
-      'tags: [hub/area]',
-      '---',
-      '',
-      '# ⚠️ ' + AREAS_FOLDER,
-      '',
-      'Ongoing safety dashboards — auto-populated from material tags.',
-      '',
-      ...lines,
       '',
     ].join('\n');
   }
@@ -1148,7 +1066,7 @@
 
     const mocRoot = root.folder(PARA.resources).folder(MOC_ROOT);
     // Track which axis folders ended up with content so we only emit
-    // hubs for axes the user actually requested.
+    // per-axis hubs for axes the user actually requested.
     const axesEmitted = new Set();
     for (const [, { axis, value }] of mocsToEmit) {
       if (!wants(axis)) continue;
@@ -1163,22 +1081,15 @@
       }
       axesEmitted.add('notegroup');
     }
-    // Per-axis hub pages — emit one for each axis that got at least
-    // one MOC value. Name matches the folder so Obsidian's
-    // "folder-as-note" convention picks it up.
+    // Folder-as-note hub for each emitted axis — Obsidian surfaces
+    // these automatically when the user clicks the folder.
     for (const axis of axesEmitted) {
       const folder = JD_MOC[axis];
-      const content = axis === 'notegroup' ? noteGroupHubPage() : axisHubPage(axis);
-      mocRoot.folder(folder).file(folder + '.md', content);
-    }
-    // MOC root hub — emit when any axis was requested.
-    if (axesEmitted.size) {
-      mocRoot.file(MOC_ROOT + '.md', mocRootHubPage());
+      mocRoot.folder(folder).file(folder + '.md', axisHubPage(axis));
     }
 
     if (wants('areas')) {
       const areasFolder = root.folder(PARA.areas).folder(AREAS_FOLDER);
-      areasFolder.file(AREAS_FOLDER + '.md', areasHubPage());
       for (const page of AREAS_PAGES) {
         areasFolder.file(page.file, areaMonitoringPage(page));
       }
