@@ -646,6 +646,11 @@
   function areaMonitoringPage(page) {
     const regValue = page.tag.split('/')[1] || '';
     const mocRegPath = mocPath('regulatory', regValue);
+    // Callout severity matches the regulatory level.
+    const calloutType = /banned/i.test(regValue)     ? 'danger'
+                      : /phototoxic/i.test(regValue) ? 'bug'
+                      : /allergen|sensit/i.test(regValue) ? 'warning'
+                      :                                     'warning';
     return [
       '---',
       'type: area',
@@ -659,9 +664,10 @@
       '',
       '# ' + page.title,
       '',
-      page.desc,
-      '',
-      `**See also:** [[${mocRegPath}|${mocDisplay(regValue)} (MOC)]]`,
+      `> [!${calloutType}] ${page.title}`,
+      '> ' + page.desc,
+      '> ',
+      `> **MOC:** [[${mocRegPath}|${mocDisplay(regValue)}]]`,
       '',
       '## 🧪 Materials currently flagged',
       '',
@@ -678,6 +684,13 @@
       '```',
       '',
       '> Dataview plugin ไม่พร้อม → ดู **Backlinks panel** ทางขวาแทน',
+      '',
+      '## 📇 All regulatory flags',
+      '',
+      // Embed the 69 Regulatory axis hub so the user can hop to any
+      // other flag without leaving this page. Basename match resolves
+      // against `3_Resources/60-69 MOC/69 Regulatory/69 Regulatory.md`.
+      `![[${JD_MOC.regulatory}#📇 All values]]`,
       '',
     ].join('\n');
   }
@@ -766,6 +779,18 @@
 
     const body = ['# ' + name, ''];
 
+    // One-glance summary callout — family · note tier · strength · duration.
+    // Obsidian renders `[!abstract]` as a tinted card so the material's
+    // identity is immediately scannable without reading full sections.
+    const snap = [];
+    if (a.primaryFamilies.length) snap.push(a.primaryFamilies.map(mocDisplay).join(' / '));
+    if (a.notes.length)           snap.push(a.notes.map(mocDisplay).join(' / ') + ' note');
+    if (perf.odor_strength)       snap.push(perf.odor_strength + ' strength');
+    if (perf.tenacity_hours)      snap.push(perf.tenacity_hours);
+    if (snap.length) {
+      body.push('> [!abstract] Snapshot', '> ' + snap.join(' · '), '');
+    }
+
     if (perf.odor_description) {
       body.push('> ' + perf.odor_description, '');
     }
@@ -806,12 +831,38 @@
 
     body.push('## ⚠️ Regulatory');
     if (a.regulatory.length) {
-      body.push(mocLinkList('regulatory', a.regulatory), '');
+      for (const r of a.regulatory) body.push('- ' + mocLink('regulatory', r));
     } else {
-      body.push(mocLink('regulatory', 'no regulatory'), '');
+      body.push('- ' + mocLink('regulatory', 'no regulatory'));
     }
-    if (safety.ifra_guideline) body.push('**IFRA:** ' + safety.ifra_guideline, '');
-    if (safety.usage_levels)   body.push('**Usage:** ' + safety.usage_levels, '');
+    body.push('');
+
+    // Severity-based callouts so the risk level is visually obvious
+    // without reading the IFRA prose. Banned > phototoxic > allergen.
+    const regLower = new Set(a.regulatory.map(r => String(r).toLowerCase()));
+    if (regLower.has('banned')) {
+      body.push('> [!danger] Banned',
+                '> Banned for fragrance use — remove from active formulations.', '');
+    }
+    if (regLower.has('phototoxic')) {
+      body.push('> [!bug] Phototoxic',
+                '> May cause photo-reactions under UV exposure. Check photo-safety limits for the product category.', '');
+    }
+    if (regLower.has('allergen') || regLower.has('sensitizer')) {
+      body.push('> [!warning] Sensitiser / Allergen',
+                '> Declared fragrance allergen — include on product labelling if used above the disclosure threshold.', '');
+    }
+
+    // Long regulatory prose goes into foldable callouts so the note
+    // stays scannable but the detail is one click away.
+    if (safety.ifra_guideline) {
+      const ifra = String(safety.ifra_guideline).replace(/\n/g, '\n> ');
+      body.push('> [!warning]- IFRA Guideline', '> ' + ifra, '');
+    }
+    if (safety.usage_levels) {
+      const usage = String(safety.usage_levels).replace(/\n/g, '\n> ');
+      body.push('> [!info]- Usage Levels', '> ' + usage, '');
+    }
 
     if (blendsWith.length) {
       body.push('## 🔗 Related Notes', '');
