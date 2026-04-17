@@ -1058,6 +1058,21 @@
       }
     }
 
+    // Area pages cross-link to regulatory MOC values — seed them so
+    // the links resolve even when no imported material carries the flag
+    // (e.g. a vault with no banned materials still has a working link
+    // from "23 Banned Materials" → "69 Regulatory/Banned").
+    if (wants('areas') && wants('regulatory')) {
+      for (const page of AREAS_PAGES) {
+        const value = page.tag.split('/')[1];
+        if (!value) continue;
+        const key = mocPath('regulatory', value);
+        if (!mocsToEmit.has(key)) {
+          mocsToEmit.set(key, { axis: 'regulatory', value });
+        }
+      }
+    }
+
     // Materials hub — overview of source/type breakdown at the folder root.
     if (wants('materials')) {
       root.folder(PARA.resources).folder(JD_MATERIALS_ROOT)
