@@ -841,6 +841,42 @@ html { scroll-behavior:smooth; }
   outline: 2px solid var(--bronze-600);
   outline-offset: 3px;
 }
+/* Dark theme — respond to both system preference and manual toggle.
+   Scoped only to .landing so existing dark tokens remain untouched. */
+@media (prefers-color-scheme: dark) {
+  .landing {
+    --ivory-50:   #14110C;
+    --ivory-100:  #1A160F;
+    --ivory-200:  #2A2418;
+    --ink-900:    #F1E9D6;
+    --ink-700:    #D8CDB4;
+    --ink-500:    #9A8F76;
+    --bronze-600: #C9A063;
+    --bronze-500: #D8B379;
+    --bronze-200: #5E4728;
+    --hairline:   rgba(241,233,214,0.14);
+    --glass-bg:   rgba(26,22,15,0.55);
+    --glass-edge: 1px solid rgba(241,233,214,0.10);
+  }
+  .landing__cta--secondary:hover,
+  .landing__cta--secondary:focus-visible { background: var(--ivory-200); }
+}
+[data-theme="dark"] .landing {
+  --ivory-50:   #14110C;
+  --ivory-100:  #1A160F;
+  --ivory-200:  #2A2418;
+  --ink-900:    #F1E9D6;
+  --ink-700:    #D8CDB4;
+  --ink-500:    #9A8F76;
+  --bronze-600: #C9A063;
+  --bronze-500: #D8B379;
+  --bronze-200: #5E4728;
+  --hairline:   rgba(241,233,214,0.14);
+  --glass-bg:   rgba(26,22,15,0.55);
+  --glass-edge: 1px solid rgba(241,233,214,0.10);
+}
+[data-theme="dark"] .landing__cta--secondary:hover,
+[data-theme="dark"] .landing__cta--secondary:focus-visible { background: var(--ivory-200); }
 </style>
 </head>
 <body>
