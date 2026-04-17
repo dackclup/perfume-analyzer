@@ -3200,15 +3200,9 @@ function exportObsidianMD() {
     }
   } catch (_) { /* skip section */ }
 
-  // Archived formulations go to 4_Archives/ instead of 1_Projects/ —
-  // the UI can set `window.__formulationStatus = 'archived'` before
-  // triggering the export (default is 'active').
-  const status = (typeof window.__formulationStatus === 'string' && window.__formulationStatus) || 'active';
-
   const md = window.ObsidianExport.formulationToMarkdown({
     name: saveName,
     date: today,
-    status: status,
     category: catName,
     categoryId: catId,
     fragrancePct: fragPct,
@@ -3236,24 +3230,15 @@ function exportObsidianMD() {
     analysis,
   });
 
-  // Date-prefixed filename for the Johnny.Decimal sort order, plus the
-  // suggested PARA/JD folder path is captured in the note's frontmatter
-  // (`para:` + `jd:` keys) so the user can drop the file straight into
-  // 1_Projects/10-19 Active Formulations/{category}/.
-  const fileBase = window.ObsidianExport.formulationFileName
-    ? window.ObsidianExport.formulationFileName(saveName, today)
-    : (today + ' ' + window.ObsidianExport.safeFileName(saveName));
-  const suggestedFolder = window.ObsidianExport.formulationFolder
-    ? window.ObsidianExport.formulationFolder(catName, status)
-    : null;
+  // Date-prefixed filename for chronological sort inside the JD folder.
+  // The suggested PARA/JD path is captured in the note's frontmatter
+  // (`para:` + `jd:` keys) so the user drops it into the right spot.
+  const fileBase = window.ObsidianExport.formulationFileName(saveName, today);
   const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = fileBase + '.md'; a.click();
   URL.revokeObjectURL(url);
-  if (suggestedFolder) {
-    console.info('[Obsidian] วาง file นี้ที่ ' + suggestedFolder + '/ ใน vault');
-  }
 }
 
 function exportJSON() {
