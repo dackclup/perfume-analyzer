@@ -710,6 +710,51 @@ html { scroll-behavior:smooth; }
 @media (min-width: 1024px) {
   .landing__ethos { max-width: 58ch; }
 }
+.landing__pillars {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  max-width: 72rem;
+  margin: var(--space-6) auto;
+  padding: 0;
+}
+.landing__pillar {
+  margin: 0;
+  padding-block: var(--space-4);
+}
+.landing__pillar + .landing__pillar {
+  border-block-start: 1px solid var(--hairline);
+}
+.landing__pillar-term {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  color: var(--ink-900);
+  margin-block-end: 0.35rem;
+}
+.landing__pillar-num {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  color: var(--bronze-600);
+  margin-block-end: var(--space-2);
+}
+.landing__pillar-desc {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink-500);
+  max-width: 32ch;
+}
+@media (min-width: 768px) {
+  .landing__pillars { grid-template-columns: repeat(2, 1fr); gap: var(--space-6); }
+  .landing__pillar + .landing__pillar { border-block-start: 0; }
+  .landing__pillar:nth-child(n+2) { border-inline-start: 1px solid var(--hairline); padding-inline-start: var(--space-5); }
+}
+@media (min-width: 1024px) {
+  .landing__pillars { grid-template-columns: repeat(3, 1fr); }
+  .landing__pillar:nth-child(n+2) { padding-inline-start: var(--space-6); }
+}
 </style>
 </head>
 <body>
@@ -726,6 +771,23 @@ html { scroll-behavior:smooth; }
     <span class="landing__ethos-label" data-i18n="ethosLabel">Ethos</span>
     <p class="landing__ethos-body" data-i18n="ethos">Every fragrance begins as a quiet conversation between molecules. This archive gathers that conversation &mdash; sourced, studied, indexed &mdash; so the craft of perfumery is never more than a search away.</p>
   </section>
+  <dl class="landing__pillars" aria-label="Values">
+    <div class="landing__pillar">
+      <span class="landing__pillar-num">01</span>
+      <dt class="landing__pillar-term" data-i18n="pillar1Title">Sourced</dt>
+      <dd class="landing__pillar-desc" data-i18n="pillar1Body">Nearly four hundred raw materials, each with traceable identity &mdash; CAS, FEMA, and verified synonyms.</dd>
+    </div>
+    <div class="landing__pillar">
+      <span class="landing__pillar-num">02</span>
+      <dt class="landing__pillar-term" data-i18n="pillar2Title">Studied</dt>
+      <dd class="landing__pillar-desc" data-i18n="pillar2Body">Olfactory families, tenacity, safety, and IFRA guidance &mdash; curated beside the chemistry that underpins each note.</dd>
+    </div>
+    <div class="landing__pillar">
+      <span class="landing__pillar-num">03</span>
+      <dt class="landing__pillar-term" data-i18n="pillar3Title">Searchable</dt>
+      <dd class="landing__pillar-desc" data-i18n="pillar3Body">A precise matching pipeline &mdash; CAS, canonical name, synonym, trade &mdash; so the ingredient you mean is the one you find.</dd>
+    </div>
+  </dl>
 </section>
 <div id="top"></div>
 <!-- SVG icon sprite (inline, no CDN, works over file://). Icons: Lucide (MIT). -->
