@@ -2841,10 +2841,10 @@ const GHS_PICTOGRAMS = {
   'GHS08': {name:'Health Hazard', codes:['H304','H334','H340','H341','H350','H351','H360','H361','H370','H371','H372','H373']},
   'GHS09': {name:'Environmental', codes:['H400','H401','H410','H411','H412','H413']},
 };
-// Extract GHS codes from PUG View Markup (pictogram image URLs)
+// Extract GHS codes from PUG View Markup (pictogram image URLs).
+// Walks the full section tree; the Set handles dedupe across sources.
 function _extractGHSFromMarkup(sections) {
   const codes = new Set();
-  let found = false;
   function walk(secs) {
     for (const sec of secs) {
       if (sec.Information) {
@@ -2856,18 +2856,18 @@ function _extractGHSFromMarkup(sections) {
               for (const m of sm.Markup) {
                 if (m.URL) {
                   const match = m.URL.match(/GHS(\d{2})/);
-                  if (match) { codes.add('GHS' + match[1]); found = true; }
+                  if (match) codes.add('GHS' + match[1]);
                 }
                 if (m.Extra) {
                   const match = m.Extra.match(/GHS(\d{2})/);
-                  if (match) { codes.add('GHS' + match[1]); found = true; }
+                  if (match) codes.add('GHS' + match[1]);
                 }
               }
             }
           }
         }
       }
-      if (!found && sec.Section) walk(sec.Section);
+      if (sec.Section) walk(sec.Section);
     }
   }
   walk(sections);
