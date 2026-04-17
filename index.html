@@ -897,6 +897,20 @@ html { scroll-behavior:smooth; }
   .landing__hero > * { animation: none; opacity: 1; transform: none; }
   .landing__cta, .landing__chip { transition: none; }
 }
+/* Responsive safeguards — keep the landing tidy on every viewport:
+   320px portrait phones through 1440px+ desktops. overflow-x:clip
+   prevents any glass panel near the edge from introducing a
+   horizontal scroll without affecting the rest of the document. */
+.landing { overflow-x: clip; }
+.landing * { min-width: 0; max-width: 100%; }
+.landing__wordmark,
+.landing__tagline,
+.landing__ethos-body,
+.landing__pillar-term,
+.landing__pillar-desc { overflow-wrap: anywhere; word-break: break-word; hyphens: auto; }
+@media (max-height: 560px) and (orientation: landscape) {
+  .landing__hero { min-height: auto; padding-block: var(--space-5); }
+}
 </style>
 </head>
 <body>
