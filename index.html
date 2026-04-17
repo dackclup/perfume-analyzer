@@ -1119,6 +1119,41 @@ function facetLabel(t) {
   return String(t).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
+// Reverse index: legacy PRIMARY_FAMILIES token → Edwards 2021 sub-family key.
+// Built once from SUB_FAMILY_TO_LEGACY so downstream code can still resolve
+// a finer-grained sub-family label when needed. Card-level Primary row uses
+// the coarser EDWARDS_TO_LEGACY parent bucket instead — see
+// primaryFamilyFilterLabel below.
+const LEGACY_TO_SUB_FAMILY = (() => {
+  const m = {};
+  for (const [sub, legacySet] of Object.entries(SUB_FAMILY_TO_LEGACY)) {
+    for (const tok of legacySet) m[tok] = sub;
+  }
+  return m;
+})();
+// Reverse index: legacy PRIMARY_FAMILIES token → Edwards 2021 parent bucket
+// (floral_note / amber_note / woody_note / fresh_note / floral_fresh_note /
+// woody_amber_note / fresh_woody_note). Used by the card PRIMARY row so a
+// material classified as e.g. woody + amber + powdery shows a clean
+// "Woody • Amber" pair (powdery folds into amber_note, same as its chip in
+// the Primary Family filter drawer). Underlying primary/secondary arrays
+// are untouched so filter matching is unaffected.
+const LEGACY_TO_EDWARDS = (() => {
+  const m = {};
+  for (const [bucket, legacySet] of Object.entries(EDWARDS_TO_LEGACY)) {
+    for (const tok of legacySet) m[tok] = bucket;
+  }
+  return m;
+})();
+function primaryFamilyFilterLabel(legacyTok) {
+  if (!legacyTok) return '';
+  const bucket = LEGACY_TO_EDWARDS[legacyTok];
+  if (bucket && EDWARDS_FAMILY_LABELS[bucket]) {
+    return EDWARDS_FAMILY_LABELS[bucket].replace(/\s*note$/i, '');
+  }
+  return PRIMARY_FAMILY_LABELS[legacyTok] || legacyTok;
+}
+
 // Facet tags = specific descriptors that live UNDER a primary family.
 // Each entry maps a normalized facet token (snake_case) to its parent
 // family from PRIMARY_FAMILIES. A material can carry multiple facets.
@@ -1154,6 +1189,19 @@ const FACET_TAGS = {
   minty:'herbal', medicinal:'herbal', antiseptic:'herbal',
   tea:'herbal', green_tea:'herbal', black_tea:'herbal', mate:'herbal',
   hay:'herbal', clover:'herbal',
+  eucalyptus:'herbal', menthol:'herbal', oregano:'herbal', marjoram:'herbal',
+  verbena:'herbal', lemongrass:'herbal',
+  angelica:'herbal', hyssop:'herbal', hops:'herbal', valerian:'herbal',
+  lemon_balm:'herbal', melissa:'herbal', yarrow:'herbal', lovage:'herbal',
+  dill:'herbal', cilantro:'herbal', savory:'herbal', rue:'herbal',
+  wormwood:'herbal', oolong:'herbal', white_tea:'herbal', chai:'herbal',
+  aniseed:'herbal', caraway:'herbal', fenugreek:'herbal',
+  // ── citrus additions ──
+  kumquat:'citrus', pomelo:'citrus',
+  clementine:'citrus', calamansi:'citrus', sudachi:'citrus',
+  bitter_orange:'citrus', blood_orange:'citrus', meyer_lemon:'citrus',
+  key_lime:'citrus', finger_lime:'citrus', buddha_hand:'citrus',
+  citron:'citrus', chinotto:'citrus', bigarade:'citrus',
   // ── floral ──
   rose:'floral', jasmine:'floral', ylang:'floral', tuberose:'floral', geranium:'floral', linden:'floral',
   narcissus:'floral', orchid:'floral', magnolia:'floral', hyacinth:'floral',
@@ -1161,6 +1209,17 @@ const FACET_TAGS = {
   violet:'floral', lily:'floral', osmanthus:'floral', honeysuckle:'floral',
   iris_flower:'floral', muguet:'floral', frangipani:'floral', boronia:'floral',
   cassie:'floral',
+  peony:'floral', carnation:'floral', cherry_blossom:'floral', peach_blossom:'floral',
+  plumeria:'floral', tiare:'floral', wisteria:'floral', stephanotis:'floral',
+  freesia:'floral', daffodil:'floral', jonquil:'floral', hellebore:'floral',
+  sweet_pea:'floral', camellia:'floral', water_lily:'floral', lotus:'floral',
+  poppy:'floral', elderflower:'floral', broom:'floral', acacia:'floral',
+  tagetes:'floral', marigold:'floral', chrysanthemum:'floral', calendula:'floral',
+  hibiscus:'floral', datura:'floral', cistus:'floral', oleander:'floral',
+  bluebell:'floral', cowslip:'floral', primrose:'floral', daisy:'floral',
+  sunflower:'floral', heather:'floral', dianthus:'floral', wallflower:'floral',
+  begonia:'floral', gillyflower:'floral', centifolia:'floral', damascena:'floral',
+  genet:'floral',
   // ── floral amber (Edwards 2021 "Floral Oriental") ──
   immortelle:'floral_amber', heliotrope:'floral_amber',
   orange_blossom:'floral_amber', cinnamic_floral:'floral_amber',
@@ -1171,9 +1230,27 @@ const FACET_TAGS = {
   coconut:'fruity', melon:'fruity', raspberry:'fruity', strawberry:'fruity',
   blackcurrant:'fruity', cassis:'fruity', cherry:'fruity', fig:'fruity',
   banana:'fruity', grape:'fruity',
+  lychee:'fruity', mango:'fruity', passion_fruit:'fruity', papaya:'fruity',
+  guava:'fruity', quince:'fruity', watermelon:'fruity', kiwi:'fruity',
+  date:'fruity', currant:'fruity', rhubarb:'fruity',
+  nectarine:'fruity', prune:'fruity', persimmon:'fruity', pomegranate:'fruity',
+  dragon_fruit:'fruity', jackfruit:'fruity', durian:'fruity', starfruit:'fruity',
+  loquat:'fruity', mulberry:'fruity', elderberry:'fruity', cranberry:'fruity',
+  blueberry:'fruity', mangosteen:'fruity', lingonberry:'fruity', gooseberry:'fruity',
+  jujube:'fruity', tamarind:'fruity', acai:'fruity', soursop:'fruity',
+  cherimoya:'fruity',
   // ── aquatic ──
   marine:'aquatic', sea:'aquatic', seaweed:'aquatic', oceanic:'aquatic',
   calone:'aquatic', water:'aquatic', watery:'aquatic', dewy:'aquatic', iodine:'aquatic',
+  petrichor:'aquatic', saline:'aquatic',
+  aqueous:'aquatic', wet:'aquatic', mist:'aquatic', fog:'aquatic',
+  brine:'aquatic', kelp:'aquatic', spring_water:'aquatic', rain:'aquatic',
+  shower:'aquatic', chlorine:'aquatic',
+  // ── green additions ──
+  fig_leaf:'green', ivy:'green', bamboo:'green', sap:'green', nettle:'green',
+  basil_leaf:'green', mint_leaf:'green', fern:'green', bud:'green',
+  sprout:'green', shoot:'green', ferny:'green', algae:'green',
+  vine:'green', lettuce:'green', arugula:'green', spinach:'green',
   // ── ozonic (NOT fresh — distinct family) ──
   ozone:'ozonic', airy:'ozonic',
   // ── fresh ──
@@ -1183,12 +1260,32 @@ const FACET_TAGS = {
   cinnamon:'spicy', clove:'spicy', pepper:'spicy', nutmeg:'spicy',
   cardamom:'spicy', saffron:'spicy', ginger:'spicy', anise:'spicy',
   star_anise:'spicy', allspice:'spicy', coriander:'spicy', licorice:'spicy',
+  pink_pepper:'spicy', white_pepper:'spicy', sichuan_pepper:'spicy',
+  juniper:'spicy', turmeric:'spicy', cumin:'spicy', davana:'spicy',
+  cassia:'spicy', chili:'spicy', paprika:'spicy', sumac:'spicy',
+  mastic:'spicy', amyris:'spicy', sassafras:'spicy',
+  pepper_berry:'spicy', juniperberry:'spicy', rosehip:'spicy',
+  // ── balsamic / resinous additions ──
+  dragon_blood:'resinous', guggul:'resinous', labdanum_resin:'resinous',
   // ── gourmand ──
   vanilla:'gourmand', vanillin:'gourmand', caramel:'gourmand',
   chocolate:'gourmand', cocoa:'gourmand', honey:'gourmand', coffee:'gourmand',
   tonka:'gourmand', maple:'gourmand', hazelnut:'gourmand', almond:'gourmand',
   praline:'gourmand', biscuit:'gourmand', milk:'gourmand', rum:'gourmand',
   roasted:'gourmand', nutty:'gourmand', cereal:'gourmand', beeswax:'gourmand',
+  marshmallow:'gourmand', whisky:'gourmand', toffee:'gourmand', marzipan:'gourmand',
+  sugar:'gourmand', brown_sugar:'gourmand', molasses:'gourmand', caramelized:'gourmand',
+  custard:'gourmand', butterscotch:'gourmand', fudge:'gourmand', pudding:'gourmand',
+  bread:'gourmand', dough:'gourmand', cake:'gourmand', cookie:'gourmand',
+  jam:'gourmand', waffle:'gourmand', pastry:'gourmand', shortbread:'gourmand',
+  icing:'gourmand', meringue:'gourmand', cotton_candy:'gourmand', bubblegum:'gourmand',
+  candy:'gourmand', popcorn:'gourmand', peanut:'gourmand', pistachio:'gourmand',
+  pecan:'gourmand', macadamia:'gourmand', chestnut:'gourmand', cashew:'gourmand',
+  walnut:'gourmand', pine_nut:'gourmand', cognac:'gourmand', brandy:'gourmand',
+  wine:'gourmand', port:'gourmand', sake:'gourmand', ale:'gourmand',
+  beer:'gourmand', mead:'gourmand', sorbet:'gourmand', yogurt:'gourmand',
+  butter:'gourmand', condensed_milk:'gourmand', mascarpone:'gourmand',
+  tiramisu:'gourmand',
   // ── lactonic ──
   creamy:'lactonic', milky:'lactonic', buttery:'lactonic', cream:'lactonic',
   // ── powdery ──
@@ -1198,6 +1295,15 @@ const FACET_TAGS = {
   guaiac:'woody', oud:'woody', agarwood:'woody', cypress:'woody',
   fir:'woody', pine:'woody', birch:'woody', oakmoss:'woody', cashmere_wood:'woody',
   rosewood:'woody', cedrol:'woody', coniferous:'woody', dry:'woody', earthy:'woody',
+  palo_santo:'woody', hinoki:'woody', teak:'woody', driftwood:'woody',
+  papyrus:'woody', fir_needle:'woody', treemoss:'woody', forest_floor:'woody',
+  atlas_cedar:'woody', virginia_cedar:'woody', himalayan_cedar:'woody',
+  mysore_sandalwood:'woody', haitian_vetiver:'woody', madagascar_vetiver:'woody',
+  swiss_pine:'woody', mountain_pine:'woody', yew:'woody', ebony:'woody',
+  mahogany:'woody', oak:'woody', beech:'woody', mesquite:'woody',
+  aged_wood:'woody', burnt_wood:'woody', damp:'woody', humus:'woody',
+  loam:'woody', peat:'woody', mushroom:'woody', truffle:'woody',
+  wet_stone:'woody', mineral_earth:'woody', leafmold:'woody',
   // ── balsamic ──
   balsam:'balsamic', tolu_balsam:'balsamic', peru_balsam:'balsamic',
   benzoin:'balsamic', styrax:'balsamic',
@@ -1215,8 +1321,21 @@ const FACET_TAGS = {
   // ── smoky ──
   tobacco:'smoky', incense:'smoky', tar:'smoky', burn:'smoky', burnt:'smoky',
   smoke:'smoky', birch_tar:'smoky', cade:'smoky', phenolic:'smoky',
+  charcoal:'smoky',
+  pipe_tobacco:'smoky', tobacco_leaf:'smoky', shag:'smoky', pipe:'smoky',
+  bonfire:'smoky', campfire:'smoky', woodfire:'smoky', gunpowder:'smoky',
+  brimstone:'smoky', ash:'smoky', ember:'smoky',
   // ── leather ──
-  leathery:'leather', suede:'leather'
+  leathery:'leather', suede:'leather',
+  aged_leather:'leather', saddle:'leather', bridle:'leather',
+  // ── powdery additions ──
+  powder:'powdery', baby_powder:'powdery', face_powder:'powdery', makeup:'powdery',
+  lipstick:'powdery', starch:'powdery', clay:'powdery', chalk:'powdery',
+  cotton:'powdery',
+  // ── animalic additions ──
+  hyraceum:'animalic', choya:'animalic',
+  // ── musk additions ──
+  ambrettolide:'musk', galaxolide:'musk'
 };
 
 // ── Nose-friendly keyword → facet regex map ──
@@ -1310,40 +1429,64 @@ const FACET_KEYWORDS = {
 const FACET_GROUPS = [
   { label:'Aromatic',     facets:[
     'lavender','sage','thyme','rosemary','basil','tarragon','fennel','chamomile','bay_laurel','artemisia','celery','parsley','medicinal','antiseptic','clover',
-    'mint','minty','peppermint','spearmint',
+    'mint','minty','peppermint','spearmint','menthol',
+    'eucalyptus','oregano','marjoram','verbena','lemongrass',
+    'angelica','hyssop','hops','valerian','lemon_balm','melissa','yarrow','lovage','dill','cilantro','savory','rue','wormwood',
+    'oolong','white_tea','chai',
+    'aniseed','caraway','fenugreek',
     'camphor','camphor_oil','cooling','cool','crisp'] },
-  { label:'Citrus',       facets:['bergamot','lemon','orange','mandarin','grapefruit','lime','yuzu','tangerine','petitgrain','neroli','hesperidic'] },
+  { label:'Citrus',       facets:['bergamot','lemon','orange','mandarin','grapefruit','lime','yuzu','tangerine','petitgrain','neroli','hesperidic',
+    'kumquat','pomelo','clementine','calamansi','sudachi','bitter_orange','blood_orange','meyer_lemon','key_lime','finger_lime','buddha_hand','citron','chinotto','bigarade'] },
   { label:'Water',        facets:[
     'marine','sea','seaweed','oceanic','calone','water','watery','dewy','iodine',
+    'petrichor','saline','aqueous','wet','mist','fog','brine','kelp','spring_water','rain','shower','chlorine',
     'ozone','airy',
     'clean','soapy','metallic','laundry'] },
   { label:'Green',        facets:[
     'leaf','leafy','grass','stem','violet_leaf','tomato_leaf','cut_grass','galbanum','cucumber',
+    'fig_leaf','ivy','bamboo','sap','nettle',
+    'basil_leaf','mint_leaf','fern','bud','sprout','shoot','ferny','algae','vine','lettuce','arugula','spinach',
     'tea','green_tea','black_tea','mate'] },
-  { label:'Fruity',       facets:['apple','pear','peach','apricot','berry','plum','tropical','pineapple','coconut','melon','raspberry','strawberry','blackcurrant','cassis','cherry','fig','banana','grape'] },
-  { label:'Floral',       facets:['rose','jasmine','ylang','tuberose','narcissus','orchid','magnolia','hyacinth','lilac','gardenia','mimosa','champaca','violet','lily','osmanthus','honeysuckle','muguet','frangipani','boronia','cassie','geranium','linden'] },
+  { label:'Fruity',       facets:['apple','pear','peach','apricot','berry','plum','tropical','pineapple','coconut','melon','raspberry','strawberry','blackcurrant','cassis','cherry','fig','banana','grape','lychee','mango','passion_fruit','papaya','guava','quince','watermelon','kiwi','date','currant','rhubarb',
+    'nectarine','prune','persimmon','pomegranate','dragon_fruit','jackfruit','durian','starfruit','loquat','mulberry','elderberry','cranberry','blueberry','mangosteen','lingonberry','gooseberry','jujube','tamarind','acai','soursop','cherimoya'] },
+  { label:'Floral',       facets:['rose','jasmine','ylang','tuberose','narcissus','orchid','magnolia','hyacinth','lilac','gardenia','mimosa','champaca','violet','lily','osmanthus','honeysuckle','muguet','frangipani','boronia','cassie','geranium','linden',
+    'peony','carnation','cherry_blossom','peach_blossom','plumeria','tiare','wisteria','stephanotis',
+    'freesia','daffodil','jonquil','hellebore','sweet_pea','camellia','water_lily','lotus','poppy','elderflower','broom','acacia',
+    'tagetes','marigold','chrysanthemum','calendula','hibiscus','datura','cistus','oleander',
+    'bluebell','cowslip','primrose','daisy','sunflower','heather','dianthus','wallflower','begonia','gillyflower','centifolia','damascena','genet'] },
   { label:'Soft Floral',  facets:[
     'aldehyde','waxy_aldehyde','waxy','fatty',
-    'iris','iris_flower','orris','heliotrope','talc','velvety'] },
+    'iris','iris_flower','orris','heliotrope','talc','velvety',
+    'powder','baby_powder','face_powder','makeup','lipstick','starch','clay','chalk','cotton'] },
   { label:'Floral Amber', facets:['immortelle','heliotrope','orange_blossom','cinnamic_floral','ambery_floral'] },
   { label:'Soft Amber',   facets:[
     'vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee','tonka','maple','hazelnut','almond','praline','biscuit','milk','rum','roasted','nutty','cereal','beeswax',
+    'marshmallow','whisky','toffee','marzipan',
+    'sugar','brown_sugar','molasses','caramelized','custard','butterscotch','fudge','pudding','bread','dough','cake','cookie','jam','waffle','pastry','shortbread','icing','meringue','cotton_candy','bubblegum','candy','popcorn','peanut','pistachio','pecan','macadamia','chestnut','cashew','walnut','pine_nut',
+    'cognac','brandy','wine','port','sake','ale','beer','mead',
+    'sorbet','yogurt','butter','condensed_milk','mascarpone','tiramisu',
     'creamy','milky','buttery','cream'] },
   { label:'Amber',        facets:[
     'ambergris','ambrox','ambroxan','ambrette','mineral',
     'balsam','tolu_balsam','peru_balsam','benzoin','styrax',
-    'frankincense','myrrh','elemi','labdanum','olibanum','opoponax','copal','galbanum_resin',
-    'cinnamon','clove','pepper','nutmeg','cardamom','saffron','ginger','anise','star_anise','allspice','coriander','licorice'] },
+    'frankincense','myrrh','elemi','labdanum','olibanum','opoponax','copal','galbanum_resin','dragon_blood','guggul','labdanum_resin',
+    'cinnamon','clove','pepper','nutmeg','cardamom','saffron','ginger','anise','star_anise','allspice','coriander','licorice',
+    'pink_pepper','white_pepper','sichuan_pepper','juniper','turmeric','cumin','davana',
+    'cassia','chili','paprika','sumac','mastic','amyris','sassafras','pepper_berry','juniperberry','rosehip'] },
   { label:'Woody Amber',  facets:[
-    'civet','castoreum','hyrax','skin','costus','sweaty',
-    'white_musk','muscone'] },
+    'civet','castoreum','hyrax','hyraceum','choya','skin','costus','sweaty',
+    'white_musk','muscone','ambrettolide','galaxolide'] },
   { label:'Woods',        facets:[
-    'cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','pine','birch','cashmere_wood','rosewood','cedrol','coniferous','dry'] },
-  { label:'Mossy Woods',  facets:['oakmoss','earthy'] },
+    'cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','fir_needle','pine','birch','cashmere_wood','rosewood','cedrol','coniferous','dry',
+    'palo_santo','hinoki','teak','driftwood','papyrus',
+    'atlas_cedar','virginia_cedar','himalayan_cedar','mysore_sandalwood','haitian_vetiver','madagascar_vetiver','swiss_pine','mountain_pine','yew','ebony','mahogany','oak','beech','mesquite','aged_wood','burnt_wood'] },
+  { label:'Mossy Woods',  facets:['oakmoss','earthy','treemoss','forest_floor',
+    'damp','humus','loam','peat','mushroom','truffle','wet_stone','mineral_earth','leafmold'] },
   { label:'Dry Woods',    facets:[
     'tobacco','hay',
-    'incense','tar','burn','burnt','smoke','birch_tar','cade','phenolic',
-    'leathery','suede'] },
+    'incense','tar','burn','burnt','smoke','birch_tar','cade','phenolic','charcoal',
+    'pipe_tobacco','tobacco_leaf','shag','pipe','bonfire','campfire','woodfire','gunpowder','brimstone','ash','ember',
+    'leathery','suede','aged_leather','saddle','bridle'] },
 ];
 
 // Synonym → canonical-token map. The tokenizer hits raw text and many
@@ -2460,22 +2603,39 @@ _buildPillFilter('source');
     group.appendChild(chips);
     container.appendChild(group);
   };
-  // Explicit groups from FACET_GROUPS
-  for (const g of FACET_GROUPS) _renderGroup(g.label, g.facets);
-  // Catch-all: any facet with data but not in any group → parent-family bucket
-  const orphansByFamily = {};
+  // Collect facets not in any explicit FACET_GROUPS, bucketed by the
+  // Edwards sub-family their parent primary-family maps to. This keeps
+  // fallback chips grouped under the same sub-family label the user sees
+  // elsewhere in the drawer instead of a legacy label that doesn't match
+  // any existing group header.
+  const orphansBySubFamily = {};
+  const groupedFacetSet = new Set();
+  for (const g of FACET_GROUPS) for (const f of g.facets) groupedFacetSet.add(f);
   for (const [facet, family] of Object.entries(FACET_TAGS)) {
     if (facet === family) continue;
-    if (rendered.has(facet)) continue;
+    if (groupedFacetSet.has(facet)) continue;
     if (!facetCounts[facet]) continue;
-    if (!orphansByFamily[family]) orphansByFamily[family] = [];
-    orphansByFamily[family].push(facet);
+    const sub = LEGACY_TO_SUB_FAMILY[family] || family;
+    if (!orphansBySubFamily[sub]) orphansBySubFamily[sub] = [];
+    orphansBySubFamily[sub].push(facet);
   }
-  for (const family of PRIMARY_FAMILIES) {
-    const ofs = orphansByFamily[family];
-    if (!ofs || !ofs.length) continue;
+  // Render explicit groups in canonical order, merging in any orphan
+  // facets whose sub-family matches the group's label.
+  for (const g of FACET_GROUPS) {
+    const subKey = Object.keys(SUB_FAMILY_LABELS).find(k => SUB_FAMILY_LABELS[k] === g.label);
+    const extra = subKey && orphansBySubFamily[subKey] ? orphansBySubFamily[subKey] : [];
+    if (extra.length) { delete orphansBySubFamily[subKey]; }
+    const merged = extra.length ? [...g.facets, ...[...extra].sort()] : g.facets;
+    _renderGroup(g.label, merged);
+  }
+  // Any remaining orphans whose sub-family has no explicit group — render
+  // with the Edwards sub-family label (falls back to PRIMARY_FAMILY_LABELS
+  // only if the parent never mapped to a sub-family at all).
+  for (const [sub, ofs] of Object.entries(orphansBySubFamily)) {
+    if (!ofs.length) continue;
     ofs.sort();
-    _renderGroup(PRIMARY_FAMILY_LABELS[family] || family, ofs);
+    const label = SUB_FAMILY_LABELS[sub] || PRIMARY_FAMILY_LABELS[sub] || sub;
+    _renderGroup(label, ofs);
   }
 }
 
@@ -3839,7 +3999,7 @@ function renderResults() {
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
-          ${(displayTags.length || displayPrimaryFamilies.length || displaySecondaryFamilies.length || displayFacets.length)?`<div class="card-meta-row" style="margin:6px 0 10px 0">${displayTags.length?`<div class="tag-row"><span class="tag-axis-label">Use</span><span class="tag-chips">${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px;margin:0">${USE_LABELS[t]||t}</span>`).join('')}</span></div>`:''}${(displayPrimaryFamilies.length || displaySecondaryFamilies.length)?`<div class="tag-row"><span class="tag-axis-label">Primary</span><span class="tag-chips">${displayPrimaryFamilies.map(f=>`<span class="badge-primary">${PRIMARY_FAMILY_LABELS[f]||f}</span>`).join('')}${displaySecondaryFamilies.length?`<span class="badge-primary">${displaySecondaryFamilies.map(f=>PRIMARY_FAMILY_LABELS[f]||f).join(' • ')}</span>`:''}</span></div>`:''}${displayFacets.length?`<div class="tag-row"><span class="tag-axis-label">Facets</span><span class="tag-chips">${displayFacets.map(f=>`<span class="badge-facet">${facetLabel(f)}</span>`).join('')}</span></div>`:''}</div>`:""}
+          ${(displayTags.length || displayPrimaryFamilies.length || displaySecondaryFamilies.length || displayFacets.length)?`<div class="card-meta-row" style="margin:6px 0 10px 0">${displayTags.length?`<div class="tag-row"><span class="tag-axis-label">Use</span><span class="tag-chips">${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px;margin:0">${USE_LABELS[t]||t}</span>`).join('')}</span></div>`:''}${(displayPrimaryFamilies.length || displaySecondaryFamilies.length)?`<div class="tag-row"><span class="tag-axis-label">Primary</span><span class="tag-chips">${(() => { const seen=new Set(); const pri=[]; for (const f of displayPrimaryFamilies) { const lbl=primaryFamilyFilterLabel(f); if (!seen.has(lbl)) { seen.add(lbl); pri.push(lbl); } } const sec=[]; for (const f of displaySecondaryFamilies) { const lbl=primaryFamilyFilterLabel(f); if (!seen.has(lbl)) { seen.add(lbl); sec.push(lbl); } } return pri.map(l=>`<span class="badge-primary">${l}</span>`).join('') + (sec.length?`<span class="badge-primary">${sec.join(' • ')}</span>`:''); })()}</span></div>`:''}${displayFacets.length?`<div class="tag-row"><span class="tag-axis-label">Facets</span><span class="tag-chips">${displayFacets.map(f=>`<span class="badge-facet">${facetLabel(f)}</span>`).join('')}</span></div>`:''}</div>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" onerror="this.parentNode.style.display='none'"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
