@@ -1113,6 +1113,21 @@ const SUB_FAMILY_TO_LEGACY = {
   mossy_woods:      new Set(),
   dry_woods:        new Set(['leather', 'smoky']),
 };
+// ── Cascading filter map: Primary Family (Edwards parent bucket) →
+// set of Sub-families allowed under it. Used by the 3-level cascading
+// filter UI: selecting a Primary Family narrows the Sub-families chip
+// cloud to its children, and selecting a Sub-family narrows the Facet
+// chip cloud to that group. When no Primary is selected, all Sub-families
+// are visible; likewise for Sub-families → Facets.
+const PRIMARY_TO_SUB_FAMILIES = {
+  floral_note:       new Set(['floral', 'soft_floral', 'floral_amber']),
+  amber_note:        new Set(['soft_amber', 'amber', 'woody_amber']),
+  woody_note:        new Set(['mossy_woods', 'dry_woods']),
+  fresh_note:        new Set(['citrus', 'water', 'green']),
+  floral_fresh_note: new Set(['fruity']),
+  woody_amber_note:  new Set(['woods']),
+  fresh_woody_note:  new Set(['aromatic_fougere']),
+};
 // Build a snake_case facet token into a presentable label.
 function facetLabel(t) {
   if (!t) return '';
@@ -2291,6 +2306,7 @@ function togglePrimaryFamilyChip(el) {
   const allReset = document.querySelector('#primaryFamilyFilters > div > .odor-tag:first-child');
   if (allReset) allReset.classList.toggle('active', !activePrimaryFamilyFilters.size);
   _updatePrimaryFamSelected();
+  _applyCascadingVisibility();
   _refreshPills();
 }
 function clearPrimaryFamilyFiltersUI(el) {
@@ -2298,6 +2314,7 @@ function clearPrimaryFamilyFiltersUI(el) {
   document.querySelectorAll('#primaryFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
   _updatePrimaryFamSelected();
+  _applyCascadingVisibility();
   _refreshPills();
 }
 // ── Sub-family chip handlers (Edwards 14-subfamily filter) ─────────
@@ -2316,6 +2333,7 @@ function toggleSubFamilyChip(el) {
   const allReset = document.querySelector('#subFamilyFilters > div > .odor-tag:first-child');
   if (allReset) allReset.classList.toggle('active', !activeSubFamilyFilters.size);
   _updateSubFamilySelected();
+  _applyCascadingVisibility();
   _refreshPills();
 }
 function clearSubFamilyFiltersUI(el) {
@@ -2323,7 +2341,75 @@ function clearSubFamilyFiltersUI(el) {
   document.querySelectorAll('#subFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
   _updateSubFamilySelected();
+  _applyCascadingVisibility();
   _refreshPills();
+}
+
+// ── Cascading visibility: Primary Family → Sub-families → Facet groups ──
+// After any selection change in Primary or Sub-family, re-compute which
+// Sub-family chips and Facet groups should be visible. Clicking a chip
+// in a now-hidden section would be impossible, so also deactivate any
+// previously-selected chips that fell out of scope.
+function _applyCascadingVisibility() {
+  // 1. Sub-families visible only if allowed by selected Primary Families.
+  //    Empty primary selection = all sub-families visible.
+  let allowedSubs = null;
+  if (activePrimaryFamilyFilters.size) {
+    allowedSubs = new Set();
+    for (const p of activePrimaryFamilyFilters) {
+      const children = PRIMARY_TO_SUB_FAMILIES[p];
+      if (children) for (const s of children) allowedSubs.add(s);
+    }
+  }
+  let subDeactivated = false;
+  document.querySelectorAll('#subFamilyFilters .odor-tag[data-subfam]').forEach(chip => {
+    const sub = chip.dataset.subfam;
+    const visible = !allowedSubs || allowedSubs.has(sub);
+    chip.style.display = visible ? '' : 'none';
+    if (!visible && activeSubFamilyFilters.has(sub)) {
+      activeSubFamilyFilters.delete(sub);
+      chip.classList.remove('active');
+      subDeactivated = true;
+    }
+  });
+  if (subDeactivated) {
+    const allReset = document.querySelector('#subFamilyFilters > div > .odor-tag:first-child');
+    if (allReset) allReset.classList.toggle('active', !activeSubFamilyFilters.size);
+    _updateSubFamilySelected();
+  }
+
+  // 2. Facet groups visible only if their sub-family is selected (or
+  //    if the selected sub-family set is empty — then show all groups
+  //    that are allowed by the Primary Family selection, if any).
+  let allowedGroupSubs;
+  if (activeSubFamilyFilters.size) {
+    allowedGroupSubs = new Set(activeSubFamilyFilters);
+  } else if (allowedSubs) {
+    allowedGroupSubs = allowedSubs; // fall back to Primary Family scope
+  } else {
+    allowedGroupSubs = null; // no constraint — show all groups
+  }
+  let facetDeactivated = false;
+  document.querySelectorAll('#facetGroups .facet-group').forEach(group => {
+    const sub = group.dataset.subfam;
+    const visible = !allowedGroupSubs || (sub && allowedGroupSubs.has(sub));
+    group.style.display = visible ? '' : 'none';
+    if (!visible) {
+      group.querySelectorAll('.odor-tag[data-facet]').forEach(chip => {
+        const f = chip.dataset.facet;
+        if (activeFacetFilters.has(f)) {
+          activeFacetFilters.delete(f);
+          chip.classList.remove('active');
+          facetDeactivated = true;
+        }
+      });
+    }
+  });
+  if (facetDeactivated) {
+    const allReset = document.querySelector('#facetFilters > div > .odor-tag:first-child');
+    if (allReset) allReset.classList.toggle('active', !activeFacetFilters.size);
+    _updateFacetSelected();
+  }
 }
 function toggleFacetChip(el) {
   const v = el.dataset.facet;
@@ -2398,6 +2484,9 @@ function resetAllFilters() {
   ['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','primaryFamSelected','subFamilySelected','facetSelected'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = 'All';
   });
+  // Cascade: clearing Primary/Sub-family selections restores the full
+  // set of visible Sub-family and Facet chips.
+  if (typeof _applyCascadingVisibility === 'function') _applyCascadingVisibility();
   _refreshPills();
 }
 
@@ -2504,11 +2593,12 @@ _buildPillFilter('source');
     for (const f of fc.facets || []) facetCounts[f] = (facetCounts[f] || 0) + 1;
   }
   const rendered = new Set();
-  const _renderGroup = (labelText, facets) => {
+  const _renderGroup = (labelText, facets, subKey) => {
     const live = facets.filter(f => facetCounts[f]);
     if (!live.length) return;
     const group = document.createElement('div');
     group.className = 'facet-group';
+    if (subKey) group.dataset.subfam = subKey;
     const label = document.createElement('div');
     label.className = 'facet-group-label';
     label.textContent = labelText;
@@ -2550,7 +2640,7 @@ _buildPillFilter('source');
     const extra = subKey && orphansBySubFamily[subKey] ? orphansBySubFamily[subKey] : [];
     if (extra.length) { delete orphansBySubFamily[subKey]; }
     const merged = extra.length ? [...g.facets, ...[...extra].sort()] : g.facets;
-    _renderGroup(g.label, merged);
+    _renderGroup(g.label, merged, subKey);
   }
   // Any remaining orphans whose sub-family has no explicit group — render
   // with the Edwards sub-family label (falls back to PRIMARY_FAMILY_LABELS
@@ -2559,7 +2649,7 @@ _buildPillFilter('source');
     if (!ofs.length) continue;
     ofs.sort();
     const label = SUB_FAMILY_LABELS[sub] || PRIMARY_FAMILY_LABELS[sub] || sub;
-    _renderGroup(label, ofs);
+    _renderGroup(label, ofs, sub);
   }
 }
 
@@ -2568,6 +2658,9 @@ _updateFilterVisibility();
 ['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','primaryFamSelected','subFamilySelected','facetSelected'].forEach(id => {
   const el = document.getElementById(id); if (el) el.textContent = 'All';
 });
+// Initial cascade pass: reconciles Sub-family + Facet chip visibility
+// with whatever Primary/Sub selections are in effect at boot.
+_applyCascadingVisibility();
 
 // ===== UI Event Bindings =====
 const input = document.getElementById("searchInput");
