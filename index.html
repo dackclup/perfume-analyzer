@@ -1119,6 +1119,26 @@ function facetLabel(t) {
   return String(t).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
+// Reverse index: legacy PRIMARY_FAMILIES token → Edwards 2021 sub-family key.
+// Built once from SUB_FAMILY_TO_LEGACY so the result-card PRIMARY row can
+// render the same vocabulary the user sees in the Sub-families filter drawer
+// (e.g. legacy 'woody' → 'Woods', legacy 'powdery' → 'Soft Floral'). Keeps
+// the underlying primaryFamilies / secondaryFamilies arrays untouched so
+// filter matching logic is unaffected.
+const LEGACY_TO_SUB_FAMILY = (() => {
+  const m = {};
+  for (const [sub, legacySet] of Object.entries(SUB_FAMILY_TO_LEGACY)) {
+    for (const tok of legacySet) m[tok] = sub;
+  }
+  return m;
+})();
+function primaryFamilyFilterLabel(legacyTok) {
+  if (!legacyTok) return '';
+  const sub = LEGACY_TO_SUB_FAMILY[legacyTok];
+  if (sub && SUB_FAMILY_LABELS[sub]) return SUB_FAMILY_LABELS[sub];
+  return PRIMARY_FAMILY_LABELS[legacyTok] || legacyTok;
+}
+
 // Facet tags = specific descriptors that live UNDER a primary family.
 // Each entry maps a normalized facet token (snake_case) to its parent
 // family from PRIMARY_FAMILIES. A material can carry multiple facets.
@@ -3839,7 +3859,7 @@ function renderResults() {
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
-          ${(displayTags.length || displayPrimaryFamilies.length || displaySecondaryFamilies.length || displayFacets.length)?`<div class="card-meta-row" style="margin:6px 0 10px 0">${displayTags.length?`<div class="tag-row"><span class="tag-axis-label">Use</span><span class="tag-chips">${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px;margin:0">${USE_LABELS[t]||t}</span>`).join('')}</span></div>`:''}${(displayPrimaryFamilies.length || displaySecondaryFamilies.length)?`<div class="tag-row"><span class="tag-axis-label">Primary</span><span class="tag-chips">${displayPrimaryFamilies.map(f=>`<span class="badge-primary">${PRIMARY_FAMILY_LABELS[f]||f}</span>`).join('')}${displaySecondaryFamilies.length?`<span class="badge-primary">${displaySecondaryFamilies.map(f=>PRIMARY_FAMILY_LABELS[f]||f).join(' • ')}</span>`:''}</span></div>`:''}${displayFacets.length?`<div class="tag-row"><span class="tag-axis-label">Facets</span><span class="tag-chips">${displayFacets.map(f=>`<span class="badge-facet">${facetLabel(f)}</span>`).join('')}</span></div>`:''}</div>`:""}
+          ${(displayTags.length || displayPrimaryFamilies.length || displaySecondaryFamilies.length || displayFacets.length)?`<div class="card-meta-row" style="margin:6px 0 10px 0">${displayTags.length?`<div class="tag-row"><span class="tag-axis-label">Use</span><span class="tag-chips">${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px;margin:0">${USE_LABELS[t]||t}</span>`).join('')}</span></div>`:''}${(displayPrimaryFamilies.length || displaySecondaryFamilies.length)?`<div class="tag-row"><span class="tag-axis-label">Primary</span><span class="tag-chips">${(() => { const seen=new Set(); const pri=[]; for (const f of displayPrimaryFamilies) { const lbl=primaryFamilyFilterLabel(f); if (!seen.has(lbl)) { seen.add(lbl); pri.push(lbl); } } const sec=[]; for (const f of displaySecondaryFamilies) { const lbl=primaryFamilyFilterLabel(f); if (!seen.has(lbl)) { seen.add(lbl); sec.push(lbl); } } return pri.map(l=>`<span class="badge-primary">${l}</span>`).join('') + (sec.length?`<span class="badge-primary">${sec.join(' • ')}</span>`:''); })()}</span></div>`:''}${displayFacets.length?`<div class="tag-row"><span class="tag-axis-label">Facets</span><span class="tag-chips">${displayFacets.map(f=>`<span class="badge-facet">${facetLabel(f)}</span>`).join('')}</span></div>`:''}</div>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" onerror="this.parentNode.style.display='none'"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
