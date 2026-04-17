@@ -798,6 +798,24 @@ html { scroll-behavior:smooth; }
   border-color: var(--bronze-600);
   color: var(--bronze-600);
 }
+.landing__transition {
+  max-width: 36rem;
+  margin: var(--space-7) auto 0;
+  padding-block-start: var(--space-6);
+  border-block-start: 1px solid var(--bronze-200);
+  text-align: center;
+}
+.landing__cta--secondary {
+  color: var(--ink-700);
+  border-color: var(--hairline);
+  background: transparent;
+}
+.landing__cta--secondary:hover,
+.landing__cta--secondary:focus-visible {
+  background: var(--ivory-100);
+  color: var(--ink-900);
+  border-color: var(--bronze-600);
+}
 </style>
 </head>
 <body>
@@ -842,6 +860,9 @@ html { scroll-behavior:smooth; }
       <li><button type="button" class="landing__chip" data-search="Cashmeran">Cashmeran</button></li>
     </ul>
   </section>
+  <div class="landing__transition">
+    <a class="landing__cta landing__cta--secondary" href="#main-content" data-i18n="ctaSecondary">Begin a search &darr;</a>
+  </div>
 </section>
 <div id="top"></div>
 <!-- SVG icon sprite (inline, no CDN, works over file://). Icons: Lucide (MIT). -->
