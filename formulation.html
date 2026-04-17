@@ -1525,7 +1525,7 @@ function renderMaterialList() {
 
   // Total — show % + total grams
   const rawPct = formulation.totalPct();
-  const pct = isNaN(rawPct) ? 0 : Math.round(rawPct * 10) / 10;
+  const pct = isNaN(rawPct) ? 0 : Math.round(rawPct * 100) / 100;
   const pctEl = document.getElementById('matTotalPct');
   function fmtAmt(v) { return v === 0 ? '0' : v < 0.001 ? v.toExponential(1) : v < 0.1 ? v.toFixed(3) : v < 1 ? v.toFixed(3) : v < 10 ? v.toFixed(2) : roundN(v, 1).toString(); }
   const fragVal = batchUnit === 'ml' ? fragGrams / 0.9 : fragGrams;
@@ -2692,7 +2692,7 @@ function renderOdorTab() {
   html += '<table class="data-table"><thead><tr><th>Material</th><th>Note</th><th>ODT (ppb)</th><th>OV</th><th>PSI</th><th>n</th><th>Data</th></tr></thead><tbody>';
   for (const r of ovTable) {
     const psiBar = '<div style="display:inline-block;width:' + Math.min(r.perceivedIntensity, 100) + 'px;height:8px;background:var(--accent);border-radius:4px;opacity:0.7"></div>';
-    const confDot = r.odt_confidence === 'high' ? 'high' : r.odt_confidence === 'low' ? 'med' : 'low';
+    const confDot = r.odt_confidence === 'high' ? 'high' : r.odt_confidence === 'medium' ? 'med' : 'low';
     html += '<tr>';
     html += '<td>' + escHtml(r.name) + '</td>';
     html += '<td>' + escHtml(r.note || '—') + '</td>';
@@ -3594,7 +3594,7 @@ document.getElementById('savedFormulas').addEventListener('change', () => {
     formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data || {} });
   }
   // Restore carriers
-  carrierMaterials.length = 0; lockedCarriers.clear();
+  carrierMaterials.length = 0; lockedCarriers.clear(); lockedMaterials.clear();
   if (Array.isArray(carriers)) {
     carriers.forEach(c => carrierMaterials.push({ cas: c.cas, name: c.name, pct: c.pct }));
   }
@@ -3623,14 +3623,14 @@ document.getElementById('btnDelete').addEventListener('click', () => {
   localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
   populateSavedList();
   formulation.materials = [];
-  carrierMaterials.length = 0; lockedCarriers.clear();
+  carrierMaterials.length = 0; lockedCarriers.clear(); lockedMaterials.clear();
   formulation.onChange();
 });
 
 document.getElementById('btnNew').addEventListener('click', () => {
   if ((formulation.materials.length || carrierMaterials.length) && !confirm('Clear current formulation?')) return;
   formulation.materials = [];
-  carrierMaterials.length = 0; lockedCarriers.clear();
+  carrierMaterials.length = 0; lockedCarriers.clear(); lockedMaterials.clear();
   document.getElementById('savedFormulas').value = '';
   formulation.onChange();
 });
@@ -3651,7 +3651,7 @@ document.getElementById('jsonFileInput').addEventListener('change', (e) => {
         alert('Invalid JSON: no materials array found.'); return;
       }
       formulation.materials = [];
-      carrierMaterials.length = 0; lockedCarriers.clear();
+      carrierMaterials.length = 0; lockedCarriers.clear(); lockedMaterials.clear();
       for (const m of data.materials) {
         if (!m.cas || !m.name) continue;
         const dbEntry = DB[m.cas];
@@ -3787,7 +3787,7 @@ function _applySnapshot(snapshot) {
     formulation.materials = snapshot;
   } else {
     formulation.materials = snapshot.materials || [];
-    carrierMaterials.length = 0; lockedCarriers.clear();
+    carrierMaterials.length = 0; lockedCarriers.clear(); lockedMaterials.clear();
     (snapshot.carriers || []).forEach(c => carrierMaterials.push({ cas: c.cas, name: c.name, pct: c.pct }));
   }
 }

@@ -1908,7 +1908,7 @@ const FILTER_INDEX = {};
     if (RE_NOTE_M.test(fc.noteLow)) _idx('note', 'middle', cas);
     if (RE_NOTE_B.test(fc.noteLow)) _idx('note', 'base', cas);
     for (const pf of fc.primaryFamilies || []) _idx('primaryFamily', pf, cas);
-    for (const sf of fc.secondaryFamilies || []) _idx('primaryFamily', sf, cas);
+    for (const sf of fc.secondaryFamilies || []) _idx('secondaryFamily', sf, cas);
     for (const f of fc.facets || []) _idx('facet', f, cas);
   }
 }
@@ -2220,7 +2220,6 @@ function _updateFacetSelected() {
 function togglePrimaryFamilyChip(el) {
   const v = el.dataset.edwards;
   if (!v) return;
-  const allBtn = document.querySelector('#primaryFamilyFilters .odor-tag.active[onclick*="clearPrimaryFamilyFiltersUI"]');
   if (activePrimaryFamilyFilters.has(v)) { activePrimaryFamilyFilters.delete(v); el.classList.remove('active'); }
   else { activePrimaryFamilyFilters.add(v); el.classList.add('active'); }
   // Toggle the "All" reset chip's .active state to mirror Set emptiness.
@@ -2484,7 +2483,7 @@ _buildPillFilter('source');
 
 _updateFilterVisibility();
 // Set initial "All" labels for every selected-axis indicator.
-['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','primaryFamSelected','facetSelected'].forEach(id => {
+['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','primaryFamSelected','subFamilySelected','facetSelected'].forEach(id => {
   const el = document.getElementById(id); if (el) el.textContent = 'All';
 });
 
@@ -2842,10 +2841,6 @@ const GHS_PICTOGRAMS = {
   'GHS08': {name:'Health Hazard', codes:['H304','H334','H340','H341','H350','H351','H360','H361','H370','H371','H372','H373']},
   'GHS09': {name:'Environmental', codes:['H400','H401','H410','H411','H412','H413']},
 };
-const _hCodeToGHS = {};
-for (const [ghs, info] of Object.entries(GHS_PICTOGRAMS)) {
-  info.codes.forEach(h => { if (!_hCodeToGHS[h]) _hCodeToGHS[h] = []; _hCodeToGHS[h].push(ghs); });
-}
 // Extract GHS codes from PUG View Markup (pictogram image URLs)
 function _extractGHSFromMarkup(sections) {
   const codes = new Set();
@@ -4175,13 +4170,14 @@ async function downloadJSON() {
   function odorStrengthScale(s) {
     if (!s) return null;
     const sl = s.toLowerCase();
-    if (sl.includes('none')) return 0;
+    if (sl.includes('extremely high')) return 5;
     if (sl.includes('very high')) return 5;
-    if (sl.includes('high')) return 4;
     if (sl.includes('medium to high')) return 3.5;
-    if (sl.includes('medium')) return 3;
+    if (sl.includes('high')) return 4;
     if (sl.includes('low to medium')) return 2;
+    if (sl.includes('medium')) return 3;
     if (sl.includes('low')) return 1;
+    if (sl.includes('none')) return 0;
     return null;
   }
   // One-hot note classification
@@ -4190,7 +4186,7 @@ async function downloadJSON() {
     const sl = s.toLowerCase();
     return {
       is_top: sl.includes('top'),
-      is_middle: sl.includes('middle'),
+      is_middle: sl.includes('middle') || sl.includes('mid') || sl.includes('heart'),
       is_base: sl.includes('base')
     };
   }

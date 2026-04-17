@@ -89,18 +89,21 @@ function parseIFRA51(s) {
   return Object.keys(limits).length ? limits : null;
 }
 
-// Ordinal scale for odor strength text → 0-5 number
+// Ordinal scale for odor strength text → 0-5 number.
+// Order matters: composite strings like "medium to high" must be tested
+// before their substrings ("high", "medium") so they don't short-circuit
+// into the wrong bucket.
 function odorStrengthScale(s) {
   if (!s) return null;
   const sl = s.toLowerCase();
   if (sl.includes('extremely high')) return 5;
-  if (sl.includes('very high')) return 5;
-  if (sl.includes('high'))        return 4;
+  if (sl.includes('very high'))      return 5;
   if (sl.includes('medium to high')) return 3.5;
-  if (sl.includes('medium'))      return 3;
-  if (sl.includes('low to medium')) return 2;
-  if (sl.includes('low'))         return 1;
-  if (sl.includes('none'))        return 0;
+  if (sl.includes('high'))           return 4;
+  if (sl.includes('low to medium'))  return 2;
+  if (sl.includes('medium'))         return 3;
+  if (sl.includes('low'))            return 1;
+  if (sl.includes('none'))           return 0;
   return null;
 }
 
