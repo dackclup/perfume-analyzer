@@ -602,10 +602,101 @@ html { scroll-behavior:smooth; }
   --glass-edge: 1px solid rgba(255,255,255,0.45);
   --font-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
 }
+.landing {
+  background: var(--ivory-50);
+  color: var(--ink-700);
+  padding-inline: clamp(1rem, 5vw, 1.75rem);
+  padding-block: clamp(2rem, 6vw, 4rem);
+  margin-block-end: var(--space-6);
+}
+.landing__hero {
+  min-height: 92svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-4);
+  padding-block: var(--space-6);
+}
+.landing__eyebrow {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(0.85rem, 2.4vw, 1rem);
+  letter-spacing: 0.18em;
+  color: var(--bronze-600);
+  text-transform: uppercase;
+  margin: 0;
+}
+.landing__wordmark {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(2.4rem, 11vw, 5.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--ink-900);
+  margin: 0;
+}
+.landing__tagline {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1rem, 3.6vw, 1.35rem);
+  color: var(--ink-500);
+  max-width: 32ch;
+  margin: 0;
+}
+.landing__caption {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+  margin: 0;
+}
+.landing__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  min-height: 44px;
+  width: 100%;
+  max-width: 22rem;
+  padding: 0.9rem 1.75rem;
+  margin-block-start: var(--space-3);
+  background: transparent;
+  color: var(--ink-900);
+  border: 1px solid var(--bronze-600);
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.landing__cta:hover,
+.landing__cta:focus-visible {
+  background: var(--bronze-600);
+  color: var(--ivory-50);
+}
+@media (min-width: 1024px) {
+  .landing { padding-inline: clamp(2rem, 6vw, 4rem); }
+  .landing__hero { min-height: 85vh; }
+  .landing__cta { width: auto; }
+}
 </style>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>
+<section class="landing" aria-labelledby="maisonHeading">
+  <div class="landing__hero">
+    <p class="landing__eyebrow" data-i18n="brandEyebrow">Maison</p>
+    <h1 id="maisonHeading" class="landing__wordmark" data-i18n="brand">Maison S&egrave;ve</h1>
+    <p class="landing__tagline" data-i18n="tagline">The grammar of scent.</p>
+    <p class="landing__caption" data-i18n="archiveCaption">An archive of perfumery raw materials</p>
+    <a class="landing__cta" href="#main-content" data-i18n="ctaPrimary">Enter the archive &darr;</a>
+  </div>
+</section>
 <div id="top"></div>
 <!-- SVG icon sprite (inline, no CDN, works over file://). Icons: Lucide (MIT). -->
 <svg class="svg-sprite" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
