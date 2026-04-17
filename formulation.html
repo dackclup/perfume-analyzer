@@ -172,8 +172,10 @@ hr { border:none; border-top:1px solid var(--border); margin:12px 0; }
 .control-label output { color:var(--accent); font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:0.95em; }
 select, input[type="range"] { width:100%; }
 select { padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); color:var(--text); font-family:inherit; font-size:0.85em; }
-input[type="range"] { -webkit-appearance:none; height:6px; border-radius:3px; background:var(--border); outline:none; cursor:pointer; }
+input[type="range"] { -webkit-appearance:none; appearance:none; height:6px; border-radius:3px; background:var(--border); outline:none; cursor:pointer; }
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent); cursor:pointer; }
+input[type="range"]::-moz-range-track { height:6px; border-radius:3px; background:var(--border); border:none; }
+input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:50%; background:var(--accent); cursor:pointer; border:none; }
 
 /* Material List */
 .mat-list { margin-top:12px; }
@@ -275,7 +277,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px;
 .modal { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; width:90%; max-width:480px; max-height:70vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.2); }
 .modal-header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
 .modal-header h3 { font-size:0.95em; font-weight:600; }
-.modal-close { background:none; border:none; font-size:1.2em; cursor:pointer; color:var(--text2); padding:4px; }
+.modal-close { background:none; border:none; font-size:1.2em; cursor:pointer; color:var(--text2); padding:8px 10px; min-width:32px; min-height:32px; line-height:1; border-radius:4px; }
 .modal-close:hover { color:var(--text); }
 .modal-body { padding:12px 16px; overflow-y:auto; flex:1; }
 .modal-search { width:100%; padding:10px 12px; border:2px solid var(--border); border-radius:6px; font-size:0.9em; background:var(--bg2); color:var(--text); outline:none; font-family:inherit; margin-bottom:8px; }
@@ -915,8 +917,6 @@ const LANG_FORM = {
     odorMap: 'Odor Map',
     generateBrief: 'Generate from Brief',
     compare: 'Compare',
-    undo: 'Undo',
-    redo: 'Redo',
   },
   th: {
     title: '\u0E2B\u0E49\u0E2D\u0E07\u0E1B\u0E0F\u0E34\u0E1A\u0E31\u0E15\u0E34\u0E01\u0E32\u0E23\u0E1B\u0E23\u0E38\u0E07\u0E19\u0E49\u0E33\u0E2B\u0E2D\u0E21',
@@ -993,8 +993,6 @@ const LANG_FORM = {
     odorMap: '\u0E41\u0E1C\u0E19\u0E17\u0E35\u0E48\u0E01\u0E25\u0E34\u0E48\u0E19',
     generateBrief: '\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E08\u0E32\u0E01\u0E42\u0E08\u0E17\u0E22\u0E4C',
     compare: '\u0E40\u0E1B\u0E23\u0E35\u0E22\u0E1A\u0E40\u0E17\u0E35\u0E22\u0E1A',
-    undo: '\u0E22\u0E49\u0E2D\u0E19\u0E01\u0E25\u0E31\u0E1A',
-    redo: '\u0E17\u0E33\u0E0B\u0E49\u0E33',
   }
 };
 let _lang = localStorage.getItem('perfume_lang') || 'en';
@@ -1895,9 +1893,9 @@ function importFromAnalyzer() {
       if (formulation.addMaterial(item.cas, item.name, 10, item)) added++;
     }
     if (added) {
-      alert(`Imported ${added} material(s).`);
+      showToast({ message: `Imported ${added} material(s)`, variant: 'success' });
     } else {
-      alert('All materials are already in the formulation.');
+      showToast({ message: 'All materials are already in the formulation', variant: 'info' });
     }
   } catch (e) {
     console.error('importFromAnalyzer:', e);
@@ -3576,7 +3574,7 @@ document.getElementById('btnSave').addEventListener('click', () => {
       formula.currentVersion = formula.versions.length - 1;
       if (!saveAll(saved)) return;
       populateSavedList();
-      alert('Saved version ' + formula.versions.length + ' of "' + formula.name + '"');
+      showToast({ message: 'Saved version ' + formula.versions.length + ' of "' + formula.name + '"', variant: 'success' });
       return;
     }
   }
@@ -3591,7 +3589,7 @@ document.getElementById('btnSave').addEventListener('click', () => {
   });
   if (!saveAll(saved)) return;
   populateSavedList();
-  alert('Saved "' + name + '"!');
+  showToast({ message: 'Saved "' + name + '"', variant: 'success' });
 });
 
 document.getElementById('savedFormulas').addEventListener('change', () => {
@@ -3706,7 +3704,7 @@ document.getElementById('jsonFileInput').addEventListener('change', (e) => {
         }
       }
       formulation.onChange();
-      alert('Loaded ' + formulation.materials.length + ' material(s) from JSON.');
+      showToast({ message: 'Loaded ' + formulation.materials.length + ' material(s) from JSON', variant: 'success' });
     } catch (err) {
       alert('Failed to parse JSON: ' + err.message);
     }
