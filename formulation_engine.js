@@ -58,9 +58,9 @@ function _materialsKey(materials) {
 
 // ─────────────────────────────────────────────────────────────
 // SHARED UTILITIES
-// Duplicated from index.html (lines 3589-3694) to keep the
-// formulation page self-contained without refactoring the
-// existing single-file app.
+// Kept in sync with the parse/classify helpers in index.html so the
+// formulation page can be loaded standalone without pulling in the
+// materials-browser script bundle.
 // ─────────────────────────────────────────────────────────────
 
 // Gas constant (J / mol·K)
@@ -114,18 +114,6 @@ function noteOneHot(s) {
     is_base:   sl.includes('base'),
   };
 }
-
-// Unit conversion: text → degrees Celsius
-
-// Unit conversion: text → mmHg
-
-// Unit conversion: text → g/cm³
-
-// Parse multiple values with a parser function, return array
-
-// Median of a numeric array
-
-// Parse hours from text like "~2 hours", "~400 hours", "~48 hours"
 
 // Classify note text into canonical tier(s)
 function classifyNoteTier(note) {
@@ -1098,9 +1086,10 @@ function _hillClimbFitness(pctsIn, materials, unlockedIdx, ifraMaxes, opts, iter
     // Move B — pairwise transfer (i → j). Skip early when few unlocked.
     if (unlockedIdx.length >= 3 && iter % 2 === 0) {
       // Only try a subset of pairs to keep per-iter cost bounded
+      const stride = Math.max(1, unlockedIdx.length - 1);
       for (let a = 0; a < unlockedIdx.length; a++) {
         const i = unlockedIdx[a];
-        const j = unlockedIdx[(a + 1 + (iter % (unlockedIdx.length - 1))) % unlockedIdx.length];
+        const j = unlockedIdx[(a + 1 + (iter % stride)) % unlockedIdx.length];
         if (i === j) continue;
         const k = delta; // transfer amount
         if (pcts[i] - k < 0 || pcts[j] + k > ifraMaxes[j]) continue;
@@ -2656,8 +2645,8 @@ function generateFromBrief(brief, db, graph) {
     });
     const fragPct = brief.fragPct || 18;
     const ifraMaxes = fullMats.map(m => {
-      const ifra51 = parseIFRA51(m.data.usage_levels);
-      const range = parseUsageRange(m.data.usage_levels);
+      const ifra51 = parseIFRA51(m.data?.usage_levels);
+      const range = parseUsageRange(m.data?.usage_levels);
       let mp = range.max != null ? range.max : 100;
       if (ifra51) for (const v of Object.values(ifra51)) if (v < mp) mp = v;
       return mp / (fragPct / 100);
