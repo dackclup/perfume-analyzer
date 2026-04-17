@@ -1,50 +1,21 @@
 // ===== Obsidian Knowledge Base Export =====
-// Build a well-classified Obsidian vault that fuses three organisation
-// methodologies into one structure:
+// Build a PARA + Johnny.Decimal + Zettelkasten Obsidian vault:
 //
-//   PARA (Tiago Forte)      — top-level folders by actionability
-//   Johnny.Decimal          — numeric IDs on every folder for stable sort
-//   Zettelkasten            — atomic notes with a persistent CAS-based id
-//
-// Vault layout:
 //   PerfumeVault/
-//   ├── 1_Projects/                        ← active formulations (drop in)
-//   │   └── 10-19 Active Formulations/
-//   │       ├── 10 Fine Fragrance/
-//   │       ├── 11 Personal Care/
-//   │       ├── 12 Home Care/
-//   │       └── 13 Experiments/
-//   ├── 2_Areas/                           ← ongoing monitoring (Dataview)
-//   │   └── 20-29 Safety & Compliance/
-//   │       ├── 20 IFRA Compliance.md
-//   │       ├── 21 Allergen Monitoring.md
-//   │       ├── 22 Restricted Materials.md
-//   │       ├── 23 Banned Materials.md
-//   │       └── 24 Phototoxic Materials.md
-//   ├── 3_Resources/                       ← reference knowledge base
-//   │   ├── 40-49 Materials/               ← routed by source + type
-//   │   │   ├── 40 Naturals/{sub}/…
-//   │   │   ├── 41 Synthetics/{sub}/…
-//   │   │   ├── 42 Semi-synthetics/…
-//   │   │   └── 43 Biotech/…
-//   │   ├── 50-59 Reference/
-//   │   │   ├── 50 IFRA Categories.md
-//   │   │   ├── 51 EU 26 Allergens.md
-//   │   │   └── 52 Fragrance Wheel.md
-//   │   └── 60-69 MOC/                     ← Map-of-Content per filter axis
-//   │       ├── 60 Note Groups/
-//   │       ├── 61 Families/  … 69 Regulatory/
-//   └── 4_Archives/                        ← archived formulations
-//       └── 90-99 Completed Formulations/
+//   ├── 1_Projects/10-19 Active Formulations/{10..13}/   ← formulations
+//   ├── 2_Areas/20-29 Safety & Compliance/               ← Dataview dashboards
+//   ├── 3_Resources/
+//   │   ├── 40-49 Materials/{40..43}/{sub}/              ← routed by source+type
+//   │   └── 60-69 MOC/{60..69}/                          ← Map-of-Content per axis
+//   └── 4_Archives/                                      ← archived work
 //
-// Zettelkasten layer: every material carries a CAS-based `id`
-// (e.g. `78-70-6-linalool`) in frontmatter. Filenames are Johnny.Decimal
-// style: `{CAS} {Canonical Name}.md`. Body wikilinks stay basename-only
-// (`[[Linalool]]`) and resolve through the `aliases` frontmatter key —
-// nothing breaks if a material is moved between sub-folders.
+// Every material carries a CAS-based Zettelkasten `id`
+// (e.g. `78-70-6-linalool`) in frontmatter and a JD filename
+// `{CAS} {Name}.md`. Body wikilinks stay basename-only (`[[Linalool]]`)
+// and resolve through the `aliases` frontmatter key, so moving files
+// between sub-folders never breaks existing links.
 //
-// Depends on:
-//   - JSZip (window.JSZip, loaded via CDN) for the ZIP path only.
+// Depends on JSZip (window.JSZip, loaded via CDN).
 
 (function () {
   'use strict';
@@ -168,12 +139,8 @@
 
   // ---- PARA + Johnny.Decimal structure ---------------------------------
 
-  // Root folder inside the ZIP. Users extract the ZIP into their vault
-  // (or drag-drop it alongside their existing structure).
   const VAULT_ROOT = 'PerfumeVault';
 
-  // PARA top-level folders. The numeric prefix keeps them ordered in
-  // Obsidian's file explorer (1_ < 2_ < 3_ < 4_).
   const PARA = {
     projects:  '1_Projects',
     areas:     '2_Areas',
@@ -181,21 +148,20 @@
     archives:  '4_Archives',
   };
 
-  // Johnny.Decimal routing for materials. Driven by `classification.source`
-  // first, then `classification.material_type` for the sub-bucket. The
-  // `sub` map keys match the material_type slugs used by DB records.
+  // Johnny.Decimal routing for materials — keyed by classification.source,
+  // then by material_type for the sub-bucket.
   const JD_MATERIALS_ROOT = '40-49 Materials';
   const JD_MATERIALS = {
     natural: {
       folder: '40 Naturals',
       fallback: '40.00 Uncategorized Naturals',
       sub: {
-        essential_oil: '40.01 Essential Oils',
-        absolute:      '40.02 Absolutes',
-        resinoid:      '40.03 Resinoids',
-        co2_extract:   '40.04 CO2 Extracts',
-        tincture:      '40.05 Tinctures',
-        oleoresin:     '40.06 Oleoresins',
+        essential_oil:   '40.01 Essential Oils',
+        absolute:        '40.02 Absolutes',
+        resinoid:        '40.03 Resinoids',
+        co2_extract:     '40.04 CO2 Extracts',
+        tincture:        '40.05 Tinctures',
+        oleoresin:       '40.06 Oleoresins',
         natural_extract: '40.07 Other Extracts',
       },
     },
@@ -203,32 +169,18 @@
       folder: '41 Synthetics',
       fallback: '41.00 Uncategorized Synthetics',
       sub: {
-        aroma_chemical: '41.01 Aroma Chemicals',
-        captive:        '41.02 Captives',
-        isolate:        '41.03 Isolates',
-        single_molecule:'41.01 Aroma Chemicals',
+        aroma_chemical:  '41.01 Aroma Chemicals',
+        captive:         '41.02 Captives',
+        isolate:         '41.03 Isolates',
+        single_molecule: '41.01 Aroma Chemicals',
       },
     },
-    semi_synthetic: {
-      folder: '42 Semi-synthetics',
-      fallback: '42.00 Semi-synthetics',
-      sub: {},
-    },
-    biotech: {
-      folder: '43 Biotech',
-      fallback: '43.00 Biotech',
-      sub: {},
-    },
-    uncategorized: {
-      folder: '49 Uncategorized',
-      fallback: '49.00 Uncategorized',
-      sub: {},
-    },
+    semi_synthetic: { folder: '42 Semi-synthetics', fallback: '42.00 Semi-synthetics', sub: {} },
+    biotech:        { folder: '43 Biotech',         fallback: '43.00 Biotech',         sub: {} },
+    uncategorized:  { folder: '49 Uncategorized',   fallback: '49.00 Uncategorized',   sub: {} },
   };
 
-  // Areas pages are monitoring dashboards — Dataview queries over the
-  // materials tagged with the relevant regulatory slug. These live at
-  // 2_Areas/20-29 Safety & Compliance/*.md.
+  // Areas monitoring dashboards — Dataview queries over regulatory tags.
   const AREAS_FOLDER = '20-29 Safety & Compliance';
   const AREAS_PAGES = [
     { file: '20 IFRA Compliance.md',      tag: 'regulatory/restricted',  title: 'IFRA Compliance',       desc: 'Materials with IFRA usage-level restrictions. Review before raising concentrations.' },
@@ -236,46 +188,6 @@
     { file: '22 Restricted Materials.md', tag: 'regulatory/restricted',  title: 'Restricted Materials',  desc: 'Materials carrying an explicit restriction flag (IFRA, EU, regional).' },
     { file: '23 Banned Materials.md',     tag: 'regulatory/banned',      title: 'Banned Materials',      desc: 'Materials banned for fragrance use — remove from active formulations.' },
     { file: '24 Phototoxic Materials.md', tag: 'regulatory/phototoxic',  title: 'Phototoxic Materials',  desc: 'Bergapten / furocoumarin-bearing materials requiring photo-safety review.' },
-  ];
-
-  // Static reference notes bundled alongside materials. Content is
-  // generated from the constant tables so the vault stays self-contained.
-  const REFERENCE_FOLDER = '50-59 Reference';
-
-  // IFRA product categories used by the formulation lab. Mapping keeps
-  // the vault useful offline even without the app.
-  const IFRA_CATEGORY_SUMMARY = [
-    ['1',  'Lip products (IFRA Cat. 1)'],
-    ['2',  'Deodorants, body sprays (Cat. 2)'],
-    ['3',  'Hydroalcoholic products applied to shaved skin (Cat. 3)'],
-    ['4',  'Hydroalcoholic fine fragrance — EDP/EDT (Cat. 4)'],
-    ['5A', 'Body lotion, body butter (Cat. 5A)'],
-    ['5B', 'Face moisturiser (Cat. 5B)'],
-    ['5C', 'Hand cream (Cat. 5C)'],
-    ['5D', 'Baby creams, oils, powders (Cat. 5D)'],
-    ['6',  'Mouthwash, toothpaste (Cat. 6)'],
-    ['7A', 'Hair styling, leave-on (Cat. 7A)'],
-    ['7B', 'Deodorant/antiperspirant non-spray (Cat. 7B)'],
-    ['8',  'Products with significant anogenital exposure (Cat. 8)'],
-    ['9',  'Rinse-off body wash, shampoo, conditioner, soap (Cat. 9)'],
-    ['10A','Household cleaners with hand contact (Cat. 10A)'],
-    ['10B','Household cleaners without hand contact (Cat. 10B)'],
-    ['11A','Non-skin/incidental-skin products — candles (Cat. 11A)'],
-    ['11B','Household care — laundry softener sheets (Cat. 11B)'],
-  ];
-
-  // EU declared allergens — the "EU 26" plus the 2023 additions.
-  // This is a companion reference for the Allergen Monitoring area page.
-  const EU_ALLERGENS = [
-    'Amyl cinnamal', 'Amylcinnamyl alcohol', 'Anise alcohol', 'Benzyl alcohol',
-    'Benzyl benzoate', 'Benzyl cinnamate', 'Benzyl salicylate', 'Cinnamal',
-    'Cinnamyl alcohol', 'Citral', 'Citronellol', 'Coumarin', 'Eugenol',
-    'Farnesol', 'Geraniol', 'Hexyl cinnamal', 'Hydroxycitronellal',
-    'Isoeugenol', 'Limonene', 'Linalool', 'Methyl 2-octynoate',
-    '(alpha-) Iso-methyl ionone', 'Evernia prunastri (Oakmoss) extract',
-    'Evernia furfuracea (Treemoss) extract',
-    'Butylphenyl methylpropional (Lilial — banned since 2022)',
-    'Hydroxyisohexyl 3-cyclohexene carboxaldehyde (HICC/Lyral — banned)',
   ];
 
   // ---- Note Group (Edwards Fragrance Wheel, top tier) ------------------
@@ -379,7 +291,7 @@
       '  note AS Note,',
       '  source AS Source',
       `FROM #${tag}`,
-      'WHERE type != "moc" AND type != "formulation"',
+      'WHERE type != "moc" AND type != "formulation" AND type != "hub"',
       'SORT file.name ASC',
       '```',
       '',
@@ -424,6 +336,7 @@
   // menu); `singular` is the per-value subtitle ("Floral (Primary
   // Family)").
   const AXIS_META = {
+    notegroup:  { title: 'Note Groups',        singular: 'Note Group',       emoji: '🎯', desc: 'Edwards Fragrance Wheel — four core groups plus three transition zones.' },
     family:     { title: 'Primary Families',   singular: 'Primary Family',   emoji: '👃', desc: 'Primary olfactory family — the dominant scent family a material belongs to.' },
     subfamily:  { title: 'Sub-families',       singular: 'Sub-family',       emoji: '🌿', desc: 'Secondary olfactory families — supporting scent families a material exhibits alongside its primary.' },
     facet:      { title: 'Facets',             singular: 'Facet',            emoji: '🎨', desc: 'Fine-grained odor descriptors — the specific notes and nuances reviewers pick out.' },
@@ -528,7 +441,7 @@
       '  tenacity AS Tenacity,',
       '  source AS Source',
       `FROM #${tag}`,
-      'WHERE type != "moc" AND type != "formulation"',
+      'WHERE type != "moc" AND type != "formulation" AND type != "hub"',
       'SORT file.name ASC',
       '```',
       '',
@@ -537,61 +450,125 @@
     ].join('\n');
   }
 
+  // ---- Hub / Index pages ------------------------------------------------
+  // Hub pages give each PARA/JD folder a "home" note with a Dataview
+  // overview. They use the same basename as the containing folder so
+  // Obsidian's "folder as note" convention surfaces them automatically.
+
+  // Per-axis hub listing every MOC value under the axis, with material
+  // counts via backlinks.
+  function axisHubPage(axis) {
+    const meta = AXIS_META[axis] || { title: axis, emoji: '', desc: '' };
+    const folder = JD_MOC[axis];
+    return [
+      '---',
+      'type: hub',
+      'para: resources',
+      'jd: ' + yamlScalar(PARA.resources + '/' + MOC_ROOT + '/' + folder),
+      'title: ' + yamlScalar(folder),
+      'axis: ' + yamlScalar(axis),
+      'tags: [hub/moc, hub/' + axis + ']',
+      '---',
+      '',
+      `# ${meta.emoji} ${folder}`,
+      '',
+      meta.desc,
+      '',
+      '## 📇 All values',
+      '',
+      '```dataview',
+      'TABLE WITHOUT ID',
+      '  file.link AS Value,',
+      '  length(file.inlinks) AS "Materials"',
+      'FROM #moc/' + axis,
+      'WHERE type = "moc"',
+      'SORT file.name ASC',
+      '```',
+      '',
+    ].join('\n');
+  }
+
+  // Materials hub — source / material-type breakdown with counts.
+  function materialsHubPage() {
+    return [
+      '---',
+      'type: hub',
+      'para: resources',
+      'jd: ' + yamlScalar(PARA.resources + '/' + JD_MATERIALS_ROOT),
+      'title: ' + yamlScalar(JD_MATERIALS_ROOT),
+      'tags: [hub/materials]',
+      '---',
+      '',
+      '# 🧪 ' + JD_MATERIALS_ROOT,
+      '',
+      'Full material library — routed by `source` then `material_type`.',
+      '',
+      '## By source',
+      '',
+      '```dataview',
+      'TABLE WITHOUT ID source AS Source, length(rows) AS Count',
+      'FROM "' + PARA.resources + '/' + JD_MATERIALS_ROOT + '"',
+      'WHERE type != "hub"',
+      'GROUP BY source',
+      'SORT source ASC',
+      '```',
+      '',
+      '## By material type',
+      '',
+      '```dataview',
+      'TABLE WITHOUT ID type AS "Type", length(rows) AS Count',
+      'FROM "' + PARA.resources + '/' + JD_MATERIALS_ROOT + '"',
+      'WHERE type != "hub"',
+      'GROUP BY type',
+      'SORT type ASC',
+      '```',
+      '',
+    ].join('\n');
+  }
+
   // ---- Zettelkasten ID + PARA/JD path builders -------------------------
 
-  // CAS-based atomic-note id. Stable across exports (same material
-  // always gets the same id), so incremental imports into Obsidian
-  // never create duplicates. Falls back to a slug of the canonical
-  // name when CAS is missing.
+  // CAS-based atomic-note id — stable across exports so incremental
+  // imports never create duplicates.
   function zettelId(record) {
     const r = record || {};
     const cas = r.identifiers && r.identifiers.cas ? String(r.identifiers.cas).trim() : '';
     const name = (r.names && r.names.canonical) ? String(r.names.canonical).trim() : '';
-    const slug = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     if (cas && slug) return cas + '-' + slug;
-    if (cas) return cas;
-    if (slug) return slug;
-    return 'untitled';
+    return cas || slug || 'untitled';
   }
 
-  // Johnny.Decimal filename for a material: "{CAS} {Name}" when CAS is
-  // available, else just "{Name}". Keeps the extension off — caller
-  // appends ".md". The leading CAS doubles as an alphabetical sort key
-  // when browsing sibling files.
+  // Johnny.Decimal filename "{CAS} {Name}" — CAS prefix doubles as
+  // alphabetical sort key. Caller appends ".md".
   function materialFileName(record) {
     const r = record || {};
     const name = safeFileName((r.names && r.names.canonical) || 'Untitled');
     const cas = r.identifiers && r.identifiers.cas ? String(r.identifiers.cas).trim() : '';
-    if (!cas) return name;
-    return `${safeFileName(cas)} ${name}`;
+    return cas ? `${safeFileName(cas)} ${name}` : name;
   }
 
-  // Full vault-relative folder path for a material, routed by
-  // source + material_type. Returns a path like
-  // "3_Resources/40-49 Materials/40 Naturals/40.01 Essential Oils".
+  // Vault-relative folder for a material, routed by source + material_type.
   function materialFolder(record) {
     const cls = (record && record.classification) ? record.classification : {};
     const sourceKey = String(cls.source || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
     const typeKey   = String(cls.material_type || cls.materialType || '').toLowerCase();
-    let bucket = JD_MATERIALS[sourceKey];
-    if (!bucket) bucket = JD_MATERIALS.uncategorized;
+    const bucket = JD_MATERIALS[sourceKey] || JD_MATERIALS.uncategorized;
     const subFolder = (typeKey && bucket.sub[typeKey]) ? bucket.sub[typeKey] : bucket.fallback;
     return `${PARA.resources}/${JD_MATERIALS_ROOT}/${bucket.folder}/${subFolder}`;
   }
 
-  // Areas page path (vault-relative, no .md).
-  function areaPagePath(page) {
-    const base = String(page.file || '').replace(/\.md$/i, '');
-    return `${PARA.areas}/${AREAS_FOLDER}/${base}`;
-  }
-
-  // Render a single Area monitoring page. Content is a Dataview query
-  // over the tag the page is responsible for, so the list auto-updates
-  // as new materials are imported.
+  // Dataview-backed Area monitoring page for one regulatory tag.
+  // Cross-links back to the matching MOC regulatory page so the graph
+  // view shows Area → MOC → Material as a three-hop trail.
   function areaMonitoringPage(page) {
+    const regValue = page.tag.split('/')[1] || '';
+    const mocRegPath = mocPath('regulatory', regValue);
+    // Callout severity matches the regulatory level.
+    const calloutType = /banned/i.test(regValue)     ? 'danger'
+                      : /phototoxic/i.test(regValue) ? 'bug'
+                      : /allergen|sensit/i.test(regValue) ? 'warning'
+                      :                                     'warning';
     return [
       '---',
       'type: area',
@@ -599,12 +576,16 @@
       'jd: ' + yamlScalar(PARA.areas + '/' + AREAS_FOLDER),
       'title: ' + yamlScalar(page.title),
       'monitors_tag: ' + yamlScalar('#' + page.tag),
+      'see_also: ' + yamlScalar(mocRegPath),
       'tags: [area/safety, area/compliance]',
       '---',
       '',
       '# ' + page.title,
       '',
-      page.desc,
+      `> [!${calloutType}] ${page.title}`,
+      '> ' + page.desc,
+      '> ',
+      `> **MOC:** [[${mocRegPath}|${mocDisplay(regValue)}]]`,
       '',
       '## 🧪 Materials currently flagged',
       '',
@@ -616,114 +597,18 @@
       '  odor_strength AS Strength,',
       '  tenacity AS Tenacity',
       'FROM #' + page.tag,
-      'WHERE type != "moc" AND type != "formulation" AND type != "area"',
+      'WHERE type != "moc" AND type != "formulation" AND type != "area" AND type != "hub"',
       'SORT file.name ASC',
       '```',
       '',
       '> Dataview plugin ไม่พร้อม → ดู **Backlinks panel** ทางขวาแทน',
       '',
-    ].join('\n');
-  }
-
-  // Static reference pages bundled into 3_Resources/50-59 Reference/.
-  function ifraCategoriesPage() {
-    const lines = [
-      '---',
-      'type: reference',
-      'para: resources',
-      'jd: ' + yamlScalar(PARA.resources + '/' + REFERENCE_FOLDER),
-      'title: IFRA Categories',
-      'tags: [reference/ifra]',
-      '---',
+      '## 📇 All regulatory flags',
       '',
-      '# IFRA Product Categories',
-      '',
-      'Reference list of IFRA product categories used by the formulation lab.',
-      'Limits per material are defined in the material note\'s `## ⚠️ Regulatory` section.',
-      '',
-      '| Category | Description |',
-      '|---|---|',
-    ];
-    for (const [id, name] of IFRA_CATEGORY_SUMMARY) {
-      lines.push(`| **${id}** | ${name} |`);
-    }
-    lines.push('');
-    return lines.join('\n');
-  }
-
-  function euAllergensPage() {
-    const lines = [
-      '---',
-      'type: reference',
-      'para: resources',
-      'jd: ' + yamlScalar(PARA.resources + '/' + REFERENCE_FOLDER),
-      'title: EU 26 Allergens',
-      'tags: [reference/allergens]',
-      '---',
-      '',
-      '# EU Declared Fragrance Allergens',
-      '',
-      'The original "EU 26" plus the 2023 additions. Cross-reference materials carrying `#regulatory/allergen`.',
-      '',
-    ];
-    for (const a of EU_ALLERGENS) lines.push('- ' + a);
-    lines.push('');
-    lines.push('> See also: [[21 Allergen Monitoring]] for the live Dataview dashboard.');
-    lines.push('');
-    return lines.join('\n');
-  }
-
-  function fragranceWheelPage() {
-    const lines = [
-      '---',
-      'type: reference',
-      'para: resources',
-      'jd: ' + yamlScalar(PARA.resources + '/' + REFERENCE_FOLDER),
-      'title: Fragrance Wheel',
-      'tags: [reference/fragrance-wheel]',
-      '---',
-      '',
-      '# Edwards Fragrance Wheel',
-      '',
-      'Seven Note Groups are emitted into `60-69 MOC/60 Note Groups/` — four core groups plus three transition zones:',
-      '',
-    ];
-    for (const g of NOTE_GROUPS) {
-      const meta = NOTE_GROUP_META[g] || { emoji: '', desc: '' };
-      lines.push(`- ${meta.emoji} **[[${g}]]** — ${meta.desc}`);
-    }
-    lines.push('');
-    return lines.join('\n');
-  }
-
-  function vaultReadmePage() {
-    return [
-      '---',
-      'type: readme',
-      'title: Perfume Vault',
-      'tags: [readme]',
-      '---',
-      '',
-      '# 🌸 Perfume Vault',
-      '',
-      'Hybrid knowledge base built with **PARA** + **Johnny.Decimal** + **Zettelkasten**.',
-      '',
-      '## Layout',
-      '',
-      '- `1_Projects/` — active formulations you\'re developing',
-      '- `2_Areas/` — ongoing monitoring (IFRA, allergen, banned lists)',
-      '- `3_Resources/` — the material knowledge base + MOC navigation',
-      '- `4_Archives/` — completed / discontinued formulations',
-      '',
-      '## Finding materials',
-      '',
-      '- Browse by **category** → `3_Resources/40-49 Materials/{Naturals|Synthetics|…}/`',
-      '- Browse by **filter axis** → `3_Resources/60-69 MOC/` then pick Family / Facet / Note…',
-      '- Search by **CAS or name** → every material has `id: {CAS}-{slug}` and aliases covering synonyms',
-      '',
-      '## Plugins',
-      '',
-      'Install **Dataview** to light up the auto-generated tables on every MOC and Area page. Without it, Obsidian\'s built-in Backlinks panel still lists the linked materials.',
+      // Embed the 69 Regulatory axis hub so the user can hop to any
+      // other flag without leaving this page. Basename match resolves
+      // against `3_Resources/60-69 MOC/69 Regulatory/69 Regulatory.md`.
+      `![[${JD_MOC.regulatory}#📇 All values]]`,
       '',
     ].join('\n');
   }
@@ -750,44 +635,31 @@
 
   // ---- Material renderer -------------------------------------------------
 
-  // Render a material as a rich reference sheet — identity block,
-  // odor profile, full classification with wikilinks to the MOC
-  // pages, regulatory summary, and blends_with cross-links. Sections
-  // are emitted only when the underlying data is present so sparse
-  // records stay readable.
   function materialToMarkdown(record) {
     const r = record || {};
     const name        = (r.names && r.names.canonical) || 'Untitled';
     const ids         = r.identifiers || {};
-    // Filter self-referential synonyms (DB often lists the lowercase
-    // canonical name in synonyms too — Obsidian link resolution is
-    // case-insensitive so that entry is noise).
+    // Drop self-referential synonyms — Obsidian link resolution is
+    // case-insensitive so they'd be noise.
     const rawSyns     = (r.names && Array.isArray(r.names.synonyms)) ? r.names.synonyms : [];
     const nameLower   = name.toLowerCase();
     const synonyms    = rawSyns.filter(s => s && s.toLowerCase() !== nameLower);
     const perf        = r.perfumery || {};
     const safety      = r.safety || {};
     const blendsWith  = Array.isArray(perf.blends_with) ? perf.blends_with : [];
+    const industryTags = (r.classification && Array.isArray(r.classification.industry_tags))
+      ? r.classification.industry_tags : [];
     const a           = extractAxes(r);
     const noteGroups  = detectNoteGroups(a.primaryFamilies, a.secondaryFamilies);
     const tags        = buildTags(a).concat(noteGroups.map(g => 'notegroup/' + tagSlug(g)));
 
-    // ---- Frontmatter -----------------------------------------------------
-    // Carries every filter axis + identity + odor + performance fields so
-    // Dataview / Bases can query any dimension without parsing the body.
-    // `aliases` uses Obsidian's built-in frontmatter key — typing
-    // `[[linalol]]` in any note resolves to the material note even after
-    // it's been moved between JD sub-folders.
-    // `id` is the Zettelkasten atomic-note identifier (CAS-based) and
-    // stays stable across exports, enabling incremental imports.
+    // Aliases include the canonical name so `[[Linalool]]` still
+    // resolves after the JD-prefixed filename moves between folders.
     const folder = materialFolder(r);
     const fm = ['---',
       'id: ' + yamlScalar(zettelId(r)),
       'name: ' + yamlScalar(name),
     ];
-    // `aliases` list — Obsidian uses this for link resolution. Always
-    // include the canonical name so `[[Linalool]]` resolves no matter
-    // where the file is moved (the JD filename prefixes CAS to the name).
     const aliasList = [name].concat(synonyms).filter((v, i, arr) => v && arr.indexOf(v) === i);
     fm.push('aliases: ' + yamlArray(aliasList));
     if (ids.cas)               fm.push('cas: ' + yamlScalar(ids.cas));
@@ -806,23 +678,41 @@
       'para: resources',
       'jd: ' + yamlScalar(folder),
     );
-    if (blendsWith.length) fm.push('related: ' + yamlArray(blendsWith));
+    if (industryTags.length) fm.push('industry_tags: ' + yamlArray(industryTags));
+    if (blendsWith.length) {
+      fm.push('related: ' + yamlArray(blendsWith));
+      fm.push('blends_count: ' + yamlScalar(blendsWith.length));
+    }
+    // Short odor description for quick scanning in Dataview tables —
+    // trimmed to the first sentence to keep table cells compact.
+    if (perf.odor_description) {
+      const short = String(perf.odor_description).split(/[.!?]/)[0].trim().slice(0, 160);
+      if (short) fm.push('odor_description: ' + yamlScalar(short));
+    }
     if (perf.odor_type)      fm.push('odor_type: '     + yamlScalar(perf.odor_type));
     if (perf.odor_strength)  fm.push('odor_strength: ' + yamlScalar(perf.odor_strength));
     if (perf.tenacity)       fm.push('tenacity: '      + yamlScalar(perf.tenacity));
     if (perf.tenacity_hours) fm.push('duration: '      + yamlScalar(perf.tenacity_hours));
-    // Tag slugs are pre-normalised so emit the flow array directly.
     fm.push('tags: ' + (tags.length ? '[' + tags.join(', ') + ']' : '[]'), '---', '');
 
-    // ---- Body ------------------------------------------------------------
     const body = ['# ' + name, ''];
 
-    // Blockquote: the headline odor description (one-line summary).
+    // One-glance summary callout — family · note tier · strength · duration.
+    // Obsidian renders `[!abstract]` as a tinted card so the material's
+    // identity is immediately scannable without reading full sections.
+    const snap = [];
+    if (a.primaryFamilies.length) snap.push(a.primaryFamilies.map(mocDisplay).join(' / '));
+    if (a.notes.length)           snap.push(a.notes.map(mocDisplay).join(' / ') + ' note');
+    if (perf.odor_strength)       snap.push(perf.odor_strength + ' strength');
+    if (perf.tenacity_hours)      snap.push(perf.tenacity_hours);
+    if (snap.length) {
+      body.push('> [!abstract] Snapshot', '> ' + snap.join(' · '), '');
+    }
+
     if (perf.odor_description) {
       body.push('> ' + perf.odor_description, '');
     }
 
-    // Identity — only emit if we have at least one identifier beyond name.
     if (ids.cas || ids.fema || synonyms.length) {
       body.push('## 🔬 Identity');
       if (ids.cas)         body.push('- **CAS:** ' + ids.cas);
@@ -831,7 +721,6 @@
       body.push('');
     }
 
-    // Odor profile — type/strength/tenacity/duration as a compact block.
     if (perf.odor_type || perf.odor_strength || perf.tenacity) {
       body.push('## 🌸 Odor Profile');
       const line1 = [];
@@ -845,9 +734,6 @@
       body.push('');
     }
 
-    // Classification — one bullet per axis, wikilinks to MOC pages.
-    // Note Group (Edwards wheel) is the top-most tier and gets listed
-    // first so the material is anchored to the broadest grouping.
     body.push('## 🎨 Classification',
       '- **Note Group:** '   + noteGroupLinkList(noteGroups),
       '- **Family:** '       + mocLinkList('family',     a.primaryFamilies),
@@ -861,26 +747,44 @@
       '',
     );
 
-    // Regulatory — MOC links + raw IFRA text where available.
     body.push('## ⚠️ Regulatory');
     if (a.regulatory.length) {
-      body.push(mocLinkList('regulatory', a.regulatory), '');
+      for (const r of a.regulatory) body.push('- ' + mocLink('regulatory', r));
     } else {
-      body.push(mocLink('regulatory', 'no regulatory'), '');
+      body.push('- ' + mocLink('regulatory', 'no regulatory'));
     }
-    if (safety.ifra_guideline) body.push('**IFRA:** ' + safety.ifra_guideline, '');
-    if (safety.usage_levels)   body.push('**Usage:** ' + safety.usage_levels, '');
+    body.push('');
 
-    // Related Notes — Zettelkasten-style atomic links. One bullet per
-    // related material so the backlink panel groups them cleanly, and
-    // unresolved links still appear as graph nodes so the relationship
-    // is visible even when the target material hasn't been exported yet.
+    // Severity-based callouts so the risk level is visually obvious
+    // without reading the IFRA prose. Banned > phototoxic > allergen.
+    const regLower = new Set(a.regulatory.map(r => String(r).toLowerCase()));
+    if (regLower.has('banned')) {
+      body.push('> [!danger] Banned',
+                '> Banned for fragrance use — remove from active formulations.', '');
+    }
+    if (regLower.has('phototoxic')) {
+      body.push('> [!bug] Phototoxic',
+                '> May cause photo-reactions under UV exposure. Check photo-safety limits for the product category.', '');
+    }
+    if (regLower.has('allergen') || regLower.has('sensitizer')) {
+      body.push('> [!warning] Sensitiser / Allergen',
+                '> Declared fragrance allergen — include on product labelling if used above the disclosure threshold.', '');
+    }
+
+    // Long regulatory prose goes into foldable callouts so the note
+    // stays scannable but the detail is one click away.
+    if (safety.ifra_guideline) {
+      const ifra = String(safety.ifra_guideline).replace(/\n/g, '\n> ');
+      body.push('> [!warning]- IFRA Guideline', '> ' + ifra, '');
+    }
+    if (safety.usage_levels) {
+      const usage = String(safety.usage_levels).replace(/\n/g, '\n> ');
+      body.push('> [!info]- Usage Levels', '> ' + usage, '');
+    }
+
     if (blendsWith.length) {
       body.push('## 🔗 Related Notes', '');
-      body.push('_Materials that blend well with this one:_', '');
-      for (const b of blendsWith) {
-        body.push(`- [[${safeFileName(b)}]]`);
-      }
+      for (const b of blendsWith) body.push(`- [[${safeFileName(b)}]]`);
       body.push('');
     }
 
@@ -912,27 +816,14 @@
   //       longevity?:   { total, top: {end}, heart: {end}, base: {end} },
   //     },
   //   }
-  // Route a formulation into the right Johnny.Decimal sub-folder under
-  // 1_Projects/ (or 4_Archives/ for completed work). Category keywords
-  // map to the four top-level buckets; anything unrecognised falls into
-  // 13 Experiments so the note still lands somewhere sensible.
+  // Pick the Johnny.Decimal sub-folder for a formulation based on its
+  // product category. Unknown categories fall into 13 Experiments.
   function formulationJdFolder(category) {
     const c = String(category || '').toLowerCase();
     if (/fine|parfum|edp|edt|eau de|cologne/i.test(c)) return '10 Fine Fragrance';
     if (/lotion|shampoo|conditioner|body|hand|face|baby|deodorant|antiperspir|personal|skin|hair|rinse|wash|soap|bath|lip|mouth|tooth|shave|sun|anogenital/i.test(c)) return '11 Personal Care';
     if (/candle|home|room|detergent|softener|cleaner|surface|laundry|air freshener|reed/i.test(c)) return '12 Home Care';
     return '13 Experiments';
-  }
-
-  // Full PARA/JD folder path for a formulation depending on its status.
-  // Active → 1_Projects/10-19 Active Formulations/{jd}.
-  // Archived → 4_Archives/90-99 Completed Formulations/.
-  function formulationFolder(category, status) {
-    const s = String(status || 'active').toLowerCase();
-    if (s === 'archived' || s === 'archive' || s === 'done' || s === 'complete' || s === 'completed') {
-      return `${PARA.archives}/90-99 Completed Formulations`;
-    }
-    return `${PARA.projects}/10-19 Active Formulations/${formulationJdFolder(category)}`;
   }
 
   // Date-prefixed filename (no extension) so chronological sort is
@@ -947,13 +838,11 @@
     const f = input || {};
     const name = (f.name || 'Untitled Formulation').trim() || 'Untitled Formulation';
     const date = f.date || new Date().toISOString().slice(0, 10);
-    const status = f.status || 'active';
     const materials = Array.isArray(f.materials) ? f.materials : [];
     const carriers  = Array.isArray(f.carriers)  ? f.carriers  : [];
     const analysis  = f.analysis || {};
     const totalPct  = typeof f.totalPct === 'number' ? f.totalPct : null;
-    const jdFolder  = formulationFolder(f.category, status);
-    const isArchived = jdFolder.startsWith(PARA.archives);
+    const jdFolder  = `${PARA.projects}/10-19 Active Formulations/${formulationJdFolder(f.category)}`;
     const zid = `formulation-${date}-${(name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled')}`;
 
     // ---- Frontmatter ----------------------------------------------------
@@ -962,8 +851,8 @@
       'id: ' + yamlScalar(zid),
       'name: ' + yamlScalar(name),
       'date: ' + yamlScalar(date),
-      'status: ' + yamlScalar(status),
-      'para: ' + (isArchived ? 'archives' : 'projects'),
+      'status: active',
+      'para: projects',
       'jd: ' + yamlScalar(jdFolder),
     ];
     if (f.category)            fm.push('category: '      + yamlScalar(f.category));
@@ -976,7 +865,7 @@
       'materials: ' + yamlScalar(materials.length),
     );
     if (totalPct != null)      fm.push('total_pct: '     + yamlScalar(totalPct));
-    fm.push('tags: [formulation, ' + (isArchived ? 'status/archived' : 'status/active') + ']', '---', '');
+    fm.push('tags: [formulation, status/active]', '---', '');
 
     // ---- Body -----------------------------------------------------------
     const body = ['# ' + name, ''];
@@ -1108,19 +997,11 @@
   // records: array of { record: ... } (mat.record shape from index.html).
   // Returns a Blob (application/zip). Caller triggers the download.
   //
-  // opts.parts — Set or array of vault parts to include. Default
-  // omits nothing (full vault). Recognised parts:
-  //   'materials'  — the per-material notes (routed by JD source/type)
-  //   'notegroups' — 3_Resources/60-69 MOC/60 Note Groups/
-  //   'family', 'subfamily', 'facet', 'note', 'type', 'source',
-  //   'use', 'function', 'regulatory' — the per-axis MOC folders
-  //   'areas'      — 2_Areas/20-29 Safety & Compliance/ dashboards
-  //   'reference'  — 3_Resources/50-59 Reference/ static notes
-  //   'scaffold'   — empty 1_Projects/ + 4_Archives/ sub-folders
-  //
-  // Partial exports let the user build up their Obsidian vault
-  // incrementally. Material `id` fields are CAS-based so successive
-  // imports never create duplicate notes.
+  // opts.parts — Set or array of vault parts to include (default: all).
+  // Recognised parts: 'materials', 'notegroups', 'areas', and the nine
+  // axis names ('family', 'subfamily', 'facet', 'note', 'type',
+  // 'source', 'use', 'function', 'regulatory'). Material `id` fields
+  // are CAS-based so incremental imports never duplicate notes.
   async function buildMaterialVaultZip(records, opts) {
     opts = opts || {};
     const onProgress = typeof opts.onProgress === 'function' ? opts.onProgress : null;
@@ -1134,21 +1015,11 @@
     const zip  = new window.JSZip();
     const root = zip.folder(VAULT_ROOT);
 
-    // Top-of-vault README — always emitted so new users land on an
-    // orientation page when they open the vault.
-    root.file('README.md', vaultReadmePage());
-
-    // De-dupe material basenames within the same JD sub-folder.
-    // Obsidian wikilinks resolve by alias first, then basename — so
-    // colliding file names within a folder would break unaliased links.
+    // Collision tracking — Obsidian resolves wikilinks by alias first,
+    // then by basename, so colliding file names within one folder would
+    // break unaliased links.
     const usedPaths = new Set();
-
-    // Collect unique (axis, value) pairs across all materials while we
-    // iterate. Keyed by the MOC file path so the same page is never
-    // emitted twice.
     const mocsToEmit = new Map();
-    // Note Groups encountered across the whole batch — collected once
-    // so the writer below emits one MOC page per group.
     const noteGroupsToEmit = new Set();
 
     const total = records.length;
@@ -1158,9 +1029,6 @@
       const rec = item && item.record ? item.record : item;
       if (!rec) { done++; continue; }
 
-      // Johnny.Decimal filename + folder — routed by source/type.
-      // Filename collisions within the same sub-folder get a numeric
-      // suffix since the CAS-prefixed filename is already highly unique.
       const folderPath = materialFolder(rec);
       let fileBase = materialFileName(rec);
       let collisionKey = `${folderPath}/${fileBase}`.toLowerCase();
@@ -1170,28 +1038,19 @@
       }
       usedPaths.add(collisionKey);
 
-      // Skip writing the material note when a partial export was
-      // requested. The record is still walked below so MOC pages
-      // still aggregate the correct values.
       if (wants('materials')) {
         root.folder(folderPath).file(fileBase + '.md', materialToMarkdown(rec));
       }
 
-      // Register every MOC page this material will link to. Only axes
-      // in the MOC_AXES allowlist get a physical page.
       const axes = extractAxes(rec);
       forEachAxisValue(axes, (axis, value) => {
         if (!MOC_AXES.has(axis)) return;
         const key = mocPath(axis, value);
-        if (!mocsToEmit.has(key)) {
-          mocsToEmit.set(key, { axis, value });
-        }
+        if (!mocsToEmit.has(key)) mocsToEmit.set(key, { axis, value });
       });
-
-      // Register Note Group MOCs (the top tier of the hierarchy) based
-      // on this material's primary + secondary families.
-      const groups = detectNoteGroups(axes.primaryFamilies, axes.secondaryFamilies);
-      for (const g of groups) noteGroupsToEmit.add(g);
+      for (const g of detectNoteGroups(axes.primaryFamilies, axes.secondaryFamilies)) {
+        noteGroupsToEmit.add(g);
+      }
 
       done++;
       if (onProgress && (done % 25 === 0 || done === total)) {
@@ -1199,56 +1058,41 @@
       }
     }
 
-    // MOC root — everything lives under 3_Resources/60-69 MOC/.
-    const mocRoot = root.folder(PARA.resources).folder(MOC_ROOT);
+    // Materials hub — overview of source/type breakdown at the folder root.
+    if (wants('materials')) {
+      root.folder(PARA.resources).folder(JD_MATERIALS_ROOT)
+        .file(JD_MATERIALS_ROOT + '.md', materialsHubPage());
+    }
 
-    // Emit per-value MOC pages under their axis folder. Skip axes
-    // the caller opted out of via `opts.parts`.
+    const mocRoot = root.folder(PARA.resources).folder(MOC_ROOT);
+    // Track which axis folders ended up with content so we only emit
+    // per-axis hubs for axes the user actually requested.
+    const axesEmitted = new Set();
     for (const [, { axis, value }] of mocsToEmit) {
       if (!wants(axis)) continue;
       mocRoot.folder(JD_MOC[axis]).file(mocFileName(value) + '.md', mocPage(axis, value));
+      axesEmitted.add(axis);
     }
-
-    // Emit Note Group MOC pages — the top tier. One file per group
-    // that any material matched.
     if (noteGroupsToEmit.size && wants('notegroups')) {
       const ngFolder = mocRoot.folder(JD_MOC.notegroup);
       for (const group of NOTE_GROUPS) {
         if (!noteGroupsToEmit.has(group)) continue;
         ngFolder.file(safeFileName(group) + '.md', noteGroupPage(group));
       }
+      axesEmitted.add('notegroup');
+    }
+    // Folder-as-note hub for each emitted axis — Obsidian surfaces
+    // these automatically when the user clicks the folder.
+    for (const axis of axesEmitted) {
+      const folder = JD_MOC[axis];
+      mocRoot.folder(folder).file(folder + '.md', axisHubPage(axis));
     }
 
-    // 2_Areas — Dataview-backed monitoring dashboards. Auto-update
-    // against whatever materials are currently in the vault.
     if (wants('areas')) {
       const areasFolder = root.folder(PARA.areas).folder(AREAS_FOLDER);
       for (const page of AREAS_PAGES) {
         areasFolder.file(page.file, areaMonitoringPage(page));
       }
-    }
-
-    // 3_Resources/50-59 Reference — static lookup notes (IFRA,
-    // allergens, fragrance wheel) bundled for offline use.
-    if (wants('reference')) {
-      const refFolder = root.folder(PARA.resources).folder(REFERENCE_FOLDER);
-      refFolder.file('50 IFRA Categories.md', ifraCategoriesPage());
-      refFolder.file('51 EU 26 Allergens.md', euAllergensPage());
-      refFolder.file('52 Fragrance Wheel.md', fragranceWheelPage());
-    }
-
-    // Scaffold the Projects / Archives buckets with empty category
-    // folders so `1_Projects/10-19 Active Formulations/10 Fine Fragrance/`
-    // exists before the user drops their first formulation `.md` in.
-    // JSZip drops truly empty folders at generation time, so we emit a
-    // tiny `.keep` marker to force the directory to materialise.
-    if (wants('scaffold')) {
-      const projRoot = root.folder(PARA.projects).folder('10-19 Active Formulations');
-      for (const name of ['10 Fine Fragrance', '11 Personal Care', '12 Home Care', '13 Experiments']) {
-        projRoot.folder(name).file('.keep', '');
-      }
-      const arcRoot = root.folder(PARA.archives).folder('90-99 Completed Formulations');
-      arcRoot.file('.keep', '');
     }
 
     return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
@@ -1261,12 +1105,6 @@
     materialToMarkdown,
     buildMaterialVaultZip,
     formulationToMarkdown,
-    // PARA/JD path helpers for callers who want to suggest the
-    // correct vault location (e.g. formulation.html download prompt).
-    formulationFolder,
     formulationFileName,
-    materialFolder,
-    zettelId,
-    VAULT_ROOT,
   };
 })();
