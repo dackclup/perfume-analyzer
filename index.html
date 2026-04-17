@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Perfume Raw Materials Analyzer</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 /* ===== Design Tokens (WCAG AA verified) =====
    Light accent #2E4A73 on #fff = 7.2:1. Dark accent #9FB8DE on #0b0f17 = 7.8:1.
@@ -582,10 +582,383 @@ html { scroll-behavior:smooth; }
 .badge-base, .mat-note.base { background:var(--note-base-bg); color:var(--note-base-fg); }
 .match-tag { background:var(--accent); color:#fff; opacity:.88; }
 .mat-warn { background:var(--warn-bg); color:var(--warn); border-color:var(--warn-border); }
+
+/* ===== MODULE: landing ===== Additive. All rules scoped to .landing — will
+   not affect the existing app below. Palette: ivory + bronze (quiet editorial
+   luxury). Dark-theme + print guards added in later tasks. */
+.landing {
+  --ivory-50:   #FBF7EE;
+  --ivory-100:  #F6F1E7;
+  --ivory-200:  #ECE4D2;
+  --ink-900:    #1B1A17;
+  --ink-700:    #3A3833;
+  --ink-500:    #6E6A60;
+  --bronze-600: #8C6A3F;
+  --bronze-500: #A6804E;
+  --bronze-200: #D9C4A3;
+  --hairline:   rgba(27,26,23,0.12);
+  --glass-bg:   rgba(246,241,231,0.55);
+  --glass-blur: blur(8px) saturate(1.05);
+  --glass-edge: 1px solid rgba(255,255,255,0.45);
+  --font-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+}
+.landing {
+  background: var(--ivory-50);
+  color: var(--ink-700);
+  padding-inline: clamp(1rem, 5vw, 1.75rem);
+  padding-block: clamp(2rem, 6vw, 4rem);
+  margin-block-end: var(--space-6);
+}
+.landing__hero {
+  min-height: 92svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-4);
+  padding-block: var(--space-6);
+}
+.landing__eyebrow {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(0.85rem, 2.4vw, 1rem);
+  letter-spacing: 0.18em;
+  color: var(--bronze-600);
+  text-transform: uppercase;
+  margin: 0;
+}
+.landing__wordmark {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(2.4rem, 11vw, 5.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--ink-900);
+  margin: 0;
+}
+.landing__tagline {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1rem, 3.6vw, 1.35rem);
+  color: var(--ink-500);
+  max-width: 32ch;
+  margin: 0;
+}
+.landing__caption {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+  margin: 0;
+}
+.landing__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  min-height: 44px;
+  width: 100%;
+  max-width: 22rem;
+  padding: 0.9rem 1.75rem;
+  margin-block-start: var(--space-3);
+  background: transparent;
+  color: var(--ink-900);
+  border: 1px solid var(--bronze-600);
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.landing__cta:hover,
+.landing__cta:focus-visible {
+  background: var(--bronze-600);
+  color: var(--ivory-50);
+}
+@media (min-width: 1024px) {
+  .landing { padding-inline: clamp(2rem, 6vw, 4rem); }
+  .landing__hero { min-height: 85vh; }
+  .landing__cta { width: auto; }
+}
+.landing__ethos {
+  max-width: 36ch;
+  margin: var(--space-6) auto;
+  padding-block: var(--space-5);
+  border-block-start: 1px solid var(--hairline);
+  border-block-end: 1px solid var(--hairline);
+  text-align: center;
+}
+.landing__ethos-label {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--bronze-600);
+  margin-block-end: var(--space-3);
+}
+.landing__ethos-body {
+  font-family: var(--font-serif);
+  font-size: clamp(1.15rem, 3.6vw, 1.5rem);
+  line-height: 1.55;
+  color: var(--ink-900);
+  margin: 0;
+}
+@media (min-width: 1024px) {
+  .landing__ethos { max-width: 58ch; }
+}
+.landing__pillars {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  max-width: 72rem;
+  margin: var(--space-6) auto;
+  padding: 0;
+}
+.landing__pillar {
+  margin: 0;
+  padding-block: var(--space-4);
+}
+.landing__pillar + .landing__pillar {
+  border-block-start: 1px solid var(--hairline);
+}
+.landing__pillar-term {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  color: var(--ink-900);
+  margin-block-end: 0.35rem;
+}
+.landing__pillar-num {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  color: var(--bronze-600);
+  margin-block-end: var(--space-2);
+}
+.landing__pillar-desc {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink-500);
+  max-width: 32ch;
+}
+@media (min-width: 768px) {
+  .landing__pillars { grid-template-columns: repeat(2, 1fr); gap: var(--space-6); }
+  .landing__pillar + .landing__pillar { border-block-start: 0; }
+  .landing__pillar:nth-child(n+2) { border-inline-start: 1px solid var(--hairline); padding-inline-start: var(--space-5); }
+}
+@media (min-width: 1024px) {
+  .landing__pillars { grid-template-columns: repeat(3, 1fr); }
+  .landing__pillar:nth-child(n+2) { padding-inline-start: var(--space-6); }
+}
+.landing__featured {
+  max-width: 56rem;
+  margin: var(--space-7) auto var(--space-6);
+  text-align: center;
+}
+.landing__featured-label {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--bronze-600);
+  margin-block-end: var(--space-4);
+}
+.landing__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.landing__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.6rem 1.15rem;
+  background: var(--ivory-100);
+  color: var(--ink-900);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.landing__chip:hover,
+.landing__chip:focus-visible {
+  border-color: var(--bronze-600);
+  color: var(--bronze-600);
+}
+.landing__transition {
+  max-width: 36rem;
+  margin: var(--space-7) auto 0;
+  padding-block-start: var(--space-6);
+  border-block-start: 1px solid var(--bronze-200);
+  text-align: center;
+}
+.landing__cta--secondary {
+  color: var(--ink-700);
+  border-color: var(--hairline);
+  background: transparent;
+}
+.landing__cta--secondary:hover,
+.landing__cta--secondary:focus-visible {
+  background: var(--ivory-100);
+  color: var(--ink-900);
+  border-color: var(--bronze-600);
+}
+/* Light glass — subtle, editorial. Gated on support; disabled for print
+   and reduced-motion users below. Applied to the hero frame and the
+   featured-chip row only — intentionally restrained. */
+@supports (backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px)) {
+  .landing__hero {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-edge);
+    border-radius: 1.5rem;
+  }
+  .landing__chips {
+    padding: var(--space-4) var(--space-3);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-edge);
+    border-radius: 1.25rem;
+  }
+}
+.landing a:focus-visible,
+.landing button:focus-visible {
+  outline: 2px solid var(--bronze-600);
+  outline-offset: 3px;
+}
+/* Dark theme — respond to both system preference and manual toggle.
+   Scoped only to .landing so existing dark tokens remain untouched. */
+@media (prefers-color-scheme: dark) {
+  .landing {
+    --ivory-50:   #14110C;
+    --ivory-100:  #1A160F;
+    --ivory-200:  #2A2418;
+    --ink-900:    #F1E9D6;
+    --ink-700:    #D8CDB4;
+    --ink-500:    #9A8F76;
+    --bronze-600: #C9A063;
+    --bronze-500: #D8B379;
+    --bronze-200: #5E4728;
+    --hairline:   rgba(241,233,214,0.14);
+    --glass-bg:   rgba(26,22,15,0.55);
+    --glass-edge: 1px solid rgba(241,233,214,0.10);
+  }
+  .landing__cta--secondary:hover,
+  .landing__cta--secondary:focus-visible { background: var(--ivory-200); }
+}
+[data-theme="dark"] .landing {
+  --ivory-50:   #14110C;
+  --ivory-100:  #1A160F;
+  --ivory-200:  #2A2418;
+  --ink-900:    #F1E9D6;
+  --ink-700:    #D8CDB4;
+  --ink-500:    #9A8F76;
+  --bronze-600: #C9A063;
+  --bronze-500: #D8B379;
+  --bronze-200: #5E4728;
+  --hairline:   rgba(241,233,214,0.14);
+  --glass-bg:   rgba(26,22,15,0.55);
+  --glass-edge: 1px solid rgba(241,233,214,0.10);
+}
+[data-theme="dark"] .landing__cta--secondary:hover,
+[data-theme="dark"] .landing__cta--secondary:focus-visible { background: var(--ivory-200); }
+@media print {
+  .landing { display: none !important; }
+}
+.landing__hero > * {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: landing-fade-in 700ms var(--ease, ease) forwards;
+}
+.landing__hero > *:nth-child(1) { animation-delay: 0ms; }
+.landing__hero > *:nth-child(2) { animation-delay: 100ms; }
+.landing__hero > *:nth-child(3) { animation-delay: 200ms; }
+.landing__hero > *:nth-child(4) { animation-delay: 300ms; }
+.landing__hero > *:nth-child(5) { animation-delay: 400ms; }
+@keyframes landing-fade-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing__hero > * { animation: none; opacity: 1; transform: none; }
+  .landing__cta, .landing__chip { transition: none; }
+}
+/* Responsive safeguards — keep the landing tidy on every viewport:
+   320px portrait phones through 1440px+ desktops. overflow-x:clip
+   prevents any glass panel near the edge from introducing a
+   horizontal scroll without affecting the rest of the document. */
+.landing { overflow-x: clip; }
+.landing * { min-width: 0; max-width: 100%; }
+.landing__wordmark,
+.landing__tagline,
+.landing__ethos-body,
+.landing__pillar-term,
+.landing__pillar-desc { overflow-wrap: anywhere; word-break: break-word; hyphens: auto; }
+@media (max-height: 560px) and (orientation: landscape) {
+  .landing__hero { min-height: auto; padding-block: var(--space-5); }
+}
 </style>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>
+<section class="landing" aria-labelledby="maisonHeading">
+  <div class="landing__hero">
+    <p class="landing__eyebrow" data-i18n="brandEyebrow">Maison</p>
+    <h1 id="maisonHeading" class="landing__wordmark" data-i18n="brand">Maison S&egrave;ve</h1>
+    <p class="landing__tagline" data-i18n="tagline">The grammar of scent.</p>
+    <p class="landing__caption" data-i18n="archiveCaption">An archive of perfumery raw materials</p>
+    <a class="landing__cta" href="#main-content" data-i18n="ctaPrimary">Enter the archive &darr;</a>
+  </div>
+  <section class="landing__ethos" aria-label="Ethos">
+    <span class="landing__ethos-label" data-i18n="ethosLabel">Ethos</span>
+    <p class="landing__ethos-body" data-i18n="ethos">Every fragrance begins as a quiet conversation between molecules. This archive gathers that conversation &mdash; sourced, studied, indexed &mdash; so the craft of perfumery is never more than a search away.</p>
+  </section>
+  <dl class="landing__pillars" aria-label="Values">
+    <div class="landing__pillar">
+      <span class="landing__pillar-num">01</span>
+      <dt class="landing__pillar-term" data-i18n="pillar1Title">Sourced</dt>
+      <dd class="landing__pillar-desc" data-i18n="pillar1Body">Nearly four hundred raw materials, each with traceable identity &mdash; CAS, FEMA, and verified synonyms.</dd>
+    </div>
+    <div class="landing__pillar">
+      <span class="landing__pillar-num">02</span>
+      <dt class="landing__pillar-term" data-i18n="pillar2Title">Studied</dt>
+      <dd class="landing__pillar-desc" data-i18n="pillar2Body">Olfactory families, tenacity, safety, and IFRA guidance &mdash; curated beside the chemistry that underpins each note.</dd>
+    </div>
+    <div class="landing__pillar">
+      <span class="landing__pillar-num">03</span>
+      <dt class="landing__pillar-term" data-i18n="pillar3Title">Searchable</dt>
+      <dd class="landing__pillar-desc" data-i18n="pillar3Body">A precise matching pipeline &mdash; CAS, canonical name, synonym, trade &mdash; so the ingredient you mean is the one you find.</dd>
+    </div>
+  </dl>
+  <section class="landing__featured" aria-label="Featured notes">
+    <span class="landing__featured-label" data-i18n="featuredLabel">Begin with a note</span>
+    <ul class="landing__chips" id="landingChips">
+      <li><button type="button" class="landing__chip" data-search="Hedione">Hedione</button></li>
+      <li><button type="button" class="landing__chip" data-search="Iso E Super">Iso E Super</button></li>
+      <li><button type="button" class="landing__chip" data-search="Ambroxan">Ambroxan</button></li>
+      <li><button type="button" class="landing__chip" data-search="Linalool">Linalool</button></li>
+      <li><button type="button" class="landing__chip" data-search="Calone">Calone</button></li>
+      <li><button type="button" class="landing__chip" data-search="Cashmeran">Cashmeran</button></li>
+    </ul>
+  </section>
+  <div class="landing__transition">
+    <a class="landing__cta landing__cta--secondary" href="#main-content" data-i18n="ctaSecondary">Begin a search &darr;</a>
+  </div>
+</section>
 <div id="top"></div>
 <!-- SVG icon sprite (inline, no CDN, works over file://). Icons: Lucide (MIT). -->
 <svg class="svg-sprite" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
@@ -5192,6 +5565,21 @@ const LANG_INDEX = {
     savePDFFull: 'Save.PDF (Full)',
     saveObsidian: 'Save.Obsidian.ZIP\u2026',
     formulate: 'Formulate \u2192',
+    brandEyebrow: 'Maison',
+    brand: 'Maison S\u00E8ve',
+    tagline: 'The grammar of scent.',
+    archiveCaption: 'An archive of perfumery raw materials',
+    ctaPrimary: 'Enter the archive \u2193',
+    ctaSecondary: 'Begin a search \u2193',
+    ethosLabel: 'Ethos',
+    ethos: 'Every fragrance begins as a quiet conversation between molecules. This archive gathers that conversation \u2014 sourced, studied, indexed \u2014 so the craft of perfumery is never more than a search away.',
+    pillar1Title: 'Sourced',
+    pillar1Body: 'Nearly four hundred raw materials, each with traceable identity \u2014 CAS, FEMA, and verified synonyms.',
+    pillar2Title: 'Studied',
+    pillar2Body: 'Olfactory families, tenacity, safety, and IFRA guidance \u2014 curated beside the chemistry that underpins each note.',
+    pillar3Title: 'Searchable',
+    pillar3Body: 'A precise matching pipeline \u2014 CAS, canonical name, synonym, trade \u2014 so the ingredient you mean is the one you find.',
+    featuredLabel: 'Begin with a note',
   },
   th: {
     title: '\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E27\u0E34\u0E40\u0E04\u0E23\u0E32\u0E30\u0E2B\u0E4C\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E19\u0E49\u0E33\u0E2B\u0E2D\u0E21',
@@ -5208,6 +5596,21 @@ const LANG_INDEX = {
     savePDFFull: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.PDF (\u0E09\u0E1A\u0E31\u0E1A\u0E40\u0E15\u0E47\u0E21)',
     saveObsidian: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.Obsidian.ZIP\u2026',
     formulate: '\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E2A\u0E39\u0E15\u0E23 \u2192',
+    brandEyebrow: '\u0E40\u0E21\u0E0B\u0E07',
+    brand: 'Maison S\u00E8ve',
+    tagline: '\u0E44\u0E27\u0E22\u0E32\u0E01\u0E23\u0E13\u0E4C\u0E41\u0E2B\u0E48\u0E07\u0E01\u0E25\u0E34\u0E48\u0E19',
+    archiveCaption: '\u0E04\u0E25\u0E31\u0E07\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E19\u0E49\u0E33\u0E2B\u0E2D\u0E21',
+    ctaPrimary: '\u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E04\u0E25\u0E31\u0E07 \u2193',
+    ctaSecondary: '\u0E40\u0E23\u0E34\u0E48\u0E21\u0E04\u0E49\u0E19\u0E2B\u0E32 \u2193',
+    ethosLabel: '\u0E1B\u0E23\u0E31\u0E0A\u0E0D\u0E32',
+    ethos: '\u0E17\u0E38\u0E01\u0E01\u0E25\u0E34\u0E48\u0E19\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19\u0E08\u0E32\u0E01\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E40\u0E07\u0E35\u0E22\u0E1A\u0E23\u0E30\u0E2B\u0E27\u0E48\u0E32\u0E07\u0E42\u0E21\u0E40\u0E25\u0E01\u0E38\u0E25 \u0E04\u0E25\u0E31\u0E07\u0E19\u0E35\u0E49\u0E23\u0E27\u0E1A\u0E23\u0E27\u0E21\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E19\u0E31\u0E49\u0E19 \u2014 \u0E40\u0E2A\u0E32\u0E30\u0E2B\u0E32 \u0E28\u0E36\u0E01\u0E29\u0E32 \u0E08\u0E31\u0E14\u0E2B\u0E21\u0E27\u0E14 \u2014 \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E2B\u0E49\u0E28\u0E32\u0E2A\u0E15\u0E23\u0E4C\u0E41\u0E2B\u0E48\u0E07\u0E19\u0E49\u0E33\u0E2B\u0E2D\u0E21\u0E2D\u0E22\u0E39\u0E48\u0E40\u0E1E\u0E35\u0E22\u0E07\u0E1B\u0E25\u0E32\u0E22\u0E19\u0E34\u0E49\u0E27\u0E04\u0E49\u0E19\u0E2B\u0E32',
+    pillar1Title: '\u0E40\u0E2A\u0E32\u0E30\u0E2B\u0E32',
+    pillar1Body: '\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E40\u0E01\u0E37\u0E2D\u0E1A\u0E2A\u0E35\u0E48\u0E23\u0E49\u0E2D\u0E22\u0E0A\u0E19\u0E34\u0E14 \u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E2D\u0E31\u0E15\u0E25\u0E31\u0E01\u0E29\u0E13\u0E4C\u0E17\u0E35\u0E48\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E44\u0E14\u0E49 \u2014 CAS, FEMA \u0E41\u0E25\u0E30\u0E0A\u0E37\u0E48\u0E2D\u0E1E\u0E49\u0E2D\u0E07\u0E17\u0E35\u0E48\u0E1C\u0E48\u0E32\u0E19\u0E01\u0E32\u0E23\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19',
+    pillar2Title: '\u0E28\u0E36\u0E01\u0E29\u0E32',
+    pillar2Body: '\u0E04\u0E23\u0E2D\u0E1A\u0E04\u0E23\u0E31\u0E27\u0E01\u0E25\u0E34\u0E48\u0E19 \u0E04\u0E27\u0E32\u0E21\u0E04\u0E07\u0E17\u0E19 \u0E04\u0E27\u0E32\u0E21\u0E1B\u0E25\u0E2D\u0E14\u0E20\u0E31\u0E22 \u0E41\u0E25\u0E30\u0E41\u0E19\u0E27\u0E17\u0E32\u0E07 IFRA \u2014 \u0E04\u0E31\u0E14\u0E2A\u0E23\u0E23\u0E40\u0E04\u0E35\u0E22\u0E07\u0E02\u0E49\u0E32\u0E07\u0E40\u0E04\u0E21\u0E35\u0E17\u0E35\u0E48\u0E23\u0E2D\u0E07\u0E23\u0E31\u0E1A\u0E17\u0E38\u0E01\u0E42\u0E19\u0E49\u0E15',
+    pillar3Title: '\u0E04\u0E49\u0E19\u0E2B\u0E32',
+    pillar3Body: '\u0E17\u0E48\u0E2D\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E17\u0E35\u0E48\u0E41\u0E21\u0E48\u0E19\u0E22\u0E33 \u2014 CAS, \u0E0A\u0E37\u0E48\u0E2D\u0E2B\u0E25\u0E31\u0E01, \u0E0A\u0E37\u0E48\u0E2D\u0E1E\u0E49\u0E2D\u0E07, \u0E0A\u0E37\u0E48\u0E2D\u0E01\u0E32\u0E23\u0E04\u0E49\u0E32 \u2014 \u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E17\u0E35\u0E48\u0E04\u0E38\u0E13\u0E2B\u0E21\u0E32\u0E22\u0E16\u0E36\u0E07\u0E04\u0E37\u0E2D\u0E2A\u0E34\u0E48\u0E07\u0E17\u0E35\u0E48\u0E04\u0E38\u0E13\u0E1E\u0E1A',
+    featuredLabel: '\u0E40\u0E23\u0E34\u0E48\u0E21\u0E08\u0E32\u0E01\u0E42\u0E19\u0E49\u0E15\u0E43\u0E14\u0E42\u0E19\u0E49\u0E15\u0E2B\u0E19\u0E36\u0E48\u0E07',
   }
 };
 let _lang = localStorage.getItem('perfume_lang') || 'en';
@@ -5215,8 +5618,13 @@ function applyLangIndex() {
   const t = LANG_INDEX[_lang];
   const label = document.getElementById('themeToggleLabel');
   if (label) label.textContent = _lang === 'en' ? 'TH' : 'EN';
-  document.querySelector('h1').textContent = t.title;
+  const appTitle = document.querySelector('.header-row h1');
+  if (appTitle) appTitle.textContent = t.title;
   document.querySelector('.subtitle').textContent = t.subtitle;
+  document.querySelectorAll('[data-i18n]').forEach(node => {
+    const key = node.getAttribute('data-i18n');
+    if (key && t[key] != null) node.textContent = t[key];
+  });
   document.getElementById('searchInput').placeholder = t.searchPlaceholder;
   document.getElementById('searchBtn').textContent = t.searchBtn;
   const filterToggle = document.querySelector('.filter-toggle');
@@ -5244,6 +5652,24 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   localStorage.setItem('perfume_lang', _lang);
   applyLangIndex();
 });
+
+// Landing featured-note chips: reuse the existing search pipeline.
+(function initLandingChips() {
+  const row = document.getElementById('landingChips');
+  if (!row) return;
+  row.addEventListener('click', (e) => {
+    const chip = e.target.closest('.landing__chip');
+    if (!chip) return;
+    const term = chip.getAttribute('data-search');
+    if (!term) return;
+    const input = document.getElementById('searchInput');
+    if (input) { input.value = term; input.dispatchEvent(new Event('input')); }
+    if (typeof doSearch === 'function') doSearch(term);
+    const main = document.getElementById('main-content');
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (main) main.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  });
+})();
 
 // ===== Theme Switch (dark/light) =====
 (function initTheme() {
