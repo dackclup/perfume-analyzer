@@ -877,6 +877,9 @@ html { scroll-behavior:smooth; }
 }
 [data-theme="dark"] .landing__cta--secondary:hover,
 [data-theme="dark"] .landing__cta--secondary:focus-visible { background: var(--ivory-200); }
+@media print {
+  .landing { display: none !important; }
+}
 </style>
 </head>
 <body>
