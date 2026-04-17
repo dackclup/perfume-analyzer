@@ -880,6 +880,23 @@ html { scroll-behavior:smooth; }
 @media print {
   .landing { display: none !important; }
 }
+.landing__hero > * {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: landing-fade-in 700ms var(--ease, ease) forwards;
+}
+.landing__hero > *:nth-child(1) { animation-delay: 0ms; }
+.landing__hero > *:nth-child(2) { animation-delay: 100ms; }
+.landing__hero > *:nth-child(3) { animation-delay: 200ms; }
+.landing__hero > *:nth-child(4) { animation-delay: 300ms; }
+.landing__hero > *:nth-child(5) { animation-delay: 400ms; }
+@keyframes landing-fade-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing__hero > * { animation: none; opacity: 1; transform: none; }
+  .landing__cta, .landing__chip { transition: none; }
+}
 </style>
 </head>
 <body>
@@ -5635,7 +5652,8 @@ document.getElementById('themeToggle').addEventListener('click', () => {
     if (input) { input.value = term; input.dispatchEvent(new Event('input')); }
     if (typeof doSearch === 'function') doSearch(term);
     const main = document.getElementById('main-content');
-    if (main) main.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (main) main.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   });
 })();
 
