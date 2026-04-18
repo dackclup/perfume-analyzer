@@ -43,8 +43,15 @@ const IFRA_CATEGORIES = {
 // Values in % of finished product. Sources: IFRA 51st Amendment
 // (2023, enforced 2025), supplier IFRA conformity certificates.
 // ─────────────────────────────────────────────────────────────
+// Two shapes supported per-CAS:
+//   { "<catId>": <pct> }          — numeric Cat-specific cap
+//   { prohibited: true, reason }  — banned in every category
+// Either may be combined with a freeform `note` for UI display.
 const IFRA_51_LIMITS = {
   "97722-12-8": { "4": 6.66 },  // Lavender Absolute (supplier COC, Fraterworks et al.)
+  "531-59-9":   { prohibited: true,
+                  reason: "IFRA 51 — 7-Methoxycoumarin prohibited in all fragrance categories (photo-toxicity)" },
+  "2442-10-6":  { note: "IFRA 51 — 1-Octen-3-yl Acetate restricted per category; consult supplier COC for Cat.4 cap" },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -355,6 +362,16 @@ const INCI_NAMES = {
   "8000-28-0":    "LAVANDULA ANGUSTIFOLIA OIL",
   "97722-12-8":   "LAVANDULA ANGUSTIFOLIA EXTRACT",
   "91722-69-9":   "LAVANDULA HYBRIDA OIL",
+  // Lavender Isolates & Modifiers (per Lavender.md §2.2 / §4)
+  "58461-27-1":   "LAVANDULOL",
+  "25905-14-0":   "LAVANDULYL ACETATE",
+  "5989-33-3":    "LINALOOL OXIDE",
+  "3779-61-1":    "BETA-OCIMENE",
+  "1139-30-2":    "CARYOPHYLLENE OXIDE",
+  "531-59-9":     "7-METHOXYCOUMARIN",
+  "22460-86-2":   "HOTRIENOL",
+  "80-57-9":      "VERBENONE",
+  "2442-10-6":    "1-OCTEN-3-YL ACETATE",
   "8007-01-0":    "ROSA DAMASCENA FLOWER OIL",
   "8006-81-3":    "CANANGA ODORATA FLOWER OIL",
   "8022-96-6":    "JASMINUM GRANDIFLORUM FLOWER EXTRACT",
@@ -624,6 +641,12 @@ const ODOR_THRESHOLDS = {
   "8000-28-0":  { ppb: 5,       src: "Leffingwell",  name: "Lavender Oil" },
   "97722-12-8": { ppb: 3,       src: "Leffingwell",  name: "Lavender Absolute" },
   "91722-69-9": { ppb: 6,       src: "Leffingwell",  name: "Lavandin Grosso Oil" },
+  "58461-27-1": { ppb: 8,       src: "TGSC",         name: "Lavandulol" },
+  "25905-14-0": { ppb: 7,       src: "TGSC",         name: "Lavandulyl Acetate" },
+  "5989-33-3":  { ppb: 20,      src: "TGSC",         name: "Linalool Oxide (cis)" },
+  "22460-86-2": { ppb: 1,       src: "TGSC",         name: "Hotrienol" },
+  "80-57-9":    { ppb: 5,       src: "TGSC",         name: "Verbenone" },
+  "2442-10-6":  { ppb: 0.6,     src: "TGSC",         name: "1-Octen-3-yl Acetate" },
   "8016-63-5":  { ppb: 4,       src: "Leffingwell",  name: "Clary Sage Oil" },
   "78-69-3":    { ppb: 3,       src: "TGSC",         name: "Tetrahydrolinalool" },
   "543-39-5":   { ppb: 2,       src: "TGSC",         name: "Myrcenol" },
@@ -1655,6 +1678,15 @@ const MATERIAL_COSTS = {
   "8000-28-0":  { cost_g: 0.30, tier: "standard" },     // Lavender Oil
   "97722-12-8": { cost_g: 2.00, tier: "precious" },     // Lavender Absolute
   "91722-69-9": { cost_g: 0.15, tier: "commodity" },    // Lavandin Grosso Oil
+  "58461-27-1": { cost_g: 1.50, tier: "specialty" },    // Lavandulol
+  "25905-14-0": { cost_g: 0.80, tier: "specialty" },    // Lavandulyl Acetate
+  "5989-33-3":  { cost_g: 0.40, tier: "standard" },     // Linalool Oxide (cis)
+  "3779-61-1":  { cost_g: 0.50, tier: "specialty" },    // β-trans-Ocimene
+  "1139-30-2":  { cost_g: 0.90, tier: "specialty" },    // β-Caryophyllene Oxide
+  "531-59-9":   { cost_g: 0.00, tier: "prohibited" },   // 7-Methoxycoumarin (do not use)
+  "22460-86-2": { cost_g: 0.70, tier: "specialty" },    // Hotrienol
+  "80-57-9":    { cost_g: 0.35, tier: "standard" },     // Verbenone
+  "2442-10-6":  { cost_g: 0.50, tier: "specialty" },    // 1-Octen-3-yl Acetate
   "8007-01-0":  { cost_g: 8.50, tier: "precious" },     // Rose Oil
   "8014-09-3":  { cost_g: 0.60, tier: "specialty" },    // Patchouli Oil
   "8006-81-3":  { cost_g: 0.80, tier: "specialty" },    // Ylang Ylang Oil

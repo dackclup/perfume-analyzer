@@ -224,16 +224,29 @@ function checkIFRACompliance(materials, categoryId, fragPct) {
     // Determine max allowed %
     let ifraMax = null;
     let ifraSource = null;
+    let banStatus = null;
 
-    // Authoritative: centralised IFRA_51_LIMITS[cas][catId] overrides
-    // any text-parsed value. Lets curated per-CAS caps (e.g. Lavender
-    // Absolute Cat.4 @ 6.66%) land deterministically even when the
-    // material's free-text `safety.ifra` is narrative.
-    if (typeof IFRA_51_LIMITS !== 'undefined'
-        && IFRA_51_LIMITS[mat.cas]
-        && IFRA_51_LIMITS[mat.cas][categoryId] != null) {
-      ifraMax = IFRA_51_LIMITS[mat.cas][categoryId];
-      ifraSource = 'IFRA 51 table (Cat.' + categoryId + ')';
+    // Authoritative: centralised IFRA_51_LIMITS[cas] overrides any
+    // text-parsed value. Supports two shapes:
+    //   { "<catId>": <pct> }          — numeric Cat-specific cap
+    //   { prohibited: true, reason }  — banned across every category
+    // Lets curated per-CAS rules (e.g. Lavender Absolute Cat.4 @ 6.66%,
+    // 7-Methoxycoumarin fully prohibited) land deterministically even
+    // when the material's free-text `safety.ifra` is narrative.
+    if (typeof IFRA_51_LIMITS !== 'undefined' && IFRA_51_LIMITS[mat.cas]) {
+      const entry = IFRA_51_LIMITS[mat.cas];
+      if (entry.prohibited === true) {
+        ifraMax = 0;
+        ifraSource = 'IFRA 51 table (prohibited)';
+        // Use 'banned' so the existing UI red-badge path fires
+        // (formulation.html:2216, :2970). The table's `prohibited:
+        // true` shape is the authoritative signal; 'banned' is the
+        // engine's existing vocabulary for the same idea.
+        banStatus = 'banned';
+      } else if (entry[categoryId] != null) {
+        ifraMax = entry[categoryId];
+        ifraSource = 'IFRA 51 table (Cat.' + categoryId + ')';
+      }
     }
 
     if (ifraMax === null && ifra51 && cat.key) {
@@ -258,7 +271,8 @@ function checkIFRACompliance(materials, categoryId, fragPct) {
     // Many banned materials (Lilial, Lyral, Musk Xylene/Ambrette, Bergaptene)
     // have the "Prohibited"/"must not be used" phrasing in `safety.usage`
     // rather than in `safety.ifra`, so we must check both.
-    let banStatus = null;
+    // (banStatus was initialised above and may already be 'prohibited'
+    //  from the IFRA_51_LIMITS table lookup.)
     const ifraLower = (ifraText || '').toLowerCase();
     const usageLower = (usage || '').toLowerCase();
     // Strip "no restriction"/"no restrictions"/"not restricted"/"not banned"
