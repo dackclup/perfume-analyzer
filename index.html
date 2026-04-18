@@ -880,7 +880,7 @@ const ODOR_FAMILY_KEYWORDS = {
 };
 const USE_VALUES = ['fine_fragrance','personal_care','home_care','flavor'];
 const USE_LABELS = {
-  fine_fragrance:'Fine Fragrance', personal_care:'Personal Care & Cosmetics',
+  fine_fragrance:'Fine Fragrance & Fine perfume', personal_care:'Personal Care & Cosmetics',
   home_care:'Home Care & Air Care', flavor:'Flavor'
 };
 // ── Flavor-safety gate constants ──
@@ -1088,8 +1088,8 @@ const SUB_FAMILY_LABELS = {
   amber:            'Amber',
   woody_amber:      'Woody Amber',
   woods:            'Woody',
-  mossy_woods:      'Mossy Woods',
-  dry_woods:        'Dry Woods',
+  mossy_woods:      'Mossy Wood',
+  dry_woods:        'Dry Wood',
 };
 // Legacy PRIMARY_FAMILIES tokens that feed each Edwards subfamily.
 // Based on the familyToSegment table in formulation_data.js (not loaded
@@ -1421,9 +1421,9 @@ const FACET_GROUPS = [
   { label:'Woody',        facets:[
     'cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','pine','birch',
     'cedrol','coniferous','dry','hinoki','teak','rosewood','pepperwood','cashmeran'] },
-  { label:'Mossy Woods',  facets:[
+  { label:'Mossy Wood',   facets:[
     'oakmoss','earthy','moss','lichens','forest','wet_earth','mushroom'] },
-  { label:'Dry Woods',    facets:[
+  { label:'Dry Wood',     facets:[
     'tobacco','hay','tar','birch_tar','cade','phenolic',
     'leathery','suede','smoke','papyrus'] },
 ];
