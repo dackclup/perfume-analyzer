@@ -225,7 +225,18 @@ function checkIFRACompliance(materials, categoryId, fragPct) {
     let ifraMax = null;
     let ifraSource = null;
 
-    if (ifra51 && cat.key) {
+    // Authoritative: centralised IFRA_51_LIMITS[cas][catId] overrides
+    // any text-parsed value. Lets curated per-CAS caps (e.g. Lavender
+    // Absolute Cat.4 @ 6.66%) land deterministically even when the
+    // material's free-text `safety.ifra` is narrative.
+    if (typeof IFRA_51_LIMITS !== 'undefined'
+        && IFRA_51_LIMITS[mat.cas]
+        && IFRA_51_LIMITS[mat.cas][categoryId] != null) {
+      ifraMax = IFRA_51_LIMITS[mat.cas][categoryId];
+      ifraSource = 'IFRA 51 table (Cat.' + categoryId + ')';
+    }
+
+    if (ifraMax === null && ifra51 && cat.key) {
       // Try exact category key match
       ifraMax = ifra51[cat.key] ?? null;
       if (ifraMax !== null) ifraSource = 'IFRA 51 (' + cat.key + ')';

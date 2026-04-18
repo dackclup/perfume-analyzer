@@ -36,6 +36,18 @@ const IFRA_CATEGORIES = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// IFRA 51 per-material finished-product caps, keyed by CAS then
+// IFRA category. Authoritative source consulted by the formulation
+// engine when computing Cat.4 (Fine Fragrance) caps; the per-material
+// `safety.ifra` free-text in perfumery_data.js is kept for UI display.
+// Values in % of finished product. Sources: IFRA 51st Amendment
+// (2023, enforced 2025), supplier IFRA conformity certificates.
+// ─────────────────────────────────────────────────────────────
+const IFRA_51_LIMITS = {
+  "97722-12-8": { "4": 6.66 },  // Lavender Absolute (supplier COC, Fraterworks et al.)
+};
+
+// ─────────────────────────────────────────────────────────────
 // EU 26 Allergens (Regulation EC 1223/2009 Annex III)
 // Must be declared on label when present above:
 //   10 ppm (0.001%) in rinse-off products
@@ -89,6 +101,22 @@ const NATURAL_ALLERGEN_COMPOSITION = {
     "5989-27-5":  0.5,  // Limonene
     "106-24-1":   1.5,  // Geraniol
     "91-64-5":    0.3,  // Coumarin
+  },
+  // Lavender Absolute (Lavandula angustifolia absolute, decolourised)
+  "97722-12-8": {
+    "78-70-6":   28.0,  // Linalool
+    "115-95-7":  30.0,  // Linalyl Acetate
+    "5989-27-5":  1.0,  // Limonene
+    "106-24-1":   2.0,  // Geraniol
+    "91-64-5":    2.5,  // Coumarin (elevated vs EO — drives the balsamic tail)
+  },
+  // Lavandin Grosso Oil (Lavandula × intermedia, Grosso chemotype)
+  "91722-69-9": {
+    "78-70-6":   32.0,  // Linalool
+    "115-95-7":  28.0,  // Linalyl Acetate
+    "5989-27-5":  1.5,  // Limonene
+    "106-24-1":   0.5,  // Geraniol
+    "91-64-5":    0.2,  // Coumarin (trace)
   },
   // Rose Oil (Rosa damascena)
   "8007-01-0": {
@@ -325,6 +353,8 @@ const INCI_NAMES = {
   "84-66-2":      "DIETHYL PHTHALATE",
   // Essential Oils
   "8000-28-0":    "LAVANDULA ANGUSTIFOLIA OIL",
+  "97722-12-8":   "LAVANDULA ANGUSTIFOLIA EXTRACT",
+  "91722-69-9":   "LAVANDULA HYBRIDA OIL",
   "8007-01-0":    "ROSA DAMASCENA FLOWER OIL",
   "8006-81-3":    "CANANGA ODORATA FLOWER OIL",
   "8022-96-6":    "JASMINUM GRANDIFLORUM FLOWER EXTRACT",
@@ -592,6 +622,12 @@ const ODOR_THRESHOLDS = {
 
   // --- Natural Oils ---
   "8000-28-0":  { ppb: 5,       src: "Leffingwell",  name: "Lavender Oil" },
+  "97722-12-8": { ppb: 3,       src: "Leffingwell",  name: "Lavender Absolute" },
+  "91722-69-9": { ppb: 6,       src: "Leffingwell",  name: "Lavandin Grosso Oil" },
+  "8016-63-5":  { ppb: 4,       src: "Leffingwell",  name: "Clary Sage Oil" },
+  "78-69-3":    { ppb: 3,       src: "TGSC",         name: "Tetrahydrolinalool" },
+  "543-39-5":   { ppb: 2,       src: "TGSC",         name: "Myrcenol" },
+  "10339-55-6": { ppb: 4,       src: "TGSC",         name: "Ethyl Linalool" },
   "8006-81-3":  { ppb: 2.5,     src: "Leffingwell",  name: "Ylang Ylang Oil" },
   "8022-96-6":  { ppb: 1.5,     src: "Leffingwell",  name: "Jasmine Oil" },
   "8014-09-3":  { ppb: 8,       src: "Leffingwell",  name: "Patchouli Oil" },
@@ -783,6 +819,12 @@ const AROMACHOLOGY_SCORES = {
 
   // --- Natural Oils (not above) ---
   "8000-28-0":  [5, 0, 2, 2, 2, 5, 2, 2],  // Lavender Oil — top anxiolytic (Kasper 2010)
+  "97722-12-8": [5, 0, 2, 2, 3, 5, 3, 1],  // Lavender Absolute — deeper, balsamic-coumarinic
+  "91722-69-9": [4, 1, 2, 2, 1, 4, 1, 3],  // Lavandin Grosso — brighter, more camphoraceous
+  "8016-63-5":  [4, 0, 3, 2, 2, 4, 2, 2],  // Clary Sage — calming, focusing
+  "78-69-3":    [3, 0, 2, 2, 1, 3, 1, 2],  // Tetrahydrolinalool — soft lavender
+  "543-39-5":   [3, 1, 2, 3, 1, 3, 1, 3],  // Myrcenol — fresh lavender
+  "10339-55-6": [3, 0, 2, 2, 1, 3, 1, 2],  // Ethyl Linalool — transparent lavender
   "8006-81-3":  [3, 1, 0, 3, 5, 2, 2, 1],  // Ylang Ylang Oil — euphoric (Hongratanaworakit 2004)
   "8022-96-6":  [2, 1, 1, 3, 5, 2, 1, 1],  // Jasmine Oil — euphoric confident
   "8016-38-4":  [3, 1, 1, 3, 3, 3, 1, 2],  // Neroli Oil — calming anti-anxiety
@@ -852,6 +894,10 @@ const BLEND_TARGET_RESOLUTION = {
 
   // Common shorthand → exact CAS
   "lavender":      "8000-28-0",   // Lavender Oil
+  "lavender absolute": "97722-12-8", // Lavender Absolute
+  "lavandin":      "91722-69-9",   // Lavandin Grosso Oil
+  "lavandin grosso": "91722-69-9",
+  "clary sage":    "8016-63-5",   // Clary Sage Oil
   "rose":          "8007-01-0",   // Rose Oil
   "jasmine":       "8022-96-6",   // Jasmine Oil
   "ylang":         "8006-81-3",   // Ylang Ylang Oil
@@ -1607,6 +1653,8 @@ const MATERIAL_COSTS = {
   "34902-57-3": { cost_g: 0.80, tier: "precious" },     // Habanolide
   // Essential oils & absolutes
   "8000-28-0":  { cost_g: 0.30, tier: "standard" },     // Lavender Oil
+  "97722-12-8": { cost_g: 2.00, tier: "precious" },     // Lavender Absolute
+  "91722-69-9": { cost_g: 0.15, tier: "commodity" },    // Lavandin Grosso Oil
   "8007-01-0":  { cost_g: 8.50, tier: "precious" },     // Rose Oil
   "8014-09-3":  { cost_g: 0.60, tier: "specialty" },    // Patchouli Oil
   "8006-81-3":  { cost_g: 0.80, tier: "specialty" },    // Ylang Ylang Oil
