@@ -259,6 +259,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
    the chips themselves don't need visual differentiation. */
 .badge-primary,
 .badge-secondary,
+.badge-sub,
 .badge-facet {
   display:inline-block;
   font-size:0.7em;
@@ -363,7 +364,7 @@ html { scroll-behavior:smooth; }
      its background + border so Type·Fn / Reg / Use / Primary / Facets
      badges and the match-tag (name exact 99%) all print as visible
      chips instead of bare text on white paper. */
-  .badge, .badge-type, .badge-primary, .badge-secondary, .badge-facet,
+  .badge, .badge-type, .badge-primary, .badge-secondary, .badge-sub, .badge-facet,
   .match-tag, .badge-not-perfumery {
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
   }
@@ -720,7 +721,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-lavender-md-v3"></script>
+<script src="perfumery_data.js?v=2026-04-19-card-sub-row"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -732,7 +733,7 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-19-lavender-md-v3";
+const DATA_VERSION = "2026-04-19-card-sub-row";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
@@ -4069,7 +4070,18 @@ function renderResults() {
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
-          ${(displayTags.length || displayPrimaryFamilies.length || displaySecondaryFamilies.length || displayFacets.length)?`<div class="card-meta-row" style="margin:6px 0 10px 0">${displayTags.length?`<div class="tag-row"><span class="tag-axis-label">Use</span><span class="tag-chips">${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px;margin:0">${USE_LABELS[t]||t}</span>`).join('')}</span></div>`:''}${(displayPrimaryFamilies.length || displaySecondaryFamilies.length)?`<div class="tag-row"><span class="tag-axis-label">Primary</span><span class="tag-chips">${(() => { const seen=new Set(); const pri=[]; for (const f of displayPrimaryFamilies) { const lbl=primaryFamilyFilterLabel(f); if (!seen.has(lbl)) { seen.add(lbl); pri.push(lbl); } } const sec=[]; for (const f of displaySecondaryFamilies) { const lbl=primaryFamilyFilterLabel(f); if (!seen.has(lbl)) { seen.add(lbl); sec.push(lbl); } } return pri.map(l=>`<span class="badge-primary">${l}</span>`).join('') + (sec.length?`<span class="badge-primary">${sec.join(' • ')}</span>`:''); })()}</span></div>`:''}${displayFacets.length?`<div class="tag-row"><span class="tag-axis-label">Facets</span><span class="tag-chips">${displayFacets.map(f=>`<span class="badge-facet">${facetLabel(f)}</span>`).join('')}</span></div>`:''}</div>`:""}
+          ${(displayTags.length || displayPrimaryFamilies.length || displaySecondaryFamilies.length || displayFacets.length)?`<div class="card-meta-row" style="margin:6px 0 10px 0">${displayTags.length?`<div class="tag-row"><span class="tag-axis-label">Use</span><span class="tag-chips">${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px;margin:0">${USE_LABELS[t]||t}</span>`).join('')}</span></div>`:''}${(() => {
+  // Primary Family + Sub-families card rows. Uses the same Edwards
+  // helper the Filter drawer and CSV/JSON exports consume, so the
+  // chips on the card match the filter drawer chip labels exactly.
+  const _ax = _edwardsAxesFor(displayPrimaryFamilies, displaySecondaryFamilies);
+  const _pri = _ax.primary_family.map(l => l.replace(/\s*note$/i, ''));
+  const _sub = _ax.sub_families;
+  const _rows = [];
+  if (_pri.length) _rows.push(`<div class="tag-row"><span class="tag-axis-label">Primary</span><span class="tag-chips">${_pri.map(l=>`<span class="badge-primary">${esc(l)}</span>`).join('')}</span></div>`);
+  if (_sub.length) _rows.push(`<div class="tag-row"><span class="tag-axis-label">Sub</span><span class="tag-chips">${_sub.map(l=>`<span class="badge-sub">${esc(l)}</span>`).join('')}</span></div>`);
+  return _rows.join('');
+})()}${displayFacets.length?`<div class="tag-row"><span class="tag-axis-label">Facets</span><span class="tag-chips">${displayFacets.map(f=>`<span class="badge-facet">${facetLabel(f)}</span>`).join('')}</span></div>`:''}</div>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" onerror="this.parentNode.style.display='none'"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
