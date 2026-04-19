@@ -294,6 +294,19 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .blend-chip-group { border-style:dashed; color:var(--text2); font-style:italic; }
 .blend-chip-text { cursor:default; color:var(--text2); border-style:dotted; font-style:italic; }
 .blend-chip-text:hover { background:var(--bg2); }
+/* Enhanced-schema strength badge (Improvement #6). anchor = dominant,
+   core = primary accord, accent = supporting nuance. */
+.blend-chip-strength { margin-left:6px; padding:0 5px; font-size:0.85em; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; border-radius:3px; background:var(--bg); color:var(--text2); border:1px solid var(--border); }
+.blend-chip[data-strength="anchor"] { border-color:var(--accent); }
+.blend-chip[data-strength="anchor"] .blend-chip-strength { color:var(--accent); border-color:var(--accent); }
+.blend-chip[data-strength="core"]   .blend-chip-strength { color:var(--text); }
+.blend-chip[data-strength="accent"] .blend-chip-strength { opacity:0.7; }
+/* Auto-suggested partners (Improvement #5). Dashed border in the
+   accent colour so they don't blend with curated chips. */
+.blend-chip-auto { border-style:dashed; border-color:var(--accent); color:var(--text); background:transparent; }
+.blend-chip-auto:hover { background:var(--bg2); }
+.blend-chip-auto .blend-chip-strength { color:var(--accent); border-color:var(--accent); font-weight:500; }
+.sec-subtitle { font-size:0.75em; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text2); margin:8px 0 2px; }
 .match-tag { font-size:0.6em; padding:1px 6px; border-radius:3px; font-weight:400; background:var(--accent); color:#fff; vertical-align:middle; opacity:0.8; white-space:nowrap; display:inline-block; }
 
 /* PubChem data */
@@ -730,7 +743,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-blends-chips"></script>
+<script src="perfumery_data.js?v=2026-04-19-blends-phase2"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -742,7 +755,7 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-19-blends-chips";
+const DATA_VERSION = "2026-04-19-blends-phase2";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
@@ -859,32 +872,57 @@ const BLEND_GROUP_TO_FILTER = {
 };
 
 // Resolve one blends_with label to a structured result.
-//   { kind:'material', cas, name }   — clickable, adds material to search
-//   { kind:'group',    label, kind, token }  — clickable, toggles a filter
-//   { kind:'text',     label }       — unresolved, rendered as muted text
+//   { kind:'material', cas, name, strength?, source? }   — clickable, adds material to search
+//   { kind:'group',    label, filterKind, token, strength?, source? }  — clickable, toggles a filter
+//   { kind:'text',     label, strength?, source? }       — unresolved, rendered as muted text
+//
+// Supports two DB shapes, legacy and enhanced (Improvement #6):
+//   "Lavender"                                 ← legacy plain string
+//   { label:"Lavender", strength:"core",       ← enhanced object
+//     source:"classical-accord", cas:"8000-28-0" }
+// The enhanced shape lets curators annotate how important the pairing
+// is (anchor / core / accent) and the source of the pairing (classical
+// perfumer tradition, GC-MS co-occurrence, RIFM safety evaluation,
+// supplier literature). Output chips badge strength; source surfaces
+// in the tooltip.
 function _resolveBlendLabel(raw) {
-  const label = String(raw == null ? '' : raw).trim();
-  if (!label) return { kind: 'text', label: '' };
+  // Unpack the enhanced object shape first; fall through to string.
+  let label = "";
+  let strength = null;
+  let source = null;
+  let explicitCas = null;
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    label = String(raw.label == null ? "" : raw.label).trim();
+    if (raw.strength) strength = String(raw.strength).toLowerCase();
+    if (raw.source)   source   = String(raw.source);
+    if (raw.cas)      explicitCas = String(raw.cas);
+  } else {
+    label = String(raw == null ? "" : raw).trim();
+  }
+  if (!label) return { kind: "text", label: "" };
+  const meta = { strength, source };
+  // Explicit CAS wins (enhanced shape short-circuit).
+  if (explicitCas && DB[explicitCas]) return { kind: "material", cas: explicitCas, name: DB[explicitCas].name, ...meta };
   const lk = label.toLowerCase();
   // (a) canonical name
   for (const [cas, entry] of Object.entries(DB)) {
-    if (entry.name.toLowerCase() === lk) return { kind: 'material', cas, name: entry.name };
+    if (entry.name.toLowerCase() === lk) return { kind: "material", cas, name: entry.name, ...meta };
   }
   // (b) synonym index
-  if (NAME_TO_CAS[lk]) { const cas = NAME_TO_CAS[lk]; if (DB[cas]) return { kind: 'material', cas, name: DB[cas].name }; }
+  if (NAME_TO_CAS[lk]) { const cas = NAME_TO_CAS[lk]; if (DB[cas]) return { kind: "material", cas, name: DB[cas].name, ...meta }; }
   // (c) trade name
-  if (TRADES[lk]) { const cas = TRADES[lk]; if (DB[cas]) return { kind: 'material', cas, name: DB[cas].name }; }
+  if (TRADES[lk]) { const cas = TRADES[lk]; if (DB[cas]) return { kind: "material", cas, name: DB[cas].name, ...meta }; }
   // (d) shorthand table
   if (BLEND_SHORTHAND_TO_CAS[lk]) {
     const cas = BLEND_SHORTHAND_TO_CAS[lk];
-    if (DB[cas]) return { kind: 'material', cas, name: DB[cas].name };
+    if (DB[cas]) return { kind: "material", cas, name: DB[cas].name, ...meta };
   }
   // (e) family / group shorthand
   if (BLEND_GROUP_TO_FILTER[lk]) {
     const g = BLEND_GROUP_TO_FILTER[lk];
-    return { kind: 'group', label, filterKind: g.kind, token: g.token };
+    return { kind: "group", label, filterKind: g.kind, token: g.token, ...meta };
   }
-  return { kind: 'text', label };
+  return { kind: "text", label, ...meta };
 }
 
 // Auto-mirror blend edges so a card that B points at sees A as a
@@ -901,13 +939,86 @@ for (const [cas, entry] of Object.entries(DB)) {
   }
 }
 
+// Auto-derived blend suggestions (Improvement #5). Scores every OTHER
+// material against the source and returns the top N. Reads FILTER_CACHE
+// (facets / primaryFamilies) after that cache is built at module init.
+// Memoised per source CAS.
+//
+// Scoring (conservative — facet overlap is the strongest signal):
+//   +2  per shared facet (FACET_TAGS key)
+//   +1  per shared legacy primaryFamilies token
+//   +1  note-group complementary bonus (Fresh↔Woody, Floral↔Amber)
+//   -3  if target is self or already curated/reverse-linked
+const _SUGGEST_CACHE = new Map();
+const _COMPLEMENTARY_NOTE_PAIRS = [
+  ["fresh_woody_note","woody_note"], ["fresh_woody_note","fresh_note"],
+  ["floral_note","amber_note"],      ["floral_note","floral_fresh_note"],
+  ["amber_note","woody_amber_note"], ["woody_note","woody_amber_note"],
+  ["fresh_note","floral_fresh_note"],
+];
+function _edwardsBucketsForTokens(toks) {
+  const legacy = new Set(toks);
+  const out = new Set();
+  for (const [bucket, tokSet] of Object.entries(EDWARDS_TO_LEGACY)) {
+    for (const t of tokSet) if (legacy.has(t)) { out.add(bucket); break; }
+  }
+  return out;
+}
+function _computeSuggestedPartners(sourceCas, limit = 6) {
+  if (_SUGGEST_CACHE.has(sourceCas)) return _SUGGEST_CACHE.get(sourceCas);
+  const fc = FILTER_CACHE.get(sourceCas);
+  if (!fc) { _SUGGEST_CACHE.set(sourceCas, []); return []; }
+  const sourceFacets = new Set(fc.facets || []);
+  const sourcePrimaries = new Set([...(fc.primaryFamilies||[]), ...(fc.secondaryFamilies||[])]);
+  const sourceBuckets = _edwardsBucketsForTokens([...sourcePrimaries]);
+
+  // Skip-set: self + everyone already curated or reverse-linked.
+  const skip = new Set([sourceCas]);
+  const sourceEntry = DB[sourceCas];
+  if (sourceEntry) {
+    for (const b of sourceEntry.blends_with || []) {
+      const r = _resolveBlendLabel(b);
+      if (r.kind === "material") skip.add(r.cas);
+    }
+  }
+  const rev = REVERSE_BLENDS_INDEX.get(sourceCas);
+  if (rev) for (const name of rev) { const c = NAME_TO_CAS[name.toLowerCase()] || null; if (c) skip.add(c); }
+
+  const scored = [];
+  for (const [cas, entry] of Object.entries(DB)) {
+    if (skip.has(cas)) continue;
+    const tfc = FILTER_CACHE.get(cas);
+    if (!tfc) continue;
+    // Exclude non-perfumery materials (solvents, carriers, etc.).
+    if (!tfc.hasRealOdor) continue;
+    let score = 0;
+    for (const f of (tfc.facets || [])) if (sourceFacets.has(f)) score += 2;
+    const tPri = [...(tfc.primaryFamilies||[]), ...(tfc.secondaryFamilies||[])];
+    for (const t of tPri) if (sourcePrimaries.has(t)) score += 1;
+    const tBuckets = _edwardsBucketsForTokens(tPri);
+    for (const [a,b] of _COMPLEMENTARY_NOTE_PAIRS) {
+      if ((sourceBuckets.has(a) && tBuckets.has(b)) || (sourceBuckets.has(b) && tBuckets.has(a))) { score += 1; break; }
+    }
+    if (score >= 3) scored.push({ cas, name: entry.name, score });
+  }
+  scored.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+  const out = scored.slice(0, limit);
+  _SUGGEST_CACHE.set(sourceCas, out);
+  return out;
+}
+
 // Merge curated + reverse links, deduped case-insensitively. Curated
-// order is preserved; reverse-only partners are appended.
+// order is preserved; reverse-only partners are appended. Handles
+// both legacy string entries and enhanced {label,…} objects.
+function _blendEntryLabel(entry) {
+  if (entry && typeof entry === "object" && !Array.isArray(entry)) return String(entry.label || "");
+  return String(entry == null ? "" : entry);
+}
 function _mergedBlendPartners(cas, curated) {
   const out = Array.isArray(curated) ? [...curated] : [];
   const rev = REVERSE_BLENDS_INDEX.get(cas);
   if (rev && rev.size) {
-    const seen = new Set(out.map(s => String(s).toLowerCase()));
+    const seen = new Set(out.map(s => _blendEntryLabel(s).toLowerCase()));
     for (const name of rev) if (!seen.has(name.toLowerCase())) out.push(name);
   }
   return out;
@@ -4053,12 +4164,15 @@ function _cleanBlendsWith(arr) {
   // Strip entries that describe the material's function instead of
   // naming a blend partner. "All — universal fixative/solvent" is not
   // a blend partner; "Universal" / "N/A" are not blend partners; any
-  // entry whose text contains a function word is suspect.
+  // entry whose text contains a function word is suspect. Accepts
+  // both legacy string entries and enhanced {label,…} objects; the
+  // object form is passed through so downstream renderers can pick
+  // up strength/source annotations.
   const FW = /\b(fixative|solvent|carrier|diluent|denaturant|plasticizer|emollient|preservative|universal)\b/i;
   return arr.filter(x => {
-    if (!x || typeof x !== 'string') return false;
-    const t = x.trim();
-    if (!t || /^(n\/a|none|all|any)$/i.test(t)) return false;
+    const t = _blendEntryLabel(x).trim();
+    if (!t) return false;
+    if (/^(n\/a|none|all|any)$/i.test(t)) return false;
     if (FW.test(t)) return false;
     return true;
   });
@@ -4272,14 +4386,29 @@ function renderResults() {
               <p class="sec-title">Blends with</p>
               ${blendsArr.length?`<p class="blends-chips">${blendsArr.map(b => {
                 const r = _resolveBlendLabel(b);
+                // Enhanced-schema annotations (Improvement #6): strength tier + source.
+                // Rendered as a small badge on the chip, surfaced in the tooltip.
+                const _strAttr = r.strength ? ` data-strength="${esc(r.strength)}"` : '';
+                const _strBadge = r.strength ? `<span class="blend-chip-strength">${esc(r.strength)}</span>` : '';
+                const _srcTip = r.source ? ` — source: ${r.source}` : '';
                 if (r.kind === 'material') {
-                  return `<a class="blend-chip" onclick="addBlendSearch(${esc(JSON.stringify(r.name))})" title="Add ${esc(r.name)} to search">${esc(r.name)}</a>`;
+                  return `<a class="blend-chip"${_strAttr} onclick="addBlendSearch(${esc(JSON.stringify(r.name))})" title="Add ${esc(r.name)} to search${_srcTip}">${esc(r.name)}${_strBadge}</a>`;
                 }
                 if (r.kind === 'group') {
-                  return `<a class="blend-chip blend-chip-group" onclick="toggleBlendFilter(${esc(JSON.stringify(r.filterKind))},${esc(JSON.stringify(r.token))})" title="Filter by family: ${esc(r.token)}">${esc(r.label)}</a>`;
+                  return `<a class="blend-chip blend-chip-group"${_strAttr} onclick="toggleBlendFilter(${esc(JSON.stringify(r.filterKind))},${esc(JSON.stringify(r.token))})" title="Filter by family: ${esc(r.token)}${_srcTip}">${esc(r.label)}${_strBadge}</a>`;
                 }
-                return `<span class="blend-chip blend-chip-text" title="Free-text label — not in DB">${esc(r.label)}</span>`;
+                return `<span class="blend-chip blend-chip-text"${_strAttr} title="Free-text label — not in DB${_srcTip}">${esc(r.label)}${_strBadge}</span>`;
               }).join(' ')}</p>`:`<p style="color:var(--text2)">—</p>`}
+              ${(()=>{
+                // Suggested partners row (Improvement #5): facet + family
+                // overlap scored across the DB, excluding self and anyone
+                // already shown in the Blends-with row above.
+                if (!id.cas) return '';
+                const sugg = _computeSuggestedPartners(id.cas, 6);
+                if (!sugg.length) return '';
+                return `<p class="sec-subtitle">Suggested partners <span style="font-weight:400;color:var(--text2);font-size:0.85em">(auto — facet + family overlap)</span></p>
+                  <p class="blends-chips">${sugg.map(s => `<a class="blend-chip blend-chip-auto" onclick="addBlendSearch(${esc(JSON.stringify(s.name))})" title="Auto-derived match (score ${s.score}) — click to add to search">${esc(s.name)}<span class="blend-chip-strength">+${s.score}</span></a>`).join(' ')}</p>`;
+              })()}
             </div>
           </div>`:""}
           ${renderGHSIcons(mat)}
