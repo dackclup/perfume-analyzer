@@ -334,6 +334,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .blend-chip-auto:hover { background:var(--bg2); }
 .blend-chip-auto .blend-chip-strength { color:var(--accent); border-color:var(--accent); font-weight:500; }
 .sec-subtitle { font-size:0.75em; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text2); margin:10px 0 4px; }
+.blends-dropped { margin:6px 0 0; font-size:0.7em; font-style:italic; color:var(--text2); opacity:0.75; }
 .match-tag { font-size:0.6em; padding:1px 6px; border-radius:3px; font-weight:400; background:var(--accent); color:#fff; vertical-align:middle; opacity:0.8; white-space:nowrap; display:inline-block; }
 
 /* PubChem data */
@@ -770,7 +771,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-ghs-above-safety"></script>
+<script src="perfumery_data.js?v=2026-04-19-blend-sanitizer"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -782,7 +783,7 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-19-ghs-above-safety";
+const DATA_VERSION = "2026-04-19-blend-sanitizer";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
@@ -1016,8 +1017,12 @@ function _computeSuggestedPartners(sourceCas, limit = 6) {
     if (skip.has(cas)) continue;
     const tfc = FILTER_CACHE.get(cas);
     if (!tfc) continue;
-    // Exclude non-perfumery materials (solvents, carriers, etc.).
+    // Quality gates: exclude non-perfumery materials (solvents,
+    // carriers) and IFRA-prohibited partners — the same gates the
+    // curated/reverse chip row uses, so Suggested partners can't
+    // recommend something the main list would filter out.
     if (!tfc.hasRealOdor) continue;
+    if (_isPartnerProhibited(cas)) continue;
     let score = 0;
     for (const f of (tfc.facets || [])) if (sourceFacets.has(f)) score += 2;
     const tPri = [...(tfc.primaryFamilies||[]), ...(tfc.secondaryFamilies||[])];
@@ -1041,14 +1046,115 @@ function _blendEntryLabel(entry) {
   if (entry && typeof entry === "object" && !Array.isArray(entry)) return String(entry.label || "");
   return String(entry == null ? "" : entry);
 }
-function _mergedBlendPartners(cas, curated) {
-  const out = Array.isArray(curated) ? [...curated] : [];
-  const rev = REVERSE_BLENDS_INDEX.get(cas);
-  if (rev && rev.size) {
-    const seen = new Set(out.map(s => _blendEntryLabel(s).toLowerCase()));
-    for (const name of rev) if (!seen.has(name.toLowerCase())) out.push(name);
+
+// ── Blend-partner sanitiser ─────────────────────────────────────────
+// Central validation pass that drops entries failing any hard-quality
+// gate, so every consumer (card chip row, reverse-index build,
+// Suggested row, CSV/JSON/Obsidian export) sees the same clean list.
+//
+// Reject reasons (returned under `dropped` for UI / validator use):
+//   self-ref         — partner resolves to the source CAS
+//   duplicate-cas    — same partner CAS already in list
+//   duplicate-label  — same lowercase label already in list (unresolved)
+//   prohibited       — partner is IFRA-prohibited or flagged banned
+//   non-perfumery    — partner has no olfactive description (solvents,
+//                      carriers, vehicles) — not a meaningful partner
+//   inconsistent-cas — enhanced entry.cas disagrees with label's resolved
+//                      CAS; curator needs to reconcile
+//   empty            — blank / whitespace / function-word noise label
+//   weak-reverse     — reverse-filled partner sharing zero facet AND
+//                      zero family token with the source (reciprocity
+//                      noise from long-tail curated lists)
+function _isPartnerProhibited(cas) {
+  const fc = FILTER_CACHE.get(cas);
+  if (fc && fc.regulatory && fc.regulatory.has && fc.regulatory.has('banned')) return true;
+  const entry = DB[cas];
+  if (!entry) return false;
+  const ifra = (entry.safety?.ifra || '').toLowerCase();
+  // Strip negations so "not prohibited" / "no prohibition" don't trip
+  // the positive regex below.
+  const clean = ifra
+    .replace(/\bno\s+prohibit\w*/g, '')
+    .replace(/\bnot\s+prohibit\w*/g, '');
+  if (/\bprohibit(ed|ion)?\b/.test(clean)) return true;
+  if (/\bmust\s+not\s+be\s+used\b/.test(clean)) return true;
+  return false;
+}
+function _isPartnerPerfumery(cas) {
+  const fc = FILTER_CACHE.get(cas);
+  if (!fc) return true;                       // unknown — allow
+  if (fc.hasRealOdor) return true;
+  if (MIXTURES && MIXTURES.has(cas)) return true;   // naturals / mixtures
+  return false;
+}
+function _sanitizeBlendEntries(sourceCas, entries, opts) {
+  const options = Object.assign({
+    allowBanned:       false,
+    allowNonPerfumery: false,
+    weakReverseCheck:  null,   // set to a Set of reverseFilled labels-lowercase
+                               // to apply the facet/family co-occurrence gate
+                               // only to reverse-filled additions
+  }, opts || {});
+  const sourceFc = FILTER_CACHE.get(sourceCas) || {};
+  const sourceFacets = new Set(sourceFc.facets || []);
+  const sourcePrimaries = new Set([...(sourceFc.primaryFamilies||[]), ...(sourceFc.secondaryFamilies||[])]);
+
+  const seenCas   = new Set();
+  const seenLabel = new Set();
+  const dropped   = [];
+  const kept      = [];
+  for (const raw of (entries || [])) {
+    const label = _blendEntryLabel(raw).trim();
+    if (!label) { dropped.push({ raw, reason: "empty" }); continue; }
+    const r = _resolveBlendLabel(raw);
+    // Enhanced-schema sanity: declared `cas` must match the label's
+    // resolved CAS; otherwise the entry is inconsistent.
+    if (raw && typeof raw === "object" && raw.cas && r.kind === "material" && r.cas !== raw.cas) {
+      dropped.push({ raw, reason: "inconsistent-cas", detail: "declared " + raw.cas + " vs resolved " + r.cas }); continue;
+    }
+    if (r.kind === "material") {
+      if (r.cas === sourceCas) { dropped.push({ raw, reason: "self-ref" }); continue; }
+      if (seenCas.has(r.cas)) { dropped.push({ raw, reason: "duplicate-cas" }); continue; }
+      if (!options.allowBanned      && _isPartnerProhibited(r.cas)) { dropped.push({ raw, reason: "prohibited" }); continue; }
+      if (!options.allowNonPerfumery && !_isPartnerPerfumery(r.cas)) { dropped.push({ raw, reason: "non-perfumery" }); continue; }
+      // Weak-reverse gate: only applied to entries that came from the
+      // reverse-fill pass. Keeps the chip row focused on partners with
+      // at least one olfactive signal in common with the source.
+      if (options.weakReverseCheck && options.weakReverseCheck.has(label.toLowerCase())) {
+        const tFc = FILTER_CACHE.get(r.cas) || {};
+        const tFacets = new Set(tFc.facets || []);
+        const tPrimaries = new Set([...(tFc.primaryFamilies||[]), ...(tFc.secondaryFamilies||[])]);
+        let shared = 0;
+        for (const f of tFacets)   if (sourceFacets.has(f))   { shared++; break; }
+        if (!shared) for (const p of tPrimaries) if (sourcePrimaries.has(p)) { shared++; break; }
+        if (!shared) { dropped.push({ raw, reason: "weak-reverse" }); continue; }
+      }
+      seenCas.add(r.cas);
+    } else {
+      const lk = label.toLowerCase();
+      if (seenLabel.has(lk)) { dropped.push({ raw, reason: "duplicate-label" }); continue; }
+      seenLabel.add(lk);
+    }
+    kept.push(raw);
   }
-  return out;
+  return { entries: kept, dropped };
+}
+
+function _mergedBlendPartners(cas, curated) {
+  const curatedArr = Array.isArray(curated) ? [...curated] : [];
+  const rev = REVERSE_BLENDS_INDEX.get(cas);
+  const reverseLabels = new Set();
+  const merged = [...curatedArr];
+  if (rev && rev.size) {
+    const seen = new Set(merged.map(s => _blendEntryLabel(s).toLowerCase()));
+    for (const name of rev) {
+      const lk = name.toLowerCase();
+      if (!seen.has(lk)) { merged.push(name); reverseLabels.add(lk); }
+    }
+  }
+  const { entries, dropped } = _sanitizeBlendEntries(cas, merged, { weakReverseCheck: reverseLabels });
+  entries._dropped = dropped;   // stash count for the UI footer note
+  return entries;
 }
 
 // Build prefix index (pre-sorted by name length descending)
@@ -4434,6 +4540,16 @@ function renderResults() {
               }
               return `<span class="blend-chip blend-chip-text"${_strAttr} title="Free-text label — not in DB${_srcTip}">${esc(r.label)}${_strBadge}</span>`;
             }).join(' ')}</p>
+            ${(() => {
+              // Drop count — surfaces the sanitiser's filter decisions
+              // so curators can audit the data without opening devtools.
+              const dropped = blendsArr._dropped || [];
+              if (!dropped.length) return '';
+              const counts = {};
+              for (const d of dropped) counts[d.reason] = (counts[d.reason] || 0) + 1;
+              const parts = Object.entries(counts).map(([r,n]) => n + " " + r).join(", ");
+              return `<p class="blends-dropped" title="Filtered by sanitiser: ${esc(parts)}">${dropped.length} filtered out (${esc(parts)})</p>`;
+            })()}
           </div>`:""}
           ${(()=>{
             // Suggested partners row (Improvement #5) — facet + family
