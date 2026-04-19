@@ -720,7 +720,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-export-axes-rename"></script>
+<script src="perfumery_data.js?v=2026-04-19-canonical-classification"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -732,7 +732,7 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-19-export-axes-rename";
+const DATA_VERSION = "2026-04-19-canonical-classification";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
@@ -1809,6 +1809,22 @@ function classifyFacets(matOrRecord)            { return _inferTaxonomy(matOrRec
 
 function migrateLegacyTaxonomy(entry) {
   if (!entry) return { primaryFamilies: [], secondaryFamilies: [], facets: [] };
+  // Per-entry explicit override. When a DB row carries an
+  // `entry.classification` block, skip all auto-inference — the doc
+  // (e.g. Lavender.md) has already specified the canonical Primary
+  // Family / Sub-family / Facet assignment and we must not let the
+  // classifier's token-splitting pollute it with secondary families
+  // scraped from odor description prose (e.g. reading the word
+  // "floral" inside Linalool's description and assigning Floral note
+  // when the doc says the material is Aromatic-only). Only validated
+  // canonical tokens survive.
+  const raw = entry.classification;
+  if (raw && (Array.isArray(raw.primaryFamilies) || Array.isArray(raw.secondaryFamilies) || Array.isArray(raw.facets))) {
+    const pf = uniqStable((raw.primaryFamilies   || []).filter(f => PRIMARY_FAMILIES.includes(f)));
+    const sf = uniqStable((raw.secondaryFamilies || []).filter(f => PRIMARY_FAMILIES.includes(f) && !pf.includes(f)));
+    const fa = uniqStable((raw.facets            || []).filter(f => f in FACET_TAGS));
+    return { primaryFamilies: pf, secondaryFamilies: sf, facets: fa };
+  }
   const synthetic = {
     record: {
       perfumery: {
