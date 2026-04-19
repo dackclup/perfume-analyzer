@@ -720,7 +720,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-canonical-classification"></script>
+<script src="perfumery_data.js?v=2026-04-19-lavender-md-v3"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -732,7 +732,7 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-19-canonical-classification";
+const DATA_VERSION = "2026-04-19-lavender-md-v3";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
@@ -1010,7 +1010,16 @@ const PRIMARY_FAMILIES = [
   // "Floral Amber" / "Floral Oriental" as a first-class primary family so
   // the Sub-families drawer can match them without requiring both floral
   // AND amber tokens on every such material.
-  'floral_amber'
+  'floral_amber',
+  // Edwards 2021 transitional subfamilies — first-class tokens so
+  // materials can self-declare their Woody Amber / Soft Floral /
+  // Floral-Fresh membership without proxy tokens (e.g. β-Caryophyllene
+  // is Woody Amber but not animalic; α-Bisabolol is Soft Floral but
+  // we don't want to tag it aldehydic or powdery; Nerol is
+  // Floral-Fresh but "fruity" would leak into the Fruity sub-family).
+  'woody_amber',
+  'soft_floral',
+  'floral_fresh'
 ];
 // Display labels for the Step-2 primary family axis (used by the
 // Step-5 UI chips and result-card badges).
@@ -1021,7 +1030,9 @@ const PRIMARY_FAMILY_LABELS = {
   lactonic:'Lactonic', spicy:'Spicy', powdery:'Powdery', woody:'Woody',
   balsamic:'Balsamic', resinous:'Resinous', amber:'Amber', animalic:'Animalic',
   leather:'Leather', musk:'Musk', smoky:'Smoky',
-  floral_amber:'Floral Amber'
+  floral_amber:'Floral Amber',
+  woody_amber:'Woody Amber', soft_floral:'Soft Floral',
+  floral_fresh:'Floral Fresh'
 };
 
 // ── Michael Edwards 2021 filter buckets ─────────────────────────────
@@ -1048,12 +1059,13 @@ const EDWARDS_FAMILY_LABELS = {
 const EDWARDS_TO_LEGACY = {
   // floral_amber belongs to the FLORAL main family in the 2021 wheel
   // (transitional toward Amber), so it lands in the Floral note bucket.
-  floral_note:       new Set(['floral', 'floral_amber']),
+  // soft_floral is a Floral-note sibling (Aldehydic/Powdery territory).
+  floral_note:       new Set(['floral', 'floral_amber', 'soft_floral']),
   amber_note:        new Set(['amber', 'balsamic', 'resinous', 'spicy', 'gourmand', 'sweet', 'lactonic', 'musk', 'powdery']),
   woody_note:        new Set(['woody', 'earthy', 'mossy', 'smoky', 'leather']),
   fresh_note:        new Set(['fresh', 'citrus', 'green', 'aquatic', 'ozonic', 'aldehydic']),
-  floral_fresh_note: new Set(['fruity']),
-  woody_amber_note:  new Set(['animalic']),
+  floral_fresh_note: new Set(['fruity', 'floral_fresh']),
+  woody_amber_note:  new Set(['animalic', 'woody_amber']),
   fresh_woody_note:  new Set(['herbal', 'camphoraceous']),
 };
 // Given a material's legacy family set, return the Edwards buckets it
@@ -1107,12 +1119,12 @@ const SUB_FAMILY_TO_LEGACY = {
   water:            new Set(['aquatic', 'ozonic']),
   green:            new Set(['green']),
   fruity:           new Set(['fruity', 'lactonic']),
-  floral:           new Set(['floral']),
-  soft_floral:      new Set(['aldehydic', 'powdery']),
+  floral:           new Set(['floral', 'floral_fresh']),
+  soft_floral:      new Set(['aldehydic', 'powdery', 'soft_floral']),
   floral_amber:     new Set(['floral_amber']),
   soft_amber:       new Set(['sweet', 'gourmand', 'musk']),
   amber:            new Set(['amber', 'balsamic', 'resinous', 'spicy']),
-  woody_amber:      new Set(['animalic']),
+  woody_amber:      new Set(['animalic', 'woody_amber']),
   woods:            new Set(['woody']),
   mossy_woods:      new Set(),
   dry_woods:        new Set(['leather', 'smoky']),
