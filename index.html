@@ -295,14 +295,13 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .badge-sub       { background:color-mix(in srgb, var(--accent) 7%,  transparent); color:var(--text); }
 .badge-facet     { background:color-mix(in srgb, var(--text) 4%,  transparent); color:var(--text2); font-style:italic; font-weight:400; }
 .card-meta-row { margin:6px 0 0 18px; display:flex; flex-direction:column; gap:4px; }
-/* One axis = one wrapping flex row. The axis label is a fixed-width
-   prefix (38px) so labels align in a neat column even though chips
-   don't reserve a hard gutter — `display:contents` on .tag-chips
-   lets chips flow directly in the parent flex, so long axes wrap
-   across multiple visual rows with consistent rhythm. */
-.tag-row { display:flex; flex-wrap:wrap; align-items:center; row-gap:4px; column-gap:6px; margin:0; line-height:1.4; }
-.tag-row > .tag-axis-label { flex:0 0 38px; width:38px; padding:0; margin:0 2px 0 0; text-align:right; }
-.tag-row > .tag-chips { display:contents; }
+/* Two-column grid per axis so wrapped chips stay aligned under the
+   first chip instead of falling back to the gutter. Column 1 is the
+   fixed 40px label slot; column 2 is its own flex container so
+   chips flow and wrap inside that column only. */
+.tag-row { display:grid; grid-template-columns:40px 1fr; column-gap:8px; align-items:baseline; margin:0; line-height:1.4; }
+.tag-row > .tag-axis-label { padding:3px 0 0; margin:0; text-align:right; align-self:start; }
+.tag-row > .tag-chips { display:flex; flex-wrap:wrap; gap:4px 6px; min-width:0; }
 .tag-axis-label { font-size:0.56em; color:var(--text2); text-transform:uppercase; letter-spacing:0.12em; font-weight:600; opacity:0.55; vertical-align:middle; }
 /* Breadcrumb separator between Primary / Sub / Facets chips. Uses
    a slightly larger chevron + subtle colour so the reading flow
@@ -795,7 +794,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-tag-polish"></script>
+<script src="perfumery_data.js?v=2026-04-19-tag-grid"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -807,7 +806,7 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-19-tag-polish";
+const DATA_VERSION = "2026-04-19-tag-grid";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
