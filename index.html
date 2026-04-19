@@ -257,6 +257,10 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .badge-mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
 .badge-base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
 .badge-type { font-size:0.7em; padding:2px 8px; border-radius:3px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px solid var(--border); vertical-align:middle; }
+/* Regulatory badges (Restricted / Regulated / Allergen / Sensitizer /
+   Phototoxic / Banned) — share the neutral chip outline but in the
+   danger colour so the axis reads as a warning stripe at a glance. */
+.badge-reg { font-size:0.7em; padding:2px 8px; border-radius:3px; font-weight:500; background:transparent; color:#b91c1c; border:1px solid color-mix(in srgb, #b91c1c 35%, transparent); vertical-align:middle; }
 /* Step 5 — taxonomy badges. Primary / Secondary / Facets all share
    the same neutral chip style as the Use tag row (muted bg2 +
    thin border + small rounded rectangle) so the card reads as one
@@ -277,13 +281,20 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
   border:1px solid var(--border);
   vertical-align:middle;
 }
-.card-meta-row { margin:6px 0 0 18px; display:flex; flex-direction:column; gap:4px; }
-/* Each tag row = one taxonomy axis. Label column is fixed-width so the
-   chip columns line up across rows. Chip column wraps on overflow. */
-.tag-row { display:flex; align-items:flex-start; gap:8px; }
-.tag-row > .tag-axis-label { flex:0 0 56px; padding-top:3px; text-align:right; margin-right:0; }
-.tag-row > .tag-chips { flex:1 1 auto; min-width:0; display:flex; flex-wrap:wrap; gap:4px 6px; }
-.tag-axis-label { font-size:0.62em; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; font-weight:600; opacity:0.75; vertical-align:middle; }
+.card-meta-row { margin:6px 0 0 18px; display:flex; flex-direction:column; gap:3px; }
+/* One axis = one wrapping flex row. The axis label is an inline prefix
+   (no reserved 56px column anymore) so chips start right next to it
+   and wrap naturally. `display:contents` on .tag-chips lets the chip
+   elements participate in the parent flex flow — chips of a long axis
+   like Use wrap across multiple visual rows without stacking the
+   label above an empty gutter. */
+.tag-row { display:flex; flex-wrap:wrap; align-items:center; row-gap:3px; column-gap:5px; margin:0; line-height:1.35; }
+.tag-row > .tag-axis-label { flex:0 0 auto; min-width:34px; padding:0; margin-right:2px; text-align:left; }
+.tag-row > .tag-chips { display:contents; }
+.tag-axis-label { font-size:0.58em; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; font-weight:700; opacity:0.7; vertical-align:middle; }
+/* Breadcrumb separator between Primary / Sub / Facets chips when
+   the taxonomy row is rendered as a chain. */
+.tag-breadcrumb-sep { color:var(--text2); opacity:0.4; font-size:0.85em; padding:0 1px; }
 /* Step 5 — facet sub-drawer grouping. Each parent family gets a small
    header label so the chip cloud is scannable on mobile instead of one
    massive unstructured wrap. */
@@ -414,7 +425,7 @@ html { scroll-behavior:smooth; }
      its background + border so Type·Fn / Reg / Use / Primary / Facets
      badges and the match-tag (name exact 99%) all print as visible
      chips instead of bare text on white paper. */
-  .badge, .badge-type, .badge-primary, .badge-secondary, .badge-sub, .badge-facet,
+  .badge, .badge-type, .badge-reg, .badge-primary, .badge-secondary, .badge-sub, .badge-facet,
   .match-tag, .badge-not-perfumery {
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
   }
@@ -771,7 +782,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-blend-sanitizer"></script>
+<script src="perfumery_data.js?v=2026-04-19-tag-compact"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -783,7 +794,7 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-19-blend-sanitizer";
+const DATA_VERSION = "2026-04-19-tag-compact";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
@@ -4460,24 +4471,31 @@ function renderResults() {
           <div style="flex:1;min-width:0">
             <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(nm.canonical)}${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''}${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
             ${mat.match_info?`<p class="card-match" style="margin:4px 0 0 18px">${esc(mat.match_info)}</p>`:""}
-            ${(_typeFuncJoined || displayRegulatory.length)?`<div class="card-meta-row">${_typeFuncJoined?`<div class="tag-row"><span class="tag-axis-label">Type·Fn</span><span class="tag-chips"><span class="badge-type">${_typeFuncJoined}</span></span></div>`:''}${displayRegulatory.length?`<div class="tag-row"><span class="tag-axis-label">Reg</span><span class="tag-chips">${displayRegulatory.map(r=>`<span class="badge-type" style="color:#b91c1c">${REGULATORY_LABELS[r]||r}</span>`).join('')}</span></div>`:''}</div>`:''}
+            ${(_typeFuncJoined || displayRegulatory.length)?`<div class="card-meta-row">${_typeFuncJoined?`<div class="tag-row"><span class="tag-axis-label">Type</span><span class="tag-chips"><span class="badge-type">${_typeFuncJoined}</span></span></div>`:''}${displayRegulatory.length?`<div class="tag-row"><span class="tag-axis-label">Reg</span><span class="tag-chips">${displayRegulatory.map(r=>`<span class="badge-reg">${REGULATORY_LABELS[r]||r}</span>`).join('')}</span></div>`:''}</div>`:''}
           </div>
           <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
           ${(displayTags.length || displayPrimaryFamilies.length || displaySecondaryFamilies.length || displayFacets.length)?`<div class="card-meta-row" style="margin:6px 0 10px 0">${displayTags.length?`<div class="tag-row"><span class="tag-axis-label">Use</span><span class="tag-chips">${displayTags.map(t=>`<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.7em;padding:1px 8px;margin:0">${USE_LABELS[t]||t}</span>`).join('')}</span></div>`:''}${(() => {
-  // Primary Family + Sub-families card rows. Uses the same Edwards
-  // helper the Filter drawer and CSV/JSON exports consume, so the
-  // chips on the card match the filter drawer chip labels exactly.
+  // Taxonomy breadcrumb — Primary › Sub › Facets on a single wrapping
+  // row (instead of three separate axis rows) so the card doesn't
+  // reserve three vertical slots for what's usually 1-3 chips total.
+  // The `›` separators preserve the axis reading order; each axis
+  // keeps its own chip style (primary / sub / facet) for at-a-glance
+  // differentiation.
   const _ax = _edwardsAxesFor(displayPrimaryFamilies, displaySecondaryFamilies);
   const _pri = _ax.primary_family.map(l => l.replace(/\s*note$/i, ''));
   const _sub = _ax.sub_families;
-  const _rows = [];
-  if (_pri.length) _rows.push(`<div class="tag-row"><span class="tag-axis-label">Primary</span><span class="tag-chips">${_pri.map(l=>`<span class="badge-primary">${esc(l)}</span>`).join('')}</span></div>`);
-  if (_sub.length) _rows.push(`<div class="tag-row"><span class="tag-axis-label">Sub</span><span class="tag-chips">${_sub.map(l=>`<span class="badge-sub">${esc(l)}</span>`).join('')}</span></div>`);
-  return _rows.join('');
-})()}${displayFacets.length?`<div class="tag-row"><span class="tag-axis-label">Facets</span><span class="tag-chips">${displayFacets.map(f=>`<span class="badge-facet">${facetLabel(f)}</span>`).join('')}</span></div>`:''}</div>`:""}
+  const _fac = Array.isArray(displayFacets) ? displayFacets : [];
+  if (!_pri.length && !_sub.length && !_fac.length) return '';
+  const parts = [];
+  if (_pri.length) parts.push(_pri.map(l=>`<span class="badge-primary">${esc(l)}</span>`).join(''));
+  if (_sub.length) parts.push(_sub.map(l=>`<span class="badge-sub">${esc(l)}</span>`).join(''));
+  if (_fac.length) parts.push(_fac.map(f=>`<span class="badge-facet">${facetLabel(f)}</span>`).join(''));
+  const chain = parts.join('<span class="tag-breadcrumb-sep">›</span>');
+  return `<div class="tag-row"><span class="tag-axis-label" title="Primary Family › Sub-families › Facets">Class</span><span class="tag-chips">${chain}</span></div>`;
+})()}</div>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" onerror="this.parentNode.style.display='none'"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
