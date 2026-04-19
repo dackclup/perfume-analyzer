@@ -794,7 +794,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-tag-grid"></script>
+<script src="perfumery_data.js?v=2026-04-19-incompat-filter"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -806,7 +806,7 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-19-tag-grid";
+const DATA_VERSION = "2026-04-19-incompat-filter";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
@@ -1046,6 +1046,7 @@ function _computeSuggestedPartners(sourceCas, limit = 6) {
     // recommend something the main list would filter out.
     if (!tfc.hasRealOdor) continue;
     if (_isPartnerProhibited(cas)) continue;
+    if (_partnerIncompatibility(sourceCas, cas)) continue;  // HIGH-reactive pair
     let score = 0;
     for (const f of (tfc.facets || [])) if (sourceFacets.has(f)) score += 2;
     const tPri = [...(tfc.primaryFamilies||[]), ...(tfc.secondaryFamilies||[])];
@@ -1080,6 +1081,10 @@ function _blendEntryLabel(entry) {
 //   duplicate-cas    — same partner CAS already in list
 //   duplicate-label  — same lowercase label already in list (unresolved)
 //   prohibited       — partner is IFRA-prohibited or flagged banned
+//   incompatible-pair — chemically reactive with source (HIGH-severity
+//                      reaction per perfumery stability references —
+//                      aldehyde+primary-amine Schiff base, aldehyde+thiol
+//                      hemithioacetal, etc.)
 //   non-perfumery    — partner has no olfactive description (solvents,
 //                      carriers, vehicles) — not a meaningful partner
 //   inconsistent-cas — enhanced entry.cas disagrees with label's resolved
@@ -1088,6 +1093,103 @@ function _blendEntryLabel(entry) {
 //   weak-reverse     — reverse-filled partner sharing zero facet AND
 //                      zero family token with the source (reciprocity
 //                      noise from long-tail curated lists)
+// ── Chemical-incompatibility detection ──────────────────────────────
+// Curated CAS → functional-group map for materials known to participate
+// in HIGH-severity reactions per classic perfumery stability texts
+// (Calkin & Jellinek, Sell, Curtis & Williams — mirrors the rules
+// formulation_engine.js uses at formulate time).
+//
+// We can't run the full SMILES-regex detector here because the static
+// DB doesn't ship SMILES (PubChem enrichment is async / on-demand).
+// Instead: list the CAS that show up in the HIGH-severity reactive
+// pairs below, plus a name-pattern fallback that catches generic
+// "-al" aldehydes or "anthranilate" primary amines we might have
+// missed.
+const MATERIAL_GROUPS = new Map([
+  // ── Primary amines / secondary amines (anthranilates, indoles) ──
+  ["134-20-3", new Set(["primary_amine"])],   // Methyl Anthranilate
+  ["87-25-2",  new Set(["primary_amine"])],   // Ethyl Anthranilate
+  ["85-91-6",  new Set(["secondary_amine"])], // Dimethyl Anthranilate (N-methyl; tertiary? actually Methyl N-methylanthranilate)
+  ["120-72-9", new Set(["secondary_amine"])], // Indole
+  ["83-34-1",  new Set(["secondary_amine"])], // Skatole (3-methylindole)
+
+  // ── Aldehydes (HIGH-reactive candidates for Schiff base) ────────
+  ["5392-40-5", new Set(["aldehyde"])],       // Citral
+  ["106-23-0",  new Set(["aldehyde"])],       // Citronellal
+  ["100-52-7",  new Set(["aldehyde"])],       // Benzaldehyde
+  ["104-55-2",  new Set(["aldehyde"])],       // Cinnamic Aldehyde
+  ["101-86-0",  new Set(["aldehyde"])],       // Hexyl Cinnamic Aldehyde
+  ["122-40-7",  new Set(["aldehyde"])],       // Amyl Cinnamic Aldehyde
+  ["120-57-0",  new Set(["aldehyde"])],       // Heliotropin
+  ["121-33-5",  new Set(["aldehyde","phenol"])],   // Vanillin
+  ["121-32-4",  new Set(["aldehyde","phenol"])],   // Ethyl Vanillin
+  ["107-75-5",  new Set(["aldehyde","alcohol"])],  // Hydroxycitronellal
+  ["124-13-0",  new Set(["aldehyde"])],       // Octanal (Aldehyde C-8)
+  ["112-31-2",  new Set(["aldehyde"])],       // Decanal (C-10)
+  ["112-54-9",  new Set(["aldehyde"])],       // Lauric Aldehyde (C-12)
+  ["124-19-6",  new Set(["aldehyde"])],       // Nonanal (C-9)
+  ["112-44-7",  new Set(["aldehyde"])],       // Undecanal (C-11)
+  ["31906-04-4",new Set(["aldehyde","alcohol"])],  // Lyral (restricted)
+  ["1205-17-0", new Set(["aldehyde"])],       // Helional
+  ["103-95-7",  new Set(["aldehyde"])],       // Cyclamen Aldehyde
+  ["123-11-5",  new Set(["aldehyde","phenol"])],   // Anisic Aldehyde (p-Methoxybenzaldehyde)
+  ["122-78-1",  new Set(["aldehyde"])],       // Phenylacetaldehyde
+  ["104-53-0",  new Set(["aldehyde"])],       // Hydrocinnamaldehyde
+  ["141-27-5",  new Set(["aldehyde"])],       // Citronellyl/Geranial trans-2,6-dimethyl-5-heptenal
+  ["432-25-7",  new Set(["aldehyde"])],       // β-Cyclocitral
+  ["126-15-8",  new Set(["aldehyde"])],       // Myrac Aldehyde
+]);
+// Heuristic fallback — catches materials with canonical names that
+// clearly imply a reactive group (aldehyde "-al" suffix, anthranilate,
+// indole / skatole, vanillin/eugenol phenols, thiol markers).
+function _detectGroupsByName(name) {
+  const out = new Set();
+  if (!name) return out;
+  const n = name.toLowerCase();
+  if (/\bdimethyl[- ]?anthranilate\b|n-methyl[- ]?anthranilate/.test(n)) {
+    out.add("secondary_amine");
+  } else if (/\banthranilate\b/.test(n)) {
+    out.add("primary_amine");
+  }
+  if (/\b(indole|skatole|quinoline)\b/.test(n)) out.add("secondary_amine");
+  if (/\b(mercapto|thiol|mercaptan|thio[- ]?acetate|sulfanyl)\b/.test(n)) out.add("thiol");
+  if (/(aldehyde|cinnamaldehyde|citral|citronellal|heliotropin|vanillin|helional|hexenal|nonanal|octanal|decanal|undecanal|dodecanal|tridecanal|lauric\s+aldehyde)/i.test(n)) {
+    out.add("aldehyde");
+  }
+  if (/\b(eugenol|isoeugenol|thymol|guaiacol|carvacrol|chavicol|cresol|vanillin|methyl\s+salicylate|eugen|phenol)\b/.test(n)) {
+    out.add("phenol");
+  }
+  return out;
+}
+function _materialGroups(cas) {
+  const curated = MATERIAL_GROUPS.get(cas);
+  if (curated) return curated;
+  const name = DB[cas]?.name || "";
+  const inferred = _detectGroupsByName(name);
+  // Cache so we only pay the regex cost once per CAS.
+  MATERIAL_GROUPS.set(cas, inferred);
+  return inferred;
+}
+
+// HIGH-severity reactive-pair rules the sanitiser hard-drops as
+// "incompatible-pair". Each rule is [groupA, groupB, reactionLabel].
+// Source: formulation_data.js:REACTIVE_PAIRS (severity === 'high').
+const INCOMPATIBLE_PAIRS_HIGH = [
+  ["aldehyde", "primary_amine", "Schiff base formation (darkening + odor loss)"],
+  ["aldehyde", "thiol",         "Hemithioacetal (rapid sulfurous off-odor)"],
+];
+function _partnerIncompatibility(sourceCas, partnerCas) {
+  const a = _materialGroups(sourceCas);
+  const b = _materialGroups(partnerCas);
+  if (!a.size || !b.size) return null;
+  for (const [gA, gB, reaction] of INCOMPATIBLE_PAIRS_HIGH) {
+    if ((a.has(gA) && b.has(gB)) || (a.has(gB) && b.has(gA))) {
+      return { pair: gA + "+" + gB, reaction };
+    }
+  }
+  return null;
+}
+
 function _isPartnerProhibited(cas) {
   const fc = FILTER_CACHE.get(cas);
   if (fc && fc.regulatory && fc.regulatory.has && fc.regulatory.has('banned')) return true;
@@ -1113,6 +1215,10 @@ function _isPartnerPerfumery(cas) {
 function _sanitizeBlendEntries(sourceCas, entries, opts) {
   const options = Object.assign({
     allowBanned:       false,
+    allowIncompatible: false,  // HIGH-severity reactive pairs (Schiff
+                               // base, hemithioacetal) are dropped so
+                               // the card never suggests a chemically
+                               // unsafe pairing.
     allowNonPerfumery: false,
     weakReverseCheck:  null,   // set to a Set of reverseFilled labels-lowercase
                                // to apply the facet/family co-occurrence gate
@@ -1139,6 +1245,10 @@ function _sanitizeBlendEntries(sourceCas, entries, opts) {
       if (r.cas === sourceCas) { dropped.push({ raw, reason: "self-ref" }); continue; }
       if (seenCas.has(r.cas)) { dropped.push({ raw, reason: "duplicate-cas" }); continue; }
       if (!options.allowBanned      && _isPartnerProhibited(r.cas)) { dropped.push({ raw, reason: "prohibited" }); continue; }
+      if (!options.allowIncompatible) {
+        const incompat = _partnerIncompatibility(sourceCas, r.cas);
+        if (incompat) { dropped.push({ raw, reason: "incompatible-pair", detail: incompat.reaction }); continue; }
+      }
       if (!options.allowNonPerfumery && !_isPartnerPerfumery(r.cas)) { dropped.push({ raw, reason: "non-perfumery" }); continue; }
       // Weak-reverse gate: only applied to entries that came from the
       // reverse-fill pass. Keeps the chip row focused on partners with
