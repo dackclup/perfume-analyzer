@@ -80,7 +80,8 @@ function resolve(raw) {
 }
 
 // ── Partner-quality helpers (match the runtime sanitiser at
-//    index.html:_isPartnerProhibited / _isPartnerPerfumery).
+//    index.html:_isPartnerProhibited / _isPartnerPerfumery /
+//    _partnerIncompatibility).
 const RE_ODORLESS = /\b(odor(less)?|odourless|no\s+odor|no\s+odour|without\s+odor)\b/i;
 function hasRealOdor(entry) {
   const desc = entry?.odor?.description || '';
@@ -94,6 +95,68 @@ function isProhibited(entry) {
   return false;
 }
 
+// Chemical incompatibility table — keep in sync with
+// index.html:MATERIAL_GROUPS + INCOMPATIBLE_PAIRS_HIGH.
+const MATERIAL_GROUPS = new Map([
+  ["134-20-3", new Set(["primary_amine"])],
+  ["87-25-2",  new Set(["primary_amine"])],
+  ["85-91-6",  new Set(["secondary_amine"])],
+  ["120-72-9", new Set(["secondary_amine"])],
+  ["83-34-1",  new Set(["secondary_amine"])],
+  ["5392-40-5", new Set(["aldehyde"])],
+  ["106-23-0",  new Set(["aldehyde"])],
+  ["100-52-7",  new Set(["aldehyde"])],
+  ["104-55-2",  new Set(["aldehyde"])],
+  ["101-86-0",  new Set(["aldehyde"])],
+  ["122-40-7",  new Set(["aldehyde"])],
+  ["120-57-0",  new Set(["aldehyde"])],
+  ["121-33-5",  new Set(["aldehyde","phenol"])],
+  ["121-32-4",  new Set(["aldehyde","phenol"])],
+  ["107-75-5",  new Set(["aldehyde","alcohol"])],
+  ["124-13-0",  new Set(["aldehyde"])],
+  ["112-31-2",  new Set(["aldehyde"])],
+  ["112-54-9",  new Set(["aldehyde"])],
+  ["124-19-6",  new Set(["aldehyde"])],
+  ["112-44-7",  new Set(["aldehyde"])],
+  ["31906-04-4",new Set(["aldehyde","alcohol"])],
+  ["1205-17-0", new Set(["aldehyde"])],
+  ["103-95-7",  new Set(["aldehyde"])],
+  ["123-11-5",  new Set(["aldehyde","phenol"])],
+  ["122-78-1",  new Set(["aldehyde"])],
+  ["104-53-0",  new Set(["aldehyde"])],
+  ["141-27-5",  new Set(["aldehyde"])],
+  ["432-25-7",  new Set(["aldehyde"])],
+  ["126-15-8",  new Set(["aldehyde"])],
+]);
+function detectGroupsByName(name) {
+  const out = new Set();
+  if (!name) return out;
+  const n = name.toLowerCase();
+  if (/\bdimethyl[- ]?anthranilate\b|n-methyl[- ]?anthranilate/.test(n)) out.add("secondary_amine");
+  else if (/\banthranilate\b/.test(n)) out.add("primary_amine");
+  if (/\b(indole|skatole|quinoline)\b/.test(n)) out.add("secondary_amine");
+  if (/\b(mercapto|thiol|mercaptan|thio[- ]?acetate|sulfanyl)\b/.test(n)) out.add("thiol");
+  if (/(aldehyde|cinnamaldehyde|citral|citronellal|heliotropin|vanillin|helional|hexenal|nonanal|octanal|decanal|undecanal|dodecanal|tridecanal|lauric\s+aldehyde)/i.test(n)) out.add("aldehyde");
+  if (/\b(eugenol|isoeugenol|thymol|guaiacol|carvacrol|chavicol|cresol|vanillin|methyl\s+salicylate|eugen|phenol)\b/.test(n)) out.add("phenol");
+  return out;
+}
+function materialGroups(cas) {
+  return MATERIAL_GROUPS.get(cas) || detectGroupsByName(DB[cas]?.name || "");
+}
+const INCOMPATIBLE_PAIRS_HIGH = [
+  ["aldehyde", "primary_amine", "Schiff base"],
+  ["aldehyde", "thiol",         "Hemithioacetal"],
+];
+function partnerIncompatibility(sourceCas, partnerCas) {
+  const a = materialGroups(sourceCas);
+  const b = materialGroups(partnerCas);
+  if (!a.size || !b.size) return null;
+  for (const [gA, gB, reaction] of INCOMPATIBLE_PAIRS_HIGH) {
+    if ((a.has(gA) && b.has(gB)) || (a.has(gB) && b.has(gA))) return { pair: gA + "+" + gB, reaction };
+  }
+  return null;
+}
+
 // ── Checks
 const findings = {
   selfref:         [],
@@ -102,6 +165,7 @@ const findings = {
   shorthandDrift:  [],
   duplicateCas:    [],   // same partner CAS appears twice in one list
   prohibitedPartner: [], // partner is IFRA-prohibited
+  incompatiblePair: [],  // HIGH-severity reactive pair (Schiff base etc.)
   nonPerfumery:    [],   // partner is a solvent / carrier / vehicle
   inconsistentCas: [],   // enhanced {cas} disagrees with label's resolved CAS
 };
@@ -138,6 +202,10 @@ for (const e of db) {
       const partnerEntry = DB[r.cas];
       if (partnerEntry && isProhibited(partnerEntry)) {
         findings.prohibitedPartner.push({ cas: e.cas, name: from, label: rawLabel, targetCas: r.cas, targetName: r.name });
+      }
+      const incompat = partnerIncompatibility(e.cas, r.cas);
+      if (incompat) {
+        findings.incompatiblePair.push({ cas: e.cas, name: from, label: rawLabel, targetCas: r.cas, targetName: r.name, reaction: incompat.reaction });
       }
       if (partnerEntry && !hasRealOdor(partnerEntry)) {
         findings.nonPerfumery.push({ cas: e.cas, name: from, label: rawLabel, targetCas: r.cas, targetName: r.name });
@@ -248,6 +316,17 @@ if (findings.prohibitedPartner.length) {
 }
 
 console.log("\n" + hr());
+console.log(" (i) Chemically-incompatible partner (HIGH reactive): " + findings.incompatiblePair.length);
+console.log(hr());
+if (findings.incompatiblePair.length) {
+  console.log("  Source + partner form a HIGH-severity reactive pair.");
+  console.log("  Drop from blends_with; the sanitiser filters them at runtime:");
+  const sample = findings.incompatiblePair.slice(0, 10);
+  for (const r of sample) console.log("    " + r.name + "  →  " + r.targetName + "   (" + r.reaction + ")");
+  if (findings.incompatiblePair.length > 10) console.log("    … +" + (findings.incompatiblePair.length - 10) + " more");
+}
+
+console.log("\n" + hr());
 console.log(" (g) Non-perfumery partner (solvent / carrier): " + findings.nonPerfumery.length);
 console.log(hr());
 if (findings.nonPerfumery.length) {
@@ -276,13 +355,18 @@ console.log("   selfref=" + findings.selfref.length +
             "  shorthandDrift=" + findings.shorthandDrift.length);
 console.log("   duplicateCas=" + findings.duplicateCas.length +
             "  prohibitedPartner=" + findings.prohibitedPartner.length +
+            "  incompatiblePair=" + findings.incompatiblePair.length +
             "  nonPerfumery=" + findings.nonPerfumery.length +
             "  inconsistentCas=" + findings.inconsistentCas.length);
 console.log(hr("═"));
 
 // Exit non-zero on structural errors: self-ref, prohibited partners
-// (data-safety regression), inconsistent declared CAS (curation bug).
-// Curation gaps (unresolved / reciprocity / shorthandDrift / non-
-// perfumery) are informational only.
-const hardErrors = findings.selfref.length + findings.prohibitedPartner.length + findings.inconsistentCas.length;
+// (data-safety regression), incompatible HIGH-reactive partners
+// (formulation-safety regression), inconsistent declared CAS
+// (curation bug). Curation gaps (unresolved / reciprocity /
+// shorthandDrift / non-perfumery) are informational only.
+const hardErrors = findings.selfref.length
+                 + findings.prohibitedPartner.length
+                 + findings.incompatiblePair.length
+                 + findings.inconsistentCas.length;
 process.exit(hardErrors ? 1 : 0);
