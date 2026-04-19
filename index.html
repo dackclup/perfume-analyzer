@@ -720,7 +720,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-lavender-full-sync"></script>
+<script src="perfumery_data.js?v=2026-04-19-name-match-fix"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -729,6 +729,10 @@ html { scroll-behavior:smooth; }
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
+// Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
+// Obsidian artefacts can self-identify the DB snapshot they came from.
+// Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
+const DATA_VERSION = "2026-04-19-name-match-fix";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
@@ -4685,9 +4689,23 @@ async function downloadJSON() {
   });
 
   if (data.length) {
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+    // Wrap the records with provenance metadata so consumers can tell
+    // which DB snapshot the file was exported from (cache staleness
+    // was a real field issue — see the 2026-04-19 name-match fix).
+    const payload = {
+      _meta: {
+        generated_at:      new Date().toISOString(),
+        data_version:      typeof DATA_VERSION !== 'undefined' ? DATA_VERSION : null,
+        materials_count:   data.length,
+        db_total:          Object.keys(DB).length,
+        source:            "dackclup/perfume-analyzer",
+        schema:            "perfume-report.v2",
+      },
+      materials: data,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-    a.download = "perfume_report.json"; a.click();
+    a.download = "perfume-report-" + new Date().toISOString().slice(0,10) + ".json"; a.click();
   }
 
   btn.textContent = origText;
@@ -4715,7 +4733,15 @@ function downloadCSV() {
     'uses', 'odor_families', 'primary_families', 'secondary_families', 'facets',
     'regulatory', 'source'
   ];
-  const rows = [headers.join(',')];
+  // Provenance comment block. `#`-prefixed rows are skipped by most
+  // CSV readers (pandas: `comment='#'`; DuckDB: `skip=2`). Keeps the
+  // csv valid for naive consumers because every line still tokenises.
+  const _ver = typeof DATA_VERSION !== 'undefined' ? DATA_VERSION : '';
+  const rows = [
+    '# perfume-analyzer report (' + new Date().toISOString() + ')',
+    '# data_version=' + _ver + ' materials=' + found.length + ' db_total=' + Object.keys(DB).length,
+    headers.join(','),
+  ];
   for (const mat of found) {
     const src = mat.record;
     const cas = src.identifiers?.cas ?? null;
@@ -4744,7 +4770,7 @@ function downloadCSV() {
   const blob = new Blob(['\uFEFF' + rows.join('\r\n') + '\r\n'], {type: 'text/csv;charset=utf-8'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'perfume-report.csv';
+  a.download = 'perfume-report-' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
 }
 
