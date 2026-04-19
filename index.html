@@ -246,6 +246,12 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 
 /* Sections */
 .sec-title { font-size:0.7em; text-transform:uppercase; letter-spacing:0.08em; color:var(--text2); font-weight:600; margin:12px 0 4px; }
+/* Full-width card sections — Safety / Blends with / Suggested partners
+   each render on their own row so chip lists use the whole card width
+   instead of being squeezed into a half-width column. */
+.card-section { width:100%; margin:10px 0 0; }
+.card-section > p { margin:3px 0; font-size:0.9em; overflow-wrap:anywhere; }
+.card-section > .blends-chips { margin:4px 0 2px; }
 .odor-desc { font-style:italic; line-height:1.5; }
 .badge-top { background:var(--badge-top-bg); color:var(--badge-top-fg); }
 .badge-mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
@@ -764,7 +770,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-chip-rows"></script>
+<script src="perfumery_data.js?v=2026-04-19-section-rows"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -776,7 +782,7 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-19-chip-rows";
+const DATA_VERSION = "2026-04-19-section-rows";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
@@ -4395,43 +4401,47 @@ function renderResults() {
           </div>
           ${sf.ifra_guideline||sf.usage_levels||blendsArr.length?`
           <hr>
-          <div class="row">
-            <div style="flex:1">
-              <p class="sec-title">Safety</p>
-              ${sf.ifra_guideline?(()=>{const bs=getBanStatus(mat);return bs?`<p style="color:#b91c1c;font-weight:600">${esc(sf.ifra_guideline)}</p><p style="color:#b91c1c;font-size:0.8em">${bs==='worldwide'?'Banned globally — IFRA prohibition; not permitted in any application':'Banned in EU cosmetics (EC No 2021/1902 — Omnibus II / CLP Annex VI)'}</p>`:`<p>${esc(sf.ifra_guideline)}</p>`;})():""}
-              ${_usageLevelsClean?`<p style="color:var(--text2);font-size:0.85em">${esc(_usageLevelsClean)}</p>`:""}
-              ${sf.ifra_guideline||sf.usage_levels?`<p style="color:var(--text2);font-size:0.7em;font-style:italic;margin-top:4px">Usage % = guideline in fragrance concentrate, not IFRA max in finished product. Always verify per product category.</p>`:""}
-              ${!sf.ifra_guideline&&!_usageLevelsClean?`<p style="color:var(--text2)">—</p>`:""}
-            </div>
-            <div style="flex:1">
-              <p class="sec-title">Blends with</p>
-              ${blendsArr.length?`<p class="blends-chips">${blendsArr.map(b => {
-                const r = _resolveBlendLabel(b);
-                // Enhanced-schema annotations (Improvement #6): strength tier + source.
-                // Rendered as a small badge on the chip, surfaced in the tooltip.
-                const _strAttr = r.strength ? ` data-strength="${esc(r.strength)}"` : '';
-                const _strBadge = r.strength ? `<span class="blend-chip-strength">${esc(r.strength)}</span>` : '';
-                const _srcTip = r.source ? ` — source: ${r.source}` : '';
-                if (r.kind === 'material') {
-                  return `<a class="blend-chip"${_strAttr} onclick="addBlendSearch(${esc(JSON.stringify(r.name))})" title="Add ${esc(r.name)} to search${_srcTip}">${esc(r.name)}${_strBadge}</a>`;
-                }
-                if (r.kind === 'group') {
-                  return `<a class="blend-chip blend-chip-group"${_strAttr} onclick="toggleBlendFilter(${esc(JSON.stringify(r.filterKind))},${esc(JSON.stringify(r.token))})" title="Filter by family: ${esc(r.token)}${_srcTip}">${esc(r.label)}${_strBadge}</a>`;
-                }
-                return `<span class="blend-chip blend-chip-text"${_strAttr} title="Free-text label — not in DB${_srcTip}">${esc(r.label)}${_strBadge}</span>`;
-              }).join(' ')}</p>`:`<p style="color:var(--text2)">—</p>`}
-              ${(()=>{
-                // Suggested partners row (Improvement #5): facet + family
-                // overlap scored across the DB, excluding self and anyone
-                // already shown in the Blends-with row above.
-                if (!id.cas) return '';
-                const sugg = _computeSuggestedPartners(id.cas, 6);
-                if (!sugg.length) return '';
-                return `<p class="sec-subtitle">Suggested partners <span style="font-weight:400;color:var(--text2);font-size:0.85em">(auto — facet + family overlap)</span></p>
-                  <p class="blends-chips">${sugg.map(s => `<a class="blend-chip blend-chip-auto" onclick="addBlendSearch(${esc(JSON.stringify(s.name))})" title="Auto-derived match (score ${s.score}) — click to add to search">${esc(s.name)}<span class="blend-chip-strength">+${s.score}</span></a>`).join(' ')}</p>`;
-              })()}
-            </div>
+          ${sf.ifra_guideline||sf.usage_levels?`
+          <div class="card-section">
+            <p class="sec-title">Safety</p>
+            ${sf.ifra_guideline?(()=>{const bs=getBanStatus(mat);return bs?`<p style="color:#b91c1c;font-weight:600">${esc(sf.ifra_guideline)}</p><p style="color:#b91c1c;font-size:0.8em">${bs==='worldwide'?'Banned globally — IFRA prohibition; not permitted in any application':'Banned in EU cosmetics (EC No 2021/1902 — Omnibus II / CLP Annex VI)'}</p>`:`<p>${esc(sf.ifra_guideline)}</p>`;})():""}
+            ${_usageLevelsClean?`<p style="color:var(--text2);font-size:0.85em">${esc(_usageLevelsClean)}</p>`:""}
+            <p style="color:var(--text2);font-size:0.7em;font-style:italic;margin-top:4px">Usage % = guideline in fragrance concentrate, not IFRA max in finished product. Always verify per product category.</p>
           </div>`:""}
+          ${blendsArr.length?`
+          <div class="card-section">
+            <p class="sec-title">Blends with</p>
+            <p class="blends-chips">${blendsArr.map(b => {
+              const r = _resolveBlendLabel(b);
+              // Enhanced-schema annotations (Improvement #6): strength tier + source.
+              // Rendered as a small badge on the chip, surfaced in the tooltip.
+              const _strAttr = r.strength ? ` data-strength="${esc(r.strength)}"` : '';
+              const _strBadge = r.strength ? `<span class="blend-chip-strength">${esc(r.strength)}</span>` : '';
+              const _srcTip = r.source ? ` — source: ${r.source}` : '';
+              if (r.kind === 'material') {
+                return `<a class="blend-chip"${_strAttr} onclick="addBlendSearch(${esc(JSON.stringify(r.name))})" title="Add ${esc(r.name)} to search${_srcTip}">${esc(r.name)}${_strBadge}</a>`;
+              }
+              if (r.kind === 'group') {
+                return `<a class="blend-chip blend-chip-group"${_strAttr} onclick="toggleBlendFilter(${esc(JSON.stringify(r.filterKind))},${esc(JSON.stringify(r.token))})" title="Filter by family: ${esc(r.token)}${_srcTip}">${esc(r.label)}${_strBadge}</a>`;
+              }
+              return `<span class="blend-chip blend-chip-text"${_strAttr} title="Free-text label — not in DB${_srcTip}">${esc(r.label)}${_strBadge}</span>`;
+            }).join(' ')}</p>
+          </div>`:""}
+          ${(()=>{
+            // Suggested partners row (Improvement #5) — facet + family
+            // overlap scored across the DB, excluding self and anyone
+            // already shown in the Blends-with row above. Renders as its
+            // own full-width row so chip wrapping stays horizontal on
+            // mobile instead of piling up in a half-width column.
+            if (!id.cas) return '';
+            const sugg = _computeSuggestedPartners(id.cas, 6);
+            if (!sugg.length) return '';
+            return `<div class="card-section">
+              <p class="sec-title">Suggested partners <span style="font-weight:400;color:var(--text2);font-size:0.85em;text-transform:none;letter-spacing:0">(auto — facet + family overlap)</span></p>
+              <p class="blends-chips">${sugg.map(s => `<a class="blend-chip blend-chip-auto" onclick="addBlendSearch(${esc(JSON.stringify(s.name))})" title="Auto-derived match (score ${s.score}) — click to add to search">${esc(s.name)}<span class="blend-chip-strength">+${s.score}</span></a>`).join(' ')}</p>
+            </div>`;
+          })()}
+          `:""}
           ${renderGHSIcons(mat)}
           ${id.pubchem_cid?`
           <hr>
