@@ -288,15 +288,36 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 /* Blends-with chip row: resolved materials click-to-add, group labels
    click-to-filter, unresolved free-text rendered muted. Shares
    neutral-chip styling with the taxonomy badges. */
-.blends-chips { display:flex; flex-wrap:wrap; gap:4px 6px; margin:2px 0; }
-.blend-chip { display:inline-block; font-size:0.78em; padding:2px 8px; border-radius:3px; font-weight:500; background:var(--bg2); color:var(--text); border:1px solid var(--border); cursor:pointer; text-decoration:none; line-height:1.5; transition:background var(--dur) var(--ease); }
-.blend-chip:hover { background:var(--surface-hi); }
+.blends-chips { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 2px; align-items:center; line-height:1.35; }
+/* Each chip is a single-row inline-flex so the strength badge sits
+   beside the name on one line and the chip never expands vertically
+   to a second row. Long names wrap by breaking the whole chip onto
+   the next flex row (handled by the .blends-chips container), not
+   mid-chip. Consistent height via explicit padding + line-height so
+   chips with/without strength badges line up evenly. */
+.blend-chip {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:0.78em; font-weight:500; line-height:1.4;
+  padding:3px 9px; min-height:24px;
+  border-radius:4px; background:var(--bg2); color:var(--text);
+  border:1px solid var(--border); cursor:pointer; text-decoration:none;
+  white-space:nowrap; max-width:100%;
+  transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.blend-chip > span:first-child,
+.blend-chip { /* allow name to ellipsis if wildly long */ }
+.blend-chip:hover { background:var(--surface-hi); border-color:var(--text2); }
 .blend-chip-group { border-style:dashed; color:var(--text2); font-style:italic; }
 .blend-chip-text { cursor:default; color:var(--text2); border-style:dotted; font-style:italic; }
-.blend-chip-text:hover { background:var(--bg2); }
+.blend-chip-text:hover { background:var(--bg2); border-color:var(--border); }
 /* Enhanced-schema strength badge (Improvement #6). anchor = dominant,
    core = primary accord, accent = supporting nuance. */
-.blend-chip-strength { margin-left:6px; padding:0 5px; font-size:0.85em; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; border-radius:3px; background:var(--bg); color:var(--text2); border:1px solid var(--border); }
+.blend-chip-strength {
+  display:inline-block; padding:0 6px; font-size:0.72em; font-weight:600;
+  letter-spacing:0.06em; text-transform:uppercase; line-height:1.5;
+  border-radius:3px; background:var(--bg); color:var(--text2);
+  border:1px solid var(--border); flex:0 0 auto;
+}
 .blend-chip[data-strength="anchor"] { border-color:var(--accent); }
 .blend-chip[data-strength="anchor"] .blend-chip-strength { color:var(--accent); border-color:var(--accent); }
 .blend-chip[data-strength="core"]   .blend-chip-strength { color:var(--text); }
@@ -306,7 +327,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .blend-chip-auto { border-style:dashed; border-color:var(--accent); color:var(--text); background:transparent; }
 .blend-chip-auto:hover { background:var(--bg2); }
 .blend-chip-auto .blend-chip-strength { color:var(--accent); border-color:var(--accent); font-weight:500; }
-.sec-subtitle { font-size:0.75em; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text2); margin:8px 0 2px; }
+.sec-subtitle { font-size:0.75em; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text2); margin:10px 0 4px; }
 .match-tag { font-size:0.6em; padding:1px 6px; border-radius:3px; font-weight:400; background:var(--accent); color:#fff; vertical-align:middle; opacity:0.8; white-space:nowrap; display:inline-block; }
 
 /* PubChem data */
@@ -743,7 +764,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-blends-doc-seed"></script>
+<script src="perfumery_data.js?v=2026-04-19-chip-rows"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -755,7 +776,7 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-19-blends-doc-seed";
+const DATA_VERSION = "2026-04-19-chip-rows";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
