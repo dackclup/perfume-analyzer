@@ -285,6 +285,15 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .facet-group-label { font-size:0.6em; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; opacity:0.7; font-weight:600; margin:2px 2px 3px; }
 .facet-group-chips { display:flex; flex-wrap:wrap; gap:4px; }
 .badge-not-perfumery { font-size:0.7em; padding:2px 8px; border-radius:3px; margin-left:6px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px dashed var(--border); text-transform:none; vertical-align:middle; }
+/* Blends-with chip row: resolved materials click-to-add, group labels
+   click-to-filter, unresolved free-text rendered muted. Shares
+   neutral-chip styling with the taxonomy badges. */
+.blends-chips { display:flex; flex-wrap:wrap; gap:4px 6px; margin:2px 0; }
+.blend-chip { display:inline-block; font-size:0.78em; padding:2px 8px; border-radius:3px; font-weight:500; background:var(--bg2); color:var(--text); border:1px solid var(--border); cursor:pointer; text-decoration:none; line-height:1.5; transition:background var(--dur) var(--ease); }
+.blend-chip:hover { background:var(--surface-hi); }
+.blend-chip-group { border-style:dashed; color:var(--text2); font-style:italic; }
+.blend-chip-text { cursor:default; color:var(--text2); border-style:dotted; font-style:italic; }
+.blend-chip-text:hover { background:var(--bg2); }
 .match-tag { font-size:0.6em; padding:1px 6px; border-radius:3px; font-weight:400; background:var(--accent); color:#fff; vertical-align:middle; opacity:0.8; white-space:nowrap; display:inline-block; }
 
 /* PubChem data */
@@ -721,7 +730,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-lavender-exact"></script>
+<script src="perfumery_data.js?v=2026-04-19-blends-chips"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -733,7 +742,7 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-19-lavender-exact";
+const DATA_VERSION = "2026-04-19-blends-chips";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
@@ -763,6 +772,145 @@ const MIXTURES = new Set(PERFUMERY_DATA.mixture_cas);
 const NAME_TO_CAS = {};
 for (const [cas, entry] of Object.entries(DB)) {
   for (const name of entry.synonyms || []) NAME_TO_CAS[name.toLowerCase()] = cas;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Blends-with resolution subsystem (Audit Plan steps 1–3).
+//
+//   (1) REVERSE_BLENDS_INDEX — materials rarely list each other
+//       symmetrically in the hand-curated `blends_with` array. A link
+//       from A → B means "A pairs well with B", so semantically B ↔ A,
+//       but only 13% of resolvable links are reciprocated in the data.
+//       We auto-mirror in memory so each card sees every partner that
+//       points at it.
+//
+//   (2) _resolveBlendLabel — the curated lists carry shorthand
+//       ("Rose", "Lavender", "Musk") that doesn't hit DB by canonical
+//       name. Resolve through: (a) canonical name, (b) synonyms
+//       (NAME_TO_CAS), (c) trade names (TRADES), (d) a small shorthand
+//       table below (mirrors the analyzer-facing subset of
+//       BLEND_TARGET_RESOLUTION in formulation_data.js so index.html
+//       doesn't have to load the full formulation stack).
+//
+//   (3) BLEND_GROUP_TO_FILTER — Family / group shorthand ("citrus
+//       oils", "green notes", "musks", "woods", "florals", "aldehydes")
+//       maps to a Primary Family / Sub-family filter chip. The card
+//       renders these as group-chips that, when clicked, activate the
+//       matching filter drawer chip so the user can browse candidate
+//       partners.
+// ═══════════════════════════════════════════════════════════════
+
+const BLEND_SHORTHAND_TO_CAS = {
+  // Naturals — common shorthand
+  "lavender":          "8000-28-0",
+  "lavender absolute": "97722-12-8",
+  "lavandin":          "91722-69-9",
+  "lavandin grosso":   "91722-69-9",
+  "clary sage":        "8016-63-5",
+  "rose":              "8007-01-0",
+  "jasmine":           "8022-96-6",
+  "ylang":             "8006-81-3",
+  "ylang ylang":       "8006-81-3",
+  "bergamot":          "8007-75-8",
+  "patchouli":         "8014-09-3",
+  "vetiver":           "8016-96-4",
+  "sandalwood":        "8006-87-9",
+  "cedarwood":         "8000-27-9",
+  "cedar":             "8000-27-9",
+  "neroli":            "8016-38-4",
+  "frankincense":      "8016-36-2",
+  "myrrh":             "8016-37-3",
+  "clove":             "8000-34-8",
+  "cinnamon":          "8015-91-6",
+  "rosemary":          "8000-25-7",
+  "peppermint":        "8006-90-4",
+  "eucalyptus":        "8000-48-4",
+  "geranium":          "8000-46-2",
+  "lemon":             "8008-56-8",
+  "orange":            "8008-57-9",
+  "grapefruit":        "8016-20-4",
+  "lime":              "8008-26-2",
+  "chamomile":         "8015-92-7",
+  "tea tree":          "68647-73-4",
+  "oakmoss":           "9000-50-4",
+  "labdanum":          "8016-26-0",
+  "benzoin":           "9000-72-0",
+  "peru balsam":       "8007-00-9",
+  "tolu balsam":       "9000-64-0",
+  "rosewood":          "78-70-6",
+  "tonka":             "91-64-5",
+  "tonka bean":        "91-64-5",
+  "musk":              "541-91-3",
+  "vanilla":           "121-33-5",
+};
+
+const BLEND_GROUP_TO_FILTER = {
+  "citrus oils":  { kind: "subfamily",     token: "citrus" },
+  "citrus":       { kind: "subfamily",     token: "citrus" },
+  "green notes":  { kind: "subfamily",     token: "green" },
+  "green":        { kind: "subfamily",     token: "green" },
+  "florals":      { kind: "subfamily",     token: "floral" },
+  "floral notes": { kind: "subfamily",     token: "floral" },
+  "musks":        { kind: "subfamily",     token: "soft_amber" },
+  "woods":        { kind: "subfamily",     token: "woods" },
+  "aldehydes":    { kind: "subfamily",     token: "soft_floral" },
+  "aldehydic":    { kind: "subfamily",     token: "soft_floral" },
+  "amber":        { kind: "primary",       token: "amber_note" },
+};
+
+// Resolve one blends_with label to a structured result.
+//   { kind:'material', cas, name }   — clickable, adds material to search
+//   { kind:'group',    label, kind, token }  — clickable, toggles a filter
+//   { kind:'text',     label }       — unresolved, rendered as muted text
+function _resolveBlendLabel(raw) {
+  const label = String(raw == null ? '' : raw).trim();
+  if (!label) return { kind: 'text', label: '' };
+  const lk = label.toLowerCase();
+  // (a) canonical name
+  for (const [cas, entry] of Object.entries(DB)) {
+    if (entry.name.toLowerCase() === lk) return { kind: 'material', cas, name: entry.name };
+  }
+  // (b) synonym index
+  if (NAME_TO_CAS[lk]) { const cas = NAME_TO_CAS[lk]; if (DB[cas]) return { kind: 'material', cas, name: DB[cas].name }; }
+  // (c) trade name
+  if (TRADES[lk]) { const cas = TRADES[lk]; if (DB[cas]) return { kind: 'material', cas, name: DB[cas].name }; }
+  // (d) shorthand table
+  if (BLEND_SHORTHAND_TO_CAS[lk]) {
+    const cas = BLEND_SHORTHAND_TO_CAS[lk];
+    if (DB[cas]) return { kind: 'material', cas, name: DB[cas].name };
+  }
+  // (e) family / group shorthand
+  if (BLEND_GROUP_TO_FILTER[lk]) {
+    const g = BLEND_GROUP_TO_FILTER[lk];
+    return { kind: 'group', label, filterKind: g.kind, token: g.token };
+  }
+  return { kind: 'text', label };
+}
+
+// Auto-mirror blend edges so a card that B points at sees A as a
+// partner even when A wasn't listed on B's curated array. Populated
+// once at module init.
+const REVERSE_BLENDS_INDEX = new Map(); // cas → Set<sourceCanonicalName>
+for (const [cas, entry] of Object.entries(DB)) {
+  for (const raw of entry.blends_with || []) {
+    const r = _resolveBlendLabel(raw);
+    if (r.kind !== 'material') continue;
+    if (r.cas === cas) continue;  // self-link guard
+    if (!REVERSE_BLENDS_INDEX.has(r.cas)) REVERSE_BLENDS_INDEX.set(r.cas, new Set());
+    REVERSE_BLENDS_INDEX.get(r.cas).add(entry.name);
+  }
+}
+
+// Merge curated + reverse links, deduped case-insensitively. Curated
+// order is preserved; reverse-only partners are appended.
+function _mergedBlendPartners(cas, curated) {
+  const out = Array.isArray(curated) ? [...curated] : [];
+  const rev = REVERSE_BLENDS_INDEX.get(cas);
+  if (rev && rev.size) {
+    const seen = new Set(out.map(s => String(s).toLowerCase()));
+    for (const name of rev) if (!seen.has(name.toLowerCase())) out.push(name);
+  }
+  return out;
 }
 
 // Build prefix index (pre-sorted by name length descending)
@@ -4023,7 +4171,8 @@ function renderResults() {
     const _tenacityClean = _cleanPerformanceTenacity(pf.tenacity);
     const _tenacityHoursClean = _cleanTenacityHours(pf.tenacity_hours);
     const _usageLevelsClean = _cleanSafetyUsage(sf.usage_levels);
-    const _blendsWithClean = _cleanBlendsWith(pf.blends_with);
+    // Curated + auto-mirrored reverse partners, cleaned of function-word noise.
+    const _blendsWithClean = _cleanBlendsWith(_mergedBlendPartners(id.cas, pf.blends_with));
     const nl = (pf.note||"").toLowerCase();
     let badges = "";
     if (nl.includes("top")) badges += `<span class="badge badge-top">Top</span>`;
@@ -4121,7 +4270,16 @@ function renderResults() {
             </div>
             <div style="flex:1">
               <p class="sec-title">Blends with</p>
-              ${blendsArr.length?`<p>${esc(blendsArr.join(', '))}</p>`:`<p style="color:var(--text2)">—</p>`}
+              ${blendsArr.length?`<p class="blends-chips">${blendsArr.map(b => {
+                const r = _resolveBlendLabel(b);
+                if (r.kind === 'material') {
+                  return `<a class="blend-chip" onclick="addBlendSearch(${esc(JSON.stringify(r.name))})" title="Add ${esc(r.name)} to search">${esc(r.name)}</a>`;
+                }
+                if (r.kind === 'group') {
+                  return `<a class="blend-chip blend-chip-group" onclick="toggleBlendFilter(${esc(JSON.stringify(r.filterKind))},${esc(JSON.stringify(r.token))})" title="Filter by family: ${esc(r.token)}">${esc(r.label)}</a>`;
+                }
+                return `<span class="blend-chip blend-chip-text" title="Free-text label — not in DB">${esc(r.label)}</span>`;
+              }).join(' ')}</p>`:`<p style="color:var(--text2)">—</p>`}
             </div>
           </div>`:""}
           ${renderGHSIcons(mat)}
@@ -4229,6 +4387,40 @@ function collapseSubSections(cardBody) {
     if (toggle) toggle.textContent = "▶ Complete PubChem Data";
   }
 }
+// ===== Blends-with chip click handlers =====
+//
+// Resolved material chip → add that material as a result card.
+// If already in results, scroll to its card instead of re-searching.
+function addBlendSearch(name) {
+  if (!name) return;
+  const nl = String(name).toLowerCase();
+  const existingIdx = results.findIndex(r => (r.record?.names?.canonical || '').toLowerCase() === nl);
+  if (existingIdx >= 0) {
+    // Already in results — open and scroll to the existing card.
+    const body = document.getElementById("body"+existingIdx);
+    if (body && !body.classList.contains("open")) toggleCard(existingIdx);
+    body?.closest('.card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+  if (typeof doSearch === 'function') doSearch(name);
+}
+
+// Group-label chip → activate the matching Primary Family / Sub-family
+// filter drawer chip and scroll the filter into view so the user can
+// browse the candidate partners the group represents.
+function toggleBlendFilter(filterKind, token) {
+  if (!token) return;
+  let sel = null;
+  if (filterKind === 'subfamily') sel = `#subFamilyFilters .odor-tag[data-subfam="${token}"]`;
+  else if (filterKind === 'primary') sel = `#primaryFamilyFilters .odor-tag[data-edwards="${token}"]`;
+  const el = sel ? document.querySelector(sel) : null;
+  if (!el) return;
+  el.click();
+  // Make sure the filter drawer is visible so the user sees the toggle.
+  const drawer = document.getElementById('filterSection') || document.getElementById('filterDrawer');
+  (drawer || el)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function toggleCard(idx) {
   const body = document.getElementById("body"+idx);
   if (!body) return;
