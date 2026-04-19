@@ -770,7 +770,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-section-rows"></script>
+<script src="perfumery_data.js?v=2026-04-19-ghs-above-safety"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -782,7 +782,7 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-19-section-rows";
+const DATA_VERSION = "2026-04-19-ghs-above-safety";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
@@ -4399,6 +4399,14 @@ function renderResults() {
               ${!_tenacityClean&&!_tenacityHoursClean?`<p style="color:var(--text2)">—</p>`:""}
             </div>
           </div>
+          ${(()=>{
+            // Hazard Pictograms render above Safety so the visual
+            // warning hits the reader first, before the IFRA text.
+            // Wrapped in the same <hr> separator rhythm as Safety /
+            // Blends / Suggested below.
+            const ghs = renderGHSIcons(mat);
+            return ghs ? `<hr>${ghs}` : '';
+          })()}
           ${sf.ifra_guideline||sf.usage_levels||blendsArr.length?`
           <hr>
           ${sf.ifra_guideline||sf.usage_levels?`
@@ -4442,7 +4450,6 @@ function renderResults() {
             </div>`;
           })()}
           `:""}
-          ${renderGHSIcons(mat)}
           ${id.pubchem_cid?`
           <hr>
           <div class="pubchem-toggle" id="pcToggle${idx}" onclick="loadPubchemData(${idx})">▶ Complete PubChem Data</div>
