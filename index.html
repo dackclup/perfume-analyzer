@@ -720,7 +720,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-19-name-match-fix"></script>
+<script src="perfumery_data.js?v=2026-04-19-export-axes-rename"></script>
 <!-- Obsidian Vault export — ZIP-of-Markdown for the Save.Obsidian.ZIP menu.
      JSZip is loaded lazily-ish from CDN (matches the Chart.js pattern in
      formulation.html). obsidian_export.js attaches `window.ObsidianExport`. -->
@@ -732,7 +732,7 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-19-name-match-fix";
+const DATA_VERSION = "2026-04-19-export-axes-rename";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
@@ -1117,6 +1117,27 @@ const SUB_FAMILY_TO_LEGACY = {
   mossy_woods:      new Set(),
   dry_woods:        new Set(['leather', 'smoky']),
 };
+
+// Per-material Edwards-axis resolution. Given a material's FILTER_CACHE
+// entry (pf = primaryFamilies, sf = secondaryFamilies tokens), return
+// the human-readable labels the filter-drawer chips show, so CSV/JSON
+// exports mirror what the user sees in the Filter drawer:
+//   primary_family : ['Fresh Woody note', ...]   ← EDWARDS_FAMILY_LABELS
+//   sub_families   : ['Aromatic', ...]            ← SUB_FAMILY_LABELS
+function _edwardsAxesFor(primary, secondary) {
+  const legacy = new Set([...(primary || []), ...(secondary || [])]);
+  const primaryBuckets = [];
+  for (const key of EDWARDS_FAMILIES) {
+    const toks = EDWARDS_TO_LEGACY[key];
+    for (const t of toks) if (legacy.has(t)) { primaryBuckets.push(EDWARDS_FAMILY_LABELS[key]); break; }
+  }
+  const subBuckets = [];
+  for (const key of SUB_FAMILIES) {
+    const toks = SUB_FAMILY_TO_LEGACY[key] || new Set();
+    for (const t of toks) if (legacy.has(t)) { subBuckets.push(SUB_FAMILY_LABELS[key]); break; }
+  }
+  return { primary_family: primaryBuckets, sub_families: subBuckets };
+}
 // ── Cascading filter map: Primary Family (Edwards parent bucket) →
 // set of Sub-families allowed under it. Used by the 3-level cascading
 // filter UI: selecting a Primary Family narrows the Sub-families chip
@@ -4557,18 +4578,31 @@ async function downloadJSON() {
       // retained so older consumers that still read the single-axis
       // odor list don't break — new consumers should prefer the
       // three-field structure below.
-      classification: {
-        material_type:     src.classification?.material_type ?? null,
-        industry_tags:     Array.isArray(src.classification?.industry_tags) ? src.classification.industry_tags : [],
-        uses:              _fc ? [...(_fc.uses || [])]          : (Array.isArray(src.classification?.uses)          ? src.classification.uses          : (src.classification?.industry_tags || [])),
-        functions:         _fc ? [...(_fc.functions || [])]     : (Array.isArray(src.classification?.functions)     ? src.classification.functions     : []),
-        odor_families:     _fc ? [...(_fc.odorFamilies || [])]  : (Array.isArray(src.classification?.odor_families) ? src.classification.odor_families : []),
-        primaryFamilies:   _fc ? [...(_fc.primaryFamilies || [])]   : (Array.isArray(src.classification?.primaryFamilies)   ? src.classification.primaryFamilies   : []),
-        secondaryFamilies: _fc ? [...(_fc.secondaryFamilies || [])] : (Array.isArray(src.classification?.secondaryFamilies) ? src.classification.secondaryFamilies : []),
-        facets:            _fc ? [...(_fc.facets || [])]            : (Array.isArray(src.classification?.facets)            ? src.classification.facets            : []),
-        regulatory:        ((_fc ? [...(_fc.regulatory || [])]    : (Array.isArray(src.classification?.regulatory)    ? src.classification.regulatory    : []))).map(_normalizeRegulatoryToken).filter(Boolean),
-        source:            _fc ? _fc.source                      : (src.classification?.source ?? null),
-      },
+      classification: (() => {
+        const _legacyPri = _fc ? [..._fc.primaryFamilies   || []] : (Array.isArray(src.classification?.primaryFamilies)   ? src.classification.primaryFamilies   : []);
+        const _legacySec = _fc ? [..._fc.secondaryFamilies || []] : (Array.isArray(src.classification?.secondaryFamilies) ? src.classification.secondaryFamilies : []);
+        const _ax = _edwardsAxesFor(_legacyPri, _legacySec);
+        return {
+          material_type:     src.classification?.material_type ?? null,
+          industry_tags:     Array.isArray(src.classification?.industry_tags) ? src.classification.industry_tags : [],
+          uses:              _fc ? [...(_fc.uses || [])]          : (Array.isArray(src.classification?.uses)          ? src.classification.uses          : (src.classification?.industry_tags || [])),
+          functions:         _fc ? [...(_fc.functions || [])]     : (Array.isArray(src.classification?.functions)     ? src.classification.functions     : []),
+          // Filter-drawer axes (current taxonomy): labels mirror what
+          // the UI chips show. `primary_family` = Edwards parent bucket,
+          // `sub_families` = Edwards 14-sub-family.
+          primary_family:    _ax.primary_family,
+          sub_families:      _ax.sub_families,
+          facets:            _fc ? [...(_fc.facets || [])]            : (Array.isArray(src.classification?.facets)            ? src.classification.facets            : []),
+          // Legacy tokens (kept for Obsidian export / internal consumers).
+          _legacy: {
+            odor_families:     _fc ? [...(_fc.odorFamilies || [])]  : (Array.isArray(src.classification?.odor_families) ? src.classification.odor_families : []),
+            primaryFamilies:   _legacyPri,
+            secondaryFamilies: _legacySec,
+          },
+          regulatory:        ((_fc ? [...(_fc.regulatory || [])]    : (Array.isArray(src.classification?.regulatory)    ? src.classification.regulatory    : []))).map(_normalizeRegulatoryToken).filter(Boolean),
+          source:            _fc ? _fc.source                      : (src.classification?.source ?? null),
+        };
+      })(),
       metadata: {
         source: src.metadata?.source ?? null,
         is_external: src.metadata?.is_external ?? false,
@@ -4727,10 +4761,16 @@ function downloadCSV() {
     const s = Array.isArray(v) ? v.join(';') : String(v);
     return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
+  // Column names mirror the current Filter-drawer labels:
+  //   Primary Family  → primary_family      (Edwards parent-bucket labels)
+  //   Sub-families    → sub_families        (Edwards 14-sub-family labels)
+  //   Facet           → facets              (fine-grained facet tokens)
+  // The legacy `odor_families` axis was removed when the filter was
+  // migrated to the 3-axis taxonomy.
   const headers = [
     'cas_number', 'name', 'material_type', 'functions',
     'ban_status', 'note', 'odor_description', 'usage_levels',
-    'uses', 'odor_families', 'primary_families', 'secondary_families', 'facets',
+    'uses', 'primary_family', 'sub_families', 'facets',
     'regulatory', 'source'
   ];
   // Provenance comment block. `#`-prefixed rows are skipped by most
@@ -4748,6 +4788,12 @@ function downloadCSV() {
     const fc  = cas ? FILTER_CACHE.get(cas) : null;
     const regTags = ((fc ? [...(fc.regulatory || [])] : (src.classification?.regulatory ?? []))).map(_normalizeRegulatoryToken).filter(Boolean);
     const banStatus = regTags.some(r => /banned/i.test(r)) ? 'banned' : regTags.some(r => /restricted/i.test(r)) ? 'restricted' : 'norestriction';
+    // Resolve Edwards primary-bucket + sub-family labels from the
+    // material's legacy family tokens so the values match the chip
+    // labels shown in the Filter drawer.
+    const _legacyPri = fc ? (fc.primaryFamilies   || []) : (src.classification?.primaryFamilies   ?? []);
+    const _legacySec = fc ? (fc.secondaryFamilies || []) : (src.classification?.secondaryFamilies ?? []);
+    const _axes = _edwardsAxesFor(_legacyPri, _legacySec);
     rows.push([
       _csv(cas),
       _csv(src.names?.canonical),
@@ -4758,9 +4804,8 @@ function downloadCSV() {
       _csv(src.perfumery?.odor_description),
       _csv(src.safety?.usage_levels),
       _csv(fc ? [...(fc.uses || [])]         : (src.classification?.uses         ?? src.classification?.industry_tags ?? null)),
-      _csv(fc ? [...(fc.odorFamilies || [])] : (src.classification?.odor_families ?? null)),
-      _csv(fc ? [...(fc.primaryFamilies || [])]   : (src.classification?.primaryFamilies ?? [])),
-      _csv(fc ? [...(fc.secondaryFamilies || [])] : (src.classification?.secondaryFamilies ?? [])),
+      _csv(_axes.primary_family),
+      _csv(_axes.sub_families),
       _csv(fc ? [...(fc.facets || [])]             : (src.classification?.facets ?? [])),
       _csv(regTags),
       _csv(fc ? fc.source                     : (src.classification?.source       ?? null)),
@@ -4783,6 +4828,9 @@ function downloadCSV() {
 function _buildOfflineRecord(cas) {
   const entry = DB[cas]; if (!entry) return null;
   const fc = FILTER_CACHE.get(cas);
+  const _legacyPri = fc?.primaryFamilies   || [];
+  const _legacySec = fc?.secondaryFamilies || [];
+  const _ax = _edwardsAxesFor(_legacyPri, _legacySec);
   return { record: {
     identifiers: { cas, fema: entry.fema || null, pubchem_cid: null, iupac: null,
       molecular_formula: null, canonical_smiles: null, isomeric_smiles: null, inchi: null },
@@ -4811,12 +4859,17 @@ function _buildOfflineRecord(cas) {
       industry_tags:     fc ? [...fc.industryTags] : [],
       uses:              fc ? [...fc.uses]         : [],
       functions:         fc ? [...fc.functions]    : [],
-      odor_families:     fc ? [...fc.odorFamilies] : [],
       regulatory:        fc ? [...fc.regulatory]   : [],
       source:            fc?.source || 'local_db',
-      primaryFamilies:   fc?.primaryFamilies   || [],
-      secondaryFamilies: fc?.secondaryFamilies || [],
+      // Current filter-drawer axes (Edwards labels).
+      primary_family:    _ax.primary_family,
+      sub_families:      _ax.sub_families,
       facets:            fc?.facets            || [],
+      // Legacy tokens — retained because obsidian_export.js and
+      // formulation.html still key off these camelCase names.
+      primaryFamilies:   _legacyPri,
+      secondaryFamilies: _legacySec,
+      odor_families:     fc ? [...fc.odorFamilies] : [],
     },
     metadata: { source: fc?.source || 'local_db', is_external: false, pubchem_sections: {} },
   }};
