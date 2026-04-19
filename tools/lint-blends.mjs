@@ -79,16 +79,45 @@ function resolve(raw) {
   return { kind: "unresolved", label };
 }
 
+// ── Partner-quality helpers (match the runtime sanitiser at
+//    index.html:_isPartnerProhibited / _isPartnerPerfumery).
+const RE_ODORLESS = /\b(odor(less)?|odourless|no\s+odor|no\s+odour|without\s+odor)\b/i;
+function hasRealOdor(entry) {
+  const desc = entry?.odor?.description || '';
+  return !!(desc && !RE_ODORLESS.test(desc));
+}
+function isProhibited(entry) {
+  const ifra = (entry?.safety?.ifra || '').toLowerCase();
+  const clean = ifra.replace(/\bno\s+prohibit\w*/g, '').replace(/\bnot\s+prohibit\w*/g, '');
+  if (/\bprohibit(ed|ion)?\b/.test(clean)) return true;
+  if (/\bmust\s+not\s+be\s+used\b/.test(clean)) return true;
+  return false;
+}
+
 // ── Checks
-const findings = { selfref: [], unresolved: [], reciprocity: [], shorthandDrift: [] };
+const findings = {
+  selfref:         [],
+  unresolved:      [],
+  reciprocity:     [],
+  shorthandDrift:  [],
+  duplicateCas:    [],   // same partner CAS appears twice in one list
+  prohibitedPartner: [], // partner is IFRA-prohibited
+  nonPerfumery:    [],   // partner is a solvent / carrier / vehicle
+  inconsistentCas: [],   // enhanced {cas} disagrees with label's resolved CAS
+};
 
 for (const e of db) {
   const from = e.name;
   const blends = Array.isArray(e.blends_with) ? e.blends_with : [];
+  const seenCasLocal = new Set();
   for (const raw of blends) {
     const r = resolve(raw);
     if (r.kind === "empty") continue;
     const rawLabel = (raw && typeof raw === "object") ? String(raw.label || "") : String(raw);
+    // Enhanced-schema sanity
+    if (raw && typeof raw === "object" && raw.cas && r.kind === "material" && r.cas !== raw.cas) {
+      findings.inconsistentCas.push({ cas: e.cas, name: from, label: rawLabel, declared: raw.cas, resolved: r.cas });
+    }
     if (r.kind === "material" && r.cas === e.cas) {
       findings.selfref.push({ cas: e.cas, name: from, label: rawLabel });
       continue;
@@ -99,6 +128,20 @@ for (const e of db) {
     }
     if (r.kind === "material" && r.via === "shorthand" && rawLabel.trim().toLowerCase() !== r.name.toLowerCase()) {
       findings.shorthandDrift.push({ cas: e.cas, name: from, label: rawLabel, canonical: r.name, targetCas: r.cas });
+    }
+    if (r.kind === "material") {
+      if (seenCasLocal.has(r.cas)) {
+        findings.duplicateCas.push({ cas: e.cas, name: from, label: rawLabel, targetCas: r.cas, targetName: r.name });
+        continue;
+      }
+      seenCasLocal.add(r.cas);
+      const partnerEntry = DB[r.cas];
+      if (partnerEntry && isProhibited(partnerEntry)) {
+        findings.prohibitedPartner.push({ cas: e.cas, name: from, label: rawLabel, targetCas: r.cas, targetName: r.name });
+      }
+      if (partnerEntry && !hasRealOdor(partnerEntry)) {
+        findings.nonPerfumery.push({ cas: e.cas, name: from, label: rawLabel, targetCas: r.cas, targetName: r.name });
+      }
     }
     if (r.kind === "material") {
       const partner = DB[r.cas];
@@ -184,9 +227,62 @@ if (findings.shorthandDrift.length) {
   if (findings.shorthandDrift.length > 15) console.log("    … +" + (findings.shorthandDrift.length - 15) + " more");
 }
 
+console.log("\n" + hr());
+console.log(" (e) Duplicate CAS in same list: " + findings.duplicateCas.length);
+console.log(hr());
+if (findings.duplicateCas.length) {
+  console.log("  Both labels resolve to the same partner CAS — keep one:");
+  const sample = findings.duplicateCas.slice(0, 10);
+  for (const r of sample) console.log("    " + r.name + ":  \"" + r.label + "\"  duplicates  \"" + r.targetName + "\"  (" + r.targetCas + ")");
+  if (findings.duplicateCas.length > 10) console.log("    … +" + (findings.duplicateCas.length - 10) + " more");
+}
+
+console.log("\n" + hr());
+console.log(" (f) Prohibited partner listed: " + findings.prohibitedPartner.length);
+console.log(hr());
+if (findings.prohibitedPartner.length) {
+  console.log("  Partner is IFRA-prohibited — drop from blends_with:");
+  const sample = findings.prohibitedPartner.slice(0, 10);
+  for (const r of sample) console.log("    " + r.name + "  →  " + r.targetName + "  (" + r.targetCas + ")");
+  if (findings.prohibitedPartner.length > 10) console.log("    … +" + (findings.prohibitedPartner.length - 10) + " more");
+}
+
+console.log("\n" + hr());
+console.log(" (g) Non-perfumery partner (solvent / carrier): " + findings.nonPerfumery.length);
+console.log(hr());
+if (findings.nonPerfumery.length) {
+  console.log("  Partner has no olfactive description — likely a solvent");
+  console.log("  or vehicle, not a meaningful blend partner:");
+  const sample = findings.nonPerfumery.slice(0, 10);
+  for (const r of sample) console.log("    " + r.name + "  →  " + r.targetName + "  (" + r.targetCas + ")");
+  if (findings.nonPerfumery.length > 10) console.log("    … +" + (findings.nonPerfumery.length - 10) + " more");
+}
+
+console.log("\n" + hr());
+console.log(" (h) Inconsistent declared CAS: " + findings.inconsistentCas.length);
+console.log(hr());
+if (findings.inconsistentCas.length) {
+  console.log("  Enhanced entry's {cas} doesn't match the label's resolved CAS:");
+  const sample = findings.inconsistentCas.slice(0, 10);
+  for (const r of sample) console.log("    " + r.name + ":  \"" + r.label + "\"  declared " + r.declared + " vs resolved " + r.resolved);
+  if (findings.inconsistentCas.length > 10) console.log("    … +" + (findings.inconsistentCas.length - 10) + " more");
+}
+
 console.log("\n" + hr("═"));
-console.log(" Summary:  selfref=" + findings.selfref.length + "  unresolved=" + findings.unresolved.length + "  reciprocity=" + findings.reciprocity.length + "  shorthandDrift=" + findings.shorthandDrift.length);
+console.log(" Summary:");
+console.log("   selfref=" + findings.selfref.length +
+            "  unresolved=" + findings.unresolved.length +
+            "  reciprocity=" + findings.reciprocity.length +
+            "  shorthandDrift=" + findings.shorthandDrift.length);
+console.log("   duplicateCas=" + findings.duplicateCas.length +
+            "  prohibitedPartner=" + findings.prohibitedPartner.length +
+            "  nonPerfumery=" + findings.nonPerfumery.length +
+            "  inconsistentCas=" + findings.inconsistentCas.length);
 console.log(hr("═"));
 
-// Exit non-zero only on structural errors (self-ref), not on curation gaps.
-process.exit(findings.selfref.length ? 1 : 0);
+// Exit non-zero on structural errors: self-ref, prohibited partners
+// (data-safety regression), inconsistent declared CAS (curation bug).
+// Curation gaps (unresolved / reciprocity / shorthandDrift / non-
+// perfumery) are informational only.
+const hardErrors = findings.selfref.length + findings.prohibitedPartner.length + findings.inconsistentCas.length;
+process.exit(hardErrors ? 1 : 0);
