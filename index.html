@@ -1022,6 +1022,9 @@ function _computeSuggestedPartners(sourceCas, limit = 6) {
   const sourceFacets = new Set(fc.facets || []);
   const sourcePrimaries = new Set([...(fc.primaryFamilies||[]), ...(fc.secondaryFamilies||[])]);
   const sourceBuckets = _edwardsBucketsForTokens([...sourcePrimaries]);
+  // Hoist functional-group set once — _partnerIncompatibility would
+  // otherwise recompute it per DB candidate inside the loop below.
+  const sourceGroups = _materialGroups(sourceCas);
 
   // Skip-set: self + everyone already curated or reverse-linked.
   const skip = new Set([sourceCas]);
@@ -1046,7 +1049,18 @@ function _computeSuggestedPartners(sourceCas, limit = 6) {
     // recommend something the main list would filter out.
     if (!tfc.hasRealOdor) continue;
     if (_isPartnerProhibited(cas)) continue;
-    if (_partnerIncompatibility(sourceCas, cas)) continue;  // HIGH-reactive pair
+    // HIGH-reactive pair gate — inlined so sourceGroups is reused
+    // instead of resolved per-candidate.
+    if (sourceGroups.size) {
+      const tg = _materialGroups(cas);
+      let reactive = false;
+      if (tg.size) {
+        for (const [gA, gB] of INCOMPATIBLE_PAIRS_HIGH) {
+          if ((sourceGroups.has(gA) && tg.has(gB)) || (sourceGroups.has(gB) && tg.has(gA))) { reactive = true; break; }
+        }
+      }
+      if (reactive) continue;
+    }
     let score = 0;
     for (const f of (tfc.facets || [])) if (sourceFacets.has(f)) score += 2;
     const tPri = [...(tfc.primaryFamilies||[]), ...(tfc.secondaryFamilies||[])];
@@ -1109,7 +1123,7 @@ const MATERIAL_GROUPS = new Map([
   // ── Primary amines / secondary amines (anthranilates, indoles) ──
   ["134-20-3", new Set(["primary_amine"])],   // Methyl Anthranilate
   ["87-25-2",  new Set(["primary_amine"])],   // Ethyl Anthranilate
-  ["85-91-6",  new Set(["secondary_amine"])], // Dimethyl Anthranilate (N-methyl; tertiary? actually Methyl N-methylanthranilate)
+  ["85-91-6",  new Set(["secondary_amine"])], // Dimethyl Anthranilate (= methyl N-methylanthranilate; one N-H remains)
   ["120-72-9", new Set(["secondary_amine"])], // Indole
   ["83-34-1",  new Set(["secondary_amine"])], // Skatole (3-methylindole)
 
@@ -1142,31 +1156,28 @@ const MATERIAL_GROUPS = new Map([
 // Heuristic fallback — catches materials with canonical names that
 // clearly imply a reactive group (aldehyde "-al" suffix, anthranilate,
 // indole / skatole, vanillin/eugenol phenols, thiol markers).
+const _NAME_SECONDARY_AMINE = /\b(dimethyl[- ]?anthranilate|n-methyl[- ]?anthranilate|indole|skatole|quinoline)\b/;
+const _NAME_PRIMARY_AMINE   = /\banthranilate\b/;
+const _NAME_THIOL           = /\b(mercapto|thiol|mercaptan|thio[- ]?acetate|sulfanyl)\b/;
+const _NAME_ALDEHYDE        = /(aldehyde|cinnamaldehyde|citral|citronellal|heliotropin|vanillin|helional|hexenal|nonanal|octanal|decanal|undecanal|dodecanal|tridecanal|lauric\s+aldehyde)/i;
+const _NAME_PHENOL          = /\b(eugenol|isoeugenol|thymol|guaiacol|carvacrol|chavicol|cresol|vanillin|methyl\s+salicylate|eugen|phenol)\b/;
 function _detectGroupsByName(name) {
   const out = new Set();
   if (!name) return out;
   const n = name.toLowerCase();
-  if (/\bdimethyl[- ]?anthranilate\b|n-methyl[- ]?anthranilate/.test(n)) {
-    out.add("secondary_amine");
-  } else if (/\banthranilate\b/.test(n)) {
-    out.add("primary_amine");
-  }
-  if (/\b(indole|skatole|quinoline)\b/.test(n)) out.add("secondary_amine");
-  if (/\b(mercapto|thiol|mercaptan|thio[- ]?acetate|sulfanyl)\b/.test(n)) out.add("thiol");
-  if (/(aldehyde|cinnamaldehyde|citral|citronellal|heliotropin|vanillin|helional|hexenal|nonanal|octanal|decanal|undecanal|dodecanal|tridecanal|lauric\s+aldehyde)/i.test(n)) {
-    out.add("aldehyde");
-  }
-  if (/\b(eugenol|isoeugenol|thymol|guaiacol|carvacrol|chavicol|cresol|vanillin|methyl\s+salicylate|eugen|phenol)\b/.test(n)) {
-    out.add("phenol");
-  }
+  if (_NAME_SECONDARY_AMINE.test(n)) out.add("secondary_amine");
+  else if (_NAME_PRIMARY_AMINE.test(n)) out.add("primary_amine");
+  if (_NAME_THIOL.test(n))    out.add("thiol");
+  if (_NAME_ALDEHYDE.test(n)) out.add("aldehyde");
+  if (_NAME_PHENOL.test(n))   out.add("phenol");
   return out;
 }
+// Memoise inferred results back into MATERIAL_GROUPS so repeated
+// lookups for the same CAS stay O(1).
 function _materialGroups(cas) {
-  const curated = MATERIAL_GROUPS.get(cas);
-  if (curated) return curated;
-  const name = DB[cas]?.name || "";
-  const inferred = _detectGroupsByName(name);
-  // Cache so we only pay the regex cost once per CAS.
+  const cached = MATERIAL_GROUPS.get(cas);
+  if (cached) return cached;
+  const inferred = _detectGroupsByName(DB[cas]?.name || "");
   MATERIAL_GROUPS.set(cas, inferred);
   return inferred;
 }
@@ -1174,6 +1185,20 @@ function _materialGroups(cas) {
 // HIGH-severity reactive-pair rules the sanitiser hard-drops as
 // "incompatible-pair". Each rule is [groupA, groupB, reactionLabel].
 // Source: formulation_data.js:REACTIVE_PAIRS (severity === 'high').
+// Human-readable label per sanitiser reject code. Used by the card
+// footer so user-visible copy doesn't leak the kebab-case internal
+// vocabulary.
+const BLEND_DROP_REASON_LABELS = {
+  "self-ref":         "self-reference",
+  "duplicate-cas":    "duplicate",
+  "duplicate-label":  "duplicate label",
+  "prohibited":       "IFRA-prohibited",
+  "incompatible-pair":"reactive pair",
+  "non-perfumery":    "not perfumery",
+  "inconsistent-cas": "CAS mismatch",
+  "empty":            "empty label",
+  "weak-reverse":     "no olfactive overlap",
+};
 const INCOMPATIBLE_PAIRS_HIGH = [
   ["aldehyde", "primary_amine", "Schiff base formation (darkening + odor loss)"],
   ["aldehyde", "thiol",         "Hemithioacetal (rapid sulfurous off-odor)"],
@@ -1215,14 +1240,10 @@ function _isPartnerPerfumery(cas) {
 function _sanitizeBlendEntries(sourceCas, entries, opts) {
   const options = Object.assign({
     allowBanned:       false,
-    allowIncompatible: false,  // HIGH-severity reactive pairs (Schiff
-                               // base, hemithioacetal) are dropped so
-                               // the card never suggests a chemically
-                               // unsafe pairing.
+    allowIncompatible: false,  // HIGH-severity reactive pairs — see INCOMPATIBLE_PAIRS_HIGH
     allowNonPerfumery: false,
-    weakReverseCheck:  null,   // set to a Set of reverseFilled labels-lowercase
-                               // to apply the facet/family co-occurrence gate
-                               // only to reverse-filled additions
+    weakReverseCheck:  null,   // Set<lowercase-label> — gate only reverse-filled additions
+                               // through a facet/family co-occurrence check
   }, opts || {});
   const sourceFc = FILTER_CACHE.get(sourceCas) || {};
   const sourceFacets = new Set(sourceFc.facets || []);
@@ -4687,7 +4708,7 @@ function renderResults() {
               if (!dropped.length) return '';
               const counts = {};
               for (const d of dropped) counts[d.reason] = (counts[d.reason] || 0) + 1;
-              const parts = Object.entries(counts).map(([r,n]) => n + " " + r).join(", ");
+              const parts = Object.entries(counts).map(([r,n]) => n + " " + (BLEND_DROP_REASON_LABELS[r] || r)).join(", ");
               return `<p class="blends-dropped" title="Filtered by sanitiser: ${esc(parts)}">${dropped.length} filtered out (${esc(parts)})</p>`;
             })()}
           </div>`:""}
