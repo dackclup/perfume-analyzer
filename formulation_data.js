@@ -55,49 +55,60 @@ const IFRA_51_LIMITS = {
   "531-59-9":   { prohibited: true,
                   reason: "IFRA 51 — 7-Methoxycoumarin prohibited in all fragrance categories (photo-toxicity)" },
 
-  // Lavender Absolute — Cat.4 Fine, Cat.5A leave-on; Cat.5D tightly
-  // constrained on coumarin basis per supplier COC.
-  "97722-12-8": { "4": 6.66, "5A": 6.66, "5B": 6.66, "5C": 6.66, "5D": 0.035,
-                  note: "IFRA 51 — Lavender Absolute caps driven by coumarin (~2.5%); Cat.5D restricted on coumarin basis" },
+  // Lavender Absolute — Cat.4 Fine + Cat.5A/5B/5D leave-on; Cat.10A
+  // hand-contact cap matches Cat.4 per coumarin-driven ceiling.
+  "97722-12-8": { "4": 6.66, "5A": 1.7, "5B": 0.9, "5D": 0.3, "10A": 6.66,
+                  note: "IFRA 51 — Lavender Absolute caps driven by coumarin + 7-methoxycoumarin load; per database/lavender reference" },
 
-  // Lavender EO (L. angustifolia) — Cat.5 leave-on 38%, Cat.2 axillae 8%
-  "8000-28-0":  { "5A": 38, "5B": 38, "5C": 38, "2": 8,
-                  note: "IFRA 51 — Lavender EO per-category caps; Cat.4 and Cat.9 Not Restricted; recalc allergens (linalool, limonene, geraniol, coumarin)" },
+  // Lavender EO (L. angustifolia) — not restricted in Cat.4/5/9/10;
+  // Cat.12 is effectively 100% (non-skin candles/diffusers).
+  "8000-28-0":  { "12": 100,
+                  note: "IFRA 51 — Lavender EO Not Restricted in Cat.4/5/9/10 per se; recalc allergens (linalool, limonene, geraniol, coumarin); Cat.12 up to 100%" },
 
-  // Lavandin EO (L. × intermedia, cv. Grosso/Super/Abrialis)
-  "91722-69-9": { "5A": 76, "5B": 22, "5C": 32, "5D": 7, "2": 16,
-                  note: "IFRA 51 — Lavandin EO per-category caps; Cat.4 and Cat.9 Not Limited" },
+  // Lavandin EO (L. × intermedia, cv. Grosso/Super/Abrialis) — not
+  // restricted itself; Cat.12 up to 100%.
+  "91722-69-9": { "12": 100,
+                  note: "IFRA 51 — Lavandin EO Not Limited in Cat.9–10; Cat.12 up to 100%; recalc allergens" },
 
-  // Linalool — peroxide ≤20 mmol/L; leave-on 4.3%, baby/axillae 0.9%
-  "78-70-6":    { "5A": 4.3, "5B": 4.3, "5C": 4.3, "5D": 0.9, "2": 0.9,
-                  note: "IFRA 51 — Linalool peroxide ≤20 mmol/L; Cat.9 Not Limited" },
+  // Linalool — per-category caps per database/lavender reference
+  // (Cat.4/10A/10B/12 Not Limited → omitted).
+  "78-70-6":    { "1": 3.8, "2": 0.9, "3": 5, "5A": 4.3, "5B": 2.5, "5C": 4.3,
+                  "5D": 0.8, "9": 13, "11A": 6.7, "11B": 6.7,
+                  note: "IFRA 51 — Linalool peroxide ≤20 mmol/L; EU 2023/1545 allergen labelling" },
 
-  // Limonene — peroxide ≤20 mmol/L; leave-on 4.7%, baby/axillae 0.98%
-  "5989-27-5":  { "5A": 4.7, "5B": 4.7, "5C": 4.7, "5D": 0.98, "2": 0.98,
-                  note: "IFRA 51 — Limonene peroxide ≤20 mmol/L; Cat.9 Not Limited" },
+  // Limonene — per-category caps per database/lavender reference
+  "5989-27-5":  { "1": 4.4, "2": 0.98, "3": 5.8, "4": 12, "5A": 4.7, "5B": 2.7,
+                  "5C": 4.7, "5D": 0.93, "9": 14,
+                  note: "IFRA 51 — Limonene peroxide ≤20 mmol/L; EU 2023/1545 allergen labelling; Cat.9–12 home care Not Limited above Cat.9 14%" },
 
-  // Geraniol — IFRA 51 Amendment per-category QRA2 caps (2023)
-  // Values verified against third-party summaries of the official
-  // IFRA 51 Geraniol Standard (stricter than the MD summary table).
-  "106-24-1":   { "1": 4.2, "5A": 1.2, "5B": 0.78, "5C": 0.94, "5D": 0.26,
-                  "2": 0.87, "9": 2.3,
-                  note: "IFRA 51 — Geraniol allergen; Cat.5 values per Amendment 51 QRA2 reassessment (stricter than legacy 2.3% summary)" },
+  // Geraniol — per-category caps per database/lavender reference
+  "106-24-1":   { "1": 4.2, "2": 1.3, "3": 4.2, "4": 4.7, "5A": 2.3, "5B": 1.4,
+                  "5C": 2.3, "5D": 0.42, "9": 7, "10A": 5, "10B": 5,
+                  note: "IFRA 51 — Geraniol allergen; EU 2023/1545 labelling required" },
 
-  // Coumarin — IFRA 51 Amendment per-category caps (2023)
-  // Values verified against third-party summaries of the official
-  // IFRA 51 Coumarin Standard (Cat.5A 0.38% / 5B 0.11% / 5C 0.16% /
-  // 5D 0.035%) — stricter than the MD summary table.
-  "91-64-5":    { "5A": 0.38, "5B": 0.11, "5C": 0.16, "5D": 0.035,
-                  "2": 0.08, "9": 1.7,
-                  note: "IFRA 51 — Coumarin allergen; baby cap 0.035% (Amendment 51 QRA2 reassessment)" },
+  // Coumarin — per-category caps per database/lavender reference
+  // (Cat.9 corrected from PCC file 2.2% → official IFRA 1.7% from HC file)
+  "91-64-5":    { "1": 0.09, "2": 0.08, "3": 0.09, "4": 1.5, "5A": 0.67, "5B": 0.4,
+                  "5C": 0.67, "5D": 0.13, "9": 1.7, "10A": 0.52, "10B": 1.6,
+                  "11A": 0.035, "11B": 0.035, "12": 33,
+                  note: "IFRA 51 — Coumarin allergen; Cat.9 harmonised to IFRA official 1.7% (PCC file 2.2% typo)" },
 
-  // Camphor — neurotoxicity; NOT PERMITTED in baby (Cat.5D)
-  "76-22-2":    { "5A": 0.39, "5B": 0.39, "5C": 0.39, "5D": 0, "2": 0.39,
-                  note: "IFRA 51 — Camphor neurotoxicity; prohibited in Cat.5D baby products" },
+  // Camphor — per database/lavender reference (NOT fully prohibited
+  // in Cat.5D — restricted to 1% with neurotoxicity concern)
+  "76-22-2":    { "5A": 3, "5B": 2, "5D": 1, "10A": 2.5, "10B": 2.5,
+                  note: "IFRA 51 — Camphor neurotoxicity; Cat.5D baby 1% (formulators typically avoid baby products entirely)" },
 
-  // 1-Octen-3-yl Acetate — per-category caps
-  "2442-10-6":  { "5A": 0.38, "5B": 0.38, "5C": 0.38, "5D": 0.38, "2": 0.08, "9": 2.9,
-                  note: "IFRA 51 — 1-Octen-3-yl Acetate per-category caps" },
+  // 1-Octen-3-yl Acetate — per database/lavender reference
+  "2442-10-6":  { "5A": 0.3, "5B": 0.2, "5D": 0.05, "9": 2.9, "10A": 0.4, "10B": 0.4,
+                  note: "IFRA 51 — 1-Octen-3-yl Acetate sensitizer; per-category caps from Personal Care & Home Care references" },
+
+  // Hexyl Cinnamal (HCA) — Cat.4 12% per Fine Fragrance reference
+  "101-86-0":   { "4": 12,
+                  note: "IFRA 51 — Hexyl Cinnamal dermal sensitization; Cat.4 12%; Home Care Cat.9–12 ~2–5% per supplier COC" },
+
+  // Hydroxycitronellal — Cat.4 1.20% per Fine Fragrance reference
+  "107-75-5":   { "4": 1.20,
+                  note: "IFRA 51 — Hydroxycitronellal dermal sensitization + systemic toxicity; Cat.4 1.20%; Home Care Cat.9–12 ~1.1–5% per supplier COC" },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -116,6 +127,8 @@ const PEROXIDE_CONTROL = {
   "97722-12-8": { maxPV: 20, unit: "mmol/L", name: "Lavender Absolute" },
   "91722-69-9": { maxPV: 20, unit: "mmol/L", name: "Lavandin Oil" },
   "115-95-7":   { maxPV: 20, unit: "mmol/L", name: "Linalyl Acetate" },
+  "123-35-3":   { maxPV: 20, unit: "mmol/L", name: "beta-Myrcene" },
+  "586-62-9":   { maxPV: 20, unit: "mmol/L", name: "alpha-Terpinolene" },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -1017,10 +1030,12 @@ const BLEND_TARGET_RESOLUTION = {
   "lavender":      "8000-28-0",   // Lavender Oil
   "lavender absolute": "97722-12-8", // Lavender Absolute
   "lavandin":      "91722-69-9",   // Lavandin Oil (L. × intermedia)
+  "lavandin oil":      "91722-69-9",
   "lavandin grosso":   "91722-69-9",
   "lavandin super":    "91722-69-9",
   "lavandin abrialis": "91722-69-9",
   "lavandin abrial":   "91722-69-9",
+  "lavandula hybrida": "91722-69-9",
   "clary sage":    "8016-63-5",   // Clary Sage Oil
   "rose":          "8007-01-0",   // Rose Oil
   "jasmine":       "8022-96-6",   // Jasmine Oil
