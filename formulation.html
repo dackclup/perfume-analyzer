@@ -259,15 +259,8 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .chart-wrap { position:relative; max-width:480px; margin:0 auto 16px; }
 .chart-wrap.wide { max-width:100%; }
 
-/* ===== Export Bar ===== */
+/* ===== Nav Bar ===== */
 .export-bar { position:fixed; bottom:0; left:0; right:0; z-index:100; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(8px); border-top:1px solid var(--border); padding:var(--space-3) var(--space-4); padding-bottom:calc(var(--space-3) + env(safe-area-inset-bottom)); display:flex; justify-content:space-between; align-items:center; box-shadow:var(--shadow-up); }
-.dl-wrap { position:relative; }
-.dl-wrap > a { color:var(--text2); font-size:0.85em; text-decoration:none; cursor:pointer; }
-.dl-wrap > a:hover { text-decoration:underline; }
-.dl-menu { display:none; position:absolute; bottom:calc(100% + 8px); left:0; background:var(--card-bg); border:1px solid var(--border); border-radius:6px; min-width:140px; box-shadow:0 -4px 12px rgba(0,0,0,0.15); overflow:hidden; }
-.dl-menu.open { display:block; }
-.dl-menu a { display:block; padding:10px 16px; font-size:0.9em; text-decoration:none; color:var(--text); cursor:pointer; }
-.dl-menu a:hover { background:var(--bg2); }
 .export-bar .analyzer-link { color:var(--text2); font-size:0.85em; text-decoration:none; cursor:pointer; }
 .export-bar .analyzer-link:hover { text-decoration:underline; }
 
@@ -425,7 +418,6 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
     <symbol id="i-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></symbol>
     <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
     <symbol id="i-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></symbol>
-    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
     <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
     <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
@@ -681,18 +673,8 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
   </div>
 </main>
 
-<!-- ===== Export Bar ===== -->
+<!-- ===== Nav Bar ===== -->
 <div class="export-bar">
-  <div class="dl-wrap">
-    <a onclick="toggleDlMenu()">&#x25BC; Download</a>
-    <div class="dl-menu" id="dlMenu">
-      <a id="btnExportJSON">Save.JSON</a>
-      <a id="btnExportCSV">Save.CSV</a>
-      <a id="btnExportPDF">Save.PDF</a>
-      <a id="btnExportXLSX">Save.XLSX</a>
-      <a id="btnExportObsidian">Save.Obsidian.MD</a>
-    </div>
-  </div>
   <a href="index.html" class="analyzer-link">&larr; Analyzer</a>
 </div>
 
@@ -823,9 +805,6 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 <script src="perfumery_data.js?v=2026-04-19-incompat-filter"></script>
 <script src="formulation_data.js?v=2026-04-19-incompat-filter"></script>
 <script src="formulation_engine.js?v=2026-04-19-incompat-filter"></script>
-<!-- Obsidian single-file .md export. No JSZip dependency — output is a
-     plain Blob — so we only need the renderer module here. -->
-<script src="obsidian_export.js?v=2026-04-16-obsidian-phase4"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -873,11 +852,6 @@ const LANG_FORM = {
     moodTitle: 'Mood & Aromachology',
     moodDesc: 'Physiological mood scoring, 8-axis mood radar, and material suggestions by target mood.',
     emptyState: 'Add materials to see analysis',
-    download: '\u25BC Download',
-    saveJSON: 'Save.JSON',
-    saveCSV: 'Save.CSV',
-    savePDF: 'Save.PDF',
-    saveObsidian: 'Save.Obsidian.MD',
     analyzer: '\u2190 Analyzer',
     addMaterial: 'Add Material',
     searchPlaceholder: 'Search by name or CAS...',
@@ -950,11 +924,6 @@ const LANG_FORM = {
     moodTitle: '\u0E2D\u0E32\u0E23\u0E21\u0E13\u0E4C\u0E41\u0E25\u0E30\u0E1C\u0E25\u0E17\u0E32\u0E07\u0E08\u0E34\u0E15\u0E43\u0E08',
     moodDesc: '\u0E04\u0E30\u0E41\u0E19\u0E19\u0E2D\u0E32\u0E23\u0E21\u0E13\u0E4C 8 \u0E21\u0E34\u0E15\u0E34 \u0E40\u0E23\u0E14\u0E32\u0E23\u0E4C\u0E2D\u0E32\u0E23\u0E21\u0E13\u0E4C \u0E41\u0E25\u0E30\u0E41\u0E19\u0E30\u0E19\u0E33\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E15\u0E32\u0E21\u0E2D\u0E32\u0E23\u0E21\u0E13\u0E4C\u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23',
     emptyState: '\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E14\u0E39\u0E1C\u0E25\u0E27\u0E34\u0E40\u0E04\u0E23\u0E32\u0E30\u0E2B\u0E4C',
-    download: '\u25BC \u0E14\u0E32\u0E27\u0E19\u0E4C\u0E42\u0E2B\u0E25\u0E14',
-    saveJSON: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.JSON',
-    saveCSV: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.CSV',
-    savePDF: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.PDF',
-    saveObsidian: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01.Obsidian.MD',
     analyzer: '\u2190 \u0E2B\u0E19\u0E49\u0E32\u0E27\u0E34\u0E40\u0E04\u0E23\u0E32\u0E30\u0E2B\u0E4C',
     addMaterial: '\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A',
     searchPlaceholder: '\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E15\u0E32\u0E21\u0E0A\u0E37\u0E48\u0E2D\u0E2B\u0E23\u0E37\u0E2D CAS...',
@@ -1042,14 +1011,7 @@ function applyLangForm() {
   }
   // Empty states inside tabs
   document.querySelectorAll('.tab-panel .empty-state p').forEach(p => { p.textContent = t.emptyState; });
-  // Export bar
-  const dlToggle = document.querySelector('.dl-wrap > a');
-  if (dlToggle) dlToggle.textContent = t.download;
-  const dlMenuLinks = document.querySelectorAll('.dl-menu a');
-  if (dlMenuLinks[0]) dlMenuLinks[0].textContent = t.saveJSON;
-  if (dlMenuLinks[1]) dlMenuLinks[1].textContent = t.saveCSV;
-  if (dlMenuLinks[2]) dlMenuLinks[2].textContent = t.savePDF;
-  if (dlMenuLinks[4] && t.saveObsidian) dlMenuLinks[4].textContent = t.saveObsidian;
+  // Nav bar
   const analyzerLink = document.querySelector('.analyzer-link');
   if (analyzerLink) analyzerLink.textContent = t.analyzer;
   // Modal
@@ -3115,323 +3077,6 @@ function renderSafetyTab() {
   el.innerHTML = html;
 }
 
-// ===== Download Menu =====
-function toggleDlMenu() { document.getElementById('dlMenu').classList.toggle('open'); }
-function closeDlMenu() { document.getElementById('dlMenu').classList.remove('open'); }
-document.addEventListener('click', ev => { if (!ev.target.closest('.dl-wrap')) closeDlMenu(); });
-
-// ===== Export =====
-document.getElementById('btnExportJSON').addEventListener('click', () => { exportJSON(); closeDlMenu(); });
-document.getElementById('btnExportCSV').addEventListener('click', () => { exportCSV(); closeDlMenu(); });
-document.getElementById('btnExportPDF').addEventListener('click', () => { exportPDF(); closeDlMenu(); });
-document.getElementById('btnExportXLSX').addEventListener('click', () => { exportXLSX(); closeDlMenu(); });
-document.getElementById('btnExportObsidian').addEventListener('click', () => { exportObsidianMD(); closeDlMenu(); });
-
-// Obsidian single-file formulation export — produces a recipe sheet
-// with composition table, parameters, and analysis blocks (IFRA
-// compliance + note balance + longevity estimate). Each material links
-// back to its note in the materials vault via a wikilink.
-//
-// Analysis blocks are computed lazily inside try/catch so one broken
-// analyser doesn't sink the whole export — the section is simply
-// omitted from the payload.
-function exportObsidianMD() {
-  const mats = formulation.materials;
-  if (!mats.length) { alert('Add materials first.'); return; }
-  if (!window.ObsidianExport) {
-    alert('Obsidian export module failed to load. Reload the page and try again.');
-    return;
-  }
-
-  const today = new Date().toISOString().slice(0, 10);
-  const defaultName = 'Formulation ' + today;
-  const rawName = window.prompt('ตั้งชื่อสูตร / Formulation name:', defaultName);
-  if (rawName === null) return; // user cancelled
-  const saveName = (rawName.trim() || defaultName);
-
-  // Pull the live UI parameters — these feed both the Parameters block
-  // in the note and the IFRA / longevity analysers.
-  const catId    = document.getElementById('productCategory').value;
-  const fragPct  = parseInt(document.getElementById('fragPct').value);
-  const tempC    = parseInt(document.getElementById('tempSlider').value);
-  const batchSz  = validateBatchSize(document.getElementById('batchSize').value);
-  const batchU   = document.getElementById('batchUnit').value;
-  const catName  = (typeof IFRA_CATEGORIES !== 'undefined' && IFRA_CATEGORIES[catId])
-                    ? IFRA_CATEGORIES[catId].name : catId;
-
-  // Compute analysis — one try per section so a single failing analyser
-  // drops only its block, not the whole export.
-  const analysis = {};
-  try {
-    const rows = checkIFRACompliance(mats, catId, fragPct);
-    if (Array.isArray(rows)) {
-      const failures = rows
-        .filter(r => r && (r.status === 'danger' || r.compliant === false))
-        .map(r => ({ name: r.name, max: r.ifraMax, current: r.pctInProduct, status: r.status }));
-      const warnings = rows
-        .filter(r => r && r.status === 'warn')
-        .map(r => ({ name: r.name, max: r.ifraMax, current: r.pctInProduct }));
-      analysis.compliance = { passed: failures.length === 0, failures, warnings };
-    }
-  } catch (_) { /* skip section */ }
-  try {
-    const nb = analyzeNoteBalance(mats);
-    if (nb) {
-      analysis.noteBalance = {
-        top:              nb.top,
-        middle:           nb.middle,
-        base:             nb.base,
-        unclassifiedPct:  nb.unclassifiedPct,
-        missing:          nb.missing,
-      };
-    }
-  } catch (_) { /* skip section */ }
-  try {
-    const lo = estimateLongevity(mats, tempC);
-    if (lo && typeof lo.totalHours === 'number') {
-      analysis.longevity = {
-        total:  lo.totalHours,
-        top:    lo.topPhase,
-        heart:  lo.heartPhase,
-        base:   lo.basePhase,
-      };
-    }
-  } catch (_) { /* skip section */ }
-
-  const md = window.ObsidianExport.formulationToMarkdown({
-    name: saveName,
-    date: today,
-    category: catName,
-    categoryId: catId,
-    fragrancePct: fragPct,
-    batchSize: batchSz,
-    batchUnit: batchU,
-    temperatureC: tempC,
-    totalPct: formulation.totalPct(),
-    materials: mats.map(m => ({
-      cas: m.cas,
-      name: m.name,
-      pct: m.pct,
-      dilution: m.dilution || 100,
-      dilutionSolvent: m.dilutionSolvent || '',
-      note:              m.data?.note              || null,
-      uses:              m.data?.uses              || [],
-      functions:         m.data?.functions         || [],
-      materialType:      m.data?.materialType      || null,
-      source:            m.data?.source            || null,
-      regulatory:        m.data?.regulatory        || [],
-      primaryFamilies:   m.data?.primaryFamilies   || [],
-      secondaryFamilies: m.data?.secondaryFamilies || [],
-      facets:            m.data?.facets            || [],
-    })),
-    carriers: carrierMaterials.map(c => ({ cas: c.cas, name: c.name, pct: c.pct })),
-    analysis,
-  });
-
-  // Date-prefixed filename for chronological sort inside the JD folder.
-  // The suggested PARA/JD path is captured in the note's frontmatter
-  // (`para:` + `jd:` keys) so the user drops it into the right spot.
-  const fileBase = window.ObsidianExport.formulationFileName(saveName, today);
-  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = fileBase + '.md'; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function exportJSON() {
-  const mats = formulation.materials;
-  if (!mats.length) { alert('Add materials first.'); return; }
-
-  const catId = document.getElementById('productCategory').value;
-  const fragPct = parseInt(document.getElementById('fragPct').value);
-  const tempC = parseInt(document.getElementById('tempSlider').value);
-  const carrier = document.getElementById('carrierSelect').value;
-  const batchSize = validateBatchSize(document.getElementById('batchSize').value);
-  const batchUnit = document.getElementById('batchUnit').value;
-
-  const payload = {
-    meta: {
-      title: 'Perfume Formulation',
-      exported: new Date().toISOString(),
-      productCategory: IFRA_CATEGORIES[catId]?.name || catId,
-      categoryId: catId,
-      fragrancePct: fragPct,
-      temperatureC: tempC,
-      carrier: carrier,
-      batchSize: batchSize,
-      batchUnit: batchUnit,
-      totalPct: formulation.totalPct(),
-    },
-    materials: mats.map(m => ({
-      cas: m.cas,
-      name: m.name,
-      pct: m.pct,
-      dilution: m.dilution || 100,
-      dilutionSolvent: m.dilutionSolvent || '',
-      note: m.data?.note || null,
-      odorType: m.data?.odor_type || null,
-      odorStrength: m.data?.odor_strength || null,
-    })),
-    carriers: carrierMaterials.map(c => ({ cas: c.cas, name: c.name, pct: c.pct })),
-    analysis: {},
-  };
-
-  // Run all analyses
-  try {
-    payload.analysis.safety = {
-      compliance: checkIFRACompliance(mats, catId, fragPct),
-      allergens: aggregateAllergens(mats, fragPct, catId),
-      inci: generateINCILabel(mats, aggregateAllergens(mats, fragPct, catId), document.getElementById('carrierSelect').value),
-    };
-    const graph = getCompatGraph();
-    payload.analysis.compatibility = {
-      harmony: computeHarmonyScore(mats.map(m => m.cas), graph),
-      noteBalance: analyzeNoteBalance(mats),
-      suggestedAllocation: suggestAllocation(mats, validateFragPct(document.getElementById('fragPct').value)),
-    };
-    payload.analysis.thermodynamics = {
-      vpTable: buildVPTable(mats, tempC),
-      longevity: estimateLongevity(mats, tempC),
-    };
-    payload.analysis.odorProfile = {
-      ovTable: buildOdorValueTable(mats, tempC),
-      radarData: buildRadarData(mats, tempC),
-    };
-    payload.analysis.stability = {
-      groups: buildFunctionalGroupMatrix(mats),
-      warnings: detectReactivePairs(buildFunctionalGroupMatrix(mats)),
-    };
-    payload.analysis.mood = computeMoodProfile(mats, null);
-  } catch (e) { console.warn('Analysis export error:', e); }
-
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'formulation_' + new Date().toISOString().slice(0, 10) + '.json';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function exportCSV() {
-  const mats = formulation.materials;
-  if (!mats.length) { alert('Add materials first.'); return; }
-
-  const catId = document.getElementById('productCategory').value;
-  const fragPct = parseInt(document.getElementById('fragPct').value);
-
-  const compliance = checkIFRACompliance(mats, catId, fragPct);
-  const allergens = aggregateAllergens(mats, fragPct, catId);
-
-  // CSV header
-  const batchSize = validateBatchSize(document.getElementById('batchSize').value);
-  const batchUnit = document.getElementById('batchUnit').value;
-  const fragGrams = batchSize * (fragPct / 100);
-
-  const rows = [['Name','CAS','%','Dilution %','Pure Amount','Weigh Amount','Note','Odor Type','Odor Strength','% in Product','IFRA Max','IFRA Status'].join(',')];
-
-  for (const mat of mats) {
-    const r = compliance.find(c => c.cas === mat.cas) || {};
-    const csvEsc = s => '"' + String(s || '').replace(/"/g, '""') + '"';
-    let pure = (mat.pct / 100) * fragGrams;
-    if (batchUnit === 'ml') pure = pure / (mat.data?.density || 0.9);
-    const dil = mat.dilution || 100;
-    const weigh = dil < 100 ? pure / (dil / 100) : pure;
-    const unit = batchUnit === 'ml' ? 'ml' : 'g';
-    rows.push([
-      csvEsc(mat.name),
-      csvEsc(mat.cas),
-      mat.pct,
-      dil,
-      roundN(pure, 3) + unit,
-      roundN(weigh, 3) + unit,
-      csvEsc(mat.data?.note),
-      csvEsc(mat.data?.odor_type),
-      csvEsc(mat.data?.odor_strength),
-      r.pctInProduct || '',
-      r.ifraMax != null ? r.ifraMax : '',
-      r.status || '',
-    ].join(','));
-  }
-
-  // Allergen section
-  rows.push('');
-  rows.push('Allergens to Declare');
-  rows.push('Allergen,INCI,Total ppm,Exceeds Threshold');
-  for (const a of allergens.allergens.filter(a => a.exceedsThreshold)) {
-    rows.push(['"'+a.name+'"','"'+a.inci+'"',a.totalPpm,'YES'].join(','));
-  }
-
-  const bom = '\uFEFF';
-  const blob = new Blob([bom + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'formulation_' + new Date().toISOString().slice(0, 10) + '.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-// Compact PDF Summary Export
-function exportPDF() {
-  if (!formulation.materials.length) { alert('Add materials first.'); return; }
-
-  const mats = formulation.materials;
-  const catId = document.getElementById('productCategory').value;
-  const fragPct = parseInt(document.getElementById('fragPct').value);
-  const carrier = document.getElementById('carrierSelect').value;
-  const batchSize = validateBatchSize(document.getElementById('batchSize').value);
-  const batchUnit = document.getElementById('batchUnit').value;
-
-  const compliance = checkIFRACompliance(mats, catId, fragPct);
-  const allergens = aggregateAllergens(mats, fragPct, catId);
-  const summary = getSafetySummary(compliance, allergens);
-  const balance = analyzeNoteBalance(mats);
-  const inci = generateINCILabel(mats, allergens, carrier);
-
-  const printWin = window.open('', '_blank');
-  let h = '<!DOCTYPE html><html><head><title>Formulation Summary</title><style>';
-  h += 'body{font-family:Arial,Helvetica,sans-serif;font-size:11px;margin:20px;color:#222}';
-  h += 'h1{font-size:16px;margin:0 0 4px}h2{font-size:12px;margin:12px 0 4px;border-bottom:1px solid #ccc;padding-bottom:2px}';
-  h += 'table{border-collapse:collapse;width:100%;margin:4px 0}th,td{border:1px solid #ccc;padding:3px 6px;text-align:left;font-size:10px}';
-  h += 'th{background:#f0f0f0;font-weight:600}.ok{color:#16a34a}.warn{color:#d97706}.danger{color:#dc2626}';
-  h += '.meta{color:#666;font-size:10px}.inci{background:#f8f8f8;padding:8px;border:1px solid #ddd;font-size:10px;margin:4px 0;word-break:break-word}';
-  h += '@media print{body{margin:10mm}}';
-  h += '</style></head><body>';
-  h += '<h1>Perfume Formulation Summary</h1>';
-  h += '<div class="meta">' + IFRA_CATEGORIES[catId].name + ' | ' + fragPct + '% in product | ' + (CARRIER_INCI[carrier] || 'ETHANOL') + ' | Batch: ' + batchSize + batchUnit + ' | ' + new Date().toLocaleDateString() + '</div>';
-
-  h += '<h2>Formula (' + mats.length + ' materials, total ' + roundN(formulation.totalPct(), 1) + '%)</h2>';
-  h += '<table><tr><th>#</th><th>Material</th><th>CAS</th><th>Note</th><th>%</th><th>' + batchUnit + '</th><th>IFRA Status</th></tr>';
-  mats.forEach((m, i) => {
-    const r = compliance.find(c => c.cas === m.cas) || {};
-    let grams = (m.pct / 100) * batchSize * (fragPct / 100);
-    if (batchUnit === 'ml') grams /= (m.data?.density || 0.9);
-    const cls = r.status === 'ok' ? 'ok' : r.status === 'warn' ? 'warn' : 'danger';
-    h += '<tr><td>' + (i+1) + '</td><td>' + escHtml(m.name) + '</td><td>' + m.cas + '</td>';
-    h += '<td>' + (m.data?.note || '-') + '</td><td>' + m.pct + '</td><td>' + grams.toFixed(2) + '</td>';
-    h += '<td class="' + cls + '">' + (r.status || '-') + '</td></tr>';
-  });
-  h += '</table>';
-
-  h += '<h2>Fragrance Pyramid</h2>';
-  h += '<div>Top: ' + balance.top + '% | Middle: ' + balance.middle + '% | Base: ' + balance.base + '%';
-  if (balance.unclassified > 0) h += ' | Unclassified: ' + balance.unclassified + '%';
-  h += '</div>';
-
-  const statusTxt = summary.overallStatus === 'ok' ? 'COMPLIANT' : summary.overallStatus === 'banned' ? 'BANNED MATERIAL' : 'OVER LIMIT';
-  h += '<h2>Safety Status: <span class="' + (summary.overallStatus === 'ok' ? 'ok' : 'danger') + '">' + statusTxt + '</span></h2>';
-  if (allergens.allergens.filter(a => a.exceedsThreshold).length) {
-    h += '<div>Allergens to declare: ' + allergens.allergens.filter(a => a.exceedsThreshold).map(a => a.inci).join(', ') + '</div>';
-  }
-
-  h += '<h2>INCI Label</h2><div class="inci">' + inci + '</div>';
-  h += '</body></html>';
-  printWin.document.write(h);
-  printWin.document.close();
-  setTimeout(() => { printWin.print(); }, 300);
-}
 
 // ===== Preset Chip Logic =====
 function setFragPct(val) {
@@ -4355,67 +4000,6 @@ document.getElementById('compareRun').addEventListener('click', () => {
   document.getElementById('compareResults').innerHTML = html;
 });
 
-// ===== B5: XLSX Export (Excel XML Spreadsheet 2003) =====
-function exportXLSX() {
-  const mats = formulation.materials;
-  if (!mats.length) { alert('Add materials first.'); return; }
-
-  const catId = document.getElementById('productCategory').value;
-  const fragPct = parseInt(document.getElementById('fragPct').value);
-  const batchSize = validateBatchSize(document.getElementById('batchSize').value);
-  const carrier = document.getElementById('carrierSelect').value;
-  const compliance = checkIFRACompliance(mats, catId, fragPct);
-
-  function xmlEsc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  function cell(val, type) {
-    type = type || (typeof val === 'number' ? 'Number' : 'String');
-    return '<Cell><Data ss:Type="' + type + '">' + xmlEsc(val) + '</Data></Cell>';
-  }
-
-  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-  xml += '<?mso-application progid="Excel.Sheet"?>\n';
-  xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n';
-  xml += ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n';
-
-  // Styles
-  xml += '<Styles><Style ss:ID="hdr"><Font ss:Bold="1"/><Interior ss:Color="#E8E8E8" ss:Pattern="Solid"/></Style></Styles>\n';
-
-  // Sheet 1: Formula
-  xml += '<Worksheet ss:Name="Formula"><Table>\n';
-  const batchUnit = document.getElementById('batchUnit').value;
-  xml += '<Row ss:StyleID="hdr">' + ['#','Material','CAS','Note','%','Dilution %','Pure (g)','Weigh (g)','IFRA Status','Odor Type','Strength'].map(h => cell(h)).join('') + '</Row>\n';
-  mats.forEach((m, i) => {
-    const r = compliance.find(c => c.cas === m.cas) || {};
-    const fragGrams = batchSize * (fragPct / 100);
-    let pure = (m.pct / 100) * fragGrams;
-    if (batchUnit === 'ml') pure = pure / (m.data?.density || 0.9);
-    const dil = m.dilution || 100;
-    const weigh = dil < 100 ? pure / (dil / 100) : pure;
-    xml += '<Row>' + cell(i + 1, 'Number') + cell(m.name) + cell(m.cas) + cell(m.data?.note || '') + cell(m.pct, 'Number') + cell(dil, 'Number') + cell(roundN(pure, 3), 'Number') + cell(roundN(weigh, 3), 'Number') + cell(r.status || '') + cell(m.data?.odor_type || '') + cell(m.data?.odor_strength || '') + '</Row>\n';
-  });
-  xml += '</Table></Worksheet>\n';
-
-  // Sheet 2: Summary
-  xml += '<Worksheet ss:Name="Summary"><Table>\n';
-  xml += '<Row>' + cell('Product Category') + cell(IFRA_CATEGORIES[catId]?.name || catId) + '</Row>\n';
-  xml += '<Row>' + cell('Fragrance %') + cell(fragPct, 'Number') + '</Row>\n';
-  xml += '<Row>' + cell('Carrier') + cell((CARRIER_INCI[carrier] || carrier)) + '</Row>\n';
-  xml += '<Row>' + cell('Batch Size') + cell(batchSize, 'Number') + '</Row>\n';
-  xml += '<Row>' + cell('Total %') + cell(roundN(formulation.totalPct(), 1), 'Number') + '</Row>\n';
-  xml += '<Row>' + cell('Materials') + cell(mats.length, 'Number') + '</Row>\n';
-  xml += '<Row>' + cell('Date') + cell(new Date().toISOString()) + '</Row>\n';
-  xml += '</Table></Worksheet>\n';
-
-  xml += '</Workbook>';
-
-  const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'formulation_' + new Date().toISOString().slice(0, 10) + '.xls';
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 // ===== C1: Odor Map Renderer =====
 function renderMapTab() {
