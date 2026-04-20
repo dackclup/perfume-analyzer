@@ -76,13 +76,20 @@ const IFRA_51_LIMITS = {
   "5989-27-5":  { "5A": 4.7, "5B": 4.7, "5C": 4.7, "5D": 0.98, "2": 0.98,
                   note: "IFRA 51 — Limonene peroxide ≤20 mmol/L; Cat.9 Not Limited" },
 
-  // Geraniol — allergen caps
-  "106-24-1":   { "1": 4.2, "5A": 2.3, "5B": 2.3, "5C": 2.3, "2": 0.87, "9": 2.3,
-                  note: "IFRA 51 — Geraniol allergen declaration required" },
+  // Geraniol — IFRA 51 Amendment per-category QRA2 caps (2023)
+  // Values verified against third-party summaries of the official
+  // IFRA 51 Geraniol Standard (stricter than the MD summary table).
+  "106-24-1":   { "1": 4.2, "5A": 1.2, "5B": 0.78, "5C": 0.94, "5D": 0.26,
+                  "2": 0.87, "9": 2.3,
+                  note: "IFRA 51 — Geraniol allergen; Cat.5 values per Amendment 51 QRA2 reassessment (stricter than legacy 2.3% summary)" },
 
-  // Coumarin — allergen caps
-  "91-64-5":    { "5A": 0.67, "5B": 0.67, "5C": 0.67, "5D": 0.22, "2": 0.08, "9": 1.7,
-                  note: "IFRA 51 — Coumarin allergen; baby cap 0.22%" },
+  // Coumarin — IFRA 51 Amendment per-category caps (2023)
+  // Values verified against third-party summaries of the official
+  // IFRA 51 Coumarin Standard (Cat.5A 0.38% / 5B 0.11% / 5C 0.16% /
+  // 5D 0.035%) — stricter than the MD summary table.
+  "91-64-5":    { "5A": 0.38, "5B": 0.11, "5C": 0.16, "5D": 0.035,
+                  "2": 0.08, "9": 1.7,
+                  note: "IFRA 51 — Coumarin allergen; baby cap 0.035% (Amendment 51 QRA2 reassessment)" },
 
   // Camphor — neurotoxicity; NOT PERMITTED in baby (Cat.5D)
   "76-22-2":    { "5A": 0.39, "5B": 0.39, "5C": 0.39, "5D": 0, "2": 0.39,
