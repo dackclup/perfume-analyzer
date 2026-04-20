@@ -56,8 +56,8 @@ GC-MS analysis ของ *Lavandula angustifolia* Mill. ระบุได้ส
 | **Nerol Acetate** | Floral Fresh note | Floral | Lavender / Citrus | 141-12-8 | Fresh, sweet, rose-citrus, neroli | ~1% | ไม่ restrict |
 | **β-Caryophyllene** | Woody Amber note | Woody Amber | Lavender / Woody Dry-down | 87-44-5 | Dry, woody-spicy, clove-like, herbal | ~1–2% | ไม่ restrict |
 | **β-Caryophyllene Oxide** | Woody Amber note | Woody Amber | Lavender / Woody Dry-down | 1139-30-2 | Woody, dry, earthy, mildly spicy | ~3–4% | ไม่ restrict |
-| **Geraniol** | Floral note | Floral | Lavender / Rose | 106-24-1 | Sweet, rose-floral, green | trace–ต่ำ | Cat.5A: 2.3% / Cat.5B: 2.3% / Cat.5C: 2.3% / Cat.5D: 4.2% (allergen) |
-| **Coumarin** (ใน Absolute) | Amber note | Soft Amber | Lavender / Fougère | 91-64-5 | Sweet, hay-like, tonka, vanilla | ~0.03–3% ใน Absolute | Cat.5A: 0.67% / Cat.5B: 0.67% / Cat.5C: 0.67% / Cat.5D: 0.22% (allergen) |
+| **Geraniol** | Floral note | Floral | Lavender / Rose | 106-24-1 | Sweet, rose-floral, green | trace–ต่ำ | Cat.5A: 1.2% / Cat.5B: 0.78% / Cat.5C: 0.94% / Cat.5D: 0.26% (allergen; Amendment 51 QRA2) |
+| **Coumarin** (ใน Absolute) | Amber note | Soft Amber | Lavender / Fougère | 91-64-5 | Sweet, hay-like, tonka, vanilla | ~0.03–3% ใน Absolute | Cat.5A: 0.38% / Cat.5B: 0.11% / Cat.5C: 0.16% / Cat.5D: 0.035% (allergen; Amendment 51 QRA2) |
 | **7-Methoxycoumarin** | — | — | — | 531-59-9 | Sweet-coumarinic | trace | **Prohibited** — ห้ามใช้ทุก category รวม Personal Care |
 | **1-Octen-3-yl Acetate** | Fresh note | Green | Lavender / Earthy-Moss | 2442-10-6 | Mushroom, earthy, green | trace ใน Lavandin | Cat.5A: 0.38% / Cat.5B: 0.38% / Cat.5C: 0.38% / Cat.5D: 0.38% |
 
@@ -106,8 +106,8 @@ GC-MS analysis ของ *Lavandula angustifolia* Mill. ระบุได้ส
 |---|---|---|---|---|---|---|---|
 | **Linalool** | 78-70-6 | 4.3% | 4.3% | 4.3% | 0.9% | 0.9% | Not Limited |
 | **Limonene** | 5989-27-5 | 4.7% | 4.7% | 4.7% | 0.98% | 0.98% | Not Limited |
-| **Geraniol** | 106-24-1 | 2.3% | 2.3% | 2.3% | 4.2% (Cat.1 Lip) | 0.87% | 2.3% |
-| **Coumarin** | 91-64-5 | 0.67% | 0.67% | 0.67% | 0.22% | 0.08% | 1.7% |
+| **Geraniol** | 106-24-1 | 1.2% | 0.78% | 0.94% | 0.26% | 0.87% | 2.3% |
+| **Coumarin** | 91-64-5 | 0.38% | 0.11% | 0.16% | 0.035% | 0.08% | 1.7% |
 | **Camphor** | 76-22-2 | 0.39% | 0.39% | 0.39% | **Not Permitted** | 0.39% | — |
 | **1-Octen-3-yl Acetate** | 2442-10-6 | 0.38% | 0.38% | 0.38% | 0.38% | 0.08% | 2.9% |
 | **7-Methoxycoumarin** | 531-59-9 | **Prohibited** | **Prohibited** | **Prohibited** | **Prohibited** | **Prohibited** | **Prohibited** |
@@ -158,3 +158,11 @@ GC-MS analysis ของ *Lavandula angustifolia* Mill. ระบุได้ส
 ***
 
 *ข้อมูล IFRA 51st Amendment 2023 (มีผลบังคับ existing creations 30 ตุลาคม 2025); EU 2023/1545 fragrance allergen labeling (มีผล 31 กรกฎาคม 2026). อ้างอิง IFRA Conformity Certificates จาก NHR Organic Oils, Perfumer's Apprentice, Ventos, Bedoukian Research, PerfumersWorld.*
+
+### Revision Note (2026-04)
+- **Geraniol** และ **Coumarin** Cat.5A–5D caps ได้รับการ harmonize กับค่า **IFRA 51 Amendment Standard (QRA2 reassessment)** โดยใช้ค่าที่เข้มกว่าเดิม — safer for compliance:
+  - Geraniol 5A 1.2% / 5B 0.78% / 5C 0.94% / 5D 0.26%
+  - Coumarin 5A 0.38% / 5B 0.11% / 5C 0.16% / 5D 0.035%
+- ค่าเดิมใน draft แรก (Geraniol 2.3% / Coumarin 0.67% ใน Cat.5A) มาจาก legacy summary; Amendment 51 QRA2 ให้ค่าต่ำกว่านี้มาก
+- Sources: IFRA Standards 51st Amendment (30 Jun 2023); IFRA_STD_037 (Geraniol), IFRA_STD_023 (Coumarin); third-party summaries (Scentspiracy, Fraterworks, Nurture Handmade)
+- ค่าอื่น ๆ (Linalool, Limonene, Camphor, Lavender EO/Abs, Lavandin EO) คงเดิมเนื่องจากยังไม่พบ delta ที่ชัดจาก IFRA 51 official sources ใน review นี้
