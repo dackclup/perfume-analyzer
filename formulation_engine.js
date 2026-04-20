@@ -233,7 +233,7 @@ function checkIFRACompliance(materials, categoryId, fragPct) {
     // Lets curated per-CAS rules (e.g. Lavender Absolute Cat.4 @ 6.66%,
     // 7-Methoxycoumarin fully prohibited) land deterministically even
     // when the material's free-text `safety.ifra` is narrative.
-    if (typeof IFRA_51_LIMITS !== 'undefined' && IFRA_51_LIMITS[mat.cas]) {
+    if (IFRA_51_LIMITS[mat.cas]) {
       const entry = IFRA_51_LIMITS[mat.cas];
       if (entry.prohibited === true) {
         ifraMax = 0;
@@ -347,17 +347,13 @@ function aggregateAllergens(materials, fragPct, categoryId) {
   const isRinseOff = cat ? cat.rinseOff : false;
   const threshold = isRinseOff ? ALLERGEN_THRESHOLD_RINSEOFF : ALLERGEN_THRESHOLD_LEAVEON;
 
-  // Accumulate allergen ppm from all sources
-  const allergenMap = {}; // CAS → { name, inci, totalPpm, sources[] }
+  const allergenMap = {};
+  const allergenTable = EU_ALLERGENS_CURRENT;
 
   for (const mat of materials) {
-    const pctInProduct = (mat.pct / 100) * (fragPct / 100) * 100; // % in product
-    const ppmInProduct = pctInProduct * 10000; // convert % to ppm
+    const pctInProduct = (mat.pct / 100) * (fragPct / 100) * 100;
+    const ppmInProduct = pctInProduct * 10000;
 
-    // Case 1: Material itself IS an allergen (EU 26 + 2023/1545 additions)
-    const allergenTable = (typeof EU_ALLERGENS_CURRENT !== 'undefined')
-      ? EU_ALLERGENS_CURRENT
-      : EU_ALLERGENS_26;
     if (allergenTable[mat.cas]) {
       const a = allergenTable[mat.cas];
       if (!allergenMap[mat.cas]) {
@@ -367,11 +363,10 @@ function aggregateAllergens(materials, fragPct, categoryId) {
       allergenMap[mat.cas].sources.push({ from: mat.name, ppm: roundN(ppmInProduct, 2), type: 'direct' });
     }
 
-    // Case 2: Material is a natural containing allergens
     const natComp = NATURAL_ALLERGEN_COMPOSITION[mat.cas];
     if (natComp) {
       for (const [allergenCAS, allergenPct] of Object.entries(natComp)) {
-        if (!allergenTable[allergenCAS]) continue; // only track labelled allergens
+        if (!allergenTable[allergenCAS]) continue;
         const a = allergenTable[allergenCAS];
         const contribPpm = ppmInProduct * (allergenPct / 100);
 
