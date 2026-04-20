@@ -56,8 +56,8 @@ GC-MS analysis ของ *Lavandula angustifolia* Mill. ระบุได้ส
 | **Nerol Acetate** | Floral Fresh note | Floral | Lavender / Citrus | 141-12-8 | Fresh, sweet, rose-citrus, neroli | ~1% | ไม่ restrict |
 | **β-Caryophyllene** | Woody Amber note | Woody Amber | Lavender / Woody Dry-down | 87-44-5 | Dry, woody-spicy, clove-like, herbal | ~1–2% | ไม่ restrict |
 | **β-Caryophyllene Oxide** | Woody Amber note | Woody Amber | Lavender / Woody Dry-down | 1139-30-2 | Woody, dry, earthy, mildly spicy | ~3–4% | ไม่ restrict |
-| **Geraniol** | Floral note | Floral | Lavender / Rose | 106-24-1 | Sweet, rose-floral, green | trace–ต่ำ | Cat.5A: 1.2% / Cat.5B: 0.78% / Cat.5C: 0.94% / Cat.5D: 0.26% (allergen; Amendment 51 QRA2) |
-| **Coumarin** (ใน Absolute) | Amber note | Soft Amber | Lavender / Fougère | 91-64-5 | Sweet, hay-like, tonka, vanilla | ~0.03–3% ใน Absolute | Cat.5A: 0.38% / Cat.5B: 0.11% / Cat.5C: 0.16% / Cat.5D: 0.035% (allergen; Amendment 51 QRA2) |
+| **Geraniol** | Floral note | Floral | Lavender / Rose | 106-24-1 | Sweet, rose-floral, green | trace–ต่ำ | Cat.1 4.2% / Cat.2 1.3% / Cat.3 4.2% / Cat.4 4.7% / Cat.5A 2.3% / Cat.5B 1.4% / Cat.5C 2.3% / Cat.5D 0.42% / Cat.9 7% (allergen) |
+| **Coumarin** (ใน Absolute) | Amber note | Soft Amber | Lavender / Fougère | 91-64-5 | Sweet, hay-like, tonka, vanilla | ~0.03–3% ใน Absolute | Cat.1 0.09% / Cat.2 0.08% / Cat.4 1.5% / Cat.5A 0.67% / Cat.5B 0.4% / Cat.5C 0.67% / Cat.5D 0.13% / Cat.9 1.7% (allergen) |
 | **7-Methoxycoumarin** | — | — | — | 531-59-9 | Sweet-coumarinic | trace | **Prohibited** — ห้ามใช้ทุก category รวม Personal Care |
 | **1-Octen-3-yl Acetate** | Fresh note | Green | Lavender / Earthy-Moss | 2442-10-6 | Mushroom, earthy, green | trace ใน Lavandin | Cat.5A: 0.38% / Cat.5B: 0.38% / Cat.5C: 0.38% / Cat.5D: 0.38% |
 
@@ -104,16 +104,16 @@ GC-MS analysis ของ *Lavandula angustifolia* Mill. ระบุได้ส
 
 | สาร | CAS | Cat.5A Body Lotion | Cat.5B Face | Cat.5C Hand | Cat.5D Baby | Cat.2 Axillae | Cat.9 Rinse-off |
 |---|---|---|---|---|---|---|---|
-| **Linalool** | 78-70-6 | 4.3% | 4.3% | 4.3% | 0.9% | 0.9% | Not Limited |
-| **Limonene** | 5989-27-5 | 4.7% | 4.7% | 4.7% | 0.98% | 0.98% | Not Limited |
-| **Geraniol** | 106-24-1 | 1.2% | 0.78% | 0.94% | 0.26% | 0.87% | 2.3% |
-| **Coumarin** | 91-64-5 | 0.38% | 0.11% | 0.16% | 0.035% | 0.08% | 1.7% |
-| **Camphor** | 76-22-2 | 0.39% | 0.39% | 0.39% | **Not Permitted** | 0.39% | — |
-| **1-Octen-3-yl Acetate** | 2442-10-6 | 0.38% | 0.38% | 0.38% | 0.38% | 0.08% | 2.9% |
+| **Linalool** | 78-70-6 | 4.3% | 2.5% | 4.3% | 0.8% | 0.9% | 13% |
+| **Limonene** | 5989-27-5 | 4.7% | 2.7% | 4.7% | 0.93% | 0.98% | 14% |
+| **Geraniol** | 106-24-1 | 2.3% | 1.4% | 2.3% | 0.42% | 1.3% | 7% |
+| **Coumarin** | 91-64-5 | 0.67% | 0.4% | 0.67% | 0.13% | 0.08% | 1.7% |
+| **Camphor** | 76-22-2 | 3% | 2% | — | 1% (neurotoxicity — avoid baby) | — | — |
+| **1-Octen-3-yl Acetate** | 2442-10-6 | 0.3% | 0.2% | — | 0.05% | — | 2.9% |
 | **7-Methoxycoumarin** | 531-59-9 | **Prohibited** | **Prohibited** | **Prohibited** | **Prohibited** | **Prohibited** | **Prohibited** |
-| **Lavender Absolute** | 97722-12-8 | ~6.66% (via coumarin) | limited | limited | จำกัดมาก | low | low |
-| **Lavender EO** | 8000-28-0 | 38% (oil basis; recalc allergens) | 38% | 38% | limited | 8% | Not Restricted |
-| **Lavandin EO Super** | 91722-69-9 | 76% (oil basis) | 22% | 32% | 7% | 16% | Not Limited |
+| **Lavender Absolute** | 97722-12-8 | 1.7% | 0.9% | — | 0.3% | — | — |
+| **Lavender EO** | 8000-28-0 | Not Restricted (allergen sum) | Not Restricted | Not Restricted | allergen sum | allergen sum | Not Restricted |
+| **Lavandin EO** | 91722-69-9 | Not Restricted | Not Restricted | Not Restricted | Not Restricted | Not Restricted | Not Limited |
 
 > **หลักสำคัญ:** ใน Personal Care (leave-on Cat.5) limits จะ**เข้มกว่า** Fine Fragrance (Cat.4) เสมอ เพราะ exposure time + surface area สูงกว่า สูตร Cat.5D (Baby) เข้มที่สุด
 
@@ -160,9 +160,9 @@ GC-MS analysis ของ *Lavandula angustifolia* Mill. ระบุได้ส
 *ข้อมูล IFRA 51st Amendment 2023 (มีผลบังคับ existing creations 30 ตุลาคม 2025); EU 2023/1545 fragrance allergen labeling (มีผล 31 กรกฎาคม 2026). อ้างอิง IFRA Conformity Certificates จาก NHR Organic Oils, Perfumer's Apprentice, Ventos, Bedoukian Research, PerfumersWorld.*
 
 ### Revision Note (2026-04)
-- **Geraniol** และ **Coumarin** Cat.5A–5D caps ได้รับการ harmonize กับค่า **IFRA 51 Amendment Standard (QRA2 reassessment)** โดยใช้ค่าที่เข้มกว่าเดิม — safer for compliance:
-  - Geraniol 5A 1.2% / 5B 0.78% / 5C 0.94% / 5D 0.26%
-  - Coumarin 5A 0.38% / 5B 0.11% / 5C 0.16% / 5D 0.035%
-- ค่าเดิมใน draft แรก (Geraniol 2.3% / Coumarin 0.67% ใน Cat.5A) มาจาก legacy summary; Amendment 51 QRA2 ให้ค่าต่ำกว่านี้มาก
-- Sources: IFRA Standards 51st Amendment (30 Jun 2023); IFRA_STD_037 (Geraniol), IFRA_STD_023 (Coumarin); third-party summaries (Scentspiracy, Fraterworks, Nurture Handmade)
-- ค่าอื่น ๆ (Linalool, Limonene, Camphor, Lavender EO/Abs, Lavandin EO) คงเดิมเนื่องจากยังไม่พบ delta ที่ชัดจาก IFRA 51 official sources ใน review นี้
+- ตาราง IFRA 51 harmonized กับ **`database/lavender/` reference set** (4 ไฟล์: Personal Care & Cosmetics, Fine Fragrance, Home Care, Flavor) — ครอบคลุม Cat.1–12 เต็มรูปแบบสำหรับ Linalool, Limonene, Geraniol, Coumarin, Camphor, 1-Octen-3-yl Acetate, Lavender EO/Absolute, Lavandin EO
+- **Camphor Cat.5D = 1%** (restricted, NOT fully prohibited) ต่าง draft แรกที่ระบุ "Not Permitted" — formulator ระวัง neurotoxicity ในเด็กเล็ก
+- **Coumarin Cat.9 = 1.7%** (แก้จากไฟล์ PCC ระบุ 2.2% — IFRA 51 official + Home Care file ให้ 1.7%)
+- **เพิ่มสารใหม่ใน app:** 1-Octen-3-ol (3391-86-4), Spike Lavender Oil (8016-78-2), Lavandin alt CAS (8022-15-9)
+- **เพิ่ม peroxide control** สำหรับ β-Myrcene (123-35-3), α-Terpinolene (586-62-9)
+- Sources: `database/lavender/` reference set; IFRA 51st Amendment (30 Jun 2023); FEMA GRAS library
