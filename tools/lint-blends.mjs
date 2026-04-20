@@ -80,8 +80,8 @@ function resolve(raw) {
 }
 
 // ── Partner-quality helpers (match the runtime sanitiser at
-//    index.html:_isPartnerProhibited / _isPartnerPerfumery /
-//    _partnerIncompatibility).
+//    index.html:_isPartnerProhibited / _isPartnerPerfumery and the
+//    inline reactive-pair gate in _computeSuggestedPartners).
 const RE_ODORLESS = /\b(odor(less)?|odourless|no\s+odor|no\s+odour|without\s+odor)\b/i;
 function hasRealOdor(entry) {
   const desc = entry?.odor?.description || '';
@@ -128,16 +128,20 @@ const MATERIAL_GROUPS = new Map([
   ["432-25-7",  new Set(["aldehyde"])],
   ["126-15-8",  new Set(["aldehyde"])],
 ]);
+const _NAME_SECONDARY_AMINE = /\b(dimethyl[- ]?anthranilate|n-methyl[- ]?anthranilate|indole|skatole|quinoline)\b/;
+const _NAME_PRIMARY_AMINE   = /\banthranilate\b/;
+const _NAME_THIOL           = /\b(mercapto|thiol|mercaptan|thio[- ]?acetate|sulfanyl)\b/;
+const _NAME_ALDEHYDE        = /(aldehyde|cinnamaldehyde|citral|citronellal|heliotropin|vanillin|helional|hexenal|nonanal|octanal|decanal|undecanal|dodecanal|tridecanal|lauric\s+aldehyde)/i;
+const _NAME_PHENOL          = /\b(eugenol|isoeugenol|thymol|guaiacol|carvacrol|chavicol|cresol|vanillin|methyl\s+salicylate|eugen|phenol)\b/;
 function detectGroupsByName(name) {
   const out = new Set();
   if (!name) return out;
   const n = name.toLowerCase();
-  if (/\bdimethyl[- ]?anthranilate\b|n-methyl[- ]?anthranilate/.test(n)) out.add("secondary_amine");
-  else if (/\banthranilate\b/.test(n)) out.add("primary_amine");
-  if (/\b(indole|skatole|quinoline)\b/.test(n)) out.add("secondary_amine");
-  if (/\b(mercapto|thiol|mercaptan|thio[- ]?acetate|sulfanyl)\b/.test(n)) out.add("thiol");
-  if (/(aldehyde|cinnamaldehyde|citral|citronellal|heliotropin|vanillin|helional|hexenal|nonanal|octanal|decanal|undecanal|dodecanal|tridecanal|lauric\s+aldehyde)/i.test(n)) out.add("aldehyde");
-  if (/\b(eugenol|isoeugenol|thymol|guaiacol|carvacrol|chavicol|cresol|vanillin|methyl\s+salicylate|eugen|phenol)\b/.test(n)) out.add("phenol");
+  if (_NAME_SECONDARY_AMINE.test(n)) out.add("secondary_amine");
+  else if (_NAME_PRIMARY_AMINE.test(n)) out.add("primary_amine");
+  if (_NAME_THIOL.test(n))    out.add("thiol");
+  if (_NAME_ALDEHYDE.test(n)) out.add("aldehyde");
+  if (_NAME_PHENOL.test(n))   out.add("phenol");
   return out;
 }
 function materialGroups(cas) {
@@ -147,15 +151,6 @@ const INCOMPATIBLE_PAIRS_HIGH = [
   ["aldehyde", "primary_amine", "Schiff base"],
   ["aldehyde", "thiol",         "Hemithioacetal"],
 ];
-function partnerIncompatibility(sourceCas, partnerCas) {
-  const a = materialGroups(sourceCas);
-  const b = materialGroups(partnerCas);
-  if (!a.size || !b.size) return null;
-  for (const [gA, gB, reaction] of INCOMPATIBLE_PAIRS_HIGH) {
-    if ((a.has(gA) && b.has(gB)) || (a.has(gB) && b.has(gA))) return { pair: gA + "+" + gB, reaction };
-  }
-  return null;
-}
 
 // ── Checks
 const findings = {
@@ -174,6 +169,9 @@ for (const e of db) {
   const from = e.name;
   const blends = Array.isArray(e.blends_with) ? e.blends_with : [];
   const seenCasLocal = new Set();
+  // Hoist once per material so the reactive-pair gate below doesn't
+  // refetch the source's functional groups for every blend entry.
+  const sourceGroups = materialGroups(e.cas);
   for (const raw of blends) {
     const r = resolve(raw);
     if (r.kind === "empty") continue;
@@ -203,9 +201,14 @@ for (const e of db) {
       if (partnerEntry && isProhibited(partnerEntry)) {
         findings.prohibitedPartner.push({ cas: e.cas, name: from, label: rawLabel, targetCas: r.cas, targetName: r.name });
       }
-      const incompat = partnerIncompatibility(e.cas, r.cas);
-      if (incompat) {
-        findings.incompatiblePair.push({ cas: e.cas, name: from, label: rawLabel, targetCas: r.cas, targetName: r.name, reaction: incompat.reaction });
+      if (sourceGroups.size) {
+        const targetGroups = materialGroups(r.cas);
+        for (const [gA, gB, reaction] of INCOMPATIBLE_PAIRS_HIGH) {
+          if ((sourceGroups.has(gA) && targetGroups.has(gB)) || (sourceGroups.has(gB) && targetGroups.has(gA))) {
+            findings.incompatiblePair.push({ cas: e.cas, name: from, label: rawLabel, targetCas: r.cas, targetName: r.name, reaction });
+            break;
+          }
+        }
       }
       if (partnerEntry && !hasRealOdor(partnerEntry)) {
         findings.nonPerfumery.push({ cas: e.cas, name: from, label: rawLabel, targetCas: r.cas, targetName: r.name });
