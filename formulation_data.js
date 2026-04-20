@@ -38,24 +38,81 @@ const IFRA_CATEGORIES = {
 // ─────────────────────────────────────────────────────────────
 // IFRA 51 per-material finished-product caps, keyed by CAS then
 // IFRA category. Authoritative source consulted by the formulation
-// engine when computing Cat.4 (Fine Fragrance) caps; the per-material
+// engine when computing per-category caps; the per-material
 // `safety.ifra` free-text in perfumery_data.js is kept for UI display.
 // Values in % of finished product. Sources: IFRA 51st Amendment
-// (2023, enforced 2025), supplier IFRA conformity certificates.
+// (2023, enforced existing creations 30 Oct 2025), supplier IFRA
+// conformity certificates, Personal Care & Cosmetics reference
+// (Lavender Group 2026 — see Personal Care & Cosmetics.md).
 // ─────────────────────────────────────────────────────────────
-// Two shapes supported per-CAS:
+// Three shapes supported per-CAS:
 //   { "<catId>": <pct> }          — numeric Cat-specific cap
+//   { "<catId>": 0 }              — prohibited in that specific Cat
 //   { prohibited: true, reason }  — banned in every category
 // Either may be combined with a freeform `note` for UI display.
 const IFRA_51_LIMITS = {
-  "97722-12-8": { "4": 6.66 },  // Lavender Absolute (supplier COC, Fraterworks et al.)
+  // 7-Methoxycoumarin — fully banned (photo-toxicity)
   "531-59-9":   { prohibited: true,
                   reason: "IFRA 51 — 7-Methoxycoumarin prohibited in all fragrance categories (photo-toxicity)" },
-  "2442-10-6":  { note: "IFRA 51 — 1-Octen-3-yl Acetate restricted per category; consult supplier COC for Cat.4 cap" },
+
+  // Lavender Absolute — Cat.4 Fine, Cat.5A leave-on; Cat.5D tightly
+  // constrained on coumarin basis per supplier COC.
+  "97722-12-8": { "4": 6.66, "5A": 6.66, "5B": 6.66, "5C": 6.66, "5D": 0.035,
+                  note: "IFRA 51 — Lavender Absolute caps driven by coumarin (~2.5%); Cat.5D restricted on coumarin basis" },
+
+  // Lavender EO (L. angustifolia) — Cat.5 leave-on 38%, Cat.2 axillae 8%
+  "8000-28-0":  { "5A": 38, "5B": 38, "5C": 38, "2": 8,
+                  note: "IFRA 51 — Lavender EO per-category caps; Cat.4 and Cat.9 Not Restricted; recalc allergens (linalool, limonene, geraniol, coumarin)" },
+
+  // Lavandin EO (L. × intermedia, cv. Grosso/Super/Abrialis)
+  "91722-69-9": { "5A": 76, "5B": 22, "5C": 32, "5D": 7, "2": 16,
+                  note: "IFRA 51 — Lavandin EO per-category caps; Cat.4 and Cat.9 Not Limited" },
+
+  // Linalool — peroxide ≤20 mmol/L; leave-on 4.3%, baby/axillae 0.9%
+  "78-70-6":    { "5A": 4.3, "5B": 4.3, "5C": 4.3, "5D": 0.9, "2": 0.9,
+                  note: "IFRA 51 — Linalool peroxide ≤20 mmol/L; Cat.9 Not Limited" },
+
+  // Limonene — peroxide ≤20 mmol/L; leave-on 4.7%, baby/axillae 0.98%
+  "5989-27-5":  { "5A": 4.7, "5B": 4.7, "5C": 4.7, "5D": 0.98, "2": 0.98,
+                  note: "IFRA 51 — Limonene peroxide ≤20 mmol/L; Cat.9 Not Limited" },
+
+  // Geraniol — allergen caps
+  "106-24-1":   { "1": 4.2, "5A": 2.3, "5B": 2.3, "5C": 2.3, "2": 0.87, "9": 2.3,
+                  note: "IFRA 51 — Geraniol allergen declaration required" },
+
+  // Coumarin — allergen caps
+  "91-64-5":    { "5A": 0.67, "5B": 0.67, "5C": 0.67, "5D": 0.22, "2": 0.08, "9": 1.7,
+                  note: "IFRA 51 — Coumarin allergen; baby cap 0.22%" },
+
+  // Camphor — neurotoxicity; NOT PERMITTED in baby (Cat.5D)
+  "76-22-2":    { "5A": 0.39, "5B": 0.39, "5C": 0.39, "5D": 0, "2": 0.39,
+                  note: "IFRA 51 — Camphor neurotoxicity; prohibited in Cat.5D baby products" },
+
+  // 1-Octen-3-yl Acetate — per-category caps
+  "2442-10-6":  { "5A": 0.38, "5B": 0.38, "5C": 0.38, "5D": 0.38, "2": 0.08, "9": 2.9,
+                  note: "IFRA 51 — 1-Octen-3-yl Acetate per-category caps" },
 };
 
 // ─────────────────────────────────────────────────────────────
-// EU 26 Allergens (Regulation EC 1223/2009 Annex III)
+// Peroxide control (IFRA 51 requirement)
+// For materials prone to auto-oxidation that form hydroperoxide
+// sensitizers, IFRA mandates a peroxide value ≤20 mmol/L measured
+// on the raw material. Storage recommendations: antioxidants (BHT
+// 0.01–0.05%, tocopherol 0.05–0.2%), inert atmosphere (N₂), ≤15°C.
+// Ref: IFRA 51st Amendment, RIFM peroxide guidance, Personal Care
+// & Cosmetics.md §6.2.
+// ─────────────────────────────────────────────────────────────
+const PEROXIDE_CONTROL = {
+  "78-70-6":    { maxPV: 20, unit: "mmol/L", name: "Linalool" },
+  "5989-27-5":  { maxPV: 20, unit: "mmol/L", name: "Limonene" },
+  "8000-28-0":  { maxPV: 20, unit: "mmol/L", name: "Lavender Oil" },
+  "97722-12-8": { maxPV: 20, unit: "mmol/L", name: "Lavender Absolute" },
+  "91722-69-9": { maxPV: 20, unit: "mmol/L", name: "Lavandin Oil" },
+  "115-95-7":   { maxPV: 20, unit: "mmol/L", name: "Linalyl Acetate" },
+};
+
+// ─────────────────────────────────────────────────────────────
+// EU 26 Allergens (Regulation EC 1223/2009 Annex III — legacy list)
 // Must be declared on label when present above:
 //   10 ppm (0.001%) in rinse-off products
 //  100 ppm (0.01%)  in leave-on products
@@ -90,6 +147,38 @@ const EU_ALLERGENS_26 = {
   "5989-54-8":  { name: "l-Limonene",              inci: "LIMONENE" },
 };
 
+// ─────────────────────────────────────────────────────────────
+// EU 2023/1545 — Expanded fragrance allergen list
+// Commission Regulation (EU) 2023/1545 extends Annex III to 81
+// labelled fragrance allergens (transition period ends 31 July 2026
+// for leave-on, 31 July 2028 for rinse-off). Same declaration
+// thresholds apply: ≥0.001% rinse-off, ≥0.01% leave-on.
+// This table holds the NEW additions beyond the EU_26 list.
+// Only a lavender-relevant subset is populated here; extend as
+// other CAS entries join the perfumery database.
+// ─────────────────────────────────────────────────────────────
+const EU_ALLERGENS_2023_NEW = {
+  "515-69-5":   { name: "alpha-Bisabolol",         inci: "BISABOLOL" },
+  "98-55-5":    { name: "alpha-Terpineol",         inci: "TERPINEOL" },
+  "8000-41-7":  { name: "Terpineol",               inci: "TERPINEOL" },
+  "10482-56-1": { name: "Terpineol (alpha, racemic)", inci: "TERPINEOL" },
+  "106-25-2":   { name: "Nerol",                   inci: "NEROL" },
+  "87-44-5":    { name: "beta-Caryophyllene",      inci: "CARYOPHYLLENE" },
+  "123-35-3":   { name: "Myrcene",                 inci: "MYRCENE" },
+  "13877-91-3": { name: "beta-Ocimene",            inci: "OCIMENE" },
+  "3779-61-1":  { name: "beta-trans-Ocimene",      inci: "OCIMENE" },
+  "3338-55-4":  { name: "beta-cis-Ocimene",        inci: "OCIMENE" },
+  "8024-34-6":  { name: "Camphor",                 inci: "CAMPHOR" },
+  "76-22-2":    { name: "Camphor",                 inci: "CAMPHOR" },
+  "121-33-5":   { name: "Vanillin",                inci: "VANILLIN" },
+  "119-36-8":   { name: "Methyl Salicylate",       inci: "METHYL SALICYLATE" },
+};
+
+// Combined lookup (EU 26 + 2023/1545 additions) used by the engine
+// for current compliance checks. Keep the originals for any legacy
+// tooling that still queries EU_ALLERGENS_26 directly.
+const EU_ALLERGENS_CURRENT = Object.assign({}, EU_ALLERGENS_26, EU_ALLERGENS_2023_NEW);
+
 // Threshold in ppm for label declaration
 const ALLERGEN_THRESHOLD_RINSEOFF  = 10;   // 0.001%
 const ALLERGEN_THRESHOLD_LEAVEON   = 100;  // 0.01%
@@ -117,7 +206,9 @@ const NATURAL_ALLERGEN_COMPOSITION = {
     "106-24-1":   2.0,  // Geraniol
     "91-64-5":    2.5,  // Coumarin (elevated vs EO — drives the balsamic tail)
   },
-  // Lavandin Grosso Oil (Lavandula × intermedia, Grosso chemotype)
+  // Lavandin Oil (Lavandula × intermedia) — covers Grosso, Super,
+  // and Abrialis chemotypes which share INCI LAVANDULA HYBRIDA OIL
+  // and CAS 91722-69-9. Composition averaged across cultivars.
   "91722-69-9": {
     "78-70-6":   32.0,  // Linalool
     "115-95-7":  28.0,  // Linalyl Acetate
@@ -918,8 +1009,11 @@ const BLEND_TARGET_RESOLUTION = {
   // Common shorthand → exact CAS
   "lavender":      "8000-28-0",   // Lavender Oil
   "lavender absolute": "97722-12-8", // Lavender Absolute
-  "lavandin":      "91722-69-9",   // Lavandin Grosso Oil
-  "lavandin grosso": "91722-69-9",
+  "lavandin":      "91722-69-9",   // Lavandin Oil (L. × intermedia)
+  "lavandin grosso":   "91722-69-9",
+  "lavandin super":    "91722-69-9",
+  "lavandin abrialis": "91722-69-9",
+  "lavandin abrial":   "91722-69-9",
   "clary sage":    "8016-63-5",   // Clary Sage Oil
   "rose":          "8007-01-0",   // Rose Oil
   "jasmine":       "8022-96-6",   // Jasmine Oil

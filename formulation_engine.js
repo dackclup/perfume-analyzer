@@ -246,6 +246,12 @@ function checkIFRACompliance(materials, categoryId, fragPct) {
       } else if (entry[categoryId] != null) {
         ifraMax = entry[categoryId];
         ifraSource = 'IFRA 51 table (Cat.' + categoryId + ')';
+        // Value 0 for a specific category = Not Permitted in that
+        // category (e.g. Camphor prohibited in Cat.5D baby). Surface
+        // it through the existing 'banned' banStatus pathway.
+        if (entry[categoryId] === 0) {
+          banStatus = 'banned';
+        }
       }
     }
 
@@ -348,9 +354,12 @@ function aggregateAllergens(materials, fragPct, categoryId) {
     const pctInProduct = (mat.pct / 100) * (fragPct / 100) * 100; // % in product
     const ppmInProduct = pctInProduct * 10000; // convert % to ppm
 
-    // Case 1: Material itself IS an allergen
-    if (EU_ALLERGENS_26[mat.cas]) {
-      const a = EU_ALLERGENS_26[mat.cas];
+    // Case 1: Material itself IS an allergen (EU 26 + 2023/1545 additions)
+    const allergenTable = (typeof EU_ALLERGENS_CURRENT !== 'undefined')
+      ? EU_ALLERGENS_CURRENT
+      : EU_ALLERGENS_26;
+    if (allergenTable[mat.cas]) {
+      const a = allergenTable[mat.cas];
       if (!allergenMap[mat.cas]) {
         allergenMap[mat.cas] = { name: a.name, inci: a.inci, totalPpm: 0, sources: [] };
       }
@@ -362,8 +371,8 @@ function aggregateAllergens(materials, fragPct, categoryId) {
     const natComp = NATURAL_ALLERGEN_COMPOSITION[mat.cas];
     if (natComp) {
       for (const [allergenCAS, allergenPct] of Object.entries(natComp)) {
-        if (!EU_ALLERGENS_26[allergenCAS]) continue; // only track EU 26
-        const a = EU_ALLERGENS_26[allergenCAS];
+        if (!allergenTable[allergenCAS]) continue; // only track labelled allergens
+        const a = allergenTable[allergenCAS];
         const contribPpm = ppmInProduct * (allergenPct / 100);
 
         if (!allergenMap[allergenCAS]) {
