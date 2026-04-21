@@ -313,6 +313,17 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .facet-group { margin:6px 0; }
 .facet-group-label { font-size:0.6em; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; opacity:0.7; font-weight:600; margin:2px 2px 3px; }
 .facet-group-chips { display:flex; flex-wrap:wrap; gap:4px; }
+/* Facet groups picker — collapsible checkbox list that hides/shows
+   entire Edwards sub-family groups from the Facet drawer. */
+.facet-groups-picker { margin:4px 0 8px; }
+.facet-groups-picker summary { display:inline-block; cursor:pointer; list-style:none; }
+.facet-groups-picker summary::-webkit-details-marker { display:none; }
+.facet-groups-picker summary::marker { content:''; }
+.facet-groups-picker[open] summary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.facet-groups-picker-body { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:2px 10px; margin-top:6px; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); }
+.facet-groups-picker-row { display:flex; align-items:center; gap:6px; font-size:0.78em; color:var(--text2); cursor:pointer; padding:2px 0; user-select:none; }
+.facet-groups-picker-row:hover { color:var(--accent); }
+.facet-groups-picker-row input { margin:0; cursor:pointer; accent-color:var(--accent); }
 .badge-not-perfumery { font-size:0.7em; padding:2px 8px; border-radius:3px; margin-left:6px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px dashed var(--border); text-transform:none; vertical-align:middle; }
 /* Blends-with chip row: resolved materials click-to-add, group labels
    click-to-filter, unresolved free-text rendered muted. Shares
@@ -753,6 +764,10 @@ html { scroll-behavior:smooth; }
         <div style="display:flex;justify-content:flex-start;margin-bottom:4px">
           <span class="odor-tag active" onclick="clearFacetFiltersUI(this)">All</span>
         </div>
+        <details class="facet-groups-picker" id="facetGroupsPicker">
+          <summary class="odor-tag">Groups: <span id="facetGroupsPickerSelected">All</span></summary>
+          <div class="facet-groups-picker-body" id="facetGroupsPickerBody"></div>
+        </details>
         <div id="facetGroups"></div>
       </div>
     </div>
@@ -1507,6 +1522,10 @@ let activeOdorFilters = new Set();
 let activePrimaryFamilyFilters = new Set();
 let activeSubFamilyFilters = new Set();
 let activeFacetFilters = new Set();
+// User-hidden facet groups (by group label). Populated by the
+// facet-groups-picker checkbox list; composed with the Primary/Sub
+// cascade so a user-hidden group stays hidden regardless of cascade.
+let hiddenFacetGroups = new Set();
 
 // ═══════════════════════════════════════════════════════════════
 // TAXONOMY FOUNDATION (Step 1 — additive only)
@@ -2969,9 +2988,12 @@ function _applyCascadingVisibility() {
   let facetDeactivated = false;
   document.querySelectorAll('#facetGroups .facet-group').forEach(group => {
     const sub = group.dataset.subfam;
-    const visible = !allowedGroupSubs || (sub && allowedGroupSubs.has(sub));
+    const cascadeVisible = !allowedGroupSubs || (sub && allowedGroupSubs.has(sub));
+    const label = group.querySelector('.facet-group-label')?.textContent || '';
+    const userHidden = hiddenFacetGroups.has(label);
+    const visible = cascadeVisible && !userHidden;
     group.style.display = visible ? '' : 'none';
-    if (!visible) {
+    if (!cascadeVisible) {
       group.querySelectorAll('.odor-tag[data-facet]').forEach(chip => {
         const f = chip.dataset.facet;
         if (activeFacetFilters.has(f)) {
@@ -3227,6 +3249,44 @@ _buildPillFilter('source');
     ofs.sort();
     const label = SUB_FAMILY_LABELS[sub] || PRIMARY_FAMILY_LABELS[sub] || sub;
     _renderGroup(label, ofs, sub);
+  }
+}
+
+// Facet groups picker — checkbox list that hides/shows entire
+// rendered groups in the Facet drawer. Writes into hiddenFacetGroups;
+// actual show/hide is performed by _applyCascadingVisibility() so the
+// user mask composes with the Primary/Sub-family cascade. Active
+// facet filters are intentionally left in place when the user hides
+// a group (clear via the "All" chip).
+{
+  const pickerBody = document.getElementById('facetGroupsPickerBody');
+  const selLabel = document.getElementById('facetGroupsPickerSelected');
+  if (pickerBody && selLabel) {
+    const groupEls = Array.from(document.querySelectorAll('#facetGroups > .facet-group'));
+    const labels = groupEls.map(el => el.querySelector('.facet-group-label')?.textContent || '');
+    const _refreshLabel = () => {
+      const shown = labels.length - hiddenFacetGroups.size;
+      selLabel.textContent = hiddenFacetGroups.size === 0
+        ? 'All'
+        : shown === 0 ? 'None' : shown + '/' + labels.length;
+    };
+    labels.forEach(label => {
+      const row = document.createElement('label');
+      row.className = 'facet-groups-picker-row';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = true;
+      cb.addEventListener('change', () => {
+        if (cb.checked) hiddenFacetGroups.delete(label);
+        else hiddenFacetGroups.add(label);
+        _refreshLabel();
+        _applyCascadingVisibility();
+      });
+      row.appendChild(cb);
+      row.appendChild(document.createTextNode(label));
+      pickerBody.appendChild(row);
+    });
+    _refreshLabel();
   }
 }
 
