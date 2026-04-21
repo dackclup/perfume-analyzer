@@ -315,12 +315,12 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .facet-group-chips { display:flex; flex-wrap:wrap; gap:4px; }
 /* Facet groups picker — collapsible checkbox list that hides/shows
    entire Edwards sub-family groups from the Facet drawer. */
-.facet-groups-picker { margin:4px 0 8px; }
+.facet-groups-picker { margin:0; position:relative; }
 .facet-groups-picker summary { display:inline-block; cursor:pointer; list-style:none; }
 .facet-groups-picker summary::-webkit-details-marker { display:none; }
 .facet-groups-picker summary::marker { content:''; }
 .facet-groups-picker[open] summary { background:var(--accent); color:#fff; border-color:var(--accent); }
-.facet-groups-picker-body { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:2px 10px; margin-top:6px; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); }
+.facet-groups-picker-body { position:absolute; top:calc(100% + 4px); left:0; z-index:20; display:grid; grid-template-columns:repeat(2, minmax(120px, 1fr)); gap:2px 10px; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); box-shadow:0 4px 12px rgba(0,0,0,0.35); min-width:260px; max-width:min(360px, 90vw); }
 .facet-groups-picker-row { display:flex; align-items:center; gap:6px; font-size:0.78em; color:var(--text2); cursor:pointer; padding:2px 0; user-select:none; }
 .facet-groups-picker-row:hover { color:var(--accent); }
 .facet-groups-picker-row input { margin:0; cursor:pointer; accent-color:var(--accent); }
@@ -761,13 +761,13 @@ html { scroll-behavior:smooth; }
     <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Facet <span class="sub-selected" id="facetSelected"></span></div>
       <div class="sub-body" id="facetFilters">
-        <div style="display:flex;justify-content:flex-start;margin-bottom:4px">
+        <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;flex-wrap:wrap">
           <span class="odor-tag active" onclick="clearFacetFiltersUI(this)">All</span>
+          <details class="facet-groups-picker" id="facetGroupsPicker">
+            <summary class="odor-tag">Groups: <span id="facetGroupsPickerSelected">All</span></summary>
+            <div class="facet-groups-picker-body" id="facetGroupsPickerBody"></div>
+          </details>
         </div>
-        <details class="facet-groups-picker" id="facetGroupsPicker">
-          <summary class="odor-tag">Groups: <span id="facetGroupsPickerSelected">All</span></summary>
-          <div class="facet-groups-picker-body" id="facetGroupsPickerBody"></div>
-        </details>
         <div id="facetGroups"></div>
       </div>
     </div>
