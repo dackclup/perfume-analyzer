@@ -323,7 +323,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .facet-groups-picker summary::-webkit-details-marker { display:none; }
 .facet-groups-picker summary::marker { content:''; }
 .facet-groups-picker[open] summary { background:var(--accent); color:#fff; border-color:var(--accent); }
-.facet-groups-picker-body { position:absolute; top:calc(100% + 4px); left:0; z-index:20; display:grid; grid-template-columns:repeat(2, minmax(120px, 1fr)); gap:2px 10px; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); box-shadow:0 4px 12px rgba(0,0,0,0.35); min-width:260px; max-width:min(360px, 90vw); }
+.facet-groups-picker-body { position:absolute; top:calc(100% + 4px); left:0; z-index:20; display:grid; grid-template-columns:repeat(2, minmax(120px, 1fr)); gap:2px 10px; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); box-shadow:0 4px 12px rgba(0,0,0,0.35); min-width:260px; max-width:min(360px, 90vw); max-height:60vh; overflow-y:auto; }
 .facet-groups-picker-row { display:flex; align-items:center; gap:6px; font-size:0.78em; color:var(--text2); cursor:pointer; padding:2px 0; user-select:none; }
 .facet-groups-picker-row:hover { color:var(--accent); }
 .facet-groups-picker-row input { margin:0; cursor:pointer; accent-color:var(--accent); }
@@ -3289,6 +3289,25 @@ _buildPillFilter('source');
       pickerBody.appendChild(row);
     });
     _refreshLabel();
+    // When there isn't enough room below the summary to show the full
+    // panel without being covered by the fixed .downloads footer, flip
+    // the panel to open upward. Recomputed on every open in case the
+    // user scrolled between toggles.
+    const picker = document.getElementById('facetGroupsPicker');
+    const downloadsEl = document.getElementById('downloads');
+    picker?.addEventListener('toggle', () => {
+      if (!picker.open) return;
+      requestAnimationFrame(() => {
+        pickerBody.style.top = '';
+        pickerBody.style.bottom = '';
+        const bodyRect = pickerBody.getBoundingClientRect();
+        const footerTop = downloadsEl ? downloadsEl.getBoundingClientRect().top : window.innerHeight;
+        if (bodyRect.bottom > footerTop - 8) {
+          pickerBody.style.top = 'auto';
+          pickerBody.style.bottom = 'calc(100% + 4px)';
+        }
+      });
+    });
   }
 }
 
