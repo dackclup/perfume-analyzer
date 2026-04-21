@@ -2896,9 +2896,18 @@ function _updatePrimaryFamSelected() {
 function _updateFacetSelected() {
   const sel = document.getElementById('facetSelected');
   if (!sel) return;
+  const parts = [];
   if (activeFacetFilters.size) {
-    sel.textContent = [...activeFacetFilters].map(facetLabel).join(', ');
-  } else { sel.textContent = 'All'; }
+    parts.push([...activeFacetFilters].map(facetLabel).join(', '));
+  }
+  if (hiddenFacetGroups.size) {
+    const total = document.querySelectorAll('#facetGroups > .facet-group').length;
+    if (total) {
+      const shown = total - hiddenFacetGroups.size;
+      parts.push(shown === 0 ? 'None' : shown + '/' + total);
+    }
+  }
+  sel.textContent = parts.length ? parts.join(' · ') : 'All';
 }
 function togglePrimaryFamilyChip(el) {
   const v = el.dataset.edwards;
@@ -3289,6 +3298,7 @@ _buildPillFilter('source');
         if (cb.checked) hiddenFacetGroups.delete(label);
         else hiddenFacetGroups.add(label);
         _refreshLabel();
+        _updateFacetSelected();
         _applyCascadingVisibility();
       });
       row.appendChild(cb);
