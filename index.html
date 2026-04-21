@@ -2904,7 +2904,7 @@ function _updateFacetSelected() {
     const total = document.querySelectorAll('#facetGroups > .facet-group').length;
     if (total) {
       const shown = total - hiddenFacetGroups.size;
-      parts.push(shown === 0 ? 'None' : shown + '/' + total);
+      parts.push(shown === 0 ? 'group None' : 'group ' + shown + '/' + total);
     }
   }
   sel.textContent = parts.length ? parts.join(' · ') : 'All';
