@@ -315,6 +315,9 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .facet-group-chips { display:flex; flex-wrap:wrap; gap:4px; }
 /* Facet groups picker — collapsible checkbox list that hides/shows
    entire Edwards sub-family groups from the Facet drawer. */
+/* Allow the Groups dropdown panel to escape .sub-body's overflow:hidden
+   clip when the facet chip cloud collapses (e.g. all groups unticked). */
+#facetFilters { overflow:visible; }
 .facet-groups-picker { margin:0; position:relative; }
 .facet-groups-picker summary { display:inline-block; cursor:pointer; list-style:none; }
 .facet-groups-picker summary::-webkit-details-marker { display:none; }
