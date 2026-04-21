@@ -2847,27 +2847,15 @@ function _updateFilterVisibility() {
     if (btn.classList.contains('active')) { btn.style.display = ''; return; }
     btn.style.display = facetHas[btn.dataset.facet] ? '' : 'none';
   });
-  // Hide an entire facet group if every facet in it is hidden, OR if
-  // the group is masked by the Primary/Sub cascade or by the user's
-  // Groups picker. Without these extra gates, chip-visibility alone
-  // would re-open groups that cascade / user had just closed.
-  let _cascadeAllowedSubs = null;
-  if (activeSubFamilyFilters.size) {
-    _cascadeAllowedSubs = new Set(activeSubFamilyFilters);
-  } else if (activePrimaryFamilyFilters.size) {
-    _cascadeAllowedSubs = new Set();
-    for (const p of activePrimaryFamilyFilters) {
-      const children = PRIMARY_TO_SUB_FAMILIES[p];
-      if (children) for (const s of children) _cascadeAllowedSubs.add(s);
-    }
-  }
+  // Hide a group if every chip inside it is hidden, OR if the user
+  // unticked it in the Groups picker. Primary/Sub cascade is NOT
+  // applied here — groups stay visible regardless of Primary/Sub
+  // selections as long as they still have at least one visible chip.
   document.querySelectorAll('#facetGroups .facet-group').forEach(g => {
-    const sub = g.dataset.subfam;
-    const cascadeVisible = !_cascadeAllowedSubs || (sub && _cascadeAllowedSubs.has(sub));
     const label = g.querySelector('.facet-group-label')?.textContent || '';
     const userHidden = hiddenFacetGroups.has(label);
     const hasChip = g.querySelectorAll('.odor-tag[data-facet]:not([style*="display: none"])').length > 0;
-    g.style.display = (hasChip && cascadeVisible && !userHidden) ? '' : 'none';
+    g.style.display = (hasChip && !userHidden) ? '' : 'none';
   });
 }
 function _updateOdorSelected() {
@@ -3006,13 +2994,15 @@ function _applyCascadingVisibility() {
   }
   let facetDeactivated = false;
   document.querySelectorAll('#facetGroups .facet-group').forEach(group => {
-    const sub = group.dataset.subfam;
-    const cascadeVisible = !allowedGroupSubs || (sub && allowedGroupSubs.has(sub));
     const label = group.querySelector('.facet-group-label')?.textContent || '';
     const userHidden = hiddenFacetGroups.has(label);
-    const visible = cascadeVisible && !userHidden;
-    group.style.display = visible ? '' : 'none';
-    if (!cascadeVisible) {
+    // Group visibility is controlled solely by the Groups picker here.
+    // _updateFilterVisibility() later hides groups whose chips all
+    // fell out — Primary/Sub cascade does NOT force-hide groups.
+    group.style.display = userHidden ? 'none' : '';
+    const sub = group.dataset.subfam;
+    const cascadeValid = !allowedGroupSubs || (sub && allowedGroupSubs.has(sub));
+    if (!cascadeValid) {
       group.querySelectorAll('.odor-tag[data-facet]').forEach(chip => {
         const f = chip.dataset.facet;
         if (activeFacetFilters.has(f)) {
