@@ -5466,16 +5466,30 @@ function classifyRegulatory(mat) {
   // Regulated: only fires when the safety text carries an actual limit
   // signal. The "IFRA" word inside a "No specific IFRA restriction"
   // phrase is NOT a limit — guard against it explicitly.
+  //
+  // Category detection accepts both the long form "category N" and the
+  // industry-standard abbreviation "Cat.5A" / "Cat 5" / "Cat5" that
+  // curated safety text actually uses. The old regex only matched
+  // "category N" so materials with Cat-specific caps (Camphor,
+  // Lavender Absolute etc.) were missed.
   const noRestriction = /\bno\b[^.\n]*\b(specific|ifra|restriction)\b/i.test(ifra);
-  const limitCue = /\bIFRA\s*51\b/i.test(usage) ||
-                   /\bcategory\s*\d/i.test(all) ||
+  const limitCue = /\bIFRA\s*51\b/i.test(ifra) ||
+                   /\bIFRA\s*51\b/i.test(usage) ||
+                   /\b(?:category|cat\.?)\s*\d/i.test(all) ||
                    /\b(regulated|limited|limits?|max(?:imum)?)\b/i.test(ifra);
   if (!out.includes('banned') && !noRestriction && limitCue) {
     out.push('regulated');
   }
   // Allergen: explicit cue OR canonical name on the EU 26-allergen list.
-  if (/\b(allergen|26 allergens|annex iii|labeling required)\b/i.test(all) ||
-      /\b(linalool|limonene|citral|geraniol|eugenol|coumarin|farnesol|citronellol|cinnamal|cinnamic alcohol|cinnamyl alcohol|isoeugenol|benzyl alcohol|benzyl salicylate|benzyl benzoate|benzyl cinnamate|hydroxycitronellal|amyl cinnamal|amylcinnamyl alcohol|hexyl cinnamal|methyl heptine carbonate|alpha-isomethyl ionone|oakmoss|treemoss|evernia)\b/i.test(n)) {
+  // Negation guard: curated text may say "not an EU 26 allergen" or
+  // "low sensitization risk; not an allergen" to document the negative
+  // case. The bare regex used to fire on those phrases because it just
+  // looked for the substring "allergen". The guard filters out
+  // "not an/a ... allergen" before running the positive match.
+  const negAllergen = /\bnot\s+(?:an?|a)\s+(?:[a-z0-9\s]{0,20})?allergen\b/i.test(all);
+  if (!negAllergen && (
+      /\b(allergen|26 allergens|annex iii|labeling required)\b/i.test(all) ||
+      /\b(linalool|limonene|citral|geraniol|eugenol|coumarin|farnesol|citronellol|cinnamal|cinnamic alcohol|cinnamyl alcohol|isoeugenol|benzyl alcohol|benzyl salicylate|benzyl benzoate|benzyl cinnamate|hydroxycitronellal|amyl cinnamal|amylcinnamyl alcohol|hexyl cinnamal|methyl heptine carbonate|alpha-isomethyl ionone|oakmoss|treemoss|evernia)\b/i.test(n))) {
     out.push('allergen');
   }
   // Phototoxic: explicit cue OR known phototoxic citrus / furocoumarin.
@@ -5492,7 +5506,11 @@ function classifyRegulatory(mat) {
     out.push('phototoxic');
   }
   // Sensitizer: explicit "sensitizer" / "sensitis(z)ing" / IFRA H317 cue.
-  if (/\bsensiti(?:s|z)/i.test(all) || /\bh317\b/i.test(all)) out.push('sensitizer');
+  // Negation guard: phrases like "low sensitization risk", "non-sensitizing",
+  // "not a sensitizer" document the negative case and must not fire the tag.
+  const negSens = /\b(?:not|no|non|low|minimal)[\s\-]+(?:a\s+)?sensiti(?:s|z)/i.test(all) ||
+                  /\bsensiti(?:s|z)\w*\s+risk[^.,]{0,30}?\b(?:low|minimal|none|no)\b/i.test(all);
+  if (!negSens && (/\bsensiti(?:s|z)/i.test(all) || /\bh317\b/i.test(all))) out.push('sensitizer');
 
   return out;
 }
