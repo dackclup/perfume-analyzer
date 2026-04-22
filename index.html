@@ -196,6 +196,12 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .odor-tag { padding:2px 10px; border:1px solid var(--border); border-radius:12px; font-size:0.72em; cursor:pointer; background:var(--bg2); color:var(--text2); font-family:inherit; transition:all 0.15s; }
 .odor-tag:hover { border-color:var(--accent); color:var(--accent); }
 .odor-tag.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+/* Empty-count chip — facet has no materials matching under current DB /
+   filter state. Renders dim so the user can see the canonical descriptor
+   is part of the taxonomy but the DB carries no curated match yet.
+   Click is still allowed but obviously returns zero results. */
+.odor-tag.empty { opacity:0.35; cursor:default; }
+.odor-tag.empty:hover { border-color:var(--border); color:var(--text2); }
 
 /* Pills */
 .pills { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; min-height:0; }
@@ -2801,19 +2807,26 @@ function _updateFilterVisibility() {
     if (toks) for (const t of toks) if (subFamilyHas[t]) { keep = true; break; }
     btn.style.display = keep ? '' : 'none';
   });
+  // Facet chips stay visible regardless of live count — toggle the
+  // .empty class so zero-count descriptors render dim instead of
+  // being removed entirely. This preserves the full Edwards wheel
+  // taxonomy (236 canonical chips) as a browsable reference even
+  // when the current DB / filter combo leaves some chips unused.
   document.querySelectorAll('#facetFilters .odor-tag[data-facet]').forEach(btn => {
-    if (btn.classList.contains('active')) { btn.style.display = ''; return; }
-    btn.style.display = facetHas[btn.dataset.facet] ? '' : 'none';
+    btn.style.display = '';
+    if (btn.classList.contains('active')) { btn.classList.remove('empty'); return; }
+    btn.classList.toggle('empty', !facetHas[btn.dataset.facet]);
   });
-  // Hide a group if every chip inside it is hidden, OR if the user
-  // unticked it in the Groups picker. Primary/Sub cascade is NOT
-  // applied here — groups stay visible regardless of Primary/Sub
-  // selections as long as they still have at least one visible chip.
+  // Group visibility is now only governed by the Groups picker
+  // checkbox list — all 14 canonical groups always stay rendered
+  // otherwise so the user can see the wheel-wide taxonomy at all
+  // times. The old "hide if every chip is hidden" rule made groups
+  // visually vanish when their DB coverage was zero, which hid
+  // legitimate parts of the taxonomy.
   document.querySelectorAll('#facetGroups .facet-group').forEach(g => {
     const label = g.querySelector('.facet-group-label')?.textContent || '';
     const userHidden = hiddenFacetGroups.has(label);
-    const hasChip = g.querySelectorAll('.odor-tag[data-facet]:not([style*="display: none"])').length > 0;
-    g.style.display = (hasChip && !userHidden) ? '' : 'none';
+    g.style.display = userHidden ? 'none' : '';
   });
 }
 // Family + Facet chip drawer UI handlers. Mirror the multi-select
@@ -3142,13 +3155,14 @@ _buildPillFilter('source');
   }
 }
 
-// Facet chips (Step 5). Grouped by parent family with a small heading
-// per group so the chip cloud is scannable on mobile. Only facets that
-// appear in at least one FILTER_CACHE entry are rendered, and only
-// parent families that have at least one such facet get a group.
-// Render facet chips grouped by FACET_GROUPS. Only facets that appear
-// in at least one FILTER_CACHE entry get a chip. Facets not listed in
-// any FACET_GROUPS entry fall back to a parent-family "Other" group.
+// Facet chips. Grouped by Edwards sub-family with a section header
+// per group. Every canonical descriptor in FACET_GROUPS is rendered
+// as a chip regardless of DB coverage — chips whose facet has no
+// matching material in FILTER_CACHE are styled dim via the .empty
+// class so the full Edwards wheel taxonomy is visible at a glance.
+// Facets not listed in any FACET_GROUPS entry (rare; only inferred
+// via canonical-only FACET_TAGS) fall back to a parent-family
+// "Other" group, also rendering full.
 {
   const container = document.getElementById('facetGroups');
   const facetCounts = {};
@@ -3157,8 +3171,7 @@ _buildPillFilter('source');
   }
   const rendered = new Set();
   const _renderGroup = (labelText, facets, subKey) => {
-    const live = facets.filter(f => facetCounts[f]);
-    if (!live.length) return;
+    if (!facets.length) return;
     const group = document.createElement('div');
     group.className = 'facet-group';
     if (subKey) group.dataset.subfam = subKey;
@@ -3168,11 +3181,13 @@ _buildPillFilter('source');
     group.appendChild(label);
     const chips = document.createElement('div');
     chips.className = 'facet-group-chips';
-    for (const f of live) {
+    for (const f of facets) {
       const btn = document.createElement('span');
       btn.className = 'odor-tag';
+      if (!facetCounts[f]) btn.classList.add('empty');
       btn.dataset.facet = f;
       btn.textContent = facetLabel(f);
+      btn.title = facetCounts[f] ? facetCounts[f] + ' material' + (facetCounts[f] > 1 ? 's' : '') : 'no materials in DB yet';
       btn.onclick = function() { toggleFacetChip(this); };
       chips.appendChild(btn);
       rendered.add(f);
@@ -3181,10 +3196,11 @@ _buildPillFilter('source');
     container.appendChild(group);
   };
   // Collect facets not in any explicit FACET_GROUPS, bucketed by the
-  // Edwards sub-family their parent primary-family maps to. This keeps
-  // fallback chips grouped under the same sub-family label the user sees
-  // elsewhere in the drawer instead of a legacy label that doesn't match
-  // any existing group header.
+  // Edwards sub-family their parent primary-family maps to. Unlike the
+  // main group loop these orphan facets are still filtered by live count
+  // — they exist only in FACET_TAGS and are not part of the canonical
+  // wheel list, so rendering all inferred tokens with no live match
+  // would clutter the UI with noise.
   const orphansBySubFamily = {};
   const groupedFacetSet = new Set();
   for (const g of FACET_GROUPS) for (const f of g.facets) groupedFacetSet.add(f);
