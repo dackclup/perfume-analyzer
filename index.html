@@ -2407,7 +2407,13 @@ function _buildFilterRecord(cas, entry) {
         odor_description: entry.odor?.description || null,
         odor_type: entry.odor?.type || null,
         odor_strength: entry.odor?.strength || null,
-        note: entry.note || null
+        note: entry.note || null,
+        // Copy performance.tenacity into the synthetic perfumery object
+        // so classifyUses' "very high tenacity → fine_fragrance" gate
+        // actually fires. Raw DB entries carry tenacity under
+        // `entry.performance.tenacity`; the synthetic record
+        // consolidates the fields classifiers read at `perfumery.*`.
+        tenacity: entry.performance?.tenacity || null
       },
       safety: {
         ifra_guideline: entry.safety?.ifra || null,
@@ -5324,7 +5330,7 @@ function classifyUses(mat) {
   // base note" inference — that was firing on most absolutes.
   if (!banned && (
       /\bfine fragrance\b|\bedp\b|\bedt\b|\bextrait\b|\beau\s+de\s+(parfum|toilette|cologne)\b/i.test(safetyText) ||
-      /\b(very high|excellent)\b/i.test((pf.tenacity || '').toLowerCase())
+      /\b(very high|excellent|extremely high)\b/i.test((pf.tenacity || '').toLowerCase())
   )) {
     tags.add('fine_fragrance');
   }
@@ -5344,6 +5350,23 @@ function classifyUses(mat) {
   // whether the source data actually mentioned home-care use.
   if (!banned && /\b(candle|wax melt|reed diffuser|room spray|air freshener|air care|fabric|laundry|softener|detergent|household|home care|all[- ]purpose|cleaner|dishwash|surfactant)\b/i.test(safetyText)) {
     tags.add('home_care');
+  }
+
+  // ── Baseline perfumery-material fallback ──
+  // After the evidence-based rewrite, ~55% of DB materials ended up
+  // with zero Use tags because most curated safety texts don't carry
+  // explicit EDP/EDT/cosmetic keywords even though every aromatic
+  // aroma chemical and essential oil IS used in both fine fragrance
+  // and personal care formulations. Add a conservative baseline:
+  // any non-banned material with a real odor description (or natural
+  // mixture) gets `fine_fragrance` + `personal_care` by default.
+  // Banned materials, IFRA-prohibited materials and odorless vehicles
+  // are excluded — the earlier auto-fire erroneously tagged those too.
+  const isMixture = MIXTURES.has(cas);
+  const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
+  if (!banned && (hasRealOdor || isMixture)) {
+    tags.add('fine_fragrance');
+    tags.add('personal_care');
   }
 
   // ── Flavor ──
@@ -5440,9 +5463,16 @@ function classifyRegulatory(mat) {
     out.push('allergen');
   }
   // Phototoxic: explicit cue OR known phototoxic citrus / furocoumarin.
+  // The hardcoded citrus list is limited to oils whose bergapten /
+  // furocoumarin content makes them IFRA-restricted as phototoxic.
+  // `cumin` was removed — while cumin aldehyde can be photosensitizing
+  // at high concentrations, IFRA does not classify Cumin Oil as
+  // phototoxic and the material's safety.ifra explicitly says "no
+  // specific IFRA restriction". Trigger the tag only when the curated
+  // safety text says so.
   if (/\bphototox/i.test(all) ||
       /\b(bergapten|psoralen|furocoumarin)\b/i.test(n + ' ' + all) ||
-      /\b(bergamot|lime|bitter orange|angelica root|rue|fig leaf|cumin)\b/i.test(n)) {
+      /\b(bergamot|lime|bitter orange|angelica root|rue|fig leaf)\b/i.test(n)) {
     out.push('phototoxic');
   }
   // Sensitizer: explicit "sensitizer" / "sensitis(z)ing" / IFRA H317 cue.
