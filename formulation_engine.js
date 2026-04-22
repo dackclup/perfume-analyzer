@@ -233,8 +233,15 @@ function checkIFRACompliance(materials, categoryId, fragPct) {
     // Lets curated per-CAS rules (e.g. Lavender Absolute Cat.4 @ 6.66%,
     // 7-Methoxycoumarin fully prohibited) land deterministically even
     // when the material's free-text `safety.ifra` is narrative.
-    if (IFRA_51_LIMITS[mat.cas]) {
-      const entry = IFRA_51_LIMITS[mat.cas];
+    // Use the unified accessor — returns the direct entry or falls
+    // back through IFRA_51_CAS_ALIAS so a stereoisomer CAS resolves
+    // to its parent entry (racemic linalool limit applies to both
+    // enantiomer CAS, etc.).
+    const _ifraEntry = (typeof ifraLimitForCas === 'function')
+      ? ifraLimitForCas(mat.cas)
+      : IFRA_51_LIMITS[mat.cas];
+    if (_ifraEntry) {
+      const entry = _ifraEntry;
       if (entry.prohibited === true) {
         ifraMax = 0;
         ifraSource = 'IFRA 51 table (prohibited)';
@@ -367,6 +374,12 @@ function aggregateAllergens(materials, fragPct, categoryId) {
     if (natComp) {
       for (const [allergenCAS, allergenPct] of Object.entries(natComp)) {
         if (!allergenTable[allergenCAS]) continue;
+        // Self-reference guard. If a natural-mixture entry ever lists
+        // itself as a constituent (e.g. Oakmoss 9000-50-4 having an
+        // entry { "9000-50-4": 100 }), the direct-allergen branch
+        // above already credited the full exposure — adding it again
+        // here would double-count. Skip to the next constituent.
+        if (allergenCAS === mat.cas) continue;
         const a = allergenTable[allergenCAS];
         const contribPpm = ppmInProduct * (allergenPct / 100);
 
