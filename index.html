@@ -745,12 +745,21 @@ html { scroll-behavior:smooth; }
       <div class="sub-body" id="noteFilters"></div>
     </div>
     <div class="sub-drawer">
+      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Main Family <span class="sub-selected" id="mainFamSelected"></span></div>
+      <div class="sub-body" id="mainFamilyFilters">
+        <div style="display:flex;flex-wrap:wrap;gap:4px">
+          <span class="odor-tag active" onclick="clearMainFamilyFiltersUI(this)">All</span>
+          <div class="main-family-chips" id="mainFamilyChips" style="display:contents"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Family <span class="sub-selected" id="subFamilySelected"></span></div>
       <div class="sub-body" id="subFamilyFilters">
-        <div style="display:flex;flex-wrap:wrap;gap:4px">
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">
           <span class="odor-tag active" onclick="clearSubFamilyFiltersUI(this)">All</span>
-          <div class="sub-family-chips" id="subFamilyChips" style="display:contents"></div>
         </div>
+        <div class="sub-family-chips" id="subFamilyChips"></div>
       </div>
     </div>
     <div class="sub-drawer">
@@ -1504,10 +1513,11 @@ const _filterAxes = {
   reg:    { set: new Set(), elId: 'regSelected',    values: REGULATORY_VALUES, labels: REGULATORY_LABELS, containerId: 'regFilters'   },
   source: { set: new Set(), elId: 'sourceSelected', values: SOURCE_VALUES,   labels: SOURCE_LABELS,      containerId: 'sourceFilters' },
 };
-// Family + Facet multi-select Sets. The legacy Odor Family axis and
-// the 7-bucket Edwards Primary Family axis were dropped in the
-// search-rebuild refactor — Sub-family (Edwards 14) is the only
-// family axis the UI exposes now.
+// Family axis is two-level — Main Family (4 buckets, mirroring the
+// inner ring of the Fragrance Wheel) + Family (14 sub-families on
+// the outer ring). Facet stays as the third level. The legacy 17-
+// value Odor Family axis was dropped in the rebuild.
+let activeMainFamilyFilters = new Set();
 let activeSubFamilyFilters = new Set();
 let activeFacetFilters = new Set();
 // User-hidden facet groups (by group label). Populated by the
@@ -1627,6 +1637,52 @@ const SUB_FAMILY_TO_LEGACY = {
   mossy_woods:      new Set(['mossy']),
   dry_woods:        new Set(['leather', 'smoky']),
 };
+
+// ── Edwards 2021 Main Family axis (4 buckets) ──────────────────────
+// Mirrors the inner ring of the Fragrance Wheel — Fresh / Floral /
+// Amber / Woody. Each main bucket owns 3-4 sub-families; chip
+// matching expands a main to the union of all legacy tokens its
+// sub-families hold. Identical layout to FRAGRANCE_WHEEL.mainOf in
+// formulation_data.js so the in-app filter mirrors the wheel UI 1:1.
+const MAIN_FAMILIES = ['fresh', 'floral', 'amber', 'woody'];
+const MAIN_FAMILY_LABELS = {
+  fresh:  'Fresh',
+  floral: 'Floral',
+  amber:  'Amber',
+  woody:  'Woody',
+};
+const MAIN_FAMILY_TO_SUBS = {
+  fresh:  new Set(['aromatic_fougere', 'citrus', 'water', 'green']),
+  floral: new Set(['fruity', 'floral', 'soft_floral', 'floral_amber']),
+  amber:  new Set(['soft_amber', 'amber', 'woody_amber']),
+  woody:  new Set(['woods', 'mossy_woods', 'dry_woods']),
+};
+// Derived: union of every legacy token whose sub-family belongs to a
+// main. Built once at module init so matchesAllFilters can do a
+// single Set lookup per chip.
+const MAIN_FAMILY_TO_LEGACY = (() => {
+  const m = {};
+  for (const main of MAIN_FAMILIES) {
+    const set = new Set();
+    for (const sub of MAIN_FAMILY_TO_SUBS[main]) {
+      const toks = SUB_FAMILY_TO_LEGACY[sub];
+      if (toks) for (const t of toks) set.add(t);
+    }
+    m[main] = set;
+  }
+  return m;
+})();
+// Reverse index: sub-family id → its parent main key. Used by the
+// Family-drawer chip builder to render group headers and by the
+// cascading-visibility helper to narrow the Family chip cloud after
+// a Main chip selection.
+const SUB_FAMILY_TO_MAIN = (() => {
+  const m = {};
+  for (const [main, subs] of Object.entries(MAIN_FAMILY_TO_SUBS)) {
+    for (const s of subs) m[s] = main;
+  }
+  return m;
+})();
 
 // Build a snake_case facet token into a presentable label.
 function facetLabel(t) {
@@ -2575,6 +2631,21 @@ function _axesFailedBy(fc, cas) {
   // Source (single-value)
   const sourceSet = _filterAxes.source.set;
   if (sourceSet.size && !sourceSet.has(fc.source)) failed.add('source');
+  // Main Family — AND-within / OR-inside-chip against the 4-bucket
+  // MAIN_FAMILY_TO_LEGACY Set.
+  if (activeMainFamilyFilters.size) {
+    const combined = new Set([
+      ...(fc.primaryFamilies || []),
+      ...(fc.secondaryFamilies || [])
+    ]);
+    for (const main of activeMainFamilyFilters) {
+      const toks = MAIN_FAMILY_TO_LEGACY[main];
+      if (!toks) continue;
+      let hit = false;
+      for (const t of toks) if (combined.has(t)) { hit = true; break; }
+      if (!hit) { failed.add('mainFamily'); break; }
+    }
+  }
   // Family — AND-within / OR-inside-chip against the Edwards 14-subfamily
   // buckets (SUB_FAMILY_TO_LEGACY). Each active chip is expanded to its
   // legacy-token Set; the chip is satisfied if ANY token from that Set
@@ -2616,6 +2687,7 @@ function _updateFilterVisibility() {
   // - failures.size >= 2  → contributes to no axis.
   const noteCounts = {}, typeCounts = {}, funcCounts = {}, tagCounts = {};
   const regCounts = {}, sourceCounts = {};
+  const mainFamilyHas = {};
   const subFamilyHas = {};
   const facetHas = {};
 
@@ -2640,6 +2712,13 @@ function _updateFilterVisibility() {
     if (contribTo('reg')) for (const reg of fc.regulatory) regCounts[reg] = (regCounts[reg]||0)+1;
     // Source axis (single value)
     if (contribTo('source') && fc.source) sourceCounts[fc.source] = (sourceCounts[fc.source]||0)+1;
+    // Main Family axis (marker-only). Same primary ∪ secondary union
+    // logic as Family — the marker map records every legacy token; the
+    // chip visibility loop below resolves them to the 4 main buckets.
+    if (contribTo('mainFamily')) {
+      for (const fam of fc.primaryFamilies || []) mainFamilyHas[fam] = true;
+      for (const fam of fc.secondaryFamilies || []) mainFamilyHas[fam] = true;
+    }
     // Family axis (marker-only). The axis matches against
     // primary ∪ secondary union via SUB_FAMILY_TO_LEGACY, so chip
     // visibility must look at both fields — otherwise a family that
@@ -2666,9 +2745,16 @@ function _updateFilterVisibility() {
       btn.style.display = (counts[btn.dataset.value] || 0) > 0 ? '' : 'none';
     });
   }
-  // Family / Facet chip visibility — same "minus-self" logic via
-  // the subFamilyHas / facetHas marker maps built above. Selected
-  // chips are always kept visible so the user can deselect them.
+  // Main Family / Family / Facet chip visibility — same "minus-self"
+  // logic via the marker maps built above. Selected chips are always
+  // kept visible so the user can deselect them.
+  document.querySelectorAll('#mainFamilyFilters .odor-tag[data-main]').forEach(btn => {
+    if (btn.classList.contains('active')) { btn.style.display = ''; return; }
+    const toks = MAIN_FAMILY_TO_LEGACY[btn.dataset.main];
+    let keep = false;
+    if (toks) for (const t of toks) if (mainFamilyHas[t]) { keep = true; break; }
+    btn.style.display = keep ? '' : 'none';
+  });
   document.querySelectorAll('#subFamilyFilters .odor-tag[data-subfam]').forEach(btn => {
     if (btn.classList.contains('active')) { btn.style.display = ''; return; }
     // Chip is visible if any of its sub-family legacy tokens is still
@@ -2713,6 +2799,34 @@ function _updateFacetSelected() {
   }
   sel.textContent = parts.length ? parts.join(' · ') : 'All';
 }
+// ── Main Family chip handlers (Edwards 4-bucket filter) ────────
+function _updateMainFamilySelected() {
+  const sel = document.getElementById('mainFamSelected');
+  if (!sel) return;
+  if (activeMainFamilyFilters.size) {
+    sel.textContent = [...activeMainFamilyFilters].map(m => MAIN_FAMILY_LABELS[m] || m).join(', ');
+  } else { sel.textContent = 'All'; }
+}
+function toggleMainFamilyChip(el) {
+  const v = el.dataset.main;
+  if (!v) return;
+  if (activeMainFamilyFilters.has(v)) { activeMainFamilyFilters.delete(v); el.classList.remove('active'); }
+  else { activeMainFamilyFilters.add(v); el.classList.add('active'); }
+  const allReset = document.querySelector('#mainFamilyFilters > div > .odor-tag:first-child');
+  if (allReset) allReset.classList.toggle('active', !activeMainFamilyFilters.size);
+  _updateMainFamilySelected();
+  _applyCascadingVisibility();
+  _refreshPills();
+}
+function clearMainFamilyFiltersUI(el) {
+  activeMainFamilyFilters.clear();
+  document.querySelectorAll('#mainFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  _updateMainFamilySelected();
+  _applyCascadingVisibility();
+  _refreshPills();
+}
+
 // ── Family chip handlers (Edwards 14-subfamily filter) ─────────
 function _updateSubFamilySelected() {
   const sel = document.getElementById('subFamilySelected');
@@ -2741,17 +2855,56 @@ function clearSubFamilyFiltersUI(el) {
   _refreshPills();
 }
 
-// ── Cascading visibility: Family → Facet groups ──
-// After any selection change in Family, re-compute which Facet groups
-// should be visible. Clicking a chip in a now-hidden section would be
-// impossible, so also deactivate any previously-selected chips that
-// fell out of scope.
+// ── Cascading visibility: Main Family → Family → Facet groups ──
+// After any selection change at any level of the family hierarchy,
+// re-compute which downstream chips should be visible. Clicking a
+// chip in a now-hidden section would be impossible, so also
+// deactivate any previously-selected chips that fell out of scope.
 function _applyCascadingVisibility() {
-  // Facet groups visible only if their sub-family is selected
-  // (or if the selected sub-family set is empty — show all groups).
-  const allowedGroupSubs = activeSubFamilyFilters.size
-    ? new Set(activeSubFamilyFilters)
-    : null;
+  // 1. Family chips visible only if allowed by selected Main Families.
+  //    Empty main selection = all sub-families visible.
+  let allowedSubs = null;
+  if (activeMainFamilyFilters.size) {
+    allowedSubs = new Set();
+    for (const main of activeMainFamilyFilters) {
+      const subs = MAIN_FAMILY_TO_SUBS[main];
+      if (subs) for (const s of subs) allowedSubs.add(s);
+    }
+  }
+  let subDeactivated = false;
+  document.querySelectorAll('#subFamilyFilters .odor-tag[data-subfam]').forEach(chip => {
+    const sub = chip.dataset.subfam;
+    const visible = !allowedSubs || allowedSubs.has(sub);
+    chip.style.display = visible ? '' : 'none';
+    if (!visible && activeSubFamilyFilters.has(sub)) {
+      activeSubFamilyFilters.delete(sub);
+      chip.classList.remove('active');
+      subDeactivated = true;
+    }
+  });
+  // Hide an entire Family section header when none of its chips are
+  // visible (Main filter excludes the whole group).
+  document.querySelectorAll('#subFamilyChips .sub-family-group').forEach(section => {
+    const main = section.dataset.main;
+    const visible = !allowedSubs || (main && activeMainFamilyFilters.has(main));
+    section.style.display = visible ? '' : 'none';
+  });
+  if (subDeactivated) {
+    const allReset = document.querySelector('#subFamilyFilters > div > .odor-tag:first-child');
+    if (allReset) allReset.classList.toggle('active', !activeSubFamilyFilters.size);
+    _updateSubFamilySelected();
+  }
+
+  // 2. Facet groups visible only if their sub-family is selected
+  //    (or, if no sub-family is selected, allowed by the Main scope).
+  let allowedGroupSubs;
+  if (activeSubFamilyFilters.size) {
+    allowedGroupSubs = new Set(activeSubFamilyFilters);
+  } else if (allowedSubs) {
+    allowedGroupSubs = allowedSubs; // fall back to Main scope
+  } else {
+    allowedGroupSubs = null;
+  }
   let facetDeactivated = false;
   document.querySelectorAll('#facetGroups .facet-group').forEach(group => {
     const label = group.querySelector('.facet-group-label')?.textContent || '';
@@ -2831,17 +2984,21 @@ function resetAllFilters() {
     const allBtn = document.querySelector('#' + ax.containerId + ' .odor-tag[data-axis-all]');
     if (allBtn) allBtn.classList.add('active');
   }
-  // Reset Family + Facet chip drawers (state + DOM + summary labels).
+  // Reset Main Family + Family + Facet chip drawers (state + DOM + summary labels).
+  activeMainFamilyFilters.clear();
   activeSubFamilyFilters.clear();
   activeFacetFilters.clear();
+  document.querySelectorAll('#mainFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('#subFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('#facetFilters .odor-tag').forEach(b => b.classList.remove('active'));
+  const _allMain = document.querySelector('#mainFamilyFilters > div > .odor-tag:first-child');
+  if (_allMain) _allMain.classList.add('active');
   const _allSub = document.querySelector('#subFamilyFilters > div > .odor-tag:first-child');
   if (_allSub) _allSub.classList.add('active');
   const _allFacet = document.querySelector('#facetFilters > div > .odor-tag:first-child');
   if (_allFacet) _allFacet.classList.add('active');
   // Update labels
-  ['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','subFamilySelected','facetSelected'].forEach(id => {
+  ['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','mainFamSelected','subFamilySelected','facetSelected'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = 'All';
   });
   // Cascade: clearing Primary/Sub-family selections restores the full
@@ -2897,18 +3054,54 @@ _buildPillFilter('type');
 _buildPillFilter('reg');
 _buildPillFilter('source');
 
-// Family chips — one per Edwards 2021 wheel subfamily. Rendered in
-// wheel order (Fresh → Floral → Amber → Woody) so the drawer reads the
-// way users will trace a scent profile across the wheel.
+// Main Family chips — 4 buckets matching the inner ring of the
+// Fragrance Wheel (Fresh / Floral / Amber / Woody). Rendered in
+// wheel order so the drawer reads the way users will trace a scent
+// profile clockwise around the wheel.
 {
-  const container = document.getElementById('subFamilyChips');
-  for (const sub of SUB_FAMILIES) {
+  const container = document.getElementById('mainFamilyChips');
+  for (const main of MAIN_FAMILIES) {
     const btn = document.createElement('span');
     btn.className = 'odor-tag';
-    btn.dataset.subfam = sub;
-    btn.textContent = SUB_FAMILY_LABELS[sub];
-    btn.onclick = function() { toggleSubFamilyChip(this); };
+    btn.dataset.main = main;
+    btn.textContent = MAIN_FAMILY_LABELS[main];
+    btn.onclick = function() { toggleMainFamilyChip(this); };
     container.appendChild(btn);
+  }
+}
+
+// Family chips — 14 sub-families on the outer ring of the wheel,
+// grouped under their parent main family with a small section header
+// per group. The wheel layout is mirrored 1:1: Fresh (Aromatic /
+// Citrus / Water / Green) → Floral (Fruity / Floral / Soft Floral /
+// Floral Amber) → Amber (Soft Amber / Amber / Woody Amber) → Woody
+// (Woods / Mossy Woods / Dry Woods).
+{
+  const container = document.getElementById('subFamilyChips');
+  for (const main of MAIN_FAMILIES) {
+    const section = document.createElement('div');
+    section.className = 'sub-family-group';
+    section.dataset.main = main;
+    section.style.cssText = 'display:flex;flex-direction:column;gap:2px;margin:4px 0';
+    const header = document.createElement('div');
+    header.className = 'sub-family-group-label';
+    header.textContent = MAIN_FAMILY_LABELS[main] + ' Notes';
+    header.style.cssText = 'font-size:0.7em;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px';
+    section.appendChild(header);
+    const chipsRow = document.createElement('div');
+    chipsRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px';
+    for (const sub of SUB_FAMILIES) {
+      if (SUB_FAMILY_TO_MAIN[sub] !== main) continue;
+      const btn = document.createElement('span');
+      btn.className = 'odor-tag';
+      btn.dataset.subfam = sub;
+      btn.dataset.main = main;
+      btn.textContent = SUB_FAMILY_LABELS[sub];
+      btn.onclick = function() { toggleSubFamilyChip(this); };
+      chipsRow.appendChild(btn);
+    }
+    section.appendChild(chipsRow);
+    container.appendChild(section);
   }
 }
 
@@ -3046,11 +3239,11 @@ _buildPillFilter('source');
 
 _updateFilterVisibility();
 // Set initial "All" labels for every selected-axis indicator.
-['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','subFamilySelected','facetSelected'].forEach(id => {
+['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','mainFamSelected','subFamilySelected','facetSelected'].forEach(id => {
   const el = document.getElementById(id); if (el) el.textContent = 'All';
 });
-// Initial cascade pass: reconciles Facet chip visibility with whatever
-// Family selections are in effect at boot.
+// Initial cascade pass: reconciles Family + Facet chip visibility
+// with whatever Main Family / Family selections are in effect at boot.
 _applyCascadingVisibility();
 
 // ===== UI Event Bindings =====
@@ -3074,7 +3267,7 @@ btn.addEventListener("click", () => { const v=input.value.trim(); if (v) doSearc
 // ═══════════════════════════════════════════════════════════════
 function _anyAxisActive() {
   for (const ax of Object.values(_filterAxes)) if (ax.set.size) return true;
-  return activeSubFamilyFilters.size > 0 || activeFacetFilters.size > 0;
+  return activeMainFamilyFilters.size > 0 || activeSubFamilyFilters.size > 0 || activeFacetFilters.size > 0;
 }
 
 function matchesAllFilters(cas) {
@@ -3137,6 +3330,21 @@ function matchesAllFilters(cas) {
   // Source — single-value on material.
   const sourceSet = _filterAxes.source.set;
   if (sourceSet.size && !sourceSet.has(fc.source)) return false;
+  // Main Family — Edwards 4-bucket AND-within, tokens within a chip's
+  // MAIN_FAMILY_TO_LEGACY Set OR-match.
+  if (activeMainFamilyFilters.size) {
+    const combined = new Set([
+      ...(fc.primaryFamilies || []),
+      ...(fc.secondaryFamilies || [])
+    ]);
+    for (const main of activeMainFamilyFilters) {
+      const toks = MAIN_FAMILY_TO_LEGACY[main];
+      if (!toks) continue;
+      let hit = false;
+      for (const t of toks) if (combined.has(t)) { hit = true; break; }
+      if (!hit) return false;
+    }
+  }
   // Family — Edwards 14-subfamily AND-within, tokens within a chip's
   // SUB_FAMILY_TO_LEGACY Set OR-match.
   if (activeSubFamilyFilters.size) {
@@ -4389,27 +4597,33 @@ function renderResults() {
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
           ${(displayTags.length || displayPrimaryFamilies.length || displaySecondaryFamilies.length || displayFacets.length)?`<div class="card-meta-row" style="margin:6px 0 10px 0">${displayTags.length?`<div class="tag-row"><span class="tag-axis-label">Use</span><span class="tag-chips">${displayTags.map(t=>`<span class="badge-use">${USE_LABELS[t]||t}</span>`).join('')}</span></div>`:''}${(() => {
-  // Taxonomy breadcrumb — Family › Facets on a single wrapping row.
-  // Family chips use SUB_FAMILY_LABELS (Edwards 14 buckets), derived
-  // from the material's primaryFamilies ∪ secondaryFamilies tokens
-  // via SUB_FAMILY_TO_LEGACY. The legacy 7-bucket Edwards "Primary"
-  // band was dropped — too coarse to be useful in chip form.
+  // Taxonomy breadcrumb — Main › Family › Facets, mirroring the
+  // Fragrance Wheel hierarchy (4 main families → 14 sub-families →
+  // facets). Each level is derived from the material's
+  // primaryFamilies ∪ secondaryFamilies tokens via the same
+  // SUB_FAMILY_TO_LEGACY / MAIN_FAMILY_TO_SUBS maps the filter
+  // drawer uses, so cards and chips can never disagree.
   const _legacy = new Set([
     ...(displayPrimaryFamilies || []),
     ...(displaySecondaryFamilies || [])
   ]);
-  const _fam = [];
+  const _famSubs = [];
   for (const sub of SUB_FAMILIES) {
     const toks = SUB_FAMILY_TO_LEGACY[sub] || new Set();
-    for (const t of toks) if (_legacy.has(t)) { _fam.push(SUB_FAMILY_LABELS[sub] || sub); break; }
+    for (const t of toks) if (_legacy.has(t)) { _famSubs.push(sub); break; }
   }
-  const _fac = Array.isArray(displayFacets) ? displayFacets : [];
-  if (!_fam.length && !_fac.length) return '';
+  const _mainSet = new Set();
+  for (const sub of _famSubs) { const m = SUB_FAMILY_TO_MAIN[sub]; if (m) _mainSet.add(m); }
+  const _main = MAIN_FAMILIES.filter(m => _mainSet.has(m)).map(m => MAIN_FAMILY_LABELS[m]);
+  const _fam  = _famSubs.map(s => SUB_FAMILY_LABELS[s] || s);
+  const _fac  = Array.isArray(displayFacets) ? displayFacets : [];
+  if (!_main.length && !_fam.length && !_fac.length) return '';
   const parts = [];
-  if (_fam.length) parts.push(_fam.map(l=>`<span class="badge-sub">${esc(l)}</span>`).join(''));
-  if (_fac.length) parts.push(_fac.map(f=>`<span class="badge-facet">${facetLabel(f)}</span>`).join(''));
+  if (_main.length) parts.push(_main.map(l=>`<span class="badge-primary">${esc(l)}</span>`).join(''));
+  if (_fam.length)  parts.push(_fam.map(l=>`<span class="badge-sub">${esc(l)}</span>`).join(''));
+  if (_fac.length)  parts.push(_fac.map(f=>`<span class="badge-facet">${facetLabel(f)}</span>`).join(''));
   const chain = parts.join('<span class="tag-breadcrumb-sep">›</span>');
-  return `<div class="tag-row"><span class="tag-axis-label" title="Family › Facets">Class</span><span class="tag-chips">${chain}</span></div>`;
+  return `<div class="tag-row"><span class="tag-axis-label" title="Main Family › Family › Facets">Class</span><span class="tag-chips">${chain}</span></div>`;
 })()}</div>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" onerror="this.parentNode.style.display='none'"></div>`:""}
           <div class="col-info">
