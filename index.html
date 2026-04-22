@@ -715,10 +715,11 @@ html { scroll-behavior:smooth; }
     <span class="filter-reset" onclick="resetAllFilters()">Reset</span>
   </div>
   <div class="filter-content" id="filterContent">
-    <!-- Six sub-drawers, one per taxonomy axis. The bodies are populated
+    <!-- Sub-drawers, one per taxonomy axis. The bodies are populated
          from the TYPE_VALUES / FUNCTION_VALUES / USE_VALUES /
-         REGULATORY_VALUES / ODOR_FAMILY_VALUES / SOURCE_VALUES constants
-         by the filter init block (search for "BUILD FILTER UI"). -->
+         REGULATORY_VALUES / SOURCE_VALUES constants and the
+         SUB_FAMILIES / FACET_GROUPS family/facet drawers by the
+         filter init block (search for "BUILD FILTER UI"). -->
     <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Use <span class="sub-selected" id="tagSelected"></span></div>
       <div class="sub-body" id="tagFilters"></div>
@@ -744,16 +745,7 @@ html { scroll-behavior:smooth; }
       <div class="sub-body" id="noteFilters"></div>
     </div>
     <div class="sub-drawer">
-      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Primary Family <span class="sub-selected" id="primaryFamSelected"></span></div>
-      <div class="sub-body" id="primaryFamilyFilters">
-        <div style="display:flex;flex-wrap:wrap;gap:4px">
-          <span class="odor-tag active" onclick="clearPrimaryFamilyFiltersUI(this)">All</span>
-          <div class="primary-family-chips" id="primaryFamilyChips" style="display:contents"></div>
-        </div>
-      </div>
-    </div>
-    <div class="sub-drawer">
-      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Sub-families <span class="sub-selected" id="subFamilySelected"></span></div>
+      <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Family <span class="sub-selected" id="subFamilySelected"></span></div>
       <div class="sub-body" id="subFamilyFilters">
         <div style="display:flex;flex-wrap:wrap;gap:4px">
           <span class="odor-tag active" onclick="clearSubFamilyFiltersUI(this)">All</span>
@@ -913,7 +905,10 @@ const BLEND_GROUP_TO_FILTER = {
   "woods":        { kind: "subfamily",     token: "woods" },
   "aldehydes":    { kind: "subfamily",     token: "soft_floral" },
   "aldehydic":    { kind: "subfamily",     token: "soft_floral" },
-  "amber":        { kind: "primary",       token: "amber_note" },
+  // The legacy 7-bucket Edwards "primary" filter was removed; "amber"
+  // now routes to the Soft Amber sub-family chip (closest single-chip
+  // equivalent to amber_note in the old wheel).
+  "amber":        { kind: "subfamily",     token: "amber" },
 };
 
 // Resolve one blends_with label to a structured result.
@@ -1361,8 +1356,11 @@ const RE_ODOR_FUNC = /functional|carrier|solvent|fixative|preservative|additive|
 const RE_ODORLESS = /odorless|virtually odorless|preservative|antioxidant/i;
 // Function-axis substring set used by FILTER_CACHE precompute. Kept
 // separate from the closed FUNCTION_VALUES list below because
-// FILTER_CACHE matches via funcAll.includes(...).
-const FUNCTION_AXIS_SPECIFIC = ['fixative','solvent','carrier'];
+// FILTER_CACHE matches via funcAll.includes(...). 'solvent' / 'carrier'
+// were intentionally removed — those belong to the Type axis, not
+// Function. Having them on both axes made chips appear twice and
+// filter results overlap for the same material.
+const FUNCTION_AXIS_SPECIFIC = ['fixative'];
 // Known-name overrides for the Function axis. These are intentionally
 // short, hand-curated lists of workhorse perfumery materials whose
 // curated DB descriptions don't include the literal "fixative" /
@@ -1398,31 +1396,18 @@ const TYPE_LABELS = {
   antioxidant:'Antioxidant', wax:'Wax', additive:'Additive',
   solubilizer:'Solubilizer', emulsifier:'Emulsifier'
 };
-const FUNCTION_VALUES = ['aromatic','fixative','solvent','carrier','blender','modifier','enhancer'];
+const FUNCTION_VALUES = ['aromatic','fixative','blender','modifier','enhancer'];
 const FUNCTION_LABELS = {
-  aromatic:'Aromatic', fixative:'Fixative', solvent:'Solvent', carrier:'Carrier',
+  aromatic:'Aromatic', fixative:'Fixative',
   blender:'Blender', modifier:'Modifier', enhancer:'Enhancer'
 };
-const ODOR_FAMILY_VALUES = ['citrus','floral','woody','amber','musk','green','fruity','spicy','herbal','balsamic','resinous','powdery','gourmand','fresh','animalic','smoky','aquatic'];
-const ODOR_FAMILY_KEYWORDS = {
-  citrus:   /\b(citrus|hesperid|lemon|orange|bergamot|grapefruit|mandarin|lime|yuzu|tangerine|petitgrain)\b/i,
-  floral:   /\b(floral|flower|jasmin|rose|lily|violet|tuberose|narcissus|ylang|orchid|magnolia|hyacinth|lilac|gardenia|mimosa|champaca)\b/i,
-  woody:    /\b(wood|woody|cedar|sandalwood|patchouli|vetiver|guaiac|oud|agarwood|cypress|fir|pine|birch)\b/i,
-  amber:    /\b(amber|ambergris|ambery|ambrox|ambrette)\b/i,
-  musk:     /\b(musk|musky)\b/i,
-  green:    /\b(green|leaf|leafy|grass|stem|cut[\s-]?grass|galbanum|tomato leaf|violet leaf)\b/i,
-  fruity:   /\b(fruit|fruity|berry|peach|apricot|apple|pear|plum|tropical|pineapple|coconut|melon|raspberry|strawberry|blackcurrant)\b/i,
-  spicy:    /\b(spice|spicy|cinnamon|clove|pepper|nutmeg|cardamom|saffron|ginger|anise)\b/i,
-  herbal:   /\b(herb|herbal|lavender|mint|peppermint|spearmint|sage|thyme|rosemary|basil|tarragon|fennel|chamomile|bay)\b/i,
-  balsamic: /\b(balsam|balsamic|tolu|peru|benzoin|styrax)\b/i,
-  resinous: /\b(resin|resinous|frankincense|myrrh|elemi|labdanum|olibanum|opoponax|copal)\b/i,
-  powdery:  /\b(powder|powdery|iris|orris|heliotrope)\b/i,
-  gourmand: /\b(vanilla|vanillin|caramel|chocolate|cocoa|honey|coffee|gourmand|sweet|tonka|maple|hazelnut|almond|praline|biscuit)\b/i,
-  fresh:    /\b(fresh|aldehyd|ozone|ozonic|cool|cooling|airy|crisp|clean)\b/i,
-  animalic: /\b(animal|animalic|leather|leathery|civet|castore|hyrax|skin)\b/i,
-  smoky:    /\b(smoky|smoked|smoke|smoking|burnt|burn|burning|tarry|tar|tobacco|incense|leathery|leather)\b/i,
-  aquatic:  /\b(aquatic|marine|ozone|water|sea|seaweed|oceanic|calone)\b/i,
-};
+// ── Legacy Odor Family axis REMOVED ──
+// The redundant 23-value Odor Family axis was dropped in the search-
+// rebuild refactor. Family classification now goes exclusively through
+// the Edwards 14 sub-family axis (SUB_FAMILIES + SUB_FAMILY_TO_LEGACY)
+// which produces non-overlapping families derived from the same
+// odor_type / odor_description text. Card render and FILTER_CACHE no
+// longer carry an `odorFamilies` field.
 const USE_VALUES = ['fine_fragrance','personal_care','home_care','flavor'];
 const USE_LABELS = {
   fine_fragrance:'Fine Fragrance & Fine perfume', personal_care:'Personal Care & Cosmetics',
@@ -1506,8 +1491,9 @@ const SOURCE_LABELS = {
 // Note / Regulatory) were refactored from one-value radios to multi-
 // select pill chips with OR-within-group matching. Each axis owns a
 // Set plus metadata for rendering the chip cloud and the sub-drawer
-// summary label. Primary Family / Facet / legacy Odor still live in
-// their own dedicated Sets below (activePrimaryFamilyFilters, etc.).
+// summary label. Family (14 Edwards sub-families) + Facet live in
+// their own dedicated Sets below (activeSubFamilyFilters,
+// activeFacetFilters).
 const _NOTE_VALUES = ['top','middle','base','_other'];
 const _NOTE_LABELS = { top:'Top', middle:'Middle', base:'Base', _other:'Odorless' };
 const _filterAxes = {
@@ -1518,10 +1504,10 @@ const _filterAxes = {
   reg:    { set: new Set(), elId: 'regSelected',    values: REGULATORY_VALUES, labels: REGULATORY_LABELS, containerId: 'regFilters'   },
   source: { set: new Set(), elId: 'sourceSelected', values: SOURCE_VALUES,   labels: SOURCE_LABELS,      containerId: 'sourceFilters' },
 };
-let activeOdorFilters = new Set();
-// Step 4: Primary Family + Facet multi-select Sets (populated from
-// the chip cloud UI wired in Step 5).
-let activePrimaryFamilyFilters = new Set();
+// Family + Facet multi-select Sets. The legacy Odor Family axis and
+// the 7-bucket Edwards Primary Family axis were dropped in the
+// search-rebuild refactor — Sub-family (Edwards 14) is the only
+// family axis the UI exposes now.
 let activeSubFamilyFilters = new Set();
 let activeFacetFilters = new Set();
 // User-hidden facet groups (by group label). Populated by the
@@ -1530,30 +1516,25 @@ let activeFacetFilters = new Set();
 let hiddenFacetGroups = new Set();
 
 // ═══════════════════════════════════════════════════════════════
-// TAXONOMY FOUNDATION (Step 1 — additive only)
-// New canonical constants and helpers for the upcoming odor-family
-// + facet inference path. NOT wired into rendering, FILTER_CACHE,
-// or the existing classifyOdorFamilies pipeline yet — this block
-// exists so later steps can read from it. The legacy
-// ODOR_FAMILY_VALUES / ODOR_FAMILY_KEYWORDS / classifyOdorFamilies
-// constants and function above are intentionally left untouched.
+// TAXONOMY FOUNDATION
+// Canonical constants for the family + facet inference path. The
+// legacy ODOR_FAMILY axis was removed in the search-rebuild refactor;
+// classifyPrimaryFamilies / classifySecondaryFamilies / classifyFacets
+// are the single source of truth, feeding the Edwards 14 sub-family
+// Family axis via SUB_FAMILY_TO_LEGACY.
 // ═══════════════════════════════════════════════════════════════
 
-// Primary families = the high-level perfumery buckets. Order is
-// canonical (used by sortByCanonicalOrder). Mirrors the legacy
-// ODOR_FAMILY_VALUES one-for-one PLUS three Step-2 additions
-// ('sweet', 'ozonic', 'camphoraceous') that the new
-// classifyPrimaryFamilies / classifySecondaryFamilies pipeline
-// distinguishes from their broader siblings ('gourmand', 'fresh',
-// 'herbal'). The legacy ODOR_FAMILY_VALUES constant above is
-// intentionally NOT mutated — both lists coexist.
+// Primary families = the high-level perfumery buckets that the inference
+// emits as legacy tokens. SUB_FAMILY_TO_LEGACY collapses these tokens
+// into the 14 user-facing Family chips. Order is canonical (used by
+// sortByCanonicalOrder).
 const PRIMARY_FAMILIES = [
   'citrus','green','herbal','aldehydic','aquatic','ozonic','fresh',
   'camphoraceous','floral','fruity','sweet','gourmand','lactonic','spicy','powdery',
-  'woody','balsamic','resinous','amber','animalic','leather','musk','smoky',
+  'woody','mossy','balsamic','resinous','amber','animalic','leather','musk','smoky',
   // Edwards 2021 transitional subfamily — let materials self-declare
   // "Floral Amber" / "Floral Oriental" as a first-class primary family so
-  // the Sub-families drawer can match them without requiring both floral
+  // the Family drawer can match them without requiring both floral
   // AND amber tokens on every such material.
   'floral_amber',
   // Edwards 2021 transitional subfamilies — first-class tokens so
@@ -1573,6 +1554,7 @@ const PRIMARY_FAMILY_LABELS = {
   aquatic:'Aquatic', ozonic:'Ozonic', fresh:'Fresh', camphoraceous:'Camphoraceous',
   floral:'Floral', fruity:'Fruity', sweet:'Sweet', gourmand:'Gourmand',
   lactonic:'Lactonic', spicy:'Spicy', powdery:'Powdery', woody:'Woody',
+  mossy:'Mossy',
   balsamic:'Balsamic', resinous:'Resinous', amber:'Amber', animalic:'Animalic',
   leather:'Leather', musk:'Musk', smoky:'Smoky',
   floral_amber:'Floral Amber',
@@ -1580,56 +1562,27 @@ const PRIMARY_FAMILY_LABELS = {
   floral_fresh:'Floral Fresh'
 };
 
-// ── Michael Edwards 2021 filter buckets ─────────────────────────────
-// Collapse the 23 legacy PRIMARY_FAMILIES into the 4 main families + 3
-// transitional subfamilies of the Edwards wheel. The Primary Family filter
-// drawer renders one chip per Edwards bucket; each bucket absorbs a Set of
-// legacy tokens (resolved via the activeEdwardsFamilies → token expansion
-// before running the AND-within match). This keeps the stored
-// `primaryFamilies` / `secondaryFamilies` arrays on each material
-// unchanged — the aggregation happens only at filter time.
-const EDWARDS_FAMILIES = [
-  'floral_note', 'amber_note', 'woody_note', 'fresh_note',
-  'floral_fresh_note', 'woody_amber_note', 'fresh_woody_note',
-];
-const EDWARDS_FAMILY_LABELS = {
-  floral_note:       'Floral note',
-  amber_note:        'Amber note',
-  woody_note:        'Woody note',
-  fresh_note:        'Fresh note',
-  floral_fresh_note: 'Floral Fresh note',
-  woody_amber_note:  'Woody Amber note',
-  fresh_woody_note:  'Fresh Woody note',
-};
+// ── Michael Edwards 2021 main-family buckets (internal-only) ─────────
+// Used by _computeSuggestedPartners for its complementary-bucket
+// scoring bonus (Fresh↔Woody, Floral↔Amber). The 7-bucket axis is no
+// longer exposed in the filter UI — the user-facing Family axis is the
+// finer-grained 14 SUB_FAMILIES instead. Kept internal because the
+// similarity scorer needs main-family neighbour relationships that the
+// sub-family axis doesn't directly model.
 const EDWARDS_TO_LEGACY = {
-  // floral_amber belongs to the FLORAL main family in the 2021 wheel
-  // (transitional toward Amber), so it lands in the Floral note bucket.
-  // soft_floral is a Floral-note sibling (Aldehydic/Powdery territory).
   floral_note:       new Set(['floral', 'floral_amber', 'soft_floral']),
   amber_note:        new Set(['amber', 'balsamic', 'resinous', 'spicy', 'gourmand', 'sweet', 'lactonic', 'musk', 'powdery']),
-  woody_note:        new Set(['woody', 'earthy', 'mossy', 'smoky', 'leather']),
+  woody_note:        new Set(['woody', 'mossy', 'smoky', 'leather']),
   fresh_note:        new Set(['fresh', 'citrus', 'green', 'aquatic', 'ozonic', 'aldehydic']),
   floral_fresh_note: new Set(['fruity', 'floral_fresh']),
   woody_amber_note:  new Set(['animalic', 'woody_amber']),
   fresh_woody_note:  new Set(['herbal', 'camphoraceous']),
 };
-// Given a material's legacy family set, return the Edwards buckets it
-// belongs to. Used for chip visibility ("show this bucket only if at
-// least one candidate material lands in it").
-function _edwardsBucketsForLegacy(legacySet) {
-  const out = new Set();
-  for (const [bucket, toks] of Object.entries(EDWARDS_TO_LEGACY)) {
-    for (const t of toks) if (legacySet.has(t)) { out.add(bucket); break; }
-  }
-  return out;
-}
 
-// ── Edwards 2021 sub-family filter (14 wheel subfamilies) ──────────
-// Second, finer-grained filter drawer beneath Primary Family. Each chip
-// maps to one of the 14 subfamilies on the Edwards wheel; the chip is
-// resolved to a Set of legacy PRIMARY_FAMILIES tokens at filter time
-// (same pattern as EDWARDS_TO_LEGACY above). Tokens inside a chip's
-// Set OR-match; chips AND-match between each other.
+// ── Edwards 2021 Family axis (14 sub-families) ─────────────────────
+// User-facing Family chip cloud. Each chip resolves to a Set of legacy
+// PRIMARY_FAMILIES tokens at filter time. Tokens inside a chip's Set
+// OR-match; chips AND-match between each other.
 const SUB_FAMILIES = [
   'aromatic_fougere', 'citrus', 'water', 'green',
   'fruity', 'floral', 'soft_floral', 'floral_amber',
@@ -1654,10 +1607,10 @@ const SUB_FAMILY_LABELS = {
 };
 // Legacy PRIMARY_FAMILIES tokens that feed each Edwards subfamily.
 // Based on the familyToSegment table in formulation_data.js (not loaded
-// here, so kept inline). Subfamilies with no legacy backing (floral_amber
-// / mossy_woods — no single legacy token maps there today) stay as empty
-// Sets: their chips render but match nothing until richer taxonomy data
-// lands on the materials.
+// here, so kept inline). Every sub-family bucket now has at least one
+// legacy token — mossy_woods (previously empty) now receives the
+// dedicated 'mossy' token so oakmoss / treemoss / vetiver-mossy
+// materials can match the chip.
 const SUB_FAMILY_TO_LEGACY = {
   aromatic_fougere: new Set(['herbal', 'camphoraceous']),
   citrus:           new Set(['citrus', 'fresh']),
@@ -1671,56 +1624,21 @@ const SUB_FAMILY_TO_LEGACY = {
   amber:            new Set(['amber', 'balsamic', 'resinous', 'spicy']),
   woody_amber:      new Set(['animalic', 'woody_amber']),
   woods:            new Set(['woody']),
-  mossy_woods:      new Set(),
+  mossy_woods:      new Set(['mossy']),
   dry_woods:        new Set(['leather', 'smoky']),
 };
 
-// Per-material Edwards-axis resolution. Given a material's FILTER_CACHE
-// entry (pf = primaryFamilies, sf = secondaryFamilies tokens), return
-// the human-readable labels the filter-drawer chips show, so CSV/JSON
-// exports mirror what the user sees in the Filter drawer:
-//   primary_family : ['Fresh Woody note', ...]   ← EDWARDS_FAMILY_LABELS
-//   sub_families   : ['Aromatic', ...]            ← SUB_FAMILY_LABELS
-function _edwardsAxesFor(primary, secondary) {
-  const legacy = new Set([...(primary || []), ...(secondary || [])]);
-  const primaryBuckets = [];
-  for (const key of EDWARDS_FAMILIES) {
-    const toks = EDWARDS_TO_LEGACY[key];
-    for (const t of toks) if (legacy.has(t)) { primaryBuckets.push(EDWARDS_FAMILY_LABELS[key]); break; }
-  }
-  const subBuckets = [];
-  for (const key of SUB_FAMILIES) {
-    const toks = SUB_FAMILY_TO_LEGACY[key] || new Set();
-    for (const t of toks) if (legacy.has(t)) { subBuckets.push(SUB_FAMILY_LABELS[key]); break; }
-  }
-  return { primary_family: primaryBuckets, sub_families: subBuckets };
-}
-// ── Cascading filter map: Primary Family (Edwards parent bucket) →
-// set of Sub-families allowed under it. Used by the 3-level cascading
-// filter UI: selecting a Primary Family narrows the Sub-families chip
-// cloud to its children, and selecting a Sub-family narrows the Facet
-// chip cloud to that group. When no Primary is selected, all Sub-families
-// are visible; likewise for Sub-families → Facets.
-const PRIMARY_TO_SUB_FAMILIES = {
-  floral_note:       new Set(['floral', 'soft_floral', 'floral_amber']),
-  amber_note:        new Set(['soft_amber', 'amber', 'woody_amber']),
-  woody_note:        new Set(['mossy_woods', 'dry_woods']),
-  fresh_note:        new Set(['citrus', 'water', 'green']),
-  floral_fresh_note: new Set(['fruity']),
-  woody_amber_note:  new Set(['woods']),
-  fresh_woody_note:  new Set(['aromatic_fougere']),
-};
 // Build a snake_case facet token into a presentable label.
 function facetLabel(t) {
   if (!t) return '';
   return String(t).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-// Reverse index: legacy PRIMARY_FAMILIES token → Edwards 2021 sub-family key.
-// Built once from SUB_FAMILY_TO_LEGACY so downstream code can still resolve
-// a finer-grained sub-family label when needed. Card-level Primary row uses
-// the coarser EDWARDS_TO_LEGACY parent bucket instead — see
-// primaryFamilyFilterLabel below.
+// Reverse index: legacy PRIMARY_FAMILIES token → Edwards 14 sub-family
+// key. Built once from SUB_FAMILY_TO_LEGACY for the facet-orphan
+// grouping path (facets whose parent legacy family doesn't have an
+// explicit FACET_GROUPS entry are bucketed by the sub-family their
+// parent maps to).
 const LEGACY_TO_SUB_FAMILY = (() => {
   const m = {};
   for (const [sub, legacySet] of Object.entries(SUB_FAMILY_TO_LEGACY)) {
@@ -1728,28 +1646,6 @@ const LEGACY_TO_SUB_FAMILY = (() => {
   }
   return m;
 })();
-// Reverse index: legacy PRIMARY_FAMILIES token → Edwards 2021 parent bucket
-// (floral_note / amber_note / woody_note / fresh_note / floral_fresh_note /
-// woody_amber_note / fresh_woody_note). Used by the card PRIMARY row so a
-// material classified as e.g. woody + amber + powdery shows a clean
-// "Woody • Amber" pair (powdery folds into amber_note, same as its chip in
-// the Primary Family filter drawer). Underlying primary/secondary arrays
-// are untouched so filter matching is unaffected.
-const LEGACY_TO_EDWARDS = (() => {
-  const m = {};
-  for (const [bucket, legacySet] of Object.entries(EDWARDS_TO_LEGACY)) {
-    for (const tok of legacySet) m[tok] = bucket;
-  }
-  return m;
-})();
-function primaryFamilyFilterLabel(legacyTok) {
-  if (!legacyTok) return '';
-  const bucket = LEGACY_TO_EDWARDS[legacyTok];
-  if (bucket && EDWARDS_FAMILY_LABELS[bucket]) {
-    return EDWARDS_FAMILY_LABELS[bucket].replace(/\s*note$/i, '');
-  }
-  return PRIMARY_FAMILY_LABELS[legacyTok] || legacyTok;
-}
 
 // Facet tags = specific descriptors that live UNDER a primary family.
 // Each entry maps a normalized facet token (snake_case) to its parent
@@ -1763,6 +1659,7 @@ const FACET_TAGS = {
   citrus:'citrus', green:'green', herbal:'herbal', floral:'floral',
   fruity:'fruity', aldehydic:'aldehydic', aquatic:'aquatic', fresh:'fresh',
   spicy:'spicy', gourmand:'gourmand', powdery:'powdery', woody:'woody',
+  mossy:'mossy',
   balsamic:'balsamic', resinous:'resinous', amber:'amber', animalic:'animalic',
   musk:'musk', smoky:'smoky', leather:'leather',
   sweet:'sweet', ozonic:'ozonic', camphoraceous:'camphoraceous',
@@ -1857,9 +1754,13 @@ const FACET_TAGS = {
   coniferous:'woody', dry:'woody', hinoki:'woody', teak:'woody',
   rosewood:'woody', pepperwood:'woody', cashmeran:'woody',
 
-  // ── MOSSY WOODS (parent 'woody' — mossy_woods sub-family has no legacy tokens) ──
-  oakmoss:'woody', earthy:'woody', moss:'woody', lichens:'woody',
-  forest:'woody', wet_earth:'woody', mushroom:'woody',
+  // ── MOSSY WOODS (parent 'mossy' — first-class family token so the
+  //    Mossy Wood sub-family chip lights up for oakmoss / vetiver-mossy
+  //    materials. earthy/forest stay under 'woody' since they describe
+  //    dry-wood character, not literal moss). ──
+  oakmoss:'mossy', moss:'mossy', lichens:'mossy', wet_earth:'mossy',
+  mushroom:'mossy', mossy:'mossy',
+  earthy:'woody', forest:'woody',
 
   // ── DRY WOODS (smoky / leather) ──
   tobacco:'smoky', hay:'smoky', tar:'smoky', birch_tar:'smoky',
@@ -1932,6 +1833,12 @@ const FACET_KEYWORDS = {
   // amber / woody / animalic
   mineral:     /\bmineral\b/i,
   earthy:      /\bearthy\b|\bmusty\b/i,
+  // mossy / wet earth — promotes parent family 'mossy' so the
+  // Mossy Wood sub-family chip lights up via SUB_FAMILY_TO_LEGACY.
+  oakmoss:     /\boakmoss\b|\btreemoss\b|\bevernia\b/i,
+  moss:        /\bmossy\b|\bmoss[- ]like/i,
+  wet_earth:   /\bwet\s+earth\b|\bdamp\s+earth\b/i,
+  mushroom:    /\bmushroom\b|\bfungal\b/i,
   geranium:    /\bgeranium\b/i,
   sweaty:      /\bsweaty\b|sweat[- ]like/i,
   tonka:       /\bcoumarin[- ]like\b|\bcoumarinic\b/i,
@@ -2002,9 +1909,10 @@ const FACET_GROUPS = [
     'animalic','musk','indole','skatole','leather'] },
   { label:'Woody',        facets:[
     'cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','pine','birch',
-    'cedrol','coniferous','dry','hinoki','teak','rosewood','pepperwood','cashmeran'] },
+    'cedrol','coniferous','dry','hinoki','teak','rosewood','pepperwood','cashmeran',
+    'earthy','forest'] },
   { label:'Mossy Wood',   facets:[
-    'oakmoss','earthy','moss','lichens','forest','wet_earth','mushroom'] },
+    'oakmoss','moss','mossy','lichens','wet_earth','mushroom'] },
   { label:'Dry Wood',     facets:[
     'tobacco','hay','tar','birch_tar','cade','phenolic',
     'leathery','suede','smoke','papyrus'] },
@@ -2051,6 +1959,10 @@ const TAXONOMY_SYNONYMS = {
   ambroxide:'ambroxan',
   // green
   cut_leaf:'leaf', watery_green:'watery',
+  // mossy
+  oak_moss:'oakmoss', tree_moss:'oakmoss', treemoss:'oakmoss',
+  evernia:'oakmoss', evernia_prunastri:'oakmoss', evernia_furfuracea:'oakmoss',
+  oakmoss_absolute:'oakmoss',
   // smoky / leather
   birch_tar_oil:'birch_tar', smoked:'smoky', burned:'burnt',
   skin_like:'skin', suedey:'suede',
@@ -2194,22 +2106,25 @@ const FAMILY_SPECIFICITY_OVERRIDES = [
   { specific: 'ozonic', general: 'fresh' },
 ];
 
-// Explicit gourmand facets — if at least one of these is present in
-// the facets list, the conservative gourmand guard lets `gourmand`
-// stay in primary / secondary. Otherwise gourmand is dropped.
-const _EXPLICIT_GOURMAND_FACETS = new Set([
-  'vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee',
-  'tonka','maple','hazelnut','almond','praline','biscuit','milk','rum',
-  'roasted','nutty','cereal','beeswax'
-]);
-
 // Internal: full inference. Returns { primaries, secondaries, facets }.
 // Read-only — never mutates the record. The three classify*Families /
 // classifyFacets functions below all delegate here.
+//
+// Inference is a 3-pass scan over curated text fields:
+//   1. odor_type        → first family → primary; rest → secondary
+//   2. odor_description → secondary families only (never primary)
+//   3. FACET_KEYWORDS regex → compound-phrase facets
+//
+// The earlier 4-pass design (name+synonyms scan as Pass 3, parent-
+// family promotion as Pass 4b, gourmand guard) was removed. Name/
+// synonym scanning leaked unrelated facets onto materials whose name
+// happened to contain a sibling token (e.g. "Lemon Balm" → balm/balsamic
+// facet). Parent promotion was a workaround for the earlier weak-source
+// scan and isn't needed once that scan is gone. Gourmand guard was
+// likewise a defensive kludge against name-scan over-firing.
 function _inferTaxonomy(matOrRecord) {
   const r = (matOrRecord && matOrRecord.record) || matOrRecord || {};
   const pf = r.perfumery || {};
-  const nm = r.names || {};
   const primaries = [];
   const secondaries = [];
   const facets = [];
@@ -2230,15 +2145,9 @@ function _inferTaxonomy(matOrRecord) {
     if (facets.length < 8) facets.push(facet);
   };
 
-  // True once a family-grade token has been promoted to primary in
-  // any pass. Reading order beyond the first family token routes
-  // subsequent family tokens to the secondary list.
+  // True once a family-grade token has been promoted to primary.
   let firstPrimaryAssigned = false;
 
-  // Pass logic shared between odor_type and odor_description scans.
-  // `mayPromotePrimary` controls whether the pass is allowed to
-  // assign the FIRST primary family — odor_description only does so
-  // when odor_type left primary empty.
   const _scanFamilySource = (text, mayPromotePrimary) => {
     const tokens = _orderedTaxonomyTokens(text);
     for (const raw of tokens) {
@@ -2285,62 +2194,13 @@ function _inferTaxonomy(matOrRecord) {
     }
   }
 
-  // Pass 3 — canonical name + synonyms. Weakest evidence;
-  // contributes facets ONLY. Skips primary-family tokens because the
-  // weak source isn't strong enough to promote a material into a
-  // family bucket.
-  //
-  // IMPORTANT: perfumery.blends_with is intentionally NOT scanned
-  // here. That field describes BLEND PARTNERS — other materials the
-  // current material pairs well with — not facets of the material
-  // itself. Treating blends_with as a facet source used to leak
-  // unrelated notes into the Facets list (e.g. Cedarwood picking up
-  // Vetiver / Patchouli / Sandalwood / Bergamot / Lavender facets
-  // just because those were its blend partners). Name and synonyms
-  // are still scanned because they legitimately describe the
-  // material's own identity (e.g. "Cedarwood" → cedar facet).
-  const weakSources = [];
-  if (nm.canonical) weakSources.push(nm.canonical);
-  if (Array.isArray(nm.synonyms)) for (const s of nm.synonyms) weakSources.push(s);
-  for (const src of weakSources) {
-    const tokens = _orderedTaxonomyTokens(src);
-    for (const raw of tokens) {
-      const tok = _resolveTaxonomyToken(raw);
-      if (PRIMARY_FAMILIES.includes(tok)) continue;
-      if (FACET_TAGS[tok]) _addFacet(tok);
-    }
-  }
-
-  // Pass 4 — keyword regex scan of odor_type + odor_description.
+  // Pass 3 — keyword regex scan of odor_type + odor_description.
   // Catches nose-friendly facets that the token-splitting approach
   // misses (e.g. "tea-like" → tea, "honeyed" → honey, "burnt sugar"
   // → roasted). Adds facets only — never touches primary/secondary.
   const _kwText = ((pf.odor_type || '') + ' ' + (pf.odor_description || '')).toLowerCase();
   for (const [facet, re] of Object.entries(FACET_KEYWORDS)) {
     if (re.test(_kwText)) _addFacet(facet);
-  }
-
-  // Pass 4b — Enrich secondary families from keyword-matched facets.
-  // When Pass 4 adds a facet whose parent family isn't yet in primary
-  // or secondary, promote the parent to secondary. This closes the gap
-  // where keyword-only matches (e.g. "tea-like" caught by regex but
-  // missed by token splitter) would add the facet without its parent
-  // family appearing in the family axes.
-  for (const f of facets) {
-    const parent = FACET_TAGS[f];
-    if (parent && PRIMARY_FAMILIES.includes(parent)) _addSecondary(parent);
-  }
-
-  // Conservative gourmand guard — drop `gourmand` from primary and
-  // secondary unless an explicit gourmand facet is present in the
-  // facets list. Keeps generic "sweet" descriptions from over-
-  // tagging materials as gourmand.
-  const hasExplicitGourmand = facets.some(f => _EXPLICIT_GOURMAND_FACETS.has(f));
-  if (!hasExplicitGourmand) {
-    const pi = primaries.indexOf('gourmand');
-    if (pi >= 0) primaries.splice(pi, 1);
-    const si = secondaries.indexOf('gourmand');
-    if (si >= 0) secondaries.splice(si, 1);
   }
 
   return { primaries, secondaries, facets };
@@ -2492,19 +2352,10 @@ function _buildFilterRecord(cas, entry) {
   if (/\bmodifier\b/i.test(funcAll) || KNOWN_MODIFIER_NAMES.test(_entryName)) functions.add('modifier');
   if (/\benhancer\b|\bbooster\b/i.test(funcAll)) functions.add('enhancer');
 
-  // Precompute Odor Family axis (closed list). Multi-value Set shared by
-  // filter counts/matching and card render.
-  const odorFamilies = new Set(classifyOdorFamilies(syntheticMat));
-
-  // Precompute legacy free-form odor tag set (still used by the old "Odor"
-  // sub-drawer for backward compatibility with the dynamic per-DB tag list).
-  const odorTags = new Set();
-  if (odorType) {
-    odorType.split(/\s*[\/,]\s*/).forEach(term => {
-      const c = term.trim();
-      if (c && c.length > 2 && !FUNC_TERMS.has(c) && !c.includes('—')) odorTags.add(c);
-    });
-  }
+  // Legacy Odor Family axis was removed — the redundant 23-value list
+  // duplicated work already done by SUB_FAMILY_TO_LEGACY (Edwards 14)
+  // and tended to over-fire on words like "fresh" or "sweet" inside
+  // odor_description text.
   const hasNoOdorType = !odorType || RE_ODOR_FUNC.test(entry.odor?.type||'');
 
   // Use-axis tags (renamed Industry → Use in the taxonomy redesign).
@@ -2525,11 +2376,10 @@ function _buildFilterRecord(cas, entry) {
   );
   const source = classifySource(syntheticMat);
 
-  // Step 3: precompute the new primary/secondary/facets axis directly
-  // from the raw DB entry via the legacy migration parser. This runs
-  // ONCE per CAS at module init — no hot-loop recomputation. The legacy
-  // odorFamilies Set above is intentionally left in place so the
-  // current Odor Family filter UI keeps working until Step 4+ swaps it.
+  // Precompute the primary / secondary / facets axis directly from the
+  // raw DB entry via migrateLegacyTaxonomy (which honors any explicit
+  // entry.classification override and otherwise calls _inferTaxonomy).
+  // Runs ONCE per CAS at module init — no hot-loop recomputation.
   const _newTax = migrateLegacyTaxonomy(entry);
   const primaryFamilies   = _newTax.primaryFamilies;
   const secondaryFamilies = _newTax.secondaryFamilies;
@@ -2550,9 +2400,9 @@ function _buildFilterRecord(cas, entry) {
 
   return {
     cas, noteLow, materialType, functions, funcAll, hasRealOdor,
-    odorTags, odorFamilies, hasNoOdorType,
+    hasNoOdorType,
     industryTags, uses, regulatory, source, allText,
-    // Step 3 axis — precomputed once, read-only from here on.
+    // Edwards taxonomy — precomputed once, read-only from here on.
     primaryFamilies, secondaryFamilies, facets
   };
 }
@@ -2725,25 +2575,10 @@ function _axesFailedBy(fc, cas) {
   // Source (single-value)
   const sourceSet = _filterAxes.source.set;
   if (sourceSet.size && !sourceSet.has(fc.source)) failed.add('source');
-  // Primary Family — AND-within on Edwards buckets. Each active bucket is
-  // expanded to its legacy-token Set; the bucket is satisfied if ANY token
-  // from that Set appears in the material's primaryFamilies ∪ secondary.
-  // All active buckets must pass.
-  if (activePrimaryFamilyFilters.size) {
-    const combined = new Set([
-      ...(fc.primaryFamilies || []),
-      ...(fc.secondaryFamilies || [])
-    ]);
-    for (const bucket of activePrimaryFamilyFilters) {
-      const toks = EDWARDS_TO_LEGACY[bucket];
-      if (!toks) continue;
-      let hit = false;
-      for (const t of toks) if (combined.has(t)) { hit = true; break; }
-      if (!hit) { failed.add('primaryFamily'); break; }
-    }
-  }
-  // Sub-family — same AND-within / OR-inside-chip pattern but against
-  // the finer-grained Edwards 14-subfamily buckets (SUB_FAMILY_TO_LEGACY).
+  // Family — AND-within / OR-inside-chip against the Edwards 14-subfamily
+  // buckets (SUB_FAMILY_TO_LEGACY). Each active chip is expanded to its
+  // legacy-token Set; the chip is satisfied if ANY token from that Set
+  // appears in primaryFamilies ∪ secondaryFamilies.
   if (activeSubFamilyFilters.size) {
     const combined = new Set([
       ...(fc.primaryFamilies || []),
@@ -2781,7 +2616,7 @@ function _updateFilterVisibility() {
   // - failures.size >= 2  → contributes to no axis.
   const noteCounts = {}, typeCounts = {}, funcCounts = {}, tagCounts = {};
   const regCounts = {}, sourceCounts = {};
-  const primaryFamHas = {};
+  const subFamilyHas = {};
   const facetHas = {};
 
   for (const fc of FILTER_CACHE.values()) {
@@ -2805,13 +2640,13 @@ function _updateFilterVisibility() {
     if (contribTo('reg')) for (const reg of fc.regulatory) regCounts[reg] = (regCounts[reg]||0)+1;
     // Source axis (single value)
     if (contribTo('source') && fc.source) sourceCounts[fc.source] = (sourceCounts[fc.source]||0)+1;
-    // Primary family axis (marker-only). The axis matches against
-    // the primary ∪ secondary union, so chip visibility must also
-    // look at both fields — otherwise a family that only ever
-    // appears as a secondary never gets a clickable chip.
-    if (contribTo('primaryFamily')) {
-      for (const fam of fc.primaryFamilies || []) primaryFamHas[fam] = true;
-      for (const fam of fc.secondaryFamilies || []) primaryFamHas[fam] = true;
+    // Family axis (marker-only). The axis matches against
+    // primary ∪ secondary union via SUB_FAMILY_TO_LEGACY, so chip
+    // visibility must look at both fields — otherwise a family that
+    // only ever appears as a secondary never gets a clickable chip.
+    if (contribTo('subFamily')) {
+      for (const fam of fc.primaryFamilies || []) subFamilyHas[fam] = true;
+      for (const fam of fc.secondaryFamilies || []) subFamilyHas[fam] = true;
     }
     // Facet axis (marker-only)
     if (contribTo('facet')) for (const f of fc.facets || []) facetHas[f] = true;
@@ -2831,16 +2666,16 @@ function _updateFilterVisibility() {
       btn.style.display = (counts[btn.dataset.value] || 0) > 0 ? '' : 'none';
     });
   }
-  // Primary Family / Facet chip visibility — same "minus-self" logic
-  // via the primaryFamHas / facetHas marker maps built above. Selected
+  // Family / Facet chip visibility — same "minus-self" logic via
+  // the subFamilyHas / facetHas marker maps built above. Selected
   // chips are always kept visible so the user can deselect them.
-  document.querySelectorAll('#primaryFamilyFilters .odor-tag[data-edwards]').forEach(btn => {
+  document.querySelectorAll('#subFamilyFilters .odor-tag[data-subfam]').forEach(btn => {
     if (btn.classList.contains('active')) { btn.style.display = ''; return; }
-    // Chip is visible if any of its Edwards-bucket legacy tokens is
-    // still present among the filtered candidate set.
-    const toks = EDWARDS_TO_LEGACY[btn.dataset.edwards];
+    // Chip is visible if any of its sub-family legacy tokens is still
+    // present among the filtered candidate set.
+    const toks = SUB_FAMILY_TO_LEGACY[btn.dataset.subfam];
     let keep = false;
-    if (toks) for (const t of toks) if (primaryFamHas[t]) { keep = true; break; }
+    if (toks) for (const t of toks) if (subFamilyHas[t]) { keep = true; break; }
     btn.style.display = keep ? '' : 'none';
   });
   document.querySelectorAll('#facetFilters .odor-tag[data-facet]').forEach(btn => {
@@ -2858,41 +2693,10 @@ function _updateFilterVisibility() {
     g.style.display = (hasChip && !userHidden) ? '' : 'none';
   });
 }
-function _updateOdorSelected() {
-  const sel = document.getElementById('odorSelected');
-  if (activeOdorFilters.size) {
-    sel.textContent = [...activeOdorFilters].map(f => f === '_other' ? 'Odorless' : f.charAt(0).toUpperCase()+f.slice(1)).join(', ');
-  } else { sel.textContent = 'All'; }
-}
-function toggleOdorTag(el) {
-  const v = el.dataset.odor;
-  const allBtn = document.querySelector('#odorFilters .odor-tag[data-odor=""]');
-  if (activeOdorFilters.has(v)) { activeOdorFilters.delete(v); el.classList.remove('active'); }
-  else { activeOdorFilters.add(v); el.classList.add('active'); }
-  if (allBtn) allBtn.classList.toggle('active', !activeOdorFilters.size);
-  _updateOdorSelected();
-  _refreshPills();
-}
-function clearOdorFilters(el) {
-  activeOdorFilters.clear();
-  document.querySelectorAll('.odor-tag').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  _updateOdorSelected();
-  _refreshPills();
-}
-
-// Step 5: UI handlers for the new Primary Family + Facet chip
-// drawers. Mirror the existing toggleOdorTag / clearOdorFilters
-// pattern: mutate the active Set, sync the chip's CSS .active
-// class, refresh the "All" reset chip, update the sub-drawer
+// Family + Facet chip drawer UI handlers. Mirror the multi-select
+// pill axis pattern: mutate the active Set, sync the chip's CSS
+// .active class, refresh the "All" reset chip, update the sub-drawer
 // summary label, and call _refreshPills().
-function _updatePrimaryFamSelected() {
-  const sel = document.getElementById('primaryFamSelected');
-  if (!sel) return;
-  if (activePrimaryFamilyFilters.size) {
-    sel.textContent = [...activePrimaryFamilyFilters].map(b => EDWARDS_FAMILY_LABELS[b] || b).join(', ');
-  } else { sel.textContent = 'All'; }
-}
 function _updateFacetSelected() {
   const sel = document.getElementById('facetSelected');
   if (!sel) return;
@@ -2909,27 +2713,7 @@ function _updateFacetSelected() {
   }
   sel.textContent = parts.length ? parts.join(' · ') : 'All';
 }
-function togglePrimaryFamilyChip(el) {
-  const v = el.dataset.edwards;
-  if (!v) return;
-  if (activePrimaryFamilyFilters.has(v)) { activePrimaryFamilyFilters.delete(v); el.classList.remove('active'); }
-  else { activePrimaryFamilyFilters.add(v); el.classList.add('active'); }
-  // Toggle the "All" reset chip's .active state to mirror Set emptiness.
-  const allReset = document.querySelector('#primaryFamilyFilters > div > .odor-tag:first-child');
-  if (allReset) allReset.classList.toggle('active', !activePrimaryFamilyFilters.size);
-  _updatePrimaryFamSelected();
-  _applyCascadingVisibility();
-  _refreshPills();
-}
-function clearPrimaryFamilyFiltersUI(el) {
-  activePrimaryFamilyFilters.clear();
-  document.querySelectorAll('#primaryFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
-  if (el) el.classList.add('active');
-  _updatePrimaryFamSelected();
-  _applyCascadingVisibility();
-  _refreshPills();
-}
-// ── Sub-family chip handlers (Edwards 14-subfamily filter) ─────────
+// ── Family chip handlers (Edwards 14-subfamily filter) ─────────
 function _updateSubFamilySelected() {
   const sel = document.getElementById('subFamilySelected');
   if (!sel) return;
@@ -2957,50 +2741,17 @@ function clearSubFamilyFiltersUI(el) {
   _refreshPills();
 }
 
-// ── Cascading visibility: Primary Family → Sub-families → Facet groups ──
-// After any selection change in Primary or Sub-family, re-compute which
-// Sub-family chips and Facet groups should be visible. Clicking a chip
-// in a now-hidden section would be impossible, so also deactivate any
-// previously-selected chips that fell out of scope.
+// ── Cascading visibility: Family → Facet groups ──
+// After any selection change in Family, re-compute which Facet groups
+// should be visible. Clicking a chip in a now-hidden section would be
+// impossible, so also deactivate any previously-selected chips that
+// fell out of scope.
 function _applyCascadingVisibility() {
-  // 1. Sub-families visible only if allowed by selected Primary Families.
-  //    Empty primary selection = all sub-families visible.
-  let allowedSubs = null;
-  if (activePrimaryFamilyFilters.size) {
-    allowedSubs = new Set();
-    for (const p of activePrimaryFamilyFilters) {
-      const children = PRIMARY_TO_SUB_FAMILIES[p];
-      if (children) for (const s of children) allowedSubs.add(s);
-    }
-  }
-  let subDeactivated = false;
-  document.querySelectorAll('#subFamilyFilters .odor-tag[data-subfam]').forEach(chip => {
-    const sub = chip.dataset.subfam;
-    const visible = !allowedSubs || allowedSubs.has(sub);
-    chip.style.display = visible ? '' : 'none';
-    if (!visible && activeSubFamilyFilters.has(sub)) {
-      activeSubFamilyFilters.delete(sub);
-      chip.classList.remove('active');
-      subDeactivated = true;
-    }
-  });
-  if (subDeactivated) {
-    const allReset = document.querySelector('#subFamilyFilters > div > .odor-tag:first-child');
-    if (allReset) allReset.classList.toggle('active', !activeSubFamilyFilters.size);
-    _updateSubFamilySelected();
-  }
-
-  // 2. Facet groups visible only if their sub-family is selected (or
-  //    if the selected sub-family set is empty — then show all groups
-  //    that are allowed by the Primary Family selection, if any).
-  let allowedGroupSubs;
-  if (activeSubFamilyFilters.size) {
-    allowedGroupSubs = new Set(activeSubFamilyFilters);
-  } else if (allowedSubs) {
-    allowedGroupSubs = allowedSubs; // fall back to Primary Family scope
-  } else {
-    allowedGroupSubs = null; // no constraint — show all groups
-  }
+  // Facet groups visible only if their sub-family is selected
+  // (or if the selected sub-family set is empty — show all groups).
+  const allowedGroupSubs = activeSubFamilyFilters.size
+    ? new Set(activeSubFamilyFilters)
+    : null;
   let facetDeactivated = false;
   document.querySelectorAll('#facetGroups .facet-group').forEach(group => {
     const label = group.querySelector('.facet-group-label')?.textContent || '';
@@ -3080,25 +2831,17 @@ function resetAllFilters() {
     const allBtn = document.querySelector('#' + ax.containerId + ' .odor-tag[data-axis-all]');
     if (allBtn) allBtn.classList.add('active');
   }
-  // Reset legacy odor pills (no UI control since Step 5, kept defined
-  // for the dead-code empty-Set short-circuit in matchesAllFilters).
-  activeOdorFilters.clear();
-  // Step 5: reset new Primary Family + Facet chip drawers (state +
-  // DOM + summary labels).
-  activePrimaryFamilyFilters.clear();
+  // Reset Family + Facet chip drawers (state + DOM + summary labels).
   activeSubFamilyFilters.clear();
   activeFacetFilters.clear();
-  document.querySelectorAll('#primaryFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('#subFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('#facetFilters .odor-tag').forEach(b => b.classList.remove('active'));
-  const _allPrim = document.querySelector('#primaryFamilyFilters > div > .odor-tag:first-child');
-  if (_allPrim) _allPrim.classList.add('active');
   const _allSub = document.querySelector('#subFamilyFilters > div > .odor-tag:first-child');
   if (_allSub) _allSub.classList.add('active');
   const _allFacet = document.querySelector('#facetFilters > div > .odor-tag:first-child');
   if (_allFacet) _allFacet.classList.add('active');
   // Update labels
-  ['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','primaryFamSelected','subFamilySelected','facetSelected'].forEach(id => {
+  ['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','subFamilySelected','facetSelected'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = 'All';
   });
   // Cascade: clearing Primary/Sub-family selections restores the full
@@ -3154,34 +2897,7 @@ _buildPillFilter('type');
 _buildPillFilter('reg');
 _buildPillFilter('source');
 
-// Primary Family chips. The axis matches against the union of
-// primary + secondary families on each material (AND-within), so
-// the chip cloud must also be seeded from that union — otherwise
-// a family that only ever appears as a secondary never gets a
-// clickable chip in the drawer.
-{
-  const container = document.getElementById('primaryFamilyChips');
-  const presentLegacy = new Set();
-  for (const fc of FILTER_CACHE.values()) {
-    for (const fam of fc.primaryFamilies || []) presentLegacy.add(fam);
-    for (const fam of fc.secondaryFamilies || []) presentLegacy.add(fam);
-  }
-  // Collapse legacy tokens → Edwards buckets, then render one chip per
-  // live bucket in Edwards' canonical order (4 mains followed by the 3
-  // transitionals).
-  const liveBuckets = _edwardsBucketsForLegacy(presentLegacy);
-  for (const bucket of EDWARDS_FAMILIES) {
-    if (!liveBuckets.has(bucket)) continue;
-    const btn = document.createElement('span');
-    btn.className = 'odor-tag';
-    btn.dataset.edwards = bucket;
-    btn.textContent = EDWARDS_FAMILY_LABELS[bucket];
-    btn.onclick = function() { togglePrimaryFamilyChip(this); };
-    container.appendChild(btn);
-  }
-}
-
-// Sub-family chips — one per Edwards 2021 wheel subfamily. Rendered in
+// Family chips — one per Edwards 2021 wheel subfamily. Rendered in
 // wheel order (Fresh → Floral → Amber → Woody) so the drawer reads the
 // way users will trace a scent profile across the wheel.
 {
@@ -3330,11 +3046,11 @@ _buildPillFilter('source');
 
 _updateFilterVisibility();
 // Set initial "All" labels for every selected-axis indicator.
-['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','primaryFamSelected','subFamilySelected','facetSelected'].forEach(id => {
+['tagSelected','funcSelected','typeSelected','noteSelected','regSelected','sourceSelected','subFamilySelected','facetSelected'].forEach(id => {
   const el = document.getElementById(id); if (el) el.textContent = 'All';
 });
-// Initial cascade pass: reconciles Sub-family + Facet chip visibility
-// with whatever Primary/Sub selections are in effect at boot.
+// Initial cascade pass: reconciles Facet chip visibility with whatever
+// Family selections are in effect at boot.
 _applyCascadingVisibility();
 
 // ===== UI Event Bindings =====
@@ -3358,7 +3074,7 @@ btn.addEventListener("click", () => { const v=input.value.trim(); if (v) doSearc
 // ═══════════════════════════════════════════════════════════════
 function _anyAxisActive() {
   for (const ax of Object.values(_filterAxes)) if (ax.set.size) return true;
-  return activeOdorFilters.size > 0 || activePrimaryFamilyFilters.size > 0 || activeSubFamilyFilters.size > 0 || activeFacetFilters.size > 0;
+  return activeSubFamilyFilters.size > 0 || activeFacetFilters.size > 0;
 }
 
 function matchesAllFilters(cas) {
@@ -3421,28 +3137,8 @@ function matchesAllFilters(cas) {
   // Source — single-value on material.
   const sourceSet = _filterAxes.source.set;
   if (sourceSet.size && !sourceSet.has(fc.source)) return false;
-  // Legacy Odor Family axis — AND-within (unchanged).
-  if (activeOdorFilters.size) {
-    for (const f of activeOdorFilters) {
-      if (!fc.odorFamilies.has(f)) return false;
-    }
-  }
-  // Primary Family — Edwards-bucket AND-within, tokens within a bucket
-  // OR-match. See passesAllFiltersExcept for the same logic.
-  if (activePrimaryFamilyFilters.size) {
-    const combined = new Set([
-      ...(fc.primaryFamilies || []),
-      ...(fc.secondaryFamilies || [])
-    ]);
-    for (const bucket of activePrimaryFamilyFilters) {
-      const toks = EDWARDS_TO_LEGACY[bucket];
-      if (!toks) continue;
-      let hit = false;
-      for (const t of toks) if (combined.has(t)) { hit = true; break; }
-      if (!hit) return false;
-    }
-  }
-  // Sub-family — finer-grained Edwards 14-subfamily bucket match.
+  // Family — Edwards 14-subfamily AND-within, tokens within a chip's
+  // SUB_FAMILY_TO_LEGACY Set OR-match.
   if (activeSubFamilyFilters.size) {
     const combined = new Set([
       ...(fc.primaryFamilies || []),
@@ -3968,7 +3664,6 @@ function _computeClassification(mat) {
   c.uses          = uses;
   c.industry_tags = uses; // legacy alias
   c.functions     = classifyFunctionsFromRecord(mat.record);
-  c.odor_families = classifyOdorFamilies(mat); // legacy odor axis
   c.regulatory    = classifyRegulatory(mat);
   c.source        = classifySource(mat);
   // Step 3 axis — prefer the FILTER_CACHE precompute when the CAS
@@ -4023,9 +3718,10 @@ function createResult(inputName) {
     perfumery: { odor_description:null, odor_type:null, odor_strength:null, odor_source:null,
       note:null, tenacity:null, tenacity_hours:null, blends_with:[] },
     safety: { ifra_guideline:null, usage_levels:null, ban_status:null, ghs_codes:[] },
-    classification: { material_type:null, industry_tags:null, uses:null, functions:null, odor_families:null, regulatory:null, source:null,
-      // Step 2 axis — primary/secondary families and facets. Lives
-      // alongside the legacy odor_families list, not replacing it.
+    classification: { material_type:null, industry_tags:null, uses:null, functions:null, regulatory:null, source:null,
+      // Family axis — primaryFamilies/secondaryFamilies are legacy
+      // PRIMARY_FAMILIES tokens (used by similarity scoring); the UI
+      // collapses them into Edwards 14 Family chips via SUB_FAMILY_TO_LEGACY.
       primaryFamilies:null, secondaryFamilies:null, facets:null },
     match: makeMatch(null, 0, inputName, null, null, null, null),
     metadata: { source:null, is_external:false, pubchem_sections:{} }
@@ -4609,9 +4305,6 @@ function renderResults() {
       for (const f of displayFunctions) _addPart(FUNCTION_LABELS[f] || f);
     }
     const _typeFuncJoined = _typeFuncParts.join(' • ');
-    const displayOdorFamilies = _fcCard
-      ? [...(_fcCard.odorFamilies || [])]
-      : (Array.isArray(cls.odor_families) && cls.odor_families.length ? cls.odor_families : classifyOdorFamilies(mat));
     // Regulatory display: normalize through _normalizeRegulatoryToken
     // so a legacy-imported record carrying 'ifra_limited' (or any
     // variant casing) renders as 'Regulated' on the badge, not as the
@@ -4696,23 +4389,27 @@ function renderResults() {
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
           ${(displayTags.length || displayPrimaryFamilies.length || displaySecondaryFamilies.length || displayFacets.length)?`<div class="card-meta-row" style="margin:6px 0 10px 0">${displayTags.length?`<div class="tag-row"><span class="tag-axis-label">Use</span><span class="tag-chips">${displayTags.map(t=>`<span class="badge-use">${USE_LABELS[t]||t}</span>`).join('')}</span></div>`:''}${(() => {
-  // Taxonomy breadcrumb — Primary › Sub › Facets on a single wrapping
-  // row (instead of three separate axis rows) so the card doesn't
-  // reserve three vertical slots for what's usually 1-3 chips total.
-  // The `›` separators preserve the axis reading order; each axis
-  // keeps its own chip style (primary / sub / facet) for at-a-glance
-  // differentiation.
-  const _ax = _edwardsAxesFor(displayPrimaryFamilies, displaySecondaryFamilies);
-  const _pri = _ax.primary_family.map(l => l.replace(/\s*note$/i, ''));
-  const _sub = _ax.sub_families;
+  // Taxonomy breadcrumb — Family › Facets on a single wrapping row.
+  // Family chips use SUB_FAMILY_LABELS (Edwards 14 buckets), derived
+  // from the material's primaryFamilies ∪ secondaryFamilies tokens
+  // via SUB_FAMILY_TO_LEGACY. The legacy 7-bucket Edwards "Primary"
+  // band was dropped — too coarse to be useful in chip form.
+  const _legacy = new Set([
+    ...(displayPrimaryFamilies || []),
+    ...(displaySecondaryFamilies || [])
+  ]);
+  const _fam = [];
+  for (const sub of SUB_FAMILIES) {
+    const toks = SUB_FAMILY_TO_LEGACY[sub] || new Set();
+    for (const t of toks) if (_legacy.has(t)) { _fam.push(SUB_FAMILY_LABELS[sub] || sub); break; }
+  }
   const _fac = Array.isArray(displayFacets) ? displayFacets : [];
-  if (!_pri.length && !_sub.length && !_fac.length) return '';
+  if (!_fam.length && !_fac.length) return '';
   const parts = [];
-  if (_pri.length) parts.push(_pri.map(l=>`<span class="badge-primary">${esc(l)}</span>`).join(''));
-  if (_sub.length) parts.push(_sub.map(l=>`<span class="badge-sub">${esc(l)}</span>`).join(''));
+  if (_fam.length) parts.push(_fam.map(l=>`<span class="badge-sub">${esc(l)}</span>`).join(''));
   if (_fac.length) parts.push(_fac.map(f=>`<span class="badge-facet">${facetLabel(f)}</span>`).join(''));
   const chain = parts.join('<span class="tag-breadcrumb-sep">›</span>');
-  return `<div class="tag-row"><span class="tag-axis-label" title="Primary Family › Sub-families › Facets">Class</span><span class="tag-chips">${chain}</span></div>`;
+  return `<div class="tag-row"><span class="tag-axis-label" title="Family › Facets">Class</span><span class="tag-chips">${chain}</span></div>`;
 })()}</div>`:""}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" onerror="this.parentNode.style.display='none'"></div>`:""}
           <div class="col-info">
@@ -4924,14 +4621,17 @@ function addBlendSearch(name) {
   if (typeof doSearch === 'function') doSearch(name);
 }
 
-// Group-label chip → activate the matching Primary Family / Sub-family
-// filter drawer chip and scroll the filter into view so the user can
-// browse the candidate partners the group represents.
+// Group-label chip → activate the matching Family filter drawer chip
+// and scroll the filter into view so the user can browse the candidate
+// partners the group represents. The legacy 7-bucket Edwards "primary"
+// filter was removed; group chips now route exclusively to the
+// 14-bucket Sub-family axis (which the UI labels just "Family").
 function toggleBlendFilter(filterKind, token) {
   if (!token) return;
   let sel = null;
-  if (filterKind === 'subfamily') sel = `#subFamilyFilters .odor-tag[data-subfam="${token}"]`;
-  else if (filterKind === 'primary') sel = `#primaryFamilyFilters .odor-tag[data-edwards="${token}"]`;
+  if (filterKind === 'subfamily' || filterKind === 'primary') {
+    sel = `#subFamilyFilters .odor-tag[data-subfam="${token}"]`;
+  }
   const el = sel ? document.querySelector(sel) : null;
   if (!el) return;
   el.click();
@@ -5186,120 +4886,100 @@ function getBanStatus(mat) {
 function isBannedEU(mat) { return getBanStatus(mat) !== null; }
 
 // Use-axis classifier — 4 industry categories. Returns an array.
-// 1) Fine Fragrance — complex scent compositions (EDP/EDT/niche)
-// 2) Personal Care & Cosmetics — soap, shampoo, lotion, deodorant, cosmetics
-// 3) Home Care & Air Care — candle, reed diffuser, fabric softener, detergent
-// 4) Flavor — food-grade aroma chemicals (FEMA/GRAS)
+//   fine_fragrance — EDP/EDT/extrait + supporting vehicles
+//   personal_care  — soap / shampoo / lotion / deodorant / cosmetics
+//   home_care      — candle / diffuser / fabric / laundry / household
+//   flavor         — FEMA/GRAS food-grade aroma chemicals
+//
+// Evidence-based design: a tag is added ONLY when the curated safety/
+// usage text (or a hard-coded vehicle list / FEMA gate) provides
+// explicit positive evidence. The previous "any non-banned perfumery
+// material gets personal_care for free" auto-fire was removed —
+// it made the tag carry no information. A material with no evidence
+// in any axis returns []; the result card and Use chip cloud show
+// exactly what the data supports, no more.
 function classifyUses(mat) {
   const r = mat.record || mat;
   const pf = r.perfumery || {}, sf = r.safety || {}, nm = r.names || {}, id = r.identifiers || {};
-  const tags = [];
   const n = (nm.canonical || '').toLowerCase();
   const desc = (pf.odor_description || '').toLowerCase();
-  const odorType = (pf.odor_type || '').toLowerCase();
   const usage = (sf.usage_levels || '').toLowerCase();
-  const noteLow = (pf.note || '').toLowerCase();
-  const tenacity = (pf.tenacity || '').toLowerCase();
+  const ifra = (sf.ifra_guideline || '').toLowerCase();
   const cas = id.cas || '';
   const banned = isBannedEU(mat);
+  // Single combined safety text — every text-based gate scans this.
+  const safetyText = ifra + ' ' + usage;
+  const tags = new Set();
 
-  const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
-  const isMixture = MIXTURES.has(cas);
+  // ── Fragrance vehicles / functional ingredients ──
+  // Hard-coded list of solvents, carriers and antioxidants that are
+  // essential backbone ingredients in fine-fragrance and personal-care
+  // formulations. Curated DB text rarely names them as "fine fragrance"
+  // but the perfumery industry treats them as part of the fragrance
+  // stack, so seed both axes from the name.
   const isFragranceVehicle = /\b(ethanol|ethyl alcohol|dipropylene glycol|propylene glycol|isopropyl myristate|triethyl citrate|mct oil|squalane|isododecane|benzyl benzoate|triacetin|diethyl phthalate)\b/i.test(n);
-  const isPerfumeryMaterial = hasRealOdor || isMixture || isFragranceVehicle || /\b(fragranc|perfum)/i.test(usage + ' ' + noteLow);
-  const usageDesc = usage + ' ' + desc;
-  const push = t => { if (!tags.includes(t)) tags.push(t); };
-
-  // === 1. Fine Fragrance ===
-  // Explicit cue, very-high tenacity, base+high tenacity, or ≥5% in
-  // fragrance concentrate (industry workhorse threshold).
-  const _usageMax = (() => {
-    const m = (usage || '').match(/(\d+(?:\.\d+)?)\s*(?:[–-]\s*(\d+(?:\.\d+)?))?\s*%/);
-    if (!m) return 0;
-    return parseFloat(m[2] || m[1]);
-  })();
-  if (/\bfine fragrance\b/i.test(usage) ||
-      /\b(very high|excellent)\b/i.test(tenacity) ||
-      (isPerfumeryMaterial && !banned && /\bbase\b/i.test(noteLow) && /\b(high|very high|excellent)\b/i.test(tenacity)) ||
-      (isPerfumeryMaterial && !banned && _usageMax >= 5 && /fragrance\s*concentrate/i.test(usage))) {
-    push('fine_fragrance');
+  const isAntioxidant = /\b(tocopherol|bht|bha|antioxidant)\b/i.test(n);
+  if (!banned && (isFragranceVehicle || isAntioxidant)) {
+    tags.add('fine_fragrance');
+    tags.add('personal_care');
   }
 
-  // === 1b. Fine Fragrance — fragrance vehicles & antioxidants ===
-  // Solvents, carriers and antioxidants that are essential backbone
-  // ingredients in fine fragrance formulation (EDP/EDT/extrait).
-  if (!banned && (isFragranceVehicle || /\b(antioxidant|tocopherol|bht|bha)\b/i.test(n))) {
-    push('fine_fragrance');
+  // ── Fine Fragrance ──
+  // Explicit usage cue OR very-high tenacity (industry shorthand for
+  // a base-note workhorse used in EDP/EDT). No more "high tenacity +
+  // base note" inference — that was firing on most absolutes.
+  if (!banned && (
+      /\bfine fragrance\b|\bedp\b|\bedt\b|\bextrait\b|\beau\s+de\s+(parfum|toilette|cologne)\b/i.test(safetyText) ||
+      /\b(very high|excellent)\b/i.test((pf.tenacity || '').toLowerCase())
+  )) {
+    tags.add('fine_fragrance');
   }
 
-  // === 2. Personal Care & Cosmetics ===
-  // Any non-banned perfumery material or fragrance vehicle is used in
-  // personal-care / cosmetic formulations (soap, shampoo, lotion, etc.).
-  if (!banned && (isPerfumeryMaterial || isFragranceVehicle)) {
-    push('personal_care');
-  }
-  if (!banned && /\b(body lotion|lip|hair|hands|axillae|deodorant|shampoo|skin care|body wash|cosmetic|skin|soap)\b/i.test(usageDesc)) {
-    push('personal_care');
+  // ── Personal Care & Cosmetics ──
+  // Explicit cosmetic/skin-care keyword in the safety text. The
+  // earlier auto-fire ("any non-banned perfumery material gets this
+  // tag") was removed — it added no information.
+  if (!banned && /\b(body lotion|body wash|deodorant|shampoo|conditioner|skin care|skin\s*condition|cosmetic|lip\s*(stick|balm|gloss)|hair\s*(care|product)|axillae|leave[- ]on|rinse[- ]off|emollient|humectant|soap|toothpaste)\b/i.test(safetyText)) {
+    tags.add('personal_care');
   }
 
-  // === 3. Home Care & Air Care ===
-  // Candle / reed diffuser / fabric / laundry / household, plus
-  // non-banned base-note materials with woody/amber/gourmand profile
-  // (typical home-fragrance scent profile) and natural mixtures.
-  if (/\b(candle|wax melt|home care|household|cleaner|detergent|all[- ]purpose|air care|air freshener|reed diffuser|room spray|aerosol|fabric|laundry|softener|conditioner)\b/i.test(usageDesc)) {
-    push('home_care');
-  }
-  if (!banned && /\bbase\b/i.test(noteLow) && /\b(woody|amber|ambery|balsamic|resin|vanilla|tobacco|tonka|smoke|smoky|gourmand)\b/i.test(odorType + ' ' + desc)) {
-    push('home_care');
-  }
-  if (!banned && isMixture && /\b(base|middle)\b/i.test(noteLow)) {
-    push('home_care');
+  // ── Home Care & Air Care ──
+  // Explicit household/air-care keyword in the safety text. The
+  // earlier "base note + woody/amber profile" inference was removed —
+  // it over-fired on every dark base-note material regardless of
+  // whether the source data actually mentioned home-care use.
+  if (!banned && /\b(candle|wax melt|reed diffuser|room spray|air freshener|air care|fabric|laundry|softener|detergent|household|home care|all[- ]purpose|cleaner|dishwash|surfactant)\b/i.test(safetyText)) {
+    tags.add('home_care');
   }
 
-  // === 4. Flavor ===
-  // Food-grade aroma chemicals (FEMA/GRAS). Multi-layer safety gate:
+  // ── Flavor ──
+  // FEMA# 2001-5999 is the gold-standard gate (FEMA GRAS list).
+  // Multi-layer safety gate:
   //  a) not banned (EU or worldwide)
   //  b) not on FLAVOR_EXCLUDED_CAS (phthalates, nitro/polycyclic musks)
-  //  c) no explicit "not for food" / "non-food" negative cues
-  //  d) for non-FEMA materials: no carcinogen/mutagen/neurotoxin cues
-  //  e) positive evidence: valid FEMA OR food-use keywords in safety text
+  //  c) no explicit "not for food" / "non-food" cue
+  //  d) for non-FEMA materials: no carcinogen/mutagen/neurotoxin cue
+  //  e) positive evidence: valid FEMA OR food-use keyword
   const femaNum = parseInt(id.fema, 10);
   const hasValidFema = id.fema && femaNum >= 2001 && femaNum <= 5999;
-  const ifraUsage = (sf.ifra_guideline || '') + ' ' + usage;
-  const notFood = NOT_FOOD_RE.test(ifraUsage + ' ' + n);
-  const toxicNonFema = !hasValidFema && TOXICITY_BLOCK_RE.test(ifraUsage);
-
+  const notFood = NOT_FOOD_RE.test(safetyText + ' ' + n);
+  const toxicNonFema = !hasValidFema && TOXICITY_BLOCK_RE.test(safetyText);
   if (!banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !toxicNonFema) {
     if (hasValidFema ||
-        FLAVOR_POSITIVE_RE.test(usageDesc) ||
-        FLAVOR_POSITIVE_RE.test(ifraUsage)) {
-      push('flavor');
-    } else if (FLAVOR_WEAK_RE.test(usage)) {
-      // Weak keyword only from usage_levels (safety text), NOT odor description
-      push('flavor');
+        FLAVOR_POSITIVE_RE.test(safetyText) ||
+        FLAVOR_POSITIVE_RE.test(desc) ||
+        FLAVOR_WEAK_RE.test(usage)) {
+      tags.add('flavor');
     }
   }
 
-  // === 5. Functional materials (preservative / solubilizer / emulsifier / antioxidant / carrier) ===
-  // These are non-fragrant ingredients whose usage/safety text describes
-  // the product categories they serve. Scan all text fields so they
-  // appear under the correct Use filter when combined with Type.
-  if (!tags.length || !isPerfumeryMaterial) {
-    const allText = (usage + ' ' + (sf.ifra_guideline || '') + ' ' + noteLow + ' ' + n).toLowerCase();
-    if (/\b(cosmetics?|personal care|creams?|lotions?|skin|soaps?|shampoo|body|rinse[- ]off|leave[- ]on|emulsif)/i.test(allText)) push('personal_care');
-    if (/\b(home care|household|detergent|fabric|laundry|room spray|diffuser|candle|softener|mists?)\b/i.test(allText)) push('home_care');
-    if (/\b(fine fragrance|perfum|edp|edt|fragrance concentrate)\b/i.test(allText)) push('fine_fragrance');
-    if (!banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !toxicNonFema &&
-        FLAVOR_POSITIVE_RE.test(allText)) push('flavor');
-  }
-
-  // === 6. PubChem section-based enrichment ===
-  // After prefetch, pubchem_sections may contain "Use and Manufacturing",
-  // "Food Additives", "FDA", "IFRA", or "Cosmetic" headings with
-  // industry-use signals that the local DB safety text lacks.
+  // ── PubChem section-based enrichment ──
+  // After prefetch, pubchem_sections may carry "Use and Manufacturing",
+  // "Food Additives", "FDA", "IFRA", "Cosmetic" headings with
+  // industry-use signals the local DB lacks. Single entry point —
+  // no per-axis re-scan loops scattered through the function.
   const pcSections = r.metadata?.pubchem_sections;
   if (pcSections) {
-    // Collect relevant section text once for all axes.
     let pcUseText = '';
     for (const [heading, items] of Object.entries(pcSections)) {
       const hl = heading.toLowerCase();
@@ -5310,55 +4990,20 @@ function classifyUses(mat) {
       }
     }
     if (pcUseText) {
-      // 6a. Fine Fragrance — fragrance agent, perfumery, fixative, IFRA category
-      if (!tags.includes('fine_fragrance') && !banned &&
-          PUBCHEM_FRAGRANCE_RE.test(pcUseText)) {
-        push('fine_fragrance');
-      }
-      // 6b. Personal Care — cosmetic, skin care, dermal, shampoo, soap
-      if (!tags.includes('personal_care') && !banned &&
-          PUBCHEM_PERSONALCARE_RE.test(pcUseText)) {
-        push('personal_care');
-      }
-      // 6c. Home Care — household, detergent, laundry, air freshener, candle
-      if (!tags.includes('home_care') &&
-          PUBCHEM_HOMECARE_RE.test(pcUseText)) {
-        push('home_care');
-      }
-      // 6d. Flavor — food additive, flavoring agent, GRAS, FEMA, E-numbers
-      if (!tags.includes('flavor') && !banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !toxicNonFema &&
+      if (!banned && PUBCHEM_FRAGRANCE_RE.test(pcUseText))    tags.add('fine_fragrance');
+      if (!banned && PUBCHEM_PERSONALCARE_RE.test(pcUseText)) tags.add('personal_care');
+      if (PUBCHEM_HOMECARE_RE.test(pcUseText))                tags.add('home_care');
+      if (!banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !toxicNonFema &&
           (FLAVOR_POSITIVE_RE.test(pcUseText) || PUBCHEM_FLAVOR_RE.test(pcUseText))) {
-        push('flavor');
+        tags.add('flavor');
       }
     }
   }
 
-  return tags;
+  return [...tags];
 }
 // Backwards-compat alias — older code paths still call classifyIndustryTags.
 function classifyIndustryTags(mat) { return classifyUses(mat); }
-
-// Odor-Family axis classifier — returns the subset of ODOR_FAMILY_VALUES
-// whose keyword regex matches the curated name + odor_description +
-// odor_type. Capped at 5 values, prioritized so name and odor_type
-// matches rank above mere odor_description matches (the description is
-// the noisiest text and tends to over-fire on words like "fresh" or
-// "sweet"). Within each priority bucket, families are emitted in
-// ODOR_FAMILY_VALUES order so the rendering is stable.
-function classifyOdorFamilies(mat) {
-  const r = mat.record || mat;
-  const pf = r.perfumery || {}, nm = r.names || {};
-  const nameAndType = ((nm.canonical || '') + ' ' + (pf.odor_type || '')).toLowerCase();
-  const fullText    = nameAndType + ' ' + (pf.odor_description || '').toLowerCase();
-  const strong = [], weak = [];
-  for (const family of ODOR_FAMILY_VALUES) {
-    const re = ODOR_FAMILY_KEYWORDS[family];
-    if (re.test(nameAndType))      strong.push(family);
-    else if (re.test(fullText))    weak.push(family);
-  }
-  // Cap at 5 — strong first, then weak fillers, both in canonical order.
-  return strong.concat(weak).slice(0, 5);
-}
 
 // Regulatory axis classifier — independent of Use. A material can be
 // perfumery + regulated + allergen + sensitizer simultaneously.

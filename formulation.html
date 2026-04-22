@@ -3906,7 +3906,13 @@ function renderWheelTab() {
   let legend = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;justify-content:center">';
   for (const s of segments) {
     const count = Object.values(DB).filter(e => {
-      const fams = getMaterialFamilies({ odor_type: e.odor?.type, primaryFamilies: [], secondaryFamilies: [], facets: [] });
+      const cls = e.classification || {};
+      const fams = getMaterialFamilies({
+        odor_type: e.odor?.type,
+        primaryFamilies: cls.primaryFamilies || [],
+        secondaryFamilies: cls.secondaryFamilies || [],
+        facets: cls.facets || [],
+      });
       return fams.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === s.id);
     }).length;
     // Solid-colour pill for every subfamily (no more two-tone linear-
@@ -3931,7 +3937,17 @@ function filterByWheelSegment(segId) {
   const matches = [];
   for (const [cas, e] of Object.entries(DB)) {
     if (formulation.materials.find(m => m.cas === cas)) continue;
-    const fams = getMaterialFamilies({ odor_type: e.odor?.type, primaryFamilies: [], secondaryFamilies: [], facets: [] });
+    // Pass curated classification if present so the wheel match honors
+    // the new Family axis directly. Fallback path (text split of
+    // odor_type) still applies for materials without a classification
+    // block.
+    const cls = e.classification || {};
+    const fams = getMaterialFamilies({
+      odor_type: e.odor?.type,
+      primaryFamilies: cls.primaryFamilies || [],
+      secondaryFamilies: cls.secondaryFamilies || [],
+      facets: cls.facets || [],
+    });
     if (fams.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === segId)) {
       matches.push(e);
     }
