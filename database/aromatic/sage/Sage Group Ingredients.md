@@ -1,61 +1,563 @@
-# Thyme group aromatic materials: natural & synthetic reference 2026
-
-รายงานฉบับนี้รวบรวม **วัตถุดิบหอมกลุ่มไทม์ (thyme group)** ทั้งหมดที่ใช้ในเชิงพาณิชย์ในอุตสาหกรรมน้ำหอมและฟลาเวอร์ ครอบคลุมทั้งน้ำมันหอมระเหยจากธรรมชาติ (natural complex substances, NCS) และโมเลกุลเดี่ยว (isolated/synthetic) — **รวมทั้งสิ้น 52 รายการ** จัดทำเป็นตารางเดียวตามที่ผู้ใช้ร้องขอ ข้อมูลปรับปรุงให้สอดคล้องกับ **IFRA 51st Amendment** (notified 30 June 2023, [Criticalcatalyst +5](https://criticalcatalyst.com/notification-of-the-51st-amendment-to-the-ifra-standards/) compliance for existing creations 30 Oct 2025) และ **Commission Regulation (EU) 2023/1545** ซึ่งขยายรายการสารก่อภูมิแพ้จาก 24/26 รายการเป็น **80+ รายการ** [Annelltd](https://annelltd.com/new-horizon-for-cosmetic-safety-adapting-to-regulation-eu-2023-1545-onfragrance-allergen-labelling/) [Euverify](https://euverify.com/resource/eu-uk-fragrance-allergen-rules/) (deadline: 31 July 2026 สำหรับสินค้าใหม่, 31 July 2028 สำหรับสินค้าที่วางตลาดแล้ว) [EUR-Lex +2](https://eur-lex.europa.eu/eli/reg/2023/1545/oj/eng)
-
-## สรุปเชิงกลยุทธ์ (Bottom Line Up Front)
-
-ในตลาดปี 2026 **Thymus vulgaris CT thymol (Spanish Red Thyme Oil, CAS 8007-46-3 / 84929-51-1)** ยังเป็นวัตถุดิบเชิงพาณิชย์หลัก แต่สถานะเชิงกฎระเบียบของกลุ่มไทม์ได้เปลี่ยนแปลงอย่างมีนัยสำคัญ: **linalool, limonene, geraniol, citronellol, citral, eugenol และ methyl salicylate** ยังคงเป็น "allergens เดิม 24 รายการ" ที่ต้องประกาศ ขณะที่ Regulation 2023/1545 เพิ่ม **carvacrol, camphor, menthol, vanillin, และ essential oils หลายชนิด** เข้ารายการ — ซึ่งส่งผลกระทบโดยตรงต่อสูตรที่ใช้ไทม์เพราะ carvacrol เป็น constituent หลักของ T. capitatus และ chemotype carvacrol ของ T. vulgaris ใน IFRA 51st Amendment, **thyme oils (T. vulgaris/T. zygis)** อยู่ภายใต้ restriction standard (Category 1 ≈ 0.2%, Category 4 ≈ 1.6%, Category 5A ≈ 0.6%) โดยกำหนดโดย thymol content; **thymol เอง** มีข้อจำกัดเข้มงวดกว่า (Cat 5A ≈ 0.1–0.6%) จาก sensitization endpoint; **linalool** ได้รับการกำหนดขีดจำกัดใหม่จาก peroxide-value specification (≤20 mmol/L)
-
-ไทม์เป็นกลุ่มที่ **"survive IFRA ได้ค่อนข้างดี"** เมื่อเทียบกับกลุ่ม oakmoss, treemoss, หรือ HICC — ไม่มี material ในกลุ่มไทม์ถูก prohibit โดยสมบูรณ์ — แต่ความซับซ้อนอยู่ที่การคำนวณ **"contributions from other sources"** (Annex) ที่ต้องนับ thymol, carvacrol, linalool, limonene, geraniol ที่มากับ thyme oil รวมกับที่เติมจากแหล่งอื่นในสูตร
-
-## วิธีวิทยา (Methodology)
-
-**แหล่งข้อมูลปฐมภูมิ:** IFRA 51st Amendment Standards library, EUR-Lex 32023R1545, FEMA Flavor Library (femaflavor.org), FDA 21 CFR 182.20 & 172.515, The Good Scents Company (TGSC), PubChem, Leffingwell & Associates, RIFM Fragrance Material Safety Resource, peer-reviewed GC-MS studies (Satyal et al. 2016 *Foods*; Schmidt et al. 2012 *NPC*; Borugă et al. 2014 *J Med Life*; Cohen et al. 2021 *Food Chem Toxicol* — FEMA GRAS NFC seventh series) [Flavor Extract Manufacturers Association](https://www.femaflavor.org/flavor-library/thyme-white-oil-thymus-vulgaris-l-t-zygis) [Flavor Extract Manufacturers Association](https://www.femaflavor.org/flavor-library/thyme-oil-thymus-vulgaris-l-t-zygis)
-
-**Michael Edwards Fragrance Wheel (2023–2026 edition):** ประกอบด้วย 4 Main Families — **Floral, Oriental/Amber, Woody, Fresh** — โดยกลุ่มไทม์เกือบทั้งหมดอยู่ในตระกูล **Fresh → Aromatic** (หรือบางกรณี Aromatic Fougère) โดยมี facets ได้แก่ herbal, phenolic, medicinal, camphoraceous, spicy, green, terpenic ยกเว้น linalool chemotype ที่คาบเกี่ยวกับ Floral → Fresh Floral และ caryophyllene ที่อยู่ Woody → Dry Woods → Spicy
-
-**GC-MS context:** chemotypes ของ *Thymus vulgaris* ยอมรับเป็นทางการ 6–7 รายการ [NCBI](https://ncbi.nlm.nih.gov/pmc/articles/PMC5302419) (Granger & Passet 1973; Stahl-Biskup & Venskutonis 2012) ได้แก่ thymol, carvacrol, linalool, geraniol, [ScienceDirect](https://www.sciencedirect.com/topics/agricultural-and-biological-sciences/thymus-mastichina) α-terpineol, trans-sabinene hydrate/thujanol-4, [PubMed Central +2](https://pmc.ncbi.nlm.nih.gov/articles/PMC8467294/) และ 1,8-cineole [ScienceDirect](https://www.sciencedirect.com/science/article/abs/pii/S0021967306013525) — การวิเคราะห์ cluster analysis โดย Satyal et al. (2016) ระบุได้ถึง 20 chemotypes ย่อย [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC5302419/) รายงานนี้รายงานเฉพาะ chemotype ที่ **มี commercial supply chain ยืนยัน** (เช่นจาก Biolandes, Albert Vieille, Robertet, Vigon)
-
-**IFRA Categories (12 ประเภท):** Cat 1 = lip products; Cat 2 = deodorants; Cat 3 = hydroalcoholic shaved skin; Cat 4 = hydroalcoholic unshaved skin (fine fragrance); Cat 5A-D = body/face/hand creams; [Marie Gale](https://www.mariegale.com/understanding-ifra-standards/) Cat 6 = oral care; Cat 7A/B = rinse-off/leave-on hair; Cat 8 = anogenital; Cat 9 = rinse-off body wash; Cat 10A/B = household cleaners; Cat 11A/B = non-skin contact; Cat 12 = non-cosmetic
-
----
-
-## ตารางรวม 52 วัตถุดิบในกลุ่มไทม์ (Consolidated Master Table)
-
-**Legend สำหรับคอลัมน์ Allergen status:**
-- **EU-Original 24** = อยู่ในรายการ 24 allergens เดิม (Directive 2003/15/EC)
-- **EU-2023/1545 NEW** = เพิ่มเติมโดย Regulation (EU) 2023/1545
-- **Not listed** = ไม่อยู่ใน Annex III labelling list
-- Thresholds: leave-on ≥0.001% (10 ppm); rinse-off ≥0.01% (100 ppm) [Cosmeservice](https://cosmeservice.com/news/eu-regulatory-developments-transforming-cosmetic-compliance-in-2025-and-beyond/) [europa](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32023R1545)
-
-### A. Natural materials — Thymus species essential oils, absolutes & extracts
-
-| # | Material (INCI) | Source | CAS | FEMA | EC/EINECS | Main Family | Sub-family / Facet | Odor profile | Typical GC-MS majors (%) | IFRA 51st limits (key cats) | Applications (FF/PC/HC/Flavor) | Allergen status | Regulatory |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | **Red Thyme Oil (T. vulgaris CT thymol)** — Thymus Vulgaris Flower/Leaf Oil | Natural NCS, steam-distilled crude | 8007-46-3; 84929-51-1 | 3064 | 284-535-7 | Fresh | Aromatic / herbal-phenolic-medicinal | Strong, warm, spicy-phenolic, medicinal, [thegoodscentscompany +2](http://www.thegoodscentscompany.com/data/es1011351.html) "hot-herb," tarry top note, persistent herbal dry-down | thymol 37–55; [ScienceDirect](https://www.sciencedirect.com/topics/medicine-and-dentistry/myrcene) p-cymene 15–28; γ-terpinene 5–18; linalool 3–6; carvacrol 2–8; β-caryophyllene 1–3; borneol 1–3; α-pinene 1–2 | Restricted by thymol content: Cat 1 ≈0.2%, Cat 4 ≈1.6%, Cat 5A ≈0.6%, Cat 9 ≈1.3% | FF 0.01–0.3%; PC 0.005–0.2% (mouthwash up to 0.5%); HC 0.02–1%; Flavor 1–40 ppm (meat, soups, cheese) | Contains linalool, limonene, geraniol (**EU-Original 24**); carvacrol, citral (**EU-2023/1545 NEW**) | FDA 21 CFR 182.20 GRAS; FEMA GRAS |
-| 2 | **White Thyme Oil** (rectified) | Natural, redistilled from red thyme | 8007-46-3 | 3065 | 284-535-7 | Fresh | Aromatic / herbal-medicinal (softer) | Milder, [ChemicalBook](https://www.chemicalbook.com/ChemicalProductProperty_EN_CB6739355.htm) cleaner, less tarry than red; [Vigon](https://www.vigon.com/thyme-oil-red/) phenolic-herbal with less sharpness; preferred in fine fragrance [Pell Wall](https://pellwall.com/products/thyme-oil) and oral care [Voyageur Soap & Candle](https://www.voyageursoapandcandle.com/products/thyme-white-essential-oil) | thymol 25–40; p-cymene 20–30; γ-terpinene 8–15; linalool 3–5; carvacrol 1–4; borneol 1–3 | Same as thyme oil restriction (thymol-driven) | FF 0.05–0.5%; PC up to 0.3%; Oral care 0.05–0.2% | Same as #1 | FDA GRAS; FEMA GRAS |
-| 3 | **Thyme Oil CT linalool (T. vulgaris)** — French "thym doux" | Natural, steam-distilled | 8007-46-3; 84929-51-1 | 3064 (covers vulgaris/zygis) | 284-535-7 | Floral ↔ Fresh | Fresh Floral / Aromatic; linalool-floral-herbal | Soft, sweet-floral, lavender-like, herbal, rosewood-adjacent; [Eden Botanicals](https://www.edenbotanicals.com/thyme-ct-linalool-organic.html) much gentler than thymol CT [Aromatics](https://www.aromatics.com/blogs/wellness/two-thyme-essential-oil-chemotypes) | linalool 60–80; [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC5302419/) linalyl acetate 5–15; [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC5302419/) [nih](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5302419/) β-caryophyllene 2–3; camphor 1–2; terpinen-4-ol 1–3; 1,8-cineole 0.5–2 | Governed by linalool peroxide spec (PV ≤20 mmol/L); [Avenalab](https://avenalab.com/images/001SDS/Linalol-IFRA.pdf) Cat 4 ≈ 20%, Cat 5A ≈ 5.3% | FF 0.1–1%; PC (skin care, baby care) [Eden Botanicals](https://www.edenbotanicals.com/thyme-ct-linalool-organic.html) 0.05–0.5%; aromatherapy [Eden Botanicals](https://www.edenbotanicals.com/thyme-ct-linalool-organic.html) | Linalool (**EU-Original 24**) | FDA GRAS; FEMA GRAS |
-| 4 | **Thyme Oil CT geraniol (T. vulgaris)** — Serbian/S. French | Natural, steam-distilled | 8007-46-3 | 3064 | 284-535-7 | Floral | Floral / rosy-herbal | Sweet, rosy, citrus-herbal, honeyed; most floral of thyme chemotypes | geraniol 40–60; geranyl acetate 10–20; [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC5302419/) [nih](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5302419/) linalool 5–10; β-caryophyllene 2–5; geranyl propionate 1–2 | Limited by geraniol (Cat 4 ≈ 10%, Cat 5A ≈ 5.3%) | FF 0.1–0.8%; PC fine perfumery, rose-complements | Geraniol (**EU-Original 24**), linalool (**EU-Original 24**) | FDA GRAS; FEMA GRAS |
-| 5 | **Thyme Oil CT thujanol / terpinen-4-ol (T. vulgaris)** | Natural, rare | 8007-46-3 | 3064 | 284-535-7 | Fresh | Aromatic / green-woody-herbal | Fresh, green, slightly earthy, tea-tree adjacent, soft herbal; highly valued in aromatherapy | cis-sabinene hydrate 25–35; trans-sabinene hydrate 5–10; [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC5302419/) terpinen-4-ol 6–15; [PubMed](https://pubmed.ncbi.nlm.nih.gov/22978238/) γ-terpinene 3–8; linalool 3–6; myrcene 2–5 | Governed by linalool/limonene peroxide specs; relatively open | FF 0.1–0.5%; PC premium/spa | Linalool, limonene (**EU-Original 24**) | FDA GRAS; FEMA GRAS |
-| 6 | **Thyme Oil CT carvacrol (T. vulgaris)** | Natural | 8007-46-3 | 3064 | 284-535-7 | Fresh | Aromatic / phenolic-spicy-oregano | Pungent, oregano-like, sharp-phenolic, warm, spicy — more oregano than thyme | carvacrol 30–80; p-cymene 10–20; γ-terpinene 5–15; thymol 2–8; linalool 1–3 | Restricted via carvacrol endpoint: Cat 1 ≈0.2%, Cat 4 ≈1%, Cat 5A ≈0.3% | Flavor (meat/sausage); HC disinfectants; limited FF | Carvacrol (**EU-2023/1545 NEW**), limonene (**EU-Original 24**) | FDA GRAS; FEMA GRAS |
-| 7 | **Thyme Oil CT α-terpineol (T. vulgaris)** | Natural, niche | 8007-46-3 | 3064 | 284-535-7 | Fresh | Aromatic / lilac-floral-piney | Soft piney-lilac, floral-herbal; unusual, used in niche perfumery | α-terpineol 40–60; γ-terpinene 5–10; p-cymene 5–10; terpinen-4-ol 3–6; linalool 2–5 | Not specifically listed; linalool/limonene spec applies | FF niche 0.1–0.5%; PC | Not specifically listed as allergen | FDA GRAS; FEMA GRAS |
-| 8 | **Thyme Oil CT 1,8-cineole (T. vulgaris Spanish)** | Natural | 8007-46-3 | 3064 | 284-535-7 | Fresh | Aromatic / eucalyptus-camphoraceous | Eucalyptus-like, camphoraceous, cooling, medicinal | 1,8-cineole 30–55; camphor 5–15; α-pinene 5–10; β-pinene 3–8; linalool 2–5; borneol 2–5 | Not standalone IFRA restriction on 1,8-cineole; thymol/linalool contributions apply | PC (muscle balms, cold rubs); HC (air freshener) 0.1–2% | Linalool (**EU-Original 24**); camphor (**EU-2023/1545 NEW**) | FDA GRAS; FEMA GRAS |
-| 9 | **Spanish Thyme Oil (T. zygis)** — Thymus Zygis Oil | Natural, steam-distilled, Spain | 84929-51-1; 85085-75-2 [GuideChem](https://www.guidechem.com/dictionary/en/8007-46-3.html) | 3064 | 285-397-0 | Fresh | Aromatic / phenolic-medicinal | Similar to T. vulgaris thymol CT but with higher thymol, [ChemicalBook](https://www.chemicalbook.com/ChemicalProductProperty_EN_CB6739355.htm) slightly sweeter; preferred for flavor | thymol 42–55; [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC5302419/) p-cymene 18–25; γ-terpinene 10–15; [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC8467294/) linalool 3–6; carvacrol 2–6; β-caryophyllene 1–3 | Same restriction basis as thyme oil NCS | FF 0.02–0.3%; PC 0.01–0.2%; Flavor 2–50 ppm (meats, Mediterranean blends) | Linalool, limonene, geraniol (**EU-Original 24**); carvacrol (**EU-2023/1545 NEW**) | FDA GRAS; FEMA GRAS (under FEMA 3064 NFC) |
-| 10 | **Wild Thyme Oil (T. serpyllum)** — "Serpolet" | Natural, mostly E. Europe/Russia | 84776-98-7 [GuideChem](https://www.guidechem.com/dictionary/en/8007-46-3.html) | 3062 | 283-852-3 | Fresh | Aromatic / herbal-softly-phenolic | Softer, sweeter, more herbaceous than T. vulgaris; hay-like undertones | thymol 10–40 (variable); p-cymene 10–20; γ-terpinene 8–18; carvacrol 2–15; linalool 3–8; β-caryophyllene 3–8 | Same basis as thyme oil | FF 0.05–0.3%; PC; flavor niche (5–30 ppm liqueurs) | Linalool, limonene, geraniol (**EU-Original 24**) | FDA 21 CFR 182.20 GRAS; FEMA GRAS |
-| 11 | **Spanish Marjoram / Mastic Thyme Oil (T. mastichina)** — Thymus Mastichina Oil | Natural, Portugal/Spain | 84837-14-9 [GuideChem](https://www.guidechem.com/dictionary/en/8007-46-3.html) | 2660 (as "marjoram, Spanish") | 284-294-8 | Fresh | Aromatic / eucalyptus-camphoraceous; Spanish "mejorana" | Fresh, strong, sweet, spicy, eucalyptus-camphor — NOT true marjoram; frequently commercialized as "Spanish marjoram" | 1,8-cineole 40–70; linalool 3–20 (can reach 52% in Estremadura CT); α-pinene 3–8; camphor 2–10; β-pinene 2–8; α-terpineol 2–5 | No standalone; linalool PV spec applies | FF 0.1–0.8%; PC (Cologne types, Mediterranean accords); Flavor low | Linalool (**EU-Original 24**); camphor (**EU-2023/1545 NEW**) | FDA GRAS; FEMA GRAS |
-| 12 | **Moroccan Thyme Oil (T. satureioides)** — "Thym Saturéoïde" | Natural, Morocco | 97952-80-4 (sometimes 84929-51-1 in trade) | No standalone FEMA | 308-395-5 | Fresh | Aromatic / balsamic-woody-phenolic | Warm, resinous, balsamic-herbaceous with borneol character; less sharp than Spanish | borneol 20–45; α-terpineol 8–15; camphene 5–12; p-cymene 5–10; thymol 2–8; carvacrol 2–8; β-caryophyllene 3–6 | Not standalone; borneol & camphor contributions relevant | FF niche 0.1–0.5%; aromatherapy; Moroccan cosmetics | Borneol (**EU-2023/1545 NEW**); camphor (**EU-2023/1545 NEW**) | Not FDA 21 CFR 182.20 explicit; GRAS via NFC route |
-| 13 | **Conehead Thyme / Spanish Oregano Oil (Thymbra capitata / T. capitatus)** — Thymbra Capitata Oil | Natural, Portugal/Spain/Morocco/Sicily | 84775-97-3 | 2660 (as "origanum oil") / also under 3064 | 284-074-1 | Fresh | Aromatic / phenolic-spicy-oregano | Very strong, hot-spicy, oregano-like, carvacrol-dominant; pizza/Mediterranean flavor backbone | carvacrol 55–78; p-cymene 8–18; γ-terpinene 3–12; linalool 1–3; β-caryophyllene 2–5; thymol 0.5–3 | **Restricted under "Origanum oil" standard** — Cat 1 ≈0.2%, Cat 4 ≈1.2%, Cat 5A ≈0.4% | Flavor dominant (pizza, tomato, meat) 2–80 ppm; HC; limited FF (oregano accords) | **Carvacrol (EU-2023/1545 NEW)**; limonene (EU-Original 24) | FDA GRAS as Origanum oil; FEMA GRAS [ResearchGate](https://www.researchgate.net/publication/352919150_FEMA_GRAS_assessment_of_natural_flavor_complexes_Origanum_oil_thyme_oil_and_related_phenol_derivative-containing_flavoring_ingredients) |
-| 14 | **Winter Thyme Oil (T. hiemalis / T. hyemalis)** | Natural, Spain | ~90106-28-6 | Covered under 3064 NFC | — | Fresh | Aromatic / herbal-phenolic | Sharper, more phenolic than T. vulgaris; high thymol winter harvest | thymol 30–45; carvacrol 5–20; p-cymene 15–25; γ-terpinene 5–12; linalool 2–6 | Same as thyme oil | Flavor & HC; niche FF | Linalool, limonene (**EU-Original 24**); carvacrol (**EU-2023/1545 NEW**) | GRAS via NFC |
-| 15 | **Lemon Thyme Oil (T. citriodorus)** — Thymus Citriodorus Oil | Natural, cultivated | 98653-99-5 (trade) | Covered under NFC | — | Fresh | Citrus / lemon-herbal | Bright citrus-lemon top with herbal-thyme base; [Stillpoint Aromatics](https://www.stillpointaromatics.com/lemon-thyme-essential-oil-thymus-x-citriodorus) hybrid T. pulegioides × T. vulgaris [Essentria Inc.](https://www.schoolofessentria.com/blog/thyme-essential-oil-chemotype-guide) | geraniol 15–35; geranial 8–20; neral 6–15; citronellol 3–10; thymol 3–15; β-caryophyllene 2–5 | Citral & geraniol restrictions apply; citral Cat 4 ≈1.2% | FF (citrus-herbal accords); PC, HC | **Citral, geraniol, citronellol (EU-Original 24)** | FDA GRAS; FEMA GRAS |
-| 16 | **Thyme Absolute (T. vulgaris/zygis)** | Natural, solvent/hexane extraction of concrete | 8007-46-3; 84929-51-1 | 3064 | 284-535-7 | Fresh | Aromatic / rich herbal-waxy-phenolic | Deeper, richer, more tenacious than EO; waxy-herbal-balsamic [thegoodscentscompany](http://www.thegoodscentscompany.com/data/ab1050931.html) with hay undertone; used as fixative | thymol 25–40; p-cymene 10–20; γ-terpinene 5–12; carvacrol 2–8; waxes/flavonoids; linalool 2–5 | Same as thyme oil (thymol-driven) | FF 0.05–0.5% fine perfumery (fougère, chypre) | Same as thyme oil | Not FEMA-listed for absolute specifically |
-| 17 | **Thyme CO2 Extract (select / total)** — "Mane Jungle Essence Thyme" type | Natural, supercritical CO2 | 8007-46-3 | Under NFC 3064 | 284-535-7 | Fresh | Aromatic / true-to-nature herbal | Closest to fresh crushed herb; bright top note, full herbaceous body; no distillation artefacts | thymol 35–50; p-cymene 12–22; γ-terpinene 8–15; linalool 3–7; β-caryophyllene 2–5; terpinen-4-ol 1–4 | Same as thyme oil | FF premium; PC spa; flavor (culinary authentication) | Same as thyme oil | GRAS NFC |
-| 18 | **Thyme Oleoresin** | Natural, solvent-extracted spent herb | 8007-46-3 | 3064 | 284-535-7 | Fresh | Aromatic / concentrated herbal-vegetal | Concentrated, viscous, full herbal with flavonoid/polyphenol body; flavor use | thymol 15–30; carvacrol 3–10; non-volatiles 50–70% (flavonoids, polyphenols) | Not covered by IFRA (mostly flavor use) | Flavor (savory, meat seasoning) 10–200 ppm | Linalool, limonene (**EU-Original 24**) | FDA GRAS (21 CFR 182.20 "thyme, thyme oil"); FEMA GRAS |
-| 19 | **Thyme Tincture (1:5 ethanolic)** | Natural, maceration | 8007-46-3 | 3064 | 284-535-7 | Fresh | Aromatic / dilute herbal | Soft, diluted, naturalistic thyme; used in tonics, bitters, mouthwash | thymol, carvacrol trace; polyphenols; rosmarinic acid | Not IFRA-restricted at typical dilutions | Oral care, liqueurs, bitters 0.1–2% | Linalool, limonene (**EU-Original 24**) | FDA GRAS; FEMA GRAS |
-
-### B. Isolated / synthetic molecules — phenolic compounds
-
-| # | Material | Origin | CAS | FEMA | EC/EINECS | Main Family | Sub-family / Facet | Odor / taste profile | IFRA 51st limits | Applications (FF/PC/HC/Flavor) | Allergen status | Regulatory |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 20 | **Thymol** (2-isopropyl-5-methylphenol) | Natural isolate or synthetic (nature-identical) | 89-83-8 | 3066 | 201-944-8 | Fresh | Aromatic / phenolic-medicinal-herbal | Sharp, herbal, phenolic, medicinal, camphoraceous, strong; antiseptic character | **Restricted** (Standard updated 46th; reaffirmed 51st) — Cat 1 0.08%, Cat 2 0.1%, Cat 4 0.2%, Cat 5A 0.1%, Cat 9 0.1%, Cat 10A 0.4%, Cat 11 unlimited; based on dermal sensitization | FF 0.005–0.05%; Oral care 0.05–0.3% (Listerine®); PC 0.01–0.1%; Flavor 0.5–30 ppm | **Not in EU Annex III labelling list** (toxicologically distinct from sensitizing allergens) | FDA 21 CFR 172.515 synthetic flavoring; FEMA GRAS |
-| 21 | **Carvacrol** (2-methyl-5-isopropylphenol) | Natural isolate or synthetic | 499-75-2 | 2245 | 207-889-6 | Fresh | Aromatic / phenolic-spicy-oregano | Warm, spicy, oregano-like, tar-phenolic, sharper than thymol | **Restricted** — Cat 1 0.08%, Cat 4 0.2%, Cat 5A 0.1%; Cat 10 0.4% | Flavor (oregano, meat) 1–25 ppm; Oral care; HC; FF spicy accords | **EU-2023/1545 NEW allergen** (added 2023; compliance 31 July 2026) | FDA GRAS 21 CFR 172.515; FEMA GRAS |
-| 22 | **Thymol methyl ether** (methyl thymyl ether) | Natural constituent / synthetic | 1
+Thyme group aromatic materials: natural & synthetic reference 2026
+รายงานฉบับนี้รวบรวม วัตถุดิบหอมกลุ่มไทม์ (thyme group) ทั้งหมดที่ใช้ในเชิงพาณิชย์ในอุตสาหกรรมน้ำหอมและฟลาเวอร์ ครอบคลุมทั้งน้ำมันหอมระเหยจากธรรมชาติ (natural complex substances, NCS) และโมเลกุลเดี่ยว (isolated/synthetic) — รวมทั้งสิ้น 52 รายการ จัดทำเป็นตารางเดียวตามที่ผู้ใช้ร้องขอ ข้อมูลปรับปรุงให้สอดคล้องกับ IFRA 51st Amendment (notified 30 June 2023,  (Criticalcatalyst +5) compliance for existing creations 30 Oct 2025) และ Commission Regulation (EU) 2023/1545 ซึ่งขยายรายการสารก่อภูมิแพ้จาก 24/26 รายการเป็น 80+ รายการ  (Annelltd)  (Euverify) (deadline: 31 July 2026 สำหรับสินค้าใหม่, 31 July 2028 สำหรับสินค้าที่วางตลาดแล้ว)  (EUR-Lex +2)
+สรุปเชิงกลยุทธ์ (Bottom Line Up Front)
+ในตลาดปี 2026 Thymus vulgaris CT thymol (Spanish Red Thyme Oil, CAS 8007-46-3 / 84929-51-1) ยังเป็นวัตถุดิบเชิงพาณิชย์หลัก แต่สถานะเชิงกฎระเบียบของกลุ่มไทม์ได้เปลี่ยนแปลงอย่างมีนัยสำคัญ: linalool, limonene, geraniol, citronellol, citral, eugenol และ methyl salicylate ยังคงเป็น "allergens เดิม 24 รายการ" ที่ต้องประกาศ ขณะที่ Regulation 2023/1545 เพิ่ม carvacrol, camphor, menthol, vanillin, และ essential oils หลายชนิด เข้ารายการ — ซึ่งส่งผลกระทบโดยตรงต่อสูตรที่ใช้ไทม์เพราะ carvacrol เป็น constituent หลักของ T. capitatus และ chemotype carvacrol ของ T. vulgaris ใน IFRA 51st Amendment, thyme oils (T. vulgaris/T. zygis) อยู่ภายใต้ restriction standard (Category 1 ≈ 0.2%, Category 4 ≈ 1.6%, Category 5A ≈ 0.6%) โดยกำหนดโดย thymol content; thymol เอง มีข้อจำกัดเข้มงวดกว่า (Cat 5A ≈ 0.1–0.6%) จาก sensitization endpoint; linalool ได้รับการกำหนดขีดจำกัดใหม่จาก peroxide-value specification (≤20 mmol/L)
+ไทม์เป็นกลุ่มที่ "survive IFRA ได้ค่อนข้างดี" เมื่อเทียบกับกลุ่ม oakmoss, treemoss, หรือ HICC — ไม่มี material ในกลุ่มไทม์ถูก prohibit โดยสมบูรณ์ — แต่ความซับซ้อนอยู่ที่การคำนวณ "contributions from other sources" (Annex) ที่ต้องนับ thymol, carvacrol, linalool, limonene, geraniol ที่มากับ thyme oil รวมกับที่เติมจากแหล่งอื่นในสูตร
+วิธีวิทยา (Methodology)
+แหล่งข้อมูลปฐมภูมิ: IFRA 51st Amendment Standards library, EUR-Lex 32023R1545, FEMA Flavor Library (femaflavor.org), FDA 21 CFR 182.20 & 172.515, The Good Scents Company (TGSC), PubChem, Leffingwell & Associates, RIFM Fragrance Material Safety Resource, peer-reviewed GC-MS studies (Satyal et al. 2016 Foods; Schmidt et al. 2012 NPC; Borugă et al. 2014 J Med Life; Cohen et al. 2021 Food Chem Toxicol — FEMA GRAS NFC seventh series)  (Flavor Extract Manufacturers Association)  (Flavor Extract Manufacturers Association)
+Michael Edwards Fragrance Wheel (2023–2026 edition): ประกอบด้วย 4 Main Families — Floral, Oriental/Amber, Woody, Fresh — โดยกลุ่มไทม์เกือบทั้งหมดอยู่ในตระกูล Fresh → Aromatic (หรือบางกรณี Aromatic Fougère) โดยมี facets ได้แก่ herbal, phenolic, medicinal, camphoraceous, spicy, green, terpenic ยกเว้น linalool chemotype ที่คาบเกี่ยวกับ Floral → Fresh Floral และ caryophyllene ที่อยู่ Woody → Dry Woods → Spicy
+GC-MS context: chemotypes ของ Thymus vulgaris ยอมรับเป็นทางการ 6–7 รายการ  (NCBI) (Granger & Passet 1973; Stahl-Biskup & Venskutonis 2012) ได้แก่ thymol, carvacrol, linalool, geraniol,  (ScienceDirect) α-terpineol, trans-sabinene hydrate/thujanol-4,  (PubMed Central +2) และ 1,8-cineole  (ScienceDirect) — การวิเคราะห์ cluster analysis โดย Satyal et al. (2016) ระบุได้ถึง 20 chemotypes ย่อย  (PubMed Central) รายงานนี้รายงานเฉพาะ chemotype ที่ มี commercial supply chain ยืนยัน (เช่นจาก Biolandes, Albert Vieille, Robertet, Vigon)
+IFRA Categories (12 ประเภท): Cat 1 = lip products; Cat 2 = deodorants; Cat 3 = hydroalcoholic shaved skin; Cat 4 = hydroalcoholic unshaved skin (fine fragrance); Cat 5A-D = body/face/hand creams;  (Marie Gale) Cat 6 = oral care; Cat 7A/B = rinse-off/leave-on hair; Cat 8 = anogenital; Cat 9 = rinse-off body wash; Cat 10A/B = household cleaners; Cat 11A/B = non-skin contact; Cat 12 = non-cosmetic
+ตารางรวม 52 วัตถุดิบในกลุ่มไทม์ (Consolidated Master Table)
+Legend สำหรับคอลัมน์ Allergen status:
+EU-Original 24 = อยู่ในรายการ 24 allergens เดิม (Directive 2003/15/EC)
+EU-2023/1545 NEW = เพิ่มเติมโดย Regulation (EU) 2023/1545
+Not listed = ไม่อยู่ใน Annex III labelling list
+Thresholds: leave-on ≥0.001% (10 ppm); rinse-off ≥0.01% (100 ppm)  (Cosmeservice)  (europa)
+A. Natural materials — Thymus species essential oils, absolutes & extracts
+#
+Material (INCI)
+Source
+CAS
+FEMA
+EC/EINECS
+Main Family
+Sub-family / Facet
+Odor profile
+Typical GC-MS majors (%)
+IFRA 51st limits (key cats)
+Applications (FF/PC/HC/Flavor)
+Allergen status
+Regulatory
+1
+Red Thyme Oil (T. vulgaris CT thymol) — Thymus Vulgaris Flower/Leaf Oil
+Natural NCS, steam-distilled crude
+8007-46-3; 84929-51-1
+3064
+284-535-7
+Fresh
+Aromatic / herbal-phenolic-medicinal
+Strong, warm, spicy-phenolic, medicinal,  (thegoodscentscompany +2) "hot-herb," tarry top note, persistent herbal dry-down
+thymol 37–55;  (ScienceDirect) p-cymene 15–28; γ-terpinene 5–18; linalool 3–6; carvacrol 2–8; β-caryophyllene 1–3; borneol 1–3; α-pinene 1–2
+Restricted by thymol content: Cat 1 ≈0.2%, Cat 4 ≈1.6%, Cat 5A ≈0.6%, Cat 9 ≈1.3%
+FF 0.01–0.3%; PC 0.005–0.2% (mouthwash up to 0.5%); HC 0.02–1%; Flavor 1–40 ppm (meat, soups, cheese)
+Contains linalool, limonene, geraniol (EU-Original 24); carvacrol, citral (EU-2023/1545 NEW)
+FDA 21 CFR 182.20 GRAS; FEMA GRAS
+2
+White Thyme Oil (rectified)
+Natural, redistilled from red thyme
+8007-46-3
+3065
+284-535-7
+Fresh
+Aromatic / herbal-medicinal (softer)
+Milder,  (ChemicalBook) cleaner, less tarry than red;  (Vigon) phenolic-herbal with less sharpness; preferred in fine fragrance  (Pell Wall) and oral care  (Voyageur Soap & Candle)
+thymol 25–40; p-cymene 20–30; γ-terpinene 8–15; linalool 3–5; carvacrol 1–4; borneol 1–3
+Same as thyme oil restriction (thymol-driven)
+FF 0.05–0.5%; PC up to 0.3%; Oral care 0.05–0.2%
+Same as #1
+FDA GRAS; FEMA GRAS
+3
+Thyme Oil CT linalool (T. vulgaris) — French "thym doux"
+Natural, steam-distilled
+8007-46-3; 84929-51-1
+3064 (covers vulgaris/zygis)
+284-535-7
+Floral ↔ Fresh
+Fresh Floral / Aromatic; linalool-floral-herbal
+Soft, sweet-floral, lavender-like, herbal, rosewood-adjacent;  (Eden Botanicals) much gentler than thymol CT  (Aromatics)
+linalool 60–80;  (PubMed Central) linalyl acetate 5–15;  (PubMed Central)  (nih) β-caryophyllene 2–3; camphor 1–2; terpinen-4-ol 1–3; 1,8-cineole 0.5–2
+Governed by linalool peroxide spec (PV ≤20 mmol/L);  (Avenalab) Cat 4 ≈ 20%, Cat 5A ≈ 5.3%
+FF 0.1–1%; PC (skin care, baby care)  (Eden Botanicals) 0.05–0.5%; aromatherapy  (Eden Botanicals)
+Linalool (EU-Original 24)
+FDA GRAS; FEMA GRAS
+4
+Thyme Oil CT geraniol (T. vulgaris) — Serbian/S. French
+Natural, steam-distilled
+8007-46-3
+3064
+284-535-7
+Floral
+Floral / rosy-herbal
+Sweet, rosy, citrus-herbal, honeyed; most floral of thyme chemotypes
+geraniol 40–60; geranyl acetate 10–20;  (PubMed Central)  (nih) linalool 5–10; β-caryophyllene 2–5; geranyl propionate 1–2
+Limited by geraniol (Cat 4 ≈ 10%, Cat 5A ≈ 5.3%)
+FF 0.1–0.8%; PC fine perfumery, rose-complements
+Geraniol (EU-Original 24), linalool (EU-Original 24)
+FDA GRAS; FEMA GRAS
+5
+Thyme Oil CT thujanol / terpinen-4-ol (T. vulgaris)
+Natural, rare
+8007-46-3
+3064
+284-535-7
+Fresh
+Aromatic / green-woody-herbal
+Fresh, green, slightly earthy, tea-tree adjacent, soft herbal; highly valued in aromatherapy
+cis-sabinene hydrate 25–35; trans-sabinene hydrate 5–10;  (PubMed Central) terpinen-4-ol 6–15;  (PubMed) γ-terpinene 3–8; linalool 3–6; myrcene 2–5
+Governed by linalool/limonene peroxide specs; relatively open
+FF 0.1–0.5%; PC premium/spa
+Linalool, limonene (EU-Original 24)
+FDA GRAS; FEMA GRAS
+6
+Thyme Oil CT carvacrol (T. vulgaris)
+Natural
+8007-46-3
+3064
+284-535-7
+Fresh
+Aromatic / phenolic-spicy-oregano
+Pungent, oregano-like, sharp-phenolic, warm, spicy — more oregano than thyme
+carvacrol 30–80; p-cymene 10–20; γ-terpinene 5–15; thymol 2–8; linalool 1–3
+Restricted via carvacrol endpoint: Cat 1 ≈0.2%, Cat 4 ≈1%, Cat 5A ≈0.3%
+Flavor (meat/sausage); HC disinfectants; limited FF
+Carvacrol (EU-2023/1545 NEW), limonene (EU-Original 24)
+FDA GRAS; FEMA GRAS
+7
+Thyme Oil CT α-terpineol (T. vulgaris)
+Natural, niche
+8007-46-3
+3064
+284-535-7
+Fresh
+Aromatic / lilac-floral-piney
+Soft piney-lilac, floral-herbal; unusual, used in niche perfumery
+α-terpineol 40–60; γ-terpinene 5–10; p-cymene 5–10; terpinen-4-ol 3–6; linalool 2–5
+Not specifically listed; linalool/limonene spec applies
+FF niche 0.1–0.5%; PC
+Not specifically listed as allergen
+FDA GRAS; FEMA GRAS
+8
+Thyme Oil CT 1,8-cineole (T. vulgaris Spanish)
+Natural
+8007-46-3
+3064
+284-535-7
+Fresh
+Aromatic / eucalyptus-camphoraceous
+Eucalyptus-like, camphoraceous, cooling, medicinal
+1,8-cineole 30–55; camphor 5–15; α-pinene 5–10; β-pinene 3–8; linalool 2–5; borneol 2–5
+Not standalone IFRA restriction on 1,8-cineole; thymol/linalool contributions apply
+PC (muscle balms, cold rubs); HC (air freshener) 0.1–2%
+Linalool (EU-Original 24); camphor (EU-2023/1545 NEW)
+FDA GRAS; FEMA GRAS
+9
+Spanish Thyme Oil (T. zygis) — Thymus Zygis Oil
+Natural, steam-distilled, Spain
+84929-51-1; 85085-75-2  (GuideChem)
+3064
+285-397-0
+Fresh
+Aromatic / phenolic-medicinal
+Similar to T. vulgaris thymol CT but with higher thymol,  (ChemicalBook) slightly sweeter; preferred for flavor
+thymol 42–55;  (PubMed Central) p-cymene 18–25; γ-terpinene 10–15;  (PubMed Central) linalool 3–6; carvacrol 2–6; β-caryophyllene 1–3
+Same restriction basis as thyme oil NCS
+FF 0.02–0.3%; PC 0.01–0.2%; Flavor 2–50 ppm (meats, Mediterranean blends)
+Linalool, limonene, geraniol (EU-Original 24); carvacrol (EU-2023/1545 NEW)
+FDA GRAS; FEMA GRAS (under FEMA 3064 NFC)
+10
+Wild Thyme Oil (T. serpyllum) — "Serpolet"
+Natural, mostly E. Europe/Russia
+84776-98-7  (GuideChem)
+3062
+283-852-3
+Fresh
+Aromatic / herbal-softly-phenolic
+Softer, sweeter, more herbaceous than T. vulgaris; hay-like undertones
+thymol 10–40 (variable); p-cymene 10–20; γ-terpinene 8–18; carvacrol 2–15; linalool 3–8; β-caryophyllene 3–8
+Same basis as thyme oil
+FF 0.05–0.3%; PC; flavor niche (5–30 ppm liqueurs)
+Linalool, limonene, geraniol (EU-Original 24)
+FDA 21 CFR 182.20 GRAS; FEMA GRAS
+11
+Spanish Marjoram / Mastic Thyme Oil (T. mastichina) — Thymus Mastichina Oil
+Natural, Portugal/Spain
+84837-14-9  (GuideChem)
+2660 (as "marjoram, Spanish")
+284-294-8
+Fresh
+Aromatic / eucalyptus-camphoraceous; Spanish "mejorana"
+Fresh, strong, sweet, spicy, eucalyptus-camphor — NOT true marjoram; frequently commercialized as "Spanish marjoram"
+1,8-cineole 40–70; linalool 3–20 (can reach 52% in Estremadura CT); α-pinene 3–8; camphor 2–10; β-pinene 2–8; α-terpineol 2–5
+No standalone; linalool PV spec applies
+FF 0.1–0.8%; PC (Cologne types, Mediterranean accords); Flavor low
+Linalool (EU-Original 24); camphor (EU-2023/1545 NEW)
+FDA GRAS; FEMA GRAS
+12
+Moroccan Thyme Oil (T. satureioides) — "Thym Saturéoïde"
+Natural, Morocco
+97952-80-4 (sometimes 84929-51-1 in trade)
+No standalone FEMA
+308-395-5
+Fresh
+Aromatic / balsamic-woody-phenolic
+Warm, resinous, balsamic-herbaceous with borneol character; less sharp than Spanish
+borneol 20–45; α-terpineol 8–15; camphene 5–12; p-cymene 5–10; thymol 2–8; carvacrol 2–8; β-caryophyllene 3–6
+Not standalone; borneol & camphor contributions relevant
+FF niche 0.1–0.5%; aromatherapy; Moroccan cosmetics
+Borneol (EU-2023/1545 NEW); camphor (EU-2023/1545 NEW)
+Not FDA 21 CFR 182.20 explicit; GRAS via NFC route
+13
+Conehead Thyme / Spanish Oregano Oil (Thymbra capitata / T. capitatus) — Thymbra Capitata Oil
+Natural, Portugal/Spain/Morocco/Sicily
+84775-97-3
+2660 (as "origanum oil") / also under 3064
+284-074-1
+Fresh
+Aromatic / phenolic-spicy-oregano
+Very strong, hot-spicy, oregano-like, carvacrol-dominant; pizza/Mediterranean flavor backbone
+carvacrol 55–78; p-cymene 8–18; γ-terpinene 3–12; linalool 1–3; β-caryophyllene 2–5; thymol 0.5–3
+Restricted under "Origanum oil" standard — Cat 1 ≈0.2%, Cat 4 ≈1.2%, Cat 5A ≈0.4%
+Flavor dominant (pizza, tomato, meat) 2–80 ppm; HC; limited FF (oregano accords)
+Carvacrol (EU-2023/1545 NEW); limonene (EU-Original 24)
+FDA GRAS as Origanum oil; FEMA GRAS  (ResearchGate)
+14
+Winter Thyme Oil (T. hiemalis / T. hyemalis)
+Natural, Spain
+~90106-28-6
+Covered under 3064 NFC
+—
+Fresh
+Aromatic / herbal-phenolic
+Sharper, more phenolic than T. vulgaris; high thymol winter harvest
+thymol 30–45; carvacrol 5–20; p-cymene 15–25; γ-terpinene 5–12; linalool 2–6
+Same as thyme oil
+Flavor & HC; niche FF
+Linalool, limonene (EU-Original 24); carvacrol (EU-2023/1545 NEW)
+GRAS via NFC
+15
+Lemon Thyme Oil (T. citriodorus) — Thymus Citriodorus Oil
+Natural, cultivated
+98653-99-5 (trade)
+Covered under NFC
+—
+Fresh
+Citrus / lemon-herbal
+Bright citrus-lemon top with herbal-thyme base;  (Stillpoint Aromatics) hybrid T. pulegioides × T. vulgaris  (Essentria Inc.)
+geraniol 15–35; geranial 8–20; neral 6–15; citronellol 3–10; thymol 3–15; β-caryophyllene 2–5
+Citral & geraniol restrictions apply; citral Cat 4 ≈1.2%
+FF (citrus-herbal accords); PC, HC
+Citral, geraniol, citronellol (EU-Original 24)
+FDA GRAS; FEMA GRAS
+16
+Thyme Absolute (T. vulgaris/zygis)
+Natural, solvent/hexane extraction of concrete
+8007-46-3; 84929-51-1
+3064
+284-535-7
+Fresh
+Aromatic / rich herbal-waxy-phenolic
+Deeper, richer, more tenacious than EO; waxy-herbal-balsamic  (thegoodscentscompany) with hay undertone; used as fixative
+thymol 25–40; p-cymene 10–20; γ-terpinene 5–12; carvacrol 2–8; waxes/flavonoids; linalool 2–5
+Same as thyme oil (thymol-driven)
+FF 0.05–0.5% fine perfumery (fougère, chypre)
+Same as thyme oil
+Not FEMA-listed for absolute specifically
+17
+Thyme CO2 Extract (select / total) — "Mane Jungle Essence Thyme" type
+Natural, supercritical CO2
+8007-46-3
+Under NFC 3064
+284-535-7
+Fresh
+Aromatic / true-to-nature herbal
+Closest to fresh crushed herb; bright top note, full herbaceous body; no distillation artefacts
+thymol 35–50; p-cymene 12–22; γ-terpinene 8–15; linalool 3–7; β-caryophyllene 2–5; terpinen-4-ol 1–4
+Same as thyme oil
+FF premium; PC spa; flavor (culinary authentication)
+Same as thyme oil
+GRAS NFC
+18
+Thyme Oleoresin
+Natural, solvent-extracted spent herb
+8007-46-3
+3064
+284-535-7
+Fresh
+Aromatic / concentrated herbal-vegetal
+Concentrated, viscous, full herbal with flavonoid/polyphenol body; flavor use
+thymol 15–30; carvacrol 3–10; non-volatiles 50–70% (flavonoids, polyphenols)
+Not covered by IFRA (mostly flavor use)
+Flavor (savory, meat seasoning) 10–200 ppm
+Linalool, limonene (EU-Original 24)
+FDA GRAS (21 CFR 182.20 "thyme, thyme oil"); FEMA GRAS
+19
+Thyme Tincture (1:5 ethanolic)
+Natural, maceration
+8007-46-3
+3064
+284-535-7
+Fresh
+Aromatic / dilute herbal
+Soft, diluted, naturalistic thyme; used in tonics, bitters, mouthwash
+thymol, carvacrol trace; polyphenols; rosmarinic acid
+Not IFRA-restricted at typical dilutions
+Oral care, liqueurs, bitters 0.1–2%
+Linalool, limonene (EU-Original 24)
+FDA GRAS; FEMA GRAS
+B. Isolated / synthetic molecules — phenolic compounds
+#
+Material
+Origin
+CAS
+FEMA
+EC/EINECS
+Main Family
+Sub-family / Facet
+Odor / taste profile
+IFRA 51st limits
+Applications (FF/PC/HC/Flavor)
+Allergen status
+Regulatory
+20
+Thymol (2-isopropyl-5-methylphenol)
+Natural isolate or synthetic (nature-identical)
+89-83-8
+3066
+201-944-8
+Fresh
+Aromatic / phenolic-medicinal-herbal
+Sharp, herbal, phenolic, medicinal, camphoraceous, strong; antiseptic character
+Restricted (Standard updated 46th; reaffirmed 51st) — Cat 1 0.08%, Cat 2 0.1%, Cat 4 0.2%, Cat 5A 0.1%, Cat 9 0.1%, Cat 10A 0.4%, Cat 11 unlimited; based on dermal sensitization
+FF 0.005–0.05%; Oral care 0.05–0.3% (Listerine®); PC 0.01–0.1%; Flavor 0.5–30 ppm
+Not in EU Annex III labelling list (toxicologically distinct from sensitizing allergens)
+FDA 21 CFR 172.515 synthetic flavoring; FEMA GRAS
+21
+Carvacrol (2-methyl-5-isopropylphenol)
+Natural isolate or synthetic
+499-75-2
+2245
+207-889-6
+Fresh
+Aromatic / phenolic-spicy-oregano
+Warm, spicy, oregano-like, tar-phenolic, sharper than thymol
+Restricted — Cat 1 0.08%, Cat 4 0.2%, Cat 5A 0.1%; Cat 10 0.4%
+Flavor (oregano, meat) 1–25 ppm; Oral care; HC; FF spicy accords
+EU-2023/1545 NEW allergen (added 2023; compliance 31 July 2026)
+FDA GRAS 21 CFR 172.515; FEMA GRAS
+22
+Thymol methyl ether (methyl thymyl ether)
+Natural constituent / synthetic
+1076-56-8
+3436
+214-063-6
+Fresh
+Aromatic / phenolic-ethereal-green
+Aromatic, green, herbal-sweet, slight mint; milder than thymol, non-phenolic character
+Not specifically restricted
+FF accents 0.01–0.1%; Flavor 0.5–10 ppm
+Not listed
+FDA 21 CFR 172.515; FEMA GRAS
+23
+Carvacrol methyl ether
+Natural / synthetic
+6379-73-3
+4719
+228-959-1
+Fresh
+Aromatic / phenolic-ethereal
+Aromatic, herbal, soft spicy-oregano; gentler than carvacrol
+Not specifically restricted
+FF; Flavor 0.5–10 ppm
+Not listed
+FDA 21 CFR 172.515; FEMA GRAS (since 2013)
+24
+Thymoquinone (2-isopropyl-5-methyl-1,4-benzoquinone)
+Natural (also Nigella sativa) / synthetic
+490-91-5
+—
+207-716-4
+—
+Not mainstream fragrance
+Aromatic-medicinal; pharmaceutical/nutraceutical primarily
+Not IFRA-listed
+Nutraceutical; specialty HC biocide
+Not listed
+Not FEMA GRAS; EFSA/FDA novel ingredient path
+25
+Thymohydroquinone
+Minor natural constituent
+490-92-6
+—
+207-717-X
+—
+Non-odorant
+—
+Not listed
+Analytical marker; research
+Not listed
+—
+C. Isolated molecules — monoterpene hydrocarbons
+#
+Material
+Origin
+CAS
+FEMA
+EC/EINECS
+Main Family
+Sub-family / Facet
+Odor profile
+IFRA 51st limits
+Applications
+Allergen status
+Regulatory
+26
+p-Cymene
+Natural/synthetic
+99-87-6
+2356
+202-796-7
+Fresh
+Aromatic / solvent-citrus-terpenic
+Mild, woody, citrus-solvent, terpenic, slightly carroty; "thyme backbone"
+Not standalone IFRA restriction
+FF 0.1–2% (diffusive character); HC; Flavor 1–20 ppm
+Not listed
+FDA 21 CFR 172.515; FEMA GRAS
+27
+γ-Terpinene
+Natural/synthetic
+99-85-4
+3559
+202-794-6
+Fresh
+Citrus-terpenic / green
+Pleasant citrus-terpene, green, fresh; precursor to p-cymene
+Not restricted, but peroxide potential noted
+FF 0.05–1%; Flavor 1–15 ppm
+Not listed
+FDA 21 CFR 172.515; FEMA GRAS
+28
+α-Terpinene
+Natural/synthetic
+99-86-5
+3558
+202-795-1
+Fresh
+Citrus-terpenic
+Lemon-woody, terpenic, slight spice
+Not restricted
+FF; Flavor 1–15 ppm
+Not listed
+FEMA GRAS
+29
+Terpinolene
+Natural/synthetic
+586-62-9
+3046
+209-578-0
+Fresh
+Citrus-piney-terpenic
+Fresh, piney, citrus, floral-woody
+Not specifically restricted; peroxide specification under review
+FF; Flavor
+Not listed
+FEMA GRAS
+30
+α-Pinene
+Natural/synthetic
+80-56-8 (racemic 2437-95-8)
+2902
+201-291-9
+Woody ↔ Fresh
+Terpenic / piney-resinous
+Fresh pine, turpentine, resinous
+Not restricted; peroxide formation noted
+FF 0.1–2%; HC; Flavor 1–30 ppm
+Not listed (though d-pinene hydroperoxides are a sensitizer concern)
+FDA 21 CFR 172.515; FEMA GRAS
+31
+β-Pinene
+Natural/synthetic
+127-91-3
+2903
+204-872-5
+Woody ↔ Fresh
+Terpenic / piney-resinous-minty
+Dry pine, woody, slight mint
+Not restricted
+FF 0.1–2%; Flavor 1–20 ppm
+Not listed
+FDA 21 CFR 172.515; FEMA GRAS
+32
+Myrcene (β-myrcene)
+Natural/synthetic
+123-35-3
+2762
+204-622-5
+Fresh
+Aromatic / peppery-balsamic-green
+Fresh-balsamic, peppery, slightly metallic; lifts top notes
+Not specifically restricted
+FF; Flavor
+Not listed
+FDA 21 CFR 172.515; FEMA GRAS
+33
+d-Limonene
+Natural (citrus) / synthetic
+5989-27-5
+2633
+227-813-5
+Fresh
+Citrus / orange-fresh
+Fresh citrus-orange, sweet, light
+Restricted — peroxide specification ≤20 mmol/L; Cat 4 ≈5.3%; sensitization-driven
+FF 1–20%; HC 0.1–5%; Flavor 10–100 ppm
+Limonene (EU-Original 24)
+FDA 21 CFR 182.60 GRAS; FEMA GRAS
+34
+l-Limonene
+Natural (mint/conifer)/synthetic
+5989-54-8
+2633
+227-815-6
+Fresh
+Mentha-terpenic
+Turpentine-minty
+Same peroxide specification
+FF; Flavor
+Limonene (EU-Original 24)
+FDA GRAS; FEMA GRAS
+35
+Sabinene
+Natural
+3387-41-5
+3539
+222-212-4
+Fresh
+Terpenic / woody-piney-spicy
+Woody, warm-spicy, slight citrus
+Not restricted
+FF; Flavor
+Not listed
+FEMA GRAS
+36
+Camphene
+Natural/synthetic
+79-92-5
+2229
+201-234-8
+Fresh
+Terpenic / camphoraceous-woody
+Camphoraceous, woody, pine
+Not restricted
+FF; Flavor
+Not listed
+FEMA GRAS
+D. Isolated molecules — oxygenated monoterpenes
+#
+Material
+Origin
+CAS
+FEMA
+EC/EINECS
+Main Family
+Sub-family / Facet
+Odor profile
+IFRA 51st limits
+Applications
+Allergen status
+Regulatory
+37
+Linalool (racemic)
+Natural/syn
