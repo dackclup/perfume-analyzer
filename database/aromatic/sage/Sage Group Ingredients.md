@@ -1,231 +1,61 @@
-# Sage Group Ingredients — Fine Fragrance, Personal Care, Home Care & Flavor Reference (2026)
-> **Scope:** สารทั้งหมดในกลุ่ม **Sage Facet** ที่ใช้ใน 4 อุตสาหกรรม: Fine Fragrance & Fine Perfume, Personal Care & Cosmetics, Home Care & Air Care, และ Flavor — ทั้ง Natural และ Synthetic — จัดตำแหน่งตาม **Michael Edwards Fragrance Wheel** พร้อม GC-MS data, CAS, IFRA 51st Amendment (2023), และ FEMA GRAS
+# Thyme group aromatic materials: natural & synthetic reference 2026
 
-> **ตรวจสอบ 2026:** IFRA limits ยืนยันจาก NHR Organic Oils IFRA 51 COC (Common Sage, Clary Sage 2024–2025)[^1][^2], Bay House Aromatics IFRA 51 COC[^3], Scentree.co Thujone limits[^4], PubChem IFRA data[^5]. บังคับ existing creations ตั้งแต่ **30 ตุลาคม 2025**.
+รายงานฉบับนี้รวบรวม **วัตถุดิบหอมกลุ่มไทม์ (thyme group)** ทั้งหมดที่ใช้ในเชิงพาณิชย์ในอุตสาหกรรมน้ำหอมและฟลาเวอร์ ครอบคลุมทั้งน้ำมันหอมระเหยจากธรรมชาติ (natural complex substances, NCS) และโมเลกุลเดี่ยว (isolated/synthetic) — **รวมทั้งสิ้น 52 รายการ** จัดทำเป็นตารางเดียวตามที่ผู้ใช้ร้องขอ ข้อมูลปรับปรุงให้สอดคล้องกับ **IFRA 51st Amendment** (notified 30 June 2023, [Criticalcatalyst +5](https://criticalcatalyst.com/notification-of-the-51st-amendment-to-the-ifra-standards/) compliance for existing creations 30 Oct 2025) และ **Commission Regulation (EU) 2023/1545** ซึ่งขยายรายการสารก่อภูมิแพ้จาก 24/26 รายการเป็น **80+ รายการ** [Annelltd](https://annelltd.com/new-horizon-for-cosmetic-safety-adapting-to-regulation-eu-2023-1545-onfragrance-allergen-labelling/) [Euverify](https://euverify.com/resource/eu-uk-fragrance-allergen-rules/) (deadline: 31 July 2026 สำหรับสินค้าใหม่, 31 July 2028 สำหรับสินค้าที่วางตลาดแล้ว) [EUR-Lex +2](https://eur-lex.europa.eu/eli/reg/2023/1545/oj/eng)
 
-***
-## 1. Sage ใน Michael Edwards Fragrance Wheel
-Sage จัดอยู่ใน **Aromatic sub-family** บน Fragrance Wheel ของ Michael Edwards โดยวางตำแหน่งบนรอยต่อ Fresh ↔ Woody — เป็น bridge ระหว่าง lavender facet (clary sage), herbal facet (common sage, Spanish sage) และ spicy/dry facet (Dalmatian sage):
+## สรุปเชิงกลยุทธ์ (Bottom Line Up Front)
 
-- **Main Family:** Fresh Woody Note
-- **Sub-family:** Aromatic
-- **Facet:** Sage (Herbal Aromatic)
+ในตลาดปี 2026 **Thymus vulgaris CT thymol (Spanish Red Thyme Oil, CAS 8007-46-3 / 84929-51-1)** ยังเป็นวัตถุดิบเชิงพาณิชย์หลัก แต่สถานะเชิงกฎระเบียบของกลุ่มไทม์ได้เปลี่ยนแปลงอย่างมีนัยสำคัญ: **linalool, limonene, geraniol, citronellol, citral, eugenol และ methyl salicylate** ยังคงเป็น "allergens เดิม 24 รายการ" ที่ต้องประกาศ ขณะที่ Regulation 2023/1545 เพิ่ม **carvacrol, camphor, menthol, vanillin, และ essential oils หลายชนิด** เข้ารายการ — ซึ่งส่งผลกระทบโดยตรงต่อสูตรที่ใช้ไทม์เพราะ carvacrol เป็น constituent หลักของ T. capitatus และ chemotype carvacrol ของ T. vulgaris ใน IFRA 51st Amendment, **thyme oils (T. vulgaris/T. zygis)** อยู่ภายใต้ restriction standard (Category 1 ≈ 0.2%, Category 4 ≈ 1.6%, Category 5A ≈ 0.6%) โดยกำหนดโดย thymol content; **thymol เอง** มีข้อจำกัดเข้มงวดกว่า (Cat 5A ≈ 0.1–0.6%) จาก sensitization endpoint; **linalool** ได้รับการกำหนดขีดจำกัดใหม่จาก peroxide-value specification (≤20 mmol/L)
 
-ใน **Fougère accord** คลาสสิก, Clary Sage ทำงานร่วมกับ Lavender + Coumarin + Oakmoss ในฐานะ aromatic bridge ที่ให้ความ warm-herbaceous; ใน **Chypre accord**, Sage เสริม earthy warmth และ depth ให้กับ core bergamot-labdanum-oakmoss structure.
+ไทม์เป็นกลุ่มที่ **"survive IFRA ได้ค่อนข้างดี"** เมื่อเทียบกับกลุ่ม oakmoss, treemoss, หรือ HICC — ไม่มี material ในกลุ่มไทม์ถูก prohibit โดยสมบูรณ์ — แต่ความซับซ้อนอยู่ที่การคำนวณ **"contributions from other sources"** (Annex) ที่ต้องนับ thymol, carvacrol, linalool, limonene, geraniol ที่มากับ thyme oil รวมกับที่เติมจากแหล่งอื่นในสูตร
 
-***
-## 2. Naturals — Essential Oils, Absolutes & Extracts
-### 2.1 สาร Natural หลัก (สรุป)
-| สาร | Main Family | Sub-family | Facet | CAS | ลักษณะกลิ่น |
-|---|---|---|---|---|---|
-| **Common/Garden Sage EO** (*Salvia officinalis* L.) | Fresh Woody Note | Aromatic | Sage / Herbal-Camphor | 8022-56-8 / 84082-79-1 | Sharp, medicinal, camphoraceous, herbal, green; dry-warm undertone; bitter-spicy hint |
-| **Clary Sage EO** (*Salvia sclarea* L.) | Fresh Woody Note | Aromatic | Sage / Lavender | 8016-63-5 | Warm, herbaceous, tea-like, hay, amber, earthy; linalyl acetate dominant (~55–65%) |
-| **Spanish Sage EO** (*Salvia lavandulifolia* Vahl) | Fresh Woody Note | Aromatic | Sage / Lavender-Camphor | 84776-73-8[^6] | Lavender-like, camphoraceous, fresh; lower thujone กว่า common sage |
-| **Sage Absolute** (*S. officinalis*) | Fresh Woody / Amber Note | Aromatic / Soft Amber | Sage / Herbaceous Amber | — | Rich, herbaceous, warm, hay-like, diffusive |
-| **Clary Sage Absolute** (*S. sclarea*) | Fresh Woody Note | Aromatic | Sage / Lavender-Amber | — | Warm, amber, hay-like; muskier กว่า EO; อุดมสมบูรณ์ใน sclareol |
+## วิธีวิทยา (Methodology)
 
-***
-## 3. GC-MS Compounds สำคัญ จาก Sage Essential Oils
-### 3.1 Common Sage (*Salvia officinalis*) — GC-MS Principal Compounds[^7][^8]
-| สาร | Main Family | Sub-family | Facet | CAS | ลักษณะกลิ่น | % ใน EO | IFRA 51 Status |
-|---|---|---|---|---|---|---|---|
-| **α-Thujone** | Fresh Woody Note | Aromatic | Sage / Camphor | 546-80-5 | Herbaceous-camphoraceous, medicinal, minty, sharply green | 8–42% | **RESTRICTED (Neurotoxicity)**[^4][^5] |
-| **β-Thujone** | Fresh Woody Note | Aromatic | Sage / Camphor | 471-15-8 | คล้าย α-thujone, นุ่มกว่าเล็กน้อย | 1–10% | **RESTRICTED** (รวมกับ α-thujone) |
-| **Camphor** | Fresh Woody Note | Aromatic | Sage / Camphor | 76-22-2 | Sharp, medicinal, cooling, camphoraceous | 10–35% | Restricted Cat.5A ≤3%, Cat.5D ≤1% |
-| **1,8-Cineole (Eucalyptol)** | Fresh Note | Aromatic | Sage / Eucalyptus | 470-82-6 | Fresh, camphoraceous, minty-eucalyptus | 4–15% | Not restricted |
-| **α-Pinene** | Fresh Note | Citrus / Green | Sage / Piney | 80-56-8 | Fresh, piney, turpentine | 1–8% | Not restricted (peroxide control) |
-| **β-Pinene** | Fresh Note | Green | Sage / Piney | 127-91-3 | Dry-woody, piney, fresh | 1–9% | Not restricted |
-| **Camphene** | Woody Note | Woody | Sage / Camphor | 79-92-5 | Camphoraceous-woody, minty | 2–10% | Not restricted |
-| **α-Humulene** | Woody Amber Note | Woody Amber | Sage / Woody Herbal | 6753-98-6 | Woody, earthy, spicy, hoppy | 3–11% | Not restricted |
-| **Borneol** | Fresh Woody Note | Aromatic | Sage / Camphor | 507-70-0 | Camphoraceous, woody, earthy | 0.5–2% | Not restricted |
-| **Bornyl Acetate** | Woody Note | Woody | Sage / Conifer | 76-49-3 | Piney-camphoraceous, balsamic | 0.5–2% | Not restricted |
-| **β-Caryophyllene** | Woody Amber Note | Woody Amber | Sage / Woody Dry-down | 87-44-5 | Dry, woody-spicy, clove-like | 1–6% | Not restricted |
-| **Limonene** | Fresh Note | Citrus | Sage / Citrus | 5989-27-5 | Fresh, citrusy, bright | 0.5–2% | Cat.4: 12% / Cat.5A: 4.7% / Cat.5D: 0.93% |
-| **Viridoflorol** | Woody Note | Woody | Sage / Woody | 20489-45-6 | Green-woody, earthy, mossy | 1–17% | Not restricted |
-| **Eugenol** | Amber Note | Amber | Sage / Spicy | 97-53-0 | Clove-like, spicy, warm | ~0.01% | **RESTRICTED:** Cat.4: 0.5%; EU allergen |
-| **Methyleugenol** | Amber Note | Amber | Sage / Spicy | 93-15-2 | Sweet, rose, spicy | ~0.002% | **RESTRICTED (genotoxic):** Cat.4: 0.0004%[^1] |
-### 3.2 Clary Sage (*Salvia sclarea*) — GC-MS Principal Compounds[^3][^9]
-| สาร | Main Family | Sub-family | Facet | CAS | ลักษณะกลิ่น | % ใน EO | IFRA 51 / Regulatory |
-|---|---|---|---|---|---|---|---|
-| **Linalyl Acetate** | Fresh Woody Note | Aromatic | Lavender-Sage | 115-95-7 | Sweet, floral-fruity, bergamot-like, fresh | 50–65% | Not restricted Cat.4[^3] |
-| **Linalool** | Fresh Woody Note | Aromatic | Lavender-Sage | 78-70-6 | Floral, fresh, woody, rose-like | 15–35% | Not restricted Cat.4; EU allergen; peroxide ≤20 mmol/L[^3] |
-| **Germacrene D** | Woody Amber Note | Woody Amber | Sage / Sesquiterpene | 23986-74-5 | Woody, earthy, dry, slightly peppery | 4–10% | Not restricted |
-| **β-Caryophyllene** | Woody Amber Note | Woody Amber | Sage / Woody Dry-down | 87-44-5 | Dry, woody-spicy, clove-like | 3–5% | Not restricted |
-| **α-Terpineol** | Floral Note | Soft Floral | Lavender-Sage / Floral | 98-55-5 | Sweet, floral, lilac, slightly piney | 3–6% | Not restricted |
-| **Geranyl Acetate** | Floral Note | Floral | Sage / Rose-Floral | 105-87-3 | Sweet, rosy-floral, fruity-pear | 1–3% | Not restricted |
-| **Neryl Acetate** | Floral Fresh Note | Floral | Sage / Citrus-Floral | 141-12-8 | Fresh, sweet, rose-citrus, neroli-like | ~1% | Not restricted |
-| **Geraniol** | Floral Note | Floral | Sage / Rose | 106-24-1 | Sweet, rose-floral, green | 1–2% | Cat.4: 4.7% / Cat.5A: 2.3%; EU allergen[^3] |
-| **Sclareol** | Amber Note | Soft Amber | Sage / Ambergris-Amber | 515-03-7 | Sweet, balsamic, sage-clary, amber, woody, earthy; low volatility; base note | 0.4–5% | **No IFRA restriction**; purity spec ≥98%; EU Annex III allergen (labeling threshold 0.001% leave-on)[^10][^11][^12] |
-| **Valencene** | Fresh Note | Fruity / Citrus | Sage / Citrus bridge | 4630-07-3 | Sweet, orange-citrus, woody | 1–3% | Not restricted |
-| **β-cis-Ocimene** | Fresh Note | Green | Sage / Green-Herbal | 3338-55-4 | Fresh, sweet, green-floral | 0.5–1% | Not restricted |
-| **Myrcene** | Fresh Note | Green | Sage / Herbal-Green | 123-35-3 | Metallic, balsamic, herbal | 1–2% | Not restricted; peroxide control |
-| **Manool** | Woody Amber Note | Woody Amber | Sage / Woody Dry-down | 596-85-0 | Woody, earthy, dry, slightly ambery | ~0.5% | Not restricted |
+**แหล่งข้อมูลปฐมภูมิ:** IFRA 51st Amendment Standards library, EUR-Lex 32023R1545, FEMA Flavor Library (femaflavor.org), FDA 21 CFR 182.20 & 172.515, The Good Scents Company (TGSC), PubChem, Leffingwell & Associates, RIFM Fragrance Material Safety Resource, peer-reviewed GC-MS studies (Satyal et al. 2016 *Foods*; Schmidt et al. 2012 *NPC*; Borugă et al. 2014 *J Med Life*; Cohen et al. 2021 *Food Chem Toxicol* — FEMA GRAS NFC seventh series) [Flavor Extract Manufacturers Association](https://www.femaflavor.org/flavor-library/thyme-white-oil-thymus-vulgaris-l-t-zygis) [Flavor Extract Manufacturers Association](https://www.femaflavor.org/flavor-library/thyme-oil-thymus-vulgaris-l-t-zygis)
 
-***
-## 4. IFRA 51 — Common Sage EO ทุก Category (สำหรับ 4 Industries)
-> Common Sage EO (*Salvia officinalis*) ถูก **จำกัดหลักด้วย α+β-Thujone** (~34%) — IFRA คำนวณ max level ของ EO จาก thujone limit ÷ % thujone ใน EO[^13][^14][^1]
+**Michael Edwards Fragrance Wheel (2023–2026 edition):** ประกอบด้วย 4 Main Families — **Floral, Oriental/Amber, Woody, Fresh** — โดยกลุ่มไทม์เกือบทั้งหมดอยู่ในตระกูล **Fresh → Aromatic** (หรือบางกรณี Aromatic Fougère) โดยมี facets ได้แก่ herbal, phenolic, medicinal, camphoraceous, spicy, green, terpenic ยกเว้น linalool chemotype ที่คาบเกี่ยวกับ Floral → Fresh Floral และ caryophyllene ที่อยู่ Woody → Dry Woods → Spicy
 
-**Thujone IFRA 51 limits (% ใน finished product):**[^4]
+**GC-MS context:** chemotypes ของ *Thymus vulgaris* ยอมรับเป็นทางการ 6–7 รายการ [NCBI](https://ncbi.nlm.nih.gov/pmc/articles/PMC5302419) (Granger & Passet 1973; Stahl-Biskup & Venskutonis 2012) ได้แก่ thymol, carvacrol, linalool, geraniol, [ScienceDirect](https://www.sciencedirect.com/topics/agricultural-and-biological-sciences/thymus-mastichina) α-terpineol, trans-sabinene hydrate/thujanol-4, [PubMed Central +2](https://pmc.ncbi.nlm.nih.gov/articles/PMC8467294/) และ 1,8-cineole [ScienceDirect](https://www.sciencedirect.com/science/article/abs/pii/S0021967306013525) — การวิเคราะห์ cluster analysis โดย Satyal et al. (2016) ระบุได้ถึง 20 chemotypes ย่อย [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC5302419/) รายงานนี้รายงานเฉพาะ chemotype ที่ **มี commercial supply chain ยืนยัน** (เช่นจาก Biolandes, Albert Vieille, Robertet, Vigon)
 
-| Category | ประเภทผลิตภัณฑ์ (Industry) | Thujone Max % | Common Sage EO Max (เทียบ thujone 34%) |
-|---|---|---|---|
-| Cat.1 | Lip / Toys | 0.11% | 0.32% |
-| Cat.2 | Deodorant / Body spray | 0.21% | 0.62% |
-| Cat.3 | Eye products / Makeup | 0.032% | 0.09% |
-| **Cat.4** | **Fine Fragrance / EdT / EdP** | **1.40%** | **~4.1%** |
-| Cat.5A | Body lotion / Foot care | 0.095% | ~0.28% |
-| Cat.5B | Facial moisturizer | 0.032% | ~0.09% |
-| Cat.5C | Hand cream | 0.016% | ~0.05% |
-| Cat.5D | Baby cream / Baby products | 0.0053% | ~0.016% (ไม่แนะนำ) |
-| Cat.6 | Toothpaste / Mouthwash | 0.095% | ~0.28% |
-| Cat.7A/7B | Hair spray / Hair products | 0.24% | ~0.71% |
-| Cat.8 | Intimate / Baby wipes | 0.0053% | ~0.016% (ไม่แนะนำ) |
-| Cat.9 | Soap / Shower gel / Shampoo | 0.13% | ~0.38% |
-| Cat.10A | Laundry / Surface cleaners | 0.13% | ~0.38% |
-| Cat.10B | Air freshener spray | 0.22% | ~0.65% |
-| Cat.11A/11B | Diapers / Facial tissue | 0.0053% | ~0.016% (ไม่แนะนำ) |
-| **Cat.12** | **Candles / Incense / Reed diffuser** | **9.5%** | **~27.9%** |
-
-***
-## 5. IFRA 51 — Clary Sage EO ทุก Category (สำหรับ 4 Industries)
-> Clary Sage EO เกือบไม่ถูก restrict เป็น EO ตัวเอง — ข้อจำกัดมาจาก allergens (linalool, limonene, geraniol) ตาม COC supplier[^3]
-
-| Category | ประเภทผลิตภัณฑ์ | Max Clary Sage EO (Bay House COC)[^3] |
-|---|---|---|
-| Cat.1 | Lip products | 39% |
-| Cat.2 | Deodorant | 12.5% |
-| Cat.3 | Eye / Makeup | 55% |
-| **Cat.4** | **Fine Fragrance** | **100% (ไม่จำกัดจาก EO ตัวเอง)** |
-| Cat.5A | Body lotion | 60% |
-| Cat.5B | Facial cream | 39% |
-| Cat.5C | Hand cream | 47% |
-| Cat.5D | Baby products | 13% |
-| Cat.6 | Oral | 8% |
-| Cat.7A | Hair rinse-off | 39% |
-| Cat.7B | Hair leave-on | 39% |
-| Cat.8 | Intimate wipes | 13% |
-| Cat.9 | Soap / Shampoo | 100% |
-| Cat.10A | Laundry / Surface cleaner | 55% |
-| Cat.10B | Air freshener spray | 100% |
-| Cat.11A/11B | Diapers / Tissues | 13% |
-| **Cat.12** | **Candles / Reed diffusers** | **100%** |
-
-Key restricted allergens ใน Clary Sage EO: **Geraniol ≤2%, Linalool ≤22%, Limonene ≤0.30%** (ค่านี้เป็นของ EO; limit final product ต่ำกว่า)[^3]
-
-***
-## 6. Synthetics — Aroma Chemicals กลุ่ม Sage
-| สาร | Main Family | Sub-family | Facet | CAS | ลักษณะกลิ่น | IFRA 51 | Industry Use |
-|---|---|---|---|---|---|---|---|
-| **Sclareolide** | Amber Note | Soft Amber | Sage / Amber-Musky | 564-20-5 | Woody-ambergris, musky, warm; base note | Not restricted | Fine Fragrance (precursor to Ambroxide) |
-| **Ambroxide (Ambroxan®)** | Woody Amber Note | Woody Amber | Sage-derived Amber | 6790-58-5 | Warm, ambery, musky, woody, marine-clean | Not restricted; RIFM safe | Fine Fragrance, PC&C, Home Care — derived from sclareol; major modern amber ingredient |
-| **Dihydro-β-Ionone** (sage-violet modifier) | Floral Note | Soft Floral | Sage / Floral-Violet | 17283-81-7 | Violet-like, woody, iris | Not restricted | Fine Fragrance |
-| **Norlimbanol** (sage-woody modifier) | Woody Amber Note | Woody Amber | Sage / Woody-Dry | 70788-30-6 | Dry, cedar-woody, sage, earthy | Not restricted | Fine Fragrance, Home Care |
-
-***
-## 7. FEMA GRAS — Sage ใน Flavor Industry
-| สาร | FEMA # | CAS | 21 CFR | ลักษณะรส/กลิ่น | สถานะ |
-|---|---|---|---|---|---|
-| **Sage, Common** (*Salvia officinalis*) | **3000** | 977002-44-0 | 182.10 | Herbaceous, warm, camphoric, slightly bitter | GRAS (herb/spice)[^15] |
-| **Sage Oil** (*Salvia officinalis*) | **3001** | 8022-56-8 | 182.20 | Sharp, medicinal, camphoraceous, herbal | GRAS[^16][^17] |
-| **Sage Oil Oleoresin** | **3002** | — | 182.20 | Rich, concentrated sage | GRAS |
-| **Sage Extract** | **3003** | — | 182.20 | Herbaceous, sage-like | GRAS |
-| **Clary Sage Oil** (*Salvia sclarea*) | **2321** | 8016-63-5 | 182.20 | Warm, herbaceous, tea, hay, amber | GRAS[^9] |
-| **Camphor** | 2230 | 76-22-2 | 172.515 | Sharp, medicinal, cooling | GRAS (limited); EU max 2 mg/kg savory food |
-| **1,8-Cineole (Eucalyptol)** | 2465 | 470-82-6 | 172.515 | Camphoraceous, minty-eucalyptus | GRAS |
-| **Sclareol** | **4502** | 515-03-7 | 172.515 | Sweet, balsamic, sage, amber | GRAS[^18] |
-| **Linalool** | 2635 | 78-70-6 | 172.515/182.60 | Floral, fresh, lavender-like | GRAS |
-| **Linalyl Acetate** | 2636 | 115-95-7 | 172.515 | Sweet, floral-fruity, bergamot | GRAS |
-| **α-Pinene** | 2902 | 80-56-8 | 172.515 | Piney, fresh, turpentine | GRAS |
-| **β-Caryophyllene** | 2252 | 87-44-5 | 172.515 | Woody-spicy, clove, peppery | GRAS |
-### 7.1 ข้อห้ามใน Flavor
-- **α-Thujone ในรูป isolated chemical:** ไม่ใช่ GRAS เป็น standalone flavor[^17]; trace จาก natural sage EO ยอมรับได้
-- **EU Regulation 1334/2008 Annex IV:** α-Thujone max **0.5 mg/kg** ใน beverages; **5 mg/kg** ใน savory foods; traditional herbal spirits พิเศษ ≤10 mg/L
-- **Methyleugenol:** ไม่ใช่ GRAS เป็น isolated flavor ใน FDA
-
-***
-## 8. สรุปประเด็นสำคัญ ตาม 4 Industries
-### Fine Fragrance
-- Common Sage EO: max **~4.1%** ใน fragrance compound (Cat.4) เนื่องจาก thujone 34%[^4]
-- Clary Sage EO: **ไม่จำกัดใน Cat.4**; ใช้ได้สูงมาก (ขึ้นกับ allergen sum)[^3]
-- **Sclareol:** ไม่มี IFRA restriction; EU allergen labeling threshold 0.001% leave-on[^10]
-- **Ambroxide (hemisynthesis จาก sclareol):** หัวใจของ modern amber fragrance; no restriction
-- **Methyleugenol trace:** ต้องคุม <0.0004% ใน finished product Cat.4
-### Personal Care & Cosmetics
-- Common Sage EO ใช้ใน Cat.5A ได้สูงสุด **~0.28%** เท่านั้น
-- Clary Sage เหมาะกว่าสำหรับ PC&C: Cat.5A 60%, Cat.5D 13%[^3]
-- Sclareol ต้องระบุบนฉลาก EU ≥0.001% (leave-on) — Annex III allergen[^11]
-### Home Care & Air Care
-- Common Sage EO ใน candles (Cat.12): max **~28%** ของ fragrance compound
-- Clary Sage EO: **ไม่จำกัดใน Cat.12**; ideal สำหรับ candles/diffusers[^3]
-- Air freshener spray (Cat.10B): Common Sage EO max ~0.65%
-- Laundry (Cat.10A): Common Sage EO max ~0.38%
-### Flavor Industry
-- Common Sage herb/extract (FEMA 3000–3003): GRAS ใช้ใน savory foods, sausages, stuffing[^16]
-- Clary Sage EO (FEMA 2321): ใช้ใน beverages, alcohol flavoring, baked goods[^9]
-- Sclareol (FEMA 4502): GRAS ในอาหาร trace[^18]
-- สาร Sage ใน flavor ใช้ปริมาณ 5–50 ppm ใน finished product
-
-***
-## 9. ⚠️ Methyleugenol Warning (Sage Group)
-Methyleugenol (CAS 93-15-2) มีอยู่ใน sage group ในปริมาณน้อยแต่ **ต้องควบคุมอย่างเข้มงวด:**[^1]
-
-- Common Sage EO: ~0.002%
-- IFRA 51 Cat.4 limit: **0.0004%** (genotoxic/potentially carcinogenic)
-- FDA: Methyleugenol ไม่ใช่ GRAS เป็น isolated flavor
-- **ต้องตรวจ GC-MS ทุก lot** ของ natural sage oil ก่อนใช้ใน fine fragrance หรือ leave-on products
-
-***
-## 10. ข้อมูล IFRA Certificate Sources ที่ใช้ตรวจสอบ
-| ข้อมูล | แหล่งอ้างอิง | สถานะ |
-|---|---|---|
-| α-Thujone IFRA 51 all category limits | Scentree.co + PubChem IFRA[^4][^5] | ✅ ยืนยัน 2025 |
-| Common Sage EO IFRA 51 COC | NHR Organic Oils COC 2025[^1] | ✅ ยืนยัน |
-| Clary Sage EO IFRA 51 COC | Bay House IFRA 51[^3] + NHR IFRA 51[^2] | ✅ ยืนยัน |
-| Sclareol No IFRA restriction | Première Peau[^10] + RIFM review[^12] | ✅ ยืนยัน |
-| FEMA GRAS numbers | FEMA Flavor Library[^16][^9][^18] + FDA EAFUS[^15][^17] | ✅ ครบ |
-| GC-MS % ใน Common Sage | Scentspiracy[^7] + ScenTree[^8] | ✅ ตรงกัน |
-| GC-MS % ใน Clary Sage | FEMA GRAS[^9] + Amphora COC[^19] | ✅ ตรงกัน |
-| EU Food Regulation thujone | EU 1334/2008 Annex IV | ✅ ยืนยัน |
+**IFRA Categories (12 ประเภท):** Cat 1 = lip products; Cat 2 = deodorants; Cat 3 = hydroalcoholic shaved skin; Cat 4 = hydroalcoholic unshaved skin (fine fragrance); Cat 5A-D = body/face/hand creams; [Marie Gale](https://www.mariegale.com/understanding-ifra-standards/) Cat 6 = oral care; Cat 7A/B = rinse-off/leave-on hair; Cat 8 = anogenital; Cat 9 = rinse-off body wash; Cat 10A/B = household cleaners; Cat 11A/B = non-skin contact; Cat 12 = non-cosmetic
 
 ---
 
-## References
+## ตารางรวม 52 วัตถุดิบในกลุ่มไทม์ (Consolidated Master Table)
 
-1. [[PDF] IFRA 51 Conformity Certificate Organic Common Sage Essential Oil ...](https://mail.nhrorganicoils.com/uploads/20250821123541e_Sage_Common_IFRA_51.pdf) - We certify that the above mixture is in compliance with the Standards of the INTERNATIONAL FRAGRANCE...
+**Legend สำหรับคอลัมน์ Allergen status:**
+- **EU-Original 24** = อยู่ในรายการ 24 allergens เดิม (Directive 2003/15/EC)
+- **EU-2023/1545 NEW** = เพิ่มเติมโดย Regulation (EU) 2023/1545
+- **Not listed** = ไม่อยู่ใน Annex III labelling list
+- Thresholds: leave-on ≥0.001% (10 ppm); rinse-off ≥0.01% (100 ppm) [Cosmeservice](https://cosmeservice.com/news/eu-regulatory-developments-transforming-cosmetic-compliance-in-2025-and-beyond/) [europa](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32023R1545)
 
-2. [[PDF] IFRA 51 Conformity Certificate Organic Clary Sage Essential Oil ...](https://www.nhrorganicoils.com/uploads/20241016145755e_Clary_Sage_IFRA_51.pdf) - Category 4. 16,67 %. Category 9. 4,39 ... This Certificate provides restrictions for use of the spec...
+### A. Natural materials — Thymus species essential oils, absolutes & extracts
 
-3. [[PDF] IFRA CONFORMITY CERTIFICATE - Bay House Aromatics](https://www.bayhousearomatics.com/mwdownloads/download/link/id/2114) - Maximum peroxide level should be less than 20mmol/Litre**. The essential oil of Clary Sage Oil on it...
+| # | Material (INCI) | Source | CAS | FEMA | EC/EINECS | Main Family | Sub-family / Facet | Odor profile | Typical GC-MS majors (%) | IFRA 51st limits (key cats) | Applications (FF/PC/HC/Flavor) | Allergen status | Regulatory |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | **Red Thyme Oil (T. vulgaris CT thymol)** — Thymus Vulgaris Flower/Leaf Oil | Natural NCS, steam-distilled crude | 8007-46-3; 84929-51-1 | 3064 | 284-535-7 | Fresh | Aromatic / herbal-phenolic-medicinal | Strong, warm, spicy-phenolic, medicinal, [thegoodscentscompany +2](http://www.thegoodscentscompany.com/data/es1011351.html) "hot-herb," tarry top note, persistent herbal dry-down | thymol 37–55; [ScienceDirect](https://www.sciencedirect.com/topics/medicine-and-dentistry/myrcene) p-cymene 15–28; γ-terpinene 5–18; linalool 3–6; carvacrol 2–8; β-caryophyllene 1–3; borneol 1–3; α-pinene 1–2 | Restricted by thymol content: Cat 1 ≈0.2%, Cat 4 ≈1.6%, Cat 5A ≈0.6%, Cat 9 ≈1.3% | FF 0.01–0.3%; PC 0.005–0.2% (mouthwash up to 0.5%); HC 0.02–1%; Flavor 1–40 ppm (meat, soups, cheese) | Contains linalool, limonene, geraniol (**EU-Original 24**); carvacrol, citral (**EU-2023/1545 NEW**) | FDA 21 CFR 182.20 GRAS; FEMA GRAS |
+| 2 | **White Thyme Oil** (rectified) | Natural, redistilled from red thyme | 8007-46-3 | 3065 | 284-535-7 | Fresh | Aromatic / herbal-medicinal (softer) | Milder, [ChemicalBook](https://www.chemicalbook.com/ChemicalProductProperty_EN_CB6739355.htm) cleaner, less tarry than red; [Vigon](https://www.vigon.com/thyme-oil-red/) phenolic-herbal with less sharpness; preferred in fine fragrance [Pell Wall](https://pellwall.com/products/thyme-oil) and oral care [Voyageur Soap & Candle](https://www.voyageursoapandcandle.com/products/thyme-white-essential-oil) | thymol 25–40; p-cymene 20–30; γ-terpinene 8–15; linalool 3–5; carvacrol 1–4; borneol 1–3 | Same as thyme oil restriction (thymol-driven) | FF 0.05–0.5%; PC up to 0.3%; Oral care 0.05–0.2% | Same as #1 | FDA GRAS; FEMA GRAS |
+| 3 | **Thyme Oil CT linalool (T. vulgaris)** — French "thym doux" | Natural, steam-distilled | 8007-46-3; 84929-51-1 | 3064 (covers vulgaris/zygis) | 284-535-7 | Floral ↔ Fresh | Fresh Floral / Aromatic; linalool-floral-herbal | Soft, sweet-floral, lavender-like, herbal, rosewood-adjacent; [Eden Botanicals](https://www.edenbotanicals.com/thyme-ct-linalool-organic.html) much gentler than thymol CT [Aromatics](https://www.aromatics.com/blogs/wellness/two-thyme-essential-oil-chemotypes) | linalool 60–80; [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC5302419/) linalyl acetate 5–15; [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC5302419/) [nih](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5302419/) β-caryophyllene 2–3; camphor 1–2; terpinen-4-ol 1–3; 1,8-cineole 0.5–2 | Governed by linalool peroxide spec (PV ≤20 mmol/L); [Avenalab](https://avenalab.com/images/001SDS/Linalol-IFRA.pdf) Cat 4 ≈ 20%, Cat 5A ≈ 5.3% | FF 0.1–1%; PC (skin care, baby care) [Eden Botanicals](https://www.edenbotanicals.com/thyme-ct-linalool-organic.html) 0.05–0.5%; aromatherapy [Eden Botanicals](https://www.edenbotanicals.com/thyme-ct-linalool-organic.html) | Linalool (**EU-Original 24**) | FDA GRAS; FEMA GRAS |
+| 4 | **Thyme Oil CT geraniol (T. vulgaris)** — Serbian/S. French | Natural, steam-distilled | 8007-46-3 | 3064 | 284-535-7 | Floral | Floral / rosy-herbal | Sweet, rosy, citrus-herbal, honeyed; most floral of thyme chemotypes | geraniol 40–60; geranyl acetate 10–20; [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC5302419/) [nih](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5302419/) linalool 5–10; β-caryophyllene 2–5; geranyl propionate 1–2 | Limited by geraniol (Cat 4 ≈ 10%, Cat 5A ≈ 5.3%) | FF 0.1–0.8%; PC fine perfumery, rose-complements | Geraniol (**EU-Original 24**), linalool (**EU-Original 24**) | FDA GRAS; FEMA GRAS |
+| 5 | **Thyme Oil CT thujanol / terpinen-4-ol (T. vulgaris)** | Natural, rare | 8007-46-3 | 3064 | 284-535-7 | Fresh | Aromatic / green-woody-herbal | Fresh, green, slightly earthy, tea-tree adjacent, soft herbal; highly valued in aromatherapy | cis-sabinene hydrate 25–35; trans-sabinene hydrate 5–10; [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC5302419/) terpinen-4-ol 6–15; [PubMed](https://pubmed.ncbi.nlm.nih.gov/22978238/) γ-terpinene 3–8; linalool 3–6; myrcene 2–5 | Governed by linalool/limonene peroxide specs; relatively open | FF 0.1–0.5%; PC premium/spa | Linalool, limonene (**EU-Original 24**) | FDA GRAS; FEMA GRAS |
+| 6 | **Thyme Oil CT carvacrol (T. vulgaris)** | Natural | 8007-46-3 | 3064 | 284-535-7 | Fresh | Aromatic / phenolic-spicy-oregano | Pungent, oregano-like, sharp-phenolic, warm, spicy — more oregano than thyme | carvacrol 30–80; p-cymene 10–20; γ-terpinene 5–15; thymol 2–8; linalool 1–3 | Restricted via carvacrol endpoint: Cat 1 ≈0.2%, Cat 4 ≈1%, Cat 5A ≈0.3% | Flavor (meat/sausage); HC disinfectants; limited FF | Carvacrol (**EU-2023/1545 NEW**), limonene (**EU-Original 24**) | FDA GRAS; FEMA GRAS |
+| 7 | **Thyme Oil CT α-terpineol (T. vulgaris)** | Natural, niche | 8007-46-3 | 3064 | 284-535-7 | Fresh | Aromatic / lilac-floral-piney | Soft piney-lilac, floral-herbal; unusual, used in niche perfumery | α-terpineol 40–60; γ-terpinene 5–10; p-cymene 5–10; terpinen-4-ol 3–6; linalool 2–5 | Not specifically listed; linalool/limonene spec applies | FF niche 0.1–0.5%; PC | Not specifically listed as allergen | FDA GRAS; FEMA GRAS |
+| 8 | **Thyme Oil CT 1,8-cineole (T. vulgaris Spanish)** | Natural | 8007-46-3 | 3064 | 284-535-7 | Fresh | Aromatic / eucalyptus-camphoraceous | Eucalyptus-like, camphoraceous, cooling, medicinal | 1,8-cineole 30–55; camphor 5–15; α-pinene 5–10; β-pinene 3–8; linalool 2–5; borneol 2–5 | Not standalone IFRA restriction on 1,8-cineole; thymol/linalool contributions apply | PC (muscle balms, cold rubs); HC (air freshener) 0.1–2% | Linalool (**EU-Original 24**); camphor (**EU-2023/1545 NEW**) | FDA GRAS; FEMA GRAS |
+| 9 | **Spanish Thyme Oil (T. zygis)** — Thymus Zygis Oil | Natural, steam-distilled, Spain | 84929-51-1; 85085-75-2 [GuideChem](https://www.guidechem.com/dictionary/en/8007-46-3.html) | 3064 | 285-397-0 | Fresh | Aromatic / phenolic-medicinal | Similar to T. vulgaris thymol CT but with higher thymol, [ChemicalBook](https://www.chemicalbook.com/ChemicalProductProperty_EN_CB6739355.htm) slightly sweeter; preferred for flavor | thymol 42–55; [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC5302419/) p-cymene 18–25; γ-terpinene 10–15; [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC8467294/) linalool 3–6; carvacrol 2–6; β-caryophyllene 1–3 | Same restriction basis as thyme oil NCS | FF 0.02–0.3%; PC 0.01–0.2%; Flavor 2–50 ppm (meats, Mediterranean blends) | Linalool, limonene, geraniol (**EU-Original 24**); carvacrol (**EU-2023/1545 NEW**) | FDA GRAS; FEMA GRAS (under FEMA 3064 NFC) |
+| 10 | **Wild Thyme Oil (T. serpyllum)** — "Serpolet" | Natural, mostly E. Europe/Russia | 84776-98-7 [GuideChem](https://www.guidechem.com/dictionary/en/8007-46-3.html) | 3062 | 283-852-3 | Fresh | Aromatic / herbal-softly-phenolic | Softer, sweeter, more herbaceous than T. vulgaris; hay-like undertones | thymol 10–40 (variable); p-cymene 10–20; γ-terpinene 8–18; carvacrol 2–15; linalool 3–8; β-caryophyllene 3–8 | Same basis as thyme oil | FF 0.05–0.3%; PC; flavor niche (5–30 ppm liqueurs) | Linalool, limonene, geraniol (**EU-Original 24**) | FDA 21 CFR 182.20 GRAS; FEMA GRAS |
+| 11 | **Spanish Marjoram / Mastic Thyme Oil (T. mastichina)** — Thymus Mastichina Oil | Natural, Portugal/Spain | 84837-14-9 [GuideChem](https://www.guidechem.com/dictionary/en/8007-46-3.html) | 2660 (as "marjoram, Spanish") | 284-294-8 | Fresh | Aromatic / eucalyptus-camphoraceous; Spanish "mejorana" | Fresh, strong, sweet, spicy, eucalyptus-camphor — NOT true marjoram; frequently commercialized as "Spanish marjoram" | 1,8-cineole 40–70; linalool 3–20 (can reach 52% in Estremadura CT); α-pinene 3–8; camphor 2–10; β-pinene 2–8; α-terpineol 2–5 | No standalone; linalool PV spec applies | FF 0.1–0.8%; PC (Cologne types, Mediterranean accords); Flavor low | Linalool (**EU-Original 24**); camphor (**EU-2023/1545 NEW**) | FDA GRAS; FEMA GRAS |
+| 12 | **Moroccan Thyme Oil (T. satureioides)** — "Thym Saturéoïde" | Natural, Morocco | 97952-80-4 (sometimes 84929-51-1 in trade) | No standalone FEMA | 308-395-5 | Fresh | Aromatic / balsamic-woody-phenolic | Warm, resinous, balsamic-herbaceous with borneol character; less sharp than Spanish | borneol 20–45; α-terpineol 8–15; camphene 5–12; p-cymene 5–10; thymol 2–8; carvacrol 2–8; β-caryophyllene 3–6 | Not standalone; borneol & camphor contributions relevant | FF niche 0.1–0.5%; aromatherapy; Moroccan cosmetics | Borneol (**EU-2023/1545 NEW**); camphor (**EU-2023/1545 NEW**) | Not FDA 21 CFR 182.20 explicit; GRAS via NFC route |
+| 13 | **Conehead Thyme / Spanish Oregano Oil (Thymbra capitata / T. capitatus)** — Thymbra Capitata Oil | Natural, Portugal/Spain/Morocco/Sicily | 84775-97-3 | 2660 (as "origanum oil") / also under 3064 | 284-074-1 | Fresh | Aromatic / phenolic-spicy-oregano | Very strong, hot-spicy, oregano-like, carvacrol-dominant; pizza/Mediterranean flavor backbone | carvacrol 55–78; p-cymene 8–18; γ-terpinene 3–12; linalool 1–3; β-caryophyllene 2–5; thymol 0.5–3 | **Restricted under "Origanum oil" standard** — Cat 1 ≈0.2%, Cat 4 ≈1.2%, Cat 5A ≈0.4% | Flavor dominant (pizza, tomato, meat) 2–80 ppm; HC; limited FF (oregano accords) | **Carvacrol (EU-2023/1545 NEW)**; limonene (EU-Original 24) | FDA GRAS as Origanum oil; FEMA GRAS [ResearchGate](https://www.researchgate.net/publication/352919150_FEMA_GRAS_assessment_of_natural_flavor_complexes_Origanum_oil_thyme_oil_and_related_phenol_derivative-containing_flavoring_ingredients) |
+| 14 | **Winter Thyme Oil (T. hiemalis / T. hyemalis)** | Natural, Spain | ~90106-28-6 | Covered under 3064 NFC | — | Fresh | Aromatic / herbal-phenolic | Sharper, more phenolic than T. vulgaris; high thymol winter harvest | thymol 30–45; carvacrol 5–20; p-cymene 15–25; γ-terpinene 5–12; linalool 2–6 | Same as thyme oil | Flavor & HC; niche FF | Linalool, limonene (**EU-Original 24**); carvacrol (**EU-2023/1545 NEW**) | GRAS via NFC |
+| 15 | **Lemon Thyme Oil (T. citriodorus)** — Thymus Citriodorus Oil | Natural, cultivated | 98653-99-5 (trade) | Covered under NFC | — | Fresh | Citrus / lemon-herbal | Bright citrus-lemon top with herbal-thyme base; [Stillpoint Aromatics](https://www.stillpointaromatics.com/lemon-thyme-essential-oil-thymus-x-citriodorus) hybrid T. pulegioides × T. vulgaris [Essentria Inc.](https://www.schoolofessentria.com/blog/thyme-essential-oil-chemotype-guide) | geraniol 15–35; geranial 8–20; neral 6–15; citronellol 3–10; thymol 3–15; β-caryophyllene 2–5 | Citral & geraniol restrictions apply; citral Cat 4 ≈1.2% | FF (citrus-herbal accords); PC, HC | **Citral, geraniol, citronellol (EU-Original 24)** | FDA GRAS; FEMA GRAS |
+| 16 | **Thyme Absolute (T. vulgaris/zygis)** | Natural, solvent/hexane extraction of concrete | 8007-46-3; 84929-51-1 | 3064 | 284-535-7 | Fresh | Aromatic / rich herbal-waxy-phenolic | Deeper, richer, more tenacious than EO; waxy-herbal-balsamic [thegoodscentscompany](http://www.thegoodscentscompany.com/data/ab1050931.html) with hay undertone; used as fixative | thymol 25–40; p-cymene 10–20; γ-terpinene 5–12; carvacrol 2–8; waxes/flavonoids; linalool 2–5 | Same as thyme oil (thymol-driven) | FF 0.05–0.5% fine perfumery (fougère, chypre) | Same as thyme oil | Not FEMA-listed for absolute specifically |
+| 17 | **Thyme CO2 Extract (select / total)** — "Mane Jungle Essence Thyme" type | Natural, supercritical CO2 | 8007-46-3 | Under NFC 3064 | 284-535-7 | Fresh | Aromatic / true-to-nature herbal | Closest to fresh crushed herb; bright top note, full herbaceous body; no distillation artefacts | thymol 35–50; p-cymene 12–22; γ-terpinene 8–15; linalool 3–7; β-caryophyllene 2–5; terpinen-4-ol 1–4 | Same as thyme oil | FF premium; PC spa; flavor (culinary authentication) | Same as thyme oil | GRAS NFC |
+| 18 | **Thyme Oleoresin** | Natural, solvent-extracted spent herb | 8007-46-3 | 3064 | 284-535-7 | Fresh | Aromatic / concentrated herbal-vegetal | Concentrated, viscous, full herbal with flavonoid/polyphenol body; flavor use | thymol 15–30; carvacrol 3–10; non-volatiles 50–70% (flavonoids, polyphenols) | Not covered by IFRA (mostly flavor use) | Flavor (savory, meat seasoning) 10–200 ppm | Linalool, limonene (**EU-Original 24**) | FDA GRAS (21 CFR 182.20 "thyme, thyme oil"); FEMA GRAS |
+| 19 | **Thyme Tincture (1:5 ethanolic)** | Natural, maceration | 8007-46-3 | 3064 | 284-535-7 | Fresh | Aromatic / dilute herbal | Soft, diluted, naturalistic thyme; used in tonics, bitters, mouthwash | thymol, carvacrol trace; polyphenols; rosmarinic acid | Not IFRA-restricted at typical dilutions | Oral care, liqueurs, bitters 0.1–2% | Linalool, limonene (**EU-Original 24**) | FDA GRAS; FEMA GRAS |
 
-4. [3-Thujanone (CAS N° 1125-12-8) - ScenTree.co](https://www.scentree.co/en/3-Thujanone.html) - IFRA. IFRA 51th : This ingredient is restricted by the 51th amendment. IFRA's logo. Restriction type...
+### B. Isolated / synthetic molecules — phenolic compounds
 
-5. [Thujone | C10H16O | CID 261491 - PubChem - NIH](https://pubchem.ncbi.nlm.nih.gov/compound/alpha-Thujone) - Category 3 (%). 0.032 [Products applied to the face/body using fingertips]. Category 4 (%). 1.4 [Pro...
-
-6. [Safety and efficacy of a feed additive consisting of an essential oil derived from the leaves of Salvia officinalis ssp. lavandulifolia (Vahl) Gams (Spanish sage oil) for use in all animal species (FEFANA asbl)](https://pmc.ncbi.nlm.nih.gov/articles/PMC11502965/) - ...kg complete feed for all animal species. The FEEDAP Panel considered that the use of Spanish sage...
-
-7. [Salvia officinalis (CAS 8022-56-8 / 84776-73-8) - Scentspiracy](https://www.scentspiracy.com/fragrance-ingredients/p/salvia-officinalis-oil) - Thujone Content Concerns: The primary safety consideration for Salvia officinalis oil relates to its...
-
-8. [Sage officinale flower oil (CAS N° 8022-56-8) - ScenTree.co](https://www.scentree.co/en/Sage_officinale_flower_oil.html) - Sage officinale flower oil (CAS N° 8022-56-8) is an ingredient used in perfumes. Discover all about ...
-
-9. [CLARY OIL (SALVIA SCLAREA L.) | FEMA](https://www.femaflavor.org/flavor-library/clary-oil-salvia-sclarea-l) - FEMA GRAS assessment of natural flavor complexes: Lavender, Guaiac Coriander ... Quick Reference. in...
-
-10. [What Is Sclareol? | Première Peau](https://premierepeau.com/pages/glossary-terms/sclareol) - No IFRA restriction. Sclareol is permitted without quantitative limit across all product categories....
-
-11. [Sclareol | C20H36O2 | CID 163263 - PubChem - NIH](https://pubchem.ncbi.nlm.nih.gov/compound/Sclareol) - Sclareol is a fragrance allergen. Fragrance allergens are hazardous only to individuals who suffer f...
-
-12. [Fragrance material review on sclareol - ScienceDirect.com](https://www.sciencedirect.com/science/article/abs/pii/S0278691508003645) - International Fragrance Association (IFRA): Sclareol used as fragrance ingredient should have a mini...
-
-13. [Understanding IFRA Standards - Marie Gale](https://www.mariegale.com/understanding-ifra-standards/) - The current framework (the 51st Amendment) reviews three factors when determining the limits of a co...
-
-14. [scentspiracy's Post - LinkedIn](https://www.linkedin.com/posts/scentspiracy_scentspiracy-perfumerychemistry-sage-activity-7426580942317674496-tPAe) - ⚠️ Regulatory status: IFRA-restricted material due to thujone content (8-33% in oil). Thujone limits...
-
-15. [sage (salvia officinalis l.) - cfsanappsexternal.fda.gov](https://hfpappexternal.fda.gov/scripts/fdcc/index.cfm?set=FoodSubstances&id=SAGESALVIAOFFICINALIS&sort=Sortterm_ID&order=ASC&startrow=1&type=basic&search=ficin)
-
-16. [SAGE OIL (SALVIA OFFICINALIS L.) | FEMA](https://www.femaflavor.org/flavor-library/sage-oil-salvia-officinalis-l)
-
-17. [Substances Added to Food (formerly EAFUS)](https://www.hfpappexternal.fda.gov/scripts/fdcc/index.cfm?set=FoodSubstances&id=SAGEOILSALVIAOFFICINALIS&sort=Sortterm_ID&order=ASC&startrow=1&type=basic&search=oil)
-
-18. [(-)-SCLAREOL - Flavor Extract Manufacturers Association (FEMA)](https://www.femaflavor.org/flavor-library/sclareol) - GRAS evaluation of aliphatic acyclic and alicyclic terpenoid tertiary alcohols and structurally rela...
-
-19. [[PDF] IFRA Conformity Certificate for Clary Sage Organic Essential Oil](https://www.amphora-aromatics.com/images/product/262%20IFRA%20Clary%20Sage%20Organic%20Oil%20-%20Version%201.pdf) - Combined IFRA Category. Maximum Level of Use ( % w/w). Class 1 ... 120-51-4. ≤0.1. Restriction Stds ...
-
+| # | Material | Origin | CAS | FEMA | EC/EINECS | Main Family | Sub-family / Facet | Odor / taste profile | IFRA 51st limits | Applications (FF/PC/HC/Flavor) | Allergen status | Regulatory |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 20 | **Thymol** (2-isopropyl-5-methylphenol) | Natural isolate or synthetic (nature-identical) | 89-83-8 | 3066 | 201-944-8 | Fresh | Aromatic / phenolic-medicinal-herbal | Sharp, herbal, phenolic, medicinal, camphoraceous, strong; antiseptic character | **Restricted** (Standard updated 46th; reaffirmed 51st) — Cat 1 0.08%, Cat 2 0.1%, Cat 4 0.2%, Cat 5A 0.1%, Cat 9 0.1%, Cat 10A 0.4%, Cat 11 unlimited; based on dermal sensitization | FF 0.005–0.05%; Oral care 0.05–0.3% (Listerine®); PC 0.01–0.1%; Flavor 0.5–30 ppm | **Not in EU Annex III labelling list** (toxicologically distinct from sensitizing allergens) | FDA 21 CFR 172.515 synthetic flavoring; FEMA GRAS |
+| 21 | **Carvacrol** (2-methyl-5-isopropylphenol) | Natural isolate or synthetic | 499-75-2 | 2245 | 207-889-6 | Fresh | Aromatic / phenolic-spicy-oregano | Warm, spicy, oregano-like, tar-phenolic, sharper than thymol | **Restricted** — Cat 1 0.08%, Cat 4 0.2%, Cat 5A 0.1%; Cat 10 0.4% | Flavor (oregano, meat) 1–25 ppm; Oral care; HC; FF spicy accords | **EU-2023/1545 NEW allergen** (added 2023; compliance 31 July 2026) | FDA GRAS 21 CFR 172.515; FEMA GRAS |
+| 22 | **Thymol methyl ether** (methyl thymyl ether) | Natural constituent / synthetic | 1
