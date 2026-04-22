@@ -2292,7 +2292,17 @@ function migrateLegacyTaxonomy(entry) {
   // when the doc says the material is Aromatic-only). Only validated
   // canonical tokens survive.
   const raw = entry.classification;
-  if (raw && (Array.isArray(raw.primaryFamilies) || Array.isArray(raw.secondaryFamilies) || Array.isArray(raw.facets))) {
+  // Override only when the curated block carries actual content. The DB
+  // contains 400+ stub blocks of shape `{facets:[]}` (auto-generated
+  // placeholders) which used to short-circuit inference and leave the
+  // material with zero families/facets. Treat any all-empty curated
+  // block as "no override" and fall through to inference.
+  const _hasCurated = raw && (
+    (Array.isArray(raw.primaryFamilies)   && raw.primaryFamilies.length   > 0) ||
+    (Array.isArray(raw.secondaryFamilies) && raw.secondaryFamilies.length > 0) ||
+    (Array.isArray(raw.facets)            && raw.facets.length            > 0)
+  );
+  if (_hasCurated) {
     const pf = uniqStable((raw.primaryFamilies   || []).filter(f => PRIMARY_FAMILIES.includes(f)));
     const sf = uniqStable((raw.secondaryFamilies || []).filter(f => PRIMARY_FAMILIES.includes(f) && !pf.includes(f)));
     const fa = uniqStable((raw.facets            || []).filter(f => f in FACET_TAGS));
