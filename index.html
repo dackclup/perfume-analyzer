@@ -2303,10 +2303,31 @@ function migrateLegacyTaxonomy(entry) {
     (Array.isArray(raw.facets)            && raw.facets.length            > 0)
   );
   if (_hasCurated) {
-    const pf = uniqStable((raw.primaryFamilies   || []).filter(f => PRIMARY_FAMILIES.includes(f)));
-    const sf = uniqStable((raw.secondaryFamilies || []).filter(f => PRIMARY_FAMILIES.includes(f) && !pf.includes(f)));
-    const fa = uniqStable((raw.facets            || []).filter(f => f in FACET_TAGS));
-    return { primaryFamilies: pf, secondaryFamilies: sf, facets: fa };
+    const rawPf = raw.primaryFamilies   || [];
+    const rawSf = raw.secondaryFamilies || [];
+    const rawFa = raw.facets            || [];
+    const pf = uniqStable(rawPf.filter(f => PRIMARY_FAMILIES.includes(f)));
+    const sf = uniqStable(rawSf.filter(f => PRIMARY_FAMILIES.includes(f) && !pf.includes(f)));
+    const fa = uniqStable(rawFa.filter(f => f in FACET_TAGS));
+    // Integrity check: if the curated block had tokens but ALL got
+    // filtered out as unknown, warn loudly. A silent drop is
+    // indistinguishable from "no override, infer it" and hides typos
+    // or stale taxonomies that slipped into perfumery_data.js.
+    const _dropped = [];
+    for (const t of rawPf) if (!PRIMARY_FAMILIES.includes(t)) _dropped.push('primary:' + t);
+    for (const t of rawSf) if (!PRIMARY_FAMILIES.includes(t)) _dropped.push('secondary:' + t);
+    for (const t of rawFa) if (!(t in FACET_TAGS))            _dropped.push('facet:' + t);
+    if (_dropped.length && !pf.length && !sf.length && !fa.length) {
+      console.warn('[taxonomy] curated classification for "' + (entry.name || '?') +
+        '" had tokens but every one is unknown — falling through to inference. Dropped: ' + _dropped.join(', '));
+    } else if (_dropped.length) {
+      console.warn('[taxonomy] "' + (entry.name || '?') + '" curated classification contains unknown tokens (ignored): ' + _dropped.join(', '));
+    }
+    // If all validated arrays are empty, DON'T short-circuit inference —
+    // treat the curated block as malformed and fall through.
+    if (pf.length || sf.length || fa.length) {
+      return { primaryFamilies: pf, secondaryFamilies: sf, facets: fa };
+    }
   }
   const synthetic = {
     record: {
@@ -3462,10 +3483,29 @@ function renderPills(suggestions) {
 }
 
 // Fetch with timeout
-function fetchWithTimeout(url, opts={}, ms=8000) {
+// Default fetch timeout reduced from 8s → 6s (per-request). Slow
+// networks still have a second chance via fetchWithTimeoutRetry below.
+function fetchWithTimeout(url, opts={}, ms=6000) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
   return fetch(url, {...opts, signal:ctrl.signal}).finally(() => clearTimeout(timer));
+}
+
+// Retry wrapper — one re-try on AbortError only (i.e. timeout). A
+// real HTTP error (404 / 500) resolves without abort and is NOT
+// retried. First attempt uses `ms`, retry bumps to 2×ms so a
+// genuinely slow request can still complete. Used by the CID lookup
+// helpers (getCid / getCidViaSid) so a transient network blip
+// doesn't land a permanent null in pcCache.
+async function fetchWithTimeoutRetry(url, opts={}, ms=6000) {
+  try {
+    return await fetchWithTimeout(url, opts, ms);
+  } catch (e) {
+    if (e?.name === 'AbortError') {
+      return fetchWithTimeout(url, opts, ms * 2);
+    }
+    throw e;
+  }
 }
 
 
@@ -3640,8 +3680,21 @@ function _extractGHSFromMarkup(sections) {
 
 function getGHSPictograms(mat) {
   if (mat._ghsPictograms) return mat._ghsPictograms;
-  // Use pre-extracted codes from PUG View Markup (most reliable)
-  if (mat._ghsCodes && mat._ghsCodes.length) {
+  // Use pre-extracted codes from PUG View Markup (most reliable).
+  // Validate the CID the codes came from still matches the material's
+  // current PubChem CID — if a later re-scrape or DB-merge changed
+  // the identity we must not show hazard pictograms from the old CID.
+  if (mat._ghsCodes && Array.isArray(mat._ghsCodes.codes) && mat._ghsCodes.codes.length) {
+    const _curCid = mat.record?.identifiers?.pubchem_cid;
+    if (!mat._ghsCodes.cid || mat._ghsCodes.cid === _curCid) {
+      mat._ghsPictograms = mat._ghsCodes.codes.filter(g => GHS_PICTOGRAMS[g]);
+      return mat._ghsPictograms;
+    }
+  }
+  // Legacy bare-array shape (older persisted state): honored but flagged
+  // as untied — the CID consistency check only fires when the object
+  // shape carries a `cid` tag.
+  if (mat._ghsCodes && Array.isArray(mat._ghsCodes) && mat._ghsCodes.length) {
     mat._ghsPictograms = mat._ghsCodes.filter(g => GHS_PICTOGRAMS[g]);
     return mat._ghsPictograms;
   }
@@ -3818,7 +3871,7 @@ function _enrichPubchem(mat, cas) {
     try { _computeClassification(mat); } catch(e) { console.warn('_computeClassification (enrich):', e); }
     renderResults(); prefetchAll();
     fetchWithTimeout('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/'+cid+'/JSON?heading=GHS+Classification', {}, 8000)
-      .then(r=>r.json()).then(d => { mat._ghsCodes = _extractGHSFromMarkup(d.Record?.Section||[]); mat._ghsPictograms=null; renderResults(); })
+      .then(r=>r.json()).then(d => { mat._ghsCodes = { cid, codes: _extractGHSFromMarkup(d.Record?.Section||[]) }; mat._ghsPictograms=null; renderResults(); })
       .catch(e => { if (e?.name !== 'AbortError') console.warn('GHS fetch error:', e); });
   }).catch(e => { if (e?.name !== 'AbortError') console.warn('_enrichPubchem error:', e); });
 }
@@ -4020,16 +4073,43 @@ async function scrapeMaterial(name) {
       // like "phenylethyl alcohol" and "2-phenylethanol" both reduce to
       // a comparable stem ("phenylethan-"). Strips leading positional
       // numbers and collapses "-ol"/"-yl alcohol" tail forms.
-      // Also normalizes "-ic acid" → "-ate" for a conservative whitelist
-      // of roots common in perfumery (cinnam, benzo, salicyl, anthranil)
-      // so "cinnamic acid" matches "methyl cinnamate" etc.
+      // Also normalizes "-ic acid" → "-ate" for a whitelist of roots
+      // common in perfumery so "cinnamic acid" matches "methyl cinnamate".
       const _stem = s => s
         .replace(/^\d+[-\s]*/, '')      // drop leading "2-" / "1 "
         .replace(/\s+alcohol\b/g, 'ol') // "phenylethyl alcohol" → "phenylethylol"
         .replace(/yl ?ol\b/g, 'anol')   // "phenylethylol" → "phenylethanol"
         .replace(/[\s\-]+/g, '')        // strip remaining whitespace/hyphens
-        // acid↔ester: whitelisted roots only to avoid over-matching
-        .replace(/(cinnam|benzo|salicyl|anthranil)icacid/g, '$1ate');
+        // acid↔ester: whitelisted roots (expanded for common fragrance
+        // acids/esters — geranic, phenylacetic, acetic, propionic,
+        // butyric, hexanoic/hex-, octanoic, decanoic, nonanoic,
+        // caproic/caprylic/capric, lauric, myristic, palmitic).
+        .replace(/(cinnam|benzo|salicyl|anthranil|geran|phenylacet|acet|propion|butyr|hexano|octano|decano|nonano|capro|capryl|capr|laur|myrist|palmit)icacid/g, '$1ate');
+
+      // Stereo-descriptor consistency check. If the user's query carries
+      // an explicit stereo marker (L-, D-, R-, S-, (+)-, (−)-, cis-,
+      // trans-, E-, Z-, α-, β-, γ-) the PubChem title must carry a
+      // compatible marker — otherwise PubChem returned the "default"
+      // CID and we'd show wrong stereochemistry. The _stem normalizer
+      // strips hyphens and would silently collapse "L-Linalool" onto
+      // plain "Linalool", so we check markers BEFORE stemming.
+      const _extractStereo = s => {
+        const out = new Set();
+        if (!s) return out;
+        if (/(?:^|[^a-z])l(?=[- ])/i.test(s) || /l\s*-\s*\(/i.test(s) || /\(s\)/i.test(s) || /\(-\)/.test(s) || /\(−\)/.test(s)) out.add('L');
+        if (/(?:^|[^a-z])d(?=[- ])/i.test(s) || /d\s*-\s*\(/i.test(s) || /\(r\)/i.test(s) || /\(\+\)/.test(s)) out.add('D');
+        if (/\btrans[- ]/i.test(s) || /\(e\)/i.test(s) || /(?:^|[^a-z])e(?=[- ])/.test(s.toLowerCase())) out.add('trans');
+        if (/\bcis[- ]/i.test(s) || /\(z\)/i.test(s) || /(?:^|[^a-z])z(?=[- ])/.test(s.toLowerCase())) out.add('cis');
+        if (/(^|[^a-z])(?:alpha|α)(?=[- ])/i.test(s)) out.add('alpha');
+        if (/(^|[^a-z])(?:beta|β)(?=[- ])/i.test(s)) out.add('beta');
+        if (/(^|[^a-z])(?:gamma|γ)(?=[- ])/i.test(s)) out.add('gamma');
+        return out;
+      };
+      const inputStereo = _extractStereo(name);
+      const titleStereo = _extractStereo(pcTitle || '');
+      const stereoAgrees = inputStereo.size === 0
+        || [...inputStereo].every(m => titleStereo.has(m));
+
       let isPlausible = false;
       if (titleNorm) {
         if (titleNorm.includes(inputNorm) || inputNorm.includes(titleNorm)) {
@@ -4051,8 +4131,14 @@ async function scrapeMaterial(name) {
           }
         }
       }
-      if (isPlausible) {
+      if (isPlausible && stereoAgrees) {
         mat.record.match = makeMatch('pubchem_name', 0.80, name, pcTitle||name, pcTitle, 'PubChem name lookup', 'pubchem');
+      } else if (isPlausible && !stereoAgrees) {
+        // Name matches but stereo descriptor doesn't — PubChem likely
+        // returned the default (racemic / unspecified) CID instead of
+        // the specific enantiomer/isomer the query asked for.
+        mat.record.match = makeMatch('pubchem_name', 0.60, name, pcTitle||name, pcTitle,
+          'PubChem returned "' + (pcTitle||'unknown') + '" — stereochemistry may differ from query (' + [...inputStereo].join(',') + ')', 'pubchem');
       } else {
         // Low confidence — PubChem returned something but name doesn't match well
         mat.record.match = makeMatch('pubchem_name', 0.55, name, pcTitle||name, pcTitle,
@@ -4081,7 +4167,29 @@ async function scrapeMaterial(name) {
   ]);
   _applyPubchemProps(mat, propsRes.status==='fulfilled'?propsRes.value:null, synsRes.status==='fulfilled'?synsRes.value:null, descRes.status==='fulfilled'?descRes.value:null);
   if (!mat.record.identifiers.cas && mat.record.names.synonyms.length) { const cas = mat.record.names.synonyms.find(s => CAS_RE_SEARCH.test(s)); if (cas) mat.record.identifiers.cas = cas; }
-  if (mat.record.identifiers.cas) { if (DB[mat.record.identifiers.cas]) mat.record.names.canonical = DB[mat.record.identifiers.cas].name; applyPerfumery(mat, mat.record.identifiers.cas); }
+  if (mat.record.identifiers.cas) {
+    const _cas = mat.record.identifiers.cas;
+    const _dbEntry = DB[_cas];
+    if (_dbEntry) {
+      // Guard: a CAS extracted from PubChem synonyms is NOT guaranteed
+      // to refer to the same compound the user intended — for natural
+      // mixtures and compounds whose registries list constituent or
+      // related-compound CAS numbers, the first CAS-shaped synonym can
+      // belong to a different material. Applying local DB overrides
+      // via the wrong CAS silently overwrites odor, tenacity, IFRA
+      // and FEMA fields with unrelated data. Only apply the DB merge
+      // when the DB entry's canonical name shares a meaningful stem
+      // with either the PubChem title or the user's search query.
+      if (_dbNameMatchesContext(_dbEntry, mat.record.names.pubchem_title, name)) {
+        mat.record.names.canonical = _dbEntry.name;
+        applyPerfumery(mat, _cas);
+      } else {
+        console.warn('[scrape] synonym CAS ' + _cas + ' → DB name "' + _dbEntry.name +
+          '" does not match PubChem title "' + (mat.record.names.pubchem_title||'') +
+          '" or query "' + name + '" — skipping DB merge');
+      }
+    }
+  }
 
   // ── Perfumery validation ──
   if (mat.record.identifiers.molecular_formula) {
@@ -4106,9 +4214,11 @@ async function scrapeMaterial(name) {
 
   try { _computeClassification(mat); } catch(e) { console.warn('_computeClassification (pubchem):', e); }
 
-  // Fetch GHS
+  // Fetch GHS — tag the extracted codes with the CID they belong to
+  // so getGHSPictograms can drop them if the material's CID later
+  // changes (prevents stale hazard codes from a re-scraped material).
   fetchWithTimeout('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/'+cid+'/JSON?heading=GHS+Classification', {}, 8000)
-    .then(r=>r.json()).then(d => { mat._ghsCodes = _extractGHSFromMarkup(d.Record?.Section||[]); mat._ghsPictograms=null; renderResults(); })
+    .then(r=>r.json()).then(d => { mat._ghsCodes = { cid, codes: _extractGHSFromMarkup(d.Record?.Section||[]) }; mat._ghsPictograms=null; renderResults(); })
     .catch(e => { if (e?.name !== 'AbortError') console.warn('GHS fetch (pubchem path):', e); });
 
   return mat;
@@ -4119,11 +4229,17 @@ async function getCidViaSid(name) {
   const key = 'sid_'+name.toLowerCase();
   if (pcCache[key] !== undefined) return pcCache[key];
   try {
-    const r = await fetchWithTimeout(`${PUBCHEM_REST}/substance/name/${encodeURIComponent(name)}/cids/JSON?cids_type=standardized`);
+    const r = await fetchWithTimeoutRetry(`${PUBCHEM_REST}/substance/name/${encodeURIComponent(name)}/cids/JSON?cids_type=standardized`);
     const d = await r.json();
     const cid = d.InformationList?.Information?.[0]?.CID?.[0] || null;
-    pcCache[key] = cid; return cid;
-  } catch(e) { pcCache[key]=null; return null; }
+    pcCache[key] = cid;
+    return cid;
+  } catch(e) {
+    // Don't cache timeout results — allow retry on next search.
+    if (e?.name === 'AbortError') return null;
+    pcCache[key] = null;
+    return null;
+  }
 }
 
 
@@ -4253,6 +4369,27 @@ function extractAllSections(sections, prefix="", depth=0) {
   return result;
 }
 
+// Cross-compound contamination guard. Returns true when the local DB
+// entry's canonical name shares a meaningful stem with either the
+// PubChem title or the user's raw search input. Used before routing
+// the synonym-derived CAS to applyPerfumery so mixtures / related
+// compounds can't silently overwrite odor / IFRA / FEMA fields with
+// data from an unrelated material.
+function _dbNameMatchesContext(dbEntry, pubTitle, searchInput) {
+  if (!dbEntry || !dbEntry.name) return false;
+  const db = String(dbEntry.name).toLowerCase();
+  const pt = String(pubTitle || '').toLowerCase();
+  const si = String(searchInput || '').toLowerCase();
+  if (pt && (pt.includes(db) || db.includes(pt))) return true;
+  if (si && (si.includes(db) || db.includes(si))) return true;
+  const tokenize = s => s.split(/[^a-z0-9]+/).filter(w => w.length >= 5);
+  const dbTokens = new Set(tokenize(db));
+  if (!dbTokens.size) return false;
+  for (const t of tokenize(pt)) if (dbTokens.has(t)) return true;
+  for (const t of tokenize(si)) if (dbTokens.has(t)) return true;
+  return false;
+}
+
 function applyPerfumery(mat, cas) {
   const rec = mat.record, id = rec.identifiers, pf = rec.perfumery, sf = rec.safety;
   let pdb = DB[cas];
@@ -4285,11 +4422,21 @@ async function getCid(name) {
   const key = 'cid_'+name.toLowerCase();
   if (pcCache[key] !== undefined) return pcCache[key];
   try {
-    const r = await fetchWithTimeout(`${PUBCHEM_REST}/compound/name/${encodeURIComponent(name)}/cids/JSON`);
+    const r = await fetchWithTimeoutRetry(`${PUBCHEM_REST}/compound/name/${encodeURIComponent(name)}/cids/JSON`);
     const d = await r.json();
     const cid = d.IdentifierList?.CID?.[0] || null;
-    pcCache[key] = cid; return cid;
-  } catch(e) { pcCache[key]=null; return null; }
+    // Cache confirmed result (CID found or PubChem said "not found").
+    // Missing status field is treated as confirmed null.
+    pcCache[key] = cid;
+    return cid;
+  } catch(e) {
+    // Timeout / network error — don't cache so a later retry can
+    // succeed when the network recovers. The lookup just returns null
+    // for this call.
+    if (e?.name === 'AbortError') return null;
+    pcCache[key] = null;
+    return null;
+  }
 }
 
 let pcGroupId = 0;
@@ -4392,12 +4539,27 @@ function _cleanOdorDescription(s, source) {
   const FW = '(?:fixative|solvent|carrier|diluent|denaturant|plasticizer|emollient|preservative)';
   const re = new RegExp('\\s*[—\\-–]\\s*(?:mainly\\s+|mostly\\s+|primarily\\s+|also\\s+|used\\s+as\\s+|acts\\s+as\\s+)*(?:a\\s+|an\\s+)?' + FW + '(?:\\s*(?:[\\/&,]|and)\\s*' + FW + ')*\\s*$', 'i');
   const cleaned = s.replace(re, '').trim();
-  // PubChem-sourced odor descriptions are often single-word generic
-  // adjectives ("Pleasant", "Mild", "Characteristic odor", …) that
-  // carry no perfumery information. Suppress them so the card falls
-  // through to the "—" placeholder instead of showing noise.
-  if (source === 'PubChem' && /^(pleasant|mild|strong|sweet|faint|odorless|odourless|none|pungent|aromatic|characteristic|mild\s+odor|pleasant\s+odor|sweet\s+odor|characteristic\s+odor|no\s+odor|odour\s+none)\.?$/i.test(cleaned)) {
-    return '';
+  // PubChem-sourced odor descriptions are often generic adjectives
+  // ("Pleasant", "Mild", "Characteristic odor", …) that carry no
+  // perfumery information. Suppress them so the card falls through
+  // to the "—" placeholder instead of showing noise.
+  //
+  // Multi-word check: a description made entirely of generic
+  // adjectives (e.g. "Pleasant mild") is still noise. Only suppress
+  // when EVERY non-filler word is in the generic set — a single
+  // meaningful token like "floral" anywhere ("Mild floral") keeps
+  // the description as legitimate odor copy.
+  if (source === 'PubChem' && cleaned) {
+    const GENERIC = new Set([
+      'pleasant','mild','strong','sweet','faint','odorless','odourless',
+      'none','pungent','aromatic','characteristic','slight','slightly',
+      'weak','intense','nice','agreeable','fragrant','fresh','clean',
+      'distinct','noticeable','typical','light'
+    ]);
+    const FILLER = new Set(['odor','odour','smell','scent','and','a','an','the','with','of']);
+    const tokens = cleaned.toLowerCase().replace(/[.,;:!?]/g, '').split(/\s+/).filter(Boolean);
+    const meaningful = tokens.filter(t => !FILLER.has(t));
+    if (meaningful.length && meaningful.every(t => GENERIC.has(t))) return '';
   }
   return cleaned;
 }
@@ -5100,9 +5262,17 @@ function getBanStatus(mat) {
   const sf = r.safety || {};
   const ifra = (sf.ifra_guideline || '').toLowerCase();
   const usage = (sf.usage_levels || '').toLowerCase();
+  // Worldwide-ban detection must scope its "no EU" lookahead to the
+  // ifra field only. The earlier version concatenated ifra+usage and
+  // ran the lookahead over the full string, so a legitimate
+  // "prohibited worldwide (phototoxicity)" in ifra + any mention of
+  // "eu" in usage (e.g. "Limited use in EU cosmetics") would cause
+  // the negative lookahead to fail and downgrade the status to null.
+  const ifraSaysWorldwide = /\bprohibited\s+worldwide\b/i.test(ifra) ||
+                            /\bbanned\s+worldwide\b/i.test(ifra);
+  const ifraMentionsEU = /\beu\b/i.test(ifra);
+  if (ifraSaysWorldwide && !ifraMentionsEU) return 'worldwide';
   const all = ifra + ' ' + usage;
-  if (/prohibited\s*worldwide|\bbanned\b(?!.*\beu\b)/i.test(all) && !/\beu\b/i.test(ifra))
-    return 'worldwide';
   if (/\bbanned\b|prohibited\s*in\s*eu|banned\s*in\s*eu/i.test(all))
     return 'eu';
   return null;

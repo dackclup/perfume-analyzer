@@ -84,6 +84,47 @@ const IFRA_51_LIMITS = {
   "107-75-5":   { "4": 1.20 },
 };
 
+// IFRA 51 CAS stereoisomer / alias map — alternative CAS numbers that
+// refer to the same regulated compound under IFRA. The engine looks up
+// IFRA_51_LIMITS[cas] first; if missing, it falls back to
+// IFRA_51_LIMITS[IFRA_51_CAS_ALIAS[cas]]. This covers enantiomer and
+// geometric isomer CAS variants that IFRA regulates under a single cap
+// (racemic / R / S / cis / trans all share the same workplace limit).
+// Populated conservatively — only documented one-to-one equivalences
+// where the RIFM dossier explicitly covers both CAS under one cap.
+const IFRA_51_CAS_ALIAS = {
+  // Linalool — racemic (78-70-6) is the regulated CAS; (S)-(+)- and
+  // (R)-(−)- enantiomer CAS both map onto it.
+  "126-91-0": "78-70-6",  // (R)-(−)-Linalool
+  "126-90-9": "78-70-6",  // (S)-(+)-Linalool
+  // Limonene — racemic (7705-14-8) and (R)-(+)- (5989-27-5) share a
+  // RIFM dossier; (S)-(−)- (5989-54-8) is covered by the same limit.
+  "7705-14-8": "5989-27-5", // (±)-Limonene
+  "5989-54-8": "5989-27-5", // (S)-(−)-Limonene
+  // Citronellol — racemic (106-22-9) is the regulated CAS; enantiomer
+  // variants (7540-51-4 = (R), 1117-61-9 = (S)) map onto it.
+  "7540-51-4": "106-22-9",  // (R)-(+)-Citronellol
+  "1117-61-9": "106-22-9",  // (S)-(−)-Citronellol
+  // Geraniol — trans form (106-24-1) is the regulated CAS; cis (Nerol,
+  // 106-25-2) is regulated SEPARATELY (different EU allergen entry)
+  // so it is intentionally NOT aliased here.
+  // Camphor — racemic (76-22-2); (+)-camphor (464-49-3) and
+  // (−)-camphor (464-48-2) share the same IFRA cap per RIFM.
+  "464-49-3": "76-22-2",  // (+)-Camphor
+  "464-48-2": "76-22-2",  // (−)-Camphor
+};
+
+// Unified lookup — preferred accessor for IFRA caps. Returns the table
+// entry for the given CAS or null. Falls back through IFRA_51_CAS_ALIAS
+// so stereoisomer CAS variants resolve to their parent cap.
+function ifraLimitForCas(cas) {
+  if (!cas) return null;
+  if (IFRA_51_LIMITS[cas]) return IFRA_51_LIMITS[cas];
+  const alias = IFRA_51_CAS_ALIAS[cas];
+  if (alias && IFRA_51_LIMITS[alias]) return IFRA_51_LIMITS[alias];
+  return null;
+}
+
 // ─────────────────────────────────────────────────────────────
 // Peroxide control (IFRA 51 requirement)
 // For materials prone to auto-oxidation that form hydroperoxide
