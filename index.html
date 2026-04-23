@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-23-rebuild-v17"></script>
+<script src="perfumery_data.js?v=2026-04-23-rebuild-v18"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-23-rebuild-v17";
+const DATA_VERSION = "2026-04-23-rebuild-v18";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1470,6 +1470,15 @@ const USE_LABELS = {
   home_care:'Home Care & Air Care', flavor:'Flavor'
 };
 // ── Flavor-safety gate constants ──
+// TODO(stereoisomer-alias-map): when a 2nd stereoisomer family lands
+// in the DB (Mint/Thyme/Rosemary facet group will bring menthol's 4
+// stereoisomers, citronellol R/S, nerol/geraniol), build a code
+// constant here: `const IFRA_51_CAS_ALIAS = { '126-91-0': '78-70-6',
+// '126-90-9': '78-70-6', ... }` and have the IFRA/FEMA lookup path
+// resolve stereoisomer CAS to the canonical racemic CAS before
+// looking up caps. Today (R)/(S)-linalool carry full Cat.N text
+// inline so the classifier works via text-regex — no code map needed
+// for 2 entries.
 // CAS numbers of common perfumery materials that are definitively NOT food-safe.
 const FLAVOR_EXCLUDED_CAS = new Set([
   '84-66-2',    // Diethyl phthalate (DEP) — endocrine disruptor
