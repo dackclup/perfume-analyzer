@@ -2314,7 +2314,15 @@ function migrateLegacyTaxonomy(entry) {
     const rawFa = raw.facets            || [];
     const pf = uniqStable(rawPf.filter(f => PRIMARY_FAMILIES.includes(f)));
     const sf = uniqStable(rawSf.filter(f => PRIMARY_FAMILIES.includes(f) && !pf.includes(f)));
-    const fa = uniqStable(rawFa.filter(f => f in FACET_TAGS));
+    // Facets must be specific descriptor tokens — NOT family names. The
+    // self-reference entries in FACET_TAGS (e.g. `herbal:'herbal'`) let
+    // validation pass for any family token, but those tokens belong in
+    // primaryFamilies/secondaryFamilies, not facets. Filter them out so
+    // the card's Class row doesn't render "Citrus · Floral · Herbal"
+    // alongside the actual family chips (which would be visually
+    // duplicated). Real descriptor facets (lavender / sage / rose /
+    // bergamot / …) still pass through.
+    const fa = uniqStable(rawFa.filter(f => f in FACET_TAGS && !PRIMARY_FAMILIES.includes(f)));
     // Integrity check: if the curated block had tokens but ALL got
     // filtered out as unknown, warn loudly. A silent drop is
     // indistinguishable from "no override, infer it" and hides typos
