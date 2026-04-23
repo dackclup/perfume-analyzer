@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-23-rebuild-v14"></script>
+<script src="perfumery_data.js?v=2026-04-23-rebuild-v15"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-23-rebuild-v14";
+const DATA_VERSION = "2026-04-23-rebuild-v15";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -3619,6 +3619,28 @@ async function fetchWithTimeoutRetry(url, opts={}, ms=6000) {
   }
 }
 
+// onerror handler for structure-image <img>. On the first failure we
+// silently retry once with a cache-buster — handles the common case
+// where a mobile network drop aborted the first request. On the
+// second failure we replace the <img> with a visible placeholder so
+// the user knows the image was attempted (instead of silently hiding
+// the whole container — which made it look like the card was missing
+// data).
+function handleStructureImgError(img) {
+  try {
+    img.dataset.retry = String(Number(img.dataset.retry || '0') + 1);
+    if (img.dataset.retry === '1') {
+      const sep = img.src.includes('?') ? '&' : '?';
+      img.src = img.src.split('#')[0] + sep + '_r=' + Date.now();
+      return;
+    }
+    img.onerror = null;
+    const parent = img.parentNode;
+    if (!parent) return;
+    parent.innerHTML = '<div style="padding:16px;border:1px dashed var(--border);border-radius:6px;color:var(--text2);font-size:0.85em;text-align:center">Structure image unavailable (network)<br><a href="' + (img.src.split('?')[0].replace('/rest/pug/compound/cid/','/compound/').replace('/PNG','')) + '" target="_blank" style="color:var(--accent)">Open on PubChem ↗</a></div>';
+  } catch(e) { /* defensive — never let the handler itself throw */ }
+}
+
 
 // Append pre-escaped HTML into the searchError banner so multiple
 // per-item messages in one batch (e.g. "foo, bar, baz" all failing)
@@ -3968,7 +3990,14 @@ function matchFuzzyLocal(n) {
 
 // ── Helper: background PubChem enrichment for local DB matches ──
 function _enrichPubchem(mat, cas) {
-  mat._loadPubchem = getCid(cas).then(async cid => {
+  // Prefer a curated CID on the local DB entry (applyPerfumery copies it
+  // into mat.record.identifiers.pubchem_cid) — avoids the name→CID
+  // round-trip on slow mobile networks and bypasses PubChem's flaky
+  // name-lookup (which returns the wrong stereoisomer for some oxide
+  // CAS numbers). Fall back to getCid(cas) only when no CID is curated.
+  const curatedCid = mat.record?.identifiers?.pubchem_cid || null;
+  const cidPromise = curatedCid ? Promise.resolve(Number(curatedCid)) : getCid(cas);
+  mat._loadPubchem = cidPromise.then(async cid => {
     if (!cid) return;
     mat.record.identifiers.pubchem_cid = cid;
     mat.page_url = 'https://pubchem.ncbi.nlm.nih.gov/compound/'+cid;
@@ -4526,6 +4555,22 @@ function applyPerfumery(mat, cas) {
   _assign(sf, 'usage_levels',     pdb.safety?.usage);
   if (Array.isArray(pdb.blends_with) && pdb.blends_with.length) pf.blends_with = pdb.blends_with;
   if (pdb.fema) id.fema = pdb.fema;
+  // Pre-populate PubChem link + 2D structure image from curated CID when
+  // the DB has one. Lets the card show the molecule picture + PubChem
+  // deep-link INSTANTLY on first render (no CAS→CID network round-trip),
+  // and bypasses the flaky PubChem name-lookup path (which returns the
+  // wrong stereoisomer for some oxide CAS numbers — e.g. 60047-17-8 →
+  // furanoid CID instead of pyranoid). _enrichPubchem still runs for
+  // properties/synonyms/GHS, but skips its own getCid() when a CID is
+  // already set here.
+  if (pdb.pubchem_cid) {
+    id.pubchem_cid = pdb.pubchem_cid;
+    if (!mat.page_url) mat.page_url = pdb.pubchem_url || ('https://pubchem.ncbi.nlm.nih.gov/compound/' + pdb.pubchem_cid);
+    if (!mat.structure_image_url) mat.structure_image_url = PUBCHEM_REST + '/compound/cid/' + pdb.pubchem_cid + '/PNG?image_size=large';
+  }
+  if (pdb.iupac) id.iupac = pdb.iupac;
+  if (pdb.formula) id.molecular_formula = pdb.formula;
+  if (pdb.weight) rec.properties.molecular_weight = pdb.weight;
   if (!mat.match_info) mat.match_info = "✅ CAS match (" + cas + ")";
 }
 
@@ -4908,7 +4953,7 @@ function renderResults() {
   const chain = parts.join('<span class="tag-breadcrumb-sep">›</span>');
   return `<div class="tag-row"><span class="tag-axis-label" title="Main Family › Family › Facets">Class</span><span class="tag-chips">${chain}</span></div>`;
 })()}</div>`:""}
-          ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="structure" onerror="this.parentNode.style.display='none'"></div>`:""}
+          ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="2D structure of ${esc(nm.canonical)}" loading="lazy" onerror="handleStructureImgError(this)"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
             ${mat.page_url?`<p class="pubchem-link"><a href="${mat.page_url}" target="_blank" style="color:var(--accent);font-size:0.85em">PubChem ↗</a></p>`:""}
