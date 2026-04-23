@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-23-rebuild-v2"></script>
+<script src="perfumery_data.js?v=2026-04-23-rebuild-v3"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-23-rebuild-v2";
+const DATA_VERSION = "2026-04-23-rebuild-v3";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -853,10 +853,25 @@ PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 const TRADES = PERFUMERY_DATA.trade_names;
 const MIXTURES = new Set(PERFUMERY_DATA.mixture_cas);
 
-// Build synonym→CAS reverse lookup
+// Build lowercase name→CAS reverse lookup. Indexes both the canonical
+// entry.name AND every synonym so _applyLocalMatch can resolve any form
+// the matcher returns — previously this was synonym-only, and canonical
+// names carrying punctuation / Unicode chars that don't appear
+// verbatim in the synonyms list (e.g. "trans-Linalool Oxide (pyranoid)"
+// whose synonym is the paren-less "trans-linalool oxide pyranoid", or
+// "(R)-(−)-Linalool" whose synonym uses hyphen-minus not U+2212) would
+// find the match but fail to resolve the CAS, falling through to fuzzy
+// matching that suggested nearby materials at low confidence.
 const NAME_TO_CAS = {};
 for (const [cas, entry] of Object.entries(DB)) {
-  for (const name of entry.synonyms || []) NAME_TO_CAS[name.toLowerCase()] = cas;
+  if (entry.name) {
+    const nl = entry.name.toLowerCase();
+    if (!NAME_TO_CAS[nl]) NAME_TO_CAS[nl] = cas; // canonical name wins
+  }
+  for (const name of entry.synonyms || []) {
+    const nl = name.toLowerCase();
+    if (!NAME_TO_CAS[nl]) NAME_TO_CAS[nl] = cas; // synonym fills remaining
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1363,12 +1378,18 @@ for (const key in PREFIX_IX) PREFIX_IX[key].sort((a,b) => {
   return b.name.length - a.name.length;
 });
 
-// Build lowercase synonym→CAS index for fast fuzzy matching (keep first match per synonym)
+// Build lowercase name index for fuzzy matching. Indexes entry.name
+// first (so canonical-name lookups resolve without going through the
+// synonyms list), then every synonym. First hit wins per key.
 const SYN_IX = {};
 for (const [cas, entry] of Object.entries(DB)) {
+  if (entry.name) {
+    const nl = entry.name.toLowerCase();
+    if (!SYN_IX[nl]) SYN_IX[nl] = {cas, name: entry.name};
+  }
   for (const name of entry.synonyms || []) {
     const nl = name.toLowerCase();
-    if (!SYN_IX[nl]) SYN_IX[nl] = {cas, name}; // First wins, no overwrite
+    if (!SYN_IX[nl]) SYN_IX[nl] = {cas, name};
   }
 }
 
