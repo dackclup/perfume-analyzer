@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-23-rebuild-v11"></script>
+<script src="perfumery_data.js?v=2026-04-23-rebuild-v12"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-23-rebuild-v11";
+const DATA_VERSION = "2026-04-23-rebuild-v12";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1484,6 +1484,19 @@ const FLAVOR_EXCLUDED_CAS = new Set([
   '15323-35-0', // Phantolide — polycyclic musk
   '32388-55-9', // Vertofix — macrocyclic musk
   '101-81-5',   // Diphenylmethane — industrial solvent
+  '546-80-5',   // α-Thujone — convulsant neurotoxin; EU Reg 1334/2008 restricts
+                //   to alcoholic beverages containing sage; FEMA 3604 applies
+                //   to thujone-bearing botanical extracts, NOT the pure isolate
+]);
+
+// CAS numbers of materials that must NEVER get a Personal Care tag —
+// skin/leave-on/rinse-off exposure is unsafe at realistic formulation
+// levels regardless of what the curated safety text says. Applies as
+// an override at every PC gate path (vehicle, explicit keyword,
+// baseline fallback, PubChem enrichment) so a single data-text typo
+// can't slip a neurotoxin into a cosmetic-use tag.
+const PERSONAL_CARE_EXCLUDED_CAS = new Set([
+  '546-80-5',   // α-Thujone — GABA-A antagonist, convulsant; banned from leave-on cosmetics
 ]);
 // Negative cues: explicit denial of food use.
 const NOT_FOOD_RE = /\bnot\s+(?:for\s+)?(?:food|flavou?r|human\s+consumption|internal\s+use|ingestion)\b|\bnon[- ]?food\b|\bdo\s+not\s+(?:eat|ingest|consume)\b|\bindustrial\s+use\s+only\b|\bnot\s+intended\s+for\s+(?:food|consumption|ingestion)\b/i;
@@ -5401,7 +5414,7 @@ function classifyUses(mat) {
   const isAntioxidant = /\b(tocopherol|bht|bha|antioxidant)\b/i.test(n);
   if (!banned && (isFragranceVehicle || isAntioxidant)) {
     tags.add('fine_fragrance');
-    tags.add('personal_care');
+    if (!PERSONAL_CARE_EXCLUDED_CAS.has(cas)) tags.add('personal_care');
   }
 
   // ── Fine Fragrance ──
@@ -5419,7 +5432,7 @@ function classifyUses(mat) {
   // Explicit cosmetic/skin-care keyword in the safety text. The
   // earlier auto-fire ("any non-banned perfumery material gets this
   // tag") was removed — it added no information.
-  if (!banned && /\b(body lotion|body wash|deodorant|shampoo|conditioner|skin care|skin\s*condition|cosmetic|lip\s*(stick|balm|gloss)|hair\s*(care|product)|axillae|leave[- ]on|rinse[- ]off|emollient|humectant|soap|toothpaste)\b/i.test(safetyText)) {
+  if (!banned && !PERSONAL_CARE_EXCLUDED_CAS.has(cas) && /\b(body lotion|body wash|deodorant|shampoo|conditioner|skin care|skin\s*condition|cosmetic|lip\s*(stick|balm|gloss)|hair\s*(care|product)|axillae|leave[- ]on|rinse[- ]off|emollient|humectant|soap|toothpaste)\b/i.test(safetyText)) {
     tags.add('personal_care');
   }
 
@@ -5428,7 +5441,11 @@ function classifyUses(mat) {
   // earlier "base note + woody/amber profile" inference was removed —
   // it over-fired on every dark base-note material regardless of
   // whether the source data actually mentioned home-care use.
-  if (!banned && /\b(candle|wax melt|reed diffuser|room spray|air freshener|air care|fabric|laundry|softener|detergent|household|home care|all[- ]purpose|cleaner|dishwash|surfactant)\b/i.test(safetyText)) {
+  // Evidence vocabulary extended 2026-04 to cover industry shorthand
+  // "functional perfumery" (= soap/detergent/candle/air care collectively)
+  // and explicit bar-soap / shower-gel / body-bar mentions that were
+  // missing from the original household-keyword list.
+  if (!banned && /\b(candle|wax melt|reed diffuser|room spray|air freshener|air care|fabric|laundry|softener|detergent|household|home care|all[- ]purpose|cleaner|dishwash|surfactant|functional\s*perfumery|bar\s*soap|shower\s*gel|body\s*bar|dish\s*soap)\b/i.test(safetyText)) {
     tags.add('home_care');
   }
 
@@ -5446,7 +5463,7 @@ function classifyUses(mat) {
   const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
   if (!banned && (hasRealOdor || isMixture)) {
     tags.add('fine_fragrance');
-    tags.add('personal_care');
+    if (!PERSONAL_CARE_EXCLUDED_CAS.has(cas)) tags.add('personal_care');
   }
 
   // ── Flavor ──
@@ -5488,7 +5505,7 @@ function classifyUses(mat) {
     }
     if (pcUseText) {
       if (!banned && PUBCHEM_FRAGRANCE_RE.test(pcUseText))    tags.add('fine_fragrance');
-      if (!banned && PUBCHEM_PERSONALCARE_RE.test(pcUseText)) tags.add('personal_care');
+      if (!banned && !PERSONAL_CARE_EXCLUDED_CAS.has(cas) && PUBCHEM_PERSONALCARE_RE.test(pcUseText)) tags.add('personal_care');
       if (PUBCHEM_HOMECARE_RE.test(pcUseText))                tags.add('home_care');
       if (!banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !toxicNonFema &&
           (FLAVOR_POSITIVE_RE.test(pcUseText) || PUBCHEM_FLAVOR_RE.test(pcUseText))) {
