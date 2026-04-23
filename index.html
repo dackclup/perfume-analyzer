@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-23-rebuild-v19"></script>
+<script src="perfumery_data.js?v=2026-04-23-rebuild-v20"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-23-rebuild-v19";
+const DATA_VERSION = "2026-04-23-rebuild-v20";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -3985,16 +3985,30 @@ function matchFuzzyLocal(n) {
   let bestScore = 0, bestMatch = null;
   const candidates = [];
   const seenCasCand = new Set();
+  // Normalize dashes/underscores to spaces before substring comparison —
+  // lets "trans Linalool" match "trans-Linalool Oxide" and "p cymene"
+  // match "p-Cymene" without requiring the user to punctuate exactly.
+  const canonSep = s => s.replace(/[-_\s]+/g, ' ').trim();
+  const nkC = canonSep(nk);
   for (const [nl, match] of Object.entries(SYN_IX)) {
     if (SYNONYM_BLACKLIST.has(nl)) continue;
-    if (nl.includes(nk) || nk.includes(nl)) {
-      const score = Math.min(nk.length, nl.length) / Math.max(nk.length, nl.length);
-      if (score > bestScore) { bestScore = score; bestMatch = match; }
-      if (score > 0.6 && candidates.length < 5 && !seenCasCand.has(match.cas)) {
-        seenCasCand.add(match.cas);
-        candidates.push({ name: DB[match.cas]?.name||match.name, cas: match.cas, score: Math.round(score*100) });
-      }
-    }
+    const nlC = canonSep(nl);
+    const nlHasNk = nlC.includes(nkC);
+    const nkHasNl = nkC.includes(nlC);
+    if (!nlHasNk && !nkHasNl) continue;
+    const score = Math.min(nk.length, nl.length) / Math.max(nk.length, nl.length);
+    if (score > bestScore) { bestScore = score; bestMatch = match; }
+    // User-typed-substring-of-DB-name (e.g. "spanish" → Thyme Oil,
+    // Spanish + Spanish Sage Oil) always qualifies as a candidate —
+    // the length-ratio gate was rejecting these short partial-word
+    // queries and returning "No material found" instead of a Did You
+    // Mean list. The 0.6 ratio gate is preserved for the reverse
+    // direction (nk.includes(nl)) to keep short-synonym noise out.
+    const candidateOk = nlHasNk || score > 0.6;
+    if (!candidateOk) continue;
+    if (seenCasCand.has(match.cas)) continue;
+    seenCasCand.add(match.cas);
+    candidates.push({ name: DB[match.cas]?.name||match.name, cas: match.cas, score: Math.round(score*100) });
   }
   if (bestScore >= 0.8 && bestMatch) {
     return makeMatch('fuzzy', Math.round(bestScore*70)/100, n, normalizeKey(bestMatch.name), DB[bestMatch.cas]?.name||bestMatch.name,
