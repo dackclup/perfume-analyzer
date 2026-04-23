@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-23-rebuild-v13"></script>
+<script src="perfumery_data.js?v=2026-04-23-rebuild-v14"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-23-rebuild-v13";
+const DATA_VERSION = "2026-04-23-rebuild-v14";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1409,7 +1409,7 @@ const FUNC_TERMS = new Set(['functional','carrier','fixative','solvent','additiv
 const RE_NOTE_OTHER = /top|middle|base/i;
 const RE_FUNC_AROMATIC_EXCLUDE = /solvent|carrier|fixative|additive|preservative|repellent|biocide|colorant|antioxidant|emollient|denaturant|plasticizer/i;
 const RE_ODOR_FUNC = /functional|carrier|solvent|fixative|preservative|additive|repellent|n\/a/i;
-const RE_ODORLESS = /odorless|virtually odorless|preservative|antioxidant/i;
+const RE_ODORLESS = /odou?rless|virtually\s+odou?rless|essentially\s+odou?rless|no\s+odou?r|odou?r[- ]?free|preservative|antioxidant/i;
 // Function-axis substring set used by FILTER_CACHE precompute. Kept
 // separate from the closed FUNCTION_VALUES list below because
 // FILTER_CACHE matches via funcAll.includes(...). 'solvent' / 'carrier'
@@ -1498,12 +1498,24 @@ const FLAVOR_EXCLUDED_CAS = new Set([
 const PERSONAL_CARE_EXCLUDED_CAS = new Set([
   '546-80-5',   // α-Thujone — GABA-A antagonist, convulsant; banned from leave-on cosmetics
 ]);
-// Negative cues: explicit denial of food use.
-const NOT_FOOD_RE = /\bnot\s+(?:for\s+)?(?:food|flavou?r|human\s+consumption|internal\s+use|ingestion)\b|\bnon[- ]?food\b|\bdo\s+not\s+(?:eat|ingest|consume)\b|\bindustrial\s+use\s+only\b|\bnot\s+intended\s+for\s+(?:food|consumption|ingestion)\b/i;
+// Negative cues: explicit denial of food use. Accepts optional
+// intervening article (a/an/the/any) so phrasings like
+// "not a food additive", "not an ingredient for food" also match —
+// the earlier version only caught "not food" / "not for food".
+const NOT_FOOD_RE = /\bnot\s+(?:(?:for|a|an|the|any)\s+)?(?:food|flavou?r|human\s+consumption|internal\s+use|ingestion)\b|\bnon[- ]?food\b|\bdo\s+not\s+(?:eat|ingest|consume)\b|\bindustrial\s+use\s+only\b|\bnot\s+intended\s+for\s+(?:food|consumption|ingestion)\b/i;
 // Text-based toxicity signals — applied ONLY to non-FEMA materials.
 // No trailing \b — so "carcinogen" matches "carcinogenic" too.
 // Leading \b ensures no match inside "anticarcinogen" or "nonmutagenic".
 const TOXICITY_BLOCK_RE = /\b(?:carcinogen|mutagen|neurotox|reproductive\s*tox|CMR\s*[12]|fatal\s+if\s+(?:swallowed|ingested))/i;
+// Severe-hazard signals that unconditionally block flavor regardless
+// of FEMA status. FEMA# is the primary GRAS gate, but a listed number
+// does not override unambiguous lethal/convulsant signals in the
+// safety text. This is defense-in-depth against a FEMA number being
+// present on a material whose safety text identifies a severe hazard
+// (e.g., thujone's own IFRA text says "neurotoxic at high concentration"
+// and it has FEMA 3604; without this check the text signal would be
+// ignored and only the CAS exclusion list would prevent a flavor tag).
+const HARD_TOXICITY_RE = /\b(?:convulsant|GABA-?A\s*antagonist|fatal\s+if\s+(?:swallowed|ingested)|CMR\s*1[AB]?)\b/i;
 // Strong positive food-use signals — high confidence.
 // Note: fema\s*\d+ (not \d) to consume all digits so trailing \b works.
 const FLAVOR_POSITIVE_RE = /\b(?:food[\s-]*grade|food[\s-]*(?:flavou?r|additive|safe)|gras|fema\s*\d+|jecfa|flavou?ring\s*(?:agent|substance|ingredient|compound)|permitted\s+(?:in\s+)?food|food[\s-]*contact[\s-]*approved|edible)\b/i;
@@ -5470,15 +5482,20 @@ function classifyUses(mat) {
   // FEMA# 2001-5999 is the gold-standard gate (FEMA GRAS list).
   // Multi-layer safety gate:
   //  a) not banned (EU or worldwide)
-  //  b) not on FLAVOR_EXCLUDED_CAS (phthalates, nitro/polycyclic musks)
+  //  b) not on FLAVOR_EXCLUDED_CAS (phthalates, nitro/polycyclic musks, thujone)
   //  c) no explicit "not for food" / "non-food" cue
-  //  d) for non-FEMA materials: no carcinogen/mutagen/neurotoxin cue
-  //  e) positive evidence: valid FEMA OR food-use keyword
+  //  d) HARD_TOXICITY_RE (convulsant, CMR1, fatal) — blocks unconditionally
+  //     even for FEMA-listed compounds; defense-in-depth against a FEMA
+  //     number slipping a genuinely-lethal material through the gate
+  //  e) for non-FEMA materials: soft toxicity cue (carcinogen, mutagen,
+  //     neurotox, reproductive tox, CMR2)
+  //  f) positive evidence: valid FEMA OR food-use keyword
   const femaNum = parseInt(id.fema, 10);
   const hasValidFema = id.fema && femaNum >= 2001 && femaNum <= 5999;
   const notFood = NOT_FOOD_RE.test(safetyText + ' ' + n);
+  const hardTox = HARD_TOXICITY_RE.test(safetyText);
   const toxicNonFema = !hasValidFema && TOXICITY_BLOCK_RE.test(safetyText);
-  if (!banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !toxicNonFema) {
+  if (!banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !hardTox && !toxicNonFema) {
     if (hasValidFema ||
         FLAVOR_POSITIVE_RE.test(safetyText) ||
         FLAVOR_POSITIVE_RE.test(desc) ||
@@ -5507,7 +5524,7 @@ function classifyUses(mat) {
       if (!banned && PUBCHEM_FRAGRANCE_RE.test(pcUseText))    tags.add('fine_fragrance');
       if (!banned && !PERSONAL_CARE_EXCLUDED_CAS.has(cas) && PUBCHEM_PERSONALCARE_RE.test(pcUseText)) tags.add('personal_care');
       if (PUBCHEM_HOMECARE_RE.test(pcUseText))                tags.add('home_care');
-      if (!banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !toxicNonFema &&
+      if (!banned && !FLAVOR_EXCLUDED_CAS.has(cas) && !notFood && !hardTox && !toxicNonFema &&
           (FLAVOR_POSITIVE_RE.test(pcUseText) || PUBCHEM_FLAVOR_RE.test(pcUseText))) {
         tags.add('flavor');
       }
