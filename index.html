@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-23-rebuild-v10"></script>
+<script src="perfumery_data.js?v=2026-04-23-rebuild-v11"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-23-rebuild-v10";
+const DATA_VERSION = "2026-04-23-rebuild-v11";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -3434,11 +3434,21 @@ function matchesAllFilters(cas) {
   if (sourceSet.size && !sourceSet.has(fc.source)) return false;
   // Main Family — Edwards 4-bucket AND-within, tokens within a chip's
   // MAIN_FAMILY_TO_LEGACY Set OR-match.
+  // Note: combined set includes both explicit families AND facet-derived
+  // parents (via FACET_TAGS). This means a material tagged with facets
+  // like 'tobacco'/'hay' is reachable via the Smoky family chip even
+  // when 'smoky' isn't listed in primary/secondary — the facet axis is
+  // more granular than family, but parent-of-facet membership is
+  // logically implied.
   if (activeMainFamilyFilters.size) {
     const combined = new Set([
       ...(fc.primaryFamilies || []),
       ...(fc.secondaryFamilies || [])
     ]);
+    for (const f of (fc.facets || [])) {
+      const parent = FACET_TAGS[f];
+      if (parent) combined.add(parent);
+    }
     for (const main of activeMainFamilyFilters) {
       const toks = MAIN_FAMILY_TO_LEGACY[main];
       if (!toks) continue;
@@ -3448,12 +3458,17 @@ function matchesAllFilters(cas) {
     }
   }
   // Family — Edwards 14-subfamily AND-within, tokens within a chip's
-  // SUB_FAMILY_TO_LEGACY Set OR-match.
+  // SUB_FAMILY_TO_LEGACY Set OR-match. Same facet→parent derivation
+  // as the Main Family axis above.
   if (activeSubFamilyFilters.size) {
     const combined = new Set([
       ...(fc.primaryFamilies || []),
       ...(fc.secondaryFamilies || [])
     ]);
+    for (const f of (fc.facets || [])) {
+      const parent = FACET_TAGS[f];
+      if (parent) combined.add(parent);
+    }
     for (const sub of activeSubFamilyFilters) {
       const toks = SUB_FAMILY_TO_LEGACY[sub];
       if (!toks) continue;
