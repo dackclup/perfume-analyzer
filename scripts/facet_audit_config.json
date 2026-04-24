@@ -568,6 +568,21 @@
     "biosynthetic_chains": []
   },
 
+  "mint": {
+    "description": "Mentha piperita + M. spicata — menthol/menthone + (R)-(-)-carvone cooling/sweet mint cluster (plus shared eucalyptol tag from cardamom/camphor)",
+    "expected_entry_count": 6,
+    "oil_cas": ["8006-90-4", "8008-79-5"],
+    "isolates": {
+      "2216-51-5":  { "name": "l-Menthol",       "cid": "16666",  "formula": "C10H20O", "mw": 156.27, "ghs": ["GHS07"] },
+      "14073-97-3": { "name": "l-Menthone",      "cid": "26447",  "formula": "C10H18O", "mw": 154.25, "ghs": ["GHS07"] },
+      "6485-40-1":  { "name": "(R)-(-)-Carvone", "cid": "439570", "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "cinnamon": {
     "description": "Cinnamomum verum (Ceylon, bark + leaf) + C. cassia (Chinese) + cinnamaldehyde/cinnamyl alcohol/cinnamyl acetate",
     "expected_entry_count": 10,
