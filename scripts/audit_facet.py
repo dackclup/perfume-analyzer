@@ -444,6 +444,7 @@ def probe_safety(db, html_vocab, facet_cfg, facet_entries):
     isolates_cfg = facet_cfg.get("isolates", {})
     peroxide_required = set(facet_cfg.get("peroxide_required_cas", []))
     sensitizer_required = set(facet_cfg.get("sensitizer_required_cas", []))
+    phototoxic_required = set(facet_cfg.get("phototoxic_required_cas", []))
     is_phenolic_facet = bool(facet_cfg.get("ifra_phenolic"))
 
     excl_expect = facet_cfg.get("excluded_cas_expected", {})
@@ -506,6 +507,16 @@ def probe_safety(db, html_vocab, facet_cfg, facet_entries):
             if "sensiti" not in low and "h317" not in low:
                 out.append(mk("WARN", "P-sensitizer-disclose", "safety",
                               "sensitizer-required isolate lacks 'sensiti…' or H317 disclosure", name))
+
+        # P-phototoxic-disclose — furanocoumarin-bearing oils + photosensitizer
+        # isolates must reference phototoxicity / furanocoumarin / bergapten /
+        # psoralen in their safety text so the downstream UV-exposure warning
+        # surfaces to the formulator.
+        if cas in phototoxic_required:
+            low = safety_text.lower()
+            if not any(kw in low for kw in ("phototox", "furanocoumarin", "bergapten", "psoralen")):
+                out.append(mk("WARN", "P-phototoxic-disclose", "safety",
+                              "phototoxic-required material lacks phototox/furanocoumarin/psoralen disclosure", name))
 
         # P-fema-text-consistency
         if re.search(r"\bFEMA\s*\d", usage + ifra) and not e.get("fema"):

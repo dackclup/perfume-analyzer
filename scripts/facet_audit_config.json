@@ -31,7 +31,7 @@
 
   "lavandin": {
     "description": "Lavandula × intermedia — camphor-shifted linalool cluster",
-    "expected_entry_count": 7,
+    "expected_entry_count": 8,
     "oil_cas": ["91722-69-9", "93455-96-0", "8022-15-9"],
     "isolates": {
       "76-22-2":    { "name": "Camphor",           "cid": "2537",   "formula": "C10H16O",  "mw": 152.23, "ghs": ["GHS02","GHS07","GHS08"] },
@@ -159,24 +159,37 @@
   },
 
   "bergamot": {
-    "description": "Citrus bergamia — linalyl/terpinyl-ester cluster (the oil itself is not yet in DB; this facet covers its isolate fingerprint)",
-    "expected_entry_count": 5,
-    "oil_cas": [],
+    "description": "Citrus bergamia — cold-pressed peel oil + furanocoumarin + linalyl/terpinyl ester cluster",
+    "expected_entry_count": 13,
+    "oil_cas": ["8007-75-8", "89957-91-5"],
     "isolates": {
-      "115-95-7":   { "name": "Linalyl Acetate",    "cid": "8294",   "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS07"] },
-      "115-99-1":   { "name": "Linalyl Formate",    "cid": "61040",  "formula": "C11H18O2", "mw": 182.26, "ghs": [] },
-      "80-26-2":    { "name": "Terpinyl Acetate",   "cid": "111037", "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS09"] },
-      "144-39-8":   { "name": "Linalyl Propionate", "cid": "61098",  "formula": "C13H22O2", "mw": 210.31, "ghs": ["GHS09"] },
-      "2153-28-8":  { "name": "Terpinyl Butyrate",  "cid": "578423", "formula": "C14H24O2", "mw": 224.34, "ghs": [] }
+      "115-95-7":   { "name": "Linalyl Acetate",    "cid": "8294",    "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS07"] },
+      "115-99-1":   { "name": "Linalyl Formate",    "cid": "61040",   "formula": "C11H18O2", "mw": 182.26, "ghs": [] },
+      "80-26-2":    { "name": "Terpinyl Acetate",   "cid": "111037",  "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS09"] },
+      "144-39-8":   { "name": "Linalyl Propionate", "cid": "61098",   "formula": "C13H22O2", "mw": 210.31, "ghs": ["GHS09"] },
+      "2153-28-8":  { "name": "Terpinyl Butyrate",  "cid": "578423",  "formula": "C14H24O2", "mw": 224.34, "ghs": [] },
+      "484-20-8":   { "name": "Bergapten",          "cid": "2355",    "formula": "C12H8O4",  "mw": 216.19, "ghs": ["GHS06","GHS07","GHS08"] },
+      "106-24-1":   { "name": "Geraniol",           "cid": "637566",  "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
+      "105-87-3":   { "name": "Geranyl Acetate",    "cid": "1549026", "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS07"] },
+      "5989-27-5":  { "name": "d-Limonene",         "cid": "440917",  "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
+      "78-70-6":    { "name": "Linalool",           "cid": "6549",    "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
+      "127-91-3":   { "name": "β-Pinene",           "cid": "14896",   "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": [],
-    "sensitizer_required_cas": [],
+    "peroxide_required_cas": ["5989-27-5", "127-91-3", "78-70-6"],
+    "sensitizer_required_cas": ["106-24-1"],
+    "phototoxic_required_cas": ["8007-75-8", "484-20-8"],
     "biosynthetic_chains": [],
+    "excluded_cas_expected": {
+      "personal_care": ["484-20-8"],
+      "flavor":        []
+    },
     "trade_name_expectations": {
-      "linalyl acetate":    "115-95-7",
-      "terpinyl acetate":   "80-26-2",
-      "linalyl formate":    "115-99-1"
+      "bergamot":        "8007-75-8",
+      "bergamot fcf":    "89957-91-5",
+      "bergapten":       "484-20-8",
+      "geraniol":        "106-24-1",
+      "geranyl acetate": "105-87-3"
     }
   }
 }

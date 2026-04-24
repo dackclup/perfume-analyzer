@@ -77,6 +77,10 @@ Optional fields:
   whitelists CAS that are intentionally on the `PERSONAL_CARE_EXCLUDED_CAS`
   or `FLAVOR_EXCLUDED_CAS` sets in `index.html`. Without the whitelist,
   a CAS on an exclusion list raises a CRITICAL in `P-pc-excluded-consistency`.
+- `phototoxic_required_cas` — list of CAS that must reference
+  phototoxicity / furanocoumarin / bergapten / psoralen in their
+  safety text (bergamot oil and analogous citrus peel oils). Drives
+  `P-phototoxic-disclose`.
 - `trade_name_expectations` — `{ alias: CAS }` for round-trip checks
   against `trade_names` in `perfumery_data.js` (not enforced today;
   reserved for a future probe).
@@ -145,6 +149,7 @@ these rather than on message text.
 | P-ghs-majority-extra         | INFO     | safety |
 | P-peroxide-caveat            | WARN     | safety |
 | P-sensitizer-disclose        | WARN     | safety |
+| P-phototoxic-disclose        | WARN     | safety |
 | P-pc-excluded-consistency    | CRITICAL | safety |
 | P-flavor-excluded-consistency| CRITICAL | safety |
 | P-hard-toxicity              | WARN     | safety |
