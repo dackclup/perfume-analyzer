@@ -271,7 +271,7 @@
 
   "clove": {
     "description": "Syzygium aromaticum — eugenol-dominated phenolic sensitiser cluster; bud + leaf oils plus isoeugenol / eugenyl acetate derivatives",
-    "expected_entry_count": 9,
+    "expected_entry_count": 10,
     "oil_cas": ["8000-34-8", "8015-97-2", "84775-70-2", "84775-72-4"],
     "isolates": {
       "97-53-0":  { "name": "Eugenol",          "cid": "3314",   "formula": "C10H12O2", "mw": 164.20, "ghs": ["GHS07"] },
@@ -368,7 +368,7 @@
 
   "jasmine": {
     "description": "Jasminum grandiflorum + J. sambac — indolic floral cluster with benzyl acetate / indole / methyl jasmonate fingerprint",
-    "expected_entry_count": 7,
+    "expected_entry_count": 8,
     "oil_cas": ["8022-96-6", "91770-14-8"],
     "isolates": {
       "140-11-4":   { "name": "Benzyl Acetate",   "cid": "8785",    "formula": "C9H10O2",  "mw": 150.17, "ghs": ["GHS07"] },
@@ -380,6 +380,21 @@
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": ["120-72-9"],
+    "biosynthetic_chains": []
+  },
+
+  "cinnamon": {
+    "description": "Cinnamomum verum (Ceylon, bark + leaf) + C. cassia (Chinese) + cinnamaldehyde/cinnamyl alcohol/cinnamyl acetate",
+    "expected_entry_count": 10,
+    "oil_cas": ["8015-91-6", "84649-98-9", "8007-80-5"],
+    "isolates": {
+      "104-55-2":  { "name": "Cinnamaldehyde",  "cid": "637511",  "formula": "C9H8O",   "mw": 132.16, "ghs": ["GHS07"] },
+      "104-54-1":  { "name": "Cinnamyl Alcohol","cid": "5315892", "formula": "C9H10O",  "mw": 134.18, "ghs": ["GHS07"] },
+      "103-54-8":  { "name": "Cinnamyl Acetate","cid": "5282110", "formula": "C11H12O2","mw": 176.21, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": ["104-55-2", "104-54-1"],
     "biosynthetic_chains": []
   },
 
