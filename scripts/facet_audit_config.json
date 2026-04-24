@@ -290,5 +290,35 @@
       "isoeugenol":      "97-54-1",
       "eugenyl acetate": "93-28-7"
     }
+  },
+
+  "rose": {
+    "description": "Rosa damascena + Rosa centifolia — citronellol / geraniol / PEA / damascenone floral cluster; opens the Floral family as first-class primary home",
+    "expected_entry_count": 14,
+    "oil_cas": ["8007-01-0", "84604-12-6", "90106-38-0", "8006-78-8", "8015-77-8"],
+    "isolates": {
+      "106-22-9":   { "name": "Citronellol",           "cid": "8842",    "formula": "C10H20O",  "mw": 156.27, "ghs": ["GHS07"] },
+      "106-24-1":   { "name": "Geraniol",              "cid": "637566",  "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
+      "106-25-2":   { "name": "Nerol",                 "cid": "643820",  "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
+      "105-87-3":   { "name": "Geranyl Acetate",       "cid": "1549026", "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS07"] },
+      "60-12-8":    { "name": "Phenylethyl Alcohol",   "cid": "6054",    "formula": "C8H10O",   "mw": 122.17, "ghs": ["GHS07"] },
+      "23726-93-4": { "name": "β-Damascenone",         "cid": "5366074", "formula": "C13H18O",  "mw": 190.28, "ghs": ["GHS07"] },
+      "78-70-6":    { "name": "Linalool",              "cid": "6549",    "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
+      "126-91-0":   { "name": "(R)-(−)-Linalool",      "cid": "443158",  "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
+      "115-99-1":   { "name": "Linalyl Formate",       "cid": "61040",   "formula": "C11H18O2", "mw": 182.26, "ghs": [] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": ["78-70-6", "126-91-0", "106-22-9", "106-25-2", "106-24-1"],
+    "sensitizer_required_cas": ["106-24-1", "23726-93-4"],
+    "biosynthetic_chains": [],
+    "trade_name_expectations": {
+      "rose":                "8007-01-0",
+      "rose absolute":       "84604-12-6",
+      "rose centifolia":     "90106-38-0",
+      "citronellol":         "106-22-9",
+      "nerol":               "106-25-2",
+      "phenylethyl alcohol": "60-12-8",
+      "damascenone":         "23726-93-4"
+    }
   }
 }
