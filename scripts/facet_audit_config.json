@@ -383,6 +383,19 @@
     "biosynthetic_chains": []
   },
 
+  "patchouli": {
+    "description": "Pogostemon cablin + patchoulol / norpatchoulenol / α-bulnesene sesquiterpenoid cluster",
+    "expected_entry_count": 4,
+    "oil_cas": ["8014-09-3", "41429-52-1", "3691-11-0"],
+    "isolates": {
+      "5986-55-0": { "name": "Patchoulol", "cid": "521903", "formula": "C15H26O", "mw": 222.37, "ghs": [] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "sandalwood": {
     "description": "Santalum album (Mysore) + S. spicatum (Australian) + santalol isolates + Javanol synthetic. Opens the Woody primary home",
     "expected_entry_count": 6,
