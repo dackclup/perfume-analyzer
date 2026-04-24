@@ -480,6 +480,17 @@
     "biosynthetic_chains": []
   },
 
+  "cardamom": {
+    "description": "Elettaria cardamomum — α-terpinyl acetate + 1,8-cineole cluster (shares molecules with pine / bergamot / pepper facets)",
+    "expected_entry_count": 4,
+    "oil_cas": ["8000-66-6"],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "cinnamon": {
     "description": "Cinnamomum verum (Ceylon, bark + leaf) + C. cassia (Chinese) + cinnamaldehyde/cinnamyl alcohol/cinnamyl acetate",
     "expected_entry_count": 10,
