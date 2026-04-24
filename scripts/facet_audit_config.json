@@ -383,6 +383,19 @@
     "biosynthetic_chains": []
   },
 
+  "oakmoss": {
+    "description": "Evernia prunastri + Pseudevernia furfuracea + Evernyl synthetic. Chypre mossy-woods foundation; atranol/chloroatranol restricted post-SCCNFP 2000",
+    "expected_entry_count": 3,
+    "oil_cas": ["9000-50-4", "90028-67-4"],
+    "isolates": {
+      "4707-47-5": { "name": "Evernyl", "cid": "79096", "formula": "C10H12O4", "mw": 196.20, "ghs": [] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "cedar": {
     "description": "Juniperus virginiana + Cedrus atlantica + Cedrol / Cedryl Acetate / Iso E Super woody-cedar cluster",
     "expected_entry_count": 5,
