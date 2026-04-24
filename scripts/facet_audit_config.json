@@ -568,6 +568,17 @@
     "biosynthetic_chains": []
   },
 
+  "geranium": {
+    "description": "Pelargonium graveolens — Bourbon + Egyptian chemotypes + rhodinol (citronellol/geraniol commercial mix) rose-geranium cluster",
+    "expected_entry_count": 5,
+    "oil_cas": ["8000-46-2", "90082-51-2", "141-25-3"],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "gourmand": {
     "description": "Coffee + cocoa + maltol + ethyl maltol + furaneol — Edwards Soft Amber gourmand family",
     "expected_entry_count": 5,
