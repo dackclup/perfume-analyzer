@@ -218,5 +218,32 @@
       "(z)-beta-ocimene":   "3338-55-4",
       "beta-phellandrene":  "555-10-2"
     }
+  },
+
+  "fennel": {
+    "description": "Foeniculum vulgare — anethole + estragole + fenchone cluster; sweet (dulce) and bitter (vulgare) chemotypes",
+    "expected_entry_count": 10,
+    "oil_cas": ["8006-84-6", "84625-39-8"],
+    "isolates": {
+      "4180-23-8":  { "name": "trans-Anethole",     "cid": "637563",  "formula": "C10H12O", "mw": 148.20, "ghs": ["GHS07"] },
+      "1195-79-5":  { "name": "Fenchone",           "cid": "14525",   "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS02"] },
+      "140-67-0":   { "name": "Methyl Chavicol",    "cid": "8815",    "formula": "C10H12O", "mw": 148.20, "ghs": ["GHS07","GHS08"] },
+      "80-56-8":    { "name": "α-Pinene",           "cid": "6654",    "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
+      "5989-27-5":  { "name": "d-Limonene",         "cid": "440917",  "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
+      "555-10-2":   { "name": "β-Phellandrene",     "cid": "11142",   "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
+      "99-83-2":    { "name": "α-Phellandrene",     "cid": "7460",    "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
+      "123-11-5":   { "name": "Anisaldehyde",       "cid": "31244",   "formula": "C8H8O2",  "mw": 136.15, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": ["80-56-8", "5989-27-5", "555-10-2", "99-83-2"],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [],
+    "trade_name_expectations": {
+      "fennel":              "8006-84-6",
+      "sweet fennel":        "8006-84-6",
+      "bitter fennel":       "84625-39-8",
+      "alpha-phellandrene":  "99-83-2",
+      "anisaldehyde":        "123-11-5"
+    }
   }
 }
