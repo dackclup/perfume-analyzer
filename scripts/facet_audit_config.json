@@ -568,6 +568,21 @@
     "biosynthetic_chains": []
   },
 
+  "green": {
+    "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord",
+    "expected_entry_count": 5,
+    "oil_cas": ["8023-91-4", "8024-08-6"],
+    "isolates": {
+      "928-96-1":   { "name": "cis-3-Hexenol",         "cid": "5281167", "formula": "C6H12O",  "mw": 100.16, "ghs": ["GHS07"] },
+      "3681-71-8":  { "name": "cis-3-Hexenyl Acetate", "cid": "5363388", "formula": "C8H14O2", "mw": 142.20, "ghs": ["GHS07"] },
+      "68039-49-6": { "name": "Triplal",               "cid": "87577",   "formula": "C9H14O",  "mw": 138.21, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": ["928-96-1"],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "musk": {
     "description": "Synthetic white musks + natural ambrette — Galaxolide / Ethylene Brassylate / Exaltolide / Habanolide / Ambrette Seed",
     "expected_entry_count": 5,
