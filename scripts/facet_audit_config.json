@@ -245,5 +245,27 @@
       "alpha-phellandrene":  "99-83-2",
       "anisaldehyde":        "123-11-5"
     }
+  },
+
+  "anise": {
+    "description": "Anethole-dominated herbal-spicy cluster — Pimpinella anisum (true anise) + Illicium verum (star anise) + cross-tagged anethole materials from fennel / tarragon / basil",
+    "expected_entry_count": 11,
+    "oil_cas": ["8007-70-3", "84650-59-9", "8016-88-4", "8006-84-6", "84625-39-8", "8015-73-4"],
+    "isolates": {
+      "4180-23-8":  { "name": "trans-Anethole",  "cid": "637563", "formula": "C10H12O", "mw": 148.20, "ghs": ["GHS07"] },
+      "140-67-0":   { "name": "Methyl Chavicol", "cid": "8815",   "formula": "C10H12O", "mw": 148.20, "ghs": ["GHS07","GHS08"] },
+      "1195-79-5":  { "name": "Fenchone",        "cid": "14525",  "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS02"] },
+      "123-11-5":   { "name": "Anisaldehyde",    "cid": "31244",  "formula": "C8H8O2",  "mw": 136.15, "ghs": ["GHS07"] },
+      "105-13-5":   { "name": "Anisyl Alcohol",  "cid": "7780",   "formula": "C8H10O2", "mw": 138.16, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": ["105-13-5"],
+    "biosynthetic_chains": [],
+    "trade_name_expectations": {
+      "anise":          "8007-70-3",
+      "star anise":     "84650-59-9",
+      "anisyl alcohol": "105-13-5"
+    }
   }
 }
