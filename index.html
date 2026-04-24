@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-24-rebuild-v73"></script>
+<script src="perfumery_data.js?v=2026-04-24-rebuild-v74"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-24-rebuild-v73";
+const DATA_VERSION = "2026-04-24-rebuild-v74";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1865,6 +1865,7 @@ const FACET_TAGS = {
   cinnamic_floral:'floral_amber',
 
   // ── SOFT AMBER (gourmand) ──
+  gourmand:'gourmand', maltol:'gourmand', candy:'gourmand',
   vanilla:'gourmand', vanillin:'gourmand', caramel:'gourmand',
   chocolate:'gourmand', cocoa:'gourmand', honey:'gourmand', coffee:'gourmand',
   tonka:'gourmand', almond:'gourmand', roasted:'gourmand', nutty:'gourmand',
@@ -2040,6 +2041,7 @@ const FACET_GROUPS = [
   { label:'Floral Amber', facets:[
     'immortelle','heliotrope','orange_blossom','cinnamic_floral'] },
   { label:'Soft Amber',   facets:[
+    'gourmand','maltol','candy',
     'vanilla','vanillin','caramel','chocolate','cocoa','honey','coffee','tonka','almond','roasted','nutty','beeswax',
     'creamy','milky','buttery',
     'praline','marshmallow','custard','maple'] },

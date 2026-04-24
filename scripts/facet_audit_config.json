@@ -568,6 +568,21 @@
     "biosynthetic_chains": []
   },
 
+  "gourmand": {
+    "description": "Coffee + cocoa + maltol + ethyl maltol + furaneol — Edwards Soft Amber gourmand family",
+    "expected_entry_count": 5,
+    "oil_cas": ["8001-67-0", "8002-31-1"],
+    "isolates": {
+      "118-71-8":  { "name": "Maltol",        "cid": "8369",  "formula": "C6H6O3",  "mw": 126.11, "ghs": ["GHS07"] },
+      "4940-11-8": { "name": "Ethyl Maltol",  "cid": "19310", "formula": "C7H8O3",  "mw": 140.14, "ghs": ["GHS07"] },
+      "3658-77-3": { "name": "Furaneol",      "cid": "19309", "formula": "C6H8O3",  "mw": 128.13, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "fruity": {
     "description": "Fruity base — damascones (α/β-damascenone/δ) + β-ionone + γ-nonalactone + raspberry ketone (+ β-damascenone cross-tag)",
     "expected_entry_count": 7,
