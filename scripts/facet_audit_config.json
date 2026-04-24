@@ -344,5 +344,25 @@
       "pink pepper":  "90082-88-7",
       "piperine":     "94-62-2"
     }
+  },
+
+  "tobacco": {
+    "description": "Nicotiana tabacum absolute + coumarin/tonka anchor — dry wood Fougère base. Opens the smoky / balsamic cross-family cluster",
+    "expected_entry_count": 9,
+    "oil_cas": ["8037-19-2", "8046-22-8", "97722-12-8", "8016-63-5", "84775-83-7", "84775-71-3"],
+    "isolates": {
+      "91-64-5":    { "name": "Coumarin",       "cid": "323",     "formula": "C9H6O2",  "mw": 146.14, "ghs": ["GHS07"] },
+      "515-03-7":   { "name": "Sclareol",       "cid": "163263",  "formula": "C20H36O2","mw": 308.50, "ghs": [] },
+      "23726-93-4": { "name": "β-Damascenone",  "cid": "5366074", "formula": "C13H18O", "mw": 190.28, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": ["91-64-5"],
+    "biosynthetic_chains": [],
+    "trade_name_expectations": {
+      "tobacco":   "8037-19-2",
+      "coumarin":  "91-64-5",
+      "tonka":     "8046-22-8"
+    }
   }
 }
