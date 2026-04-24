@@ -568,6 +568,23 @@
     "biosynthetic_chains": []
   },
 
+  "fruity": {
+    "description": "Fruity base — damascones (α/β-damascenone/δ) + β-ionone + γ-nonalactone + raspberry ketone (+ β-damascenone cross-tag)",
+    "expected_entry_count": 7,
+    "oil_cas": [],
+    "isolates": {
+      "43052-87-5": { "name": "alpha-Damascone",    "cid": "519381",  "formula": "C13H20O",  "mw": 192.30, "ghs": ["GHS07"] },
+      "57378-68-4": { "name": "delta-Damascone",    "cid": "5376253", "formula": "C13H20O",  "mw": 192.30, "ghs": ["GHS07"] },
+      "79-77-6":    { "name": "beta-Ionone",        "cid": "638015",  "formula": "C13H20O",  "mw": 192.30, "ghs": ["GHS07"] },
+      "104-61-0":   { "name": "gamma-Nonalactone",  "cid": "7710",    "formula": "C9H16O2",  "mw": 156.22, "ghs": [] },
+      "5471-51-2":  { "name": "Raspberry Ketone",   "cid": "11624",   "formula": "C10H12O2", "mw": 164.20, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": ["43052-87-5", "57378-68-4"],
+    "biosynthetic_chains": []
+  },
+
   "iris": {
     "description": "Iris pallida orris cluster — α-irone + α-ionone + methyl ionone powdery-violet base",
     "expected_entry_count": 4,
