@@ -1506,6 +1506,8 @@ const FLAVOR_EXCLUDED_CAS = new Set([
 // can't slip a neurotoxin into a cosmetic-use tag.
 const PERSONAL_CARE_EXCLUDED_CAS = new Set([
   '546-80-5',   // α-Thujone — GABA-A antagonist, convulsant; banned from leave-on cosmetics
+  '471-15-8',   // β-Thujone — same GABA-A antagonist mechanism as the α-isomer; safety text explicitly says "NOT for leave-on or rinse-off personal care"
+  '8007-20-3',  // Cedarleaf Oil — 48-65% α-thujone + 8-15% β-thujone; curated text says "AVOID leave-on cosmetics"
 ]);
 // Negative cues: explicit denial of food use. Accepts optional
 // intervening article (a/an/the/any) so phrasings like

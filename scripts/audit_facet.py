@@ -29,7 +29,10 @@ ATOMIC_WEIGHT = {"C": 12.011, "H": 1.008, "O": 15.999, "N": 14.007, "S": 32.06}
 INCHIKEY_RE = re.compile(r"^[A-Z]{14}-[A-Z]{10}-[A-Z]$")
 GHS_RE = re.compile(r"^GHS0\d$")
 CAS_RE = re.compile(r"^\d{2,7}-\d{2}-\d$")
-VALID_STRENGTHS = {"Low", "Medium", "High", "Very High"}
+VALID_STRENGTHS = {
+    "Low", "Medium", "High", "Very High",
+    "Low to Medium", "Medium to High", "High to Very High",
+}
 NOTE_BUCKETS = {"Top", "Middle", "Base"}
 HARD_TOX_RE = re.compile(
     r"\b(?:convulsant|GABA-?A\s*antagonist|fatal\s+if\s+(?:swallowed|ingested)|CMR\s*1[AB]?)\b",

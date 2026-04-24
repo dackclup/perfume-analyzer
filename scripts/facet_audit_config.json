@@ -63,7 +63,7 @@
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [],
     "excluded_cas_expected": {
-      "personal_care": ["546-80-5"],
+      "personal_care": ["546-80-5", "471-15-8", "8007-20-3"],
       "flavor":        ["546-80-5"]
     },
     "trade_name_expectations": {
