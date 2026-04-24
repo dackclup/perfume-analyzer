@@ -448,6 +448,22 @@
     "biosynthetic_chains": []
   },
 
+  "ylang": {
+    "description": "Cananga odorata — p-cresyl methyl ether / methyl benzoate / benzyl salicylate cluster",
+    "expected_entry_count": 7,
+    "oil_cas": ["8006-81-3"],
+    "isolates": {
+      "1515-95-3": { "name": "p-Cresyl Methyl Ether", "cid": "7731",   "formula": "C8H10O",   "mw": 122.17, "ghs": ["GHS07"] },
+      "93-58-3":   { "name": "Methyl Benzoate",       "cid": "7150",   "formula": "C8H8O2",   "mw": 136.15, "ghs": ["GHS07"] },
+      "118-58-1":  { "name": "Benzyl Salicylate",     "cid": "8361",   "formula": "C14H12O3", "mw": 228.24, "ghs": ["GHS07"] },
+      "4602-84-0": { "name": "Farnesol",              "cid": "445070", "formula": "C15H26O",  "mw": 222.37, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": ["4602-84-0"],
+    "sensitizer_required_cas": ["118-58-1", "4602-84-0"],
+    "biosynthetic_chains": []
+  },
+
   "cinnamon": {
     "description": "Cinnamomum verum (Ceylon, bark + leaf) + C. cassia (Chinese) + cinnamaldehyde/cinnamyl alcohol/cinnamyl acetate",
     "expected_entry_count": 10,
