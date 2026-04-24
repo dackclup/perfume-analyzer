@@ -491,6 +491,21 @@
     "biosynthetic_chains": []
   },
 
+  "pine": {
+    "description": "Pinus sylvestris + Abies sibirica coniferous cluster — α-pinene/β-pinene/bornyl acetate dominated",
+    "expected_entry_count": 20,
+    "oil_cas": ["8002-09-3", "8021-29-2"],
+    "isolates": {
+      "13466-78-9": { "name": "delta-3-Carene",    "cid": "440062",  "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS07","GHS08","GHS09"] },
+      "475-20-7":   { "name": "Longifolene",       "cid": "442348",  "formula": "C15H24",   "mw": 204.35, "ghs": ["GHS07"] },
+      "125-12-2":   { "name": "Isobornyl Acetate", "cid": "1550884", "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": ["13466-78-9"],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "cinnamon": {
     "description": "Cinnamomum verum (Ceylon, bark + leaf) + C. cassia (Chinese) + cinnamaldehyde/cinnamyl alcohol/cinnamyl acetate",
     "expected_entry_count": 10,
