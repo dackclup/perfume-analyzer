@@ -156,5 +156,27 @@
       "eugenol": "97-53-0",
       "methyl chavicol": "140-67-0"
     }
+  },
+
+  "bergamot": {
+    "description": "Citrus bergamia — linalyl/terpinyl-ester cluster (the oil itself is not yet in DB; this facet covers its isolate fingerprint)",
+    "expected_entry_count": 5,
+    "oil_cas": [],
+    "isolates": {
+      "115-95-7":   { "name": "Linalyl Acetate",    "cid": "8294",   "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS07"] },
+      "115-99-1":   { "name": "Linalyl Formate",    "cid": "61040",  "formula": "C11H18O2", "mw": 182.26, "ghs": [] },
+      "80-26-2":    { "name": "Terpinyl Acetate",   "cid": "111037", "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS09"] },
+      "144-39-8":   { "name": "Linalyl Propionate", "cid": "61098",  "formula": "C13H22O2", "mw": 210.31, "ghs": ["GHS09"] },
+      "2153-28-8":  { "name": "Terpinyl Butyrate",  "cid": "578423", "formula": "C14H24O2", "mw": 224.34, "ghs": [] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [],
+    "trade_name_expectations": {
+      "linalyl acetate":    "115-95-7",
+      "terpinyl acetate":   "80-26-2",
+      "linalyl formate":    "115-99-1"
+    }
   }
 }
