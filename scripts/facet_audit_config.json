@@ -552,6 +552,22 @@
     "biosynthetic_chains": []
   },
 
+  "tuberose": {
+    "description": "Polianthes tuberosa + lactonic peach / hexyl salicylate / methyl heptine carbonate white-floral cluster",
+    "expected_entry_count": 5,
+    "oil_cas": ["8024-05-3"],
+    "isolates": {
+      "111-12-6":  { "name": "Methyl Heptine Carbonate", "cid": "61199", "formula": "C9H14O2",  "mw": 154.21, "ghs": ["GHS07"] },
+      "706-14-9":  { "name": "gamma-Decalactone",        "cid": "12813", "formula": "C10H18O2", "mw": 170.25, "ghs": [] },
+      "104-67-6":  { "name": "gamma-Undecalactone",      "cid": "7714",  "formula": "C11H20O2", "mw": 184.28, "ghs": [] },
+      "6259-76-3": { "name": "Hexyl Salicylate",         "cid": "20567", "formula": "C13H18O3", "mw": 222.28, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": ["111-12-6", "6259-76-3"],
+    "biosynthetic_chains": []
+  },
+
   "cinnamon": {
     "description": "Cinnamomum verum (Ceylon, bark + leaf) + C. cassia (Chinese) + cinnamaldehyde/cinnamyl alcohol/cinnamyl acetate",
     "expected_entry_count": 10,
