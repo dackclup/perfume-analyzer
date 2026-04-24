@@ -568,6 +568,22 @@
     "biosynthetic_chains": []
   },
 
+  "aquatic": {
+    "description": "Modern aquatic/marine accord — Calone 1951 + Helional + Floralozone + Melonal + Dihydromyrcenol",
+    "expected_entry_count": 5,
+    "oil_cas": [],
+    "isolates": {
+      "28940-11-6": { "name": "Calone 1951",  "cid": "91721", "formula": "C11H12O3", "mw": 192.21, "ghs": ["GHS07"] },
+      "1205-17-0":  { "name": "Helional",     "cid": "15606", "formula": "C11H12O3", "mw": 192.21, "ghs": ["GHS07"] },
+      "106-72-9":   { "name": "Melonal",      "cid": "7762",  "formula": "C9H16O",   "mw": 140.22, "ghs": ["GHS07"] },
+      "67634-15-5": { "name": "Floralozone",  "cid": "62335", "formula": "C13H18O",  "mw": 190.28, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "mint": {
     "description": "Mentha piperita + M. spicata — menthol/menthone + (R)-(-)-carvone cooling/sweet mint cluster (plus shared eucalyptol tag from cardamom/camphor)",
     "expected_entry_count": 6,
