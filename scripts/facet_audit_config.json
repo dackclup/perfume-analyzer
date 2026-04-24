@@ -383,6 +383,19 @@
     "biosynthetic_chains": []
   },
 
+  "cedar": {
+    "description": "Juniperus virginiana + Cedrus atlantica + Cedrol / Cedryl Acetate / Iso E Super woody-cedar cluster",
+    "expected_entry_count": 5,
+    "oil_cas": ["8000-27-9", "8023-85-6", "77-54-3", "54464-57-2"],
+    "isolates": {
+      "77-53-2": { "name": "Cedrol", "cid": "65355", "formula": "C15H26O", "mw": 222.37, "ghs": [] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "vetiver": {
     "description": "Chrysopogon zizanioides (Haitian / Javanese / Bourbon) + sesquiterpene isolates",
     "expected_entry_count": 4,
