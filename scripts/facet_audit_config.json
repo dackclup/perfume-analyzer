@@ -368,7 +368,7 @@
 
   "jasmine": {
     "description": "Jasminum grandiflorum + J. sambac — indolic floral cluster with benzyl acetate / indole / methyl jasmonate fingerprint",
-    "expected_entry_count": 8,
+    "expected_entry_count": 9,
     "oil_cas": ["8022-96-6", "91770-14-8"],
     "isolates": {
       "140-11-4":   { "name": "Benzyl Acetate",   "cid": "8785",    "formula": "C9H10O2",  "mw": 150.17, "ghs": ["GHS07"] },
@@ -380,6 +380,20 @@
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": ["120-72-9"],
+    "biosynthetic_chains": []
+  },
+
+  "nutmeg": {
+    "description": "Myristica fragrans (nutmeg seed + mace aril) + myristicin + elemicin phenylpropanoid cluster",
+    "expected_entry_count": 4,
+    "oil_cas": ["8008-45-5", "8007-12-3"],
+    "isolates": {
+      "607-91-0": { "name": "Myristicin", "cid": "4276",  "formula": "C11H12O3", "mw": 192.21, "ghs": ["GHS07","GHS08"] },
+      "487-11-6": { "name": "Elemicin",   "cid": "10248", "formula": "C12H16O3", "mw": 208.25, "ghs": ["GHS07","GHS08"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
 
