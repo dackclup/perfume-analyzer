@@ -568,6 +568,22 @@
     "biosynthetic_chains": []
   },
 
+  "musk": {
+    "description": "Synthetic white musks + natural ambrette — Galaxolide / Ethylene Brassylate / Exaltolide / Habanolide / Ambrette Seed",
+    "expected_entry_count": 5,
+    "oil_cas": ["8015-62-1", "111879-80-2"],
+    "isolates": {
+      "1222-05-5": { "name": "Galaxolide (HHCB)",   "cid": "91497", "formula": "C18H26O",  "mw": 258.40, "ghs": [] },
+      "105-95-3":  { "name": "Ethylene Brassylate", "cid": "15600", "formula": "C15H26O4", "mw": 270.37, "ghs": [] },
+      "106-02-5":  { "name": "Exaltolide",          "cid": "61793", "formula": "C15H28O2", "mw": 240.38, "ghs": [] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [],
+    "excluded_cas_expected": { "flavor": ["1222-05-5"] }
+  },
+
   "aquatic": {
     "description": "Modern aquatic/marine accord — Calone 1951 + Helional + Floralozone + Melonal + Dihydromyrcenol",
     "expected_entry_count": 5,
