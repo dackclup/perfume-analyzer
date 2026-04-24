@@ -568,6 +568,21 @@
     "biosynthetic_chains": []
   },
 
+  "iris": {
+    "description": "Iris pallida orris cluster — α-irone + α-ionone + methyl ionone powdery-violet base",
+    "expected_entry_count": 4,
+    "oil_cas": ["8002-73-1"],
+    "isolates": {
+      "79-69-6":  { "name": "alpha-Irone",     "cid": "61692",  "formula": "C14H22O", "mw": 206.32, "ghs": ["GHS07"] },
+      "127-41-3": { "name": "alpha-Ionone",    "cid": "638014", "formula": "C13H20O", "mw": 192.30, "ghs": ["GHS07"] },
+      "127-43-5": { "name": "Methyl Ionone",   "cid": "8051",   "formula": "C14H22O", "mw": 206.32, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "smoky": {
     "description": "Smoky / leather base — guaiacol + cade + birch tar + isobutyl quinoline (+ styrallyl acetate modifier)",
     "expected_entry_count": 4,
