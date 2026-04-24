@@ -294,7 +294,7 @@
 
   "rose": {
     "description": "Rosa damascena + Rosa centifolia — citronellol / geraniol / PEA / damascenone floral cluster; opens the Floral family as first-class primary home",
-    "expected_entry_count": 14,
+    "expected_entry_count": 19,
     "oil_cas": ["8007-01-0", "84604-12-6", "90106-38-0", "8006-78-8", "8015-77-8"],
     "isolates": {
       "106-22-9":   { "name": "Citronellol",           "cid": "8842",    "formula": "C10H20O",  "mw": 156.27, "ghs": ["GHS07"] },
@@ -348,7 +348,7 @@
 
   "tobacco": {
     "description": "Nicotiana tabacum absolute + coumarin/tonka anchor — dry wood Fougère base. Opens the smoky / balsamic cross-family cluster (+ styrallyl acetate sweet-tobacco modifier)",
-    "expected_entry_count": 10,
+    "expected_entry_count": 11,
     "oil_cas": ["8037-19-2", "8046-22-8", "97722-12-8", "8016-63-5", "84775-83-7", "84775-71-3"],
     "isolates": {
       "91-64-5":    { "name": "Coumarin",       "cid": "323",     "formula": "C9H6O2",  "mw": 146.14, "ghs": ["GHS07"] },
@@ -568,6 +568,43 @@
     "biosynthetic_chains": []
   },
 
+  "chamomile": {
+    "description": "Chamaemelum nobile (Roman) + Matricaria recutita (German) + α-bisabolol herbal-apple cluster",
+    "expected_entry_count": 3,
+    "oil_cas": ["8015-92-7", "8002-66-2"],
+    "isolates": {
+      "23089-26-1": { "name": "alpha-Bisabolol", "cid": "442343", "formula": "C15H26O", "mw": 222.37, "ghs": [] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
+  "coriander": {
+    "description": "Coriandrum sativum seed — linalool-rich spicy-fresh (≠ cilantro leaf); S-(+)-linalool cross-tag from lavender",
+    "expected_entry_count": 2,
+    "oil_cas": ["8008-52-4"],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
+  "cumin": {
+    "description": "Cuminum cyminum seed + cuminaldehyde — warm-animalic spicy",
+    "expected_entry_count": 2,
+    "oil_cas": ["8014-13-9"],
+    "isolates": {
+      "122-03-2": { "name": "Cuminaldehyde", "cid": "326", "formula": "C10H12O", "mw": 148.20, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "geranium": {
     "description": "Pelargonium graveolens — Bourbon + Egyptian chemotypes + rhodinol (citronellol/geraniol commercial mix) rose-geranium cluster",
     "expected_entry_count": 5,
@@ -595,8 +632,8 @@
   },
 
   "fruity": {
-    "description": "Fruity base — damascones (α/β-damascenone/δ) + β-ionone + γ-nonalactone + raspberry ketone (+ β-damascenone cross-tag)",
-    "expected_entry_count": 7,
+    "description": "Fruity base — damascones + β-ionone + γ-nonalactone + raspberry ketone + furaneol cross-tag",
+    "expected_entry_count": 8,
     "oil_cas": [],
     "isolates": {
       "43052-87-5": { "name": "alpha-Damascone",    "cid": "519381",  "formula": "C13H20O",  "mw": 192.30, "ghs": ["GHS07"] },
