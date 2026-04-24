@@ -364,5 +364,22 @@
       "coumarin":  "91-64-5",
       "tonka":     "8046-22-8"
     }
+  },
+
+  "jasmine": {
+    "description": "Jasminum grandiflorum + J. sambac — indolic floral cluster with benzyl acetate / indole / methyl jasmonate fingerprint",
+    "expected_entry_count": 7,
+    "oil_cas": ["8022-96-6", "91770-14-8"],
+    "isolates": {
+      "140-11-4":   { "name": "Benzyl Acetate",   "cid": "8785",    "formula": "C9H10O2",  "mw": 150.17, "ghs": ["GHS07"] },
+      "120-72-9":   { "name": "Indole",           "cid": "798",     "formula": "C8H7N",    "mw": 117.15, "ghs": ["GHS06","GHS09"] },
+      "488-10-8":   { "name": "cis-Jasmone",      "cid": "1549018", "formula": "C11H16O",  "mw": 164.24, "ghs": ["GHS07"] },
+      "1211-29-6":  { "name": "Methyl Jasmonate", "cid": "5281929", "formula": "C13H20O3", "mw": 224.30, "ghs": ["GHS07"] },
+      "24851-98-7": { "name": "Hedione",          "cid": "31252",   "formula": "C13H22O3", "mw": 226.32, "ghs": [] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": ["120-72-9"],
+    "biosynthetic_chains": []
   }
 }
