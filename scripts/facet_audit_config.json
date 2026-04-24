@@ -320,5 +320,29 @@
       "phenylethyl alcohol": "60-12-8",
       "damascenone":         "23726-93-4"
     }
+  },
+
+  "pepper": {
+    "description": "Piper nigrum (black pepper) + Schinus molle (pink pepper) — fresh-spicy cluster anchored by β-caryophyllene + α/β-phellandrene + sabinene",
+    "expected_entry_count": 10,
+    "oil_cas": ["8006-82-4", "90082-88-7", "8022-56-8"],
+    "isolates": {
+      "87-44-5":   { "name": "β-Caryophyllene", "cid": "5281515","formula": "C15H24",   "mw": 204.35, "ghs": ["GHS07","GHS08"] },
+      "3387-41-5": { "name": "Sabinene",        "cid": "18818",  "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
+      "99-83-2":   { "name": "α-Phellandrene",  "cid": "7460",   "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
+      "555-10-2":  { "name": "β-Phellandrene",  "cid": "11142",  "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
+      "80-56-8":   { "name": "α-Pinene",        "cid": "6654",   "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
+      "5989-27-5": { "name": "d-Limonene",      "cid": "440917", "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
+      "94-62-2":   { "name": "Piperine",        "cid": "638024", "formula": "C17H19NO3","mw": 285.34, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": ["87-44-5", "3387-41-5", "99-83-2", "555-10-2", "80-56-8", "5989-27-5"],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [],
+    "trade_name_expectations": {
+      "black pepper": "8006-82-4",
+      "pink pepper":  "90082-88-7",
+      "piperine":     "94-62-2"
+    }
   }
 }
