@@ -367,8 +367,8 @@
   },
 
   "jasmine": {
-    "description": "Jasminum grandiflorum + J. sambac — indolic floral cluster with benzyl acetate / indole / methyl jasmonate fingerprint",
-    "expected_entry_count": 9,
+    "description": "Jasminum grandiflorum + J. sambac — indolic floral cluster with benzyl acetate / indole / methyl jasmonate fingerprint (expanded via ylang cluster cross-tags)",
+    "expected_entry_count": 14,
     "oil_cas": ["8022-96-6", "91770-14-8"],
     "isolates": {
       "140-11-4":   { "name": "Benzyl Acetate",   "cid": "8785",    "formula": "C9H10O2",  "mw": 150.17, "ghs": ["GHS07"] },
@@ -503,6 +503,52 @@
     "ifra_phenolic": false,
     "peroxide_required_cas": ["13466-78-9"],
     "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
+  "labdanum": {
+    "description": "Cistus ladanifer — labdane diterpene amber base",
+    "expected_entry_count": 1,
+    "oil_cas": ["8016-26-0"],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
+  "frankincense": {
+    "description": "Boswellia carterii / sacra — olibanum fresh-resinous",
+    "expected_entry_count": 1,
+    "oil_cas": ["8016-36-2"],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
+  "myrrh": {
+    "description": "Commiphora myrrha — furanosesquiterpene bitter-balsamic",
+    "expected_entry_count": 1,
+    "oil_cas": ["8016-37-3"],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
+  "amber": {
+    "description": "Amber base accord — labdanum + benzoin + ambroxide trio (shared amber/balsamic family)",
+    "expected_entry_count": 3,
+    "oil_cas": ["8016-26-0", "9000-72-0"],
+    "isolates": {
+      "6790-58-5": { "name": "Ambroxide", "cid": "443061", "formula": "C16H28O", "mw": 236.39, "ghs": [] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": ["9000-72-0"],
     "biosynthetic_chains": []
   },
 
