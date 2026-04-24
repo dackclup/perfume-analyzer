@@ -267,5 +267,28 @@
       "star anise":     "84650-59-9",
       "anisyl alcohol": "105-13-5"
     }
+  },
+
+  "clove": {
+    "description": "Syzygium aromaticum — eugenol-dominated phenolic sensitiser cluster; bud + leaf oils plus isoeugenol / eugenyl acetate derivatives",
+    "expected_entry_count": 9,
+    "oil_cas": ["8000-34-8", "8015-97-2", "84775-70-2", "84775-72-4"],
+    "isolates": {
+      "97-53-0":  { "name": "Eugenol",          "cid": "3314",   "formula": "C10H12O2", "mw": 164.20, "ghs": ["GHS07"] },
+      "93-15-2":  { "name": "Methyl Eugenol",   "cid": "7127",   "formula": "C11H14O2", "mw": 178.23, "ghs": ["GHS07","GHS08"] },
+      "97-54-1":  { "name": "Isoeugenol",       "cid": "853433", "formula": "C10H12O2", "mw": 164.20, "ghs": ["GHS07"] },
+      "93-28-7":  { "name": "Eugenyl Acetate",  "cid": "7136",   "formula": "C12H14O3", "mw": 206.24, "ghs": ["GHS07"] },
+      "87-44-5":  { "name": "β-Caryophyllene",  "cid": "5281515","formula": "C15H24",   "mw": 204.35, "ghs": ["GHS07","GHS08"] }
+    },
+    "ifra_phenolic": true,
+    "peroxide_required_cas": ["87-44-5"],
+    "sensitizer_required_cas": ["97-53-0", "97-54-1"],
+    "biosynthetic_chains": [],
+    "trade_name_expectations": {
+      "clove":           "8000-34-8",
+      "clove leaf":      "8015-97-2",
+      "isoeugenol":      "97-54-1",
+      "eugenyl acetate": "93-28-7"
+    }
   }
 }
