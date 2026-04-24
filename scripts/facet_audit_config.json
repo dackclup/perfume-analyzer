@@ -464,6 +464,22 @@
     "biosynthetic_chains": []
   },
 
+  "ginger": {
+    "description": "Zingiber officinale — zingiberene / sesquiphellandrene / ar-curcumene sesquiterpene cluster + citral top",
+    "expected_entry_count": 5,
+    "oil_cas": ["8007-08-7"],
+    "isolates": {
+      "495-60-3":   { "name": "alpha-Zingiberene",       "cid": "92776",    "formula": "C15H24", "mw": 204.35, "ghs": ["GHS07"] },
+      "495-62-5":   { "name": "beta-Sesquiphellandrene", "cid": "12315762", "formula": "C15H24", "mw": 204.35, "ghs": ["GHS07"] },
+      "17699-05-7": { "name": "ar-Curcumene",            "cid": "92139",    "formula": "C15H22", "mw": 202.34, "ghs": ["GHS07"] },
+      "5392-40-5":  { "name": "Citral",                  "cid": "638011",   "formula": "C10H16O","mw": 152.23, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": ["495-60-3", "495-62-5", "5392-40-5"],
+    "sensitizer_required_cas": ["5392-40-5"],
+    "biosynthetic_chains": []
+  },
+
   "cinnamon": {
     "description": "Cinnamomum verum (Ceylon, bark + leaf) + C. cassia (Chinese) + cinnamaldehyde/cinnamyl alcohol/cinnamyl acetate",
     "expected_entry_count": 10,
