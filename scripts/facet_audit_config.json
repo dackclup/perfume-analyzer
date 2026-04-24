@@ -383,6 +383,20 @@
     "biosynthetic_chains": []
   },
 
+  "sandalwood": {
+    "description": "Santalum album (Mysore) + S. spicatum (Australian) + santalol isolates + Javanol synthetic. Opens the Woody primary home",
+    "expected_entry_count": 6,
+    "oil_cas": ["8006-87-9", "8024-35-9", "198991-79-6"],
+    "isolates": {
+      "115-71-9":  { "name": "α-Santalol", "cid": "91732",    "formula": "C15H24O", "mw": 220.35, "ghs": [] },
+      "77-42-9":   { "name": "β-Santalol", "cid": "11166891", "formula": "C15H24O", "mw": 220.35, "ghs": [] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "vanilla": {
     "description": "Vanilla planifolia + vanillin / ethyl vanillin / heliotropin + balsamic fixatives. Opens the gourmand family primary home",
     "expected_entry_count": 7,
