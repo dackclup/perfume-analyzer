@@ -569,11 +569,13 @@
   },
 
   "chamomile": {
-    "description": "Chamaemelum nobile (Roman) + Matricaria recutita (German) + α-bisabolol herbal-apple cluster",
-    "expected_entry_count": 3,
+    "description": "Chamaemelum nobile (Roman) + Matricaria recutita (German) + α-bisabolol + isobutyl angelate (Roman ester) + chamazulene (German blue azulene) cluster",
+    "expected_entry_count": 5,
     "oil_cas": ["8015-92-7", "8002-66-2"],
     "isolates": {
-      "23089-26-1": { "name": "alpha-Bisabolol", "cid": "442343", "formula": "C15H26O", "mw": 222.37, "ghs": [] }
+      "23089-26-1": { "name": "alpha-Bisabolol",   "cid": "442343",  "formula": "C15H26O", "mw": 222.37, "ghs": [] },
+      "7779-81-9":  { "name": "Isobutyl Angelate", "cid": "5364437", "formula": "C9H16O2", "mw": 156.22, "ghs": ["GHS07"] },
+      "529-05-5":   { "name": "Chamazulene",       "cid": "10719",   "formula": "C14H16",  "mw": 184.28, "ghs": ["GHS07"] }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
@@ -632,8 +634,8 @@
   },
 
   "fruity": {
-    "description": "Fruity base — damascones + β-ionone + γ-nonalactone + raspberry ketone + furaneol cross-tag",
-    "expected_entry_count": 8,
+    "description": "Fruity base — damascones + β-ionone + γ-nonalactone + raspberry ketone + furaneol + isobutyl angelate (chamomile cross-tag)",
+    "expected_entry_count": 9,
     "oil_cas": [],
     "isolates": {
       "43052-87-5": { "name": "alpha-Damascone",    "cid": "519381",  "formula": "C13H20O",  "mw": 192.30, "ghs": ["GHS07"] },
