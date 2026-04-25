@@ -554,8 +554,8 @@
   },
 
   "amber": {
-    "description": "Amber base accord — labdanum + benzoin + ambroxide trio + sclareolide/manool clary-sage diterpene precursors",
-    "expected_entry_count": 5,
+    "description": "Amber base accord — labdanum + benzoin + ambroxide trio + sclareolide/manool clary-sage diterpene precursors + davana oil/davanone fruity-amber cross",
+    "expected_entry_count": 7,
     "oil_cas": ["8016-26-0", "9000-72-0"],
     "isolates": {
       "6790-58-5": { "name": "Ambroxide",   "cid": "443061", "formula": "C16H28O",  "mw": 236.39, "ghs": [] },
@@ -585,8 +585,8 @@
   },
 
   "chamomile": {
-    "description": "4-species coverage: Chamaemelum nobile (Roman) + Matricaria recutita (German) + Ormenis multicaulis (Wild Moroccan) + Eriocephalus punctulatus (Cape) — angelate ester suite + α-bisabolol + chamazulene + bisabolol oxides A/B chemotype markers",
-    "expected_entry_count": 11,
+    "description": "4-species coverage: Chamaemelum nobile (Roman) + Matricaria recutita (German) + Ormenis multicaulis (Wild Moroccan) + Eriocephalus punctulatus (Cape) — angelate ester suite + α-bisabolol + chamazulene + bisabolol oxides A/B + Artemisia arborescens (blue chemotype cross-tag)",
+    "expected_entry_count": 12,
     "oil_cas": ["8015-92-7", "8002-66-2", "8023-93-0", "91745-67-2"],
     "isolates": {
       "23089-26-1": { "name": "alpha-Bisabolol",         "cid": "442343",   "formula": "C15H26O",  "mw": 222.37, "ghs": [] },
@@ -601,6 +601,26 @@
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
+  },
+
+  "artemisia": {
+    "description": "Artemisia spp. — wormwood (A. absinthium) + mugwort (A. vulgaris) + davana (A. pallens) + herba-alba + arborescens; thujone/davanone/artemisia-ketone cluster; tarragon (A. dracunculus) is its own facet",
+    "expected_entry_count": 11,
+    "oil_cas": ["8008-93-3", "84775-22-4", "8016-03-3", "84775-23-5", "84775-12-2", "7392-19-0"],
+    "isolates": {
+      "546-49-6":   { "name": "Artemisia Ketone", "cid": "5374533", "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS07"] },
+      "546-80-5":   { "name": "alpha-Thujone",    "cid": "261491",  "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS06","GHS07"] },
+      "471-15-8":   { "name": "beta-Thujone",     "cid": "91456",   "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS07"] },
+      "529-05-5":   { "name": "Chamazulene",      "cid": "10719",   "formula": "C14H16",  "mw": 184.28, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [],
+    "excluded_cas_expected": {
+      "personal_care": ["8008-93-3", "84775-22-4", "84775-23-5", "84775-12-2", "546-80-5", "471-15-8"],
+      "flavor":        ["546-80-5"]
+    }
   },
 
   "coriander": {
@@ -654,8 +674,8 @@
   },
 
   "fruity": {
-    "description": "Fruity base — damascones + β-ionone + γ-nonalactone + raspberry ketone + furaneol + Roman chamomile angelate esters + Cape chamomile cross-tag",
-    "expected_entry_count": 12,
+    "description": "Fruity base — damascones + β-ionone + γ-nonalactone + raspberry ketone + furaneol + Roman chamomile angelate esters + Cape chamomile + davana oil + davanone fruity-amber cross-tags",
+    "expected_entry_count": 14,
     "oil_cas": [],
     "isolates": {
       "43052-87-5": { "name": "alpha-Damascone",    "cid": "519381",  "formula": "C13H20O",  "mw": 192.30, "ghs": ["GHS07"] },
