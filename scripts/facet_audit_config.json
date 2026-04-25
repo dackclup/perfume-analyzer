@@ -623,6 +623,20 @@
     }
   },
 
+  "celery": {
+    "description": "Apium graveolens — phthalide-driven vegetal-herbal cluster (3-butylphthalide + ligustilide + butylidene phthalide); d-limonene (~60%) cross-tag",
+    "expected_entry_count": 5,
+    "oil_cas": ["8015-90-5", "4431-01-0", "17369-59-4"],
+    "isolates": {
+      "6066-49-5":  { "name": "3-Butylphthalide", "cid": "61042",  "formula": "C12H14O2", "mw": 190.24, "ghs": ["GHS07"] },
+      "5989-27-5":  { "name": "d-Limonene",       "cid": "440917", "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": ["5989-27-5"],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "coriander": {
     "description": "Coriandrum sativum seed — linalool-rich spicy-fresh (≠ cilantro leaf); S-(+)-linalool cross-tag from lavender",
     "expected_entry_count": 2,
@@ -734,8 +748,8 @@
   },
 
   "green": {
-    "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord",
-    "expected_entry_count": 5,
+    "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal cross-tags (4 phthalide-cluster entries)",
+    "expected_entry_count": 9,
     "oil_cas": ["8023-91-4", "8024-08-6"],
     "isolates": {
       "928-96-1":   { "name": "cis-3-Hexenol",         "cid": "5281167", "formula": "C6H12O",  "mw": 100.16, "ghs": ["GHS07"] },
