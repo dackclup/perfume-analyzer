@@ -762,6 +762,25 @@
     "biosynthetic_chains": []
   },
 
+  "saffron": {
+    "description": "Crocus sativus stigma — modern niche-luxury cornerstone (Memo, Tom Ford, Penhaligon's); safranal-driven leathery-spicy with hydroxyisophorone + oxoisophorone tobacco-amber depth",
+    "expected_entry_count": 5,
+    "oil_cas": ["84604-17-1"],
+    "isolates": {
+      "116-26-7":  { "name": "Safranal",            "cid": "61041", "formula": "C10H14O",  "mw": 150.22, "ghs": ["GHS07"] },
+      "78-59-1":   { "name": "Isophorone",          "cid": "6544",  "formula": "C9H14O",   "mw": 138.21, "ghs": ["GHS02","GHS06","GHS08"] },
+      "4883-60-7": { "name": "4-Hydroxyisophorone", "cid": "21405", "formula": "C9H14O2",  "mw": 154.21, "ghs": ["GHS07"] },
+      "1125-21-9": { "name": "Oxoisophorone",       "cid": "14066", "formula": "C9H12O2",  "mw": 152.19, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [
+      { "precursor": "78-59-1",  "product": "4883-60-7", "reaction": "allylic hydroxylation (isophorone → 4-hydroxyisophorone)" },
+      { "precursor": "4883-60-7", "product": "1125-21-9", "reaction": "alcohol oxidation (4-hydroxyisophorone → oxoisophorone)" }
+    ]
+  },
+
   "galbanum": {
     "description": "Ferula gummosa — iconic 20th-c green-resinous chypre cornerstone (Chanel No.19, Vent Vert, Cabochard, Must de Cartier); galbazine + (E,E)-decadienal markers; α/β-pinene + 3-carene chemotype cross-tags",
     "expected_entry_count": 8,
