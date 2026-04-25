@@ -52,8 +52,8 @@
   },
 
   "sage": {
-    "description": "Salvia spp. — sclareol + thujone + sclareolide/manool diterpene amber-precursor cluster + linalyl acetate (clary marker) + 1,8-cineole cross-tags",
-    "expected_entry_count": 12,
+    "description": "Salvia spp. — sclareol + thujone + sclareolide/manool diterpene amber-precursor cluster + linalyl acetate (clary marker) + 1,8-cineole + sabinyl acetate (Spanish sage marker) cross-tags",
+    "expected_entry_count": 13,
     "oil_cas": ["8016-63-5", "84775-83-7", "8022-56-8", "8016-64-6", "8007-20-3"],
     "isolates": {
       "515-03-7":   { "name": "Sclareol",        "cid": "163263", "formula": "C20H36O2", "mw": 308.50, "ghs": [] },
@@ -604,9 +604,9 @@
   },
 
   "artemisia": {
-    "description": "Artemisia spp. — wormwood (A. absinthium) + mugwort (A. vulgaris) + davana (A. pallens) + herba-alba + arborescens; thujone/davanone/artemisia-ketone cluster; tarragon (A. dracunculus) is its own facet",
-    "expected_entry_count": 11,
-    "oil_cas": ["8008-93-3", "84775-22-4", "8016-03-3", "84775-23-5", "84775-12-2", "7392-19-0"],
+    "description": "Artemisia spp. — wormwood (A. absinthium) + mugwort (A. vulgaris) + davana (A. pallens) + herba-alba + arborescens + sweet wormwood (A. annua); thujone/davanone/artemisia-ketone/sabinyl-acetate cluster; tarragon (A. dracunculus) is its own facet",
+    "expected_entry_count": 13,
+    "oil_cas": ["8008-93-3", "84775-22-4", "8016-03-3", "84775-23-5", "84775-12-2", "7392-19-0", "82658-69-1", "1365-84-4"],
     "isolates": {
       "546-49-6":   { "name": "Artemisia Ketone", "cid": "5374533", "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS07"] },
       "546-80-5":   { "name": "alpha-Thujone",    "cid": "261491",  "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS06","GHS07"] },
