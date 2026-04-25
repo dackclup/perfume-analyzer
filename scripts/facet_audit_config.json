@@ -762,6 +762,17 @@
     "biosynthetic_chains": []
   },
 
+  "oud": {
+    "description": "Aquilaria spp. — agarwood / oud cluster: regional chemotypes (Hindi/Assam, Cambodian) + synthetic captive (Norlimbanol) + agarofuran/agarospirol sesquiterpene markers; modern luxury cornerstone (Tom Ford Oud Wood, Maison Francis Kurkdjian, Amouage)",
+    "expected_entry_count": 5,
+    "oil_cas": ["94350-09-1", "102395-30-2", "70788-30-6", "5956-12-7", "1460-73-7"],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "saffron": {
     "description": "Crocus sativus stigma — modern niche-luxury cornerstone (Memo, Tom Ford, Penhaligon's); safranal-driven leathery-spicy with hydroxyisophorone + oxoisophorone tobacco-amber depth",
     "expected_entry_count": 5,
