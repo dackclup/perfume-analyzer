@@ -748,8 +748,8 @@
   },
 
   "green": {
-    "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal cross-tags (4 phthalide-cluster entries)",
-    "expected_entry_count": 9,
+    "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal cross-tags + galbanum-cluster green entries",
+    "expected_entry_count": 13,
     "oil_cas": ["8023-91-4", "8024-08-6"],
     "isolates": {
       "928-96-1":   { "name": "cis-3-Hexenol",         "cid": "5281167", "formula": "C6H12O",  "mw": 100.16, "ghs": ["GHS07"] },
@@ -758,6 +758,23 @@
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": ["928-96-1"],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
+  "galbanum": {
+    "description": "Ferula gummosa — iconic 20th-c green-resinous chypre cornerstone (Chanel No.19, Vent Vert, Cabochard, Must de Cartier); galbazine + (E,E)-decadienal markers; α/β-pinene + 3-carene chemotype cross-tags",
+    "expected_entry_count": 8,
+    "oil_cas": ["8023-91-4", "9000-23-1", "84961-49-9"],
+    "isolates": {
+      "24683-00-9": { "name": "Galbazine",            "cid": "31249",   "formula": "C9H14N2O", "mw": 166.22, "ghs": ["GHS07"] },
+      "25152-84-5": { "name": "(E,E)-2,4-Decadienal", "cid": "5283349", "formula": "C10H16O",  "mw": 152.23, "ghs": ["GHS07"] },
+      "13466-78-9": { "name": "delta-3-Carene",       "cid": "440062",  "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS07","GHS08","GHS09"] },
+      "80-56-8":    { "name": "α-Pinene",             "cid": "6654",    "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
+      "127-91-3":   { "name": "β-Pinene",             "cid": "14896",   "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": ["13466-78-9", "80-56-8", "127-91-3"],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
