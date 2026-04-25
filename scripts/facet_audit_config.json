@@ -569,9 +569,9 @@
   },
 
   "chamomile": {
-    "description": "Chamaemelum nobile (Roman) + Matricaria recutita (German) + Ormenis multicaulis (Wild Moroccan) — angelate ester suite + α-bisabolol + chamazulene + bisabolol oxides A/B chemotype markers",
-    "expected_entry_count": 10,
-    "oil_cas": ["8015-92-7", "8002-66-2", "8023-93-0"],
+    "description": "4-species coverage: Chamaemelum nobile (Roman) + Matricaria recutita (German) + Ormenis multicaulis (Wild Moroccan) + Eriocephalus punctulatus (Cape) — angelate ester suite + α-bisabolol + chamazulene + bisabolol oxides A/B chemotype markers",
+    "expected_entry_count": 11,
+    "oil_cas": ["8015-92-7", "8002-66-2", "8023-93-0", "91745-67-2"],
     "isolates": {
       "23089-26-1": { "name": "alpha-Bisabolol",         "cid": "442343",   "formula": "C15H26O",  "mw": 222.37, "ghs": [] },
       "7779-81-9":  { "name": "Isobutyl Angelate",       "cid": "5364437",  "formula": "C9H16O2",  "mw": 156.22, "ghs": ["GHS07"] },
@@ -638,8 +638,8 @@
   },
 
   "fruity": {
-    "description": "Fruity base — damascones + β-ionone + γ-nonalactone + raspberry ketone + furaneol + Roman chamomile angelate esters (isobutyl/isoamyl/2-methylbutyl)",
-    "expected_entry_count": 11,
+    "description": "Fruity base — damascones + β-ionone + γ-nonalactone + raspberry ketone + furaneol + Roman chamomile angelate esters + Cape chamomile cross-tag",
+    "expected_entry_count": 12,
     "oil_cas": [],
     "isolates": {
       "43052-87-5": { "name": "alpha-Damascone",    "cid": "519381",  "formula": "C13H20O",  "mw": 192.30, "ghs": ["GHS07"] },
