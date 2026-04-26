@@ -1,25 +1,114 @@
 {
   "_comment": "Per-facet expected values for scripts/audit_facet.py. Each entry lists the CAS numbers of oils (mixtures without structural IDs) and isolates (with PubChem CID + GHS codes). Additional flags drive facet-specific safety probes (ifra_phenolic, sensitizer_required_cas, peroxide_required_cas) and chemistry probes (biosynthetic_chains, isolate formula/mw/cid expected values). Seed data derived from v32 of perfumery_data.js and historical audit scripts in /tmp/.",
-
   "lavender": {
     "description": "Lavandula angustifolia — linalool/linalyl-acetate cluster + β-caryophyllene/(E)-β-ocimene/terpinen-4-ol minor cross-tags",
     "expected_entry_count": 17,
-    "oil_cas": ["8000-28-0", "97722-12-8", "8016-78-2"],
+    "oil_cas": [
+      "8000-28-0",
+      "97722-12-8",
+      "8016-78-2"
+    ],
     "isolates": {
-      "78-70-6":     { "name": "Linalool",                  "cid": "6549",    "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
-      "126-91-0":    { "name": "(R)-(−)-Linalool",          "cid": "443158",  "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
-      "126-90-9":    { "name": "(S)-(+)-Linalool",          "cid": "67179",   "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
-      "115-95-7":    { "name": "Linalyl Acetate",           "cid": "8294",    "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS07"] },
-      "115-99-1":    { "name": "Linalyl Formate",           "cid": "61040",   "formula": "C11H18O2", "mw": 182.26, "ghs": [] },
-      "10339-55-6":  { "name": "Ethyl Linalool",            "cid": "6433547", "formula": "C12H22O",  "mw": 182.30, "ghs": ["GHS07"] },
-      "498-16-8":    { "name": "Lavandulol",                "cid": "5464156", "formula": "C10H18O",  "mw": 154.25, "ghs": [] },
-      "25905-14-0":  { "name": "Lavandulyl Acetate",        "cid": "30247",   "formula": "C12H20O2", "mw": 196.29, "ghs": [] },
-      "78-69-3":     { "name": "Tetrahydrolinalool",        "cid": "6548",    "formula": "C10H22O",  "mw": 158.28, "ghs": ["GHS07"] },
-      "1365-19-1":   { "name": "Linalool Oxide (furanoid)", "cid": "22310",   "formula": "C10H18O2", "mw": 170.25, "ghs": ["GHS07"] },
-      "60047-17-8":  { "name": "Linalool Oxide (pyranoid)", "cid": "26396",   "formula": "C10H18O2", "mw": 170.25, "ghs": ["GHS07"] }
+      "78-70-6": {
+        "name": "Linalool",
+        "cid": "6549",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "126-91-0": {
+        "name": "(R)-(−)-Linalool",
+        "cid": "443158",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "126-90-9": {
+        "name": "(S)-(+)-Linalool",
+        "cid": "67179",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "115-95-7": {
+        "name": "Linalyl Acetate",
+        "cid": "8294",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "115-99-1": {
+        "name": "Linalyl Formate",
+        "cid": "61040",
+        "formula": "C11H18O2",
+        "mw": 182.26,
+        "ghs": []
+      },
+      "10339-55-6": {
+        "name": "Ethyl Linalool",
+        "cid": "6433547",
+        "formula": "C12H22O",
+        "mw": 182.3,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "498-16-8": {
+        "name": "Lavandulol",
+        "cid": "5464156",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": []
+      },
+      "25905-14-0": {
+        "name": "Lavandulyl Acetate",
+        "cid": "30247",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": []
+      },
+      "78-69-3": {
+        "name": "Tetrahydrolinalool",
+        "cid": "6548",
+        "formula": "C10H22O",
+        "mw": 158.28,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "1365-19-1": {
+        "name": "Linalool Oxide (furanoid)",
+        "cid": "22310",
+        "formula": "C10H18O2",
+        "mw": 170.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "60047-17-8": {
+        "name": "Linalool Oxide (pyranoid)",
+        "cid": "26396",
+        "formula": "C10H18O2",
+        "mw": 170.25,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["78-70-6", "126-91-0", "126-90-9"],
+    "peroxide_required_cas": [
+      "78-70-6",
+      "126-91-0",
+      "126-90-9"
+    ],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [],
     "trade_name_expectations": {
@@ -28,18 +117,67 @@
       "linalyl acetate": "115-95-7"
     }
   },
-
   "lavandin": {
     "description": "Lavandula × intermedia — camphor-shifted linalool cluster + 1,8-cineole/borneol cross-tags",
     "expected_entry_count": 10,
-    "oil_cas": ["91722-69-9", "93455-96-0", "8022-15-9"],
+    "oil_cas": [
+      "91722-69-9",
+      "93455-96-0",
+      "8022-15-9"
+    ],
     "isolates": {
-      "76-22-2":    { "name": "Camphor",           "cid": "2537",   "formula": "C10H16O",  "mw": 152.23, "ghs": ["GHS02","GHS07","GHS08"] },
-      "76-49-3":    { "name": "Bornyl Acetate",    "cid": "93009",  "formula": "C12H20O2", "mw": 196.29, "ghs": [] },
-      "144-39-8":   { "name": "Linalyl Propionate","cid": "61098",  "formula": "C13H22O2", "mw": 210.31, "ghs": ["GHS09"] },
-      "2153-28-8":  { "name": "Terpinyl Butyrate", "cid": "578423", "formula": "C14H24O2", "mw": 224.34, "ghs": [] },
-      "470-82-6":   { "name": "1,8-Cineole",       "cid": "2758",   "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS02"] },
-      "507-70-0":   { "name": "Borneol",           "cid": "64685",  "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS02"] }
+      "76-22-2": {
+        "name": "Camphor",
+        "cid": "2537",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "76-49-3": {
+        "name": "Bornyl Acetate",
+        "cid": "93009",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": []
+      },
+      "144-39-8": {
+        "name": "Linalyl Propionate",
+        "cid": "61098",
+        "formula": "C13H22O2",
+        "mw": 210.31,
+        "ghs": [
+          "GHS09"
+        ]
+      },
+      "2153-28-8": {
+        "name": "Terpinyl Butyrate",
+        "cid": "578423",
+        "formula": "C14H24O2",
+        "mw": 224.34,
+        "ghs": []
+      },
+      "470-82-6": {
+        "name": "1,8-Cineole",
+        "cid": "2758",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS02"
+        ]
+      },
+      "507-70-0": {
+        "name": "Borneol",
+        "cid": "64685",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS02"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
@@ -50,57 +188,209 @@
       "camphor": "76-22-2"
     }
   },
-
   "sage": {
     "description": "Salvia spp. — sclareol + thujone + sclareolide/manool diterpene amber-precursor cluster + linalyl acetate (clary marker) + 1,8-cineole + sabinyl acetate (Spanish sage marker) cross-tags",
     "expected_entry_count": 13,
-    "oil_cas": ["8016-63-5", "84775-83-7", "8022-56-8", "8016-64-6", "8007-20-3"],
+    "oil_cas": [
+      "8016-63-5",
+      "84775-83-7",
+      "8022-56-8",
+      "8016-64-6",
+      "8007-20-3"
+    ],
     "isolates": {
-      "515-03-7":   { "name": "Sclareol",        "cid": "163263", "formula": "C20H36O2", "mw": 308.50, "ghs": [] },
-      "546-80-5":   { "name": "alpha-Thujone",   "cid": "261491", "formula": "C10H16O",  "mw": 152.23, "ghs": ["GHS06","GHS07"] },
-      "471-15-8":   { "name": "beta-Thujone",    "cid": "91456",  "formula": "C10H16O",  "mw": 152.23, "ghs": ["GHS07"] },
-      "564-20-5":   { "name": "Sclareolide",     "cid": "929262", "formula": "C16H26O2", "mw": 250.38, "ghs": [] },
-      "596-85-0":   { "name": "Manool",          "cid": "519759", "formula": "C20H34O",  "mw": 290.49, "ghs": [] },
-      "470-82-6":   { "name": "1,8-Cineole",     "cid": "2758",   "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS02"] },
-      "115-95-7":   { "name": "Linalyl Acetate", "cid": "8294",   "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS07"] }
+      "515-03-7": {
+        "name": "Sclareol",
+        "cid": "163263",
+        "formula": "C20H36O2",
+        "mw": 308.5,
+        "ghs": []
+      },
+      "546-80-5": {
+        "name": "alpha-Thujone",
+        "cid": "261491",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS06",
+          "GHS07"
+        ]
+      },
+      "471-15-8": {
+        "name": "beta-Thujone",
+        "cid": "91456",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "564-20-5": {
+        "name": "Sclareolide",
+        "cid": "929262",
+        "formula": "C16H26O2",
+        "mw": 250.38,
+        "ghs": []
+      },
+      "596-85-0": {
+        "name": "Manool",
+        "cid": "519759",
+        "formula": "C20H34O",
+        "mw": 290.49,
+        "ghs": []
+      },
+      "470-82-6": {
+        "name": "1,8-Cineole",
+        "cid": "2758",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS02"
+        ]
+      },
+      "115-95-7": {
+        "name": "Linalyl Acetate",
+        "cid": "8294",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [],
     "excluded_cas_expected": {
-      "personal_care": ["546-80-5", "471-15-8", "8007-20-3"],
-      "flavor":        ["546-80-5"]
+      "personal_care": [
+        "546-80-5",
+        "471-15-8",
+        "8007-20-3"
+      ],
+      "flavor": [
+        "546-80-5"
+      ]
     },
     "trade_name_expectations": {
       "clary sage": "8016-63-5",
       "sclareol": "515-03-7"
     }
   },
-
   "thyme": {
     "description": "Thymus spp. + Origanum + Satureja — phenolic sensitizer cluster + α-terpinene biosynthetic precursor + borneol cross-tag",
     "expected_entry_count": 13,
-    "oil_cas": ["8007-46-3", "84696-17-3", "84929-51-1", "8007-11-2", "8016-68-0", "8015-01-8"],
+    "oil_cas": [
+      "8007-46-3",
+      "84696-17-3",
+      "84929-51-1",
+      "8007-11-2",
+      "8016-68-0",
+      "8015-01-8"
+    ],
     "isolates": {
-      "89-83-8":   { "name": "Thymol",          "cid": "6989",  "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS05","GHS07","GHS09"] },
-      "499-75-2":  { "name": "Carvacrol",       "cid": "10364", "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS07"] },
-      "99-87-6":   { "name": "p-Cymene",        "cid": "7463",  "formula": "C10H14",  "mw": 134.22, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "99-85-4":   { "name": "γ-Terpinene",     "cid": "7461",  "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS08","GHS09"] },
-      "99-86-5":   { "name": "alpha-Terpinene", "cid": "7462",  "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS07","GHS08","GHS09"] },
-      "562-74-3":  { "name": "Terpinen-4-ol",   "cid": "11230", "formula": "C10H18O", "mw": 154.25, "ghs": ["GHS07"] },
-      "507-70-0":  { "name": "Borneol",         "cid": "64685", "formula": "C10H18O", "mw": 154.25, "ghs": ["GHS02"] }
+      "89-83-8": {
+        "name": "Thymol",
+        "cid": "6989",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS05",
+          "GHS07",
+          "GHS09"
+        ]
+      },
+      "499-75-2": {
+        "name": "Carvacrol",
+        "cid": "10364",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "99-87-6": {
+        "name": "p-Cymene",
+        "cid": "7463",
+        "formula": "C10H14",
+        "mw": 134.22,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "99-85-4": {
+        "name": "γ-Terpinene",
+        "cid": "7461",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "99-86-5": {
+        "name": "alpha-Terpinene",
+        "cid": "7462",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "562-74-3": {
+        "name": "Terpinen-4-ol",
+        "cid": "11230",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "507-70-0": {
+        "name": "Borneol",
+        "cid": "64685",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS02"
+        ]
+      }
     },
     "ifra_phenolic": true,
-    "peroxide_required_cas": ["99-87-6", "99-85-4", "99-86-5"],
-    "sensitizer_required_cas": ["89-83-8", "499-75-2"],
+    "peroxide_required_cas": [
+      "99-87-6",
+      "99-85-4",
+      "99-86-5"
+    ],
+    "sensitizer_required_cas": [
+      "89-83-8",
+      "499-75-2"
+    ],
     "biosynthetic_chains": [
-      { "precursor": "99-85-4", "product": "99-87-6", "reaction": "aromatic dehydrogenation" },
-      { "precursor": "99-87-6", "product": "89-83-8", "reaction": "cytochrome P450 hydroxylation" },
-      { "precursor": "99-87-6", "product": "499-75-2", "reaction": "cytochrome P450 hydroxylation (isomeric)" }
+      {
+        "precursor": "99-85-4",
+        "product": "99-87-6",
+        "reaction": "aromatic dehydrogenation"
+      },
+      {
+        "precursor": "99-87-6",
+        "product": "89-83-8",
+        "reaction": "cytochrome P450 hydroxylation"
+      },
+      {
+        "precursor": "99-87-6",
+        "product": "499-75-2",
+        "reaction": "cytochrome P450 hydroxylation (isomeric)"
+      }
     ],
     "iupac_expectations": {
-      "89-83-8":  "5-methyl-2-propan-2-ylphenol",
+      "89-83-8": "5-methyl-2-propan-2-ylphenol",
       "499-75-2": "2-methyl-5-propan-2-ylphenol"
     },
     "trade_name_expectations": {
@@ -112,30 +402,156 @@
       "terpinen-4-ol": "562-74-3"
     }
   },
-
   "rosemary": {
     "description": "Rosmarinus officinalis — α-pinene/verbenone/camphor chemotypes",
     "expected_entry_count": 14,
-    "oil_cas": ["8000-25-7", "84604-14-8"],
+    "oil_cas": [
+      "8000-25-7",
+      "84604-14-8"
+    ],
     "isolates": {
-      "80-56-8":    { "name": "α-Pinene",       "cid": "6654",   "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "127-91-3":   { "name": "β-Pinene",       "cid": "14896",  "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "80-57-9":    { "name": "Verbenone",      "cid": "29025",  "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS07"] },
-      "123-35-3":   { "name": "Myrcene",        "cid": "31253",  "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "5989-27-5":  { "name": "d-Limonene",     "cid": "440917", "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "98-55-5":    { "name": "α-Terpineol",    "cid": "17100",  "formula": "C10H18O", "mw": 154.25, "ghs": ["GHS07"] },
-      "3387-41-5":  { "name": "Sabinene",       "cid": "18818",  "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
-      "586-62-9":   { "name": "Terpinolene",    "cid": "11463",  "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "470-82-6":   { "name": "1,8-Cineole",    "cid": "2758",   "formula": "C10H18O", "mw": 154.25, "ghs": ["GHS02"] },
-      "76-22-2":    { "name": "Camphor",        "cid": "2537",   "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS02","GHS07","GHS08"] },
-      "76-49-3":    { "name": "Bornyl Acetate", "cid": "93009",  "formula": "C12H20O2","mw": 196.29, "ghs": [] },
-      "507-70-0":   { "name": "Borneol",        "cid": "64685",  "formula": "C10H18O", "mw": 154.25, "ghs": ["GHS02"] }
+      "80-56-8": {
+        "name": "α-Pinene",
+        "cid": "6654",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "127-91-3": {
+        "name": "β-Pinene",
+        "cid": "14896",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "80-57-9": {
+        "name": "Verbenone",
+        "cid": "29025",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "123-35-3": {
+        "name": "Myrcene",
+        "cid": "31253",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "5989-27-5": {
+        "name": "d-Limonene",
+        "cid": "440917",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "98-55-5": {
+        "name": "α-Terpineol",
+        "cid": "17100",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "3387-41-5": {
+        "name": "Sabinene",
+        "cid": "18818",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "586-62-9": {
+        "name": "Terpinolene",
+        "cid": "11463",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "470-82-6": {
+        "name": "1,8-Cineole",
+        "cid": "2758",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS02"
+        ]
+      },
+      "76-22-2": {
+        "name": "Camphor",
+        "cid": "2537",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "76-49-3": {
+        "name": "Bornyl Acetate",
+        "cid": "93009",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": []
+      },
+      "507-70-0": {
+        "name": "Borneol",
+        "cid": "64685",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS02"
+        ]
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["80-56-8", "127-91-3", "123-35-3", "5989-27-5", "3387-41-5", "586-62-9"],
+    "peroxide_required_cas": [
+      "80-56-8",
+      "127-91-3",
+      "123-35-3",
+      "5989-27-5",
+      "3387-41-5",
+      "586-62-9"
+    ],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [
-      { "precursor": "80-56-8", "product": "80-57-9", "reaction": "allylic oxidation (α-pinene → verbenone)" }
+      {
+        "precursor": "80-56-8",
+        "product": "80-57-9",
+        "reaction": "allylic oxidation (α-pinene → verbenone)"
+      }
     ],
     "trade_name_expectations": {
       "rosemary": "8000-25-7",
@@ -146,24 +562,99 @@
       "terpinolene": "586-62-9"
     }
   },
-
   "basil": {
     "description": "Ocimum spp. — chavicol / eugenol / methyl-eugenol chemotypes + linalool sweet-basil cross-tag + 1,8-cineole",
     "expected_entry_count": 14,
-    "oil_cas": ["8015-73-4", "84775-70-2", "84775-72-4", "84775-71-3"],
+    "oil_cas": [
+      "8015-73-4",
+      "84775-70-2",
+      "84775-72-4",
+      "84775-71-3"
+    ],
     "isolates": {
-      "140-67-0":   { "name": "Methyl Chavicol",    "cid": "8815",    "formula": "C10H12O",  "mw": 148.20, "ghs": ["GHS07","GHS08"] },
-      "93-15-2":    { "name": "Methyl Eugenol",     "cid": "7127",    "formula": "C11H14O2", "mw": 178.23, "ghs": ["GHS07","GHS08"] },
-      "97-53-0":    { "name": "Eugenol",            "cid": "3314",    "formula": "C10H12O2", "mw": 164.20, "ghs": ["GHS07"] },
-      "103-26-4":   { "name": "Methyl Cinnamate",   "cid": "637520",  "formula": "C10H10O2", "mw": 162.18, "ghs": ["GHS07"] },
-      "87-44-5":    { "name": "β-Caryophyllene",    "cid": "5281515", "formula": "C15H24",   "mw": 204.35, "ghs": ["GHS07","GHS08"] },
-      "4180-23-8":  { "name": "trans-Anethole",     "cid": "637563",  "formula": "C10H12O",  "mw": 148.20, "ghs": ["GHS07"] },
-      "78-70-6":    { "name": "Linalool",           "cid": "6549",    "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
-      "470-82-6":   { "name": "1,8-Cineole",        "cid": "2758",    "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS02"] }
+      "140-67-0": {
+        "name": "Methyl Chavicol",
+        "cid": "8815",
+        "formula": "C10H12O",
+        "mw": 148.2,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "93-15-2": {
+        "name": "Methyl Eugenol",
+        "cid": "7127",
+        "formula": "C11H14O2",
+        "mw": 178.23,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "97-53-0": {
+        "name": "Eugenol",
+        "cid": "3314",
+        "formula": "C10H12O2",
+        "mw": 164.2,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "103-26-4": {
+        "name": "Methyl Cinnamate",
+        "cid": "637520",
+        "formula": "C10H10O2",
+        "mw": 162.18,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "87-44-5": {
+        "name": "β-Caryophyllene",
+        "cid": "5281515",
+        "formula": "C15H24",
+        "mw": 204.35,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "4180-23-8": {
+        "name": "trans-Anethole",
+        "cid": "637563",
+        "formula": "C10H12O",
+        "mw": 148.2,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "78-70-6": {
+        "name": "Linalool",
+        "cid": "6549",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "470-82-6": {
+        "name": "1,8-Cineole",
+        "cid": "2758",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS02"
+        ]
+      }
     },
     "ifra_phenolic": true,
-    "peroxide_required_cas": ["87-44-5"],
-    "sensitizer_required_cas": ["97-53-0"],
+    "peroxide_required_cas": [
+      "87-44-5"
+    ],
+    "sensitizer_required_cas": [
+      "97-53-0"
+    ],
     "biosynthetic_chains": [],
     "trade_name_expectations": {
       "sweet basil": "8015-73-4",
@@ -171,959 +662,3460 @@
       "methyl chavicol": "140-67-0"
     }
   },
-
   "bergamot": {
     "description": "Citrus bergamia — cold-pressed peel oil + furanocoumarin + linalyl/terpinyl ester cluster",
     "expected_entry_count": 13,
-    "oil_cas": ["8007-75-8", "89957-91-5"],
+    "oil_cas": [
+      "8007-75-8",
+      "89957-91-5"
+    ],
     "isolates": {
-      "115-95-7":   { "name": "Linalyl Acetate",    "cid": "8294",    "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS07"] },
-      "115-99-1":   { "name": "Linalyl Formate",    "cid": "61040",   "formula": "C11H18O2", "mw": 182.26, "ghs": [] },
-      "80-26-2":    { "name": "Terpinyl Acetate",   "cid": "111037",  "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS09"] },
-      "144-39-8":   { "name": "Linalyl Propionate", "cid": "61098",   "formula": "C13H22O2", "mw": 210.31, "ghs": ["GHS09"] },
-      "2153-28-8":  { "name": "Terpinyl Butyrate",  "cid": "578423",  "formula": "C14H24O2", "mw": 224.34, "ghs": [] },
-      "484-20-8":   { "name": "Bergapten",          "cid": "2355",    "formula": "C12H8O4",  "mw": 216.19, "ghs": ["GHS06","GHS07","GHS08"] },
-      "106-24-1":   { "name": "Geraniol",           "cid": "637566",  "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
-      "105-87-3":   { "name": "Geranyl Acetate",    "cid": "1549026", "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS07"] },
-      "5989-27-5":  { "name": "d-Limonene",         "cid": "440917",  "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "78-70-6":    { "name": "Linalool",           "cid": "6549",    "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
-      "127-91-3":   { "name": "β-Pinene",           "cid": "14896",   "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] }
+      "115-95-7": {
+        "name": "Linalyl Acetate",
+        "cid": "8294",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "115-99-1": {
+        "name": "Linalyl Formate",
+        "cid": "61040",
+        "formula": "C11H18O2",
+        "mw": 182.26,
+        "ghs": []
+      },
+      "80-26-2": {
+        "name": "Terpinyl Acetate",
+        "cid": "111037",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": [
+          "GHS09"
+        ]
+      },
+      "144-39-8": {
+        "name": "Linalyl Propionate",
+        "cid": "61098",
+        "formula": "C13H22O2",
+        "mw": 210.31,
+        "ghs": [
+          "GHS09"
+        ]
+      },
+      "2153-28-8": {
+        "name": "Terpinyl Butyrate",
+        "cid": "578423",
+        "formula": "C14H24O2",
+        "mw": 224.34,
+        "ghs": []
+      },
+      "484-20-8": {
+        "name": "Bergapten",
+        "cid": "2355",
+        "formula": "C12H8O4",
+        "mw": 216.19,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "106-24-1": {
+        "name": "Geraniol",
+        "cid": "637566",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "105-87-3": {
+        "name": "Geranyl Acetate",
+        "cid": "1549026",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "5989-27-5": {
+        "name": "d-Limonene",
+        "cid": "440917",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "78-70-6": {
+        "name": "Linalool",
+        "cid": "6549",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "127-91-3": {
+        "name": "β-Pinene",
+        "cid": "14896",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["5989-27-5", "127-91-3", "78-70-6"],
-    "sensitizer_required_cas": ["106-24-1"],
-    "phototoxic_required_cas": ["8007-75-8", "484-20-8"],
+    "peroxide_required_cas": [
+      "5989-27-5",
+      "127-91-3",
+      "78-70-6"
+    ],
+    "sensitizer_required_cas": [
+      "106-24-1"
+    ],
+    "phototoxic_required_cas": [
+      "8007-75-8",
+      "484-20-8"
+    ],
     "biosynthetic_chains": [],
     "excluded_cas_expected": {
-      "personal_care": ["484-20-8"],
-      "flavor":        []
+      "personal_care": [
+        "484-20-8"
+      ],
+      "flavor": []
     },
     "trade_name_expectations": {
-      "bergamot":        "8007-75-8",
-      "bergamot fcf":    "89957-91-5",
-      "bergapten":       "484-20-8",
-      "geraniol":        "106-24-1",
+      "bergamot": "8007-75-8",
+      "bergamot fcf": "89957-91-5",
+      "bergapten": "484-20-8",
+      "geraniol": "106-24-1",
       "geranyl acetate": "105-87-3"
     }
   },
-
   "tarragon": {
     "description": "Artemisia dracunculus (French chemotype) — estragole-rich with sabinene + ocimene + phellandrene terpene fingerprint",
     "expected_entry_count": 9,
-    "oil_cas": ["8016-88-4"],
+    "oil_cas": [
+      "8016-88-4"
+    ],
     "isolates": {
-      "140-67-0":   { "name": "Methyl Chavicol",    "cid": "8815",    "formula": "C10H12O", "mw": 148.20, "ghs": ["GHS07","GHS08"] },
-      "4180-23-8":  { "name": "trans-Anethole",     "cid": "637563",  "formula": "C10H12O", "mw": 148.20, "ghs": ["GHS07"] },
-      "3387-41-5":  { "name": "Sabinene",           "cid": "18818",   "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
-      "80-56-8":    { "name": "α-Pinene",           "cid": "6654",    "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "127-91-3":   { "name": "β-Pinene",           "cid": "14896",   "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "3779-61-1":  { "name": "(E)-β-Ocimene",      "cid": "5281553", "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
-      "3338-55-4":  { "name": "(Z)-β-Ocimene",      "cid": "5320250", "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
-      "555-10-2":   { "name": "β-Phellandrene",     "cid": "11142",   "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] }
+      "140-67-0": {
+        "name": "Methyl Chavicol",
+        "cid": "8815",
+        "formula": "C10H12O",
+        "mw": 148.2,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "4180-23-8": {
+        "name": "trans-Anethole",
+        "cid": "637563",
+        "formula": "C10H12O",
+        "mw": 148.2,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "3387-41-5": {
+        "name": "Sabinene",
+        "cid": "18818",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "80-56-8": {
+        "name": "α-Pinene",
+        "cid": "6654",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "127-91-3": {
+        "name": "β-Pinene",
+        "cid": "14896",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "3779-61-1": {
+        "name": "(E)-β-Ocimene",
+        "cid": "5281553",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "3338-55-4": {
+        "name": "(Z)-β-Ocimene",
+        "cid": "5320250",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "555-10-2": {
+        "name": "β-Phellandrene",
+        "cid": "11142",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08"
+        ]
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["3387-41-5", "80-56-8", "127-91-3", "3779-61-1", "3338-55-4", "555-10-2"],
+    "peroxide_required_cas": [
+      "3387-41-5",
+      "80-56-8",
+      "127-91-3",
+      "3779-61-1",
+      "3338-55-4",
+      "555-10-2"
+    ],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [],
     "trade_name_expectations": {
-      "tarragon":           "8016-88-4",
-      "estragon":           "8016-88-4",
-      "(e)-beta-ocimene":   "3779-61-1",
-      "(z)-beta-ocimene":   "3338-55-4",
-      "beta-phellandrene":  "555-10-2"
+      "tarragon": "8016-88-4",
+      "estragon": "8016-88-4",
+      "(e)-beta-ocimene": "3779-61-1",
+      "(z)-beta-ocimene": "3338-55-4",
+      "beta-phellandrene": "555-10-2"
     }
   },
-
   "fennel": {
     "description": "Foeniculum vulgare — anethole + estragole + fenchone cluster; sweet (dulce) and bitter (vulgare) chemotypes",
     "expected_entry_count": 10,
-    "oil_cas": ["8006-84-6", "84625-39-8"],
+    "oil_cas": [
+      "8006-84-6",
+      "84625-39-8"
+    ],
     "isolates": {
-      "4180-23-8":  { "name": "trans-Anethole",     "cid": "637563",  "formula": "C10H12O", "mw": 148.20, "ghs": ["GHS07"] },
-      "1195-79-5":  { "name": "Fenchone",           "cid": "14525",   "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS02"] },
-      "140-67-0":   { "name": "Methyl Chavicol",    "cid": "8815",    "formula": "C10H12O", "mw": 148.20, "ghs": ["GHS07","GHS08"] },
-      "80-56-8":    { "name": "α-Pinene",           "cid": "6654",    "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "5989-27-5":  { "name": "d-Limonene",         "cid": "440917",  "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "555-10-2":   { "name": "β-Phellandrene",     "cid": "11142",   "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
-      "99-83-2":    { "name": "α-Phellandrene",     "cid": "7460",    "formula": "C10H16",  "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
-      "123-11-5":   { "name": "Anisaldehyde",       "cid": "31244",   "formula": "C8H8O2",  "mw": 136.15, "ghs": ["GHS07"] }
+      "4180-23-8": {
+        "name": "trans-Anethole",
+        "cid": "637563",
+        "formula": "C10H12O",
+        "mw": 148.2,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "1195-79-5": {
+        "name": "Fenchone",
+        "cid": "14525",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS02"
+        ]
+      },
+      "140-67-0": {
+        "name": "Methyl Chavicol",
+        "cid": "8815",
+        "formula": "C10H12O",
+        "mw": 148.2,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "80-56-8": {
+        "name": "α-Pinene",
+        "cid": "6654",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "5989-27-5": {
+        "name": "d-Limonene",
+        "cid": "440917",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "555-10-2": {
+        "name": "β-Phellandrene",
+        "cid": "11142",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "99-83-2": {
+        "name": "α-Phellandrene",
+        "cid": "7460",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "123-11-5": {
+        "name": "Anisaldehyde",
+        "cid": "31244",
+        "formula": "C8H8O2",
+        "mw": 136.15,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["80-56-8", "5989-27-5", "555-10-2", "99-83-2"],
+    "peroxide_required_cas": [
+      "80-56-8",
+      "5989-27-5",
+      "555-10-2",
+      "99-83-2"
+    ],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [],
     "trade_name_expectations": {
-      "fennel":              "8006-84-6",
-      "sweet fennel":        "8006-84-6",
-      "bitter fennel":       "84625-39-8",
-      "alpha-phellandrene":  "99-83-2",
-      "anisaldehyde":        "123-11-5"
+      "fennel": "8006-84-6",
+      "sweet fennel": "8006-84-6",
+      "bitter fennel": "84625-39-8",
+      "alpha-phellandrene": "99-83-2",
+      "anisaldehyde": "123-11-5"
     }
   },
-
   "anise": {
     "description": "Anethole-dominated herbal-spicy cluster — Pimpinella anisum (true anise) + Illicium verum (star anise) + cross-tagged anethole materials from fennel / tarragon / basil",
     "expected_entry_count": 11,
-    "oil_cas": ["8007-70-3", "84650-59-9", "8016-88-4", "8006-84-6", "84625-39-8", "8015-73-4"],
+    "oil_cas": [
+      "8007-70-3",
+      "84650-59-9",
+      "8016-88-4",
+      "8006-84-6",
+      "84625-39-8",
+      "8015-73-4"
+    ],
     "isolates": {
-      "4180-23-8":  { "name": "trans-Anethole",  "cid": "637563", "formula": "C10H12O", "mw": 148.20, "ghs": ["GHS07"] },
-      "140-67-0":   { "name": "Methyl Chavicol", "cid": "8815",   "formula": "C10H12O", "mw": 148.20, "ghs": ["GHS07","GHS08"] },
-      "1195-79-5":  { "name": "Fenchone",        "cid": "14525",  "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS02"] },
-      "123-11-5":   { "name": "Anisaldehyde",    "cid": "31244",  "formula": "C8H8O2",  "mw": 136.15, "ghs": ["GHS07"] },
-      "105-13-5":   { "name": "Anisyl Alcohol",  "cid": "7780",   "formula": "C8H10O2", "mw": 138.16, "ghs": ["GHS07"] }
+      "4180-23-8": {
+        "name": "trans-Anethole",
+        "cid": "637563",
+        "formula": "C10H12O",
+        "mw": 148.2,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "140-67-0": {
+        "name": "Methyl Chavicol",
+        "cid": "8815",
+        "formula": "C10H12O",
+        "mw": 148.2,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "1195-79-5": {
+        "name": "Fenchone",
+        "cid": "14525",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS02"
+        ]
+      },
+      "123-11-5": {
+        "name": "Anisaldehyde",
+        "cid": "31244",
+        "formula": "C8H8O2",
+        "mw": 136.15,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "105-13-5": {
+        "name": "Anisyl Alcohol",
+        "cid": "7780",
+        "formula": "C8H10O2",
+        "mw": 138.16,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
-    "sensitizer_required_cas": ["105-13-5"],
+    "sensitizer_required_cas": [
+      "105-13-5"
+    ],
     "biosynthetic_chains": [],
     "trade_name_expectations": {
-      "anise":          "8007-70-3",
-      "star anise":     "84650-59-9",
+      "anise": "8007-70-3",
+      "star anise": "84650-59-9",
       "anisyl alcohol": "105-13-5"
     }
   },
-
   "clove": {
     "description": "Syzygium aromaticum — eugenol-dominated phenolic sensitiser cluster; bud + leaf oils plus isoeugenol / eugenyl acetate derivatives",
     "expected_entry_count": 10,
-    "oil_cas": ["8000-34-8", "8015-97-2", "84775-70-2", "84775-72-4"],
+    "oil_cas": [
+      "8000-34-8",
+      "8015-97-2",
+      "84775-70-2",
+      "84775-72-4"
+    ],
     "isolates": {
-      "97-53-0":  { "name": "Eugenol",          "cid": "3314",   "formula": "C10H12O2", "mw": 164.20, "ghs": ["GHS07"] },
-      "93-15-2":  { "name": "Methyl Eugenol",   "cid": "7127",   "formula": "C11H14O2", "mw": 178.23, "ghs": ["GHS07","GHS08"] },
-      "97-54-1":  { "name": "Isoeugenol",       "cid": "853433", "formula": "C10H12O2", "mw": 164.20, "ghs": ["GHS07"] },
-      "93-28-7":  { "name": "Eugenyl Acetate",  "cid": "7136",   "formula": "C12H14O3", "mw": 206.24, "ghs": ["GHS07"] },
-      "87-44-5":  { "name": "β-Caryophyllene",  "cid": "5281515","formula": "C15H24",   "mw": 204.35, "ghs": ["GHS07","GHS08"] }
+      "97-53-0": {
+        "name": "Eugenol",
+        "cid": "3314",
+        "formula": "C10H12O2",
+        "mw": 164.2,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "93-15-2": {
+        "name": "Methyl Eugenol",
+        "cid": "7127",
+        "formula": "C11H14O2",
+        "mw": 178.23,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "97-54-1": {
+        "name": "Isoeugenol",
+        "cid": "853433",
+        "formula": "C10H12O2",
+        "mw": 164.2,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "93-28-7": {
+        "name": "Eugenyl Acetate",
+        "cid": "7136",
+        "formula": "C12H14O3",
+        "mw": 206.24,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "87-44-5": {
+        "name": "β-Caryophyllene",
+        "cid": "5281515",
+        "formula": "C15H24",
+        "mw": 204.35,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      }
     },
     "ifra_phenolic": true,
-    "peroxide_required_cas": ["87-44-5"],
-    "sensitizer_required_cas": ["97-53-0", "97-54-1"],
+    "peroxide_required_cas": [
+      "87-44-5"
+    ],
+    "sensitizer_required_cas": [
+      "97-53-0",
+      "97-54-1"
+    ],
     "biosynthetic_chains": [],
     "trade_name_expectations": {
-      "clove":           "8000-34-8",
-      "clove leaf":      "8015-97-2",
-      "isoeugenol":      "97-54-1",
+      "clove": "8000-34-8",
+      "clove leaf": "8015-97-2",
+      "isoeugenol": "97-54-1",
       "eugenyl acetate": "93-28-7"
     }
   },
-
   "rose": {
     "description": "Rosa damascena + Rosa centifolia — citronellol / geraniol / PEA / damascenone floral cluster; opens the Floral family as first-class primary home",
     "expected_entry_count": 19,
-    "oil_cas": ["8007-01-0", "84604-12-6", "90106-38-0", "8006-78-8", "8015-77-8"],
+    "oil_cas": [
+      "8007-01-0",
+      "84604-12-6",
+      "90106-38-0",
+      "8006-78-8",
+      "8015-77-8"
+    ],
     "isolates": {
-      "106-22-9":   { "name": "Citronellol",           "cid": "8842",    "formula": "C10H20O",  "mw": 156.27, "ghs": ["GHS07"] },
-      "106-24-1":   { "name": "Geraniol",              "cid": "637566",  "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
-      "106-25-2":   { "name": "Nerol",                 "cid": "643820",  "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
-      "105-87-3":   { "name": "Geranyl Acetate",       "cid": "1549026", "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS07"] },
-      "60-12-8":    { "name": "Phenylethyl Alcohol",   "cid": "6054",    "formula": "C8H10O",   "mw": 122.17, "ghs": ["GHS07"] },
-      "23726-93-4": { "name": "β-Damascenone",         "cid": "5366074", "formula": "C13H18O",  "mw": 190.28, "ghs": ["GHS07"] },
-      "78-70-6":    { "name": "Linalool",              "cid": "6549",    "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
-      "126-91-0":   { "name": "(R)-(−)-Linalool",      "cid": "443158",  "formula": "C10H18O",  "mw": 154.25, "ghs": ["GHS07"] },
-      "115-99-1":   { "name": "Linalyl Formate",       "cid": "61040",   "formula": "C11H18O2", "mw": 182.26, "ghs": [] }
+      "106-22-9": {
+        "name": "Citronellol",
+        "cid": "8842",
+        "formula": "C10H20O",
+        "mw": 156.27,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "106-24-1": {
+        "name": "Geraniol",
+        "cid": "637566",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "106-25-2": {
+        "name": "Nerol",
+        "cid": "643820",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "105-87-3": {
+        "name": "Geranyl Acetate",
+        "cid": "1549026",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "60-12-8": {
+        "name": "Phenylethyl Alcohol",
+        "cid": "6054",
+        "formula": "C8H10O",
+        "mw": 122.17,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "23726-93-4": {
+        "name": "β-Damascenone",
+        "cid": "5366074",
+        "formula": "C13H18O",
+        "mw": 190.28,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "78-70-6": {
+        "name": "Linalool",
+        "cid": "6549",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "126-91-0": {
+        "name": "(R)-(−)-Linalool",
+        "cid": "443158",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "115-99-1": {
+        "name": "Linalyl Formate",
+        "cid": "61040",
+        "formula": "C11H18O2",
+        "mw": 182.26,
+        "ghs": []
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["78-70-6", "126-91-0", "106-22-9", "106-25-2", "106-24-1"],
-    "sensitizer_required_cas": ["106-24-1", "23726-93-4"],
+    "peroxide_required_cas": [
+      "78-70-6",
+      "126-91-0",
+      "106-22-9",
+      "106-25-2",
+      "106-24-1"
+    ],
+    "sensitizer_required_cas": [
+      "106-24-1",
+      "23726-93-4"
+    ],
     "biosynthetic_chains": [],
     "trade_name_expectations": {
-      "rose":                "8007-01-0",
-      "rose absolute":       "84604-12-6",
-      "rose centifolia":     "90106-38-0",
-      "citronellol":         "106-22-9",
-      "nerol":               "106-25-2",
+      "rose": "8007-01-0",
+      "rose absolute": "84604-12-6",
+      "rose centifolia": "90106-38-0",
+      "citronellol": "106-22-9",
+      "nerol": "106-25-2",
       "phenylethyl alcohol": "60-12-8",
-      "damascenone":         "23726-93-4"
+      "damascenone": "23726-93-4"
     }
   },
-
   "pepper": {
     "description": "Piper nigrum (black pepper) + Schinus molle (pink pepper) — fresh-spicy cluster anchored by β-caryophyllene + α/β-phellandrene + sabinene",
     "expected_entry_count": 10,
-    "oil_cas": ["8006-82-4", "90082-88-7", "8022-56-8"],
+    "oil_cas": [
+      "8006-82-4",
+      "90082-88-7",
+      "8022-56-8"
+    ],
     "isolates": {
-      "87-44-5":   { "name": "β-Caryophyllene", "cid": "5281515","formula": "C15H24",   "mw": 204.35, "ghs": ["GHS07","GHS08"] },
-      "3387-41-5": { "name": "Sabinene",        "cid": "18818",  "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
-      "99-83-2":   { "name": "α-Phellandrene",  "cid": "7460",   "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
-      "555-10-2":  { "name": "β-Phellandrene",  "cid": "11142",  "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08"] },
-      "80-56-8":   { "name": "α-Pinene",        "cid": "6654",   "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "5989-27-5": { "name": "d-Limonene",      "cid": "440917", "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "94-62-2":   { "name": "Piperine",        "cid": "638024", "formula": "C17H19NO3","mw": 285.34, "ghs": ["GHS07"] }
+      "87-44-5": {
+        "name": "β-Caryophyllene",
+        "cid": "5281515",
+        "formula": "C15H24",
+        "mw": 204.35,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "3387-41-5": {
+        "name": "Sabinene",
+        "cid": "18818",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "99-83-2": {
+        "name": "α-Phellandrene",
+        "cid": "7460",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "555-10-2": {
+        "name": "β-Phellandrene",
+        "cid": "11142",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "80-56-8": {
+        "name": "α-Pinene",
+        "cid": "6654",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "5989-27-5": {
+        "name": "d-Limonene",
+        "cid": "440917",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "94-62-2": {
+        "name": "Piperine",
+        "cid": "638024",
+        "formula": "C17H19NO3",
+        "mw": 285.34,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["87-44-5", "3387-41-5", "99-83-2", "555-10-2", "80-56-8", "5989-27-5"],
+    "peroxide_required_cas": [
+      "87-44-5",
+      "3387-41-5",
+      "99-83-2",
+      "555-10-2",
+      "80-56-8",
+      "5989-27-5"
+    ],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [],
     "trade_name_expectations": {
       "black pepper": "8006-82-4",
-      "pink pepper":  "90082-88-7",
-      "piperine":     "94-62-2"
+      "pink pepper": "90082-88-7",
+      "piperine": "94-62-2"
     }
   },
-
   "tobacco": {
     "description": "Nicotiana tabacum absolute + coumarin/tonka anchor — dry wood Fougère base + hay/liatrix clover-cross. Opens the smoky / balsamic cross-family cluster (+ styrallyl acetate sweet-tobacco modifier)",
     "expected_entry_count": 13,
-    "oil_cas": ["8037-19-2", "8046-22-8", "97722-12-8", "8016-63-5", "84775-83-7", "84775-71-3"],
+    "oil_cas": [
+      "8037-19-2",
+      "8046-22-8",
+      "97722-12-8",
+      "8016-63-5",
+      "84775-83-7",
+      "84775-71-3"
+    ],
     "isolates": {
-      "91-64-5":    { "name": "Coumarin",       "cid": "323",     "formula": "C9H6O2",  "mw": 146.14, "ghs": ["GHS07"] },
-      "515-03-7":   { "name": "Sclareol",       "cid": "163263",  "formula": "C20H36O2","mw": 308.50, "ghs": [] },
-      "23726-93-4": { "name": "β-Damascenone",  "cid": "5366074", "formula": "C13H18O", "mw": 190.28, "ghs": ["GHS07"] }
+      "91-64-5": {
+        "name": "Coumarin",
+        "cid": "323",
+        "formula": "C9H6O2",
+        "mw": 146.14,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "515-03-7": {
+        "name": "Sclareol",
+        "cid": "163263",
+        "formula": "C20H36O2",
+        "mw": 308.5,
+        "ghs": []
+      },
+      "23726-93-4": {
+        "name": "β-Damascenone",
+        "cid": "5366074",
+        "formula": "C13H18O",
+        "mw": 190.28,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
-    "sensitizer_required_cas": ["91-64-5"],
+    "sensitizer_required_cas": [
+      "91-64-5"
+    ],
     "biosynthetic_chains": [],
     "trade_name_expectations": {
-      "tobacco":   "8037-19-2",
-      "coumarin":  "91-64-5",
-      "tonka":     "8046-22-8"
+      "tobacco": "8037-19-2",
+      "coumarin": "91-64-5",
+      "tonka": "8046-22-8"
     }
   },
-
   "jasmine": {
     "description": "Jasminum grandiflorum + J. sambac — indolic floral cluster with benzyl acetate / indole / methyl jasmonate fingerprint (expanded via ylang + tuberose cluster cross-tags)",
     "expected_entry_count": 16,
-    "oil_cas": ["8022-96-6", "91770-14-8"],
+    "oil_cas": [
+      "8022-96-6",
+      "91770-14-8"
+    ],
     "isolates": {
-      "140-11-4":   { "name": "Benzyl Acetate",   "cid": "8785",    "formula": "C9H10O2",  "mw": 150.17, "ghs": ["GHS07"] },
-      "120-72-9":   { "name": "Indole",           "cid": "798",     "formula": "C8H7N",    "mw": 117.15, "ghs": ["GHS06","GHS09"] },
-      "488-10-8":   { "name": "cis-Jasmone",      "cid": "1549018", "formula": "C11H16O",  "mw": 164.24, "ghs": ["GHS07"] },
-      "1211-29-6":  { "name": "Methyl Jasmonate", "cid": "5281929", "formula": "C13H20O3", "mw": 224.30, "ghs": ["GHS07"] },
-      "24851-98-7": { "name": "Hedione",          "cid": "31252",   "formula": "C13H22O3", "mw": 226.32, "ghs": [] }
+      "140-11-4": {
+        "name": "Benzyl Acetate",
+        "cid": "8785",
+        "formula": "C9H10O2",
+        "mw": 150.17,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "120-72-9": {
+        "name": "Indole",
+        "cid": "798",
+        "formula": "C8H7N",
+        "mw": 117.15,
+        "ghs": [
+          "GHS06",
+          "GHS09"
+        ]
+      },
+      "488-10-8": {
+        "name": "cis-Jasmone",
+        "cid": "1549018",
+        "formula": "C11H16O",
+        "mw": 164.24,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "1211-29-6": {
+        "name": "Methyl Jasmonate",
+        "cid": "5281929",
+        "formula": "C13H20O3",
+        "mw": 224.3,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "24851-98-7": {
+        "name": "Hedione",
+        "cid": "31252",
+        "formula": "C13H22O3",
+        "mw": 226.32,
+        "ghs": []
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
-    "sensitizer_required_cas": ["120-72-9"],
+    "sensitizer_required_cas": [
+      "120-72-9"
+    ],
     "biosynthetic_chains": []
   },
-
   "nutmeg": {
     "description": "Myristica fragrans (nutmeg seed + mace aril) + myristicin + elemicin phenylpropanoid cluster",
     "expected_entry_count": 4,
-    "oil_cas": ["8008-45-5", "8007-12-3"],
+    "oil_cas": [
+      "8008-45-5",
+      "8007-12-3"
+    ],
     "isolates": {
-      "607-91-0": { "name": "Myristicin", "cid": "4276",  "formula": "C11H12O3", "mw": 192.21, "ghs": ["GHS07","GHS08"] },
-      "487-11-6": { "name": "Elemicin",   "cid": "10248", "formula": "C12H16O3", "mw": 208.25, "ghs": ["GHS07","GHS08"] }
+      "607-91-0": {
+        "name": "Myristicin",
+        "cid": "4276",
+        "formula": "C11H12O3",
+        "mw": 192.21,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "487-11-6": {
+        "name": "Elemicin",
+        "cid": "10248",
+        "formula": "C12H16O3",
+        "mw": 208.25,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "neroli": {
     "description": "Citrus aurantium var. amara — Neroli Oil (distilled flower) + Petitgrain (leaf) + Orange Flower Absolute + Methyl Anthranilate + Nerolidol. Bridge between citrus and floral families",
     "expected_entry_count": 5,
-    "oil_cas": ["8016-38-4", "8014-17-3", "8030-28-2"],
+    "oil_cas": [
+      "8016-38-4",
+      "8014-17-3",
+      "8030-28-2"
+    ],
     "isolates": {
-      "134-20-3":  { "name": "Methyl Anthranilate", "cid": "8635",    "formula": "C8H9NO2", "mw": 151.16, "ghs": ["GHS07"] },
-      "7212-44-4": { "name": "Nerolidol",           "cid": "5284507", "formula": "C15H26O", "mw": 222.37, "ghs": ["GHS07"] }
+      "134-20-3": {
+        "name": "Methyl Anthranilate",
+        "cid": "8635",
+        "formula": "C8H9NO2",
+        "mw": 151.16,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "7212-44-4": {
+        "name": "Nerolidol",
+        "cid": "5284507",
+        "formula": "C15H26O",
+        "mw": 222.37,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["7212-44-4"],
+    "peroxide_required_cas": [
+      "7212-44-4"
+    ],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "oakmoss": {
     "description": "Evernia prunastri + Pseudevernia furfuracea + Evernyl synthetic. Chypre mossy-woods foundation; atranol/chloroatranol restricted post-SCCNFP 2000",
     "expected_entry_count": 3,
-    "oil_cas": ["9000-50-4", "90028-67-4"],
+    "oil_cas": [
+      "9000-50-4",
+      "90028-67-4"
+    ],
     "isolates": {
-      "4707-47-5": { "name": "Evernyl", "cid": "79096", "formula": "C10H12O4", "mw": 196.20, "ghs": [] }
+      "4707-47-5": {
+        "name": "Evernyl",
+        "cid": "79096",
+        "formula": "C10H12O4",
+        "mw": 196.2,
+        "ghs": []
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "cedar": {
     "description": "Juniperus virginiana + Cedrus atlantica + Cedrol / Cedryl Acetate / Iso E Super woody-cedar cluster",
     "expected_entry_count": 5,
-    "oil_cas": ["8000-27-9", "8023-85-6", "77-54-3", "54464-57-2"],
+    "oil_cas": [
+      "8000-27-9",
+      "8023-85-6",
+      "77-54-3",
+      "54464-57-2"
+    ],
     "isolates": {
-      "77-53-2": { "name": "Cedrol", "cid": "65355", "formula": "C15H26O", "mw": 222.37, "ghs": [] }
+      "77-53-2": {
+        "name": "Cedrol",
+        "cid": "65355",
+        "formula": "C15H26O",
+        "mw": 222.37,
+        "ghs": []
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "vetiver": {
     "description": "Chrysopogon zizanioides (Haitian / Javanese / Bourbon) + sesquiterpene isolates",
     "expected_entry_count": 4,
-    "oil_cas": ["8016-96-4", "58297-61-9", "15764-04-2", "117-98-6"],
+    "oil_cas": [
+      "8016-96-4",
+      "58297-61-9",
+      "15764-04-2",
+      "117-98-6"
+    ],
     "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "ylang": {
     "description": "Cananga odorata — p-cresyl methyl ether / methyl benzoate / benzyl salicylate cluster",
     "expected_entry_count": 7,
-    "oil_cas": ["8006-81-3"],
+    "oil_cas": [
+      "8006-81-3"
+    ],
     "isolates": {
-      "1515-95-3": { "name": "p-Cresyl Methyl Ether", "cid": "7731",   "formula": "C8H10O",   "mw": 122.17, "ghs": ["GHS07"] },
-      "93-58-3":   { "name": "Methyl Benzoate",       "cid": "7150",   "formula": "C8H8O2",   "mw": 136.15, "ghs": ["GHS07"] },
-      "118-58-1":  { "name": "Benzyl Salicylate",     "cid": "8361",   "formula": "C14H12O3", "mw": 228.24, "ghs": ["GHS07"] },
-      "4602-84-0": { "name": "Farnesol",              "cid": "445070", "formula": "C15H26O",  "mw": 222.37, "ghs": ["GHS07"] }
+      "1515-95-3": {
+        "name": "p-Cresyl Methyl Ether",
+        "cid": "7731",
+        "formula": "C8H10O",
+        "mw": 122.17,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "93-58-3": {
+        "name": "Methyl Benzoate",
+        "cid": "7150",
+        "formula": "C8H8O2",
+        "mw": 136.15,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "118-58-1": {
+        "name": "Benzyl Salicylate",
+        "cid": "8361",
+        "formula": "C14H12O3",
+        "mw": 228.24,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "4602-84-0": {
+        "name": "Farnesol",
+        "cid": "445070",
+        "formula": "C15H26O",
+        "mw": 222.37,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["4602-84-0"],
-    "sensitizer_required_cas": ["118-58-1", "4602-84-0"],
+    "peroxide_required_cas": [
+      "4602-84-0"
+    ],
+    "sensitizer_required_cas": [
+      "118-58-1",
+      "4602-84-0"
+    ],
     "biosynthetic_chains": []
   },
-
   "ginger": {
     "description": "Zingiber officinale — zingiberene / sesquiphellandrene / ar-curcumene sesquiterpene cluster + citral top",
     "expected_entry_count": 5,
-    "oil_cas": ["8007-08-7"],
+    "oil_cas": [
+      "8007-08-7"
+    ],
     "isolates": {
-      "495-60-3":   { "name": "alpha-Zingiberene",       "cid": "92776",    "formula": "C15H24", "mw": 204.35, "ghs": ["GHS07"] },
-      "495-62-5":   { "name": "beta-Sesquiphellandrene", "cid": "12315762", "formula": "C15H24", "mw": 204.35, "ghs": ["GHS07"] },
-      "17699-05-7": { "name": "ar-Curcumene",            "cid": "92139",    "formula": "C15H22", "mw": 202.34, "ghs": ["GHS07"] },
-      "5392-40-5":  { "name": "Citral",                  "cid": "638011",   "formula": "C10H16O","mw": 152.23, "ghs": ["GHS07"] }
+      "495-60-3": {
+        "name": "alpha-Zingiberene",
+        "cid": "92776",
+        "formula": "C15H24",
+        "mw": 204.35,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "495-62-5": {
+        "name": "beta-Sesquiphellandrene",
+        "cid": "12315762",
+        "formula": "C15H24",
+        "mw": 204.35,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "17699-05-7": {
+        "name": "ar-Curcumene",
+        "cid": "92139",
+        "formula": "C15H22",
+        "mw": 202.34,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "5392-40-5": {
+        "name": "Citral",
+        "cid": "638011",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["495-60-3", "495-62-5", "5392-40-5"],
-    "sensitizer_required_cas": ["5392-40-5"],
+    "peroxide_required_cas": [
+      "495-60-3",
+      "495-62-5",
+      "5392-40-5"
+    ],
+    "sensitizer_required_cas": [
+      "5392-40-5"
+    ],
     "biosynthetic_chains": []
   },
-
   "cardamom": {
     "description": "Elettaria cardamomum — α-terpinyl acetate + 1,8-cineole cluster (shares molecules with pine / bergamot / pepper facets)",
     "expected_entry_count": 4,
-    "oil_cas": ["8000-66-6"],
+    "oil_cas": [
+      "8000-66-6"
+    ],
     "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "pine": {
     "description": "Pinus sylvestris + Abies sibirica coniferous cluster — α-pinene/β-pinene/bornyl acetate dominated",
     "expected_entry_count": 20,
-    "oil_cas": ["8002-09-3", "8021-29-2"],
+    "oil_cas": [
+      "8002-09-3",
+      "8021-29-2"
+    ],
     "isolates": {
-      "13466-78-9": { "name": "delta-3-Carene",    "cid": "440062",  "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS07","GHS08","GHS09"] },
-      "475-20-7":   { "name": "Longifolene",       "cid": "442348",  "formula": "C15H24",   "mw": 204.35, "ghs": ["GHS07"] },
-      "125-12-2":   { "name": "Isobornyl Acetate", "cid": "1550884", "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS07"] }
+      "13466-78-9": {
+        "name": "delta-3-Carene",
+        "cid": "440062",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "475-20-7": {
+        "name": "Longifolene",
+        "cid": "442348",
+        "formula": "C15H24",
+        "mw": 204.35,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "125-12-2": {
+        "name": "Isobornyl Acetate",
+        "cid": "1550884",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["13466-78-9"],
+    "peroxide_required_cas": [
+      "13466-78-9"
+    ],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "labdanum": {
     "description": "Cistus ladanifer — labdane diterpene amber base",
     "expected_entry_count": 1,
-    "oil_cas": ["8016-26-0"],
+    "oil_cas": [
+      "8016-26-0"
+    ],
     "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "frankincense": {
     "description": "Boswellia carterii / sacra — olibanum fresh-resinous",
     "expected_entry_count": 1,
-    "oil_cas": ["8016-36-2"],
+    "oil_cas": [
+      "8016-36-2"
+    ],
     "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "myrrh": {
     "description": "Commiphora myrrha — furanosesquiterpene bitter-balsamic",
     "expected_entry_count": 1,
-    "oil_cas": ["8016-37-3"],
+    "oil_cas": [
+      "8016-37-3"
+    ],
     "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "amber": {
     "description": "Amber base accord — labdanum + benzoin + ambroxide trio + sclareolide/manool clary-sage diterpene precursors + davana oil/davanone fruity-amber cross",
     "expected_entry_count": 7,
-    "oil_cas": ["8016-26-0", "9000-72-0"],
+    "oil_cas": [
+      "8016-26-0",
+      "9000-72-0"
+    ],
     "isolates": {
-      "6790-58-5": { "name": "Ambroxide",   "cid": "443061", "formula": "C16H28O",  "mw": 236.39, "ghs": [] },
-      "564-20-5":  { "name": "Sclareolide", "cid": "929262", "formula": "C16H26O2", "mw": 250.38, "ghs": [] },
-      "596-85-0":  { "name": "Manool",      "cid": "519759", "formula": "C20H34O",  "mw": 290.49, "ghs": [] }
+      "6790-58-5": {
+        "name": "Ambroxide",
+        "cid": "443061",
+        "formula": "C16H28O",
+        "mw": 236.39,
+        "ghs": []
+      },
+      "564-20-5": {
+        "name": "Sclareolide",
+        "cid": "929262",
+        "formula": "C16H26O2",
+        "mw": 250.38,
+        "ghs": []
+      },
+      "596-85-0": {
+        "name": "Manool",
+        "cid": "519759",
+        "formula": "C20H34O",
+        "mw": 290.49,
+        "ghs": []
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
-    "sensitizer_required_cas": ["9000-72-0"],
+    "sensitizer_required_cas": [
+      "9000-72-0"
+    ],
     "biosynthetic_chains": []
   },
-
   "tuberose": {
     "description": "Polianthes tuberosa + lactonic peach / hexyl salicylate / methyl heptine carbonate white-floral cluster",
     "expected_entry_count": 5,
-    "oil_cas": ["8024-05-3"],
+    "oil_cas": [
+      "8024-05-3"
+    ],
     "isolates": {
-      "111-12-6":  { "name": "Methyl Heptine Carbonate", "cid": "61199", "formula": "C9H14O2",  "mw": 154.21, "ghs": ["GHS07"] },
-      "706-14-9":  { "name": "gamma-Decalactone",        "cid": "12813", "formula": "C10H18O2", "mw": 170.25, "ghs": [] },
-      "104-67-6":  { "name": "gamma-Undecalactone",      "cid": "7714",  "formula": "C11H20O2", "mw": 184.28, "ghs": [] },
-      "6259-76-3": { "name": "Hexyl Salicylate",         "cid": "20567", "formula": "C13H18O3", "mw": 222.28, "ghs": ["GHS07"] }
+      "111-12-6": {
+        "name": "Methyl Heptine Carbonate",
+        "cid": "61199",
+        "formula": "C9H14O2",
+        "mw": 154.21,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "706-14-9": {
+        "name": "gamma-Decalactone",
+        "cid": "12813",
+        "formula": "C10H18O2",
+        "mw": 170.25,
+        "ghs": []
+      },
+      "104-67-6": {
+        "name": "gamma-Undecalactone",
+        "cid": "7714",
+        "formula": "C11H20O2",
+        "mw": 184.28,
+        "ghs": []
+      },
+      "6259-76-3": {
+        "name": "Hexyl Salicylate",
+        "cid": "20567",
+        "formula": "C13H18O3",
+        "mw": 222.28,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
-    "sensitizer_required_cas": ["111-12-6", "6259-76-3"],
+    "sensitizer_required_cas": [
+      "111-12-6",
+      "6259-76-3"
+    ],
     "biosynthetic_chains": []
   },
-
   "chamomile": {
     "description": "4-species coverage: Chamaemelum nobile (Roman) + Matricaria recutita (German) + Ormenis multicaulis (Wild Moroccan) + Eriocephalus punctulatus (Cape) — angelate ester suite + α-bisabolol + chamazulene + bisabolol oxides A/B + Artemisia arborescens (blue chemotype cross-tag)",
     "expected_entry_count": 12,
-    "oil_cas": ["8015-92-7", "8002-66-2", "8023-93-0", "91745-67-2"],
+    "oil_cas": [
+      "8015-92-7",
+      "8002-66-2",
+      "8023-93-0",
+      "91745-67-2"
+    ],
     "isolates": {
-      "23089-26-1": { "name": "alpha-Bisabolol",         "cid": "442343",   "formula": "C15H26O",  "mw": 222.37, "ghs": [] },
-      "7779-81-9":  { "name": "Isobutyl Angelate",       "cid": "5364437",  "formula": "C9H16O2",  "mw": 156.22, "ghs": ["GHS07"] },
-      "2835-39-4":  { "name": "Isoamyl Angelate",        "cid": "5366134",  "formula": "C10H18O2", "mw": 170.25, "ghs": ["GHS07"] },
-      "7785-66-2":  { "name": "2-Methylbutyl Angelate",  "cid": "5365810",  "formula": "C10H18O2", "mw": 170.25, "ghs": ["GHS07"] },
-      "529-05-5":   { "name": "Chamazulene",             "cid": "10719",    "formula": "C14H16",   "mw": 184.28, "ghs": ["GHS07"] },
-      "22567-36-8": { "name": "Bisabolol Oxide A",       "cid": "91749",    "formula": "C15H26O2", "mw": 238.37, "ghs": [] },
-      "26184-88-3": { "name": "Bisabolol Oxide B",       "cid": "12302243", "formula": "C15H26O2", "mw": 238.37, "ghs": [] }
+      "23089-26-1": {
+        "name": "alpha-Bisabolol",
+        "cid": "442343",
+        "formula": "C15H26O",
+        "mw": 222.37,
+        "ghs": []
+      },
+      "7779-81-9": {
+        "name": "Isobutyl Angelate",
+        "cid": "5364437",
+        "formula": "C9H16O2",
+        "mw": 156.22,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "2835-39-4": {
+        "name": "Isoamyl Angelate",
+        "cid": "5366134",
+        "formula": "C10H18O2",
+        "mw": 170.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "7785-66-2": {
+        "name": "2-Methylbutyl Angelate",
+        "cid": "5365810",
+        "formula": "C10H18O2",
+        "mw": 170.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "529-05-5": {
+        "name": "Chamazulene",
+        "cid": "10719",
+        "formula": "C14H16",
+        "mw": 184.28,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "22567-36-8": {
+        "name": "Bisabolol Oxide A",
+        "cid": "91749",
+        "formula": "C15H26O2",
+        "mw": 238.37,
+        "ghs": []
+      },
+      "26184-88-3": {
+        "name": "Bisabolol Oxide B",
+        "cid": "12302243",
+        "formula": "C15H26O2",
+        "mw": 238.37,
+        "ghs": []
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "artemisia": {
     "description": "Artemisia spp. — wormwood (A. absinthium) + mugwort (A. vulgaris) + davana (A. pallens) + herba-alba + arborescens + sweet wormwood (A. annua); thujone/davanone/artemisia-ketone/sabinyl-acetate cluster; tarragon (A. dracunculus) is its own facet",
     "expected_entry_count": 13,
-    "oil_cas": ["8008-93-3", "84775-22-4", "8016-03-3", "84775-23-5", "84775-12-2", "7392-19-0", "82658-69-1", "1365-84-4"],
+    "oil_cas": [
+      "8008-93-3",
+      "84775-22-4",
+      "8016-03-3",
+      "84775-23-5",
+      "84775-12-2",
+      "7392-19-0",
+      "82658-69-1",
+      "1365-84-4"
+    ],
     "isolates": {
-      "546-49-6":   { "name": "Artemisia Ketone", "cid": "5374533", "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS07"] },
-      "546-80-5":   { "name": "alpha-Thujone",    "cid": "261491",  "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS06","GHS07"] },
-      "471-15-8":   { "name": "beta-Thujone",     "cid": "91456",   "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS07"] },
-      "529-05-5":   { "name": "Chamazulene",      "cid": "10719",   "formula": "C14H16",  "mw": 184.28, "ghs": ["GHS07"] }
+      "546-49-6": {
+        "name": "Artemisia Ketone",
+        "cid": "5374533",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "546-80-5": {
+        "name": "alpha-Thujone",
+        "cid": "261491",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS06",
+          "GHS07"
+        ]
+      },
+      "471-15-8": {
+        "name": "beta-Thujone",
+        "cid": "91456",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "529-05-5": {
+        "name": "Chamazulene",
+        "cid": "10719",
+        "formula": "C14H16",
+        "mw": 184.28,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [],
     "excluded_cas_expected": {
-      "personal_care": ["8008-93-3", "84775-22-4", "84775-23-5", "84775-12-2", "546-80-5", "471-15-8"],
-      "flavor":        ["546-80-5"]
+      "personal_care": [
+        "8008-93-3",
+        "84775-22-4",
+        "84775-23-5",
+        "84775-12-2",
+        "546-80-5",
+        "471-15-8"
+      ],
+      "flavor": [
+        "546-80-5"
+      ]
     }
   },
-
   "celery": {
     "description": "Apium graveolens — phthalide-driven vegetal-herbal cluster (3-butylphthalide + ligustilide + butylidene phthalide); d-limonene (~60%) cross-tag + lovage cross-tags",
     "expected_entry_count": 7,
-    "oil_cas": ["8015-90-5", "4431-01-0", "17369-59-4"],
+    "oil_cas": [
+      "8015-90-5",
+      "4431-01-0",
+      "17369-59-4"
+    ],
     "isolates": {
-      "6066-49-5":  { "name": "3-Butylphthalide", "cid": "61042",  "formula": "C12H14O2", "mw": 190.24, "ghs": ["GHS07"] },
-      "5989-27-5":  { "name": "d-Limonene",       "cid": "440917", "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] }
+      "6066-49-5": {
+        "name": "3-Butylphthalide",
+        "cid": "61042",
+        "formula": "C12H14O2",
+        "mw": 190.24,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "5989-27-5": {
+        "name": "d-Limonene",
+        "cid": "440917",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["5989-27-5"],
+    "peroxide_required_cas": [
+      "5989-27-5"
+    ],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "dill": {
     "description": "Anethum graveolens — Apiaceae 2-chemotype cluster (seed = (S)-(+)-carvone + dill apiole spicy; weed = α-phellandrene + dill ether green); Carum carvi (caraway) cross-genus S-carvone sibling; Mediterranean culinary aromatic; cross-Apiaceae with parsley apiole/myristicin",
     "expected_entry_count": 15,
-    "oil_cas": ["8006-75-5", "90028-03-8", "484-31-1", "74410-10-9", "8000-42-8"],
+    "oil_cas": [
+      "8006-75-5",
+      "90028-03-8",
+      "484-31-1",
+      "74410-10-9",
+      "8000-42-8"
+    ],
     "isolates": {
-      "2244-16-8":  { "name": "(S)-(+)-Carvone", "cid": "16724",  "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS07"] }
+      "2244-16-8": {
+        "name": "(S)-(+)-Carvone",
+        "cid": "16724",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "carnation": {
     "description": "Dianthus caryophyllus — eugenol-driven floral-spice classic (Caron Bellodgia signature); natural absolute + methyl isoeugenol synthetic + cross-tags to eugenol/isoeugenol/eugenyl acetate/methyl eugenol/β-caryophyllene/benzyl benzoate",
     "expected_entry_count": 8,
-    "oil_cas": ["8000-67-7"],
+    "oil_cas": [
+      "8000-67-7"
+    ],
     "isolates": {
-      "93-16-3":  { "name": "Methyl Isoeugenol", "cid": "7128", "formula": "C11H14O2", "mw": 178.23, "ghs": ["GHS07","GHS08"] }
+      "93-16-3": {
+        "name": "Methyl Isoeugenol",
+        "cid": "7128",
+        "formula": "C11H14O2",
+        "mw": 178.23,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
-    "sensitizer_required_cas": ["97-53-0", "97-54-1"],
+    "sensitizer_required_cas": [
+      "97-53-0",
+      "97-54-1"
+    ],
     "biosynthetic_chains": []
   },
-
   "clover": {
     "description": "Melilotus officinalis (sweet clover) + Hierochloe odorata (sweet grass) + Trilisa odoratissima (deer's tongue) — coumarin-driven hay-meadow cluster; foundational classical perfumery base (Caron Pour Un Homme, Guerlain Mouchoir de Monsieur, YSL Pour Homme); cross-tags coumarin + tonka bean absolute + dihydrocoumarin synthetic",
     "expected_entry_count": 6,
-    "oil_cas": ["84775-99-5", "91722-10-0", "84649-77-4", "8046-22-8"],
+    "oil_cas": [
+      "84775-99-5",
+      "91722-10-0",
+      "84649-77-4",
+      "8046-22-8"
+    ],
     "isolates": {
-      "91-64-5":   { "name": "Coumarin",        "cid": "323",  "formula": "C9H6O2",  "mw": 146.14, "ghs": ["GHS07"] },
-      "119-84-6":  { "name": "Dihydrocoumarin", "cid": "7152", "formula": "C9H8O2",  "mw": 148.16, "ghs": ["GHS07"] }
+      "91-64-5": {
+        "name": "Coumarin",
+        "cid": "323",
+        "formula": "C9H6O2",
+        "mw": 146.14,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "119-84-6": {
+        "name": "Dihydrocoumarin",
+        "cid": "7152",
+        "formula": "C9H8O2",
+        "mw": 148.16,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [
-      { "precursor": "91-64-5", "product": "119-84-6", "reaction": "catalytic hydrogenation (3,4-double bond reduction)" }
+      {
+        "precursor": "91-64-5",
+        "product": "119-84-6",
+        "reaction": "catalytic hydrogenation (3,4-double bond reduction)"
+      }
     ]
   },
-
   "medicinal": {
     "description": "Cross-cutting descriptor facet — camphoraceous + phenolic + cooling-mint pharmaceutical character; spans lavender + thyme + sage + basil + eucalyptus + clove + wintergreen clusters; methyl salicylate + l-menthol/menthone defining markers",
     "expected_entry_count": 32,
-    "oil_cas": ["8000-48-4", "68917-75-9", "68647-73-4", "8014-68-4", "8008-98-8"],
+    "oil_cas": [
+      "8000-48-4",
+      "68917-75-9",
+      "68647-73-4",
+      "8014-68-4",
+      "8008-98-8"
+    ],
     "isolates": {
-      "119-36-8":  { "name": "Methyl Salicylate", "cid": "4133", "formula": "C8H8O3", "mw": 152.15, "ghs": ["GHS07"] }
+      "119-36-8": {
+        "name": "Methyl Salicylate",
+        "cid": "4133",
+        "formula": "C8H8O3",
+        "mw": 152.15,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [],
     "excluded_cas_expected": {
-      "personal_care": ["546-80-5", "471-15-8", "8007-20-3"],
-      "flavor":        ["546-80-5"]
+      "personal_care": [
+        "546-80-5",
+        "471-15-8",
+        "8007-20-3"
+      ],
+      "flavor": [
+        "546-80-5"
+      ]
     }
   },
-
   "mimosa": {
     "description": "Acacia dealbata + Acacia farnesiana — yellow-pompom anisic-powdery floral classic; heliotropin + anisaldehyde driven; iconic Caron Farnesiana, Hermès Champs-Elysées, Frédéric Malle Une Fleur de Cassie cluster",
     "expected_entry_count": 4,
-    "oil_cas": ["8024-12-2", "8023-82-3"],
+    "oil_cas": [
+      "8024-12-2",
+      "8023-82-3"
+    ],
     "isolates": {
-      "120-57-0": { "name": "Heliotropin",   "cid": "8189",  "formula": "C8H6O3",  "mw": 150.13, "ghs": ["GHS07"] },
-      "123-11-5": { "name": "Anisaldehyde",  "cid": "31244", "formula": "C8H8O2",  "mw": 136.15, "ghs": ["GHS07"] }
+      "120-57-0": {
+        "name": "Heliotropin",
+        "cid": "8189",
+        "formula": "C8H6O3",
+        "mw": 150.13,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "123-11-5": {
+        "name": "Anisaldehyde",
+        "cid": "31244",
+        "formula": "C8H8O2",
+        "mw": 136.15,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "tea": {
     "description": "Camellia sinensis cluster — Green + Black + White tea absolutes + theaspirane chemotaxonomic marker; iconic 1990s-modern niche perfumery accord (Bvlgari Eau Parfumée Vert/Noir/Blanc, Bois 1920 Sushi Imperiale, Elizabeth Arden Green Tea)",
     "expected_entry_count": 4,
-    "oil_cas": ["84650-60-2", "84649-78-1", "92128-85-9", "36431-72-8"],
+    "oil_cas": [
+      "84650-60-2",
+      "84649-78-1",
+      "92128-85-9",
+      "36431-72-8"
+    ],
     "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "carrot_seed": {
     "description": "Daucus carota — Apiaceae rooty-iris woody cluster; carotol + daucol + daucene + β-bisabolene sesquiterpene cluster; modern niche cornerstone (Hermès Eau d'Hermès) + iris-extender; α/β-pinene + sabinene + β-caryophyllene + geranyl acetate + d-limonene + myrcene + (E)-β-ocimene Apiaceae cross-chemistry",
     "expected_entry_count": 12,
-    "oil_cas": ["8015-88-1", "465-28-1", "887-73-0", "24524-58-1", "495-61-4"],
+    "oil_cas": [
+      "8015-88-1",
+      "465-28-1",
+      "887-73-0",
+      "24524-58-1",
+      "495-61-4"
+    ],
     "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "violet": {
     "description": "Viola odorata flower + ionone violet-accord cluster — α/β-ionone + methyl ionone isomers + α-isomethyl ionone (modern industry-standard) + orris butter + α-irone iris-cross",
     "expected_entry_count": 6,
-    "oil_cas": ["8002-73-1", "127-51-5"],
+    "oil_cas": [
+      "8002-73-1",
+      "127-51-5"
+    ],
     "isolates": {
-      "79-69-6":   { "name": "alpha-Irone",                 "cid": "61692", "formula": "C14H22O", "mw": 206.32, "ghs": ["GHS07"] },
-      "127-41-3":  { "name": "alpha-Ionone",                "cid": "638014","formula": "C13H20O", "mw": 192.30, "ghs": ["GHS07"] },
-      "79-77-6":   { "name": "beta-Ionone",                 "cid": "638015","formula": "C13H20O", "mw": 192.30, "ghs": ["GHS07"] },
-      "127-43-5":  { "name": "Methyl Ionone (gamma-methyl)","cid": "8051",  "formula": "C14H22O", "mw": 206.32, "ghs": ["GHS07"] }
+      "79-69-6": {
+        "name": "alpha-Irone",
+        "cid": "61692",
+        "formula": "C14H22O",
+        "mw": 206.32,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "127-41-3": {
+        "name": "alpha-Ionone",
+        "cid": "638014",
+        "formula": "C13H20O",
+        "mw": 192.3,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "79-77-6": {
+        "name": "beta-Ionone",
+        "cid": "638015",
+        "formula": "C13H20O",
+        "mw": 192.3,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "127-43-5": {
+        "name": "Methyl Ionone (gamma-methyl)",
+        "cid": "8051",
+        "formula": "C14H22O",
+        "mw": 206.32,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "violet_leaf": {
     "description": "Viola odorata leaf cluster — green-leafy chemistry distinct from violet flower; methyl heptine carbonate + triplal + (E,Z)-2,6-nonadien-1-ol metallic-cucumber-leaf accord",
     "expected_entry_count": 3,
-    "oil_cas": ["8024-08-6"],
+    "oil_cas": [
+      "8024-08-6"
+    ],
     "isolates": {
-      "111-12-6":   { "name": "Methyl Heptine Carbonate", "cid": "61199", "formula": "C9H14O2", "mw": 154.21, "ghs": ["GHS07"] },
-      "68039-49-6": { "name": "Triplal",                  "cid": "87577", "formula": "C9H14O",  "mw": 138.21, "ghs": ["GHS07"] }
+      "111-12-6": {
+        "name": "Methyl Heptine Carbonate",
+        "cid": "61199",
+        "formula": "C9H14O2",
+        "mw": 154.21,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "68039-49-6": {
+        "name": "Triplal",
+        "cid": "87577",
+        "formula": "C9H14O",
+        "mw": 138.21,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
-    "sensitizer_required_cas": ["111-12-6"],
+    "sensitizer_required_cas": [
+      "111-12-6"
+    ],
     "biosynthetic_chains": []
   },
-
   "lovage": {
     "description": "Levisticum officinale — Apiaceae 'maggi-bouillon' meaty-savoury cluster; ligustilide-rich (30-70%) + sedanenolide + sedanonic anhydride + butylphthalide phthalide complex; α/β-pinene + α-phellandrene + d-limonene + myrcene Apiaceae cross-chemistry",
     "expected_entry_count": 16,
-    "oil_cas": ["8016-31-7", "84776-65-8", "62006-39-7", "4431-01-0", "17369-59-4", "6066-46-2"],
+    "oil_cas": [
+      "8016-31-7",
+      "84776-65-8",
+      "62006-39-7",
+      "4431-01-0",
+      "17369-59-4",
+      "6066-46-2"
+    ],
     "isolates": {
-      "6066-49-5":  { "name": "3-Butylphthalide",  "cid": "61042",  "formula": "C12H14O2", "mw": 190.24, "ghs": ["GHS07"] },
-      "80-26-2":    { "name": "Terpinyl Acetate",  "cid": "111037", "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS09"] }
+      "6066-49-5": {
+        "name": "3-Butylphthalide",
+        "cid": "61042",
+        "formula": "C12H14O2",
+        "mw": 190.24,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "80-26-2": {
+        "name": "Terpinyl Acetate",
+        "cid": "111037",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": [
+          "GHS09"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "parsley": {
     "description": "Petroselinum crispum — 2-oil chemotype (seed = phenolic-ether apiole/myristicin spicy; leaf = green-fresh phellandrene/menthatriene/hexenol); Apiaceae cross-chemistry with celery + carrot + cilantro/coriander; cross-tags from existing α/β-phellandrene + α/β-pinene + myrcene + cis-3-hexenol/acetate + d-limonene",
     "expected_entry_count": 13,
-    "oil_cas": ["8000-68-8", "84012-33-9", "18368-95-1"],
+    "oil_cas": [
+      "8000-68-8",
+      "84012-33-9",
+      "18368-95-1"
+    ],
     "isolates": {
-      "523-80-8":  { "name": "Apiole",      "cid": "10659", "formula": "C12H14O4", "mw": 222.24, "ghs": ["GHS06","GHS07","GHS08"] },
-      "607-91-0":  { "name": "Myristicin",  "cid": "4276",  "formula": "C11H12O3", "mw": 192.21, "ghs": ["GHS07","GHS08"] }
+      "523-80-8": {
+        "name": "Apiole",
+        "cid": "10659",
+        "formula": "C12H14O4",
+        "mw": 222.24,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "607-91-0": {
+        "name": "Myristicin",
+        "cid": "4276",
+        "formula": "C11H12O3",
+        "mw": 192.21,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      }
     },
     "ifra_phenolic": true,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [],
     "excluded_cas_expected": {
-      "personal_care": ["523-80-8", "607-91-0"],
-      "flavor":        []
+      "personal_care": [
+        "523-80-8",
+        "607-91-0"
+      ],
+      "flavor": []
     }
   },
-
   "coriander": {
     "description": "Coriandrum sativum seed — linalool-rich spicy-fresh (≠ cilantro leaf); S-(+)-linalool cross-tag from lavender",
     "expected_entry_count": 2,
-    "oil_cas": ["8008-52-4"],
+    "oil_cas": [
+      "8008-52-4"
+    ],
     "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "cumin": {
     "description": "Cuminum cyminum seed + cuminaldehyde — warm-animalic spicy",
     "expected_entry_count": 2,
-    "oil_cas": ["8014-13-9"],
+    "oil_cas": [
+      "8014-13-9"
+    ],
     "isolates": {
-      "122-03-2": { "name": "Cuminaldehyde", "cid": "326", "formula": "C10H12O", "mw": 148.20, "ghs": ["GHS07"] }
+      "122-03-2": {
+        "name": "Cuminaldehyde",
+        "cid": "326",
+        "formula": "C10H12O",
+        "mw": 148.2,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "geranium": {
     "description": "Pelargonium graveolens — Bourbon + Egyptian chemotypes + rhodinol (citronellol/geraniol commercial mix) rose-geranium cluster",
     "expected_entry_count": 5,
-    "oil_cas": ["8000-46-2", "90082-51-2", "141-25-3"],
+    "oil_cas": [
+      "8000-46-2",
+      "90082-51-2",
+      "141-25-3"
+    ],
     "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "gourmand": {
     "description": "Coffee + cocoa + maltol + ethyl maltol + furaneol — Edwards Soft Amber gourmand family",
     "expected_entry_count": 5,
-    "oil_cas": ["8001-67-0", "8002-31-1"],
+    "oil_cas": [
+      "8001-67-0",
+      "8002-31-1"
+    ],
     "isolates": {
-      "118-71-8":  { "name": "Maltol",        "cid": "8369",  "formula": "C6H6O3",  "mw": 126.11, "ghs": ["GHS07"] },
-      "4940-11-8": { "name": "Ethyl Maltol",  "cid": "19310", "formula": "C7H8O3",  "mw": 140.14, "ghs": ["GHS07"] },
-      "3658-77-3": { "name": "Furaneol",      "cid": "19309", "formula": "C6H8O3",  "mw": 128.13, "ghs": ["GHS07"] }
+      "118-71-8": {
+        "name": "Maltol",
+        "cid": "8369",
+        "formula": "C6H6O3",
+        "mw": 126.11,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "4940-11-8": {
+        "name": "Ethyl Maltol",
+        "cid": "19310",
+        "formula": "C7H8O3",
+        "mw": 140.14,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "3658-77-3": {
+        "name": "Furaneol",
+        "cid": "19309",
+        "formula": "C6H8O3",
+        "mw": 128.13,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "fruity": {
     "description": "Fruity base — damascones + β-ionone + γ-nonalactone + raspberry ketone + furaneol + Roman chamomile angelate esters + Cape chamomile + davana oil + davanone fruity-amber cross-tags",
     "expected_entry_count": 14,
     "oil_cas": [],
     "isolates": {
-      "43052-87-5": { "name": "alpha-Damascone",    "cid": "519381",  "formula": "C13H20O",  "mw": 192.30, "ghs": ["GHS07"] },
-      "57378-68-4": { "name": "delta-Damascone",    "cid": "5376253", "formula": "C13H20O",  "mw": 192.30, "ghs": ["GHS07"] },
-      "79-77-6":    { "name": "beta-Ionone",        "cid": "638015",  "formula": "C13H20O",  "mw": 192.30, "ghs": ["GHS07"] },
-      "104-61-0":   { "name": "gamma-Nonalactone",  "cid": "7710",    "formula": "C9H16O2",  "mw": 156.22, "ghs": [] },
-      "5471-51-2":  { "name": "Raspberry Ketone",   "cid": "11624",   "formula": "C10H12O2", "mw": 164.20, "ghs": ["GHS07"] }
+      "43052-87-5": {
+        "name": "alpha-Damascone",
+        "cid": "519381",
+        "formula": "C13H20O",
+        "mw": 192.3,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "57378-68-4": {
+        "name": "delta-Damascone",
+        "cid": "5376253",
+        "formula": "C13H20O",
+        "mw": 192.3,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "79-77-6": {
+        "name": "beta-Ionone",
+        "cid": "638015",
+        "formula": "C13H20O",
+        "mw": 192.3,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "104-61-0": {
+        "name": "gamma-Nonalactone",
+        "cid": "7710",
+        "formula": "C9H16O2",
+        "mw": 156.22,
+        "ghs": []
+      },
+      "5471-51-2": {
+        "name": "Raspberry Ketone",
+        "cid": "11624",
+        "formula": "C10H12O2",
+        "mw": 164.2,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
-    "sensitizer_required_cas": ["43052-87-5", "57378-68-4"],
+    "sensitizer_required_cas": [
+      "43052-87-5",
+      "57378-68-4"
+    ],
     "biosynthetic_chains": []
   },
-
   "iris": {
     "description": "Iris pallida orris cluster — α-irone + α-ionone + methyl ionone powdery-violet base + carotol cross-tag",
     "expected_entry_count": 5,
-    "oil_cas": ["8002-73-1"],
+    "oil_cas": [
+      "8002-73-1"
+    ],
     "isolates": {
-      "79-69-6":  { "name": "alpha-Irone",     "cid": "61692",  "formula": "C14H22O", "mw": 206.32, "ghs": ["GHS07"] },
-      "127-41-3": { "name": "alpha-Ionone",    "cid": "638014", "formula": "C13H20O", "mw": 192.30, "ghs": ["GHS07"] },
-      "127-43-5": { "name": "Methyl Ionone",   "cid": "8051",   "formula": "C14H22O", "mw": 206.32, "ghs": ["GHS07"] }
+      "79-69-6": {
+        "name": "alpha-Irone",
+        "cid": "61692",
+        "formula": "C14H22O",
+        "mw": 206.32,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "127-41-3": {
+        "name": "alpha-Ionone",
+        "cid": "638014",
+        "formula": "C13H20O",
+        "mw": 192.3,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "127-43-5": {
+        "name": "Methyl Ionone",
+        "cid": "8051",
+        "formula": "C14H22O",
+        "mw": 206.32,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "smoky": {
     "description": "Smoky / leather base — guaiacol + cade + birch tar + isobutyl quinoline (+ styrallyl acetate modifier)",
     "expected_entry_count": 4,
-    "oil_cas": ["8013-10-3", "8001-88-5"],
+    "oil_cas": [
+      "8013-10-3",
+      "8001-88-5"
+    ],
     "isolates": {
-      "90-05-1":    { "name": "Guaiacol",          "cid": "460",   "formula": "C7H8O2",  "mw": 124.14, "ghs": ["GHS06","GHS07","GHS08"] },
-      "65442-31-1": { "name": "Isobutyl Quinoline","cid": "22165", "formula": "C13H15N", "mw": 185.27, "ghs": ["GHS07"] }
+      "90-05-1": {
+        "name": "Guaiacol",
+        "cid": "460",
+        "formula": "C7H8O2",
+        "mw": 124.14,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "65442-31-1": {
+        "name": "Isobutyl Quinoline",
+        "cid": "22165",
+        "formula": "C13H15N",
+        "mw": 185.27,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": true,
     "peroxide_required_cas": [],
-    "sensitizer_required_cas": ["65442-31-1"],
+    "sensitizer_required_cas": [
+      "65442-31-1"
+    ],
     "biosynthetic_chains": []
   },
-
   "leather": {
     "description": "Smoky leather base — cade + birch tar rectified + isobutyl quinoline + guaiacol (shared smoky subset)",
     "expected_entry_count": 4,
-    "oil_cas": ["8013-10-3", "8001-88-5"],
+    "oil_cas": [
+      "8013-10-3",
+      "8001-88-5"
+    ],
     "isolates": {
-      "65442-31-1": { "name": "Isobutyl Quinoline","cid": "22165", "formula": "C13H15N", "mw": 185.27, "ghs": ["GHS07"] },
-      "90-05-1":    { "name": "Guaiacol",          "cid": "460",   "formula": "C7H8O2",  "mw": 124.14, "ghs": ["GHS06","GHS07","GHS08"] }
+      "65442-31-1": {
+        "name": "Isobutyl Quinoline",
+        "cid": "22165",
+        "formula": "C13H15N",
+        "mw": 185.27,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "90-05-1": {
+        "name": "Guaiacol",
+        "cid": "460",
+        "formula": "C7H8O2",
+        "mw": 124.14,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      }
     },
     "ifra_phenolic": true,
     "peroxide_required_cas": [],
-    "sensitizer_required_cas": ["65442-31-1"],
+    "sensitizer_required_cas": [
+      "65442-31-1"
+    ],
     "biosynthetic_chains": []
   },
-
   "green": {
     "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal + galbanum cluster + parsley leaf + 1,3,8-p-menthatriene + lovage + dill weed/ether + Camellia sinensis tea cluster (white/green/black + theaspirane)",
     "expected_entry_count": 25,
-    "oil_cas": ["8023-91-4", "8024-08-6"],
+    "oil_cas": [
+      "8023-91-4",
+      "8024-08-6"
+    ],
     "isolates": {
-      "928-96-1":   { "name": "cis-3-Hexenol",         "cid": "5281167", "formula": "C6H12O",  "mw": 100.16, "ghs": ["GHS07"] },
-      "3681-71-8":  { "name": "cis-3-Hexenyl Acetate", "cid": "5363388", "formula": "C8H14O2", "mw": 142.20, "ghs": ["GHS07"] },
-      "68039-49-6": { "name": "Triplal",               "cid": "87577",   "formula": "C9H14O",  "mw": 138.21, "ghs": ["GHS07"] }
+      "928-96-1": {
+        "name": "cis-3-Hexenol",
+        "cid": "5281167",
+        "formula": "C6H12O",
+        "mw": 100.16,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "3681-71-8": {
+        "name": "cis-3-Hexenyl Acetate",
+        "cid": "5363388",
+        "formula": "C8H14O2",
+        "mw": 142.2,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "68039-49-6": {
+        "name": "Triplal",
+        "cid": "87577",
+        "formula": "C9H14O",
+        "mw": 138.21,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["928-96-1"],
+    "peroxide_required_cas": [
+      "928-96-1"
+    ],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "oud": {
     "description": "Aquilaria spp. — agarwood / oud cluster: regional chemotypes (Hindi/Assam, Cambodian) + synthetic captive (Norlimbanol) + agarofuran/agarospirol sesquiterpene markers; modern luxury cornerstone (Tom Ford Oud Wood, Maison Francis Kurkdjian, Amouage)",
     "expected_entry_count": 5,
-    "oil_cas": ["94350-09-1", "102395-30-2", "70788-30-6", "5956-12-7", "1460-73-7"],
+    "oil_cas": [
+      "94350-09-1",
+      "102395-30-2",
+      "70788-30-6",
+      "5956-12-7",
+      "1460-73-7"
+    ],
     "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "saffron": {
     "description": "Crocus sativus stigma — modern niche-luxury cornerstone (Memo, Tom Ford, Penhaligon's); safranal-driven leathery-spicy with hydroxyisophorone + oxoisophorone tobacco-amber depth",
     "expected_entry_count": 5,
-    "oil_cas": ["84604-17-1"],
+    "oil_cas": [
+      "84604-17-1"
+    ],
     "isolates": {
-      "116-26-7":  { "name": "Safranal",            "cid": "61041", "formula": "C10H14O",  "mw": 150.22, "ghs": ["GHS07"] },
-      "78-59-1":   { "name": "Isophorone",          "cid": "6544",  "formula": "C9H14O",   "mw": 138.21, "ghs": ["GHS02","GHS06","GHS08"] },
-      "4883-60-7": { "name": "4-Hydroxyisophorone", "cid": "21405", "formula": "C9H14O2",  "mw": 154.21, "ghs": ["GHS07"] },
-      "1125-21-9": { "name": "Oxoisophorone",       "cid": "14066", "formula": "C9H12O2",  "mw": 152.19, "ghs": ["GHS07"] }
+      "116-26-7": {
+        "name": "Safranal",
+        "cid": "61041",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "78-59-1": {
+        "name": "Isophorone",
+        "cid": "6544",
+        "formula": "C9H14O",
+        "mw": 138.21,
+        "ghs": [
+          "GHS02",
+          "GHS06",
+          "GHS08"
+        ]
+      },
+      "4883-60-7": {
+        "name": "4-Hydroxyisophorone",
+        "cid": "21405",
+        "formula": "C9H14O2",
+        "mw": 154.21,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "1125-21-9": {
+        "name": "Oxoisophorone",
+        "cid": "14066",
+        "formula": "C9H12O2",
+        "mw": 152.19,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [
-      { "precursor": "78-59-1",  "product": "4883-60-7", "reaction": "allylic hydroxylation (isophorone → 4-hydroxyisophorone)" },
-      { "precursor": "4883-60-7", "product": "1125-21-9", "reaction": "alcohol oxidation (4-hydroxyisophorone → oxoisophorone)" }
+      {
+        "precursor": "78-59-1",
+        "product": "4883-60-7",
+        "reaction": "allylic hydroxylation (isophorone → 4-hydroxyisophorone)"
+      },
+      {
+        "precursor": "4883-60-7",
+        "product": "1125-21-9",
+        "reaction": "alcohol oxidation (4-hydroxyisophorone → oxoisophorone)"
+      }
     ]
   },
-
   "galbanum": {
     "description": "Ferula gummosa — iconic 20th-c green-resinous chypre cornerstone (Chanel No.19, Vent Vert, Cabochard, Must de Cartier); galbazine + (E,E)-decadienal markers; α/β-pinene + 3-carene chemotype cross-tags",
     "expected_entry_count": 8,
-    "oil_cas": ["8023-91-4", "9000-23-1", "84961-49-9"],
+    "oil_cas": [
+      "8023-91-4",
+      "9000-23-1",
+      "84961-49-9"
+    ],
     "isolates": {
-      "24683-00-9": { "name": "Galbazine",            "cid": "31249",   "formula": "C9H14N2O", "mw": 166.22, "ghs": ["GHS07"] },
-      "25152-84-5": { "name": "(E,E)-2,4-Decadienal", "cid": "5283349", "formula": "C10H16O",  "mw": 152.23, "ghs": ["GHS07"] },
-      "13466-78-9": { "name": "delta-3-Carene",       "cid": "440062",  "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS07","GHS08","GHS09"] },
-      "80-56-8":    { "name": "α-Pinene",             "cid": "6654",    "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] },
-      "127-91-3":   { "name": "β-Pinene",             "cid": "14896",   "formula": "C10H16",   "mw": 136.23, "ghs": ["GHS02","GHS07","GHS08","GHS09"] }
+      "24683-00-9": {
+        "name": "Galbazine",
+        "cid": "31249",
+        "formula": "C9H14N2O",
+        "mw": 166.22,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "25152-84-5": {
+        "name": "(E,E)-2,4-Decadienal",
+        "cid": "5283349",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "13466-78-9": {
+        "name": "delta-3-Carene",
+        "cid": "440062",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "80-56-8": {
+        "name": "α-Pinene",
+        "cid": "6654",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "127-91-3": {
+        "name": "β-Pinene",
+        "cid": "14896",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      }
     },
     "ifra_phenolic": false,
-    "peroxide_required_cas": ["13466-78-9", "80-56-8", "127-91-3"],
+    "peroxide_required_cas": [
+      "13466-78-9",
+      "80-56-8",
+      "127-91-3"
+    ],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "musk": {
     "description": "Synthetic white musks + natural ambrette — Galaxolide / Ethylene Brassylate / Exaltolide / Habanolide / Ambrette Seed",
     "expected_entry_count": 5,
-    "oil_cas": ["8015-62-1", "111879-80-2"],
+    "oil_cas": [
+      "8015-62-1",
+      "111879-80-2"
+    ],
     "isolates": {
-      "1222-05-5": { "name": "Galaxolide (HHCB)",   "cid": "91497", "formula": "C18H26O",  "mw": 258.40, "ghs": [] },
-      "105-95-3":  { "name": "Ethylene Brassylate", "cid": "15600", "formula": "C15H26O4", "mw": 270.37, "ghs": [] },
-      "106-02-5":  { "name": "Exaltolide",          "cid": "61793", "formula": "C15H28O2", "mw": 240.38, "ghs": [] }
+      "1222-05-5": {
+        "name": "Galaxolide (HHCB)",
+        "cid": "91497",
+        "formula": "C18H26O",
+        "mw": 258.4,
+        "ghs": []
+      },
+      "105-95-3": {
+        "name": "Ethylene Brassylate",
+        "cid": "15600",
+        "formula": "C15H26O4",
+        "mw": 270.37,
+        "ghs": []
+      },
+      "106-02-5": {
+        "name": "Exaltolide",
+        "cid": "61793",
+        "formula": "C15H28O2",
+        "mw": 240.38,
+        "ghs": []
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [],
-    "excluded_cas_expected": { "flavor": ["1222-05-5"] }
+    "excluded_cas_expected": {
+      "flavor": [
+        "1222-05-5"
+      ]
+    }
   },
-
   "aquatic": {
     "description": "Modern aquatic/marine accord — Calone 1951 + Helional + Floralozone + Melonal + Dihydromyrcenol",
     "expected_entry_count": 5,
     "oil_cas": [],
     "isolates": {
-      "28940-11-6": { "name": "Calone 1951",  "cid": "91721", "formula": "C11H12O3", "mw": 192.21, "ghs": ["GHS07"] },
-      "1205-17-0":  { "name": "Helional",     "cid": "15606", "formula": "C11H12O3", "mw": 192.21, "ghs": ["GHS07"] },
-      "106-72-9":   { "name": "Melonal",      "cid": "7762",  "formula": "C9H16O",   "mw": 140.22, "ghs": ["GHS07"] },
-      "67634-15-5": { "name": "Floralozone",  "cid": "62335", "formula": "C13H18O",  "mw": 190.28, "ghs": ["GHS07"] }
+      "28940-11-6": {
+        "name": "Calone 1951",
+        "cid": "91721",
+        "formula": "C11H12O3",
+        "mw": 192.21,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "1205-17-0": {
+        "name": "Helional",
+        "cid": "15606",
+        "formula": "C11H12O3",
+        "mw": 192.21,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "106-72-9": {
+        "name": "Melonal",
+        "cid": "7762",
+        "formula": "C9H16O",
+        "mw": 140.22,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "67634-15-5": {
+        "name": "Floralozone",
+        "cid": "62335",
+        "formula": "C13H18O",
+        "mw": 190.28,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "mint": {
     "description": "Mentha spp. parent — peppermint + spearmint + cornmint + pennyroyal cluster; menthol/menthone + (R)-(-)-carvone + pulegone + menthofuran cooling/sweet/camphoraceous mint chemistry",
     "expected_entry_count": 10,
-    "oil_cas": ["8006-90-4", "8008-79-5", "68917-18-0", "8007-44-1"],
+    "oil_cas": [
+      "8006-90-4",
+      "8008-79-5",
+      "68917-18-0",
+      "8007-44-1"
+    ],
     "isolates": {
-      "2216-51-5":  { "name": "l-Menthol",       "cid": "16666",  "formula": "C10H20O", "mw": 156.27, "ghs": ["GHS07"] },
-      "14073-97-3": { "name": "l-Menthone",      "cid": "26447",  "formula": "C10H18O", "mw": 154.25, "ghs": ["GHS07"] },
-      "6485-40-1":  { "name": "(R)-(-)-Carvone", "cid": "439570", "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS07"] },
-      "89-82-7":    { "name": "Pulegone",        "cid": "442495", "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS06","GHS07","GHS08"] },
-      "494-90-6":   { "name": "Menthofuran",     "cid": "22311",  "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS06","GHS07","GHS08"] }
+      "2216-51-5": {
+        "name": "l-Menthol",
+        "cid": "16666",
+        "formula": "C10H20O",
+        "mw": 156.27,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "14073-97-3": {
+        "name": "l-Menthone",
+        "cid": "26447",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "6485-40-1": {
+        "name": "(R)-(-)-Carvone",
+        "cid": "439570",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "89-82-7": {
+        "name": "Pulegone",
+        "cid": "442495",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "494-90-6": {
+        "name": "Menthofuran",
+        "cid": "22311",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [
-      { "precursor": "89-82-7",  "product": "494-90-6",   "reaction": "cytochrome P450 oxidation (pulegone → menthofuran)" },
-      { "precursor": "89-82-7",  "product": "14073-97-3", "reaction": "double-bond reduction (pulegone → menthone)" },
-      { "precursor": "14073-97-3", "product": "2216-51-5", "reaction": "ketone reduction (menthone → menthol)" }
+      {
+        "precursor": "89-82-7",
+        "product": "494-90-6",
+        "reaction": "cytochrome P450 oxidation (pulegone → menthofuran)"
+      },
+      {
+        "precursor": "89-82-7",
+        "product": "14073-97-3",
+        "reaction": "double-bond reduction (pulegone → menthone)"
+      },
+      {
+        "precursor": "14073-97-3",
+        "product": "2216-51-5",
+        "reaction": "ketone reduction (menthone → menthol)"
+      }
     ],
     "excluded_cas_expected": {
-      "personal_care": ["89-82-7", "8007-44-1"],
-      "flavor":        ["89-82-7"]
+      "personal_care": [
+        "89-82-7",
+        "8007-44-1"
+      ],
+      "flavor": [
+        "89-82-7"
+      ]
     }
   },
-
   "peppermint": {
     "description": "Mentha × piperita-specific — peppermint oil + menthol/menthone/menthofuran + cornmint cross-tag (high-menthol chemotype)",
     "expected_entry_count": 5,
-    "oil_cas": ["8006-90-4", "68917-18-0"],
+    "oil_cas": [
+      "8006-90-4",
+      "68917-18-0"
+    ],
     "isolates": {
-      "2216-51-5":  { "name": "l-Menthol",    "cid": "16666", "formula": "C10H20O", "mw": 156.27, "ghs": ["GHS07"] },
-      "14073-97-3": { "name": "l-Menthone",   "cid": "26447", "formula": "C10H18O", "mw": 154.25, "ghs": ["GHS07"] },
-      "494-90-6":   { "name": "Menthofuran",  "cid": "22311", "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS06","GHS07","GHS08"] }
+      "2216-51-5": {
+        "name": "l-Menthol",
+        "cid": "16666",
+        "formula": "C10H20O",
+        "mw": 156.27,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "14073-97-3": {
+        "name": "l-Menthone",
+        "cid": "26447",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "494-90-6": {
+        "name": "Menthofuran",
+        "cid": "22311",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "spearmint": {
     "description": "Mentha spicata-specific — spearmint oil + (R)-(-)-carvone defining ~50-70%; lower menthol chemotype distinct from peppermint",
     "expected_entry_count": 2,
-    "oil_cas": ["8008-79-5"],
+    "oil_cas": [
+      "8008-79-5"
+    ],
     "isolates": {
-      "6485-40-1":  { "name": "(R)-(-)-Carvone", "cid": "439570", "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS07"] }
+      "6485-40-1": {
+        "name": "(R)-(-)-Carvone",
+        "cid": "439570",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "minty": {
     "description": "Cross-cutting descriptor facet — minty olfactive character beyond Mentha genus; spans pulegone + menthofuran (mint family) + thujones (sage/wormwood) + verbenone (rosemary) + phellandrenes + methyl salicylate (wintergreen) + tea tree + cornmint cross",
     "expected_entry_count": 13,
-    "oil_cas": ["68917-18-0", "8007-44-1"],
+    "oil_cas": [
+      "68917-18-0",
+      "8007-44-1"
+    ],
     "isolates": {
-      "89-82-7":   { "name": "Pulegone",     "cid": "442495", "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS06","GHS07","GHS08"] },
-      "494-90-6":  { "name": "Menthofuran",  "cid": "22311",  "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS06","GHS07","GHS08"] }
+      "89-82-7": {
+        "name": "Pulegone",
+        "cid": "442495",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "494-90-6": {
+        "name": "Menthofuran",
+        "cid": "22311",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": [],
     "excluded_cas_expected": {
-      "personal_care": ["546-80-5", "471-15-8", "89-82-7", "8007-44-1"],
-      "flavor":        ["546-80-5", "89-82-7"]
+      "personal_care": [
+        "546-80-5",
+        "471-15-8",
+        "89-82-7",
+        "8007-44-1"
+      ],
+      "flavor": [
+        "546-80-5",
+        "89-82-7"
+      ]
     }
   },
-
   "cinnamon": {
     "description": "Cinnamomum verum (Ceylon, bark + leaf) + C. cassia (Chinese) + cinnamaldehyde/cinnamyl alcohol/cinnamyl acetate",
     "expected_entry_count": 10,
-    "oil_cas": ["8015-91-6", "84649-98-9", "8007-80-5"],
+    "oil_cas": [
+      "8015-91-6",
+      "84649-98-9",
+      "8007-80-5"
+    ],
     "isolates": {
-      "104-55-2":  { "name": "Cinnamaldehyde",  "cid": "637511",  "formula": "C9H8O",   "mw": 132.16, "ghs": ["GHS07"] },
-      "104-54-1":  { "name": "Cinnamyl Alcohol","cid": "5315892", "formula": "C9H10O",  "mw": 134.18, "ghs": ["GHS07"] },
-      "103-54-8":  { "name": "Cinnamyl Acetate","cid": "5282110", "formula": "C11H12O2","mw": 176.21, "ghs": ["GHS07"] }
+      "104-55-2": {
+        "name": "Cinnamaldehyde",
+        "cid": "637511",
+        "formula": "C9H8O",
+        "mw": 132.16,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "104-54-1": {
+        "name": "Cinnamyl Alcohol",
+        "cid": "5315892",
+        "formula": "C9H10O",
+        "mw": 134.18,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "103-54-8": {
+        "name": "Cinnamyl Acetate",
+        "cid": "5282110",
+        "formula": "C11H12O2",
+        "mw": 176.21,
+        "ghs": [
+          "GHS07"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
-    "sensitizer_required_cas": ["104-55-2", "104-54-1"],
+    "sensitizer_required_cas": [
+      "104-55-2",
+      "104-54-1"
+    ],
     "biosynthetic_chains": []
   },
-
   "patchouli": {
     "description": "Pogostemon cablin + patchoulol / norpatchoulenol / α-bulnesene sesquiterpenoid cluster",
     "expected_entry_count": 4,
-    "oil_cas": ["8014-09-3", "41429-52-1", "3691-11-0"],
+    "oil_cas": [
+      "8014-09-3",
+      "41429-52-1",
+      "3691-11-0"
+    ],
     "isolates": {
-      "5986-55-0": { "name": "Patchoulol", "cid": "521903", "formula": "C15H26O", "mw": 222.37, "ghs": [] }
+      "5986-55-0": {
+        "name": "Patchoulol",
+        "cid": "521903",
+        "formula": "C15H26O",
+        "mw": 222.37,
+        "ghs": []
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "sandalwood": {
     "description": "Santalum album (Mysore) + S. spicatum (Australian) + santalol isolates + Javanol synthetic. Opens the Woody primary home",
     "expected_entry_count": 6,
-    "oil_cas": ["8006-87-9", "8024-35-9", "198991-79-6"],
+    "oil_cas": [
+      "8006-87-9",
+      "8024-35-9",
+      "198991-79-6"
+    ],
     "isolates": {
-      "115-71-9":  { "name": "α-Santalol", "cid": "91732",    "formula": "C15H24O", "mw": 220.35, "ghs": [] },
-      "77-42-9":   { "name": "β-Santalol", "cid": "11166891", "formula": "C15H24O", "mw": 220.35, "ghs": [] }
+      "115-71-9": {
+        "name": "α-Santalol",
+        "cid": "91732",
+        "formula": "C15H24O",
+        "mw": 220.35,
+        "ghs": []
+      },
+      "77-42-9": {
+        "name": "β-Santalol",
+        "cid": "11166891",
+        "formula": "C15H24O",
+        "mw": 220.35,
+        "ghs": []
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-
   "vanilla": {
     "description": "Vanilla planifolia + vanillin / ethyl vanillin / heliotropin + balsamic fixatives + liatrix vanilla-leaf cross. Opens the gourmand family primary home",
     "expected_entry_count": 8,
-    "oil_cas": ["8024-06-4"],
+    "oil_cas": [
+      "8024-06-4"
+    ],
     "isolates": {
-      "121-33-5":  { "name": "Vanillin",         "cid": "1183",  "formula": "C8H8O3",  "mw": 152.15, "ghs": ["GHS07"] },
-      "121-32-4":  { "name": "Ethyl Vanillin",   "cid": "8467",  "formula": "C9H10O3", "mw": 166.17, "ghs": ["GHS07"] },
-      "120-57-0":  { "name": "Heliotropin",      "cid": "8189",  "formula": "C8H6O3",  "mw": 150.13, "ghs": ["GHS07"] },
-      "120-51-4":  { "name": "Benzyl Benzoate",  "cid": "2345",  "formula": "C14H12O2","mw": 212.24, "ghs": ["GHS07","GHS09"] }
+      "121-33-5": {
+        "name": "Vanillin",
+        "cid": "1183",
+        "formula": "C8H8O3",
+        "mw": 152.15,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "121-32-4": {
+        "name": "Ethyl Vanillin",
+        "cid": "8467",
+        "formula": "C9H10O3",
+        "mw": 166.17,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "120-57-0": {
+        "name": "Heliotropin",
+        "cid": "8189",
+        "formula": "C8H6O3",
+        "mw": 150.13,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "120-51-4": {
+        "name": "Benzyl Benzoate",
+        "cid": "2345",
+        "formula": "C14H12O2",
+        "mw": 212.24,
+        "ghs": [
+          "GHS07",
+          "GHS09"
+        ]
+      }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
-    "sensitizer_required_cas": ["121-33-5", "120-51-4"],
+    "sensitizer_required_cas": [
+      "121-33-5",
+      "120-51-4"
+    ],
+    "biosynthetic_chains": []
+  },
+  "phenolic": {
+    "description": "Cross-cutting descriptor — eugenol/thymol/carvacrol/guaiacol phenolic-aromatic character; spans clove + thyme + origanum + savory + cinnamon + cade + birch tar + parsley apiole/dill apiole",
+    "expected_entry_count": 21,
+    "oil_cas": [
+      "8007-46-3",
+      "84929-51-1",
+      "8007-11-2",
+      "8016-68-0",
+      "84775-72-4",
+      "8000-34-8",
+      "8015-97-2",
+      "8015-91-6",
+      "84649-98-9",
+      "8013-10-3",
+      "8001-88-5",
+      "8000-68-8",
+      "484-31-1"
+    ],
+    "isolates": {
+      "89-83-8": {
+        "name": "Thymol",
+        "cid": "6989",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS05",
+          "GHS07",
+          "GHS09"
+        ]
+      },
+      "499-75-2": {
+        "name": "Carvacrol",
+        "cid": "10364",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "97-53-0": {
+        "name": "Eugenol",
+        "cid": "3314",
+        "formula": "C10H12O2",
+        "mw": 164.2,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "97-54-1": {
+        "name": "Isoeugenol",
+        "cid": "853433",
+        "formula": "C10H12O2",
+        "mw": 164.2,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "4707-47-5": {
+        "name": "Evernyl",
+        "cid": "79096",
+        "formula": "C10H12O4",
+        "mw": 196.2,
+        "ghs": []
+      },
+      "90-05-1": {
+        "name": "Guaiacol",
+        "cid": "460",
+        "formula": "C7H8O2",
+        "mw": 124.14,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "523-80-8": {
+        "name": "Apiole",
+        "cid": "10659",
+        "formula": "C12H14O4",
+        "mw": 222.24,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "93-16-3": {
+        "name": "Methyl Isoeugenol",
+        "cid": "7128",
+        "formula": "C11H14O2",
+        "mw": 178.23,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      }
+    },
+    "ifra_phenolic": true,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [
+      "89-83-8",
+      "499-75-2",
+      "97-53-0",
+      "97-54-1"
+    ],
+    "biosynthetic_chains": []
+  },
+  "hay": {
+    "description": "Cross-cutting descriptor — coumarin-driven hay-meadow character; spans clover cluster (sweet clover + hay + liatrix absolutes) + lavender/lavandin/clary sage/rosemary/basil/tobacco/tonka/chamomile absolutes",
+    "expected_entry_count": 15,
+    "oil_cas": [
+      "97722-12-8",
+      "93455-96-0",
+      "8016-63-5",
+      "84775-83-7",
+      "84604-14-8",
+      "84775-71-3",
+      "8037-19-2",
+      "8046-22-8",
+      "8015-92-7",
+      "84775-99-5",
+      "91722-10-0",
+      "84649-77-4"
+    ],
+    "isolates": {
+      "515-03-7": {
+        "name": "Sclareol",
+        "cid": "163263",
+        "formula": "C20H36O2",
+        "mw": 308.5,
+        "ghs": []
+      },
+      "91-64-5": {
+        "name": "Coumarin",
+        "cid": "323",
+        "formula": "C9H6O2",
+        "mw": 146.14,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "119-84-6": {
+        "name": "Dihydrocoumarin",
+        "cid": "7152",
+        "formula": "C9H8O2",
+        "mw": 148.16,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "leathery": {
+    "description": "Cross-cutting descriptor — leather-character olfactive note; spans clary sage absolute + tobacco + treemoss + saffron + oud (Hindi/synthetic) + black tea + isobutyl quinoline",
+    "expected_entry_count": 9,
+    "oil_cas": [
+      "84775-83-7",
+      "8037-19-2",
+      "90028-67-4",
+      "84604-17-1",
+      "94350-09-1",
+      "70788-30-6",
+      "84649-78-1"
+    ],
+    "isolates": {
+      "65442-31-1": {
+        "name": "Isobutyl Quinoline",
+        "cid": "22165",
+        "formula": "C13H15N",
+        "mw": 185.27,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "116-26-7": {
+        "name": "Safranal",
+        "cid": "61041",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "earthy": {
+    "description": "Cross-cutting descriptor — earthy-rooty character; spans patchouli + vetiver + oakmoss + carrot seed (carotol/daucol) + linalool oxides + borneol",
+    "expected_entry_count": 11,
+    "oil_cas": [
+      "8014-09-3",
+      "41429-52-1",
+      "8016-96-4",
+      "58297-61-9",
+      "9000-50-4",
+      "8015-88-1",
+      "465-28-1",
+      "887-73-0"
+    ],
+    "isolates": {
+      "1365-19-1": {
+        "name": "Linalool Oxide (furanoid)",
+        "cid": "22310",
+        "formula": "C10H18O2",
+        "mw": 170.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "507-70-0": {
+        "name": "Borneol",
+        "cid": "64685",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS02"
+        ]
+      },
+      "60047-17-8": {
+        "name": "Linalool Oxide (pyranoid)",
+        "cid": "26396",
+        "formula": "C10H18O2",
+        "mw": 170.25,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "coniferous": {
+    "description": "Cross-cutting descriptor — coniferous pine/fir/cedar woody-resinous character; spans cedar (Virginian/Atlas) + pine + fir + cedarleaf + camphor terpenes (pinenes/camphene/3-carene) + bornyl/isobornyl/terpinyl acetates + longifolene",
+    "expected_entry_count": 13,
+    "oil_cas": [
+      "8007-20-3",
+      "8000-27-9",
+      "8023-85-6",
+      "8002-09-3",
+      "8021-29-2"
+    ],
+    "isolates": {
+      "80-26-2": {
+        "name": "Terpinyl Acetate",
+        "cid": "111037",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": [
+          "GHS09"
+        ]
+      },
+      "76-49-3": {
+        "name": "Bornyl Acetate",
+        "cid": "93009",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": []
+      },
+      "79-92-5": {
+        "name": "Camphene",
+        "cid": "6616",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "80-56-8": {
+        "name": "α-Pinene",
+        "cid": "6654",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "127-91-3": {
+        "name": "β-Pinene",
+        "cid": "14896",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "13466-78-9": {
+        "name": "delta-3-Carene",
+        "cid": "440062",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "475-20-7": {
+        "name": "Longifolene",
+        "cid": "442348",
+        "formula": "C15H24",
+        "mw": 204.35,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "125-12-2": {
+        "name": "Isobornyl Acetate",
+        "cid": "1550884",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [
+      "80-56-8",
+      "127-91-3",
+      "13466-78-9"
+    ],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [],
+    "excluded_cas_expected": {
+      "personal_care": [
+        "8007-20-3"
+      ],
+      "flavor": []
+    }
+  },
+  "fir": {
+    "description": "Abies spp. — fir needle oil + bornyl/isobornyl acetate fir-marker isolates; sub-cluster of coniferous family",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "8021-29-2"
+    ],
+    "isolates": {
+      "76-49-3": {
+        "name": "Bornyl Acetate",
+        "cid": "93009",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": []
+      },
+      "125-12-2": {
+        "name": "Isobornyl Acetate",
+        "cid": "1550884",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "camphor": {
+    "description": "Cross-cutting descriptor — camphoraceous-cooling character; spans lavender/lavandin/sage/rosemary/eucalyptus/fennel/cedarleaf/wintergreen/Melaleuca cluster (tea tree/niaouli/cajeput)/pennyroyal + camphor/borneol/bornyl-acetate/eucalyptol/thujones/verbenone/fenchone/methyl-salicylate/pulegone isolates",
+    "expected_entry_count": 27,
+    "oil_cas": [
+      "8000-28-0",
+      "91722-69-9",
+      "8016-78-2",
+      "93455-96-0",
+      "8022-56-8",
+      "8016-64-6",
+      "8000-25-7",
+      "8022-15-9",
+      "8000-48-4",
+      "8007-20-3",
+      "84625-39-8",
+      "68917-75-9",
+      "68647-73-4",
+      "8014-68-4",
+      "8008-98-8",
+      "8007-44-1"
+    ],
+    "isolates": {
+      "470-82-6": {
+        "name": "Eucalyptol",
+        "cid": "2758",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS02"
+        ]
+      },
+      "76-22-2": {
+        "name": "Camphor",
+        "cid": "2537",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "507-70-0": {
+        "name": "Borneol",
+        "cid": "64685",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS02"
+        ]
+      },
+      "76-49-3": {
+        "name": "Bornyl Acetate",
+        "cid": "93009",
+        "formula": "C12H20O2",
+        "mw": 196.29,
+        "ghs": []
+      },
+      "79-92-5": {
+        "name": "Camphene",
+        "cid": "6616",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "546-80-5": {
+        "name": "alpha-Thujone",
+        "cid": "261491",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS06",
+          "GHS07"
+        ]
+      },
+      "80-57-9": {
+        "name": "Verbenone",
+        "cid": "29025",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "471-15-8": {
+        "name": "beta-Thujone",
+        "cid": "91456",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "1195-79-5": {
+        "name": "Fenchone",
+        "cid": "14525",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS02"
+        ]
+      },
+      "119-36-8": {
+        "name": "Methyl Salicylate",
+        "cid": "4133",
+        "formula": "C8H8O3",
+        "mw": 152.15,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "89-82-7": {
+        "name": "Pulegone",
+        "cid": "442495",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [],
+    "excluded_cas_expected": {
+      "personal_care": [
+        "546-80-5",
+        "471-15-8",
+        "8007-20-3",
+        "89-82-7",
+        "8007-44-1"
+      ],
+      "flavor": [
+        "546-80-5",
+        "89-82-7"
+      ]
+    }
+  },
+  "coumarin": {
+    "description": "Cross-cutting descriptor — coumarin-class molecules + coumarin-rich naturals; spans tonka/sweet-clover/hay/liatrix absolutes + coumarin/dihydrocoumarin synthetics + bergapten + lavender/lavandin absolutes",
+    "expected_entry_count": 9,
+    "oil_cas": [
+      "97722-12-8",
+      "93455-96-0",
+      "8046-22-8",
+      "84775-99-5",
+      "91722-10-0",
+      "84649-77-4"
+    ],
+    "isolates": {
+      "484-20-8": {
+        "name": "Bergapten",
+        "cid": "2355",
+        "formula": "C12H8O4",
+        "mw": 216.19,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "91-64-5": {
+        "name": "Coumarin",
+        "cid": "323",
+        "formula": "C9H6O2",
+        "mw": 146.14,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "119-84-6": {
+        "name": "Dihydrocoumarin",
+        "cid": "7152",
+        "formula": "C9H8O2",
+        "mw": 148.16,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [],
+    "excluded_cas_expected": {
+      "personal_care": [
+        "484-20-8"
+      ],
+      "flavor": []
+    }
+  },
+  "honey": {
+    "description": "Cross-cutting descriptor — honey-floral-sweet character; spans rose absolute + cassie absolute + phenylethyl alcohol + α-bisabolol",
+    "expected_entry_count": 4,
+    "oil_cas": [
+      "84604-12-6",
+      "8023-82-3"
+    ],
+    "isolates": {
+      "60-12-8": {
+        "name": "Phenylethyl Alcohol",
+        "cid": "6054",
+        "formula": "C8H10O",
+        "mw": 122.17,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "23089-26-1": {
+        "name": "alpha-Bisabolol",
+        "cid": "442343",
+        "formula": "C15H26O",
+        "mw": 222.37,
+        "ghs": []
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "creamy": {
+    "description": "Cross-cutting descriptor — creamy-soft character; spans Ho Wood + Rosewood (linalool-rich) + linalool oxide pyranoid + γ-nonalactone (coconut/peach lactone)",
+    "expected_entry_count": 4,
+    "oil_cas": [
+      "8006-78-8",
+      "8015-77-8"
+    ],
+    "isolates": {
+      "60047-17-8": {
+        "name": "Linalool Oxide (pyranoid)",
+        "cid": "26396",
+        "formula": "C10H18O2",
+        "mw": 170.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "104-61-0": {
+        "name": "gamma-Nonalactone",
+        "cid": "7710",
+        "formula": "C9H16O2",
+        "mw": 156.22,
+        "ghs": []
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "caramel": {
+    "description": "Cross-cutting descriptor — caramel-burnt-sugar character; defining gourmand pyranone class — maltol + ethyl maltol (cotton candy/Angel) + furaneol (strawberry-pineapple)",
+    "expected_entry_count": 3,
+    "oil_cas": [],
+    "isolates": {
+      "118-71-8": {
+        "name": "Maltol",
+        "cid": "8369",
+        "formula": "C6H6O3",
+        "mw": 126.11,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "4940-11-8": {
+        "name": "Ethyl Maltol",
+        "cid": "19310",
+        "formula": "C7H8O3",
+        "mw": 140.14,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "3658-77-3": {
+        "name": "Furaneol",
+        "cid": "19309",
+        "formula": "C6H8O3",
+        "mw": 128.13,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "tonka": {
+    "description": "Dipteryx odorata cluster — tonka bean absolute + coumarin defining isolate; classical fougère + soft amber base material",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "8046-22-8"
+    ],
+    "isolates": {
+      "91-64-5": {
+        "name": "Coumarin",
+        "cid": "323",
+        "formula": "C9H6O2",
+        "mw": 146.14,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "orange_blossom": {
+    "description": "Citrus aurantium flower cluster — neroli + orange flower absolute + methyl anthranilate; Floral Amber sub-family transition material",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "8016-38-4",
+      "8030-28-2"
+    ],
+    "isolates": {
+      "134-20-3": {
+        "name": "Methyl Anthranilate",
+        "cid": "8635",
+        "formula": "C8H9NO2",
+        "mw": 151.16,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "resin": {
+    "description": "Cross-cutting descriptor — resinous-balsamic character; spans labdanum/frankincense/myrrh/galbanum cluster + Cambodian oud + elemicin",
+    "expected_entry_count": 8,
+    "oil_cas": [
+      "8016-26-0",
+      "8016-36-2",
+      "8016-37-3",
+      "8023-91-4",
+      "9000-23-1",
+      "84961-49-9",
+      "102395-30-2"
+    ],
+    "isolates": {
+      "487-11-6": {
+        "name": "Elemicin",
+        "cid": "10248",
+        "formula": "C12H16O3",
+        "mw": 208.25,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "ambergris": {
+    "description": "Modern ambroxan-driven amber descriptor cluster — Iso E Super (Hercolyn-class woody-amber) + sclareol/sclareolide/Ambroxide Cetalox-class precursors; iconic Sauvage/Aventus/Olympéa modern amber wave",
+    "expected_entry_count": 4,
+    "oil_cas": [
+      "54464-57-2"
+    ],
+    "isolates": {
+      "515-03-7": {
+        "name": "Sclareol",
+        "cid": "163263",
+        "formula": "C20H36O2",
+        "mw": 308.5,
+        "ghs": []
+      },
+      "564-20-5": {
+        "name": "Sclareolide",
+        "cid": "929262",
+        "formula": "C16H26O2",
+        "mw": 250.38,
+        "ghs": []
+      },
+      "6790-58-5": {
+        "name": "Ambroxide",
+        "cid": "443061",
+        "formula": "C16H28O",
+        "mw": 236.39,
+        "ghs": []
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   }
 }
