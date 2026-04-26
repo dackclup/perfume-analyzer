@@ -2537,7 +2537,7 @@
   },
   "fruity": {
     "description": "Fruity base — damascones + β-ionone + γ-nonalactone + raspberry ketone + furaneol + Roman chamomile angelate esters + Cape chamomile + davana oil + davanone fruity-amber cross-tags",
-    "expected_entry_count": 15,
+    "expected_entry_count": 21,
     "oil_cas": [],
     "isolates": {
       "43052-87-5": {
@@ -2706,7 +2706,7 @@
   },
   "green": {
     "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal + galbanum cluster + parsley leaf + 1,3,8-p-menthatriene + lovage + dill weed/ether + Camellia sinensis tea cluster (white/green/black + theaspirane)",
-    "expected_entry_count": 25,
+    "expected_entry_count": 26,
     "oil_cas": [
       "8023-91-4",
       "8024-08-6"
@@ -4312,7 +4312,7 @@
   },
   "plum": {
     "description": "Plum accord cluster — α-damascone + δ-damascone red-fruit damascone variants; classical Mitsouko-class plum signature",
-    "expected_entry_count": 2,
+    "expected_entry_count": 3,
     "oil_cas": [],
     "isolates": {
       "43052-87-5": {
@@ -5840,6 +5840,206 @@
         "ghs": [
           "GHS07"
         ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "fig": {
+    "description": "Fig accord — Stemone (Givaudan captive fig-leaf) + γ-octalactone (lactonic fig-coconut); iconic Diptyque Philosykos signature",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "61931-81-5"
+    ],
+    "isolates": {
+      "104-50-7": {
+        "name": "γ-Octalactone",
+        "cid": "7714",
+        "formula": "C8H14O2",
+        "mw": 142.2,
+        "ghs": []
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "cassis": {
+    "description": "Cassis (blackcurrant buds) — Ribes nigrum absolute + sulfurous-fruity character",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "85085-23-0"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "blackcurrant": {
+    "description": "Blackcurrant alias for cassis cluster",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "85085-23-0"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "apricot": {
+    "description": "Apricot accord cluster — γ-decalactone + γ-undecalactone + β-damascenone lactonic-fruity",
+    "expected_entry_count": 4,
+    "oil_cas": [],
+    "isolates": {
+      "706-14-9": {
+        "name": "gamma-Decalactone",
+        "cid": "12813",
+        "formula": "C10H18O2",
+        "mw": 170.25,
+        "ghs": []
+      },
+      "104-67-6": {
+        "name": "gamma-Undecalactone",
+        "cid": "7714",
+        "formula": "C11H20O2",
+        "mw": 184.28,
+        "ghs": []
+      },
+      "23726-93-4": {
+        "name": "β-Damascenone",
+        "cid": "5366074",
+        "formula": "C13H18O",
+        "mw": 190.28,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "pineapple": {
+    "description": "Pineapple accord — allyl caproate cornerstone tropical ester",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "123-68-2": {
+        "name": "Allyl Caproate",
+        "cid": "8763",
+        "formula": "C9H16O2",
+        "mw": 156.22,
+        "ghs": [
+          "GHS06",
+          "GHS09"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "mango": {
+    "description": "Mango accord — synthetic tropical fruit captive",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8024-09-7"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "lychee": {
+    "description": "Lychee accord — synthetic Asian tropical-floral; β-damascenone + linalool + rose oxide",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "85085-30-9"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "tropical": {
+    "description": "Cross-cutting tropical-fruit descriptor — covers mango/pineapple/lychee/coconut/passion-fruit/papaya class accords",
+    "expected_entry_count": 6,
+    "oil_cas": [
+      "8024-09-7",
+      "85085-30-9"
+    ],
+    "isolates": {
+      "123-68-2": {
+        "name": "Allyl Caproate",
+        "cid": "8763",
+        "formula": "C9H16O2",
+        "mw": 156.22,
+        "ghs": [
+          "GHS06",
+          "GHS09"
+        ]
+      },
+      "706-14-9": {
+        "name": "gamma-Decalactone",
+        "cid": "12813",
+        "formula": "C10H18O2",
+        "mw": 170.25,
+        "ghs": []
+      },
+      "104-61-0": {
+        "name": "gamma-Nonalactone",
+        "cid": "7710",
+        "formula": "C9H16O2",
+        "mw": 156.22,
+        "ghs": []
+      },
+      "104-67-6": {
+        "name": "gamma-Undecalactone",
+        "cid": "7714",
+        "formula": "C11H20O2",
+        "mw": 184.28,
+        "ghs": []
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "coconut": {
+    "description": "Coconut accord — γ-undecalactone (Aldehyde C-14) + γ-nonalactone + γ-octalactone classical lactone trio",
+    "expected_entry_count": 4,
+    "oil_cas": [],
+    "isolates": {
+      "104-67-6": {
+        "name": "gamma-Undecalactone",
+        "cid": "7714",
+        "formula": "C11H20O2",
+        "mw": 184.28,
+        "ghs": []
+      },
+      "104-61-0": {
+        "name": "gamma-Nonalactone",
+        "cid": "7710",
+        "formula": "C9H16O2",
+        "mw": 156.22,
+        "ghs": []
+      },
+      "104-50-7": {
+        "name": "γ-Octalactone",
+        "cid": "7714",
+        "formula": "C8H14O2",
+        "mw": 142.2,
+        "ghs": []
       }
     },
     "ifra_phenolic": false,
