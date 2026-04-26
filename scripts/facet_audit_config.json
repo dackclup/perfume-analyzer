@@ -3578,7 +3578,7 @@
   },
   "coniferous": {
     "description": "Cross-cutting descriptor — coniferous pine/fir/cedar woody-resinous character; spans cedar (Virginian/Atlas) + pine + fir + cedarleaf + camphor terpenes (pinenes/camphene/3-carene) + bornyl/isobornyl/terpinyl acetates + longifolene",
-    "expected_entry_count": 14,
+    "expected_entry_count": 15,
     "oil_cas": [
       "8007-20-3",
       "8000-27-9",
@@ -4874,7 +4874,7 @@
   },
   "citrus": {
     "description": "Cross-cutting parent descriptor — generic citrus character; covers bergamot/lemon/orange/mandarin/grapefruit/lime/yuzu/petitgrain + citral isomers + d-limonene + α/β-pinene + γ-terpinene + nootkatone + methyl anthranilate",
-    "expected_entry_count": 19,
+    "expected_entry_count": 20,
     "oil_cas": [
       "8008-56-8",
       "8028-48-6",
@@ -6042,6 +6042,100 @@
         "ghs": []
       }
     },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "moss": {
+    "description": "Cross-cutting moss descriptor — oakmoss + treemoss mossy chypre cornerstone",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "9000-50-4",
+      "90028-67-4"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "forest": {
+    "description": "Forest descriptor — oakmoss + treemoss + earthy-mossy woody atmosphere",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "9000-50-4",
+      "90028-67-4"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "lichens": {
+    "description": "Lichens descriptor — oakmoss-class atranol-bearing lichen materials",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "9000-50-4"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "hinoki": {
+    "description": "Chamaecyparis obtusa (Japanese cypress) — Zen-spa woody material; lemony-resinous; iconic Japanese aromatherapy",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "91745-89-8"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "cashmeran": {
+    "description": "Cashmeran (DPMI) — IFF captive woody-musky cornerstone (Boucheron Jaipur, DKNY Cashmere Mist)",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "33704-61-9": {
+        "name": "Cashmeran",
+        "cid": "116903",
+        "formula": "C14H22O",
+        "mw": 206.32,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "verbena": {
+    "description": "Lemon Verbena (Aloysia citrodora / Lippia citriodora) — lemon-herbal; EU restricted phototoxic/sensitizer",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "85117-03-9"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "lemon_verbena": {
+    "description": "Lemon Verbena alias for verbena cluster",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "85117-03-9"
+    ],
+    "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
