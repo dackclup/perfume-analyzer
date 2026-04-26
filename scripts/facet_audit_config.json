@@ -638,9 +638,9 @@
   },
 
   "dill": {
-    "description": "Anethum graveolens — Apiaceae 2-chemotype cluster (seed = (S)-(+)-carvone + dill apiole spicy; weed = α-phellandrene + dill ether green); Mediterranean culinary aromatic; cross-Apiaceae chemistry",
-    "expected_entry_count": 9,
-    "oil_cas": ["8006-75-5", "90028-03-8", "484-31-1", "74410-10-9"],
+    "description": "Anethum graveolens — Apiaceae 2-chemotype cluster (seed = (S)-(+)-carvone + dill apiole spicy; weed = α-phellandrene + dill ether green); Carum carvi (caraway) cross-genus S-carvone sibling; Mediterranean culinary aromatic; cross-Apiaceae with parsley apiole/myristicin",
+    "expected_entry_count": 15,
+    "oil_cas": ["8006-75-5", "90028-03-8", "484-31-1", "74410-10-9", "8000-42-8"],
     "isolates": {
       "2244-16-8":  { "name": "(S)-(+)-Carvone", "cid": "16724",  "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS07"] }
     },
