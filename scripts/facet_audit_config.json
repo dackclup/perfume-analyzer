@@ -2939,7 +2939,7 @@
   },
   "aquatic": {
     "description": "Modern aquatic/marine accord — Calone 1951 + Helional + Floralozone + Melonal + Dihydromyrcenol",
-    "expected_entry_count": 5,
+    "expected_entry_count": 6,
     "oil_cas": [],
     "isolates": {
       "28940-11-6": {
@@ -3445,7 +3445,7 @@
   },
   "hay": {
     "description": "Cross-cutting descriptor — coumarin-driven hay-meadow character; spans clover cluster (sweet clover + hay + liatrix absolutes) + lavender/lavandin/clary sage/rosemary/basil/tobacco/tonka/chamomile absolutes",
-    "expected_entry_count": 15,
+    "expected_entry_count": 16,
     "oil_cas": [
       "97722-12-8",
       "93455-96-0",
@@ -3914,7 +3914,7 @@
   },
   "honey": {
     "description": "Cross-cutting descriptor — honey-floral-sweet character; spans rose absolute + cassie absolute + phenylethyl alcohol + α-bisabolol",
-    "expected_entry_count": 4,
+    "expected_entry_count": 6,
     "oil_cas": [
       "84604-12-6",
       "8023-82-3"
@@ -4519,7 +4519,7 @@
   },
   "indole": {
     "description": "Indole-class animalic descriptor — defining jasmine/orange flower fecal-floral character; indole isolate + jasmine/neroli absolutes (intrinsic ~2-5% indole content)",
-    "expected_entry_count": 3,
+    "expected_entry_count": 4,
     "oil_cas": [
       "8022-96-6",
       "8030-28-2"
@@ -5052,7 +5052,7 @@
   },
   "magnolia": {
     "description": "Magnolia spp. — citral-rich green-floral with linalool + methyl eugenol; modern niche-luxury alternative to rose/jasmine",
-    "expected_entry_count": 4,
+    "expected_entry_count": 5,
     "oil_cas": [
       "94334-13-7"
     ],
@@ -5157,6 +5157,202 @@
       "8023-83-4"
     ],
     "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "lilac": {
+    "description": "Syringa vulgaris accord — synthetic spring-floral; α-terpineol + hydroxycitronellal + benzyl alcohol + heliotropin",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8024-04-2"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "lotus": {
+    "description": "Nelumbo nucifera accord — synthetic Asian sacred lotus; aquatic-floral",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "84775-32-6"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "narcissus": {
+    "description": "Narcissus poeticus absolute — French Auvergne luxury floral; indolic-hay; ~$5-8k/kg",
+    "expected_entry_count": 4,
+    "oil_cas": [
+      "8023-66-5"
+    ],
+    "isolates": {
+      "120-72-9": {
+        "name": "Indole",
+        "cid": "798",
+        "formula": "C8H7N",
+        "mw": 117.15,
+        "ghs": [
+          "GHS06",
+          "GHS09"
+        ]
+      },
+      "103-26-4": {
+        "name": "Methyl Cinnamate",
+        "cid": "637520",
+        "formula": "C10H10O2",
+        "mw": 162.18,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "120-51-4": {
+        "name": "Benzyl Benzoate",
+        "cid": "2345",
+        "formula": "C14H12O2",
+        "mw": 212.24,
+        "ghs": [
+          "GHS07",
+          "GHS09"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "peony": {
+    "description": "Paeonia accord — synthetic dewy-floral; α-methylbenzyl alcohol cornerstone",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "98-85-1": {
+        "name": "Peony Accord (Synthetic)",
+        "cid": "7409",
+        "formula": "C8H10O",
+        "mw": 122.16,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "freesia": {
+    "description": "Freesia refracta accord — synthetic watery-floral; linalool + Hedione + ionones",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "85085-49-0"
+    ],
+    "isolates": {
+      "78-70-6": {
+        "name": "Linalool",
+        "cid": "6549",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "frangipani": {
+    "description": "Plumeria rubra accord — synthetic tropical-floral; jasmine-tuberose-coconut hybrid",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "84775-29-1"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "champaca": {
+    "description": "Michelia champaca absolute — Indian luxury exotic floral; ~$8-12k/kg",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "68917-99-7"
+    ],
+    "isolates": {
+      "78-70-6": {
+        "name": "Linalool",
+        "cid": "6549",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "120-72-9": {
+        "name": "Indole",
+        "cid": "798",
+        "formula": "C8H7N",
+        "mw": 117.15,
+        "ghs": [
+          "GHS06",
+          "GHS09"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "honeysuckle": {
+    "description": "Lonicera accord — synthetic honey-floral; benzyl acetate + linalool + ionones",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "8024-13-3"
+    ],
+    "isolates": {
+      "78-70-6": {
+        "name": "Linalool",
+        "cid": "6549",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "linden": {
+    "description": "Tilia (linden / tilleul) accord — synthetic honey-tea-floral",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "97676-14-9"
+    ],
+    "isolates": {
+      "78-70-6": {
+        "name": "Linalool",
+        "cid": "6549",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
