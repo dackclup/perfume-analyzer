@@ -2537,7 +2537,7 @@
   },
   "fruity": {
     "description": "Fruity base — damascones + β-ionone + γ-nonalactone + raspberry ketone + furaneol + Roman chamomile angelate esters + Cape chamomile + davana oil + davanone fruity-amber cross-tags",
-    "expected_entry_count": 14,
+    "expected_entry_count": 15,
     "oil_cas": [],
     "isolates": {
       "43052-87-5": {
@@ -2670,7 +2670,7 @@
   },
   "leather": {
     "description": "Smoky leather base — cade + birch tar rectified + isobutyl quinoline + guaiacol (shared smoky subset)",
-    "expected_entry_count": 4,
+    "expected_entry_count": 5,
     "oil_cas": [
       "8013-10-3",
       "8001-88-5"
@@ -2899,7 +2899,7 @@
   },
   "musk": {
     "description": "Synthetic white musks + natural ambrette — Galaxolide / Ethylene Brassylate / Exaltolide / Habanolide / Ambrette Seed",
-    "expected_entry_count": 5,
+    "expected_entry_count": 6,
     "oil_cas": [
       "8015-62-1",
       "111879-80-2"
@@ -3578,7 +3578,7 @@
   },
   "coniferous": {
     "description": "Cross-cutting descriptor — coniferous pine/fir/cedar woody-resinous character; spans cedar (Virginian/Atlas) + pine + fir + cedarleaf + camphor terpenes (pinenes/camphene/3-carene) + bornyl/isobornyl/terpinyl acetates + longifolene",
-    "expected_entry_count": 13,
+    "expected_entry_count": 14,
     "oil_cas": [
       "8007-20-3",
       "8000-27-9",
@@ -4498,7 +4498,7 @@
   },
   "animalic": {
     "description": "Cross-cutting descriptor — generic animalic-warm character; macrocyclic musks (Exaltolide) + Ambrette + Hindi oud; parent facet for civet/castoreum/musk sub-clusters",
-    "expected_entry_count": 3,
+    "expected_entry_count": 5,
     "oil_cas": [
       "8015-62-1",
       "94350-09-1"
@@ -4987,6 +4987,178 @@
       "127-91-3",
       "99-85-4"
     ],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "muguet": {
+    "description": "Lily of valley (Convallaria majalis) accord — synthetic only (natural extract impossible due to plant chemistry); hydroxycitronellal cornerstone (post-Lyral 2014 ban)",
+    "expected_entry_count": 3,
+    "oil_cas": [],
+    "isolates": {
+      "107-75-5": {
+        "name": "Hydroxycitronellal",
+        "cid": "7888",
+        "formula": "C10H20O2",
+        "mw": 172.27,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [
+      "107-75-5"
+    ],
+    "biosynthetic_chains": []
+  },
+  "osmanthus": {
+    "description": "Osmanthus fragrans (sweet olive / gui hua) — apricot-leather-floral; γ-decalactone + β-ionone + linalool defining; ultra-premium Chinese luxury floral",
+    "expected_entry_count": 4,
+    "oil_cas": [
+      "68917-05-5"
+    ],
+    "isolates": {
+      "706-14-9": {
+        "name": "gamma-Decalactone",
+        "cid": "12813",
+        "formula": "C10H18O2",
+        "mw": 170.25,
+        "ghs": []
+      },
+      "79-77-6": {
+        "name": "beta-Ionone",
+        "cid": "638015",
+        "formula": "C13H20O",
+        "mw": 192.3,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "78-70-6": {
+        "name": "Linalool",
+        "cid": "6549",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "magnolia": {
+    "description": "Magnolia spp. — citral-rich green-floral with linalool + methyl eugenol; modern niche-luxury alternative to rose/jasmine",
+    "expected_entry_count": 4,
+    "oil_cas": [
+      "94334-13-7"
+    ],
+    "isolates": {
+      "5392-40-5": {
+        "name": "Citral",
+        "cid": "638011",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "78-70-6": {
+        "name": "Linalool",
+        "cid": "6549",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "93-15-2": {
+        "name": "Methyl Eugenol",
+        "cid": "7127",
+        "formula": "C11H14O2",
+        "mw": 178.23,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "cypress": {
+    "description": "Cupressus sempervirens (Mediterranean / Italian cypress) — α-pinene + 3-carene + cedrol-class woody-balsamic; modern niche cornerstone",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "8013-86-3"
+    ],
+    "isolates": {
+      "80-56-8": {
+        "name": "α-Pinene",
+        "cid": "6654",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "13466-78-9": {
+        "name": "delta-3-Carene",
+        "cid": "440062",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [
+      "80-56-8",
+      "13466-78-9"
+    ],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "civet": {
+    "description": "Civetone — synthetic macrocyclic ketone replacing natural civet (Viverra civetta); cruelty-free animalic for chypre/classical/niche-luxury",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "542-46-1": {
+        "name": "Civetone (Synthetic)",
+        "cid": "10522",
+        "formula": "C17H30O",
+        "mw": 250.42,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "castoreum": {
+    "description": "Castoreum accord — synthetic blend replacing natural castoreum (Castor canadensis); cruelty-free phenolic-tar-musky for leather/animalic accords",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8023-83-4"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   }
