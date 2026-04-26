@@ -663,6 +663,23 @@
     "biosynthetic_chains": []
   },
 
+  "medicinal": {
+    "description": "Cross-cutting descriptor facet — camphoraceous + phenolic + cooling-mint pharmaceutical character; spans lavender + thyme + sage + basil + eucalyptus + clove + wintergreen clusters; methyl salicylate + l-menthol/menthone defining markers",
+    "expected_entry_count": 28,
+    "oil_cas": ["8000-48-4", "68917-75-9"],
+    "isolates": {
+      "119-36-8":  { "name": "Methyl Salicylate", "cid": "4133", "formula": "C8H8O3", "mw": 152.15, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [],
+    "excluded_cas_expected": {
+      "personal_care": ["546-80-5", "471-15-8", "8007-20-3"],
+      "flavor":        ["546-80-5"]
+    }
+  },
+
   "mimosa": {
     "description": "Acacia dealbata + Acacia farnesiana — yellow-pompom anisic-powdery floral classic; heliotropin + anisaldehyde driven; iconic Caron Farnesiana, Hermès Champs-Elysées, Frédéric Malle Une Fleur de Cassie cluster",
     "expected_entry_count": 4,
