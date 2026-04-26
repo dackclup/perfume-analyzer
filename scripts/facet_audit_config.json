@@ -361,8 +361,8 @@
   },
 
   "tobacco": {
-    "description": "Nicotiana tabacum absolute + coumarin/tonka anchor — dry wood Fougère base. Opens the smoky / balsamic cross-family cluster (+ styrallyl acetate sweet-tobacco modifier)",
-    "expected_entry_count": 11,
+    "description": "Nicotiana tabacum absolute + coumarin/tonka anchor — dry wood Fougère base + hay absolute clover-cross. Opens the smoky / balsamic cross-family cluster (+ styrallyl acetate sweet-tobacco modifier)",
+    "expected_entry_count": 12,
     "oil_cas": ["8037-19-2", "8046-22-8", "97722-12-8", "8016-63-5", "84775-83-7", "84775-71-3"],
     "isolates": {
       "91-64-5":    { "name": "Coumarin",       "cid": "323",     "formula": "C9H6O2",  "mw": 146.14, "ghs": ["GHS07"] },
@@ -660,6 +660,19 @@
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": ["97-53-0", "97-54-1"],
+    "biosynthetic_chains": []
+  },
+
+  "clover": {
+    "description": "Melilotus officinalis (sweet clover) + Hierochloe odorata (sweet grass) — coumarin-driven hay-meadow cluster; foundational classical perfumery base (Caron Pour Un Homme, Guerlain Mouchoir de Monsieur, YSL Pour Homme); cross-tags coumarin + tonka bean absolute",
+    "expected_entry_count": 4,
+    "oil_cas": ["84775-99-5", "91722-10-0", "8046-22-8"],
+    "isolates": {
+      "91-64-5": { "name": "Coumarin", "cid": "323", "formula": "C9H6O2", "mw": 146.14, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
 
