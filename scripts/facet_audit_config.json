@@ -4540,5 +4540,454 @@
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
+  },
+  "lemon": {
+    "description": "Citrus limon — sharp-zest cornerstone of Eau de Cologne (4711, Eau Impériale); defining 60-70% d-limonene + 5-15% β-pinene + 1-3% citral; phototoxic (Cat.5A=0.5%)",
+    "expected_entry_count": 8,
+    "oil_cas": [
+      "8008-56-8"
+    ],
+    "isolates": {
+      "5392-40-5": {
+        "name": "Citral",
+        "cid": "638011",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "141-27-5": {
+        "name": "Geranial",
+        "cid": "638011",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "106-26-3": {
+        "name": "Neral",
+        "cid": "643779",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "5989-27-5": {
+        "name": "d-Limonene",
+        "cid": "440917",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "127-91-3": {
+        "name": "β-Pinene",
+        "cid": "14896",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [
+      "5989-27-5",
+      "127-91-3"
+    ],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "orange": {
+    "description": "Citrus sinensis — sweet-juicy cornerstone; 90-95% d-limonene driven; functional perfumery workhorse + Eau de Cologne classical",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "8028-48-6"
+    ],
+    "isolates": {
+      "5989-27-5": {
+        "name": "d-Limonene",
+        "cid": "440917",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "5392-40-5": {
+        "name": "Citral",
+        "cid": "638011",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [
+      "5989-27-5"
+    ],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "mandarin": {
+    "description": "Citrus reticulata — soft fruity-citrus; defining methyl-N-methyl-anthranilate green-floral signature + 65-75% limonene; Italian green/red grades",
+    "expected_entry_count": 4,
+    "oil_cas": [
+      "8008-31-9"
+    ],
+    "isolates": {
+      "5989-27-5": {
+        "name": "d-Limonene",
+        "cid": "440917",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "134-20-3": {
+        "name": "Methyl Anthranilate",
+        "cid": "8635",
+        "formula": "C8H9NO2",
+        "mw": 151.16,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "5392-40-5": {
+        "name": "Citral",
+        "cid": "638011",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [
+      "5989-27-5"
+    ],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "grapefruit": {
+    "description": "Citrus paradisi — bitter-fresh citrus; defining nootkatone (~0.1-1%) + 1-p-menthene-8-thiol (ppb level); modern fougère cornerstone",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "8016-20-4"
+    ],
+    "isolates": {
+      "4674-50-4": {
+        "name": "Nootkatone",
+        "cid": "1268142",
+        "formula": "C15H22O",
+        "mw": 218.33,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "5989-27-5": {
+        "name": "d-Limonene",
+        "cid": "440917",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [
+      "5989-27-5"
+    ],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "lime": {
+    "description": "Citrus aurantifolia — sharp piney-citrus; defining 50% d-limonene + 5-15% β-pinene + 5-10% γ-terpinene + 1-3% terpinen-4-ol; expressed = STRONGLY phototoxic (Cat.5A=0.2%)",
+    "expected_entry_count": 7,
+    "oil_cas": [
+      "8008-26-2"
+    ],
+    "isolates": {
+      "5989-27-5": {
+        "name": "d-Limonene",
+        "cid": "440917",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "127-91-3": {
+        "name": "β-Pinene",
+        "cid": "14896",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "99-85-4": {
+        "name": "γ-Terpinene",
+        "cid": "7461",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "5392-40-5": {
+        "name": "Citral",
+        "cid": "638011",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [
+      "5989-27-5",
+      "127-91-3",
+      "99-85-4"
+    ],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "yuzu": {
+    "description": "Citrus junos — Japanese yuzu; complex floral-grapefruit-mandarin hybrid; defining 70% d-limonene + 10-15% γ-terpinene + 1-3% linalool; modern niche darling",
+    "expected_entry_count": 6,
+    "oil_cas": [
+      "84929-42-0"
+    ],
+    "isolates": {
+      "5989-27-5": {
+        "name": "d-Limonene",
+        "cid": "440917",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "99-85-4": {
+        "name": "γ-Terpinene",
+        "cid": "7461",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "127-91-3": {
+        "name": "β-Pinene",
+        "cid": "14896",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "80-56-8": {
+        "name": "α-Pinene",
+        "cid": "6654",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "5392-40-5": {
+        "name": "Citral",
+        "cid": "638011",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [
+      "5989-27-5",
+      "127-91-3",
+      "80-56-8",
+      "99-85-4"
+    ],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "petitgrain": {
+    "description": "Citrus aurantium leaf/twig — linalyl acetate 50% / linalool 25%; ≠ neroli (flower) + ≠ orange (fruit); iconic Eau de Cologne + classical fougère material",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8014-17-3"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "citrus": {
+    "description": "Cross-cutting parent descriptor — generic citrus character; covers bergamot/lemon/orange/mandarin/grapefruit/lime/yuzu/petitgrain + citral isomers + d-limonene + α/β-pinene + γ-terpinene + nootkatone + methyl anthranilate",
+    "expected_entry_count": 18,
+    "oil_cas": [
+      "8008-56-8",
+      "8028-48-6",
+      "8008-31-9",
+      "8016-20-4",
+      "8008-26-2",
+      "84929-42-0",
+      "8014-17-3",
+      "8007-75-8",
+      "89957-91-5"
+    ],
+    "isolates": {
+      "5392-40-5": {
+        "name": "Citral",
+        "cid": "638011",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "141-27-5": {
+        "name": "Geranial",
+        "cid": "638011",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "106-26-3": {
+        "name": "Neral",
+        "cid": "643779",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "5989-27-5": {
+        "name": "d-Limonene",
+        "cid": "440917",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "127-91-3": {
+        "name": "β-Pinene",
+        "cid": "14896",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "80-56-8": {
+        "name": "α-Pinene",
+        "cid": "6654",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "99-85-4": {
+        "name": "γ-Terpinene",
+        "cid": "7461",
+        "formula": "C10H16",
+        "mw": 136.23,
+        "ghs": [
+          "GHS02",
+          "GHS08",
+          "GHS09"
+        ]
+      },
+      "4674-50-4": {
+        "name": "Nootkatone",
+        "cid": "1268142",
+        "formula": "C15H22O",
+        "mw": 218.33,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "134-20-3": {
+        "name": "Methyl Anthranilate",
+        "cid": "8635",
+        "formula": "C8H9NO2",
+        "mw": 151.16,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [
+      "5989-27-5",
+      "80-56-8",
+      "127-91-3",
+      "99-85-4"
+    ],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
   }
 }
