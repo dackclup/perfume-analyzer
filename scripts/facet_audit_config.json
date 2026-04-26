@@ -637,6 +637,24 @@
     "biosynthetic_chains": []
   },
 
+  "parsley": {
+    "description": "Petroselinum crispum — 2-oil chemotype (seed = phenolic-ether apiole/myristicin spicy; leaf = green-fresh phellandrene/hexenol); Apiaceae cross-chemistry with celery + carrot + cilantro/coriander; cross-tags from existing α/β-phellandrene + myrcene + cis-3-hexenol + d-limonene",
+    "expected_entry_count": 9,
+    "oil_cas": ["8000-68-8", "84012-33-9"],
+    "isolates": {
+      "523-80-8":  { "name": "Apiole",      "cid": "10659", "formula": "C12H14O4", "mw": 222.24, "ghs": ["GHS06","GHS07","GHS08"] },
+      "607-91-0":  { "name": "Myristicin",  "cid": "4276",  "formula": "C11H12O3", "mw": 192.21, "ghs": ["GHS07","GHS08"] }
+    },
+    "ifra_phenolic": true,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [],
+    "excluded_cas_expected": {
+      "personal_care": ["523-80-8", "607-91-0"],
+      "flavor":        []
+    }
+  },
+
   "coriander": {
     "description": "Coriandrum sativum seed — linalool-rich spicy-fresh (≠ cilantro leaf); S-(+)-linalool cross-tag from lavender",
     "expected_entry_count": 2,
@@ -748,8 +766,8 @@
   },
 
   "green": {
-    "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal cross-tags + galbanum-cluster green entries",
-    "expected_entry_count": 13,
+    "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal cross-tags + galbanum-cluster green entries + parsley leaf",
+    "expected_entry_count": 14,
     "oil_cas": ["8023-91-4", "8024-08-6"],
     "isolates": {
       "928-96-1":   { "name": "cis-3-Hexenol",         "cid": "5281167", "formula": "C6H12O",  "mw": 100.16, "ghs": ["GHS07"] },
