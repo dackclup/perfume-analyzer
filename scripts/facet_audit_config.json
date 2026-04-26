@@ -661,6 +661,36 @@
     "biosynthetic_chains": []
   },
 
+  "violet": {
+    "description": "Viola odorata flower + ionone violet-accord cluster — α/β-ionone + methyl ionone isomers + α-isomethyl ionone (modern industry-standard) + orris butter + α-irone iris-cross",
+    "expected_entry_count": 6,
+    "oil_cas": ["8002-73-1", "127-51-5"],
+    "isolates": {
+      "79-69-6":   { "name": "alpha-Irone",                 "cid": "61692", "formula": "C14H22O", "mw": 206.32, "ghs": ["GHS07"] },
+      "127-41-3":  { "name": "alpha-Ionone",                "cid": "638014","formula": "C13H20O", "mw": 192.30, "ghs": ["GHS07"] },
+      "79-77-6":   { "name": "beta-Ionone",                 "cid": "638015","formula": "C13H20O", "mw": 192.30, "ghs": ["GHS07"] },
+      "127-43-5":  { "name": "Methyl Ionone (gamma-methyl)","cid": "8051",  "formula": "C14H22O", "mw": 206.32, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
+  "violet_leaf": {
+    "description": "Viola odorata leaf cluster — green-leafy chemistry distinct from violet flower; methyl heptine carbonate + triplal + (E,Z)-2,6-nonadien-1-ol metallic-cucumber-leaf accord",
+    "expected_entry_count": 3,
+    "oil_cas": ["8024-08-6"],
+    "isolates": {
+      "111-12-6":   { "name": "Methyl Heptine Carbonate", "cid": "61199", "formula": "C9H14O2", "mw": 154.21, "ghs": ["GHS07"] },
+      "68039-49-6": { "name": "Triplal",                  "cid": "87577", "formula": "C9H14O",  "mw": 138.21, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": ["111-12-6"],
+    "biosynthetic_chains": []
+  },
+
   "lovage": {
     "description": "Levisticum officinale — Apiaceae 'maggi-bouillon' meaty-savoury cluster; ligustilide-rich (30-70%) + sedanenolide + sedanonic anhydride + butylphthalide phthalide complex; α/β-pinene + α-phellandrene + d-limonene + myrcene Apiaceae cross-chemistry",
     "expected_entry_count": 16,
