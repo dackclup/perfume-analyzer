@@ -988,18 +988,74 @@
   },
 
   "mint": {
-    "description": "Mentha piperita + M. spicata — menthol/menthone + (R)-(-)-carvone cooling/sweet mint cluster (plus shared eucalyptol tag from cardamom/camphor)",
-    "expected_entry_count": 6,
-    "oil_cas": ["8006-90-4", "8008-79-5"],
+    "description": "Mentha spp. parent — peppermint + spearmint + cornmint + pennyroyal cluster; menthol/menthone + (R)-(-)-carvone + pulegone + menthofuran cooling/sweet/camphoraceous mint chemistry",
+    "expected_entry_count": 10,
+    "oil_cas": ["8006-90-4", "8008-79-5", "68917-18-0", "8007-44-1"],
     "isolates": {
       "2216-51-5":  { "name": "l-Menthol",       "cid": "16666",  "formula": "C10H20O", "mw": 156.27, "ghs": ["GHS07"] },
       "14073-97-3": { "name": "l-Menthone",      "cid": "26447",  "formula": "C10H18O", "mw": 154.25, "ghs": ["GHS07"] },
+      "6485-40-1":  { "name": "(R)-(-)-Carvone", "cid": "439570", "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS07"] },
+      "89-82-7":    { "name": "Pulegone",        "cid": "442495", "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS06","GHS07","GHS08"] },
+      "494-90-6":   { "name": "Menthofuran",     "cid": "22311",  "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS06","GHS07","GHS08"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [
+      { "precursor": "89-82-7",  "product": "494-90-6",   "reaction": "cytochrome P450 oxidation (pulegone → menthofuran)" },
+      { "precursor": "89-82-7",  "product": "14073-97-3", "reaction": "double-bond reduction (pulegone → menthone)" },
+      { "precursor": "14073-97-3", "product": "2216-51-5", "reaction": "ketone reduction (menthone → menthol)" }
+    ],
+    "excluded_cas_expected": {
+      "personal_care": ["89-82-7", "8007-44-1"],
+      "flavor":        ["89-82-7"]
+    }
+  },
+
+  "peppermint": {
+    "description": "Mentha × piperita-specific — peppermint oil + menthol/menthone/menthofuran + cornmint cross-tag (high-menthol chemotype)",
+    "expected_entry_count": 5,
+    "oil_cas": ["8006-90-4", "68917-18-0"],
+    "isolates": {
+      "2216-51-5":  { "name": "l-Menthol",    "cid": "16666", "formula": "C10H20O", "mw": 156.27, "ghs": ["GHS07"] },
+      "14073-97-3": { "name": "l-Menthone",   "cid": "26447", "formula": "C10H18O", "mw": 154.25, "ghs": ["GHS07"] },
+      "494-90-6":   { "name": "Menthofuran",  "cid": "22311", "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS06","GHS07","GHS08"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
+  "spearmint": {
+    "description": "Mentha spicata-specific — spearmint oil + (R)-(-)-carvone defining ~50-70%; lower menthol chemotype distinct from peppermint",
+    "expected_entry_count": 2,
+    "oil_cas": ["8008-79-5"],
+    "isolates": {
       "6485-40-1":  { "name": "(R)-(-)-Carvone", "cid": "439570", "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS07"] }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
+  },
+
+  "minty": {
+    "description": "Cross-cutting descriptor facet — minty olfactive character beyond Mentha genus; spans pulegone + menthofuran (mint family) + thujones (sage/wormwood) + verbenone (rosemary) + phellandrenes + methyl salicylate (wintergreen) + tea tree + cornmint cross",
+    "expected_entry_count": 13,
+    "oil_cas": ["68917-18-0", "8007-44-1"],
+    "isolates": {
+      "89-82-7":   { "name": "Pulegone",     "cid": "442495", "formula": "C10H16O", "mw": 152.23, "ghs": ["GHS06","GHS07","GHS08"] },
+      "494-90-6":  { "name": "Menthofuran",  "cid": "22311",  "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS06","GHS07","GHS08"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [],
+    "excluded_cas_expected": {
+      "personal_care": ["546-80-5", "471-15-8", "89-82-7", "8007-44-1"],
+      "flavor":        ["546-80-5", "89-82-7"]
+    }
   },
 
   "cinnamon": {
