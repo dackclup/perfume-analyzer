@@ -663,6 +663,20 @@
     "biosynthetic_chains": []
   },
 
+  "mimosa": {
+    "description": "Acacia dealbata + Acacia farnesiana — yellow-pompom anisic-powdery floral classic; heliotropin + anisaldehyde driven; iconic Caron Farnesiana, Hermès Champs-Elysées, Frédéric Malle Une Fleur de Cassie cluster",
+    "expected_entry_count": 4,
+    "oil_cas": ["8024-12-2", "8023-82-3"],
+    "isolates": {
+      "120-57-0": { "name": "Heliotropin",   "cid": "8189",  "formula": "C8H6O3",  "mw": 150.13, "ghs": ["GHS07"] },
+      "123-11-5": { "name": "Anisaldehyde",  "cid": "31244", "formula": "C8H8O2",  "mw": 136.15, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "carrot_seed": {
     "description": "Daucus carota — Apiaceae rooty-iris woody cluster; carotol + daucol + daucene + β-bisabolene sesquiterpene cluster; modern niche cornerstone (Hermès Eau d'Hermès) + iris-extender; α/β-pinene + sabinene + β-caryophyllene + geranyl acetate + d-limonene + myrcene + (E)-β-ocimene Apiaceae cross-chemistry",
     "expected_entry_count": 12,
