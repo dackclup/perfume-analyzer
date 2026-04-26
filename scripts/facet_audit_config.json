@@ -1829,7 +1829,7 @@
   },
   "amber": {
     "description": "Amber base accord — labdanum + benzoin + ambroxide trio + sclareolide/manool clary-sage diterpene precursors + davana oil/davanone fruity-amber cross",
-    "expected_entry_count": 7,
+    "expected_entry_count": 12,
     "oil_cas": [
       "8016-26-0",
       "9000-72-0"
@@ -2899,7 +2899,7 @@
   },
   "musk": {
     "description": "Synthetic white musks + natural ambrette — Galaxolide / Ethylene Brassylate / Exaltolide / Habanolide / Ambrette Seed",
-    "expected_entry_count": 6,
+    "expected_entry_count": 7,
     "oil_cas": [
       "8015-62-1",
       "111879-80-2"
@@ -4057,7 +4057,7 @@
   },
   "resin": {
     "description": "Cross-cutting descriptor — resinous-balsamic character; spans labdanum/frankincense/myrrh/galbanum cluster + Cambodian oud + elemicin",
-    "expected_entry_count": 8,
+    "expected_entry_count": 11,
     "oil_cas": [
       "8016-26-0",
       "8016-36-2",
@@ -5580,6 +5580,263 @@
         "cid": "240",
         "formula": "C7H6O",
         "mw": 106.12,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "benzoin": {
+    "description": "Styrax benzoin (Siam/Sumatra) — sweet vanillic-balsamic Amber fixative",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "9000-05-9"
+    ],
+    "isolates": {
+      "121-33-5": {
+        "name": "Vanillin",
+        "cid": "1183",
+        "formula": "C8H8O3",
+        "mw": 152.15,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "tolu_balsam": {
+    "description": "Myroxylon balsamum tolu — Latin-American cinnamic-balsamic",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "9000-64-0"
+    ],
+    "isolates": {
+      "121-33-5": {
+        "name": "Vanillin",
+        "cid": "1183",
+        "formula": "C8H8O3",
+        "mw": 152.15,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "104-55-2": {
+        "name": "Cinnamaldehyde",
+        "cid": "637511",
+        "formula": "C9H8O",
+        "mw": 132.16,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [
+      "104-55-2"
+    ],
+    "biosynthetic_chains": []
+  },
+  "peru_balsam": {
+    "description": "Myroxylon balsamum pereirae — PROHIBITED in EU cosmetics (skin sensitizer); reference material only",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "8007-00-9"
+    ],
+    "isolates": {
+      "121-33-5": {
+        "name": "Vanillin",
+        "cid": "1183",
+        "formula": "C8H8O3",
+        "mw": 152.15,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "104-55-2": {
+        "name": "Cinnamaldehyde",
+        "cid": "637511",
+        "formula": "C9H8O",
+        "mw": 132.16,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [
+      "104-55-2"
+    ],
+    "biosynthetic_chains": [],
+    "excluded_cas_expected": {
+      "personal_care": [
+        "8007-00-9"
+      ],
+      "flavor": []
+    }
+  },
+  "styrax": {
+    "description": "Liquidambar (Levant storax / American sweetgum) — cinnamic-resinous balsamic",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "8046-19-3"
+    ],
+    "isolates": {
+      "104-55-2": {
+        "name": "Cinnamaldehyde",
+        "cid": "637511",
+        "formula": "C9H8O",
+        "mw": 132.16,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [
+      "104-55-2"
+    ],
+    "biosynthetic_chains": []
+  },
+  "elemi": {
+    "description": "Canarium luzonicum (Manila elemi) — fresh lemony-resinous; elemicin-rich",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "8023-89-0"
+    ],
+    "isolates": {
+      "487-11-6": {
+        "name": "Elemicin",
+        "cid": "10248",
+        "formula": "C12H16O3",
+        "mw": 208.25,
+        "ghs": [
+          "GHS07",
+          "GHS08"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "opoponax": {
+    "description": "Commiphora guidotti (sweet myrrh / bisabol myrrh) — sweet-balsamic warm-amber",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "9000-78-6",
+      "8016-37-3"
+    ],
+    "isolates": {
+      "121-33-5": {
+        "name": "Vanillin",
+        "cid": "1183",
+        "formula": "C8H8O3",
+        "mw": 152.15,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "ambrox": {
+    "description": "Ambroxide (Cetalox / Ambrox / Ambermor) — synthetic ambergris substitute; modern amber wave cornerstone",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "6790-58-5": {
+        "name": "Ambroxide",
+        "cid": "443061",
+        "formula": "C16H28O",
+        "mw": 236.39,
+        "ghs": []
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "ambroxan": {
+    "description": "Ambroxan trade-name alias — same molecule as Ambroxide/Cetalox",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "6790-58-5": {
+        "name": "Ambroxide",
+        "cid": "443061",
+        "formula": "C16H28O",
+        "mw": 236.39,
+        "ghs": []
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "ambrette": {
+    "description": "Hibiscus abelmoschus (ambrette seed) + ambrettolide synthetic macrolactone — clean-musk cornerstone",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "8015-62-1"
+    ],
+    "isolates": {
+      "28645-51-4": {
+        "name": "Ambrettolide",
+        "cid": "5364319",
+        "formula": "C16H28O2",
+        "mw": 252.39,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "balsam": {
+    "description": "Cross-cutting balsamic descriptor — covers benzoin/tolu/peru/styrax/opoponax + labdanum + frankincense + myrrh",
+    "expected_entry_count": 8,
+    "oil_cas": [
+      "9000-05-9",
+      "9000-64-0",
+      "8007-00-9",
+      "8046-19-3",
+      "9000-78-6"
+    ],
+    "isolates": {
+      "121-33-5": {
+        "name": "Vanillin",
+        "cid": "1183",
+        "formula": "C8H8O3",
+        "mw": 152.15,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "104-55-2": {
+        "name": "Cinnamaldehyde",
+        "cid": "637511",
+        "formula": "C9H8O",
+        "mw": 132.16,
         "ghs": [
           "GHS07"
         ]
