@@ -651,9 +651,9 @@
   },
 
   "carrot_seed": {
-    "description": "Daucus carota — Apiaceae rooty-iris woody cluster; carotol + daucol sesquiterpenoid alcohols; modern niche cornerstone (Hermès Eau d'Hermès) + iris-extender",
-    "expected_entry_count": 6,
-    "oil_cas": ["8015-88-1", "465-28-1", "887-73-0"],
+    "description": "Daucus carota — Apiaceae rooty-iris woody cluster; carotol + daucol + daucene + β-bisabolene sesquiterpene cluster; modern niche cornerstone (Hermès Eau d'Hermès) + iris-extender; α/β-pinene + sabinene + β-caryophyllene + geranyl acetate + d-limonene + myrcene + (E)-β-ocimene Apiaceae cross-chemistry",
+    "expected_entry_count": 12,
+    "oil_cas": ["8015-88-1", "465-28-1", "887-73-0", "24524-58-1", "495-61-4"],
     "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
