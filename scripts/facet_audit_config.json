@@ -637,6 +637,17 @@
     "biosynthetic_chains": []
   },
 
+  "carrot_seed": {
+    "description": "Daucus carota — Apiaceae rooty-iris woody cluster; carotol + daucol sesquiterpenoid alcohols; modern niche cornerstone (Hermès Eau d'Hermès) + iris-extender",
+    "expected_entry_count": 6,
+    "oil_cas": ["8015-88-1", "465-28-1", "887-73-0"],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "lovage": {
     "description": "Levisticum officinale — Apiaceae 'maggi-bouillon' meaty-savoury cluster; ligustilide-rich (30-70%) + sedanenolide + butylphthalide phthalide complex; cross-chemistry with celery",
     "expected_entry_count": 10,
@@ -737,8 +748,8 @@
   },
 
   "iris": {
-    "description": "Iris pallida orris cluster — α-irone + α-ionone + methyl ionone powdery-violet base",
-    "expected_entry_count": 4,
+    "description": "Iris pallida orris cluster — α-irone + α-ionone + methyl ionone powdery-violet base + carotol cross-tag",
+    "expected_entry_count": 5,
     "oil_cas": ["8002-73-1"],
     "isolates": {
       "79-69-6":  { "name": "alpha-Irone",     "cid": "61692",  "formula": "C14H22O", "mw": 206.32, "ghs": ["GHS07"] },
