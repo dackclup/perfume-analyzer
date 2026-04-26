@@ -624,8 +624,8 @@
   },
 
   "celery": {
-    "description": "Apium graveolens — phthalide-driven vegetal-herbal cluster (3-butylphthalide + ligustilide + butylidene phthalide); d-limonene (~60%) cross-tag",
-    "expected_entry_count": 5,
+    "description": "Apium graveolens — phthalide-driven vegetal-herbal cluster (3-butylphthalide + ligustilide + butylidene phthalide); d-limonene (~60%) cross-tag + lovage cross-tags",
+    "expected_entry_count": 7,
     "oil_cas": ["8015-90-5", "4431-01-0", "17369-59-4"],
     "isolates": {
       "6066-49-5":  { "name": "3-Butylphthalide", "cid": "61042",  "formula": "C12H14O2", "mw": 190.24, "ghs": ["GHS07"] },
@@ -633,6 +633,20 @@
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": ["5989-27-5"],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
+  "lovage": {
+    "description": "Levisticum officinale — Apiaceae 'maggi-bouillon' meaty-savoury cluster; ligustilide-rich (30-70%) + sedanenolide + butylphthalide phthalide complex; cross-chemistry with celery",
+    "expected_entry_count": 10,
+    "oil_cas": ["8016-31-7", "84776-65-8", "62006-39-7", "4431-01-0", "17369-59-4"],
+    "isolates": {
+      "6066-49-5":  { "name": "3-Butylphthalide",  "cid": "61042",  "formula": "C12H14O2", "mw": 190.24, "ghs": ["GHS07"] },
+      "80-26-2":    { "name": "Terpinyl Acetate",  "cid": "111037", "formula": "C12H20O2", "mw": 196.29, "ghs": ["GHS09"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
@@ -766,8 +780,8 @@
   },
 
   "green": {
-    "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal cross-tags + galbanum-cluster green entries + parsley leaf + 1,3,8-p-menthatriene",
-    "expected_entry_count": 15,
+    "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal cross-tags + galbanum-cluster green entries + parsley leaf + 1,3,8-p-menthatriene + lovage cluster",
+    "expected_entry_count": 18,
     "oil_cas": ["8023-91-4", "8024-08-6"],
     "isolates": {
       "928-96-1":   { "name": "cis-3-Hexenol",         "cid": "5281167", "formula": "C6H12O",  "mw": 100.16, "ghs": ["GHS07"] },
