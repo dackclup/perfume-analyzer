@@ -665,8 +665,8 @@
 
   "medicinal": {
     "description": "Cross-cutting descriptor facet — camphoraceous + phenolic + cooling-mint pharmaceutical character; spans lavender + thyme + sage + basil + eucalyptus + clove + wintergreen clusters; methyl salicylate + l-menthol/menthone defining markers",
-    "expected_entry_count": 28,
-    "oil_cas": ["8000-48-4", "68917-75-9"],
+    "expected_entry_count": 32,
+    "oil_cas": ["8000-48-4", "68917-75-9", "68647-73-4", "8014-68-4", "8008-98-8"],
     "isolates": {
       "119-36-8":  { "name": "Methyl Salicylate", "cid": "4133", "formula": "C8H8O3", "mw": 152.15, "ghs": ["GHS07"] }
     },
