@@ -637,6 +637,19 @@
     "biosynthetic_chains": []
   },
 
+  "dill": {
+    "description": "Anethum graveolens — Apiaceae 2-chemotype cluster (seed = (S)-(+)-carvone + dill apiole spicy; weed = α-phellandrene + dill ether green); Mediterranean culinary aromatic; cross-Apiaceae chemistry",
+    "expected_entry_count": 9,
+    "oil_cas": ["8006-75-5", "90028-03-8", "484-31-1", "74410-10-9"],
+    "isolates": {
+      "2244-16-8":  { "name": "(S)-(+)-Carvone", "cid": "16724",  "formula": "C10H14O", "mw": 150.22, "ghs": ["GHS07"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+
   "carrot_seed": {
     "description": "Daucus carota — Apiaceae rooty-iris woody cluster; carotol + daucol sesquiterpenoid alcohols; modern niche cornerstone (Hermès Eau d'Hermès) + iris-extender",
     "expected_entry_count": 6,
@@ -791,8 +804,8 @@
   },
 
   "green": {
-    "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal cross-tags + galbanum-cluster green entries + parsley leaf + 1,3,8-p-menthatriene + lovage cluster",
-    "expected_entry_count": 18,
+    "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal cross-tags + galbanum-cluster green entries + parsley leaf + 1,3,8-p-menthatriene + lovage + dill weed/ether cross-tags",
+    "expected_entry_count": 20,
     "oil_cas": ["8023-91-4", "8024-08-6"],
     "isolates": {
       "928-96-1":   { "name": "cis-3-Hexenol",         "cid": "5281167", "formula": "C6H12O",  "mw": 100.16, "ghs": ["GHS07"] },
