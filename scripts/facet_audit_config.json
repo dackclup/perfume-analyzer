@@ -2496,7 +2496,7 @@
   },
   "gourmand": {
     "description": "Coffee + cocoa + maltol + ethyl maltol + furaneol — Edwards Soft Amber gourmand family",
-    "expected_entry_count": 5,
+    "expected_entry_count": 6,
     "oil_cas": [
       "8001-67-0",
       "8002-31-1"
@@ -3914,7 +3914,7 @@
   },
   "honey": {
     "description": "Cross-cutting descriptor — honey-floral-sweet character; spans rose absolute + cassie absolute + phenylethyl alcohol + α-bisabolol",
-    "expected_entry_count": 7,
+    "expected_entry_count": 8,
     "oil_cas": [
       "84604-12-6",
       "8023-82-3"
@@ -5407,7 +5407,7 @@
   },
   "heliotrope": {
     "description": "Heliotropium accord — synthetic cherry-pie / almond-vanilla floral; heliotropin + vanillin + benzyl alcohol",
-    "expected_entry_count": 3,
+    "expected_entry_count": 4,
     "oil_cas": [
       "8024-30-4"
     ],
@@ -5468,6 +5468,126 @@
     "sensitizer_required_cas": [
       "104-55-2"
     ],
+    "biosynthetic_chains": []
+  },
+  "vanillin": {
+    "description": "Vanillin synthetic — defining vanilla cornerstone; ~2% of vanilla bean naturally + industrial Reimer-Tiemann synthesis",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "121-33-5": {
+        "name": "Vanillin",
+        "cid": "1183",
+        "formula": "C8H8O3",
+        "mw": 152.15,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "chocolate": {
+    "description": "Chocolate accord cluster — cocoa absolute + vanillin gourmand-amber sweet-roasted",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "8002-31-1"
+    ],
+    "isolates": {
+      "121-33-5": {
+        "name": "Vanillin",
+        "cid": "1183",
+        "formula": "C8H8O3",
+        "mw": 152.15,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "cocoa": {
+    "description": "Theobroma cacao — bitter dark-chocolate gourmand cluster",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8002-31-1"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "coffee": {
+    "description": "Coffea arabica — espresso-roasted gourmand cluster",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8001-67-0"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "almond": {
+    "description": "Almond accord cluster — bitter almond oil + benzaldehyde + heliotrope cherry-pie marzipan-floral",
+    "expected_entry_count": 5,
+    "oil_cas": [
+      "8013-76-1"
+    ],
+    "isolates": {
+      "100-52-7": {
+        "name": "Benzaldehyde",
+        "cid": "240",
+        "formula": "C7H6O",
+        "mw": 106.12,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "beeswax": {
+    "description": "Cera alba — beeswax absolute honey-waxy fixative; iconic Soft Amber niche material",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8012-89-3"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "cherry": {
+    "description": "Cherry accord — benzaldehyde + heliotropin synthetic cherry-pie",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "100-52-7": {
+        "name": "Benzaldehyde",
+        "cid": "240",
+        "formula": "C7H6O",
+        "mw": 106.12,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   }
 }
