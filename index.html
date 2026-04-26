@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v104"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v105"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v104";
+const DATA_VERSION = "2026-04-25-rebuild-v105";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1834,7 +1834,7 @@ const FACET_TAGS = {
   green:'green',
   leaf:'green', grass:'green', cut_grass:'green', stem:'green',
   violet_leaf:'green', tomato_leaf:'green', galbanum:'green', cucumber:'green',
-  tea:'green', green_tea:'green', black_tea:'green', mate:'green',
+  tea:'green', green_tea:'green', black_tea:'green', white_tea:'green', mate:'green',
   fern:'green', nettle:'green',
 
   // ── FRUITY ──
@@ -2025,7 +2025,7 @@ const FACET_GROUPS = [
   { label:'Green',        facets:[
     'green','leaf','grass','cut_grass','stem','violet_leaf','tomato_leaf','galbanum','cucumber',
     'apple',
-    'tea','green_tea','black_tea','mate',
+    'tea','green_tea','black_tea','white_tea','mate',
     'fern','nettle'] },
   { label:'Fruity',       facets:[
     'fruity',
