@@ -361,8 +361,8 @@
   },
 
   "tobacco": {
-    "description": "Nicotiana tabacum absolute + coumarin/tonka anchor — dry wood Fougère base + hay absolute clover-cross. Opens the smoky / balsamic cross-family cluster (+ styrallyl acetate sweet-tobacco modifier)",
-    "expected_entry_count": 12,
+    "description": "Nicotiana tabacum absolute + coumarin/tonka anchor — dry wood Fougère base + hay/liatrix clover-cross. Opens the smoky / balsamic cross-family cluster (+ styrallyl acetate sweet-tobacco modifier)",
+    "expected_entry_count": 13,
     "oil_cas": ["8037-19-2", "8046-22-8", "97722-12-8", "8016-63-5", "84775-83-7", "84775-71-3"],
     "isolates": {
       "91-64-5":    { "name": "Coumarin",       "cid": "323",     "formula": "C9H6O2",  "mw": 146.14, "ghs": ["GHS07"] },
@@ -664,16 +664,19 @@
   },
 
   "clover": {
-    "description": "Melilotus officinalis (sweet clover) + Hierochloe odorata (sweet grass) — coumarin-driven hay-meadow cluster; foundational classical perfumery base (Caron Pour Un Homme, Guerlain Mouchoir de Monsieur, YSL Pour Homme); cross-tags coumarin + tonka bean absolute",
-    "expected_entry_count": 4,
-    "oil_cas": ["84775-99-5", "91722-10-0", "8046-22-8"],
+    "description": "Melilotus officinalis (sweet clover) + Hierochloe odorata (sweet grass) + Trilisa odoratissima (deer's tongue) — coumarin-driven hay-meadow cluster; foundational classical perfumery base (Caron Pour Un Homme, Guerlain Mouchoir de Monsieur, YSL Pour Homme); cross-tags coumarin + tonka bean absolute + dihydrocoumarin synthetic",
+    "expected_entry_count": 6,
+    "oil_cas": ["84775-99-5", "91722-10-0", "84649-77-4", "8046-22-8"],
     "isolates": {
-      "91-64-5": { "name": "Coumarin", "cid": "323", "formula": "C9H6O2", "mw": 146.14, "ghs": ["GHS07"] }
+      "91-64-5":   { "name": "Coumarin",        "cid": "323",  "formula": "C9H6O2",  "mw": 146.14, "ghs": ["GHS07"] },
+      "119-84-6":  { "name": "Dihydrocoumarin", "cid": "7152", "formula": "C9H8O2",  "mw": 148.16, "ghs": ["GHS07"] }
     },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
-    "biosynthetic_chains": []
+    "biosynthetic_chains": [
+      { "precursor": "91-64-5", "product": "119-84-6", "reaction": "catalytic hydrogenation (3,4-double bond reduction)" }
+    ]
   },
 
   "medicinal": {
@@ -1042,8 +1045,8 @@
   },
 
   "vanilla": {
-    "description": "Vanilla planifolia + vanillin / ethyl vanillin / heliotropin + balsamic fixatives. Opens the gourmand family primary home",
-    "expected_entry_count": 7,
+    "description": "Vanilla planifolia + vanillin / ethyl vanillin / heliotropin + balsamic fixatives + liatrix vanilla-leaf cross. Opens the gourmand family primary home",
+    "expected_entry_count": 8,
     "oil_cas": ["8024-06-4"],
     "isolates": {
       "121-33-5":  { "name": "Vanillin",         "cid": "1183",  "formula": "C8H8O3",  "mw": 152.15, "ghs": ["GHS07"] },
