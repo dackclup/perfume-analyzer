@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v106"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v107"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v106";
+const DATA_VERSION = "2026-04-25-rebuild-v107";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -2007,7 +2007,7 @@ const FACET_KEYWORDS = {
 // completeness; it renders no chips today but will accept future floral/
 // resinous hybrid tokens.
 const FACET_GROUPS = [
-  { label:'Aromatic',     facets:[
+  { label:'Aromatic Fougère', facets:[
     'lavender','lavandin','sage','thyme','rosemary','basil','tarragon','fennel','chamomile','artemisia','celery','parsley',
     'lovage','carrot_seed','dill',
     'medicinal','clover',
@@ -2055,7 +2055,7 @@ const FACET_GROUPS = [
   { label:'Woody Amber',  facets:[
     'civet','castoreum','skin','sweaty','muscone',
     'animalic','musk','indole','skatole','leather'] },
-  { label:'Woody',        facets:[
+  { label:'Woods',        facets:[
     'cedar','sandalwood','patchouli','vetiver','guaiac','oud','cypress','fir','pine','birch',
     'cedrol','coniferous','dry','hinoki','teak','rosewood','pepperwood','cashmeran'] },
   { label:'Mossy Wood',   facets:[
