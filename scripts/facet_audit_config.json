@@ -650,6 +650,19 @@
     "biosynthetic_chains": []
   },
 
+  "carnation": {
+    "description": "Dianthus caryophyllus — eugenol-driven floral-spice classic (Caron Bellodgia signature); natural absolute + methyl isoeugenol synthetic + cross-tags to eugenol/isoeugenol/eugenyl acetate/methyl eugenol/β-caryophyllene/benzyl benzoate",
+    "expected_entry_count": 8,
+    "oil_cas": ["8000-67-7"],
+    "isolates": {
+      "93-16-3":  { "name": "Methyl Isoeugenol", "cid": "7128", "formula": "C11H14O2", "mw": 178.23, "ghs": ["GHS07","GHS08"] }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": ["97-53-0", "97-54-1"],
+    "biosynthetic_chains": []
+  },
+
   "carrot_seed": {
     "description": "Daucus carota — Apiaceae rooty-iris woody cluster; carotol + daucol + daucene + β-bisabolene sesquiterpene cluster; modern niche cornerstone (Hermès Eau d'Hermès) + iris-extender; α/β-pinene + sabinene + β-caryophyllene + geranyl acetate + d-limonene + myrcene + (E)-β-ocimene Apiaceae cross-chemistry",
     "expected_entry_count": 12,
