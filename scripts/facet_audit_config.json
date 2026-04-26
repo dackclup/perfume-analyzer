@@ -3914,7 +3914,7 @@
   },
   "honey": {
     "description": "Cross-cutting descriptor — honey-floral-sweet character; spans rose absolute + cassie absolute + phenylethyl alcohol + α-bisabolol",
-    "expected_entry_count": 6,
+    "expected_entry_count": 7,
     "oil_cas": [
       "84604-12-6",
       "8023-82-3"
@@ -4874,7 +4874,7 @@
   },
   "citrus": {
     "description": "Cross-cutting parent descriptor — generic citrus character; covers bergamot/lemon/orange/mandarin/grapefruit/lime/yuzu/petitgrain + citral isomers + d-limonene + α/β-pinene + γ-terpinene + nootkatone + methyl anthranilate",
-    "expected_entry_count": 18,
+    "expected_entry_count": 19,
     "oil_cas": [
       "8008-56-8",
       "8028-48-6",
@@ -5356,6 +5356,118 @@
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "aldehyde": {
+    "description": "Aldehydic Soft Floral cluster — C-10/C-11/C-12 MNA aliphatic aldehydes; defining Chanel No. 5 (1921) classical aldehydic-floral genre",
+    "expected_entry_count": 4,
+    "oil_cas": [],
+    "isolates": {
+      "110-41-8": {
+        "name": "Aldehyde C-12 MNA",
+        "cid": "8126",
+        "formula": "C12H24O",
+        "mw": 184.32,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "112-31-2": {
+        "name": "Aldehyde C-10",
+        "cid": "8175",
+        "formula": "C10H20O",
+        "mw": 156.27,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "112-44-7": {
+        "name": "Aldehyde C-11",
+        "cid": "8186",
+        "formula": "C11H22O",
+        "mw": 170.29,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "120-57-0": {
+        "name": "Heliotropin",
+        "cid": "8189",
+        "formula": "C8H6O3",
+        "mw": 150.13,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "heliotrope": {
+    "description": "Heliotropium accord — synthetic cherry-pie / almond-vanilla floral; heliotropin + vanillin + benzyl alcohol",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "8024-30-4"
+    ],
+    "isolates": {
+      "120-57-0": {
+        "name": "Heliotropin",
+        "cid": "8189",
+        "formula": "C8H6O3",
+        "mw": 150.13,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "121-33-5": {
+        "name": "Vanillin",
+        "cid": "1183",
+        "formula": "C8H8O3",
+        "mw": 152.15,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "immortelle": {
+    "description": "Helichrysum italicum (everlasting flower / curry plant) — honey-curry-fenugreek Floral Amber cornerstone",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "90045-56-0"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "cinnamic_floral": {
+    "description": "Cinnamic Floral Amber descriptor — cinnamaldehyde-driven cinnamic-floral cluster (Hermès Calèche, Estée Lauder Cinnabar)",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "104-55-2": {
+        "name": "Cinnamaldehyde",
+        "cid": "637511",
+        "formula": "C9H8O",
+        "mw": 132.16,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [
+      "104-55-2"
+    ],
     "biosynthetic_chains": []
   }
 }
