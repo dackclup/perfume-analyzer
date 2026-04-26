@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v103"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v104"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v103";
+const DATA_VERSION = "2026-04-25-rebuild-v104";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1813,7 +1813,7 @@ const FACET_TAGS = {
   medicinal:'herbal', clover:'herbal',
   mint:'herbal', minty:'herbal', peppermint:'herbal', spearmint:'herbal',
   camphor:'camphoraceous', eucalyptus:'camphoraceous',
-  cooling:'camphoraceous', cool:'camphoraceous', crisp:'camphoraceous',
+  cooling:'camphoraceous', crisp:'camphoraceous',
   fougere:'herbal', coumarin:'herbal', geosmin:'herbal',
 
   // ── CITRUS ──
@@ -1832,7 +1832,7 @@ const FACET_TAGS = {
 
   // ── GREEN ──
   green:'green',
-  leaf:'green', leafy:'green', grass:'green', cut_grass:'green', stem:'green',
+  leaf:'green', grass:'green', cut_grass:'green', stem:'green',
   violet_leaf:'green', tomato_leaf:'green', galbanum:'green', cucumber:'green',
   tea:'green', green_tea:'green', black_tea:'green', mate:'green',
   fern:'green', nettle:'green',
@@ -1880,7 +1880,7 @@ const FACET_TAGS = {
   benzoin:'balsamic', styrax:'balsamic',
   frankincense:'resinous', myrrh:'resinous', elemi:'resinous',
   labdanum:'resinous', olibanum:'resinous', opoponax:'resinous',
-  galbanum_resin:'resinous', incense:'resinous', resin:'resinous',
+  incense:'resinous', resin:'resinous',
   cinnamon:'spicy', clove:'spicy', pepper:'spicy', nutmeg:'spicy',
   cardamom:'spicy', saffron:'spicy', ginger:'spicy', anise:'spicy',
   coriander:'spicy', licorice:'spicy', cumin:'spicy', turmeric:'spicy',
@@ -1892,7 +1892,7 @@ const FACET_TAGS = {
 
   // ── WOODS ──
   cedar:'woody', sandalwood:'woody', patchouli:'woody', vetiver:'woody',
-  guaiac:'woody', oud:'woody', agarwood:'woody', cypress:'woody',
+  guaiac:'woody', oud:'woody', cypress:'woody',
   fir:'woody', pine:'woody', birch:'woody', cedrol:'woody',
   coniferous:'woody', dry:'woody', hinoki:'woody', teak:'woody',
   rosewood:'woody', pepperwood:'woody', cashmeran:'woody',
@@ -2012,7 +2012,7 @@ const FACET_GROUPS = [
     'lovage','carrot_seed','dill',
     'medicinal','clover',
     'mint','minty','peppermint','spearmint',
-    'camphor','eucalyptus','cooling','cool','crisp',
+    'camphor','eucalyptus','cooling','crisp',
     'fougere','coumarin','geosmin'] },
   { label:'Citrus',       facets:[
     'bergamot','lemon','orange','mandarin','grapefruit','lime','yuzu','tangerine','petitgrain','neroli',
@@ -2023,7 +2023,7 @@ const FACET_GROUPS = [
     'clean','soapy','metallic','laundry',
     'aquatic','petrichor'] },
   { label:'Green',        facets:[
-    'green','leaf','leafy','grass','cut_grass','stem','violet_leaf','tomato_leaf','galbanum','cucumber',
+    'green','leaf','grass','cut_grass','stem','violet_leaf','tomato_leaf','galbanum','cucumber',
     'apple',
     'tea','green_tea','black_tea','mate',
     'fern','nettle'] },
@@ -2049,14 +2049,14 @@ const FACET_GROUPS = [
   { label:'Amber',        facets:[
     'ambergris','ambrox','ambroxan','ambrette','mineral',
     'balsam','tolu_balsam','peru_balsam','benzoin','styrax',
-    'frankincense','myrrh','elemi','labdanum','olibanum','opoponax','galbanum_resin',
+    'frankincense','myrrh','elemi','labdanum','olibanum','opoponax',
     'cinnamon','clove','pepper','nutmeg','cardamom','saffron','ginger','anise','coriander','licorice',
     'incense','resin','amber','cumin','turmeric','fenugreek'] },
   { label:'Woody Amber',  facets:[
     'civet','castoreum','skin','sweaty','muscone',
     'animalic','musk','indole','skatole','leather'] },
   { label:'Woody',        facets:[
-    'cedar','sandalwood','patchouli','vetiver','guaiac','oud','agarwood','cypress','fir','pine','birch',
+    'cedar','sandalwood','patchouli','vetiver','guaiac','oud','cypress','fir','pine','birch',
     'cedrol','coniferous','dry','hinoki','teak','rosewood','pepperwood','cashmeran'] },
   { label:'Mossy Wood',   facets:[
     'oakmoss','earthy','moss','lichens','forest','wet_earth','mushroom'] },
