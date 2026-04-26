@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v107"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v108"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v107";
+const DATA_VERSION = "2026-04-25-rebuild-v108";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -2015,6 +2015,7 @@ const FACET_GROUPS = [
     'camphor','eucalyptus','cooling','crisp',
     'fougere','coumarin','geosmin'] },
   { label:'Citrus',       facets:[
+    'citrus',
     'bergamot','lemon','orange','mandarin','grapefruit','lime','yuzu','tangerine','petitgrain','neroli',
     'verbena','lemon_verbena','litsea_cubeba','cedrat','citron','combava','kaffir_lime'] },
   { label:'Water',        facets:[
