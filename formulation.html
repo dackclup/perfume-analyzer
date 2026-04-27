@@ -578,9 +578,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
     </div>
     <div style="display:flex;gap:4px;margin-top:4px">
       <button class="btn" id="btnImport" style="flex:1;font-size:0.75em;white-space:nowrap">Import</button>
-      <button class="btn" id="btnLoadJSON" style="flex:1;font-size:0.75em;white-space:nowrap">JSON</button>
       <button class="btn" id="btnCompare" style="flex:1;font-size:0.75em;white-space:nowrap">Compare</button>
-      <input type="file" id="jsonFileInput" accept=".json" style="display:none">
     </div>
   </div>
 
@@ -3299,62 +3297,6 @@ document.getElementById('btnNew').addEventListener('click', () => {
   carrierMaterials.length = 0; lockedCarriers.clear(); lockedMaterials.clear();
   document.getElementById('savedFormulas').value = '';
   formulation.onChange();
-});
-
-// ===== Load JSON File =====
-document.getElementById('btnLoadJSON').addEventListener('click', () => {
-  document.getElementById('jsonFileInput').click();
-});
-
-document.getElementById('jsonFileInput').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      if (!data.materials || !Array.isArray(data.materials)) {
-        alert('Invalid JSON: no materials array found.'); return;
-      }
-      formulation.materials = [];
-      carrierMaterials.length = 0; lockedCarriers.clear(); lockedMaterials.clear();
-      for (const m of data.materials) {
-        if (!m.cas || !m.name) continue;
-        const dbEntry = DB[m.cas];
-        const matData = dbEntry ? {
-          cas: dbEntry.cas, name: dbEntry.name, note: dbEntry.note,
-          odor_type: dbEntry.odor?.type || null,
-          odor_strength: dbEntry.odor?.strength || null,
-          blends_with: dbEntry.blends_with || [],
-          usage_levels: dbEntry.safety?.usage || null,
-        } : (m.data || {});
-        formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct || 10, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: matData });
-      }
-      // Restore carriers if present
-      if (Array.isArray(data.carriers)) {
-        for (const c of data.carriers) {
-          if (c.cas && c.name) carrierMaterials.push({ cas: c.cas, name: c.name, pct: c.pct || 0 });
-        }
-      }
-      if (data.meta) {
-        if (data.meta.fragrancePct) {
-          document.getElementById('fragPct').value = data.meta.fragrancePct;
-          document.getElementById('fragPctOut').textContent = data.meta.fragrancePct + '%';
-          updatePresetHighlight();
-        }
-        if (data.meta.temperatureC) {
-          document.getElementById('tempSlider').value = data.meta.temperatureC;
-          document.getElementById('tempOut').innerHTML = data.meta.temperatureC + ' &deg;C';
-        }
-      }
-      formulation.onChange();
-      showToast({ message: 'Loaded ' + formulation.materials.length + ' material(s) from JSON', variant: 'success' });
-    } catch (err) {
-      alert('Failed to parse JSON: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
 });
 
 // ===== Multi-Category IFRA Check =====
