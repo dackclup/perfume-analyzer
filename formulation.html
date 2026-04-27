@@ -747,7 +747,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
              transitional — they bridge two adjacent main families. -->
         <select id="briefFamily">
           <optgroup label="Fresh">
-            <option value="aromatic_fougere">Aromatic</option>
+            <option value="aromatic_fougere">Aromatic Fougère</option>
             <option value="citrus">Citrus</option>
             <option value="water">Water</option>
             <option value="green">Green</option>
@@ -764,9 +764,9 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
             <option value="woody_amber">Woody Amber (transitional)</option>
           </optgroup>
           <optgroup label="Woody">
-            <option value="dry_woods">Dry Wood</option>
-            <option value="mossy_woods">Mossy Wood</option>
-            <option value="woods">Woody</option>
+            <option value="dry_woods">Dry Woods</option>
+            <option value="mossy_woods">Mossy Woods</option>
+            <option value="woods">Woods</option>
           </optgroup>
         </select>
       </div>
@@ -3740,7 +3740,7 @@ function renderWheelTab() {
   // Override the auto-derived title-case so the wheel reads "Aromatic"
   // (single word) — the internal id stays aromatic_fougere for legacy
   // data paths that still reference the Fougère lineage.
-  const LABEL_OVERRIDES = { aromatic_fougere: 'Aromatic', woods: 'Woody', mossy_woods: 'Mossy Wood', dry_woods: 'Dry Wood' };
+  const LABEL_OVERRIDES = { aromatic_fougere: 'Aromatic Fougère', woods: 'Woods', mossy_woods: 'Mossy Woods', dry_woods: 'Dry Woods' };
   const prettyLabel = id => LABEL_OVERRIDES[id] ||
     id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
