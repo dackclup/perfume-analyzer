@@ -4665,7 +4665,7 @@
   },
   "cooling": {
     "description": "Cross-cutting cooling descriptor — TRPM8 receptor agonists (l-menthol + WS-3 + isopulegol + menthyl acetate + eucalyptol + others); functional cooling effect",
-    "expected_entry_count": 13,
+    "expected_entry_count": 15,
     "oil_cas": [],
     "isolates": {
       "89-79-2": {
@@ -4726,6 +4726,22 @@
         "formula": "C10H20O2",
         "mw": 172.27,
         "ghs": []
+      },
+      "7416-35-5": {
+        "name": "Frescolat ML",
+        "cid": "16213039",
+        "formula": "C13H24O3",
+        "mw": 228.33,
+        "ghs": []
+      },
+      "68489-14-5": {
+        "name": "WS-12",
+        "cid": "11132306",
+        "formula": "C18H27NO2",
+        "mw": 289.42,
+        "ghs": [
+          "GHS07"
+        ]
       }
     },
     "ifra_phenolic": false,
