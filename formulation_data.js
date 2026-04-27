@@ -1651,6 +1651,7 @@ const FRAGRANCE_WHEEL = {
     // Floral quadrant migrations
     rose:         'floral',
     jasmine:      'floral',
+    floral_fresh: 'floral',
     aldehydic:    'soft_floral',
     powdery:      'soft_floral',
     muguet:       'soft_floral',
