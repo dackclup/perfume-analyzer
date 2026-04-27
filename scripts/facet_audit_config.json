@@ -2496,7 +2496,7 @@
   },
   "gourmand": {
     "description": "Coffee + cocoa + maltol + ethyl maltol + furaneol — Edwards Soft Amber gourmand family",
-    "expected_entry_count": 6,
+    "expected_entry_count": 7,
     "oil_cas": [
       "8001-67-0",
       "8002-31-1"
@@ -2706,7 +2706,7 @@
   },
   "green": {
     "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal + galbanum cluster + parsley leaf + 1,3,8-p-menthatriene + lovage + dill weed/ether + Camellia sinensis tea cluster (white/green/black + theaspirane)",
-    "expected_entry_count": 26,
+    "expected_entry_count": 27,
     "oil_cas": [
       "8023-91-4",
       "8024-08-6"
@@ -2899,7 +2899,7 @@
   },
   "musk": {
     "description": "Synthetic white musks + natural ambrette — Galaxolide / Ethylene Brassylate / Exaltolide / Habanolide / Ambrette Seed",
-    "expected_entry_count": 7,
+    "expected_entry_count": 8,
     "oil_cas": [
       "8015-62-1",
       "111879-80-2"
@@ -2939,7 +2939,7 @@
   },
   "aquatic": {
     "description": "Modern aquatic/marine accord — Calone 1951 + Helional + Floralozone + Melonal + Dihydromyrcenol",
-    "expected_entry_count": 6,
+    "expected_entry_count": 7,
     "oil_cas": [],
     "isolates": {
       "28940-11-6": {
@@ -3581,7 +3581,7 @@
   },
   "earthy": {
     "description": "Cross-cutting descriptor — earthy-rooty character; spans patchouli + vetiver + oakmoss + carrot seed (carotol/daucol) + linalool oxides + borneol",
-    "expected_entry_count": 11,
+    "expected_entry_count": 12,
     "oil_cas": [
       "8014-09-3",
       "41429-52-1",
@@ -4045,7 +4045,7 @@
   },
   "caramel": {
     "description": "Cross-cutting descriptor — caramel-burnt-sugar character; defining gourmand pyranone class — maltol + ethyl maltol (cotton candy/Angel) + furaneol (strawberry-pineapple)",
-    "expected_entry_count": 3,
+    "expected_entry_count": 4,
     "oil_cas": [],
     "isolates": {
       "118-71-8": {
@@ -4569,7 +4569,7 @@
   },
   "animalic": {
     "description": "Cross-cutting descriptor — generic animalic-warm character; macrocyclic musks (Exaltolide) + Ambrette + Hindi oud; parent facet for civet/castoreum/musk sub-clusters",
-    "expected_entry_count": 5,
+    "expected_entry_count": 8,
     "oil_cas": [
       "8015-62-1",
       "94350-09-1"
@@ -4590,7 +4590,7 @@
   },
   "indole": {
     "description": "Indole-class animalic descriptor — defining jasmine/orange flower fecal-floral character; indole isolate + jasmine/neroli absolutes (intrinsic ~2-5% indole content)",
-    "expected_entry_count": 4,
+    "expected_entry_count": 5,
     "oil_cas": [
       "8022-96-6",
       "8030-28-2"
@@ -6260,6 +6260,272 @@
         "mw": 154.25,
         "ghs": [
           "GHS02"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "geosmin": {
+    "description": "Geosmin (CAS 16423-19-1) — defining 'petrichor / wet-soil' molecule; Streptomyces bacterial volatile; threshold ~5 ppt; iconic earthy marker",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "16423-19-1": {
+        "name": "Geosmin",
+        "cid": "29746",
+        "formula": "C12H22O",
+        "mw": 182.3,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "petrichor": {
+    "description": "Petrichor descriptor — geosmin + Earth-after-rain accord",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "16423-19-1": {
+        "name": "Geosmin",
+        "cid": "29746",
+        "formula": "C12H22O",
+        "mw": 182.3,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "wet_earth": {
+    "description": "Wet earth descriptor — geosmin-class earthy material",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "16423-19-1": {
+        "name": "Geosmin",
+        "cid": "29746",
+        "formula": "C12H22O",
+        "mw": 182.3,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "cucumber": {
+    "description": "Cucumber descriptor — (E,Z)-2,6-nonadienal cornerstone",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "557-48-2": {
+        "name": "Cucumber Aldehyde",
+        "cid": "643842",
+        "formula": "C9H14O",
+        "mw": 138.21,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "cedrol": {
+    "description": "Cedrol — defining cedar sesquiterpene alcohol; ~30-50% of Atlas/Virginia cedar oils",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "77-53-2": {
+        "name": "Cedrol",
+        "cid": "65355",
+        "formula": "C15H26O",
+        "mw": 222.37,
+        "ghs": []
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "muscone": {
+    "description": "Muscone — natural musk macrocyclic ketone (R-(-)-isomer); cruelty-free synthetic",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "541-91-3": {
+        "name": "Muscone",
+        "cid": "10947",
+        "formula": "C16H30O",
+        "mw": 238.41,
+        "ghs": []
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "skatole": {
+    "description": "Skatole / 3-methylindole — fecal-floral indolic; defining jasmine/narcissus/civet animalic depth",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "83-34-1": {
+        "name": "Skatole",
+        "cid": "6736",
+        "formula": "C9H9N",
+        "mw": 131.17,
+        "ghs": [
+          "GHS06",
+          "GHS09"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "fenugreek": {
+    "description": "Fenugreek descriptor — sotolon-driven curry-maple-fenugreek",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "28664-35-9": {
+        "name": "Sotolon",
+        "cid": "736728",
+        "formula": "C6H8O3",
+        "mw": 128.13,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "maple": {
+    "description": "Maple syrup descriptor — sotolon-driven",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "28664-35-9": {
+        "name": "Sotolon",
+        "cid": "736728",
+        "formula": "C6H8O3",
+        "mw": 128.13,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "ozone": {
+    "description": "Ozone descriptor — Helional + Floralozone synthetic ozone-rain accord",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "1205-17-0": {
+        "name": "Helional",
+        "cid": "15606",
+        "formula": "C11H12O3",
+        "mw": 192.21,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "sea": {
+    "description": "Sea descriptor — Calone 1951 + marine accord",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "28940-11-6": {
+        "name": "Calone 1951",
+        "cid": "91721",
+        "formula": "C11H12O3",
+        "mw": 192.21,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "seaweed": {
+    "description": "Seaweed descriptor — Calone-class iodine-marine",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "28940-11-6": {
+        "name": "Calone 1951",
+        "cid": "91721",
+        "formula": "C11H12O3",
+        "mw": 192.21,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "grass": {
+    "description": "Grass descriptor — cis-3-hexenol/acetate green leaf",
+    "expected_entry_count": 2,
+    "oil_cas": [],
+    "isolates": {
+      "928-96-1": {
+        "name": "cis-3-Hexenol",
+        "cid": "5281167",
+        "formula": "C6H12O",
+        "mw": 100.16,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "3681-71-8": {
+        "name": "cis-3-Hexenyl Acetate",
+        "cid": "5363388",
+        "formula": "C8H14O2",
+        "mw": 142.2,
+        "ghs": [
+          "GHS07"
         ]
       }
     },
