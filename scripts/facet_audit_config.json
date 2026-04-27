@@ -4767,7 +4767,7 @@
   },
   "geosmin": {
     "description": "Geosmin (CAS 16423-19-1) — defining 'petrichor / wet-soil' molecule; Streptomyces bacterial volatile; threshold ~5 ppt; iconic earthy marker",
-    "expected_entry_count": 1,
+    "expected_entry_count": 3,
     "oil_cas": [],
     "isolates": {
       "16423-19-1": {
@@ -4775,6 +4775,24 @@
         "cid": "29746",
         "formula": "C12H22O",
         "mw": 182.3,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "2371-42-8": {
+        "name": "2-Methylisoborneol",
+        "cid": "142315",
+        "formula": "C11H20O",
+        "mw": 168.28,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "3391-86-4": {
+        "name": "1-Octen-3-ol",
+        "cid": "18827",
+        "formula": "C8H16O",
+        "mw": 128.21,
         "ghs": [
           "GHS07"
         ]
