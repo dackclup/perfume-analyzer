@@ -4717,7 +4717,7 @@
   },
   "mandarin": {
     "description": "Citrus reticulata — soft fruity-citrus; defining methyl-N-methyl-anthranilate green-floral signature + 65-75% limonene; Italian green/red grades",
-    "expected_entry_count": 4,
+    "expected_entry_count": 5,
     "oil_cas": [
       "8008-31-9"
     ],
@@ -4945,7 +4945,7 @@
   },
   "citrus": {
     "description": "Cross-cutting parent descriptor — generic citrus character; covers bergamot/lemon/orange/mandarin/grapefruit/lime/yuzu/petitgrain + citral isomers + d-limonene + α/β-pinene + γ-terpinene + nootkatone + methyl anthranilate",
-    "expected_entry_count": 20,
+    "expected_entry_count": 24,
     "oil_cas": [
       "8008-56-8",
       "8028-48-6",
@@ -6524,6 +6524,88 @@
         "cid": "5363388",
         "formula": "C8H14O2",
         "mw": 142.2,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "tangerine": {
+    "description": "Citrus reticulata var. tangerina — soft sweet citrus; Florida/Dancy variety",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8016-85-1"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "cedrat": {
+    "description": "Citrus medica cedrat — large citron variety; classical French/Italian Riviera Cologne",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "92346-86-4"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "citron": {
+    "description": "Citrus medica (Etrog/Buddha hand) — historical parent of lemon/lime",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "92346-86-4"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "kaffir_lime": {
+    "description": "Citrus hystrix (kaffir/makrut lime) — Thai citronellal-rich",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "91771-32-7"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "combava": {
+    "description": "Combava (kaffir lime French name) — Citrus hystrix alias",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "91771-32-7"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "litsea_cubeba": {
+    "description": "Litsea cubeba (May Chang) — citral-rich Asian source",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "68855-99-2"
+    ],
+    "isolates": {
+      "5392-40-5": {
+        "name": "Citral",
+        "cid": "638011",
+        "formula": "C10H16O",
+        "mw": 152.23,
         "ghs": [
           "GHS07"
         ]
