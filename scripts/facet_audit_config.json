@@ -5366,16 +5366,6 @@
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
   },
-  "fougere": {
-    "description": "Fougère descriptor — coumarin+lavender+oakmoss classical fern accord",
-    "expected_entry_count": 0,
-    "oil_cas": [],
-    "isolates": {},
-    "ifra_phenolic": false,
-    "peroxide_required_cas": [],
-    "sensitizer_required_cas": [],
-    "biosynthetic_chains": []
-  },
   "fern": {
     "description": "Fern descriptor — fougère cornerstone (coumarin)",
     "expected_entry_count": 0,
