@@ -2496,7 +2496,7 @@
   },
   "gourmand": {
     "description": "Coffee + cocoa + maltol + ethyl maltol + furaneol — Edwards Soft Amber gourmand family",
-    "expected_entry_count": 8,
+    "expected_entry_count": 12,
     "oil_cas": [
       "8001-67-0",
       "8002-31-1"
@@ -2537,7 +2537,7 @@
   },
   "fruity": {
     "description": "Fruity base — damascones + β-ionone + γ-nonalactone + raspberry ketone + furaneol + Roman chamomile angelate esters + Cape chamomile + davana oil + davanone fruity-amber cross-tags",
-    "expected_entry_count": 22,
+    "expected_entry_count": 29,
     "oil_cas": [],
     "isolates": {
       "43052-87-5": {
@@ -6043,7 +6043,7 @@
   },
   "tropical": {
     "description": "Cross-cutting tropical-fruit descriptor — covers mango/pineapple/lychee/coconut/passion-fruit/papaya class accords",
-    "expected_entry_count": 6,
+    "expected_entry_count": 7,
     "oil_cas": [
       "8024-09-7",
       "85085-30-9"
@@ -6429,8 +6429,10 @@
   },
   "maple": {
     "description": "Maple syrup descriptor — sotolon-driven",
-    "expected_entry_count": 1,
-    "oil_cas": [],
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "999900-13-1"
+    ],
     "isolates": {
       "28664-35-9": {
         "name": "Sotolon",
@@ -6681,6 +6683,162 @@
     "expected_entry_count": 1,
     "oil_cas": [
       "84775-37-1"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "pear": {
+    "description": "Pear accord — synthetic juicy-fresh pear",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "84649-57-0"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "banana": {
+    "description": "Banana accord — isoamyl acetate-driven synthetic",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "999900-01-7"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "grape": {
+    "description": "Grape accord — methyl anthranilate-driven synthetic",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "999900-02-4"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "passion_fruit": {
+    "description": "Passion fruit accord — sulfurous-tropical synthetic",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "999900-03-1"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "pomegranate": {
+    "description": "Pomegranate accord — sweet-tart synthetic",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "999900-04-8"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "rhubarb": {
+    "description": "Rhubarb accord — green-tart stem synthetic",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "999900-05-5"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "quince": {
+    "description": "Quince accord — pear-rose hybrid synthetic",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "999900-06-2"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "orchid": {
+    "description": "Orchid accord — synthetic exotic-tropical floral",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "999900-08-6"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "wisteria": {
+    "description": "Wisteria accord — synthetic violet-grape floral",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "999900-09-3"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "heather": {
+    "description": "Heather accord — synthetic Scottish-moor floral-honey",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "999900-10-0"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "praline": {
+    "description": "Praline accord — caramelized-almond gourmand",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "999900-11-7"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "marshmallow": {
+    "description": "Marshmallow accord — fluffy vanilla gourmand",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "999900-12-4"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "custard": {
+    "description": "Custard accord — vanilla-egg-yolk gourmand",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "999900-13-1"
     ],
     "isolates": {},
     "ifra_phenolic": false,
