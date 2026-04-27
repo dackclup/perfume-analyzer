@@ -167,7 +167,7 @@
   },
   "sage": {
     "description": "Salvia spp. — sclareol + thujone + sclareolide/manool diterpene amber-precursor cluster + linalyl acetate (clary marker) + 1,8-cineole + sabinyl acetate (Spanish sage marker) cross-tags",
-    "expected_entry_count": 9,
+    "expected_entry_count": 10,
     "oil_cas": [
       "8016-63-5",
       "84775-83-7",
@@ -492,7 +492,7 @@
   },
   "bergamot": {
     "description": "Citrus bergamia — cold-pressed peel oil + furanocoumarin + linalyl/terpinyl ester cluster",
-    "expected_entry_count": 3,
+    "expected_entry_count": 4,
     "oil_cas": [
       "8007-75-8",
       "89957-91-5"
@@ -678,7 +678,7 @@
   },
   "anise": {
     "description": "Anethole-dominated herbal-spicy cluster — Pimpinella anisum (true anise) + Illicium verum (star anise) + cross-tagged anethole materials from fennel / tarragon / basil",
-    "expected_entry_count": 1,
+    "expected_entry_count": 4,
     "oil_cas": [
       "8007-70-3",
       "84650-59-9",
@@ -1009,7 +1009,7 @@
   },
   "neroli": {
     "description": "Citrus aurantium var. amara — Neroli Oil (distilled flower) + Petitgrain (leaf) + Orange Flower Absolute + Methyl Anthranilate + Nerolidol. Bridge between citrus and floral families",
-    "expected_entry_count": 1,
+    "expected_entry_count": 3,
     "oil_cas": [
       "8016-38-4",
       "8014-17-3",
@@ -1348,7 +1348,7 @@
   },
   "chamomile": {
     "description": "4-species coverage: Chamaemelum nobile (Roman) + Matricaria recutita (German) + Ormenis multicaulis (Wild Moroccan) + Eriocephalus punctulatus (Cape) — angelate ester suite + α-bisabolol + chamazulene + bisabolol oxides A/B + Artemisia arborescens (blue chemotype cross-tag)",
-    "expected_entry_count": 11,
+    "expected_entry_count": 12,
     "oil_cas": [
       "8015-92-7",
       "8002-66-2",
@@ -1510,7 +1510,7 @@
   },
   "dill": {
     "description": "Anethum graveolens — Apiaceae 2-chemotype cluster (seed = (S)-(+)-carvone + dill apiole spicy; weed = α-phellandrene + dill ether green); Carum carvi (caraway) cross-genus S-carvone sibling; Mediterranean culinary aromatic; cross-Apiaceae with parsley apiole/myristicin",
-    "expected_entry_count": 4,
+    "expected_entry_count": 7,
     "oil_cas": [
       "8006-75-5",
       "90028-03-8",
@@ -1651,7 +1651,7 @@
   },
   "carrot_seed": {
     "description": "Daucus carota — Apiaceae rooty-iris woody cluster; carotol + daucol + daucene + β-bisabolene sesquiterpene cluster; modern niche cornerstone (Hermès Eau d'Hermès) + iris-extender; α/β-pinene + sabinene + β-caryophyllene + geranyl acetate + d-limonene + myrcene + (E)-β-ocimene Apiaceae cross-chemistry",
-    "expected_entry_count": 2,
+    "expected_entry_count": 7,
     "oil_cas": [
       "8015-88-1",
       "465-28-1",
@@ -2256,7 +2256,7 @@
   },
   "mint": {
     "description": "Mentha spp. parent — peppermint + spearmint + cornmint + pennyroyal cluster; menthol/menthone + (R)-(-)-carvone + pulegone + menthofuran cooling/sweet/camphoraceous mint chemistry",
-    "expected_entry_count": 7,
+    "expected_entry_count": 13,
     "oil_cas": [
       "8006-90-4",
       "8008-79-5",
@@ -2332,7 +2332,7 @@
   },
   "peppermint": {
     "description": "Mentha × piperita-specific — peppermint oil + menthol/menthone/menthofuran + cornmint cross-tag (high-menthol chemotype)",
-    "expected_entry_count": 3,
+    "expected_entry_count": 6,
     "oil_cas": [
       "8006-90-4",
       "68917-18-0"
@@ -2366,7 +2366,7 @@
   },
   "spearmint": {
     "description": "Mentha spicata-specific — spearmint oil + (R)-(-)-carvone defining ~50-70%; lower menthol chemotype distinct from peppermint",
-    "expected_entry_count": 0,
+    "expected_entry_count": 2,
     "oil_cas": [
       "8008-79-5"
     ],
@@ -2378,7 +2378,7 @@
   },
   "minty": {
     "description": "Cross-cutting descriptor facet — minty olfactive character beyond Mentha genus; spans pulegone + menthofuran (mint family) + thujones (sage/wormwood) + verbenone (rosemary) + phellandrenes + methyl salicylate (wintergreen) + tea tree + cornmint cross",
-    "expected_entry_count": 18,
+    "expected_entry_count": 24,
     "oil_cas": [
       "68917-18-0",
       "8007-44-1"
@@ -2933,7 +2933,7 @@
   },
   "coumarin": {
     "description": "Cross-cutting descriptor — coumarin-class molecules + coumarin-rich naturals; spans tonka/sweet-clover/hay/liatrix absolutes + coumarin/dihydrocoumarin synthetics + bergapten + lavender/lavandin absolutes",
-    "expected_entry_count": 6,
+    "expected_entry_count": 7,
     "oil_cas": [
       "97722-12-8",
       "93455-96-0",
@@ -3042,7 +3042,7 @@
   },
   "orange_blossom": {
     "description": "Citrus aurantium flower cluster — neroli + orange flower absolute + methyl anthranilate; Floral Amber sub-family transition material",
-    "expected_entry_count": 0,
+    "expected_entry_count": 1,
     "oil_cas": [
       "8016-38-4",
       "8030-28-2"
@@ -3169,19 +3169,9 @@
   },
   "hyacinth": {
     "description": "Hyacinthus orientalis accord — green-floral ozonic; cinnamyl alcohol + supporting markers; mostly synthetic accord (natural hyacinth absolute heavily restricted)",
-    "expected_entry_count": 1,
+    "expected_entry_count": 0,
     "oil_cas": [],
-    "isolates": {
-      "104-54-1": {
-        "name": "Cinnamyl Alcohol",
-        "cid": "5315892",
-        "formula": "C9H10O",
-        "mw": 134.18,
-        "ghs": [
-          "GHS07"
-        ]
-      }
-    },
+    "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
@@ -4040,7 +4030,7 @@
   },
   "heliotrope": {
     "description": "Heliotropium accord — synthetic cherry-pie / almond-vanilla floral; heliotropin + vanillin + benzyl alcohol",
-    "expected_entry_count": 1,
+    "expected_entry_count": 2,
     "oil_cas": [
       "8024-30-4"
     ],
@@ -4064,7 +4054,7 @@
   },
   "cinnamic_floral": {
     "description": "Cinnamic Floral Amber descriptor — cinnamaldehyde-driven cinnamic-floral cluster (Hermès Calèche, Estée Lauder Cinnabar)",
-    "expected_entry_count": 0,
+    "expected_entry_count": 2,
     "oil_cas": [],
     "isolates": {},
     "ifra_phenolic": false,
@@ -4350,7 +4340,7 @@
   },
   "balsam": {
     "description": "Cross-cutting balsamic descriptor — covers benzoin/tolu/peru/styrax/opoponax + labdanum + frankincense + myrrh",
-    "expected_entry_count": 7,
+    "expected_entry_count": 8,
     "oil_cas": [
       "9000-05-9",
       "9000-64-0",
@@ -4661,7 +4651,7 @@
   },
   "cooling": {
     "description": "Cross-cutting cooling descriptor — TRPM8 receptor agonists (l-menthol + WS-3 + isopulegol + menthyl acetate + eucalyptol + others); functional cooling effect",
-    "expected_entry_count": 6,
+    "expected_entry_count": 9,
     "oil_cas": [],
     "isolates": {
       "89-79-2": {
