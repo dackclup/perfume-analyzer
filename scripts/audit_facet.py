@@ -424,13 +424,23 @@ def probe_chemistry(db, facet_cfg, facet_entries):
                 out.append(mk("WARN", "P-smiles-formula-consistency", "chemistry",
                               f"SMILES gives formula {actual_formula}, stored {stored_formula!r}",
                               e["name"]))
-            # InChIKey consistency (WARN — same reasoning as formula)
+            # InChIKey consistency (WARN — only flag when SKELETON HASH
+            # differs, i.e., first 14 chars. Stereo-suffix-only mismatches
+            # are downgraded to INFO since the molecule structure is still
+            # correct, just stereo-specificity differs.)
             if stored_ik:
                 actual_ik = rdi.MolToInchiKey(mol)
                 if actual_ik != stored_ik:
-                    out.append(mk("WARN", "P-smiles-inchikey-consistency", "chemistry",
-                                  f"SMILES gives InChIKey {actual_ik}, stored {stored_ik}",
-                                  e["name"]))
+                    actual_skel = actual_ik.split("-")[0]
+                    stored_skel = stored_ik.split("-")[0]
+                    if actual_skel != stored_skel:
+                        out.append(mk("WARN", "P-smiles-inchikey-consistency", "chemistry",
+                                      f"SMILES gives InChIKey {actual_ik}, stored {stored_ik}",
+                                      e["name"]))
+                    else:
+                        out.append(mk("INFO", "P-smiles-stereo-mismatch", "chemistry",
+                                      f"stereo-suffix only: SMILES gives {actual_ik}, stored {stored_ik}",
+                                      e["name"]))
     except ImportError:
         pass  # RDKit not installed — skip structural consistency checks
 

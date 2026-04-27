@@ -1063,7 +1063,7 @@
     "isolates": {
       "77-53-2": {
         "name": "Cedrol",
-        "cid": "65355",
+        "cid": "65575",
         "formula": "C15H26O",
         "mw": 222.37,
         "ghs": []
@@ -1222,7 +1222,7 @@
       },
       "475-20-7": {
         "name": "Longifolene",
-        "cid": "442348",
+        "cid": "1796220",
         "formula": "C15H24",
         "mw": 204.35,
         "ghs": [
@@ -1681,8 +1681,8 @@
     ],
     "isolates": {
       "79-69-6": {
-        "name": "alpha-Irone",
-        "cid": "61692",
+        "name": "α-Irone",
+        "cid": "5371002",
         "formula": "C14H22O",
         "mw": 206.32,
         "ghs": [
@@ -2228,9 +2228,9 @@
     "isolates": {
       "28940-11-6": {
         "name": "Calone 1951",
-        "cid": "91721",
-        "formula": "C11H12O3",
-        "mw": 192.21,
+        "cid": "120101",
+        "formula": "C10H10O3",
+        "mw": 178.19,
         "ghs": [
           "GHS07"
         ]
@@ -2527,7 +2527,7 @@
     "isolates": {
       "5986-55-0": {
         "name": "Patchoulol",
-        "cid": "521903",
+        "cid": "10955174",
         "formula": "C15H26O",
         "mw": 222.37,
         "ghs": []
@@ -2549,14 +2549,14 @@
     "isolates": {
       "115-71-9": {
         "name": "α-Santalol",
-        "cid": "91732",
+        "cid": "11085337",
         "formula": "C15H24O",
         "mw": 220.35,
         "ghs": []
       },
       "77-42-9": {
         "name": "β-Santalol",
-        "cid": "11166891",
+        "cid": "6857681",
         "formula": "C15H24O",
         "mw": 220.35,
         "ghs": []
@@ -2766,7 +2766,7 @@
       },
       "475-20-7": {
         "name": "Longifolene",
-        "cid": "442348",
+        "cid": "1796220",
         "formula": "C15H24",
         "mw": 204.35,
         "ghs": [
@@ -3449,9 +3449,9 @@
     "isolates": {
       "28940-11-6": {
         "name": "Calone 1951",
-        "cid": "91721",
-        "formula": "C11H12O3",
-        "mw": 192.21,
+        "cid": "120101",
+        "formula": "C10H10O3",
+        "mw": 178.19,
         "ghs": [
           "GHS07"
         ]
@@ -4906,7 +4906,7 @@
     "isolates": {
       "557-48-2": {
         "name": "Cucumber Aldehyde",
-        "cid": "643842",
+        "cid": "11196",
         "formula": "C9H14O",
         "mw": 138.21,
         "ghs": [
@@ -4926,7 +4926,7 @@
     "isolates": {
       "77-53-2": {
         "name": "Cedrol",
-        "cid": "65355",
+        "cid": "65575",
         "formula": "C15H26O",
         "mw": 222.37,
         "ghs": []
@@ -5037,9 +5037,9 @@
     "isolates": {
       "28940-11-6": {
         "name": "Calone 1951",
-        "cid": "91721",
-        "formula": "C11H12O3",
-        "mw": 192.21,
+        "cid": "120101",
+        "formula": "C10H10O3",
+        "mw": 178.19,
         "ghs": [
           "GHS07"
         ]
@@ -5057,9 +5057,9 @@
     "isolates": {
       "28940-11-6": {
         "name": "Calone 1951",
-        "cid": "91721",
-        "formula": "C11H12O3",
-        "mw": 192.21,
+        "cid": "120101",
+        "formula": "C10H10O3",
+        "mw": 178.19,
         "ghs": [
           "GHS07"
         ]
@@ -5413,9 +5413,9 @@
       },
       "28940-11-6": {
         "name": "Calone 1951",
-        "cid": "91721",
-        "formula": "C11H12O3",
-        "mw": 192.21,
+        "cid": "120101",
+        "formula": "C10H10O3",
+        "mw": 178.19,
         "ghs": [
           "GHS07"
         ]
@@ -5451,9 +5451,9 @@
       },
       "28940-11-6": {
         "name": "Calone 1951",
-        "cid": "91721",
-        "formula": "C11H12O3",
-        "mw": 192.21,
+        "cid": "120101",
+        "formula": "C10H10O3",
+        "mw": 178.19,
         "ghs": [
           "GHS07"
         ]
