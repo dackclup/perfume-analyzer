@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v124"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v125"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v124";
+const DATA_VERSION = "2026-04-25-rebuild-v125";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1712,14 +1712,14 @@ const SUB_FAMILY_TO_LEGACY = {
   green:            new Set(['green']),
   fruity:           new Set(['fruity', 'lactonic']),
   floral:           new Set(['floral', 'floral_fresh']),
-  soft_floral:      new Set(['aldehydic', 'powdery', 'soft_floral']),
+  soft_floral:      new Set(['aldehydic', 'powdery', 'soft_floral', 'musk']),
   floral_amber:     new Set(['floral_amber']),
-  soft_amber:       new Set(['sweet', 'gourmand', 'musk']),
+  soft_amber:       new Set(['sweet', 'gourmand']),
   amber:            new Set(['amber', 'balsamic', 'resinous', 'spicy']),
-  woody_amber:      new Set(['animalic', 'woody_amber']),
+  woody_amber:      new Set(['animalic', 'woody_amber', 'leather']),
   woods:            new Set(['woody']),
   mossy_woods:      new Set(['mossy']),
-  dry_woods:        new Set(['leather', 'smoky']),
+  dry_woods:        new Set(['smoky']),
 };
 
 // ── Edwards 2021 Main Family axis (4 buckets) ──────────────────────

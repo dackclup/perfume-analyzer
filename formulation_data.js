@@ -1663,15 +1663,15 @@ const FRAGRANCE_WHEEL = {
     gourmand:     'soft_amber',
     vanilla:      'soft_amber',
     sweet:        'soft_amber',
-    musk:         'soft_amber',
+    musk:         'soft_floral',
     // Woody quadrant migrations
     woody:        'woods',
     mossy:        'mossy_woods',
     earthy:       'mossy_woods',
     animalic:     'woody_amber',
     leather:      'woody_amber',
-    smoky:        'woody_amber',
-    tobacco:      'woody_amber',
+    smoky:        'dry_woods',
+    tobacco:      'dry_woods',
   },
 };
 
