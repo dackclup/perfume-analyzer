@@ -2986,7 +2986,7 @@
   },
   "mint": {
     "description": "Mentha spp. parent — peppermint + spearmint + cornmint + pennyroyal cluster; menthol/menthone + (R)-(-)-carvone + pulegone + menthofuran cooling/sweet/camphoraceous mint chemistry",
-    "expected_entry_count": 10,
+    "expected_entry_count": 12,
     "oil_cas": [
       "8006-90-4",
       "8008-79-5",
@@ -3042,6 +3042,24 @@
           "GHS07",
           "GHS08"
         ]
+      },
+      "2623-23-6": {
+        "name": "L-Menthyl Acetate",
+        "cid": "27867",
+        "formula": "C12H22O2",
+        "mw": 198.3,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "89-79-2": {
+        "name": "Iso-pulegol",
+        "cid": "442502",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
       }
     },
     "ifra_phenolic": false,
@@ -3062,6 +3080,11 @@
         "precursor": "14073-97-3",
         "product": "2216-51-5",
         "reaction": "ketone reduction (menthone → menthol)"
+      },
+      {
+        "precursor": "89-82-7",
+        "product": "89-79-2",
+        "reaction": "pulegone → iso-pulegol (allylic ketone reduction)"
       }
     ],
     "excluded_cas_expected": {
@@ -3076,7 +3099,7 @@
   },
   "peppermint": {
     "description": "Mentha × piperita-specific — peppermint oil + menthol/menthone/menthofuran + cornmint cross-tag (high-menthol chemotype)",
-    "expected_entry_count": 5,
+    "expected_entry_count": 6,
     "oil_cas": [
       "8006-90-4",
       "68917-18-0"
@@ -3110,6 +3133,15 @@
           "GHS07",
           "GHS08"
         ]
+      },
+      "2623-23-6": {
+        "name": "L-Menthyl Acetate",
+        "cid": "27867",
+        "formula": "C12H22O2",
+        "mw": 198.3,
+        "ghs": [
+          "GHS07"
+        ]
       }
     },
     "ifra_phenolic": false,
@@ -3141,7 +3173,7 @@
   },
   "minty": {
     "description": "Cross-cutting descriptor facet — minty olfactive character beyond Mentha genus; spans pulegone + menthofuran (mint family) + thujones (sage/wormwood) + verbenone (rosemary) + phellandrenes + methyl salicylate (wintergreen) + tea tree + cornmint cross",
-    "expected_entry_count": 13,
+    "expected_entry_count": 16,
     "oil_cas": [
       "68917-18-0",
       "8007-44-1"
@@ -3167,6 +3199,24 @@
           "GHS06",
           "GHS07",
           "GHS08"
+        ]
+      },
+      "89-79-2": {
+        "name": "Iso-pulegol",
+        "cid": "442502",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "39711-79-0": {
+        "name": "WS-3",
+        "cid": "3036",
+        "formula": "C13H25NO",
+        "mw": 211.34,
+        "ghs": [
+          "GHS07"
         ]
       }
     },
@@ -6136,6 +6186,62 @@
       "85117-03-9"
     ],
     "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "cooling": {
+    "description": "Cross-cutting cooling descriptor — TRPM8 receptor agonists (l-menthol + WS-3 + isopulegol + menthyl acetate + eucalyptol + others); functional cooling effect",
+    "expected_entry_count": 9,
+    "oil_cas": [],
+    "isolates": {
+      "2216-51-5": {
+        "name": "l-Menthol",
+        "cid": "16666",
+        "formula": "C10H20O",
+        "mw": 156.27,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "39711-79-0": {
+        "name": "WS-3",
+        "cid": "3036",
+        "formula": "C13H25NO",
+        "mw": 211.34,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "89-79-2": {
+        "name": "Iso-pulegol",
+        "cid": "442502",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "2623-23-6": {
+        "name": "L-Menthyl Acetate",
+        "cid": "27867",
+        "formula": "C12H22O2",
+        "mw": 198.3,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "470-82-6": {
+        "name": "Eucalyptol",
+        "cid": "2758",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS02"
+        ]
+      }
+    },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
