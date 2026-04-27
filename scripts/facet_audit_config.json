@@ -2773,7 +2773,7 @@
   },
   "camphor": {
     "description": "Cross-cutting descriptor — camphoraceous-cooling character; spans lavender/lavandin/sage/rosemary/eucalyptus/fennel/cedarleaf/wintergreen/Melaleuca cluster (tea tree/niaouli/cajeput)/pennyroyal + camphor/borneol/bornyl-acetate/eucalyptol/thujones/verbenone/fenchone/methyl-salicylate/pulegone isolates",
-    "expected_entry_count": 30,
+    "expected_entry_count": 35,
     "oil_cas": [
       "8000-28-0",
       "91722-69-9",
@@ -2792,7 +2792,11 @@
       "8008-98-8",
       "8007-44-1",
       "8008-51-3",
-      "85203-56-1"
+      "85203-56-1",
+      "92201-64-4",
+      "91722-71-3",
+      "91770-52-8",
+      "92502-70-0"
     ],
     "isolates": {
       "470-82-6": {
@@ -2911,6 +2915,15 @@
           "GHS06",
           "GHS07",
           "GHS08"
+        ]
+      },
+      "89-81-6": {
+        "name": "Piperitone",
+        "cid": "6987",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
         ]
       }
     },
