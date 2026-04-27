@@ -439,7 +439,7 @@
   },
   "basil": {
     "description": "Ocimum spp. — chavicol / eugenol / methyl-eugenol chemotypes + linalool sweet-basil cross-tag + 1,8-cineole",
-    "expected_entry_count": 9,
+    "expected_entry_count": 10,
     "oil_cas": [
       "8015-73-4",
       "84775-70-2",
@@ -719,7 +719,7 @@
   },
   "clove": {
     "description": "Syzygium aromaticum — eugenol-dominated phenolic sensitiser cluster; bud + leaf oils plus isoeugenol / eugenyl acetate derivatives",
-    "expected_entry_count": 7,
+    "expected_entry_count": 8,
     "oil_cas": [
       "8000-34-8",
       "8015-97-2",
@@ -872,7 +872,7 @@
   },
   "pepper": {
     "description": "Piper nigrum (black pepper) + Schinus molle (pink pepper) — fresh-spicy cluster anchored by β-caryophyllene + α/β-phellandrene + sabinene",
-    "expected_entry_count": 3,
+    "expected_entry_count": 4,
     "oil_cas": [
       "8006-82-4",
       "90082-88-7",
@@ -2704,7 +2704,7 @@
   },
   "coniferous": {
     "description": "Cross-cutting descriptor — coniferous pine/fir/cedar woody-resinous character; spans cedar (Virginian/Atlas) + pine + fir + cedarleaf + camphor terpenes (pinenes/camphene/3-carene) + bornyl/isobornyl/terpinyl acetates + longifolene",
-    "expected_entry_count": 12,
+    "expected_entry_count": 13,
     "oil_cas": [
       "8007-20-3",
       "8000-27-9",
