@@ -2947,7 +2947,7 @@
   },
   "coumarin": {
     "description": "Cross-cutting descriptor — coumarin-class molecules + coumarin-rich naturals; spans tonka/sweet-clover/hay/liatrix absolutes + coumarin/dihydrocoumarin synthetics + bergapten + lavender/lavandin absolutes",
-    "expected_entry_count": 7,
+    "expected_entry_count": 10,
     "oil_cas": [
       "97722-12-8",
       "93455-96-0",
@@ -2965,6 +2965,22 @@
         "ghs": [
           "GHS07"
         ]
+      },
+      "531-59-9": {
+        "name": "7-Methoxycoumarin",
+        "cid": "10748",
+        "formula": "C10H8O3",
+        "mw": 176.17,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "4430-31-3": {
+        "name": "Octahydrocoumarin",
+        "cid": "18459",
+        "formula": "C9H14O2",
+        "mw": 154.21,
+        "ghs": []
       }
     },
     "ifra_phenolic": false,
