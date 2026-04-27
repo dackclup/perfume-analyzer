@@ -2706,7 +2706,7 @@
   },
   "green": {
     "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal + galbanum cluster + parsley leaf + 1,3,8-p-menthatriene + lovage + dill weed/ether + Camellia sinensis tea cluster (white/green/black + theaspirane)",
-    "expected_entry_count": 29,
+    "expected_entry_count": 30,
     "oil_cas": [
       "8023-91-4",
       "8024-08-6"
@@ -3544,7 +3544,7 @@
   },
   "leathery": {
     "description": "Cross-cutting descriptor — leather-character olfactive note; spans clary sage absolute + tobacco + treemoss + saffron + oud (Hindi/synthetic) + black tea + isobutyl quinoline",
-    "expected_entry_count": 9,
+    "expected_entry_count": 10,
     "oil_cas": [
       "84775-83-7",
       "8037-19-2",
@@ -3581,7 +3581,7 @@
   },
   "earthy": {
     "description": "Cross-cutting descriptor — earthy-rooty character; spans patchouli + vetiver + oakmoss + carrot seed (carotol/daucol) + linalool oxides + borneol",
-    "expected_entry_count": 13,
+    "expected_entry_count": 14,
     "oil_cas": [
       "8014-09-3",
       "41429-52-1",
@@ -5431,7 +5431,7 @@
   },
   "aldehyde": {
     "description": "Aldehydic Soft Floral cluster — C-10/C-11/C-12 MNA aliphatic aldehydes; defining Chanel No. 5 (1921) classical aldehydic-floral genre",
-    "expected_entry_count": 4,
+    "expected_entry_count": 5,
     "oil_cas": [],
     "isolates": {
       "110-41-8": {
@@ -7089,7 +7089,7 @@
   },
   "fatty": {
     "description": "Fatty descriptor — aliphatic aldehydes (C-10/C-11/C-12 MNA)",
-    "expected_entry_count": 3,
+    "expected_entry_count": 4,
     "oil_cas": [],
     "isolates": {
       "112-31-2": {
@@ -7127,7 +7127,7 @@
   },
   "waxy": {
     "description": "Waxy descriptor — aldehydic-fatty",
-    "expected_entry_count": 3,
+    "expected_entry_count": 4,
     "oil_cas": [],
     "isolates": {
       "112-31-2": {
@@ -7329,7 +7329,7 @@
   },
   "dry": {
     "description": "Dry descriptor — Iso E Super + dry-wood class",
-    "expected_entry_count": 2,
+    "expected_entry_count": 3,
     "oil_cas": [
       "90082-88-7"
     ],
@@ -7346,6 +7346,62 @@
       "8001-88-5"
     ],
     "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "nettle": {
+    "description": "Urtica dioica — green-stinging-leaf niche material",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "84012-40-8"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "teak": {
+    "description": "Tectona grandis (Burmese teak) — aged-furniture woody-leather; CITES considered",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "90131-58-1"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "papyrus": {
+    "description": "Cyperus papyrus (Egyptian papyrus) — dry-wood-vetiver-class; iconic Memo Inle",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "90131-25-2"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "mineral": {
+    "description": "Mineral descriptor — stone/slate/aldehydic-mineral character; Aldehyde C-9 + Iso E Super",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "124-19-6": {
+        "name": "Aldehyde C-9",
+        "cid": "31289",
+        "formula": "C9H18O",
+        "mw": 142.24,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
