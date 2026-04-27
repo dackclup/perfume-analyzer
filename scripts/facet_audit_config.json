@@ -235,7 +235,7 @@
   },
   "thyme": {
     "description": "Thymus spp. + Origanum + Satureja — phenolic sensitizer cluster + α-terpinene biosynthetic precursor + borneol cross-tag",
-    "expected_entry_count": 13,
+    "expected_entry_count": 14,
     "oil_cas": [
       "8007-46-3",
       "84696-17-3",
@@ -611,7 +611,7 @@
   },
   "fennel": {
     "description": "Foeniculum vulgare — anethole + estragole + fenchone cluster; sweet (dulce) and bitter (vulgare) chemotypes",
-    "expected_entry_count": 6,
+    "expected_entry_count": 7,
     "oil_cas": [
       "8006-84-6",
       "84625-39-8"
@@ -657,6 +657,13 @@
           "GHS07",
           "GHS08"
         ]
+      },
+      "1632-73-1": {
+        "name": "Fenchol",
+        "cid": "14068",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": []
       }
     },
     "ifra_phenolic": false,
@@ -1577,7 +1584,7 @@
   },
   "medicinal": {
     "description": "Cross-cutting descriptor facet — camphoraceous + phenolic + cooling-mint pharmaceutical character; spans lavender + thyme + sage + basil + eucalyptus + clove + wintergreen clusters; methyl salicylate + l-menthol/menthone defining markers",
-    "expected_entry_count": 28,
+    "expected_entry_count": 37,
     "oil_cas": [
       "8000-48-4",
       "68917-75-9",
@@ -1768,7 +1775,7 @@
   },
   "parsley": {
     "description": "Petroselinum crispum — 2-oil chemotype (seed = phenolic-ether apiole/myristicin spicy; leaf = green-fresh phellandrene/menthatriene/hexenol); Apiaceae cross-chemistry with celery + carrot + cilantro/coriander; cross-tags from existing α/β-phellandrene + α/β-pinene + myrcene + cis-3-hexenol/acetate + d-limonene",
-    "expected_entry_count": 5,
+    "expected_entry_count": 6,
     "oil_cas": [
       "8000-68-8",
       "84012-33-9",
@@ -1785,6 +1792,13 @@
           "GHS07",
           "GHS08"
         ]
+      },
+      "18368-95-1": {
+        "name": "1,3,8-p-Menthatriene",
+        "cid": "91747",
+        "formula": "C10H14",
+        "mw": 134.22,
+        "ghs": []
       }
     },
     "ifra_phenolic": true,
@@ -2256,7 +2270,7 @@
   },
   "mint": {
     "description": "Mentha spp. parent — peppermint + spearmint + cornmint + pennyroyal cluster; menthol/menthone + (R)-(-)-carvone + pulegone + menthofuran cooling/sweet/camphoraceous mint chemistry",
-    "expected_entry_count": 13,
+    "expected_entry_count": 18,
     "oil_cas": [
       "8006-90-4",
       "8008-79-5",
@@ -2303,6 +2317,22 @@
         "ghs": [
           "GHS07"
         ]
+      },
+      "7764-50-3": {
+        "name": "Dihydrocarvone",
+        "cid": "7438",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "1197-07-5": {
+        "name": "trans-Carveol",
+        "cid": "99868",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": []
       }
     },
     "ifra_phenolic": false,
@@ -2366,11 +2396,28 @@
   },
   "spearmint": {
     "description": "Mentha spicata-specific — spearmint oil + (R)-(-)-carvone defining ~50-70%; lower menthol chemotype distinct from peppermint",
-    "expected_entry_count": 2,
+    "expected_entry_count": 5,
     "oil_cas": [
       "8008-79-5"
     ],
-    "isolates": {},
+    "isolates": {
+      "7764-50-3": {
+        "name": "Dihydrocarvone",
+        "cid": "7438",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "1197-07-5": {
+        "name": "trans-Carveol",
+        "cid": "99868",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": []
+      }
+    },
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
@@ -2378,7 +2425,7 @@
   },
   "minty": {
     "description": "Cross-cutting descriptor facet — minty olfactive character beyond Mentha genus; spans pulegone + menthofuran (mint family) + thujones (sage/wormwood) + verbenone (rosemary) + phellandrenes + methyl salicylate (wintergreen) + tea tree + cornmint cross",
-    "expected_entry_count": 24,
+    "expected_entry_count": 27,
     "oil_cas": [
       "68917-18-0",
       "8007-44-1"
@@ -2773,7 +2820,7 @@
   },
   "camphor": {
     "description": "Cross-cutting descriptor — camphoraceous-cooling character; spans lavender/lavandin/sage/rosemary/eucalyptus/fennel/cedarleaf/wintergreen/Melaleuca cluster (tea tree/niaouli/cajeput)/pennyroyal + camphor/borneol/bornyl-acetate/eucalyptol/thujones/verbenone/fenchone/methyl-salicylate/pulegone isolates",
-    "expected_entry_count": 35,
+    "expected_entry_count": 38,
     "oil_cas": [
       "8000-28-0",
       "91722-69-9",
@@ -2796,7 +2843,9 @@
       "92201-64-4",
       "91722-71-3",
       "91770-52-8",
-      "92502-70-0"
+      "92502-70-0",
+      "8006-83-5",
+      "8007-48-5"
     ],
     "isolates": {
       "470-82-6": {
@@ -2925,6 +2974,13 @@
         "ghs": [
           "GHS07"
         ]
+      },
+      "1632-73-1": {
+        "name": "Fenchol",
+        "cid": "14068",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": []
       }
     },
     "ifra_phenolic": false,
@@ -4681,7 +4737,7 @@
   },
   "cooling": {
     "description": "Cross-cutting cooling descriptor — TRPM8 receptor agonists (l-menthol + WS-3 + isopulegol + menthyl acetate + eucalyptol + others); functional cooling effect",
-    "expected_entry_count": 15,
+    "expected_entry_count": 16,
     "oil_cas": [],
     "isolates": {
       "89-79-2": {
