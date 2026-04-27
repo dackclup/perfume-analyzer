@@ -1355,7 +1355,7 @@
   },
   "chamomile": {
     "description": "4-species coverage: Chamaemelum nobile (Roman) + Matricaria recutita (German) + Ormenis multicaulis (Wild Moroccan) + Eriocephalus punctulatus (Cape) — angelate ester suite + α-bisabolol + chamazulene + bisabolol oxides A/B + Artemisia arborescens (blue chemotype cross-tag)",
-    "expected_entry_count": 12,
+    "expected_entry_count": 13,
     "oil_cas": [
       "8015-92-7",
       "8002-66-2",
@@ -1421,7 +1421,7 @@
   },
   "artemisia": {
     "description": "Artemisia spp. — wormwood (A. absinthium) + mugwort (A. vulgaris) + davana (A. pallens) + herba-alba + arborescens + sweet wormwood (A. annua); thujone/davanone/artemisia-ketone/sabinyl-acetate cluster; tarragon (A. dracunculus) is its own facet",
-    "expected_entry_count": 11,
+    "expected_entry_count": 12,
     "oil_cas": [
       "8008-93-3",
       "84775-22-4",
@@ -1584,7 +1584,7 @@
   },
   "medicinal": {
     "description": "Cross-cutting descriptor facet — camphoraceous + phenolic + cooling-mint pharmaceutical character; spans lavender + thyme + sage + basil + eucalyptus + clove + wintergreen clusters; methyl salicylate + l-menthol/menthone defining markers",
-    "expected_entry_count": 37,
+    "expected_entry_count": 40,
     "oil_cas": [
       "8000-48-4",
       "68917-75-9",
@@ -2270,7 +2270,7 @@
   },
   "mint": {
     "description": "Mentha spp. parent — peppermint + spearmint + cornmint + pennyroyal cluster; menthol/menthone + (R)-(-)-carvone + pulegone + menthofuran cooling/sweet/camphoraceous mint chemistry",
-    "expected_entry_count": 18,
+    "expected_entry_count": 19,
     "oil_cas": [
       "8006-90-4",
       "8008-79-5",
@@ -2333,6 +2333,15 @@
         "formula": "C10H16O",
         "mw": 152.23,
         "ghs": []
+      },
+      "491-09-8": {
+        "name": "Piperitenone",
+        "cid": "10532",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS07"
+        ]
       }
     },
     "ifra_phenolic": false,
@@ -2362,7 +2371,7 @@
   },
   "peppermint": {
     "description": "Mentha × piperita-specific — peppermint oil + menthol/menthone/menthofuran + cornmint cross-tag (high-menthol chemotype)",
-    "expected_entry_count": 6,
+    "expected_entry_count": 7,
     "oil_cas": [
       "8006-90-4",
       "68917-18-0"
@@ -2820,7 +2829,7 @@
   },
   "camphor": {
     "description": "Cross-cutting descriptor — camphoraceous-cooling character; spans lavender/lavandin/sage/rosemary/eucalyptus/fennel/cedarleaf/wintergreen/Melaleuca cluster (tea tree/niaouli/cajeput)/pennyroyal + camphor/borneol/bornyl-acetate/eucalyptol/thujones/verbenone/fenchone/methyl-salicylate/pulegone isolates",
-    "expected_entry_count": 38,
+    "expected_entry_count": 41,
     "oil_cas": [
       "8000-28-0",
       "91722-69-9",
@@ -2845,7 +2854,9 @@
       "91770-52-8",
       "92502-70-0",
       "8006-83-5",
-      "8007-48-5"
+      "8007-48-5",
+      "8016-87-3",
+      "8022-66-2"
     ],
     "isolates": {
       "470-82-6": {
@@ -2981,6 +2992,15 @@
         "formula": "C10H18O",
         "mw": 154.25,
         "ghs": []
+      },
+      "30460-92-5": {
+        "name": "Pinocarvone",
+        "cid": "91497",
+        "formula": "C10H14O",
+        "mw": 150.22,
+        "ghs": [
+          "GHS07"
+        ]
       }
     },
     "ifra_phenolic": false,
