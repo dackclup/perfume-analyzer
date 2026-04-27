@@ -1389,7 +1389,7 @@
   },
   "tobacco": {
     "description": "Nicotiana tabacum absolute + coumarin/tonka anchor — dry wood Fougère base + hay/liatrix clover-cross. Opens the smoky / balsamic cross-family cluster (+ styrallyl acetate sweet-tobacco modifier)",
-    "expected_entry_count": 13,
+    "expected_entry_count": 14,
     "oil_cas": [
       "8037-19-2",
       "8046-22-8",
@@ -2255,7 +2255,7 @@
   },
   "tea": {
     "description": "Camellia sinensis cluster — Green + Black + White tea absolutes + theaspirane chemotaxonomic marker; iconic 1990s-modern niche perfumery accord (Bvlgari Eau Parfumée Vert/Noir/Blanc, Bois 1920 Sushi Imperiale, Elizabeth Arden Green Tea)",
-    "expected_entry_count": 4,
+    "expected_entry_count": 5,
     "oil_cas": [
       "84650-60-2",
       "84649-78-1",
@@ -2496,7 +2496,7 @@
   },
   "gourmand": {
     "description": "Coffee + cocoa + maltol + ethyl maltol + furaneol — Edwards Soft Amber gourmand family",
-    "expected_entry_count": 7,
+    "expected_entry_count": 8,
     "oil_cas": [
       "8001-67-0",
       "8002-31-1"
@@ -2537,7 +2537,7 @@
   },
   "fruity": {
     "description": "Fruity base — damascones + β-ionone + γ-nonalactone + raspberry ketone + furaneol + Roman chamomile angelate esters + Cape chamomile + davana oil + davanone fruity-amber cross-tags",
-    "expected_entry_count": 21,
+    "expected_entry_count": 22,
     "oil_cas": [],
     "isolates": {
       "43052-87-5": {
@@ -2634,7 +2634,7 @@
   },
   "smoky": {
     "description": "Smoky / leather base — guaiacol + cade + birch tar + isobutyl quinoline (+ styrallyl acetate modifier)",
-    "expected_entry_count": 4,
+    "expected_entry_count": 6,
     "oil_cas": [
       "8013-10-3",
       "8001-88-5"
@@ -2706,7 +2706,7 @@
   },
   "green": {
     "description": "Galbanum + cis-3-hexenol cluster — natural green foliage accord + celery vegetal + galbanum cluster + parsley leaf + 1,3,8-p-menthatriene + lovage + dill weed/ether + Camellia sinensis tea cluster (white/green/black + theaspirane)",
-    "expected_entry_count": 27,
+    "expected_entry_count": 29,
     "oil_cas": [
       "8023-91-4",
       "8024-08-6"
@@ -3581,7 +3581,7 @@
   },
   "earthy": {
     "description": "Cross-cutting descriptor — earthy-rooty character; spans patchouli + vetiver + oakmoss + carrot seed (carotol/daucol) + linalool oxides + borneol",
-    "expected_entry_count": 12,
+    "expected_entry_count": 13,
     "oil_cas": [
       "8014-09-3",
       "41429-52-1",
@@ -4045,7 +4045,7 @@
   },
   "caramel": {
     "description": "Cross-cutting descriptor — caramel-burnt-sugar character; defining gourmand pyranone class — maltol + ethyl maltol (cotton candy/Angel) + furaneol (strawberry-pineapple)",
-    "expected_entry_count": 4,
+    "expected_entry_count": 5,
     "oil_cas": [],
     "isolates": {
       "118-71-8": {
@@ -6407,8 +6407,10 @@
   },
   "fenugreek": {
     "description": "Fenugreek descriptor — sotolon-driven curry-maple-fenugreek",
-    "expected_entry_count": 1,
-    "oil_cas": [],
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "84625-40-1"
+    ],
     "isolates": {
       "28664-35-9": {
         "name": "Sotolon",
@@ -6611,6 +6613,76 @@
         ]
       }
     },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "boronia": {
+    "description": "Boronia megastigma — Tasmanian luxury floral; β-ionone-rich",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "8053-32-5"
+    ],
+    "isolates": {
+      "79-77-6": {
+        "name": "beta-Ionone",
+        "cid": "638015",
+        "formula": "C13H20O",
+        "mw": 192.3,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "guaiac": {
+    "description": "Bulnesia sarmientoi (guaiac wood) — smoky-rosy-balsamic luxury wood; CITES II",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8016-23-7"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "tomato_leaf": {
+    "description": "Tomato leaf absolute — green-vegetal niche material",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "84929-31-7"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "turmeric": {
+    "description": "Curcuma longa — Indian spice; ar-turmerone-driven",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8024-37-1"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "mate": {
+    "description": "Ilex paraguariensis (yerba mate) — South-American smoky-tea",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "84775-37-1"
+    ],
+    "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
