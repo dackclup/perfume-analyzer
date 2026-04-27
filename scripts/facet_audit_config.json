@@ -2187,7 +2187,7 @@
   },
   "medicinal": {
     "description": "Cross-cutting descriptor facet — camphoraceous + phenolic + cooling-mint pharmaceutical character; spans lavender + thyme + sage + basil + eucalyptus + clove + wintergreen clusters; methyl salicylate + l-menthol/menthone defining markers",
-    "expected_entry_count": 32,
+    "expected_entry_count": 33,
     "oil_cas": [
       "8000-48-4",
       "68917-75-9",
@@ -3173,7 +3173,7 @@
   },
   "minty": {
     "description": "Cross-cutting descriptor facet — minty olfactive character beyond Mentha genus; spans pulegone + menthofuran (mint family) + thujones (sage/wormwood) + verbenone (rosemary) + phellandrenes + methyl salicylate (wintergreen) + tea tree + cornmint cross",
-    "expected_entry_count": 16,
+    "expected_entry_count": 19,
     "oil_cas": [
       "68917-18-0",
       "8007-44-1"
@@ -3765,7 +3765,7 @@
   },
   "camphor": {
     "description": "Cross-cutting descriptor — camphoraceous-cooling character; spans lavender/lavandin/sage/rosemary/eucalyptus/fennel/cedarleaf/wintergreen/Melaleuca cluster (tea tree/niaouli/cajeput)/pennyroyal + camphor/borneol/bornyl-acetate/eucalyptol/thujones/verbenone/fenchone/methyl-salicylate/pulegone isolates",
-    "expected_entry_count": 27,
+    "expected_entry_count": 30,
     "oil_cas": [
       "8000-28-0",
       "91722-69-9",
@@ -3782,7 +3782,8 @@
       "68647-73-4",
       "8014-68-4",
       "8008-98-8",
-      "8007-44-1"
+      "8007-44-1",
+      "8008-51-3"
     ],
     "isolates": {
       "470-82-6": {
@@ -3882,6 +3883,26 @@
       "89-82-7": {
         "name": "Pulegone",
         "cid": "442495",
+        "formula": "C10H16O",
+        "mw": 152.23,
+        "ghs": [
+          "GHS06",
+          "GHS07",
+          "GHS08"
+        ]
+      },
+      "464-43-7": {
+        "name": "d-Borneol",
+        "cid": "443153",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "547-60-4": {
+        "name": "Pinocamphone",
+        "cid": "12302",
         "formula": "C10H16O",
         "mw": 152.23,
         "ghs": [
