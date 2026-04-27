@@ -4665,7 +4665,7 @@
   },
   "cooling": {
     "description": "Cross-cutting cooling descriptor — TRPM8 receptor agonists (l-menthol + WS-3 + isopulegol + menthyl acetate + eucalyptol + others); functional cooling effect",
-    "expected_entry_count": 9,
+    "expected_entry_count": 13,
     "oil_cas": [],
     "isolates": {
       "89-79-2": {
@@ -4694,6 +4694,38 @@
         "ghs": [
           "GHS02"
         ]
+      },
+      "51115-67-4": {
+        "name": "WS-23",
+        "cid": "4660470",
+        "formula": "C10H21NO",
+        "mw": 171.28,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "68489-09-8": {
+        "name": "WS-5",
+        "cid": "24967486",
+        "formula": "C15H27NO3",
+        "mw": 269.38,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "59259-38-0": {
+        "name": "Menthyl Lactate",
+        "cid": "443182",
+        "formula": "C13H24O3",
+        "mw": 228.33,
+        "ghs": []
+      },
+      "42822-86-6": {
+        "name": "PMD",
+        "cid": "91739",
+        "formula": "C10H20O2",
+        "mw": 172.27,
+        "ghs": []
       }
     },
     "ifra_phenolic": false,
