@@ -6845,5 +6845,510 @@
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
+  },
+  "dewy": {
+    "description": "Dewy descriptor — fresh-water-droplet ozonic-aquatic accord",
+    "expected_entry_count": 3,
+    "oil_cas": [],
+    "isolates": {
+      "1205-17-0": {
+        "name": "Helional",
+        "cid": "15606",
+        "formula": "C11H12O3",
+        "mw": 192.21,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "28940-11-6": {
+        "name": "Calone 1951",
+        "cid": "91721",
+        "formula": "C11H12O3",
+        "mw": 192.21,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "67634-15-5": {
+        "name": "Floralozone",
+        "cid": "62335",
+        "formula": "C13H18O",
+        "mw": 190.28,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "iodine": {
+    "description": "Iodine-marine descriptor — Calone-class",
+    "expected_entry_count": 2,
+    "oil_cas": [],
+    "isolates": {
+      "1205-17-0": {
+        "name": "Helional",
+        "cid": "15606",
+        "formula": "C11H12O3",
+        "mw": 192.21,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "28940-11-6": {
+        "name": "Calone 1951",
+        "cid": "91721",
+        "formula": "C11H12O3",
+        "mw": 192.21,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "laundry": {
+    "description": "Laundry descriptor — clean-musk Iso E Super + Hedione + Habanolide",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "54464-57-2"
+    ],
+    "isolates": {
+      "24851-98-7": {
+        "name": "Hedione",
+        "cid": "31252",
+        "formula": "C13H22O3",
+        "mw": 226.32,
+        "ghs": []
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "fougere": {
+    "description": "Fougère descriptor — coumarin+lavender+oakmoss classical fern accord",
+    "expected_entry_count": 3,
+    "oil_cas": [],
+    "isolates": {
+      "91-64-5": {
+        "name": "Coumarin",
+        "cid": "323",
+        "formula": "C9H6O2",
+        "mw": 146.14,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "1205-17-0": {
+        "name": "Helional",
+        "cid": "15606",
+        "formula": "C11H12O3",
+        "mw": 192.21,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "fern": {
+    "description": "Fern descriptor — fougère cornerstone (coumarin)",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "91-64-5": {
+        "name": "Coumarin",
+        "cid": "323",
+        "formula": "C9H6O2",
+        "mw": 146.14,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "stem": {
+    "description": "Stem descriptor — green plant-stem (cis-3-hexenol + galbanum)",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "8023-91-4"
+    ],
+    "isolates": {
+      "928-96-1": {
+        "name": "cis-3-Hexenol",
+        "cid": "5281167",
+        "formula": "C6H12O",
+        "mw": 100.16,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "mushroom": {
+    "description": "Mushroom descriptor — geosmin earthy-fungal",
+    "expected_entry_count": 1,
+    "oil_cas": [],
+    "isolates": {
+      "16423-19-1": {
+        "name": "Geosmin",
+        "cid": "29746",
+        "formula": "C12H22O",
+        "mw": 182.3,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "skin": {
+    "description": "Skin descriptor — modern clean-musk + civet animalic",
+    "expected_entry_count": 4,
+    "oil_cas": [],
+    "isolates": {
+      "541-91-3": {
+        "name": "Muscone",
+        "cid": "10947",
+        "formula": "C16H30O",
+        "mw": 238.41,
+        "ghs": []
+      },
+      "542-46-1": {
+        "name": "Civetone",
+        "cid": "10522",
+        "formula": "C17H30O",
+        "mw": 250.42,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "24851-98-7": {
+        "name": "Hedione",
+        "cid": "31252",
+        "formula": "C13H22O3",
+        "mw": 226.32,
+        "ghs": []
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "sweaty": {
+    "description": "Sweaty descriptor — cumin + civet animalic",
+    "expected_entry_count": 2,
+    "oil_cas": [],
+    "isolates": {
+      "122-03-2": {
+        "name": "Cuminaldehyde",
+        "cid": "326",
+        "formula": "C10H12O",
+        "mw": 148.2,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "542-46-1": {
+        "name": "Civetone",
+        "cid": "10522",
+        "formula": "C17H30O",
+        "mw": 250.42,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "fatty": {
+    "description": "Fatty descriptor — aliphatic aldehydes (C-10/C-11/C-12 MNA)",
+    "expected_entry_count": 3,
+    "oil_cas": [],
+    "isolates": {
+      "112-31-2": {
+        "name": "Aldehyde C-10",
+        "cid": "8175",
+        "formula": "C10H20O",
+        "mw": 156.27,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "112-44-7": {
+        "name": "Aldehyde C-11",
+        "cid": "8186",
+        "formula": "C11H22O",
+        "mw": 170.29,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "110-41-8": {
+        "name": "Aldehyde C-12 MNA",
+        "cid": "8126",
+        "formula": "C12H24O",
+        "mw": 184.32,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "waxy": {
+    "description": "Waxy descriptor — aldehydic-fatty",
+    "expected_entry_count": 3,
+    "oil_cas": [],
+    "isolates": {
+      "112-31-2": {
+        "name": "Aldehyde C-10",
+        "cid": "8175",
+        "formula": "C10H20O",
+        "mw": 156.27,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "112-44-7": {
+        "name": "Aldehyde C-11",
+        "cid": "8186",
+        "formula": "C11H22O",
+        "mw": 170.29,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "110-41-8": {
+        "name": "Aldehyde C-12 MNA",
+        "cid": "8126",
+        "formula": "C12H24O",
+        "mw": 184.32,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "waxy_aldehyde": {
+    "description": "Waxy aldehyde descriptor",
+    "expected_entry_count": 3,
+    "oil_cas": [],
+    "isolates": {
+      "112-31-2": {
+        "name": "Aldehyde C-10",
+        "cid": "8175",
+        "formula": "C10H20O",
+        "mw": 156.27,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "112-44-7": {
+        "name": "Aldehyde C-11",
+        "cid": "8186",
+        "formula": "C11H22O",
+        "mw": 170.29,
+        "ghs": [
+          "GHS07"
+        ]
+      },
+      "110-41-8": {
+        "name": "Aldehyde C-12 MNA",
+        "cid": "8126",
+        "formula": "C12H24O",
+        "mw": 184.32,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "velvety": {
+    "description": "Velvety descriptor — soft Iso E Super + Hedione + α-terpineol",
+    "expected_entry_count": 3,
+    "oil_cas": [],
+    "isolates": {
+      "24851-98-7": {
+        "name": "Hedione",
+        "cid": "31252",
+        "formula": "C13H22O3",
+        "mw": 226.32,
+        "ghs": []
+      },
+      "98-55-5": {
+        "name": "α-Terpineol",
+        "cid": "17100",
+        "formula": "C10H18O",
+        "mw": 154.25,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "milky": {
+    "description": "Milky descriptor — γ-lactone class",
+    "expected_entry_count": 4,
+    "oil_cas": [],
+    "isolates": {
+      "104-67-6": {
+        "name": "gamma-Undecalactone",
+        "cid": "7714",
+        "formula": "C11H20O2",
+        "mw": 184.28,
+        "ghs": []
+      },
+      "104-50-7": {
+        "name": "γ-Octalactone",
+        "cid": "7714",
+        "formula": "C8H14O2",
+        "mw": 142.2,
+        "ghs": []
+      },
+      "706-14-9": {
+        "name": "gamma-Decalactone",
+        "cid": "12813",
+        "formula": "C10H18O2",
+        "mw": 170.25,
+        "ghs": []
+      },
+      "104-61-0": {
+        "name": "gamma-Nonalactone",
+        "cid": "7710",
+        "formula": "C9H16O2",
+        "mw": 156.22,
+        "ghs": []
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "buttery": {
+    "description": "Buttery descriptor — γ-decalactone + γ-undecalactone + γ-octalactone",
+    "expected_entry_count": 3,
+    "oil_cas": [],
+    "isolates": {
+      "706-14-9": {
+        "name": "gamma-Decalactone",
+        "cid": "12813",
+        "formula": "C10H18O2",
+        "mw": 170.25,
+        "ghs": []
+      },
+      "104-67-6": {
+        "name": "gamma-Undecalactone",
+        "cid": "7714",
+        "formula": "C11H20O2",
+        "mw": 184.28,
+        "ghs": []
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "nutty": {
+    "description": "Nutty descriptor — bitter almond + benzaldehyde + cocoa",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "8013-76-1",
+      "8002-31-1"
+    ],
+    "isolates": {
+      "100-52-7": {
+        "name": "Benzaldehyde",
+        "cid": "240",
+        "formula": "C7H6O",
+        "mw": 106.12,
+        "ghs": [
+          "GHS07"
+        ]
+      }
+    },
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "pepperwood": {
+    "description": "Pepperwood descriptor — pink pepper / Schinus",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "90082-88-7"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "dry": {
+    "description": "Dry descriptor — Iso E Super + dry-wood class",
+    "expected_entry_count": 2,
+    "oil_cas": [
+      "90082-88-7"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "birch": {
+    "description": "Birch descriptor — Birch Tar",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8001-88-5"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
   }
 }
