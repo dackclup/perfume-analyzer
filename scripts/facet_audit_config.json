@@ -2773,7 +2773,7 @@
   },
   "camphor": {
     "description": "Cross-cutting descriptor — camphoraceous-cooling character; spans lavender/lavandin/sage/rosemary/eucalyptus/fennel/cedarleaf/wintergreen/Melaleuca cluster (tea tree/niaouli/cajeput)/pennyroyal + camphor/borneol/bornyl-acetate/eucalyptol/thujones/verbenone/fenchone/methyl-salicylate/pulegone isolates",
-    "expected_entry_count": 29,
+    "expected_entry_count": 30,
     "oil_cas": [
       "8000-28-0",
       "91722-69-9",
@@ -2791,7 +2791,8 @@
       "8014-68-4",
       "8008-98-8",
       "8007-44-1",
-      "8008-51-3"
+      "8008-51-3",
+      "85203-56-1"
     ],
     "isolates": {
       "470-82-6": {
