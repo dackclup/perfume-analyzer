@@ -405,6 +405,44 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .btn--ghost:hover { background:var(--bg-subtle); color:var(--text); border-color:transparent; }
 @media (max-width:600px) { .btn, .chip, .icon-btn { min-height:40px; } }
 
+/* Fragrance Wheel slice click effect — pop flash + glow + persistent
+   active state. Triggered from filterByWheelSegment(). The pop
+   animation runs once on click; active-seg stays until another slice
+   is selected. Ripple is a separate <circle> element appended at the
+   click point and self-destructs after the animation completes. */
+.wheel-seg {
+  transition: stroke-width 200ms ease, filter 200ms ease;
+}
+.wheel-seg:hover {
+  filter: brightness(1.06);
+  stroke-width: 3;
+}
+.wheel-seg.popping {
+  animation: wheel-pop 500ms cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes wheel-pop {
+  0%   { stroke-width: 2; filter: brightness(1); }
+  35%  { stroke-width: 7; filter: brightness(1.3) drop-shadow(0 0 16px rgba(255,255,255,.95)); }
+  100% { stroke-width: 3; filter: brightness(1.08) drop-shadow(0 0 8px rgba(255,255,255,.7)); }
+}
+.wheel-seg.active-seg {
+  stroke-width: 3;
+  filter: brightness(1.08) drop-shadow(0 0 8px rgba(255,255,255,.7));
+}
+.wheel-ripple {
+  fill: rgba(255,255,255,.45);
+  pointer-events: none;
+  animation: wheel-ripple 700ms ease-out forwards;
+}
+@keyframes wheel-ripple {
+  0%   { r: 0;   opacity: .7; }
+  100% { r: 280; opacity: 0;  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wheel-seg.popping,
+  .wheel-ripple { animation: none; }
+}
+
 /* Analysis card hover + shadow */
 .analysis-card {
   transition:box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
@@ -3779,9 +3817,9 @@ function renderWheelTab() {
     // Every slice uses a solid colour from `s.color` — transitional ones
     // carry an intermediate hue (e.g. Fruity = lavender between Fresh blue
     // and Floral rose) instead of a two-tone gradient fill.
-    svg += '<path d="' + path + '" fill="' + s.color + '" fill-opacity="' + (hasActive ? '1' : '0.95') + '" ';
+    svg += '<path class="wheel-seg" data-seg="' + s.id + '" d="' + path + '" fill="' + s.color + '" fill-opacity="' + (hasActive ? '1' : '0.95') + '" ';
     svg += 'stroke="#fff" stroke-width="2" style="cursor:pointer" ';
-    svg += 'onclick="filterByWheelSegment(\'' + s.id + '\')" ';
+    svg += 'onclick="filterByWheelSegment(\'' + s.id + '\', event)" ';
     svg += '><title>' + prettyLabel(s.id) + ' (' + s.quadrant + (s.transitional ? ' — transitional' : '') + ')</title></path>';
 
     // Subfamily label — oriented radially (rotated so text reads outward).
@@ -3894,7 +3932,42 @@ function renderWheelTab() {
   el.innerHTML = '<div class="analysis-card">' + svg + legend + '</div>';
 }
 
-function filterByWheelSegment(segId) {
+function filterByWheelSegment(segId, evt) {
+  // Visual click feedback: pop animation on clicked slice + ripple wave
+  // from click point. Persistent .active-seg highlight stays until the
+  // next slice is selected.
+  const allSegs = document.querySelectorAll('.wheel-seg');
+  allSegs.forEach(p => { p.classList.remove('active-seg'); p.classList.remove('popping'); });
+  const clickedPath = document.querySelector('.wheel-seg[data-seg="' + segId + '"]');
+  if (clickedPath) {
+    // Force reflow so the keyframe re-runs even if the same slice is
+    // clicked twice in a row.
+    void clickedPath.getBoundingClientRect();
+    clickedPath.classList.add('popping', 'active-seg');
+    setTimeout(() => clickedPath.classList.remove('popping'), 500);
+
+    // Ripple — translate the click point into SVG-local coords, drop a
+    // <circle> there, let CSS animation take over, then garbage-collect.
+    const svgEl = clickedPath.ownerSVGElement;
+    if (svgEl && evt && typeof evt.clientX === 'number') {
+      try {
+        const pt = svgEl.createSVGPoint();
+        pt.x = evt.clientX; pt.y = evt.clientY;
+        const ctm = svgEl.getScreenCTM();
+        if (ctm) {
+          const local = pt.matrixTransform(ctm.inverse());
+          const ripple = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          ripple.setAttribute('cx', local.x.toFixed(2));
+          ripple.setAttribute('cy', local.y.toFixed(2));
+          ripple.setAttribute('r', '0');
+          ripple.setAttribute('class', 'wheel-ripple');
+          svgEl.appendChild(ripple);
+          setTimeout(() => { try { ripple.remove(); } catch (e) {} }, 720);
+        }
+      } catch (e) { /* SVG point conversion can fail in old browsers — silent fallback */ }
+    }
+  }
+
   const el = document.getElementById('wheelFilterResults');
   if (!el) return;
   const matches = [];
