@@ -392,6 +392,11 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .facet-group-tab:hover { border-color:var(--accent); color:var(--accent); }
 .facet-group-tab.active { background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent); }
 .facet-group-tab:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
+/* Count badge inside each pill — softer than the label so the pill
+   still reads "Aromatic Fougère" first, "(130)" second. Inherits
+   color so active-state still has good contrast. */
+.facet-group-tab__count { opacity:.55; font-variant-numeric:tabular-nums; font-size:0.92em; }
+.facet-group-tab.active .facet-group-tab__count { opacity:.75; }
 .badge-not-perfumery { font-size:0.7em; padding:2px 8px; border-radius:var(--radius-sm); margin-left:6px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px dashed var(--border); text-transform:none; vertical-align:middle; }
 /* Blends-with chip row: resolved materials click-to-add, group labels
    click-to-filter, unresolved free-text rendered muted. Shares
@@ -859,14 +864,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v167"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v168"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v167";
+const DATA_VERSION = "2026-04-25-rebuild-v168";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -3412,12 +3417,34 @@ _buildPillFilter('source');
 // into hiddenFacetGroups (same state the cascading-visibility logic
 // already consumes — no reactive plumbing changes). Auto-scrolls the
 // chip list below to the selected group's heading so the user sees an
-// immediate result.
+// immediate result. Each pill shows the number of unique materials in
+// that group (so the user can pre-judge "is Citrus worth tapping?"
+// before committing). "All" shows the total DB-wide count.
 {
   const tabsEl = document.getElementById('facetGroupTabs');
   if (tabsEl) {
     const groupEls = Array.from(document.querySelectorAll('#facetGroups > .facet-group'));
-    const labels = groupEls.map(el => el.querySelector('.facet-group-label')?.textContent || '');
+    const groups = groupEls.map(el => ({
+      label: el.querySelector('.facet-group-label')?.textContent || '',
+      facets: new Set(Array.from(el.querySelectorAll('.odor-tag[data-facet]')).map(c => c.dataset.facet)),
+    }));
+    const labels = groups.map(g => g.label);
+
+    // Count unique materials per group (entry has ≥1 facet in the group's
+    // facet set). Computed once at boot — FILTER_CACHE doesn't change
+    // until the page is reloaded.
+    const countPerGroup = {};
+    let totalCount = 0;
+    for (const fc of FILTER_CACHE.values()) {
+      totalCount++;
+      const matFacets = fc.facets || [];
+      for (const g of groups) {
+        if (matFacets.some(f => g.facets.has(f))) {
+          countPerGroup[g.label] = (countPerGroup[g.label] || 0) + 1;
+        }
+      }
+    }
+
     let activeTab = 'All';
     const tabsList = ['All', ...labels];
 
@@ -3429,7 +3456,16 @@ _buildPillFilter('source');
         btn.className = 'facet-group-tab' + (activeTab === label ? ' active' : '');
         btn.setAttribute('role', 'tab');
         btn.setAttribute('aria-selected', activeTab === label ? 'true' : 'false');
-        btn.textContent = label;
+        const count = label === 'All' ? totalCount : (countPerGroup[label] || 0);
+        // Label + soft-muted count badge inside the same pill.
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = label;
+        const countSpan = document.createElement('span');
+        countSpan.className = 'facet-group-tab__count';
+        countSpan.textContent = count;
+        btn.appendChild(nameSpan);
+        btn.appendChild(document.createTextNode(' '));
+        btn.appendChild(countSpan);
         btn.addEventListener('click', () => {
           activeTab = label;
           if (label === 'All') {
