@@ -123,7 +123,7 @@
 /* ===== Reset & Base ===== */
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
-code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--accent); background:var(--bg2); padding:1px 6px; border-radius:3px; }
+code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--accent); background:var(--bg2); padding:1px 6px; border-radius:var(--radius-sm); }
 hr { border:none; border-top:1px solid var(--border); margin:12px 0; }
 /* Phase 3: refined typography baseline (specific selectors still override). */
 h1, h2, h3, h4, h5, h6 { line-height:var(--lh-tight); letter-spacing:-0.01em; }
@@ -188,9 +188,9 @@ input[type="number"]:focus, input[type="text"]:focus, input[type="search"]:focus
 input[type="number"]:focus-visible, input[type="text"]:focus-visible, input[type="search"]:focus-visible {
   outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);
 }
-input[type="range"] { -webkit-appearance:none; appearance:none; height:6px; border-radius:3px; background:var(--border); outline:none; cursor:pointer; }
+input[type="range"] { -webkit-appearance:none; appearance:none; height:6px; border-radius:var(--radius-sm); background:var(--border); outline:none; cursor:pointer; }
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent); cursor:pointer; }
-input[type="range"]::-moz-range-track { height:6px; border-radius:3px; background:var(--border); border:none; }
+input[type="range"]::-moz-range-track { height:6px; border-radius:var(--radius-sm); background:var(--border); border:none; }
 input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:50%; background:var(--accent); cursor:pointer; border:none; }
 
 /* Material List */
@@ -214,7 +214,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 
 /* Preset Chips */
 .preset-chips { display:flex; flex-wrap:wrap; gap:4px; }
-.preset-chip { padding:4px 10px; border:1px solid var(--border); border-radius:16px; background:var(--bg2); color:var(--text2); font-size:0.75em; font-family:inherit; cursor:pointer; white-space:nowrap; font-weight:500; }
+.preset-chip { padding:4px 10px; border:1px solid var(--border); border-radius:var(--radius-pill); background:var(--bg2); color:var(--text2); font-size:0.75em; font-family:inherit; cursor:pointer; white-space:nowrap; font-weight:500; }
 .preset-chip:hover { border-color:var(--accent); color:var(--text); }
 .preset-chip.active { background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent); }
 
@@ -270,7 +270,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .data-table tr:hover { background:var(--bg2); }
 
 /* Status badges */
-.badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.72em; font-weight:600; }
+.badge { display:inline-block; padding:2px 8px; border-radius:var(--radius-pill); font-size:0.72em; font-weight:600; }
 .badge-ok { background:var(--success-bg); color:var(--success); }
 .badge-warn { background:var(--warn-bg); color:var(--warn); }
 .badge-danger { background:var(--danger-bg); color:var(--danger); }
@@ -2091,7 +2091,7 @@ function renderCompatTab() {
     // than the Top / Base columns — misaligning the bar bottoms.
     html += '<div style="font-size:0.78em;color:var(--text2);line-height:1.25;min-height:2.5em;display:flex;align-items:flex-end;justify-content:center">' + tier + ' (' + ideal + ')</div>';
     html += '<div style="height:60px;display:flex;align-items:flex-end;justify-content:center">';
-    html += '<div style="width:40px;height:' + Math.max(pct * 0.6, 4) + 'px;background:' + color + ';border-radius:3px 3px 0 0;opacity:0.8"></div>';
+    html += '<div style="width:40px;height:' + Math.max(pct * 0.6, 4) + 'px;background:' + color + ';border-radius:var(--radius-sm) 3px 0 0;opacity:0.8"></div>';
     html += '</div>';
     html += '<div style="font-size:0.85em;font-weight:600">' + val + '%</div>';
     html += '</div>';
@@ -2804,7 +2804,7 @@ function renderStabilityTab() {
     html += '<div class="analysis-card"><h4>Reactive Pair Warnings</h4>';
     for (const w of warnings) {
       const sevClass = w.severity === 'high' ? 'badge-danger' : w.severity === 'medium' ? 'badge-warn' : 'badge-ok';
-      const colorSwatch = w.colorChange ? '<span style="display:inline-flex;gap:2px;vertical-align:middle"><span style="width:14px;height:14px;border-radius:3px;background:' + w.colorChange.from + ';border:1px solid var(--border)"></span><span style="font-size:0.8em">&rarr;</span><span style="width:14px;height:14px;border-radius:3px;background:' + w.colorChange.to + ';border:1px solid var(--border)"></span></span>' : '';
+      const colorSwatch = w.colorChange ? '<span style="display:inline-flex;gap:2px;vertical-align:middle"><span style="width:14px;height:14px;border-radius:var(--radius-sm);background:' + w.colorChange.from + ';border:1px solid var(--border)"></span><span style="font-size:0.8em">&rarr;</span><span style="width:14px;height:14px;border-radius:var(--radius-sm);background:' + w.colorChange.to + ';border:1px solid var(--border)"></span></span>' : '';
       html += '<div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:var(--bg2)">';
       html += '<div style="display:flex;justify-content:space-between;align-items:center">';
       html += '<strong>' + escHtml(w.matA.name) + ' + ' + escHtml(w.matB.name) + '</strong>';

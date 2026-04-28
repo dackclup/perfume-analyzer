@@ -169,7 +169,7 @@ h3 { font-size:var(--fs-lg); font-weight:var(--fw-semibold); }
 h4 { font-size:var(--fs-md); font-weight:var(--fw-semibold); }
 .subtitle { color:var(--text2); font-size:0.9em; margin-bottom:16px; }
 hr { border:none; border-top:1px solid var(--border); margin:16px 0; }
-code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--accent); background:var(--bg2); padding:1px 6px; border-radius:3px; overflow-wrap:anywhere; }
+code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--accent); background:var(--bg2); padding:1px 6px; border-radius:var(--radius-sm); overflow-wrap:anywhere; }
 
 /* Search */
 .search-box { display:flex; gap:8px; margin-bottom:8px; }
@@ -183,7 +183,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .filter-drawer { margin:8px 0; }
 .filter-header { display:flex; align-items:center; gap:8px; }
 .filter-toggle { cursor:pointer; font-size:0.85em; font-weight:500; color:var(--accent); padding:6px 0; user-select:none; }
-.filter-reset { font-size:0.75em; color:var(--text2); cursor:pointer; padding:2px 10px; border:1px solid var(--border); border-radius:10px; opacity:0.6; }
+.filter-reset { font-size:0.75em; color:var(--text2); cursor:pointer; padding:2px 10px; border:1px solid var(--border); border-radius:var(--radius-pill); opacity:0.6; }
 .filter-reset:hover { opacity:1; color:var(--accent); border-color:var(--accent); }
 .filter-content { display:none; padding:0 0 0 4px; }
 .filter-content.open { display:block; }
@@ -219,7 +219,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 
 /* Pills */
 .pills { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; min-height:0; }
-.pill { padding:5px 14px; border:1px solid var(--border); border-radius:16px; font-size:0.82em; cursor:pointer; background:var(--bg2); color:var(--text); transition:all 0.15s; }
+.pill { padding:5px 14px; border:1px solid var(--border); border-radius:var(--radius-pill); font-size:0.82em; cursor:pointer; background:var(--bg2); color:var(--text); transition:all 0.15s; }
 .pill:hover { background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent); }
 
 /* Status */
@@ -347,7 +347,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .facet-groups-picker-row { display:flex; align-items:center; gap:6px; font-size:0.78em; color:var(--text2); cursor:pointer; padding:2px 0; user-select:none; }
 .facet-groups-picker-row:hover { color:var(--accent); }
 .facet-groups-picker-row input { margin:0; cursor:pointer; accent-color:var(--accent); }
-.badge-not-perfumery { font-size:0.7em; padding:2px 8px; border-radius:3px; margin-left:6px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px dashed var(--border); text-transform:none; vertical-align:middle; }
+.badge-not-perfumery { font-size:0.7em; padding:2px 8px; border-radius:var(--radius-sm); margin-left:6px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px dashed var(--border); text-transform:none; vertical-align:middle; }
 /* Blends-with chip row: resolved materials click-to-add, group labels
    click-to-filter, unresolved free-text rendered muted. Shares
    neutral-chip styling with the taxonomy badges. */
@@ -378,7 +378,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .blend-chip-strength {
   display:inline-block; padding:0 6px; font-size:0.72em; font-weight:600;
   letter-spacing:0.06em; text-transform:uppercase; line-height:1.5;
-  border-radius:3px; background:var(--bg); color:var(--text2);
+  border-radius:var(--radius-sm); background:var(--bg); color:var(--text2);
   border:1px solid var(--border); flex:0 0 auto;
 }
 .blend-chip[data-strength="anchor"] { border-color:var(--accent); }
@@ -392,7 +392,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .blend-chip-auto .blend-chip-strength { color:var(--accent); border-color:var(--accent); font-weight:500; }
 .sec-subtitle { font-size:0.75em; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text2); margin:10px 0 4px; }
 .blends-dropped { margin:6px 0 0; font-size:0.7em; font-style:italic; color:var(--text2); opacity:0.75; }
-.match-tag { font-size:0.6em; padding:1px 6px; border-radius:3px; font-weight:400; background:var(--accent); color:var(--accent-text, #fff); vertical-align:middle; opacity:0.8; white-space:nowrap; display:inline-block; }
+.match-tag { font-size:0.6em; padding:1px 6px; border-radius:var(--radius-sm); font-weight:400; background:var(--accent); color:var(--accent-text, #fff); vertical-align:middle; opacity:0.8; white-space:nowrap; display:inline-block; }
 
 /* PubChem data */
 .pubchem-toggle { cursor:pointer; color:var(--accent); font-size:0.9em; margin-top:8px; }
@@ -418,7 +418,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .downloads .formulate-link:hover { text-decoration:underline; }
 
 /* Progress */
-.progress { display:none; height:4px; background:var(--border); border-radius:2px; margin:8px 0; overflow:hidden; }
+.progress { display:none; height:4px; background:var(--border); border-radius:var(--radius-sm); margin:8px 0; overflow:hidden; }
 .progress-bar { height:100%; background:var(--accent); transition:width var(--dur-slow) var(--ease); }
 .progress-text { font-size:0.8em; color:var(--text2); }
 
@@ -815,14 +815,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v161"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v162"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v161";
+const DATA_VERSION = "2026-04-25-rebuild-v162";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
