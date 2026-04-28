@@ -869,14 +869,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v169"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v170"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v169";
+const DATA_VERSION = "2026-04-25-rebuild-v170";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -3352,13 +3352,14 @@ function _buildPillFilter(axisName) {
   allBtn.innerHTML = '<span>All</span>' + (total ? ' <span class="pill-count">' + total + '</span>' : '');
   allBtn.onclick = function() { _clearAxisFilter(axisName); };
   wrap.appendChild(allBtn);
-  // One pill per value. Skip values with zero materials so the user
-  // doesn't see chips that filter to an empty result set.
+  // One pill per value. Render every value (including count=0) so the
+  // user sees the full taxonomy at a glance — the .empty class softens
+  // chips with no matching materials so they read as "available but
+  // currently unused" rather than "missing from the system".
   for (const v of ax.values) {
     const cnt = counts[v] || 0;
-    if (!cnt) continue;
     const btn = document.createElement('span');
-    btn.className = 'odor-tag';
+    btn.className = 'odor-tag' + (cnt === 0 ? ' empty' : '');
     btn.dataset.axis = axisName;
     btn.dataset.value = v;
     const desc = descriptions[v];
