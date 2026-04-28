@@ -197,7 +197,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .sub-toggle.open { color:var(--text); }
 /* Active-filter pill — appears when count > 0 (set via JS data attribute);
    hidden when empty. The text content shows count or selection summary. */
-.sub-selected { font-weight:var(--fw-medium); font-size:var(--fs-xs); color:var(--accent); margin-left:auto; padding:1px 8px; border-radius:var(--radius-pill); background:var(--accent-soft); white-space:nowrap; }
+.sub-selected { font-weight:var(--fw-medium); font-size:var(--fs-xs); color:var(--accent); margin-left:auto; padding:1px 8px; border-radius:var(--radius-pill); background:var(--accent-soft); white-space:nowrap; max-width:55%; overflow:hidden; text-overflow:ellipsis; }
 .sub-selected:empty { display:none; }
 .sub-body { display:none; padding:0 var(--space-3) var(--space-3) var(--space-4); overflow:hidden; transition:max-height var(--dur-slow) var(--ease); }
 .sub-body.open { display:block; }
@@ -859,14 +859,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v166"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v167"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v166";
+const DATA_VERSION = "2026-04-25-rebuild-v167";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -2990,7 +2990,17 @@ function _updateFacetSelected() {
   if (!sel) return;
   const parts = [];
   if (activeFacetFilters.size) {
-    parts.push([...activeFacetFilters].map(facetLabel).join(', '));
+    // Truncate when many selected so the pill never overflows on
+    // narrow phones. Show first 2 names + count of remaining ones —
+    // gives context plus total at a glance, instead of either raw
+    // overflow ("Lavender, Basil, Mint, Lemon, ...") or pure count
+    // ("9 selected") with no specifics.
+    const names = [...activeFacetFilters].map(facetLabel);
+    if (names.length <= 2) {
+      parts.push(names.join(', '));
+    } else {
+      parts.push(names.slice(0, 2).join(', ') + ' +' + (names.length - 2));
+    }
   }
   if (hiddenFacetGroups.size) {
     const groupEls = document.querySelectorAll('#facetGroups > .facet-group');
