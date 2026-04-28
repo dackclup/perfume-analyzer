@@ -423,6 +423,13 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .btn--ghost:hover { background:var(--bg-subtle); color:var(--text); border-color:transparent; }
 @media (max-width:600px) { .btn, .chip, .icon-btn { min-height:40px; } }
 
+/* Phase 6: dashed-border CTA for "tap-to-add" affordance */
+.btn--dashed { border:1px dashed var(--border-strong); background:transparent; color:var(--text-muted); }
+.btn--dashed:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); transform:translateY(-1px); box-shadow:none; }
+.btn--icon { min-width:36px; padding:8px; }
+/* Empty state with icon */
+.empty-state__svg { display:block; margin:0 auto var(--space-2); width:32px; height:32px; color:var(--text-subtle); opacity:.6; }
+
 /* Fragrance Wheel slice click effect — pop flash + glow + persistent
    active state. Triggered from filterByWheelSegment(). The pop
    animation runs once on click; active-seg stays until another slice
@@ -588,13 +595,16 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
     <div class="control-group">
       <div class="control-label"><span>SOLVENT/CARRIER/OTHER <span id="carrierCount" style="font-weight:normal;color:var(--text2)">(0)</span></span></div>
       <div class="mat-list" id="carrierList">
-        <div class="empty-state" style="padding:12px;font-size:0.8em;color:var(--text2);text-align:center">No carrier yet — click + Add below</div>
+        <div class="empty-state" style="padding:12px;font-size:0.8em">
+          <svg class="empty-state__svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5c-3 4.5-5 7.5-5 10a5 5 0 0 0 10 0c0-2.5-2-5.5-5-10z"/></svg>
+          <p>No carrier yet</p>
+        </div>
       </div>
       <div id="carrierTotal" style="display:none;justify-content:space-between;align-items:center;padding:4px 8px;font-size:0.78em;font-weight:600">
         <span>Total</span>
         <span id="carrierTotalAmt">0g</span>
       </div>
-      <button class="btn" id="btnAddCarrier" style="width:100%;margin-top:4px;font-size:0.75em">+ Add</button>
+      <button class="btn btn--dashed" id="btnAddCarrier" style="width:100%;margin-top:4px;font-size:0.75em">+ Add</button>
     </div>
 
     <!-- Temperature (hidden — fixed at 25°C average) -->
@@ -609,6 +619,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
     <h2>Materials <span id="matCount" style="font-weight:400; color:var(--text2)">(0)</span></h2>
     <div id="matList" class="mat-list">
       <div class="empty-state" id="matEmpty">
+        <svg class="empty-state__svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v5L4 18a2 2 0 0 0 1.7 3h12.6a2 2 0 0 0 1.7-3L14 8V3M8 14h8"/></svg>
         <p>No materials yet</p>
         <p>Click <strong>+ Add</strong> or <strong>Import</strong> below</p>
       </div>
@@ -623,7 +634,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
     <!-- Action Buttons — compact -->
     <div style="display:flex;gap:4px;margin-top:8px">
       <button class="btn btn-primary" id="btnAddMat" style="flex:1;white-space:nowrap">+ Add</button>
-      <button class="btn btn-primary" id="btnBrief" style="flex:1;white-space:nowrap">&#9733; Brief</button>
+      <button class="btn" id="btnBrief" style="flex:1;white-space:nowrap" title="Generate from creative brief">Brief</button>
     </div>
 
     <hr>
@@ -632,7 +643,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
     <div style="display:flex;gap:4px;align-items:center">
       <button class="btn" id="btnSave" style="white-space:nowrap">Save</button>
       <select id="savedFormulas" style="font-size:0.78em;flex:1;min-width:0"><option value="">-- Saved --</option></select>
-      <button class="btn" id="btnDelete" style="color:var(--danger);white-space:nowrap">Del</button>
+      <button class="btn btn--icon" id="btnDelete" style="color:var(--danger)" title="Delete saved formulation" aria-label="Delete saved formulation"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
       <button class="btn" id="btnNew">New</button>
     </div>
     <div style="display:flex;gap:4px;margin-top:4px">
@@ -1641,7 +1652,9 @@ function renderCarrierList() {
   const countEl = document.getElementById('carrierCount');
 
   if (!carrierMaterials.length) {
-    list.innerHTML = '<div class="empty-state" style="padding:12px;font-size:0.8em;color:var(--text2);text-align:center">No carrier yet — click + Add below</div>';
+    list.innerHTML = '<div class="empty-state" style="padding:12px;font-size:0.8em">'
+      + '<svg class="empty-state__svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5c-3 4.5-5 7.5-5 10a5 5 0 0 0 10 0c0-2.5-2-5.5-5-10z"/></svg>'
+      + '<p>No carrier yet</p></div>';
     totalEl.style.display = 'none';
     countEl.textContent = '(0)';
     // Update hidden carrierSelect to first carrier or default
