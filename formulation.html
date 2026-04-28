@@ -439,18 +439,8 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
   stroke-width: 3;
   filter: brightness(1.08) drop-shadow(0 0 8px rgba(255,255,255,.7));
 }
-.wheel-ripple {
-  fill: rgba(255,255,255,.45);
-  pointer-events: none;
-  animation: wheel-ripple 700ms ease-out forwards;
-}
-@keyframes wheel-ripple {
-  0%   { r: 0;   opacity: .7; }
-  100% { r: 280; opacity: 0;  }
-}
 @media (prefers-reduced-motion: reduce) {
-  .wheel-seg.popping,
-  .wheel-ripple { animation: none; }
+  .wheel-seg.popping { animation: none; }
 }
 
 /* Analysis card hover + shadow */
@@ -3943,9 +3933,9 @@ function renderWheelTab() {
 }
 
 function filterByWheelSegment(segId, evt) {
-  // Visual click feedback: pop animation on clicked slice + ripple wave
-  // from click point. Persistent .active-seg highlight stays until the
-  // next slice is selected.
+  // Visual click feedback: pop animation on clicked slice.
+  // Persistent .active-seg highlight stays until the next slice is
+  // selected. (`evt` arg retained for backwards compat / future use.)
   const allSegs = document.querySelectorAll('.wheel-seg');
   allSegs.forEach(p => { p.classList.remove('active-seg'); p.classList.remove('popping'); });
   const clickedPath = document.querySelector('.wheel-seg[data-seg="' + segId + '"]');
@@ -3955,27 +3945,6 @@ function filterByWheelSegment(segId, evt) {
     void clickedPath.getBoundingClientRect();
     clickedPath.classList.add('popping', 'active-seg');
     setTimeout(() => clickedPath.classList.remove('popping'), 500);
-
-    // Ripple — translate the click point into SVG-local coords, drop a
-    // <circle> there, let CSS animation take over, then garbage-collect.
-    const svgEl = clickedPath.ownerSVGElement;
-    if (svgEl && evt && typeof evt.clientX === 'number') {
-      try {
-        const pt = svgEl.createSVGPoint();
-        pt.x = evt.clientX; pt.y = evt.clientY;
-        const ctm = svgEl.getScreenCTM();
-        if (ctm) {
-          const local = pt.matrixTransform(ctm.inverse());
-          const ripple = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-          ripple.setAttribute('cx', local.x.toFixed(2));
-          ripple.setAttribute('cy', local.y.toFixed(2));
-          ripple.setAttribute('r', '0');
-          ripple.setAttribute('class', 'wheel-ripple');
-          svgEl.appendChild(ripple);
-          setTimeout(() => { try { ripple.remove(); } catch (e) {} }, 720);
-        }
-      } catch (e) { /* SVG point conversion can fail in old browsers — silent fallback */ }
-    }
   }
 
   const el = document.getElementById('wheelFilterResults');
