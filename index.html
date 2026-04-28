@@ -869,14 +869,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v170"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v171"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v170";
+const DATA_VERSION = "2026-04-25-rebuild-v171";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -3342,7 +3342,12 @@ function _buildPillFilter(axisName) {
   wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px';
   const counts = _countFilterAxis(axisName);
   const descriptions = _AXIS_DESCRIPTIONS[axisName] || {};
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  // "All" = unique material count (FILTER_CACHE size), not the sum of
+  // per-tag counts. For multi-valued axes (Use, Function, Regulatory) a
+  // material can carry several tags, so summing chip counts double-counts
+  // materials. Showing FILTER_CACHE.size keeps "All N" consistent with
+  // the actual number of materials in scope.
+  const total = (typeof FILTER_CACHE !== 'undefined' && FILTER_CACHE) ? FILTER_CACHE.size : 0;
   // "All" reset chip — click to clear the axis Set.
   const allBtn = document.createElement('span');
   allBtn.className = 'odor-tag active';
