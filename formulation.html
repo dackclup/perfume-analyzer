@@ -223,7 +223,8 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .btn { padding:8px 14px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); color:var(--text); font-family:inherit; font-size:0.82em; cursor:pointer; font-weight:500; }
 .btn:hover { border-color:var(--accent); color:var(--accent); }
 .btn-primary { background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent); }
-.btn-primary:hover { opacity:0.85; }
+.btn-primary:hover { opacity:0.85; background:var(--accent-hover); color:var(--accent-text, #fff); border-color:var(--accent-hover); }
+.btn-primary:active, .btn-primary:focus { color:var(--accent-text, #fff); }
 .btn-sm { padding:5px 10px; font-size:0.78em; }
 
 /* Empty state */
