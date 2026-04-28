@@ -175,7 +175,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .search-box { display:flex; gap:8px; margin-bottom:8px; }
 #searchInput { flex:1; padding:10px 14px; border:2px solid var(--border); border-radius:8px; font-size:1em; background:var(--bg2); color:var(--text); outline:none; font-family:inherit; }
 #searchInput:focus { border-color:var(--accent); }
-#searchBtn { padding:10px 24px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:1em; cursor:pointer; font-family:inherit; font-weight:500; white-space:nowrap; }
+#searchBtn { padding:10px 24px; background:var(--accent); color:var(--accent-text, #fff); border:none; border-radius:8px; font-size:1em; cursor:pointer; font-family:inherit; font-weight:500; white-space:nowrap; }
 #searchBtn:hover { opacity:0.85; }
 #searchBtn:disabled { opacity:0.4; cursor:default; }
 
@@ -209,7 +209,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 
 .odor-tag { padding:2px 10px; border:1px solid var(--border); border-radius:12px; font-size:0.72em; cursor:pointer; background:var(--bg2); color:var(--text2); font-family:inherit; transition:all 0.15s; }
 .odor-tag:hover { border-color:var(--accent); color:var(--accent); }
-.odor-tag.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.odor-tag.active { background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent); }
 /* Empty-count chip — facet has no materials matching under current DB /
    filter state. Renders dim so the user can see the canonical descriptor
    is part of the taxonomy but the DB carries no curated match yet.
@@ -220,11 +220,11 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 /* Pills */
 .pills { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; min-height:0; }
 .pill { padding:5px 14px; border:1px solid var(--border); border-radius:16px; font-size:0.82em; cursor:pointer; background:var(--bg2); color:var(--text); transition:all 0.15s; }
-.pill:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+.pill:hover { background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent); }
 
 /* Status */
 .status { color:var(--text2); font-size:0.85em; }
-.clear-btn { padding:6px 18px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:0.85em; cursor:pointer; font-family:inherit; font-weight:500; margin-left:auto; opacity:0.4; }
+.clear-btn { padding:6px 18px; background:var(--accent); color:var(--accent-text, #fff); border:none; border-radius:8px; font-size:0.85em; cursor:pointer; font-family:inherit; font-weight:500; margin-left:auto; opacity:0.4; }
 .clear-btn:hover { opacity:0.7; }
 #statusBar { align-items:center; margin-bottom:8px; }
 
@@ -342,7 +342,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .facet-groups-picker summary { display:inline-block; cursor:pointer; list-style:none; }
 .facet-groups-picker summary::-webkit-details-marker { display:none; }
 .facet-groups-picker summary::marker { content:''; }
-.facet-groups-picker[open] summary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.facet-groups-picker[open] summary { background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent); }
 .facet-groups-picker-body { position:absolute; top:calc(100% + 4px); left:0; z-index:20; display:grid; grid-template-columns:repeat(2, minmax(120px, 1fr)); gap:2px 10px; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--bg2); box-shadow:0 4px 12px rgba(0,0,0,0.35); min-width:260px; max-width:min(360px, 90vw); max-height:60vh; overflow-y:auto; }
 .facet-groups-picker-row { display:flex; align-items:center; gap:6px; font-size:0.78em; color:var(--text2); cursor:pointer; padding:2px 0; user-select:none; }
 .facet-groups-picker-row:hover { color:var(--accent); }
@@ -392,7 +392,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .blend-chip-auto .blend-chip-strength { color:var(--accent); border-color:var(--accent); font-weight:500; }
 .sec-subtitle { font-size:0.75em; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text2); margin:10px 0 4px; }
 .blends-dropped { margin:6px 0 0; font-size:0.7em; font-style:italic; color:var(--text2); opacity:0.75; }
-.match-tag { font-size:0.6em; padding:1px 6px; border-radius:3px; font-weight:400; background:var(--accent); color:#fff; vertical-align:middle; opacity:0.8; white-space:nowrap; display:inline-block; }
+.match-tag { font-size:0.6em; padding:1px 6px; border-radius:3px; font-weight:400; background:var(--accent); color:var(--accent-text, #fff); vertical-align:middle; opacity:0.8; white-space:nowrap; display:inline-block; }
 
 /* PubChem data */
 .pubchem-toggle { cursor:pointer; color:var(--accent); font-size:0.9em; margin-top:8px; }
@@ -508,7 +508,7 @@ html { scroll-behavior:smooth; }
 /* ===== Skip link (a11y) ===== */
 .skip-link {
   position:absolute; top:-48px; left:var(--space-3);
-  background:var(--accent); color:#fff;
+  background:var(--accent); color:var(--accent-text, #fff);
   padding:var(--space-2) var(--space-3); border-radius:var(--radius);
   z-index:1000; text-decoration:none; font-weight:var(--fw-medium);
   transition:top var(--dur) var(--ease);
@@ -628,8 +628,8 @@ html { scroll-behavior:smooth; }
 .badge--ok     { background:var(--success-bg); color:var(--success); border-color:var(--success-border); }
 .badge--warn   { background:var(--warn-bg);    color:var(--warn);    border-color:var(--warn-border); }
 .badge--danger { background:var(--danger-bg);  color:var(--danger);  border-color:var(--danger-border); }
-.badge--accent { background:var(--accent);     color:#fff; }
-.badge--match  { background:var(--accent); color:#fff; opacity:.88; }
+.badge--accent { background:var(--accent);     color:var(--accent-text, #fff); }
+.badge--match  { background:var(--accent); color:var(--accent-text, #fff); opacity:.88; }
 
 /* Chip (interactive) */
 .chip {
@@ -643,7 +643,7 @@ html { scroll-behavior:smooth; }
 .chip:hover { border-color:var(--accent); color:var(--accent); background:var(--surface-hi); }
 .chip:active { transform:translateY(1px); }
 .chip.is-active, .chip[aria-pressed="true"] {
-  background:var(--accent); color:#fff; border-color:var(--accent);
+  background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent);
 }
 .chip--sm { padding:3px 10px; font-size:var(--fs-xs); }
 
@@ -680,7 +680,7 @@ html { scroll-behavior:smooth; }
 .badge-top, .mat-note.top { background:var(--note-top-bg); color:var(--note-top-fg); }
 .badge-mid, .mat-note.mid { background:var(--note-mid-bg); color:var(--note-mid-fg); }
 .badge-base, .mat-note.base { background:var(--note-base-bg); color:var(--note-base-fg); }
-.match-tag { background:var(--accent); color:#fff; opacity:.88; }
+.match-tag { background:var(--accent); color:var(--accent-text, #fff); opacity:.88; }
 .mat-warn { background:var(--warn-bg); color:var(--warn); border-color:var(--warn-border); }
 </style>
 </head>
@@ -797,7 +797,7 @@ html { scroll-behavior:smooth; }
     </div>
   </div>
 </div>
-<p id="searchError" style="display:none;color:#e74c3c;font-size:0.85em;font-weight:500;margin:4px 0 0"></p>
+<p id="searchError" style="display:none;color:var(--danger);font-size:0.85em;font-weight:500;margin:4px 0 0"></p>
 <div class="pills" id="pills"></div>
 <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
 <p class="progress-text" id="progressText"></p>
@@ -815,14 +815,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v160"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v161"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v160";
+const DATA_VERSION = "2026-04-25-rebuild-v161";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -5090,7 +5090,7 @@ function renderResults() {
           ${sf.ifra_guideline||sf.usage_levels?`
           <div class="card-section">
             <p class="sec-title">Safety</p>
-            ${sf.ifra_guideline?(()=>{const bs=getBanStatus(mat);return bs?`<p style="color:#b91c1c;font-weight:600">${esc(sf.ifra_guideline)}</p><p style="color:#b91c1c;font-size:0.8em">${bs==='worldwide'?'Banned globally — IFRA prohibition; not permitted in any application':'Banned in EU cosmetics (EC No 2021/1902 — Omnibus II / CLP Annex VI)'}</p>`:`<p>${esc(sf.ifra_guideline)}</p>`;})():""}
+            ${sf.ifra_guideline?(()=>{const bs=getBanStatus(mat);return bs?`<p style="color:var(--danger);font-weight:600">${esc(sf.ifra_guideline)}</p><p style="color:var(--danger);font-size:0.8em">${bs==='worldwide'?'Banned globally — IFRA prohibition; not permitted in any application':'Banned in EU cosmetics (EC No 2021/1902 — Omnibus II / CLP Annex VI)'}</p>`:`<p>${esc(sf.ifra_guideline)}</p>`;})():""}
             ${_usageLevelsClean?`<p style="color:var(--text2);font-size:0.85em">${esc(_usageLevelsClean)}</p>`:""}
             <p style="color:var(--text2);font-size:0.7em;font-style:italic;margin-top:4px">Usage % = guideline in fragrance concentrate, not IFRA max in finished product. Always verify per product category.</p>
           </div>`:""}
@@ -5147,7 +5147,7 @@ function renderResults() {
       </div>`);
    } catch(e) {
     console.error('renderResults: card ' + idx + ' (' + (mat?.record?.names?.canonical||'?') + ') threw:', e);
-    cards.push(`<div class="card"><div class="card-header"><h3>${esc(mat?.record?.names?.canonical||'Unknown material')} <span style="color:#b91c1c;font-size:0.8em">(render error)</span></h3></div></div>`);
+    cards.push(`<div class="card"><div class="card-header"><h3>${esc(mat?.record?.names?.canonical||'Unknown material')} <span style="color:var(--danger);font-size:0.8em">(render error)</span></h3></div></div>`);
    }
   });
   div.innerHTML = cards.join('');
