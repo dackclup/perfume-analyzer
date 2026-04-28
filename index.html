@@ -397,6 +397,11 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
    color so active-state still has good contrast. */
 .facet-group-tab__count { opacity:.55; font-variant-numeric:tabular-nums; font-size:0.92em; }
 .facet-group-tab.active .facet-group-tab__count { opacity:.75; }
+/* Per-value count badges on filter pills (Function / Type / Note /
+   Regulatory / Source / Use). Same readability rule as the group
+   tabs: dim count, full-strength label. */
+.odor-tag .pill-count { opacity:.5; font-variant-numeric:tabular-nums; font-size:0.92em; margin-left:2px; }
+.odor-tag.active .pill-count { opacity:.75; }
 .badge-not-perfumery { font-size:0.7em; padding:2px 8px; border-radius:var(--radius-sm); margin-left:6px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px dashed var(--border); text-transform:none; vertical-align:middle; }
 /* Blends-with chip row: resolved materials click-to-add, group labels
    click-to-filter, unresolved free-text rendered muted. Shares
@@ -864,14 +869,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v168"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v169"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v168";
+const DATA_VERSION = "2026-04-25-rebuild-v169";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1506,10 +1511,39 @@ const TYPE_LABELS = {
   antioxidant:'Antioxidant', wax:'Wax', additive:'Additive',
   solubilizer:'Solubilizer', emulsifier:'Emulsifier'
 };
+// One-line definitions for non-experts — surfaced as native browser
+// tooltip via title= so long-press / hover reveals the explanation.
+const TYPE_DESCRIPTIONS = {
+  aroma_chemical: 'Synthetic or isolated single molecule (e.g., Iso E Super, Hedione)',
+  essential_oil:  'Steam-distilled or cold-pressed natural oil',
+  absolute:       'Alcohol-extracted concentrate from a concrete (e.g., Jasmine Absolute)',
+  resin:          'Dried tree exudate (e.g., Frankincense)',
+  balsam:         'Naturally fragrant resinous exudate (e.g., Peru Balsam)',
+  natural_isolate:'Single molecule isolated from a natural source',
+  solvent:        'Diluent / carrier (e.g., DPG, ethanol)',
+  carrier:        'Inert base used to dilute fragrance compounds',
+  preservative:   'Stabiliser preventing oxidation / microbial growth',
+  antioxidant:    'Slows oxidation of fragrance components (e.g., BHT)',
+  wax:            'Solid carrier (e.g., beeswax)',
+  additive:       'Other formulation additive',
+  solubilizer:    'Helps oils mix with water-based phases',
+  emulsifier:     'Stabilises oil/water emulsions'
+};
 const FUNCTION_VALUES = ['aromatic','fixative','blender','modifier','enhancer'];
 const FUNCTION_LABELS = {
-  aromatic:'Aromatic', fixative:'Fixative',
+  // 'Heart' replaces the misleading 'Aromatic' label (which clashes
+  // with the Aromatic Fougère family descriptor). Internal value stays
+  // 'aromatic' for DB compatibility — this is a label-only rename per
+  // Arctander's classification (Heart/Basic = main scent character).
+  aromatic:'Heart', fixative:'Fixative',
   blender:'Blender', modifier:'Modifier', enhancer:'Enhancer'
+};
+const FUNCTION_DESCRIPTIONS = {
+  aromatic: 'Heart — main scent character; defines the perfume’s identity',
+  fixative: 'Slows evaporation, anchors aroma, extends longevity',
+  blender:  'Smooths and harmonises disparate notes',
+  modifier: 'Decorates / alters character (fresh, fruity, spicy nuances)',
+  enhancer: 'Boosts or amplifies other materials'
 };
 // ── Legacy Odor Family axis REMOVED ──
 // The redundant 23-value Odor Family axis was dropped in the search-
@@ -3250,6 +3284,54 @@ function resetAllFilters() {
 // automatically. Every axis shares the same interaction pattern
 // (see _togglePillFilter / _clearAxisFilter / _updateAxisSelectedLabel
 // above).
+// Per-axis tooltip dictionaries — looked up by axis name. Keeps the
+// pill-render path generic; new axes only need to register a new
+// dictionary here.
+const _AXIS_DESCRIPTIONS = {
+  type: typeof TYPE_DESCRIPTIONS !== 'undefined' ? TYPE_DESCRIPTIONS : {},
+  func: typeof FUNCTION_DESCRIPTIONS !== 'undefined' ? FUNCTION_DESCRIPTIONS : {},
+};
+
+// Count per (axis, value) computed once from FILTER_CACHE so each pill
+// can show "Heart 130" instead of just "Heart". Same pattern as the
+// facet group tabs (PR #341) — counts are static between page loads
+// because FILTER_CACHE is built once at boot.
+function _countFilterAxis(axisName) {
+  const counts = {};
+  if (!(typeof FILTER_CACHE !== 'undefined' && FILTER_CACHE && FILTER_CACHE.size)) return counts;
+  // Field name per axis on a FILTER_CACHE entry. Verified against
+  // _materialMatchesFilters / _buildFilterRecord (search for the
+  // returned shape: cas, materialType, functions, uses, regulatory,
+  // source, noteLow…).
+  const FIELD = { type:'materialType', func:'functions', tag:'uses',
+                  reg:'regulatory', source:'source' };
+  const field = FIELD[axisName];
+  if (axisName === 'note') {
+    // noteLow is a single string that may contain "top middle" etc.
+    // Counts each note keyword (top/middle/base) it mentions.
+    for (const fc of FILTER_CACHE.values()) {
+      const s = (fc.noteLow || '').toLowerCase();
+      let matched = false;
+      if (s.includes('top'))    { counts.top    = (counts.top    || 0) + 1; matched = true; }
+      if (s.includes('middle')) { counts.middle = (counts.middle || 0) + 1; matched = true; }
+      if (s.includes('base'))   { counts.base   = (counts.base   || 0) + 1; matched = true; }
+      if (!matched)             { counts._other = (counts._other || 0) + 1; }
+    }
+    return counts;
+  }
+  if (!field) return counts;
+  for (const fc of FILTER_CACHE.values()) {
+    const v = fc[field];
+    if (v == null) continue;
+    if (v instanceof Set || Array.isArray(v)) {
+      for (const x of v) counts[x] = (counts[x] || 0) + 1;
+    } else {
+      counts[v] = (counts[v] || 0) + 1;
+    }
+  }
+  return counts;
+}
+
 function _buildPillFilter(axisName) {
   const ax = _filterAxes[axisName];
   if (!ax) return;
@@ -3258,20 +3340,30 @@ function _buildPillFilter(axisName) {
   container.innerHTML = '';
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px';
+  const counts = _countFilterAxis(axisName);
+  const descriptions = _AXIS_DESCRIPTIONS[axisName] || {};
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
   // "All" reset chip — click to clear the axis Set.
   const allBtn = document.createElement('span');
   allBtn.className = 'odor-tag active';
   allBtn.dataset.axisAll = axisName;
-  allBtn.textContent = 'All';
+  // Render label + count as separate spans so CSS can soft-mute the
+  // count without affecting the label readability.
+  allBtn.innerHTML = '<span>All</span>' + (total ? ' <span class="pill-count">' + total + '</span>' : '');
   allBtn.onclick = function() { _clearAxisFilter(axisName); };
   wrap.appendChild(allBtn);
-  // One pill per value.
+  // One pill per value. Skip values with zero materials so the user
+  // doesn't see chips that filter to an empty result set.
   for (const v of ax.values) {
+    const cnt = counts[v] || 0;
+    if (!cnt) continue;
     const btn = document.createElement('span');
     btn.className = 'odor-tag';
     btn.dataset.axis = axisName;
     btn.dataset.value = v;
-    btn.textContent = ax.labels[v] || v;
+    const desc = descriptions[v];
+    if (desc) btn.title = desc;
+    btn.innerHTML = '<span>' + (ax.labels[v] || v) + '</span> <span class="pill-count">' + cnt + '</span>';
     btn.onclick = function() { _togglePillFilter(axisName, v, this); };
     wrap.appendChild(btn);
   }
