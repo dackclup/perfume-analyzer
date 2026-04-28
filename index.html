@@ -22,16 +22,16 @@
 :root {
   /* Surfaces */
   --bg:          #ffffff;
-  --bg-subtle:   #f7f8fb;
-  --bg-muted:    #eef1f6;
+  --bg-subtle:   #fafafa;
+  --bg-muted:    #f4f4f5;
   --surface:     #ffffff;
-  --surface-hi:  #fbfcfe;
-  --border:      #dfe3ec;
-  --border-strong:#c3ccd9;
+  --surface-hi:  #fafafa;
+  --border:      #e4e4e7;
+  --border-strong:#d4d4d8;
   /* Text */
-  --text:        #0f172a;
-  --text-muted:  #475569;
-  --text-subtle: #64748b;
+  --text:        #09090b;
+  --text-muted:  #52525b;
+  --text-subtle: #71717a;
   /* Accent */
   --accent:      #2E4A73;
   --accent-hover:#22395C;
@@ -52,10 +52,10 @@
   /* Radii */
   --radius-sm: 4px; --radius: 8px; --radius-lg: 12px; --radius-pill: 999px;
   /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(15,23,42,.04);
-  --shadow-sm: 0 2px 6px rgba(15,23,42,.06);
-  --shadow-md: 0 6px 20px rgba(15,23,42,.08);
-  --shadow-up: 0 -4px 14px rgba(15,23,42,.06);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.04);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.04);
+  --shadow-up: 0 -2px 8px rgba(0,0,0,.04);
   /* Motion */
   --dur-fast: 120ms; --dur: 200ms; --dur-slow: 320ms;
   --ease: cubic-bezier(.2,.7,.2,1);
@@ -74,16 +74,16 @@
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg:          #0b0f17;
-    --bg-subtle:   #141a26;
-    --bg-muted:    #1c2435;
-    --surface:     #171e2c;
-    --surface-hi:  #1f2739;
-    --border:      #2b3547;
-    --border-strong:#3a475e;
-    --text:        #e8ecf2;
-    --text-muted:  #a3b1c2;
-    --text-subtle: #7c8a9d;
+    --bg:          #09090b;
+    --bg-subtle:   #18181b;
+    --bg-muted:    #27272a;
+    --surface:     #18181b;
+    --surface-hi:  #27272a;
+    --border:      #3f3f46;
+    --border-strong:#52525b;
+    --text:        #fafafa;
+    --text-muted:  #a1a1aa;
+    --text-subtle: #71717a;
     --accent:      #9FB8DE;
     --accent-hover:#B9CCE8;
     --accent-soft: #1b2744;
@@ -102,16 +102,16 @@
   }
 }
 [data-theme="dark"] {
-  --bg:          #0b0f17;
-  --bg-subtle:   #141a26;
-  --bg-muted:    #1c2435;
-  --surface:     #171e2c;
-  --surface-hi:  #1f2739;
-  --border:      #2b3547;
-  --border-strong:#3a475e;
-  --text:        #e8ecf2;
-  --text-muted:  #a3b1c2;
-  --text-subtle: #7c8a9d;
+  --bg:          #09090b;
+  --bg-subtle:   #18181b;
+  --bg-muted:    #27272a;
+  --surface:     #18181b;
+  --surface-hi:  #27272a;
+  --border:      #3f3f46;
+  --border-strong:#52525b;
+  --text:        #fafafa;
+  --text-muted:  #a1a1aa;
+  --text-subtle: #71717a;
   --accent:      #9FB8DE;
   --accent-hover:#B9CCE8;
   --accent-soft: #1b2744;
@@ -810,14 +810,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v156"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v157"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v156";
+const DATA_VERSION = "2026-04-25-rebuild-v157";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
