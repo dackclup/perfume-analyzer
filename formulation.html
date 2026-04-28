@@ -412,6 +412,16 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
    click point and self-destructs after the animation completes. */
 .wheel-seg {
   transition: stroke-width 200ms ease, filter 200ms ease;
+  /* Suppress browser default tap/focus chrome — SVG paths get a
+     rectangular bounding-box outline from :focus-visible which looks
+     ugly on a curved slice. The .popping/.active-seg classes provide
+     all the visual feedback needed. */
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+.wheel-seg:focus,
+.wheel-seg:focus-visible {
+  outline: none;
 }
 .wheel-seg:hover {
   filter: brightness(1.06);
