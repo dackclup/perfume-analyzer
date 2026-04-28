@@ -167,7 +167,7 @@
   },
   "sage": {
     "description": "Salvia spp. — sclareol + thujone + sclareolide/manool diterpene amber-precursor cluster + linalyl acetate (clary marker) + 1,8-cineole + sabinyl acetate (Spanish sage marker) cross-tags",
-    "expected_entry_count": 10,
+    "expected_entry_count": 9,
     "oil_cas": [
       "8016-63-5",
       "84775-83-7",
@@ -235,7 +235,7 @@
   },
   "thyme": {
     "description": "Thymus spp. + Origanum + Satureja — phenolic sensitizer cluster + α-terpinene biosynthetic precursor + borneol cross-tag",
-    "expected_entry_count": 14,
+    "expected_entry_count": 11,
     "oil_cas": [
       "8007-46-3",
       "84696-17-3",
@@ -1355,7 +1355,7 @@
   },
   "chamomile": {
     "description": "4-species coverage: Chamaemelum nobile (Roman) + Matricaria recutita (German) + Ormenis multicaulis (Wild Moroccan) + Eriocephalus punctulatus (Cape) — angelate ester suite + α-bisabolol + chamazulene + bisabolol oxides A/B + Artemisia arborescens (blue chemotype cross-tag)",
-    "expected_entry_count": 13,
+    "expected_entry_count": 12,
     "oil_cas": [
       "8015-92-7",
       "8002-66-2",
@@ -1517,7 +1517,7 @@
   },
   "dill": {
     "description": "Anethum graveolens — Apiaceae 2-chemotype cluster (seed = (S)-(+)-carvone + dill apiole spicy; weed = α-phellandrene + dill ether green); Carum carvi (caraway) cross-genus S-carvone sibling; Mediterranean culinary aromatic; cross-Apiaceae with parsley apiole/myristicin",
-    "expected_entry_count": 7,
+    "expected_entry_count": 6,
     "oil_cas": [
       "8006-75-5",
       "90028-03-8",
@@ -5798,6 +5798,78 @@
     "description": "Mineral descriptor — stone/slate/aldehydic-mineral character; Aldehyde C-9 + Iso E Super",
     "expected_entry_count": 0,
     "oil_cas": [],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "oregano": {
+    "description": "Origanum vulgare — carvacrol-rich Lamiaceae",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8007-11-2"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "marjoram": {
+    "description": "Origanum majorana — terpinen-4-ol-rich Lamiaceae",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8015-01-8"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "savory": {
+    "description": "Satureja montana — winter savory, carvacrol-rich Lamiaceae",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8016-68-0"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "yarrow": {
+    "description": "Achillea millefolium — chamazulene-rich Asteraceae",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8022-66-2"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "caraway": {
+    "description": "Carum carvi — (S)-carvone-rich Apiaceae",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8000-42-8"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "bay_laurel": {
+    "description": "Laurus nobilis — cineole-rich Lauraceae",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8007-48-5"
+    ],
     "isolates": {},
     "ifra_phenolic": false,
     "peroxide_required_cas": [],
