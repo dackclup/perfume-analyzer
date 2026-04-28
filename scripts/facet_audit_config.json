@@ -5875,5 +5875,102 @@
     "peroxide_required_cas": [],
     "sensitizer_required_cas": [],
     "biosynthetic_chains": []
+  },
+  "melaleuca": {
+    "description": "Melaleuca genus (tea tree, niaouli, cajeput) — Myrtaceae cineole-rich oils",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "68647-73-4",
+      "8014-68-4",
+      "8008-98-8"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "wintergreen": {
+    "description": "Gaultheria procumbens — methyl salicylate-rich Ericaceae",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "68917-75-9"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "camphor_tree": {
+    "description": "Cinnamomum camphora — camphor + linalool chemotypes Lauraceae",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8008-51-3"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "hyssop": {
+    "description": "Hyssopus officinalis — pinocamphone-rich Lamiaceae",
+    "expected_entry_count": 3,
+    "oil_cas": [
+      "8006-83-5"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "melissa": {
+    "description": "Melissa officinalis — citral-rich Lamiaceae (lemon balm)",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8014-71-9"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
+  },
+  "cedarleaf": {
+    "description": "Thuja occidentalis — thujone-rich Cupressaceae conifer",
+    "expected_entry_count": 1,
+    "oil_cas": [
+      "8007-20-3"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": [],
+    "excluded_cas_expected": {
+      "personal_care": [
+        "8007-20-3"
+      ],
+      "flavor": []
+    }
+  },
+  "eucalyptus": {
+    "description": "Eucalyptus genus + chemotypes (globulus/citriodora/radiata/dives/staigeriana/polybractea) — Myrtaceae",
+    "expected_entry_count": 8,
+    "oil_cas": [
+      "8000-48-4",
+      "85203-56-1",
+      "92201-64-4",
+      "91722-71-3",
+      "91770-52-8",
+      "92502-70-0"
+    ],
+    "isolates": {},
+    "ifra_phenolic": false,
+    "peroxide_required_cas": [],
+    "sensitizer_required_cas": [],
+    "biosynthetic_chains": []
   }
 }
