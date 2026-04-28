@@ -240,16 +240,17 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .btn-sm { padding:5px 10px; font-size:0.78em; }
 
 /* Empty state */
-.empty-state { text-align:center; padding:32px 16px; color:var(--text2); font-size:0.85em; }
-.empty-state p { margin-bottom:8px; }
+.empty-state { text-align:center; padding:var(--space-6) var(--space-4); color:var(--text-muted); font-size:var(--fs-sm); }
+.empty-state p { margin-bottom:var(--space-2); }
 
 /* ===== Main Content ===== */
 .main { padding:0; overflow-y:auto; max-height:calc(100vh - 52px - 48px); background:var(--bg2); }
 /* Tab Navigation */
 .tab-nav { display:flex; border-bottom:1px solid var(--border); background:var(--bg); overflow-x:auto; position:sticky; top:0; z-index:10; }
-.tab-btn { padding:10px 16px; font-size:0.8em; font-weight:500; color:var(--text2); background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; font-family:inherit; white-space:nowrap; }
+.tab-btn { padding:10px 16px; font-size:0.8em; font-weight:500; color:var(--text2); background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; font-family:inherit; white-space:nowrap; transition:color var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease); }
 .tab-btn:hover { color:var(--text); background:var(--bg2); }
 .tab-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+.tab-btn:focus-visible { outline:2px solid var(--focus-ring); outline-offset:-2px; border-radius:4px; }
 
 /* Tab Panels */
 .tab-panel { display:none; padding:20px; }
@@ -284,13 +285,18 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .export-bar .analyzer-link:hover { text-decoration:underline; }
 
 /* ===== Search Modal ===== */
-.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; justify-content:center; align-items:flex-start; padding-top:80px; }
-.modal-overlay.open { display:flex; }
-.modal { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; width:90%; max-width:480px; max-height:70vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.2); }
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; justify-content:center; align-items:flex-start; padding-top:80px; }
+@supports (backdrop-filter:blur(4px)) {
+  .modal-overlay { background:rgba(0,0,0,0.35); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+}
+.modal-overlay.open { display:flex; animation:modal-fade var(--dur) var(--ease); }
+.modal { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-lg); width:90%; max-width:480px; max-height:70vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:var(--shadow-md); animation:modal-pop var(--dur-slow) var(--ease); }
+@keyframes modal-fade { from { opacity:0 } to { opacity:1 } }
+@keyframes modal-pop { from { opacity:0; transform:translateY(-8px) scale(.98) } to { opacity:1; transform:none } }
 .modal-header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
 .modal-header h3 { font-size:0.95em; font-weight:600; }
-.modal-close { background:none; border:none; font-size:1.2em; cursor:pointer; color:var(--text2); padding:8px 10px; min-width:32px; min-height:32px; line-height:1; border-radius:4px; }
-.modal-close:hover { color:var(--text); }
+.modal-close { background:none; border:none; font-size:1.2em; cursor:pointer; color:var(--text2); padding:8px 10px; min-width:32px; min-height:32px; line-height:1; border-radius:var(--radius-sm); transition:color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.modal-close:hover { color:var(--text); background:var(--bg-subtle); }
 .modal-body { padding:12px 16px; overflow-y:auto; flex:1; }
 .modal-search { width:100%; padding:10px 12px; border:2px solid var(--border); border-radius:8px; font-size:0.9em; background:var(--bg2); color:var(--text); outline:none; font-family:inherit; margin-bottom:8px; }
 .modal-search:focus { border-color:var(--accent); }

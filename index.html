@@ -187,7 +187,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .filter-reset:hover { opacity:1; color:var(--accent); border-color:var(--accent); }
 .filter-content { display:none; padding:0 0 0 4px; }
 .filter-content.open { display:block; }
-.arrow { display:inline-block; font-size:0.7em; transition:transform 0.2s; }
+.arrow { display:inline-block; font-size:0.7em; transition:transform var(--dur) var(--ease); }
 .filter-toggle.open .arrow, .sub-toggle.open .arrow { transform:rotate(90deg); }
 .sub-drawer { border-bottom:1px solid var(--border); }
 .sub-drawer:last-child { border-bottom:none; }
@@ -401,7 +401,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .pc-group { border:1px solid var(--border); border-radius:8px; margin-bottom:8px; overflow:hidden; }
 .pc-group-header { padding:8px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:var(--bg2); font-weight:500; font-size:0.9em; color:var(--text); }
 .pc-group-header:hover { opacity:0.8; }
-.pc-group-header .pc-arrow { font-size:0.7em; color:var(--text2); transition:transform 0.2s; }
+.pc-group-header .pc-arrow { font-size:0.7em; color:var(--text2); transition:transform var(--dur) var(--ease); }
 .pc-group-header .pc-arrow.open { transform:rotate(90deg); }
 .pc-group-body { display:none; padding:8px 12px; }
 .pc-group-body.open { display:block; }
@@ -419,7 +419,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 
 /* Progress */
 .progress { display:none; height:4px; background:var(--border); border-radius:2px; margin:8px 0; overflow:hidden; }
-.progress-bar { height:100%; background:var(--accent); transition:width 0.3s; }
+.progress-bar { height:100%; background:var(--accent); transition:width var(--dur-slow) var(--ease); }
 .progress-text { font-size:0.8em; color:var(--text2); }
 
 /* Card back-to-header */
@@ -815,14 +815,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v159"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v160"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v159";
+const DATA_VERSION = "2026-04-25-rebuild-v160";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
