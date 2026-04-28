@@ -353,18 +353,45 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .facet-group-chips { display:flex; flex-wrap:wrap; gap:4px; }
 /* Facet groups picker — collapsible checkbox list that hides/shows
    entire Edwards sub-family groups from the Facet drawer. */
-/* Allow the Groups dropdown panel to escape .sub-body's overflow:hidden
-   clip when the facet chip cloud collapses (e.g. all groups unticked). */
 #facetFilters { overflow:visible; }
-.facet-groups-picker { margin:0; position:relative; }
-.facet-groups-picker summary { display:inline-block; cursor:pointer; list-style:none; }
-.facet-groups-picker summary::-webkit-details-marker { display:none; }
-.facet-groups-picker summary::marker { content:''; }
-.facet-groups-picker[open] summary { background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent); }
-.facet-groups-picker-body { position:absolute; top:calc(100% + 4px); left:0; z-index:20; display:grid; grid-template-columns:repeat(2, minmax(120px, 1fr)); gap:2px 10px; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--bg2); box-shadow:0 4px 12px rgba(0,0,0,0.35); min-width:260px; max-width:min(360px, 90vw); max-height:60vh; overflow-y:auto; }
-.facet-groups-picker-row { display:flex; align-items:center; gap:6px; font-size:0.78em; color:var(--text2); cursor:pointer; padding:2px 0; user-select:none; }
-.facet-groups-picker-row:hover { color:var(--accent); }
-.facet-groups-picker-row input { margin:0; cursor:pointer; accent-color:var(--accent); }
+/* Horizontal-scroll group tabs — single-select pill strip, replaces the
+   old checkbox popover. On mobile this halves the time-to-target for
+   "filter by Aromatic Fougère only" from ~5 taps (uncheck 13 boxes) to
+   1 tap (select pill). The strip itself fits ~3 pills on a narrow
+   phone; users scroll horizontally to see the rest. Active tab gets
+   accent fill + auto-scrolls into view on click. */
+.facet-group-tabs {
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  padding:4px 2px var(--space-2);
+  margin-bottom:var(--space-2);
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border-strong) transparent;
+}
+.facet-group-tabs::-webkit-scrollbar { height:4px; }
+.facet-group-tabs::-webkit-scrollbar-track { background:transparent; }
+.facet-group-tabs::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:var(--radius-pill); }
+.facet-group-tab {
+  flex-shrink:0;
+  padding:6px 14px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-pill);
+  background:var(--surface);
+  color:var(--text-muted);
+  font-family:inherit;
+  font-size:var(--fs-xs);
+  font-weight:var(--fw-medium);
+  cursor:pointer;
+  white-space:nowrap;
+  scroll-snap-align:start;
+  transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.facet-group-tab:hover { border-color:var(--accent); color:var(--accent); }
+.facet-group-tab.active { background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent); }
+.facet-group-tab:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
 .badge-not-perfumery { font-size:0.7em; padding:2px 8px; border-radius:var(--radius-sm); margin-left:6px; font-weight:400; background:var(--bg2); color:var(--text2); border:1px dashed var(--border); text-transform:none; vertical-align:middle; }
 /* Blends-with chip row: resolved materials click-to-add, group labels
    click-to-filter, unresolved free-text rendered muted. Shares
@@ -804,12 +831,11 @@ html { scroll-behavior:smooth; }
     <div class="sub-drawer">
       <div class="sub-toggle" onclick="toggleSubDrawer(this)"><span class="arrow">▶</span> Facet <span class="sub-selected" id="facetSelected"></span></div>
       <div class="sub-body" id="facetFilters">
-        <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;flex-wrap:wrap">
-          <details class="facet-groups-picker" id="facetGroupsPicker">
-            <summary class="odor-tag">Groups: <span id="facetGroupsPickerSelected">All</span></summary>
-            <div class="facet-groups-picker-body" id="facetGroupsPickerBody"></div>
-          </details>
-        </div>
+        <!-- Horizontal-scroll group tabs (replaced the checkbox popover —
+             much faster to navigate 14 sub-families on mobile). Each tab
+             single-selects: tapping "Aromatic Fougère" hides the other 13
+             groups, tapping "All" reveals everything. -->
+        <div class="facet-group-tabs" id="facetGroupTabs" role="tablist" aria-label="Facet groups"></div>
         <div id="facetGroups"></div>
       </div>
     </div>
@@ -833,14 +859,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v164"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v165"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v164";
+const DATA_VERSION = "2026-04-25-rebuild-v165";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1628,8 +1654,9 @@ let activeMainFamilyFilters = new Set();
 let activeSubFamilyFilters = new Set();
 let activeFacetFilters = new Set();
 // User-hidden facet groups (by group label). Populated by the
-// facet-groups-picker checkbox list; composed with the Primary/Sub
-// cascade so a user-hidden group stays hidden regardless of cascade.
+// .facet-group-tabs single-select pill strip; composed with the
+// Primary/Sub cascade so a user-hidden group stays hidden regardless
+// of cascade.
 let hiddenFacetGroups = new Set();
 
 // ═══════════════════════════════════════════════════════════════
@@ -3357,61 +3384,49 @@ _buildPillFilter('source');
   }
 }
 
-// Facet groups picker — checkbox list that hides/shows entire
-// rendered groups in the Facet drawer. Writes into hiddenFacetGroups;
-// actual show/hide is performed by _applyCascadingVisibility() so the
-// user mask composes with the Primary/Sub-family cascade. Active
-// facet filters are intentionally left in place when the user hides
-// a group (clear via the "All" chip).
+// Facet group tabs — horizontal-scroll pill strip. Single-select UX:
+// tap a group → hide all others; tap "All" → reveal everything. Writes
+// into hiddenFacetGroups (same state the cascading-visibility logic
+// already consumes — no reactive plumbing changes). Auto-scrolls the
+// chip list below to the selected group's heading so the user sees an
+// immediate result.
 {
-  const pickerBody = document.getElementById('facetGroupsPickerBody');
-  const selLabel = document.getElementById('facetGroupsPickerSelected');
-  if (pickerBody && selLabel) {
+  const tabsEl = document.getElementById('facetGroupTabs');
+  if (tabsEl) {
     const groupEls = Array.from(document.querySelectorAll('#facetGroups > .facet-group'));
     const labels = groupEls.map(el => el.querySelector('.facet-group-label')?.textContent || '');
-    const _refreshLabel = () => {
-      const shown = labels.length - hiddenFacetGroups.size;
-      selLabel.textContent = hiddenFacetGroups.size === 0
-        ? 'All'
-        : shown === 0 ? 'None' : shown + '/' + labels.length;
+    let activeTab = 'All';
+    const tabsList = ['All', ...labels];
+
+    const renderTabs = () => {
+      tabsEl.innerHTML = '';
+      tabsList.forEach(label => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'facet-group-tab' + (activeTab === label ? ' active' : '');
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-selected', activeTab === label ? 'true' : 'false');
+        btn.textContent = label;
+        btn.addEventListener('click', () => {
+          activeTab = label;
+          if (label === 'All') {
+            hiddenFacetGroups.clear();
+          } else {
+            hiddenFacetGroups.clear();
+            labels.forEach(l => { if (l !== label) hiddenFacetGroups.add(l); });
+          }
+          renderTabs();
+          _updateFacetSelected();
+          _applyCascadingVisibility();
+          // Smooth-scroll the active tab into view so it doesn't get
+          // clipped off-screen on narrow phones.
+          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        });
+        tabsEl.appendChild(btn);
+      });
     };
-    labels.forEach(label => {
-      const row = document.createElement('label');
-      row.className = 'facet-groups-picker-row';
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.checked = true;
-      cb.addEventListener('change', () => {
-        if (cb.checked) hiddenFacetGroups.delete(label);
-        else hiddenFacetGroups.add(label);
-        _refreshLabel();
-        _updateFacetSelected();
-        _applyCascadingVisibility();
-      });
-      row.appendChild(cb);
-      row.appendChild(document.createTextNode(label));
-      pickerBody.appendChild(row);
-    });
-    _refreshLabel();
-    // When there isn't enough room below the summary to show the full
-    // panel without being covered by the fixed .downloads footer, flip
-    // the panel to open upward. Recomputed on every open in case the
-    // user scrolled between toggles.
-    const picker = document.getElementById('facetGroupsPicker');
-    const downloadsEl = document.getElementById('downloads');
-    picker?.addEventListener('toggle', () => {
-      if (!picker.open) return;
-      requestAnimationFrame(() => {
-        pickerBody.style.top = '';
-        pickerBody.style.bottom = '';
-        const bodyRect = pickerBody.getBoundingClientRect();
-        const footerTop = downloadsEl ? downloadsEl.getBoundingClientRect().top : window.innerHeight;
-        if (bodyRect.bottom > footerTop - 8) {
-          pickerBody.style.top = 'auto';
-          pickerBody.style.bottom = 'calc(100% + 4px)';
-        }
-      });
-    });
+
+    renderTabs();
   }
 }
 
