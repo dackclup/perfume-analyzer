@@ -859,14 +859,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v165"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v166"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v165";
+const DATA_VERSION = "2026-04-25-rebuild-v166";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -2993,10 +2993,23 @@ function _updateFacetSelected() {
     parts.push([...activeFacetFilters].map(facetLabel).join(', '));
   }
   if (hiddenFacetGroups.size) {
-    const total = document.querySelectorAll('#facetGroups > .facet-group').length;
+    const groupEls = document.querySelectorAll('#facetGroups > .facet-group');
+    const total = groupEls.length;
     if (total) {
       const shown = total - hiddenFacetGroups.size;
-      parts.push(shown === 0 ? 'group None' : 'group ' + shown + '/' + total);
+      if (shown === 0) {
+        parts.push('No groups');
+      } else if (shown === 1) {
+        // Pill-tab single-select — show the group's actual name instead
+        // of the meaningless "1/14" count from the old checkbox UX.
+        const activeLabel = Array.from(groupEls)
+          .map(el => el.querySelector('.facet-group-label')?.textContent || '')
+          .find(l => l && !hiddenFacetGroups.has(l));
+        if (activeLabel) parts.push(activeLabel);
+      } else {
+        // Multi-group partial filter (legacy state path)
+        parts.push(shown + '/' + total + ' groups');
+      }
     }
   }
   sel.textContent = parts.length ? parts.join(' · ') : 'All';
