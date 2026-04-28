@@ -177,7 +177,14 @@ hr { border:none; border-top:1px solid var(--border); margin:12px 0; }
 .control-label span { font-weight:500; }
 .control-label output { color:var(--accent); font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:0.95em; }
 select, input[type="range"] { width:100%; }
-select { padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); color:var(--text); font-family:inherit; font-size:0.85em; }
+select { padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--bg2); color:var(--text); font-family:inherit; font-size:0.85em; transition:border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+select:focus, select:focus-visible { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+select:hover { border-color:var(--border-strong); }
+input[type="number"], input[type="text"], input[type="search"] { transition:border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+input[type="number"]:focus, input[type="text"]:focus, input[type="search"]:focus,
+input[type="number"]:focus-visible, input[type="text"]:focus-visible, input[type="search"]:focus-visible {
+  outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);
+}
 input[type="range"] { -webkit-appearance:none; appearance:none; height:6px; border-radius:3px; background:var(--border); outline:none; cursor:pointer; }
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent); cursor:pointer; }
 input[type="range"]::-moz-range-track { height:6px; border-radius:3px; background:var(--border); border:none; }
@@ -185,7 +192,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 
 /* Material List */
 .mat-list { margin-top:12px; }
-.mat-item { display:flex; align-items:center; gap:6px; padding:8px; border:1px solid var(--border); border-radius:6px; margin-bottom:6px; background:var(--card-bg); font-size:0.82em; flex-wrap:wrap; }
+.mat-item { display:flex; align-items:center; gap:6px; padding:8px; border:1px solid var(--border); border-radius:8px; margin-bottom:6px; background:var(--card-bg); font-size:0.82em; flex-wrap:wrap; }
 .mat-item .mat-name { flex:1; min-width:0; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .mat-item .mat-cas { color:var(--text2); font-size:0.85em; font-family:'IBM Plex Mono',monospace; }
 .mat-note { padding:1px 6px; border-radius:8px; font-size:0.7em; font-weight:600; }
@@ -220,11 +227,13 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 
 /* Action buttons */
 .sidebar-actions { display:flex; gap:6px; margin-top:12px; }
-.btn { padding:8px 14px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); color:var(--text); font-family:inherit; font-size:0.82em; cursor:pointer; font-weight:500; }
-.btn:hover { border-color:var(--accent); color:var(--accent); }
+.btn { padding:8px 14px; border:1px solid var(--border); border-radius:8px; background:var(--bg2); color:var(--text); font-family:inherit; font-size:0.82em; cursor:pointer; font-weight:500; transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease),color var(--dur) var(--ease),box-shadow var(--dur) var(--ease),transform var(--dur) var(--ease); }
+.btn:hover { border-color:var(--accent); color:var(--accent); box-shadow:var(--shadow-sm); transform:translateY(-1px); }
+.btn:active { transform:translateY(0); box-shadow:none; }
 .btn-primary { background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent); }
-.btn-primary:hover { opacity:0.85; background:var(--accent-hover); color:var(--accent-text, #fff); border-color:var(--accent-hover); }
+.btn-primary:hover { background:var(--accent-hover); color:var(--accent-text, #fff); border-color:var(--accent-hover); box-shadow:var(--shadow-sm); transform:translateY(-1px); opacity:1; }
 .btn-primary:active, .btn-primary:focus { color:var(--accent-text, #fff); }
+.btn-primary:active { transform:translateY(0); box-shadow:none; }
 .btn-sm { padding:5px 10px; font-size:0.78em; }
 
 /* Empty state */
@@ -246,7 +255,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .tab-panel .panel-desc { color:var(--text2); font-size:0.82em; margin-bottom:16px; }
 
 /* Cards inside tabs */
-.analysis-card { background:var(--card-bg); border:1px solid var(--border); border-radius:6px; padding:16px; margin-bottom:12px; }
+.analysis-card { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:12px; }
 .analysis-card h4 { font-size:0.9em; font-weight:600; margin-bottom:8px; }
 
 /* Tables */
@@ -280,7 +289,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .modal-close { background:none; border:none; font-size:1.2em; cursor:pointer; color:var(--text2); padding:8px 10px; min-width:32px; min-height:32px; line-height:1; border-radius:4px; }
 .modal-close:hover { color:var(--text); }
 .modal-body { padding:12px 16px; overflow-y:auto; flex:1; }
-.modal-search { width:100%; padding:10px 12px; border:2px solid var(--border); border-radius:6px; font-size:0.9em; background:var(--bg2); color:var(--text); outline:none; font-family:inherit; margin-bottom:8px; }
+.modal-search { width:100%; padding:10px 12px; border:2px solid var(--border); border-radius:8px; font-size:0.9em; background:var(--bg2); color:var(--text); outline:none; font-family:inherit; margin-bottom:8px; }
 .modal-search:focus { border-color:var(--accent); }
 .modal-results { list-style:none; }
 .modal-results li { padding:8px 10px; border-radius:4px; cursor:pointer; font-size:0.85em; display:flex; justify-content:space-between; align-items:center; }
@@ -527,7 +536,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
     <div class="control-group">
       <div class="control-label"><span>Batch Size</span></div>
       <div style="display:flex;gap:6px;align-items:center">
-        <input type="number" id="batchSize" value="100" min="0.1" max="100000" step="any" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-family:inherit;font-size:0.85em;text-align:right">
+        <input type="number" id="batchSize" value="100" min="0.1" max="100000" step="any" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-family:inherit;font-size:0.85em;text-align:right">
         <select id="batchUnit" style="width:auto;padding:6px 8px;font-size:0.85em">
           <option value="g">grams</option>
           <option value="ml">ml</option>
@@ -551,7 +560,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
     <div class="control-group" id="fragCustomGroup" style="display:none">
       <div class="control-label"><span>Fragrance in Product</span></div>
       <div style="display:flex;gap:6px;align-items:center">
-        <input type="number" id="fragPctCustom" min="1" max="100" step="0.1" value="18" style="width:70px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-family:inherit;font-size:0.85em;text-align:right">
+        <input type="number" id="fragPctCustom" min="1" max="100" step="0.1" value="18" style="width:70px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-family:inherit;font-size:0.85em;text-align:right">
         <span style="font-size:0.85em;color:var(--text2)">%</span>
       </div>
     </div>
@@ -1990,22 +1999,22 @@ function renderCompatTab() {
   // Component breakdown
   if (harmony.method === 'multi-factor') {
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px;font-size:0.82em">';
-    html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:6px">'
+    html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:8px">'
       + '<div style="color:var(--text2);font-size:0.78em">Pairwise base</div>'
       + '<div style="font-weight:600">' + (harmony.baseScore != null ? harmony.baseScore + '%' : '—') + '</div>'
       + '<div style="font-size:0.75em;color:var(--text2)">' + harmony.connectedPairs + '/' + harmony.totalPairs + ' connected</div></div>';
     const triClr = harmony.triangleBonus > 0 ? 'var(--ok,#22c55e)' : 'var(--text2)';
-    html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:6px">'
+    html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:8px">'
       + '<div style="color:var(--text2);font-size:0.78em">Triangle synergy</div>'
       + '<div style="font-weight:600;color:' + triClr + '">+' + harmony.triangleBonus + '</div>'
       + '<div style="font-size:0.75em;color:var(--text2)">' + harmony.fullTriangles + '/' + harmony.totalTriangles + ' full triples</div></div>';
     const divClr = harmony.tierCount === 3 ? 'var(--ok,#22c55e)' : 'var(--warn,#eab308)';
-    html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:6px">'
+    html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:8px">'
       + '<div style="color:var(--text2);font-size:0.78em">Tier diversity ×</div>'
       + '<div style="font-weight:600;color:' + divClr + '">' + harmony.diversityFactor + '</div>'
       + '<div style="font-size:0.75em;color:var(--text2)">' + harmony.tierCount + '/3 tiers</div></div>';
     const discClr = harmony.discords.length ? 'var(--danger,#ef4444)' : 'var(--text2)';
-    html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:6px">'
+    html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:8px">'
       + '<div style="color:var(--text2);font-size:0.78em">Discord hits</div>'
       + '<div style="font-weight:600;color:' + discClr + '">' + harmony.discords.length + '</div>'
       + '<div style="font-size:0.75em;color:var(--text2)">family clashes</div></div>';
@@ -2080,7 +2089,7 @@ function renderCompatTab() {
   }
   html += '</div>';
   if (balance.unclassified > 0) {
-    html += '<div style="margin-top:8px;padding:8px 10px;background:var(--warn-bg);border-radius:6px;font-size:0.82em;color:var(--warn)">';
+    html += '<div style="margin-top:8px;padding:8px 10px;background:var(--warn-bg);border-radius:8px;font-size:0.82em;color:var(--warn)">';
     html += balance.unclassifiedMats.length + ' material(s) (' + balance.unclassified + '%) have no note classification: ';
     html += balance.unclassifiedMats.map(m => escHtml(m.name)).join(', ');
     html += '</div>';
@@ -2602,7 +2611,7 @@ function renderThermoTab() {
   html += '<div class="analysis-card"><h4>Estimated Longevity</h4>';
   html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">';
   for (const phase of [longevity.topPhase, longevity.heartPhase, longevity.basePhase]) {
-    html += '<div style="flex:1;min-width:100px;padding:10px;background:var(--bg2);border-radius:6px;text-align:center">';
+    html += '<div style="flex:1;min-width:100px;padding:10px;background:var(--bg2);border-radius:8px;text-align:center">';
     html += '<div style="font-size:0.78em;color:var(--text2)">' + phase.label + '</div>';
     html += '<div style="font-size:1.2em;font-weight:600">' + phase.end + 'h</div>';
     html += '</div>';
@@ -2787,7 +2796,7 @@ function renderStabilityTab() {
     for (const w of warnings) {
       const sevClass = w.severity === 'high' ? 'badge-danger' : w.severity === 'medium' ? 'badge-warn' : 'badge-ok';
       const colorSwatch = w.colorChange ? '<span style="display:inline-flex;gap:2px;vertical-align:middle"><span style="width:14px;height:14px;border-radius:3px;background:' + w.colorChange.from + ';border:1px solid var(--border)"></span><span style="font-size:0.8em">&rarr;</span><span style="width:14px;height:14px;border-radius:3px;background:' + w.colorChange.to + ';border:1px solid var(--border)"></span></span>' : '';
-      html += '<div style="padding:10px;border:1px solid var(--border);border-radius:6px;margin-bottom:8px;background:var(--bg2)">';
+      html += '<div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:var(--bg2)">';
       html += '<div style="display:flex;justify-content:space-between;align-items:center">';
       html += '<strong>' + escHtml(w.matA.name) + ' + ' + escHtml(w.matB.name) + '</strong>';
       html += '<span class="badge ' + sevClass + '">' + w.severity + '</span>';
@@ -3117,7 +3126,7 @@ function renderSafetyTab() {
 
   // INCI Label
   html += '<div class="analysis-card"><h4>INCI Label</h4>';
-  html += '<div style="background:var(--bg2);padding:12px;border-radius:6px;font-size:0.85em;line-height:1.6;word-break:break-word;user-select:all">';
+  html += '<div style="background:var(--bg2);padding:12px;border-radius:8px;font-size:0.85em;line-height:1.6;word-break:break-word;user-select:all">';
   html += inci;
   html += '</div>';
   html += '<button class="btn btn-sm" style="margin-top:8px" id="copyInciBtn">Copy INCI</button>';

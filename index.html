@@ -169,9 +169,9 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 
 /* Search */
 .search-box { display:flex; gap:8px; margin-bottom:8px; }
-#searchInput { flex:1; padding:10px 14px; border:2px solid var(--border); border-radius:6px; font-size:1em; background:var(--bg2); color:var(--text); outline:none; font-family:inherit; }
+#searchInput { flex:1; padding:10px 14px; border:2px solid var(--border); border-radius:8px; font-size:1em; background:var(--bg2); color:var(--text); outline:none; font-family:inherit; }
 #searchInput:focus { border-color:var(--accent); }
-#searchBtn { padding:10px 24px; background:var(--accent); color:#fff; border:none; border-radius:6px; font-size:1em; cursor:pointer; font-family:inherit; font-weight:500; white-space:nowrap; }
+#searchBtn { padding:10px 24px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:1em; cursor:pointer; font-family:inherit; font-weight:500; white-space:nowrap; }
 #searchBtn:hover { opacity:0.85; }
 #searchBtn:disabled { opacity:0.4; cursor:default; }
 
@@ -193,7 +193,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .sub-body { display:none; padding:0 0 8px 14px; overflow:hidden; transition:max-height 0.25s ease; }
 .sub-body.open { display:block; }
 /* GHS hazard section */
-.ghs-section { margin:8px 0; padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); }
+.ghs-section { margin:8px 0; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--bg2); }
 .ghs-section-title { font-size:0.8em; font-weight:500; color:var(--text2); margin:0 0 8px; }
 .ghs-icons { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start; }
 .ghs-item { display:flex; flex-direction:column; align-items:center; gap:3px; }
@@ -220,7 +220,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 
 /* Status */
 .status { color:var(--text2); font-size:0.85em; }
-.clear-btn { padding:6px 18px; background:var(--accent); color:#fff; border:none; border-radius:6px; font-size:0.85em; cursor:pointer; font-family:inherit; font-weight:500; margin-left:auto; opacity:0.4; }
+.clear-btn { padding:6px 18px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:0.85em; cursor:pointer; font-family:inherit; font-weight:500; margin-left:auto; opacity:0.4; }
 .clear-btn:hover { opacity:0.7; }
 #statusBar { align-items:center; margin-bottom:8px; }
 
@@ -253,7 +253,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
   .card-body .row > .col-perf { flex-basis:calc(50% - 8px); }
 }
 .col-img { width:100%; max-width:500px; margin:0 auto 12px; text-align:center; }
-.col-img img { max-width:100%; max-height:500px; border-radius:6px; filter:contrast(1.5) saturate(1.3); }
+.col-img img { max-width:100%; max-height:500px; border-radius:8px; filter:contrast(1.5) saturate(1.3); }
 @media (prefers-color-scheme: dark) { .col-img img { filter:invert(1) contrast(1.5) saturate(1.3) brightness(0.85); background:var(--card-bg); } }
 .col-info { flex:1; min-width:200px; }
 .col-info p { margin:3px 0; font-size:0.9em; overflow-wrap:anywhere; }
@@ -339,7 +339,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .facet-groups-picker summary::-webkit-details-marker { display:none; }
 .facet-groups-picker summary::marker { content:''; }
 .facet-groups-picker[open] summary { background:var(--accent); color:#fff; border-color:var(--accent); }
-.facet-groups-picker-body { position:absolute; top:calc(100% + 4px); left:0; z-index:20; display:grid; grid-template-columns:repeat(2, minmax(120px, 1fr)); gap:2px 10px; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg2); box-shadow:0 4px 12px rgba(0,0,0,0.35); min-width:260px; max-width:min(360px, 90vw); max-height:60vh; overflow-y:auto; }
+.facet-groups-picker-body { position:absolute; top:calc(100% + 4px); left:0; z-index:20; display:grid; grid-template-columns:repeat(2, minmax(120px, 1fr)); gap:2px 10px; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--bg2); box-shadow:0 4px 12px rgba(0,0,0,0.35); min-width:260px; max-width:min(360px, 90vw); max-height:60vh; overflow-y:auto; }
 .facet-groups-picker-row { display:flex; align-items:center; gap:6px; font-size:0.78em; color:var(--text2); cursor:pointer; padding:2px 0; user-select:none; }
 .facet-groups-picker-row:hover { color:var(--accent); }
 .facet-groups-picker-row input { margin:0; cursor:pointer; accent-color:var(--accent); }
@@ -394,7 +394,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .pubchem-toggle { cursor:pointer; color:var(--accent); font-size:0.9em; margin-top:8px; }
 .pubchem-data { display:none; font-size:0.85em; margin-top:8px; }
 .pubchem-data.open { display:block; }
-.pc-group { border:1px solid var(--border); border-radius:6px; margin-bottom:8px; overflow:hidden; }
+.pc-group { border:1px solid var(--border); border-radius:8px; margin-bottom:8px; overflow:hidden; }
 .pc-group-header { padding:8px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:var(--bg2); font-weight:500; font-size:0.9em; color:var(--text); }
 .pc-group-header:hover { opacity:0.8; }
 .pc-group-header .pc-arrow { font-size:0.7em; color:var(--text2); transition:transform 0.2s; }
@@ -528,10 +528,10 @@ html { scroll-behavior:smooth; }
 }
 #searchBtn {
   border-radius:0 !important;
-  background:var(--accent); color:#fff; font-weight:var(--fw-medium);
+  background:var(--accent); color:var(--accent-text, #fff); font-weight:var(--fw-medium);
   transition:background var(--dur) var(--ease);
 }
-#searchBtn:hover:not(:disabled) { background:var(--accent-hover); opacity:1; }
+#searchBtn:hover:not(:disabled) { background:var(--accent-hover); color:var(--accent-text, #fff); opacity:1; }
 .search-hint {
   color:var(--text-subtle); font-size:var(--fs-xs);
   margin:var(--space-2) 0 var(--space-3);
@@ -652,11 +652,12 @@ html { scroll-behavior:smooth; }
   cursor:pointer; min-height:36px; line-height:1;
   transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
 }
-.btn:hover { border-color:var(--accent); color:var(--accent); background:var(--surface-hi); }
-.btn:active { transform:translateY(1px); }
+.btn:hover { border-color:var(--accent); color:var(--accent); background:var(--surface-hi); box-shadow:var(--shadow-sm); transform:translateY(-1px); }
+.btn:active { transform:translateY(0); box-shadow:none; }
 .btn:disabled { opacity:.4; cursor:not-allowed; }
-.btn--primary { background:var(--accent); color:#fff; border-color:var(--accent); }
-.btn--primary:hover { background:var(--accent-hover); color:#fff; border-color:var(--accent-hover); }
+.btn--primary { background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent); }
+.btn--primary:hover { background:var(--accent-hover); color:var(--accent-text, #fff); border-color:var(--accent-hover); box-shadow:var(--shadow-sm); transform:translateY(-1px); }
+.btn--primary:active, .btn--primary:focus, .btn--primary:focus-visible { color:var(--accent-text, #fff); }
 .btn--ghost { background:transparent; border-color:transparent; color:var(--text-muted); }
 .btn--ghost:hover { background:var(--bg-subtle); color:var(--text); border-color:transparent; }
 .btn--sm { padding:5px 10px; font-size:var(--fs-xs); min-height:28px; }
@@ -810,14 +811,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v157"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v158"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v157";
+const DATA_VERSION = "2026-04-25-rebuild-v158";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -3665,7 +3666,7 @@ function handleStructureImgError(img) {
     img.onerror = null;
     const parent = img.parentNode;
     if (!parent) return;
-    parent.innerHTML = '<div style="padding:16px;border:1px dashed var(--border);border-radius:6px;color:var(--text2);font-size:0.85em;text-align:center">Structure image unavailable (network)<br><a href="' + (img.src.split('?')[0].replace('/rest/pug/compound/cid/','/compound/').replace('/PNG','')) + '" target="_blank" style="color:var(--accent)">Open on PubChem ↗</a></div>';
+    parent.innerHTML = '<div style="padding:16px;border:1px dashed var(--border);border-radius:8px;color:var(--text2);font-size:0.85em;text-align:center">Structure image unavailable (network)<br><a href="' + (img.src.split('?')[0].replace('/rest/pug/compound/cid/','/compound/').replace('/PNG','')) + '" target="_blank" style="color:var(--accent)">Open on PubChem ↗</a></div>';
   } catch(e) { /* defensive — never let the handler itself throw */ }
 }
 
