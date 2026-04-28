@@ -516,10 +516,9 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
     <input type="hidden" id="fragPct" value="18">
     <output id="fragPctOut" style="display:none">18%</output>
 
-    <!-- Auto-Allocate -->
+    <!-- Auto-Allocate (chained Suggested → Optimized) -->
     <div style="display:flex;gap:4px;margin-top:6px">
-      <button class="btn" id="btnSuggested" style="flex:1;font-size:0.75em" onclick="applyAllocation('suggested')">Apply Suggested</button>
-      <button class="btn" id="btnOptimized" style="flex:1;font-size:0.75em" onclick="applyAllocation('optimized')">Apply Optimized</button>
+      <button class="btn btn-primary" id="btnSmartAlloc" style="flex:1;font-size:0.75em" onclick="applyAllocation()" title="Apply Dirichlet baseline + iterative gradient/hill-climb refinement">Smart Allocate</button>
     </div>
 
     <hr>
@@ -2106,8 +2105,16 @@ function renderCompatTab() {
   el.innerHTML = html;
 }
 
-// Apply suggested or optimized allocation
-// Store original percentages when materials are first set
+// Smart Allocate — chained Suggested → Optimized.
+// Phase 1: Dirichlet-inspired heuristic priors set a balanced baseline
+// (note-tier-aware top/middle/base ratios + odor-strength + harmony).
+// Phase 2: Iterative gradient descent + hill-climb refinement against
+// family-specific note ratios + IFRA caps + compatibility graph.
+//
+// Locked materials are preserved through both phases. The legacy `type`
+// argument ('suggested' | 'optimized') is still accepted for backwards
+// compatibility (old call sites / tests), but the default + UI is now
+// the chained 'smart' flow.
 let _originalPcts = {};
 
 function storeOriginalPcts() {
@@ -2123,6 +2130,7 @@ function applyAllocation(type) {
   const catId = document.getElementById('productCategory').value;
   const fragPct = validateFragPct(document.getElementById('fragPct').value);
   const graph = getCompatGraph();
+  const mode = type || 'smart';
 
   // Use original percentages for unlocked materials, current for locked
   const originalMats = mats.map(m => ({
@@ -2131,15 +2139,21 @@ function applyAllocation(type) {
   }));
 
   formulation.batchUpdate(() => {
-    let alloc;
-    if (type === 'suggested') {
-      alloc = suggestAllocation(originalMats, fragPct, lockedMaterials);
-      alloc.forEach(a => {
+    // Phase 1 — Suggested baseline (skipped if pure 'optimized' mode)
+    if (mode === 'suggested' || mode === 'smart') {
+      const sugAlloc = suggestAllocation(originalMats, fragPct, lockedMaterials);
+      sugAlloc.forEach(a => {
         if (!lockedMaterials.has(a.cas)) formulation.updatePct(a.cas, a.suggestedPct);
       });
-    } else {
-      alloc = optimizeAllocation(originalMats, graph, catId, fragPct, 50, lockedMaterials);
-      alloc.forEach(a => {
+    }
+    // Phase 2 — Optimizer refinement (skipped if pure 'suggested' mode).
+    // For 'smart' mode, uses Phase-1 output as starting point so the
+    // optimizer converges from a sensible baseline rather than
+    // stale/random current pcts.
+    if (mode === 'optimized' || mode === 'smart') {
+      const startMats = (mode === 'smart') ? formulation.materials : originalMats;
+      const optAlloc = optimizeAllocation(startMats, graph, catId, fragPct, 50, lockedMaterials);
+      optAlloc.forEach(a => {
         if (!lockedMaterials.has(a.cas)) formulation.updatePct(a.cas, a.optimizedPct);
       });
     }
@@ -2148,7 +2162,7 @@ function applyAllocation(type) {
   });
 
   // Rebalance existing carrier %s, then normalize against dilution minimums.
-  rebalanceExistingCarriers(type, catId);
+  rebalanceExistingCarriers(mode === 'suggested' ? 'suggested' : 'optimized', catId);
   autoPopulateCarriers();
 }
 
