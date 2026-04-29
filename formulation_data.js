@@ -1529,12 +1529,11 @@ const FRAGRANCE_WHEEL = {
   // transitional subfamilies (Fruity, Floral Amber, Woody Amber, plus
   // Aromatic and Woods by Edwards' colour blending) stay inside their
   // anchor band but render with a blended gradient fill.
-  mainOf: {
-    aromatic_fougere: 'fresh', citrus: 'fresh', water: 'fresh', green: 'fresh',
-    fruity: 'floral', floral: 'floral', soft_floral: 'floral', floral_amber: 'floral',
-    soft_amber: 'amber', amber: 'amber', woody_amber: 'amber',
-    woods: 'woody', mossy_woods: 'woody', dry_woods: 'woody',
-  },
+  //
+  // Derived from the shared SUB_FAMILY_TO_MAIN in taxonomy.js (v207) so
+  // there's no longer a hand-edited mirror of the Analyzer's
+  // MAIN_FAMILY_TO_SUBS.
+  mainOf: SUB_FAMILY_TO_MAIN,
 
   familyToSegment: {
     // Self-maps for every new subfamily id

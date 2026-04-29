@@ -41,6 +41,7 @@ const TARGETS = [
   { path: 'formulation.html',     label: 'Formulator page'         },
   { path: 'formulation_engine.js',label: 'Formulator engine module'},
   { path: 'formulation_data.js',  label: 'Formulator data module'  },
+  { path: 'taxonomy.js',          label: 'Shared Edwards-2021 taxonomy'},
   { path: 'lib/utils.mjs',        label: 'Shared utilities'        },
   { path: 'sw.js',                label: 'Service worker'          },
   { path: 'tools/lint-blends.mjs',label: 'Blends linter (CLI tool)'},
