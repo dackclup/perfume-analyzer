@@ -911,10 +911,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v209"></script>
-<script src="perfumery_data.js?v=2026-04-29-v209"></script>
-<script src="formulation_data.js?v=2026-04-29-v209"></script>
-<script src="formulation_engine.js?v=2026-04-29-v209"></script>
+<script src="taxonomy.js?v=2026-04-29-v210"></script>
+<script src="perfumery_data.js?v=2026-04-29-v210"></script>
+<script src="formulation_data.js?v=2026-04-29-v210"></script>
+<script src="formulation_engine.js?v=2026-04-29-v210"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1863,19 +1863,18 @@ modalSearch.addEventListener('input', () => {
 
 // Build the right-column category pill for the Add modal. Replaces the
 // raw CAS number — categories ("Solvent", "Carrier", "Antioxidant",
-// "Preservative" for functional ingredients; "Top", "Middle", "Base"
-// for fragrance materials) carry far more meaning at a glance.
+// "Preservative" for functional ingredients; "T", "M", "B" or
+// combinations like "T/M", "M/B" for fragrance materials) carry far
+// more meaning at a glance.
 //
 // Source of truth is entry.note. Multi-tier strings like "Top / Middle"
-// or "Middle / Base" render the FIRST tier only as the primary chip
-// (matching the existing single-pill UX in the materials list); when
-// multi-tier matters the user can click in to see the full note.
+// or "Middle / Base" render abbreviated as "T/M" / "M/B" so the pill
+// stays narrow enough not to crowd the row on mobile.
 function categoryPill(entry) {
   const note = (entry && entry.note) ? String(entry.note).trim() : '';
   if (!note) return '<span class="mr-cat other">—</span>';
   const lower = note.toLowerCase();
-  // Functional ingredients — single-word notes that map directly to a
-  // category class.
+  // Functional ingredients — full-word notes map directly to a class.
   const FUNCTIONAL = {
     solvent: 'solvent', carrier: 'carrier', antioxidant: 'antioxidant',
     preservative: 'preservative', solubilizer: 'other', emulsifier: 'other',
@@ -1884,13 +1883,17 @@ function categoryPill(entry) {
   if (FUNCTIONAL[lower]) {
     return `<span class="mr-cat ${FUNCTIONAL[lower]}">${escHtml(note)}</span>`;
   }
-  // Fragrance materials — pick the leading tier of a multi-tier note
-  // ("Top / Middle" → Top, "Middle / Base" → Middle).
+  // Fragrance materials — abbreviate Top/Middle/Base → T/M/B and join
+  // multi-tier notes with a slash. Class still reflects the leading
+  // tier so colour matches the existing palette.
+  const parts = lower.split(/\s*\/\s*/);
+  const TIER_ABBR = { top: 'T', middle: 'M', mid: 'M', heart: 'M', base: 'B' };
+  const abbr = parts.map(p => TIER_ABBR[p] || p.charAt(0).toUpperCase()).join('/');
   let cls = 'other';
-  if (/\btop\b/i.test(lower)) cls = 'top';
-  else if (/\b(middle|mid|heart)\b/i.test(lower)) cls = 'mid';
-  else if (/\bbase\b/i.test(lower)) cls = 'base';
-  return `<span class="mr-cat ${cls}">${escHtml(note)}</span>`;
+  if (parts.includes('top')) cls = 'top';
+  else if (parts.some(p => p === 'middle' || p === 'mid' || p === 'heart')) cls = 'mid';
+  else if (parts.includes('base')) cls = 'base';
+  return `<span class="mr-cat ${cls}">${escHtml(abbr)}</span>`;
 }
 
 // Return a small status badge HTML for a material in the Add-modal search.
