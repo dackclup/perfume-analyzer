@@ -1082,7 +1082,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v188"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v189"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1110,6 +1110,21 @@ const _RENDER_CHUNK_NEXT  = 25;
 const _scheduleIdle = (typeof window !== 'undefined' && window.requestIdleCallback)
   ? cb => window.requestIdleCallback(cb, { timeout: 200 })
   : cb => requestAnimationFrame(() => cb(null));
+
+// Compare-cart state (was in v176 cart block). Hoisted because
+// _updateCompareCta() runs at first paint (init line ~4280) and reads
+// _compareCart.size; if the let initializer hadn't reached yet, the
+// init-time call hit a TDZ ReferenceError that aborted the rest of
+// the inline script — and every later let further down the file
+// stayed uninitialized, surfacing as cascading per-card render
+// errors. Lifting the cart state here pins the init order.
+const _COMPARE_LS_KEY = 'perfume_compare_cart';
+const _COMPARE_LIMIT = 8;
+let _compareCart = new Set();
+try {
+  const _compareRaw = (typeof localStorage !== 'undefined') ? localStorage.getItem(_COMPARE_LS_KEY) : null;
+  if (_compareRaw) for (const c of JSON.parse(_compareRaw)) if (typeof c === 'string') _compareCart.add(c);
+} catch (e) { /* ignore corrupt localStorage */ }
 
 // Sort state (was in v175 sort block). Hoisted same as the chunked-
 // render state above so renderResults can read them at any time —
@@ -1194,7 +1209,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v188";
+const DATA_VERSION = "2026-04-25-rebuild-v189";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -4274,10 +4289,16 @@ _restoreUrlState();
 window.addEventListener('popstate', () => { _restoreUrlState(); });
 // First paint of the result region — when the user lands on the page
 // with an empty `results` array, renderResults swaps in the empty-state
-// CTA instead of leaving the section blank.
-if (typeof renderResults === 'function') renderResults();
-// Surface compare cart count from localStorage on first paint.
-if (typeof _updateCompareCta === 'function') _updateCompareCta();
+// CTA instead of leaving the section blank. Each init call is wrapped
+// individually so a throw in one (TDZ on a downstream let, missing
+// element, etc.) cannot abort the rest of the script. Without this
+// guard a TDZ at line N halted execution and every let between line N
+// and end-of-script silently stayed uninitialized — manifesting later
+// as confusing "Cannot access 'X' before initialization" cascades.
+try { if (typeof renderResults === 'function') renderResults(); }
+catch (e) { console.error('[init] renderResults threw:', e); }
+try { if (typeof _updateCompareCta === 'function') _updateCompareCta(); }
+catch (e) { console.error('[init] _updateCompareCta threw:', e); }
 
 // ═══════════════════════════════════════════════════════════════
 // MODULE: Filter Matching
@@ -5712,13 +5733,10 @@ function _cleanBlendsWith(arr) {
 // side comparison. Persisted in localStorage so the cart survives
 // reload, and surfaced as a floating "Compare (N)" pill in the
 // downloads strip whenever it has at least 2 entries.
-const _COMPARE_LS_KEY = 'perfume_compare_cart';
-const _COMPARE_LIMIT = 8;
-let _compareCart = new Set();
-try {
-  const raw = localStorage.getItem(_COMPARE_LS_KEY);
-  if (raw) for (const c of JSON.parse(raw)) if (typeof c === 'string') _compareCart.add(c);
-} catch (e) { /* ignore corrupt localStorage */ }
+// State (_COMPARE_LS_KEY, _COMPARE_LIMIT, _compareCart) lives at the
+// top of the script — see the comment block there. The localStorage
+// hydration also happens up there so the cart count is correct on
+// the first paint.
 function _persistCompareCart() {
   try { localStorage.setItem(_COMPARE_LS_KEY, JSON.stringify([..._compareCart])); }
   catch (e) { /* quota or private mode — ignore */ }
