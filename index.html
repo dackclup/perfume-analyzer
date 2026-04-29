@@ -1082,7 +1082,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v185"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v186"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1127,10 +1127,23 @@ const _DEBUG = (function () {
   } catch (e) { return false; }
 })();
 function _devWarn(...args) { if (_DEBUG) console.warn(...args); }
+// Click-flow tracer — visible feedback for mobile users without
+// DevTools. Logs to console always (cheap), toasts only when ?debug=1
+// so production users don't see noise. Useful when "click does
+// nothing" reports come in: each step in doSearch / scrapeMaterial
+// emits one entry so the user can screenshot the trail.
+function _clickLog(...args) {
+  if (typeof console !== 'undefined' && console.log) console.log.apply(console, ['[click]', ...args]);
+  if (!_DEBUG) return;
+  try {
+    const msg = args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ');
+    if (typeof showToast === 'function') showToast({ message: '[click] ' + msg, variant: 'info', timeout: 2200 });
+  } catch (e) { /* tracer must never break the app */ }
+}
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v185";
+const DATA_VERSION = "2026-04-25-rebuild-v186";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -4425,12 +4438,40 @@ function _showDidYouMean(input, candidates) {
 
 // ===== Search Orchestration =====
 async function doSearch(term) {
+  if (typeof _clickLog === 'function') _clickLog('doSearch entry:', term);
   clearSearchError();
   const names = term.split(',').map(s=>s.trim()).filter(Boolean);
-  const existingNames = new Set(results.map(r=>(r.record?.names?.canonical||'').toLowerCase()));
-  const newNames = names.filter(n=>!existingNames.has(n.toLowerCase()));
-  if (!newNames.length) return;
-  
+  // Dedup by canonical name AND by resolved CAS. The audit found that
+  // a pill's display name can diverge from the canonical name stored
+  // after a local match (e.g. trade name pill → DB canonical), so a
+  // name-only filter could let a duplicate slip through OR worse,
+  // silently skip a fresh click whose name matches a stale canonical.
+  // Resolving each input to a CAS first lets us catch the case where
+  // two different pill labels point at the same material.
+  const existingNames = new Set(results.map(r => (r.record?.names?.canonical || '').toLowerCase()));
+  const existingCas   = new Set(results.map(r => r.record?.identifiers?.cas).filter(Boolean));
+  const _resolveLocalCas = (n) => {
+    const nk = (n || '').toLowerCase().trim();
+    if (CAS_RE_SEARCH.test(nk) && DB[nk]) return nk;
+    return TRADES[nk] || NAME_TO_CAS[nk] || (SYN_IX[nk] && SYN_IX[nk].cas) || null;
+  };
+  const skipped = [];
+  const newNames = names.filter(n => {
+    const nl = n.toLowerCase();
+    if (existingNames.has(nl)) { skipped.push(n); return false; }
+    const localCas = _resolveLocalCas(n);
+    if (localCas && existingCas.has(localCas)) { skipped.push(n); return false; }
+    return true;
+  });
+  if (!newNames.length) {
+    // User clicked a pill whose target is already in the result list —
+    // surface a toast so the click doesn't appear to do nothing.
+    try { showToast({ message: 'Already in results: ' + skipped.join(', '), variant: 'info', timeout: 2000 }); } catch (e) {}
+    if (typeof _clickLog === 'function') _clickLog('doSearch dedup skip:', skipped.join(', '));
+    return;
+  }
+  if (typeof _clickLog === 'function') _clickLog('doSearch will scrape:', newNames.join(', '));
+
   const prog = document.getElementById("progress");
   const progBar = document.getElementById("progressBar");
   const progText = document.getElementById("progressText");
@@ -6113,8 +6154,13 @@ const _scheduleIdle = (typeof window !== 'undefined' && window.requestIdleCallba
   ? cb => window.requestIdleCallback(cb, { timeout: 200 })
   : cb => requestAnimationFrame(() => cb(null));
 
-function renderResults() {
+function _renderResultsCore() {
+  if (typeof _clickLog === 'function') _clickLog('renderResults: results.length=' + results.length);
   const div = document.getElementById("results");
+  if (!div) {
+    if (typeof showToast === 'function') showToast({ message: 'Render error: #results missing', variant: 'danger' });
+    return;
+  }
   // Save open states before re-render (skip if just searched)
   if (!renderResults._forceCollapse) {
     results.forEach((mat, idx) => {
@@ -6127,8 +6173,20 @@ function renderResults() {
   if (_renderCancel) { _renderCancel(); _renderCancel = null; }
   // Apply current sort. _seq tiebreak keeps the order stable across
   // re-renders that don't change content (e.g. PubChem callbacks).
-  results.forEach(_stampResultSeq);
-  results.sort(_compareForSort(_sortOrder));
+  // Skip the sort + stamp pass for trivial result sets — saves a few
+  // microseconds on the common case AND eliminates a possible source
+  // of throws when a result was added with an exotic record shape
+  // before the sorter could be expected to reach it.
+  if (results.length > 1) {
+    try {
+      results.forEach(_stampResultSeq);
+      results.sort(_compareForSort(_sortOrder));
+    } catch (e) {
+      console.error('[render] sort threw:', e);
+    }
+  } else {
+    results.forEach(_stampResultSeq);
+  }
   document.getElementById("statusBar").style.display = results.length?"flex":"none";
   // Empty state — no search results yet. Hint at the next action so a
   // first-time user isn't staring at a blank page. Adapts copy to whether
@@ -6462,6 +6520,17 @@ function renderResults() {
     cards.push(`<div class="card"><div class="card-header"><h3>${esc(mat?.record?.names?.canonical||'Unknown material')} <span style="color:var(--danger);font-size:0.8em">(render error)</span></h3></div></div>`);
    }
   });
+  if (typeof _clickLog === 'function') _clickLog('renderResults: cards.length=' + cards.length);
+  // Belt-and-suspenders — every per-card render has its own try/catch
+  // so cards.length should equal results.length, but if something
+  // upstream short-circuited the loop we'd otherwise paint a blank
+  // results region. Surface the mismatch loudly instead.
+  if (!cards.length && results.length) {
+    console.error('[render] results has ' + results.length + ' entries but no cards built');
+    if (typeof showToast === 'function') showToast({ message: 'Render produced no cards (results.length=' + results.length + ')', variant: 'danger', timeout: 4000 });
+    div.innerHTML = '<div class="empty-state"><div class="empty-state__title">Render produced no cards</div><p class="empty-state__hint">Open the console — every per-card error is logged. Reload the page if it persists.</p></div>';
+    return;
+  }
   // Small batches render synchronously — chunking only pays off when
   // there are enough cards that the parse cost is observable.
   if (cards.length <= _RENDER_CHUNK_FIRST) {
@@ -6490,6 +6559,24 @@ function renderResults() {
     else _renderCancel = null;
   };
   _scheduleIdle(flush);
+}
+
+// Public entry — wraps _renderResultsCore so any uncaught throw
+// surfaces as a visible toast + console stack instead of leaving the
+// user with a blank result region. The core continues to read static
+// fields off the wrapper object (renderResults._forceCollapse /
+// ._statusOverride) so doSearch's existing setters keep working.
+function renderResults() {
+  try {
+    _renderResultsCore();
+  } catch (e) {
+    console.error('[render] renderResults threw — full stack:', e);
+    try {
+      const div = document.getElementById('results');
+      if (div) div.innerHTML = '<div class="empty-state"><div class="empty-state__title">Render failed</div><p class="empty-state__hint">' + (e && (e.message || e)) + '</p></div>';
+    } catch (_) {}
+    try { showToast({ message: 'Render failed: ' + (e && e.message ? e.message : e), variant: 'danger', timeout: 6000 }); } catch (_) {}
+  }
 }
 
 // Background-only helper — called from doSearch() at the very end of
