@@ -351,6 +351,13 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .facet-group { margin:6px 0; }
 .facet-group-label { font-size:0.6em; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; opacity:0.7; font-weight:600; margin:2px 2px 3px; }
 .facet-group-chips { display:flex; flex-wrap:wrap; gap:4px; }
+/* Type filter chip grouping — splits TYPE_VALUES into "Materials" vs
+   "Solvent / Carrier / Other" clusters. Same typography as
+   .facet-group-label so the two grouped chip sections feel of a piece. */
+.pill-filter-group { display:flex; flex-direction:column; gap:4px; margin-bottom:8px; width:100%; }
+.pill-filter-group:last-child { margin-bottom:0; }
+.pill-filter-group-label { font-size:0.6em; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; opacity:0.7; font-weight:600; margin:2px 2px 3px; }
+.pill-filter-group-chips { display:flex; flex-wrap:wrap; gap:4px; }
 /* Facet groups picker — collapsible checkbox list that hides/shows
    entire Edwards sub-family groups from the Facet drawer. */
 #facetFilters { overflow:visible; }
@@ -869,14 +876,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v171"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v172"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v171";
+const DATA_VERSION = "2026-04-25-rebuild-v172";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1529,6 +1536,18 @@ const TYPE_DESCRIPTIONS = {
   solubilizer:    'Helps oils mix with water-based phases',
   emulsifier:     'Stabilises oil/water emulsions'
 };
+// TYPE_GROUPS — partitions TYPE_VALUES into two semantic clusters so
+// the Type filter chip cloud reads like the formulation page's two
+// stacked sections (MATERIALS vs SOLVENT/CARRIER/OTHER) instead of
+// one flat 14-chip strip. Order within each group preserves canonical
+// TYPE_VALUES order. Sum of values across groups must equal
+// TYPE_VALUES.length — guarded by a console.assert at boot.
+const TYPE_GROUPS = [
+  { label: 'Materials',
+    values: ['aroma_chemical','essential_oil','absolute','resin','balsam','natural_isolate'] },
+  { label: 'Solvent / Carrier / Other',
+    values: ['solvent','carrier','preservative','antioxidant','wax','additive','solubilizer','emulsifier'] },
+];
 const FUNCTION_VALUES = ['aromatic','fixative','blender','modifier','enhancer'];
 const FUNCTION_LABELS = {
   // 'Heart' replaces the misleading 'Aromatic' label (which clashes
@@ -3361,7 +3380,10 @@ function _buildPillFilter(axisName) {
   // user sees the full taxonomy at a glance — the .empty class softens
   // chips with no matching materials so they read as "available but
   // currently unused" rather than "missing from the system".
-  for (const v of ax.values) {
+  // Type axis is grouped into "Materials" vs "Solvent/Carrier/Other"
+  // (see TYPE_GROUPS) so the chip strip mirrors the formulation page's
+  // two-section layout. Other axes use a single flat strip.
+  const _makeChip = (v) => {
     const cnt = counts[v] || 0;
     const btn = document.createElement('span');
     btn.className = 'odor-tag' + (cnt === 0 ? ' empty' : '');
@@ -3371,7 +3393,24 @@ function _buildPillFilter(axisName) {
     if (desc) btn.title = desc;
     btn.innerHTML = '<span>' + (ax.labels[v] || v) + '</span> <span class="pill-count">' + cnt + '</span>';
     btn.onclick = function() { _togglePillFilter(axisName, v, this); };
-    wrap.appendChild(btn);
+    return btn;
+  };
+  if (axisName === 'type' && typeof TYPE_GROUPS !== 'undefined') {
+    for (const g of TYPE_GROUPS) {
+      const groupWrap = document.createElement('div');
+      groupWrap.className = 'pill-filter-group';
+      const lbl = document.createElement('div');
+      lbl.className = 'pill-filter-group-label';
+      lbl.textContent = g.label;
+      groupWrap.appendChild(lbl);
+      const chips = document.createElement('div');
+      chips.className = 'pill-filter-group-chips';
+      for (const v of g.values) chips.appendChild(_makeChip(v));
+      groupWrap.appendChild(chips);
+      wrap.appendChild(groupWrap);
+    }
+  } else {
+    for (const v of ax.values) wrap.appendChild(_makeChip(v));
   }
   container.appendChild(wrap);
 }
