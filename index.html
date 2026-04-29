@@ -964,14 +964,40 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v176"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v177"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
+// Centralised network + UI timing constants. Network calls (PubChem)
+// are slower so they get larger budgets; UI debouncers are tuned for
+// snappy filter-and-suggest. Tuning happens here, not at call sites.
+const TIMEOUTS = {
+  fetch:        6000,   // default outbound fetch ceiling
+  pubchemView:  15000,  // PUG View JSON — heaviest endpoint
+  pubchemGhs:   8000,   // GHS markup scan
+  pubchemDesc:  5000,   // compound description
+  formulator:   10000   // PubChem section prefetch on detail expand
+};
+const DEBOUNCE = {
+  filterVisibility: 80,   // chip count refresh after a filter toggle
+  pillSuggestions:  150   // suggestion-pill rebuild while typing
+};
+// Dev diagnostic flag. Off by default so production users don't see
+// console noise; flip it with ?debug=1 in the URL or by setting
+// localStorage.perfume_debug = '1'. Gates the taxonomy / data-quality
+// init logs that fire on every load — actual exceptions (network,
+// render) still go through plain console.warn / console.error.
+const _DEBUG = (function () {
+  try {
+    if (typeof location !== 'undefined' && location.search && location.search.includes('debug=1')) return true;
+    return localStorage.getItem('perfume_debug') === '1';
+  } catch (e) { return false; }
+})();
+function _devWarn(...args) { if (_DEBUG) console.warn(...args); }
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v176";
+const DATA_VERSION = "2026-04-25-rebuild-v177";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1002,6 +1028,36 @@ PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
     if (e.odor)        for (const k of ODOR_KEYS)   if (e.odor[k] === '')        e.odor[k] = null;
     if (e.performance) for (const k of PERF_KEYS)   if (e.performance[k] === '') e.performance[k] = null;
     if (e.safety)      for (const k of SAFETY_KEYS) if (e.safety[k] === '')      e.safety[k] = null;
+  }
+})();
+// Schema validation — single audit pass after the normaliser. Counts
+// entries missing required (cas, name) and recommended (odor, note,
+// safety) fields. Output is gated through _devWarn so end users never
+// see the noise — flip ?debug=1 to inspect coverage when reviewing
+// data quality before a release.
+(function _validateDBSchema() {
+  const issues = { noCas: [], noName: [], noOdor: 0, noNote: 0, noSafety: 0, total: 0 };
+  for (const e of PERFUMERY_DATA.perfumery_db) {
+    issues.total++;
+    if (!e.cas)  issues.noCas.push(e.name || '?');
+    if (!e.name) issues.noName.push(e.cas || '?');
+    if (!e.odor || !e.odor.description) issues.noOdor++;
+    if (!e.note) issues.noNote++;
+    if (!e.safety) issues.noSafety++;
+  }
+  if (issues.noCas.length || issues.noName.length) {
+    // Required-field gaps are real problems — surface as a console.warn
+    // even when debug is off, since they break filter / search.
+    console.warn('[schema] entries missing required fields',
+      { missingCas: issues.noCas.length, missingName: issues.noName.length });
+  }
+  if (_DEBUG) {
+    _devWarn('[schema] coverage', {
+      total:   issues.total,
+      noOdor:  issues.noOdor + ' (' + Math.round(issues.noOdor / issues.total * 100) + '%)',
+      noNote:  issues.noNote + ' (' + Math.round(issues.noNote / issues.total * 100) + '%)',
+      noSafety:issues.noSafety + ' (' + Math.round(issues.noSafety / issues.total * 100) + '%)'
+    });
   }
 })();
 const TRADES = PERFUMERY_DATA.trade_names;
@@ -2633,10 +2689,10 @@ function migrateLegacyTaxonomy(entry) {
     for (const t of rawSf) if (!PRIMARY_FAMILIES.includes(t)) _dropped.push('secondary:' + t);
     for (const t of rawFa) if (!(t in FACET_TAGS))            _dropped.push('facet:' + t);
     if (_dropped.length && !pf.length && !sf.length && !fa.length) {
-      console.warn('[taxonomy] curated classification for "' + (entry.name || '?') +
+      _devWarn('[taxonomy] curated classification for "' + (entry.name || '?') +
         '" had tokens but every one is unknown — falling through to inference. Dropped: ' + _dropped.join(', '));
     } else if (_dropped.length) {
-      console.warn('[taxonomy] "' + (entry.name || '?') + '" curated classification contains unknown tokens (ignored): ' + _dropped.join(', '));
+      _devWarn('[taxonomy] "' + (entry.name || '?') + '" curated classification contains unknown tokens (ignored): ' + _dropped.join(', '));
     }
     // If all validated arrays are empty, DON'T short-circuit inference —
     // treat the curated block as malformed and fall through.
@@ -2803,7 +2859,7 @@ function _buildFilterRecord(cas, entry) {
   // legitimately have no family.
   const _isPerfumeryCandidate = hasRealOdor || MIXTURES.has(cas);
   if (_isPerfumeryCandidate && primaryFamilies.length === 0) {
-    console.warn('[taxonomy] zero primary families for perfumery material:', entry.name, '(' + cas + ')');
+    _devWarn('[taxonomy] zero primary families for perfumery material:', entry.name, '(' + cas + ')');
   }
 
   return {
@@ -2867,9 +2923,9 @@ const FILTER_INDEX = {};
   if (_missingBoth.length || _missingP.length || _missingF.length) {
     console.groupCollapsed('[taxonomy audit] coverage gaps (' +
       (_missingP.length + _missingF.length + _missingBoth.length) + ' materials)');
-    if (_missingBoth.length) console.warn('Missing BOTH primary+facets:', _missingBoth);
-    if (_missingP.length)    console.warn('Missing primary only:', _missingP);
-    if (_missingF.length)    console.warn('Missing facets only:', _missingF);
+    if (_missingBoth.length) _devWarn('Missing BOTH primary+facets:', _missingBoth);
+    if (_missingP.length)    _devWarn('Missing primary only:', _missingP);
+    if (_missingF.length)    _devWarn('Missing facets only:', _missingF);
     console.groupEnd();
   }
 }
@@ -3046,113 +3102,117 @@ let _visTimer;
 function _refreshPills() {
   showPills(input.value);
   clearTimeout(_visTimer);
-  _visTimer = setTimeout(_updateFilterVisibility, 80);
+  _visTimer = setTimeout(_updateFilterVisibility, DEBOUNCE.filterVisibility);
   _updateActiveFilterCount();
   _writeUrlState();
 }
+
+// ── Filter axis predicates ─────────────────────────────────────────
+// One pass(fc, cas) function per axis. Each returns true when the
+// material satisfies the axis (or the axis has no active selection,
+// in which case the axis doesn't constrain). matchesAllFilters and
+// _axesFailedBy iterate this map — the previous duplicated 90-line
+// blocks (one per caller) are now driven from this single source so
+// future axis tweaks land in one spot only.
+//
+// Semantics: OR-within-axis (any selected value matches → pass),
+// AND-across-axes (every active axis must pass). See matchesAllFilters
+// for the user-facing description.
+function _combinedFamilyTokens(fc) {
+  const combined = new Set([
+    ...(fc.primaryFamilies || []),
+    ...(fc.secondaryFamilies || [])
+  ]);
+  for (const f of (fc.facets || [])) {
+    const parent = FACET_TAGS[f];
+    if (parent) combined.add(parent);
+  }
+  return combined;
+}
+const _AXIS_CHECKERS = {
+  note(fc) {
+    const set = _filterAxes.note.set;
+    if (!set.size) return true;
+    for (const v of set) {
+      if (v === '_other') { if (!RE_NOTE_OTHER.test(fc.noteLow)) return true; }
+      else if (fc.noteLow.includes(v)) return true;
+    }
+    return false;
+  },
+  type(fc) {
+    const set = _filterAxes.type.set;
+    return !set.size || set.has(fc.materialType);
+  },
+  func(fc) {
+    const set = _filterAxes.func.set;
+    if (!set.size) return true;
+    for (const f of set) if (fc.functions.has(f)) return true;
+    return false;
+  },
+  tag(fc) {
+    const set = _filterAxes.tag.set;
+    if (!set.size) return true;
+    for (const u of set) if (fc.uses.has(u)) return true;
+    return false;
+  },
+  reg(fc, cas) {
+    const set = _filterAxes.reg.set;
+    if (!set.size) return true;
+    for (const r of set) {
+      const canon = _normalizeRegulatoryToken(r);
+      if (canon === 'banned') {
+        if (BANNED_CAS.has(cas) || fc.regulatory.has('banned')) return true;
+      } else if (fc.regulatory.has(canon)) return true;
+      else {
+        for (const [legacy, c] of Object.entries(REGULATORY_LEGACY_ALIASES)) {
+          if (c === canon && fc.regulatory.has(legacy)) return true;
+        }
+      }
+    }
+    return false;
+  },
+  source(fc) {
+    const set = _filterAxes.source.set;
+    return !set.size || set.has(fc.source);
+  },
+  mainFamily(fc) {
+    if (!activeMainFamilyFilters.size) return true;
+    const combined = _combinedFamilyTokens(fc);
+    for (const main of activeMainFamilyFilters) {
+      const toks = MAIN_FAMILY_TO_LEGACY[main];
+      if (!toks) continue;
+      for (const t of toks) if (combined.has(t)) return true;
+    }
+    return false;
+  },
+  subFamily(fc) {
+    if (!activeSubFamilyFilters.size) return true;
+    const combined = _combinedFamilyTokens(fc);
+    for (const sub of activeSubFamilyFilters) {
+      const toks = SUB_FAMILY_TO_LEGACY[sub];
+      if (!toks) continue;
+      for (const t of toks) if (combined.has(t)) return true;
+    }
+    return false;
+  },
+  facet(fc) {
+    if (!activeFacetFilters.size) return true;
+    const fcFacets = fc.facets || [];
+    for (const f of activeFacetFilters) if (fcFacets.includes(f)) return true;
+    return false;
+  }
+};
+const _FILTER_AXIS_NAMES = ['note','type','func','tag','reg','source','mainFamily','subFamily','facet'];
 
 // Per-axis failure set. Returns which axes the material would fail
 // under the current active filter combo. Used by _updateFilterVisibility
 // so each axis's chip visibility is computed against the OTHER axes
 // only — otherwise selecting one chip would hide every sibling chip
 // the moment it's picked, making multi-select unusable.
-// Mirrors _passFilter's OR-within / AND-across semantics: an axis is
-// flagged as failed only when NO selected value in that axis matches
-// the material.
 function _axesFailedBy(fc, cas) {
   const failed = new Set();
-  // Note — OR-within
-  const noteSet = _filterAxes.note.set;
-  if (noteSet.size) {
-    let pass = false;
-    for (const v of noteSet) {
-      if (v === '_other') { if (!RE_NOTE_OTHER.test(fc.noteLow)) { pass = true; break; } }
-      else if (fc.noteLow.includes(v)) { pass = true; break; }
-    }
-    if (!pass) failed.add('note');
-  }
-  // Type — single-value (singleSelect: at most 1 value)
-  const typeSet = _filterAxes.type.set;
-  if (typeSet.size && !typeSet.has(fc.materialType)) failed.add('type');
-  // Function — OR-within
-  const funcSet = _filterAxes.func.set;
-  if (funcSet.size) {
-    let pass = false;
-    for (const f of funcSet) if (fc.functions.has(f)) { pass = true; break; }
-    if (!pass) failed.add('func');
-  }
-  // Use — OR-within
-  const tagSet = _filterAxes.tag.set;
-  if (tagSet.size) {
-    let pass = false;
-    for (const u of tagSet) if (fc.uses.has(u)) { pass = true; break; }
-    if (!pass) failed.add('tag');
-  }
-  // Regulatory — OR-within with BANNED_CAS fallback + legacy aliases
-  const regSet = _filterAxes.reg.set;
-  if (regSet.size) {
-    let pass = false;
-    for (const r of regSet) {
-      const canon = _normalizeRegulatoryToken(r);
-      if (canon === 'banned') {
-        if (BANNED_CAS.has(cas) || fc.regulatory.has('banned')) { pass = true; break; }
-      } else if (fc.regulatory.has(canon)) { pass = true; break; }
-      else {
-        let aliasHit = false;
-        for (const [legacy, c] of Object.entries(REGULATORY_LEGACY_ALIASES)) {
-          if (c === canon && fc.regulatory.has(legacy)) { aliasHit = true; break; }
-        }
-        if (aliasHit) { pass = true; break; }
-      }
-    }
-    if (!pass) failed.add('reg');
-  }
-  // Source — single-value (singleSelect)
-  const sourceSet = _filterAxes.source.set;
-  if (sourceSet.size && !sourceSet.has(fc.source)) failed.add('source');
-  // Main Family — OR across chips, OR across MAIN_FAMILY_TO_LEGACY
-  // tokens. Combined material set includes facet-derived parents.
-  if (activeMainFamilyFilters.size) {
-    const combined = new Set([
-      ...(fc.primaryFamilies || []),
-      ...(fc.secondaryFamilies || [])
-    ]);
-    for (const f of (fc.facets || [])) {
-      const parent = FACET_TAGS[f];
-      if (parent) combined.add(parent);
-    }
-    let pass = false;
-    outer: for (const main of activeMainFamilyFilters) {
-      const toks = MAIN_FAMILY_TO_LEGACY[main];
-      if (!toks) continue;
-      for (const t of toks) if (combined.has(t)) { pass = true; break outer; }
-    }
-    if (!pass) failed.add('mainFamily');
-  }
-  // Family — OR across chips, OR across SUB_FAMILY_TO_LEGACY tokens.
-  if (activeSubFamilyFilters.size) {
-    const combined = new Set([
-      ...(fc.primaryFamilies || []),
-      ...(fc.secondaryFamilies || [])
-    ]);
-    for (const f of (fc.facets || [])) {
-      const parent = FACET_TAGS[f];
-      if (parent) combined.add(parent);
-    }
-    let pass = false;
-    outer: for (const sub of activeSubFamilyFilters) {
-      const toks = SUB_FAMILY_TO_LEGACY[sub];
-      if (!toks) continue;
-      for (const t of toks) if (combined.has(t)) { pass = true; break outer; }
-    }
-    if (!pass) failed.add('subFamily');
-  }
-  // Facet — OR-within
-  if (activeFacetFilters.size) {
-    const fcFacets = fc.facets || [];
-    let pass = false;
-    for (const facet of activeFacetFilters) if (fcFacets.includes(facet)) { pass = true; break; }
-    if (!pass) failed.add('facet');
+  for (const name of _FILTER_AXIS_NAMES) {
+    if (!_AXIS_CHECKERS[name](fc, cas)) failed.add(name);
   }
   return failed;
 }
@@ -3878,7 +3938,7 @@ input.addEventListener("input", () => {
   btn.disabled = !input.value.trim();
   clearSearchError();
   clearTimeout(_pillTimer);
-  _pillTimer = setTimeout(() => showPills(input.value), 150);
+  _pillTimer = setTimeout(() => showPills(input.value), DEBOUNCE.pillSuggestions);
   _writeUrlState();
 });
 input.addEventListener("keydown", e => { const v=input.value.trim(); if (e.key==="Enter"&&v) doSearch(v); });
@@ -3906,121 +3966,22 @@ function _anyAxisActive() {
   return activeMainFamilyFilters.size > 0 || activeSubFamilyFilters.size > 0 || activeFacetFilters.size > 0;
 }
 
+// matchesAllFilters — short-circuit AND-across-axes filter test.
+// Filter rule: OR-within-axis, AND-across-axes.
+//   - Multi-select inside one axis = union (any selected value
+//     matches → material passes that axis). Mirrors the standard
+//     filter pattern in e-commerce/search UIs.
+//   - Multi-axis = intersection (every active axis must pass).
+//   - Untouched axes don't constrain.
+// Single-value axes (Type, Source) are wired with singleSelect:true
+// in _filterAxes so the chip strip enforces radio behavior; only one
+// value is ever in the Set, making OR/AND equivalent. Per-axis logic
+// lives in _AXIS_CHECKERS so this and _axesFailedBy stay in lockstep.
 function matchesAllFilters(cas) {
   const fc = cas ? FILTER_CACHE.get(cas) : null;
   if (!fc) return !_anyAxisActive();
-
-  // Filter rule: OR-within-axis, AND-across-axes.
-  //   - Multi-select inside one axis = union (any selected value
-  //     matches → material passes that axis). Mirrors the standard
-  //     filter pattern in e-commerce/search UIs.
-  //   - Multi-axis = intersection (every active axis must pass).
-  //   - Untouched axes don't constrain.
-  // Single-value axes (Type, Source) are wired with singleSelect:true
-  // in _filterAxes so the chip strip enforces radio behavior; only
-  // one value is ever in the Set, making OR/AND equivalent.
-
-  // Note — OR-within on substring of fc.noteLow. '_other' (Odorless)
-  // matches when the material has no top/middle/base; combining it
-  // with a concrete note picks "Top OR Odorless" etc.
-  const noteSet = _filterAxes.note.set;
-  if (noteSet.size) {
-    let pass = false;
-    for (const v of noteSet) {
-      if (v === '_other') { if (!RE_NOTE_OTHER.test(fc.noteLow)) { pass = true; break; } }
-      else if (fc.noteLow.includes(v)) { pass = true; break; }
-    }
-    if (!pass) return false;
-  }
-  // Type — single-value on material; singleSelect enforced in UI so
-  // typeSet.size <= 1. Set-membership test works for both 0 and 1.
-  const typeSet = _filterAxes.type.set;
-  if (typeSet.size && !typeSet.has(fc.materialType)) return false;
-  // Function — OR-within on fc.functions Set.
-  const funcSet = _filterAxes.func.set;
-  if (funcSet.size) {
-    let pass = false;
-    for (const f of funcSet) if (fc.functions.has(f)) { pass = true; break; }
-    if (!pass) return false;
-  }
-  // Use — OR-within on fc.uses Set.
-  const tagSet = _filterAxes.tag.set;
-  if (tagSet.size) {
-    let pass = false;
-    for (const u of tagSet) if (fc.uses.has(u)) { pass = true; break; }
-    if (!pass) return false;
-  }
-  // Regulatory — OR-within with _normalizeRegulatoryToken canonical
-  // fold, BANNED_CAS fallback for the 'banned' token, and
-  // REGULATORY_LEGACY_ALIASES defensive lookup.
-  const regSet = _filterAxes.reg.set;
-  if (regSet.size) {
-    let pass = false;
-    for (const r of regSet) {
-      const canon = _normalizeRegulatoryToken(r);
-      if (canon === 'banned') {
-        if (BANNED_CAS.has(cas) || fc.regulatory.has('banned')) { pass = true; break; }
-      } else if (fc.regulatory.has(canon)) { pass = true; break; }
-      else {
-        let aliasHit = false;
-        for (const [legacy, c] of Object.entries(REGULATORY_LEGACY_ALIASES)) {
-          if (c === canon && fc.regulatory.has(legacy)) { aliasHit = true; break; }
-        }
-        if (aliasHit) { pass = true; break; }
-      }
-    }
-    if (!pass) return false;
-  }
-  // Source — single-value on material; singleSelect enforced in UI.
-  const sourceSet = _filterAxes.source.set;
-  if (sourceSet.size && !sourceSet.has(fc.source)) return false;
-  // Main Family — OR across selected chips, OR across each chip's
-  // MAIN_FAMILY_TO_LEGACY token Set. Combined material set = primary
-  // ∪ secondary ∪ FACET_TAGS-parents, so a material tagged with facet
-  // 'tobacco' is reachable via the Smoky family chip even when
-  // 'smoky' isn't listed in primary/secondary.
-  if (activeMainFamilyFilters.size) {
-    const combined = new Set([
-      ...(fc.primaryFamilies || []),
-      ...(fc.secondaryFamilies || [])
-    ]);
-    for (const f of (fc.facets || [])) {
-      const parent = FACET_TAGS[f];
-      if (parent) combined.add(parent);
-    }
-    let pass = false;
-    outer: for (const main of activeMainFamilyFilters) {
-      const toks = MAIN_FAMILY_TO_LEGACY[main];
-      if (!toks) continue;
-      for (const t of toks) if (combined.has(t)) { pass = true; break outer; }
-    }
-    if (!pass) return false;
-  }
-  // Family — OR across chips, OR across SUB_FAMILY_TO_LEGACY tokens.
-  // Same facet→parent derivation as Main Family above.
-  if (activeSubFamilyFilters.size) {
-    const combined = new Set([
-      ...(fc.primaryFamilies || []),
-      ...(fc.secondaryFamilies || [])
-    ]);
-    for (const f of (fc.facets || [])) {
-      const parent = FACET_TAGS[f];
-      if (parent) combined.add(parent);
-    }
-    let pass = false;
-    outer: for (const sub of activeSubFamilyFilters) {
-      const toks = SUB_FAMILY_TO_LEGACY[sub];
-      if (!toks) continue;
-      for (const t of toks) if (combined.has(t)) { pass = true; break outer; }
-    }
-    if (!pass) return false;
-  }
-  // Facet — OR-within on fc.facets array.
-  if (activeFacetFilters.size) {
-    const fcFacets = fc.facets || [];
-    let pass = false;
-    for (const facet of activeFacetFilters) if (fcFacets.includes(facet)) { pass = true; break; }
-    if (!pass) return false;
+  for (const name of _FILTER_AXIS_NAMES) {
+    if (!_AXIS_CHECKERS[name](fc, cas)) return false;
   }
   return true;
 }
@@ -4109,7 +4070,7 @@ function renderPills(suggestions) {
 // Fetch with timeout
 // Default fetch timeout reduced from 8s → 6s (per-request). Slow
 // networks still have a second chance via fetchWithTimeoutRetry below.
-function fetchWithTimeout(url, opts={}, ms=6000) {
+function fetchWithTimeout(url, opts={}, ms=TIMEOUTS.fetch) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
   return fetch(url, {...opts, signal:ctrl.signal}).finally(() => clearTimeout(timer));
@@ -4121,7 +4082,7 @@ function fetchWithTimeout(url, opts={}, ms=6000) {
 // genuinely slow request can still complete. Used by the CID lookup
 // helpers (getCid / getCidViaSid) so a transient network blip
 // doesn't land a permanent null in pcCache.
-async function fetchWithTimeoutRetry(url, opts={}, ms=6000) {
+async function fetchWithTimeoutRetry(url, opts={}, ms=TIMEOUTS.fetch) {
   try {
     return await fetchWithTimeout(url, opts, ms);
   } catch (e) {
@@ -4549,7 +4510,7 @@ function _enrichPubchem(mat, cas) {
     _applyPubchemProps(mat, propsRes.status==='fulfilled'?propsRes.value:null, synsRes.status==='fulfilled'?synsRes.value:null, descRes.status==='fulfilled'?descRes.value:null);
     try { _computeClassification(mat); } catch(e) { console.warn('_computeClassification (enrich):', e); }
     renderResults(); prefetchAll();
-    fetchWithTimeout('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/'+cid+'/JSON?heading=GHS+Classification', {}, 8000)
+    fetchWithTimeout('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/'+cid+'/JSON?heading=GHS+Classification', {}, TIMEOUTS.pubchemGhs)
       .then(r=>r.json()).then(d => {
         const liveCodes = _extractGHSFromMarkup(d.Record?.Section||[]);
         // Only overwrite DB-seeded codes if the live fetch actually
@@ -4748,7 +4709,7 @@ async function scrapeMaterial(name) {
       // Fetch title to verify the match is plausible
       let pcTitle = null;
       try {
-        const dr = await fetchWithTimeout(PUBCHEM_REST+'/compound/cid/'+cid+'/description/JSON', {}, 5000);
+        const dr = await fetchWithTimeout(PUBCHEM_REST+'/compound/cid/'+cid+'/description/JSON', {}, TIMEOUTS.pubchemDesc);
         pcTitle = (await dr.json()).InformationList?.Information?.[0]?.Title || null;
       } catch(e) {}
       const titleNorm = (pcTitle||'').toLowerCase();
@@ -4875,7 +4836,7 @@ async function scrapeMaterial(name) {
         mat.record.names.canonical = _dbEntry.name;
         applyPerfumery(mat, _cas);
       } else {
-        console.warn('[scrape] synonym CAS ' + _cas + ' → DB name "' + _dbEntry.name +
+        _devWarn('[scrape] synonym CAS ' + _cas + ' → DB name "' + _dbEntry.name +
           '" does not match PubChem title "' + (mat.record.names.pubchem_title||'') +
           '" or query "' + name + '" — skipping DB merge');
       }
@@ -4908,7 +4869,7 @@ async function scrapeMaterial(name) {
   // Fetch GHS — tag the extracted codes with the CID they belong to
   // so getGHSPictograms can drop them if the material's CID later
   // changes (prevents stale hazard codes from a re-scraped material).
-  fetchWithTimeout('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/'+cid+'/JSON?heading=GHS+Classification', {}, 8000)
+  fetchWithTimeout('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/'+cid+'/JSON?heading=GHS+Classification', {}, TIMEOUTS.pubchemGhs)
     .then(r=>r.json()).then(d => { mat._ghsCodes = { cid, codes: _extractGHSFromMarkup(d.Record?.Section||[]) }; mat._ghsPictograms=null; renderResults(); })
     .catch(e => { if (e?.name !== 'AbortError') console.warn('GHS fetch (pubchem path):', e); });
 
@@ -5940,7 +5901,7 @@ function prefetchAll() {
     // Prefetch PubChem pug_view data in background
     if (mat.record.identifiers.pubchem_cid && !mat._prefetched) {
       mat._prefetched = true;
-      mat._loadPubchem = fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat.record.identifiers.pubchem_cid}/JSON`, {}, 15000)
+      mat._loadPubchem = fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat.record.identifiers.pubchem_cid}/JSON`, {}, TIMEOUTS.pubchemView)
         .then(r => r.json())
         .then(d => {
           const sections = d.Record?.Section || [];
@@ -6111,7 +6072,7 @@ async function loadPubchemData(idx) {
   try {
     // Use prefetched data if available, otherwise fetch now
     if (!mat.record.metadata.pubchem_sections || !Object.keys(mat.record.metadata.pubchem_sections).length) {
-      const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat.record.identifiers.pubchem_cid}/JSON`, {}, 10000);
+      const r = await fetchWithTimeout(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${mat.record.identifiers.pubchem_cid}/JSON`, {}, TIMEOUTS.formulator);
       const d = await r.json();
       const sections = d.Record?.Section || [];
       mat.record.metadata.pubchem_sections = extractAllSections(sections);
