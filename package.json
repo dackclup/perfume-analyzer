@@ -10,6 +10,8 @@
     "format": "prettier --write \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\" \"tests/**/*.{js,mjs}\" \"*.{json,md}\"",
     "format:check": "prettier --check \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\" \"tests/**/*.{js,mjs}\" \"*.{json,md}\"",
     "lint:blends": "node tools/lint-blends.mjs",
+    "codemap": "node tools/codemap.mjs",
+    "codemap:check": "node tools/codemap.mjs --check",
     "test": "vitest run",
     "test:watch": "vitest"
   },
