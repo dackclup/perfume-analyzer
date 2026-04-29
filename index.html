@@ -557,24 +557,36 @@ body.modal-open { overflow:hidden; }
 .wheel-host  { display:flex; justify-content:center; padding:var(--space-3) var(--space-4) var(--space-4); }
 .wheel-svg   { max-width:100%; height:auto; width:min(560px, 95vw); }
 .wheel-intro { padding:var(--space-3) var(--space-4) 0; margin:0; color:var(--text2); font-size:var(--fs-sm); }
-.wheel-seg, .wheel-band { transition:fill-opacity .15s ease, filter .15s ease; }
-.wheel-seg:hover, .wheel-band:hover { filter:brightness(1.05) saturate(1.1); }
+.wheel-seg, .wheel-band { transition:filter .25s ease, stroke-width .15s ease, stroke .15s ease; }
+.wheel-seg:hover, .wheel-band:hover { filter:brightness(1.06) saturate(1.08); }
 .wheel-seg:focus, .wheel-seg:focus-visible,
-.wheel-band:focus, .wheel-band:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.wheel-band:focus, .wheel-band:focus-visible { outline:none; }
 .wheel-seg.is-empty { opacity:0.5; cursor:default; }
-.wheel-seg.popping  { animation:wheel-pop 500ms cubic-bezier(.34, 1.56, .64, 1); transform-origin:center; transform-box:fill-box; }
-.wheel-seg.active-seg, .wheel-band.active-band {
-  stroke:#1a1a1a;
-  stroke-width:3;
-  filter:drop-shadow(0 0 6px rgba(255,255,255,0.6));
-}
+/* Pop on tap. brightness() spike + heavier stroke gives a satisfying
+   "snap" before the persistent active-seg glow kicks in. */
+.wheel-seg.popping, .wheel-band.popping { animation:wheel-pop 500ms cubic-bezier(.34, 1.56, .64, 1); }
 @keyframes wheel-pop {
-  0%   { transform:scale(1); }
-  40%  { transform:scale(1.08); }
-  100% { transform:scale(1); }
+  0%   { stroke-width:2; filter:brightness(1); }
+  35%  { stroke-width:7; filter:brightness(1.35) drop-shadow(0 0 18px rgba(255,255,255,.95)); }
+  100% { stroke-width:3.5; filter:brightness(1.12) drop-shadow(0 0 12px rgba(255,255,210,.85)); }
+}
+/* Persistent "this is the latest pick" highlight — lifts a single
+   slice out of the wheel until another one is chosen. The breathing
+   keyframe is subtle (alpha pulse, not size) so neighbouring slices
+   don't shift around it. */
+.wheel-seg.active-seg, .wheel-band.active-band {
+  stroke:#1f1f1f;
+  stroke-width:3.5;
+  filter:brightness(1.12) drop-shadow(0 0 12px rgba(255,255,210,.85));
+  animation:wheel-glow 2.4s ease-in-out infinite;
+}
+@keyframes wheel-glow {
+  0%, 100% { filter:brightness(1.10) drop-shadow(0 0 10px rgba(255,255,210,.7)); }
+  50%      { filter:brightness(1.20) drop-shadow(0 0 18px rgba(255,255,210,.95)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .wheel-seg.popping { animation:none; }
+  .wheel-seg.popping, .wheel-band.popping { animation:none; }
+  .wheel-seg.active-seg, .wheel-band.active-band { animation:none; }
 }
 
 /* Database quality dashboard — renders inside the shared compare-modal
@@ -1067,7 +1079,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v193"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v194"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1203,7 +1215,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v193";
+const DATA_VERSION = "2026-04-25-rebuild-v194";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -6164,31 +6176,65 @@ function _buildWheelSvg() {
   svg += '</svg>';
   return svg;
 }
+// Wheel click → single-select highlight on the wheel itself.
+// The chip drawer stays multi-select so power users can still
+// OR-stack family filters there, but the wheel behaves as a radio:
+// tapping a slice clears every other family selection AND every
+// other wheel highlight, then lights only the clicked one with a
+// pop into a persistent breathing glow. Re-clicking the active
+// slice toggles it off (returns to "All").
+//
+// Class state is mutated IN PLACE on the existing SVG nodes — no
+// _redrawWheel call inside the click handler — so the pop + glow
+// animations run uninterrupted. _redrawWheel still runs from
+// openWheelModal so the wheel always reflects the latest
+// out-of-band filter state when re-opened.
 window._wheelClickMain = function (main) {
-  // Visible click pulse on the inner band before redrawing — without
-  // it the click felt unresponsive on slow devices.
   const band = document.querySelector('.wheel-band[data-main="' + main + '"]');
-  if (band) {
+  if (!band) return;
+  const wasOnlyActive = activeMainFamilyFilters.size === 1 && activeMainFamilyFilters.has(main);
+  // Reset every wheel band + chip drawer state so only the latest
+  // pick survives.
+  document.querySelectorAll('.wheel-band').forEach(p => { p.classList.remove('active-band'); p.classList.remove('popping'); });
+  document.querySelectorAll('#mainFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
+  activeMainFamilyFilters.clear();
+  if (!wasOnlyActive) {
+    activeMainFamilyFilters.add(main);
+    const chip = document.querySelector('#mainFamilyFilters .odor-tag[data-main="' + main + '"]');
+    if (chip) chip.classList.add('active');
+    // Force reflow so the popping keyframes restart cleanly even
+    // when the same band is clicked twice in a row after toggling
+    // off then on.
+    void band.offsetWidth;
     band.classList.add('popping');
-    setTimeout(() => { try { band.classList.remove('popping'); } catch (_) {} }, 500);
+    band.classList.add('active-band');
   }
-  const chip = document.querySelector('#mainFamilyFilters .odor-tag[data-main="' + main + '"]');
-  if (chip) toggleMainFamilyChip(chip);
-  // Slight delay so the pop animation is seen before the redraw
-  // wipes the SVG and rebuilds it.
-  setTimeout(_redrawWheel, 80);
+  const allReset = document.querySelector('#mainFamilyFilters > div > .odor-tag:first-child');
+  if (allReset) allReset.classList.toggle('active', !activeMainFamilyFilters.size);
+  if (typeof _updateMainFamilySelected === 'function') _updateMainFamilySelected();
+  if (typeof _applyCascadingVisibility === 'function') _applyCascadingVisibility();
+  if (typeof _refreshPills === 'function') _refreshPills();
 };
 window._wheelClickSub = function (sub) {
-  // Skip if slice is greyed out (no DB coverage).
   const seg = document.querySelector('.wheel-seg[data-seg="' + sub + '"]');
-  if (seg && seg.classList.contains('is-empty')) return;
-  if (seg) {
+  if (!seg || seg.classList.contains('is-empty')) return;
+  const wasOnlyActive = activeSubFamilyFilters.size === 1 && activeSubFamilyFilters.has(sub);
+  document.querySelectorAll('.wheel-seg').forEach(p => { p.classList.remove('active-seg'); p.classList.remove('popping'); });
+  document.querySelectorAll('#subFamilyFilters .odor-tag').forEach(b => b.classList.remove('active'));
+  activeSubFamilyFilters.clear();
+  if (!wasOnlyActive) {
+    activeSubFamilyFilters.add(sub);
+    const chip = document.querySelector('#subFamilyFilters .odor-tag[data-subfam="' + sub + '"]');
+    if (chip) chip.classList.add('active');
+    void seg.offsetWidth;
     seg.classList.add('popping');
-    setTimeout(() => { try { seg.classList.remove('popping'); } catch (_) {} }, 500);
+    seg.classList.add('active-seg');
   }
-  const chip = document.querySelector('#subFamilyFilters .odor-tag[data-subfam="' + sub + '"]');
-  if (chip) toggleSubFamilyChip(chip);
-  setTimeout(_redrawWheel, 80);
+  const allReset = document.querySelector('#subFamilyFilters > div > .odor-tag:first-child');
+  if (allReset) allReset.classList.toggle('active', !activeSubFamilyFilters.size);
+  if (typeof _updateSubFamilySelected === 'function') _updateSubFamilySelected();
+  if (typeof _applyCascadingVisibility === 'function') _applyCascadingVisibility();
+  if (typeof _refreshPills === 'function') _refreshPills();
 };
 function _redrawWheel() {
   const host = document.getElementById('wheelHost');

@@ -457,15 +457,26 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 }
 @keyframes wheel-pop {
   0%   { stroke-width: 2; filter: brightness(1); }
-  35%  { stroke-width: 7; filter: brightness(1.3) drop-shadow(0 0 16px rgba(255,255,255,.95)); }
-  100% { stroke-width: 3; filter: brightness(1.08) drop-shadow(0 0 8px rgba(255,255,255,.7)); }
+  35%  { stroke-width: 7; filter: brightness(1.35) drop-shadow(0 0 18px rgba(255,255,255,.95)); }
+  100% { stroke-width: 3.5; filter: brightness(1.12) drop-shadow(0 0 12px rgba(255,255,210,.85)); }
 }
+/* Persistent "latest pick" glow — alpha-pulses so the active slice
+   reads as the focus until another one is chosen. The keyframes
+   pulse only the filter (no transform) so neighbouring slices
+   don't reflow. */
 .wheel-seg.active-seg {
-  stroke-width: 3;
-  filter: brightness(1.08) drop-shadow(0 0 8px rgba(255,255,255,.7));
+  stroke: #1f1f1f;
+  stroke-width: 3.5;
+  filter: brightness(1.12) drop-shadow(0 0 12px rgba(255,255,210,.85));
+  animation: wheel-glow 2.4s ease-in-out infinite;
+}
+@keyframes wheel-glow {
+  0%, 100% { filter: brightness(1.10) drop-shadow(0 0 10px rgba(255,255,210,.7)); }
+  50%      { filter: brightness(1.20) drop-shadow(0 0 18px rgba(255,255,210,.95)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .wheel-seg.popping { animation: none; }
+  .wheel-seg.active-seg { animation: none; }
 }
 
 /* Analysis card hover + shadow */
@@ -869,9 +880,9 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 <!-- ?v= query suffix busts browser cache whenever the wheel palette /
      taxonomy changes. Bump this string on every deploy that touches
      the three loaded scripts below. -->
-<script src="perfumery_data.js?v=2026-04-29-tdz-fix"></script>
-<script src="formulation_data.js?v=2026-04-29-tdz-fix"></script>
-<script src="formulation_engine.js?v=2026-04-29-tdz-fix"></script>
+<script src="perfumery_data.js?v=2026-04-29-wheel-glow"></script>
+<script src="formulation_data.js?v=2026-04-29-wheel-glow"></script>
+<script src="formulation_engine.js?v=2026-04-29-wheel-glow"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
