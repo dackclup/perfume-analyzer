@@ -326,7 +326,9 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .badge-primary,
 .badge-secondary,
 .badge-sub,
-.badge-facet {
+.badge-facet,
+.badge-related,
+.badge-substitute {
   display:inline-flex;
   align-items:center;
   font-size:var(--fs-xs);
@@ -345,6 +347,10 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .badge-secondary,
 .badge-sub       { background:color-mix(in srgb, var(--accent) 7%,  transparent); color:var(--text); }
 .badge-facet     { background:color-mix(in srgb, var(--text) 4%,  transparent); color:var(--text2); font-style:italic; font-weight:400; }
+.badge-related   { background:color-mix(in srgb, var(--accent) 6%, transparent); color:var(--accent); cursor:pointer; text-decoration:none; }
+.badge-related:hover { background:var(--accent); color:var(--accent-text, #fff); }
+.badge-substitute{ background:color-mix(in srgb, var(--success, #15803d) 12%, transparent); color:var(--success, #15803d); cursor:pointer; text-decoration:none; border-color:color-mix(in srgb, var(--success, #15803d) 28%, transparent); }
+.badge-substitute:hover { background:var(--success, #15803d); color:#fff; }
 .card-meta-row { margin:var(--space-2) 0 0 0; display:flex; flex-direction:column; gap:var(--space-1); }
 /* Tag rows — refined for minimal scan: label collapses to inline-prefix
    on small screens, fixed left column on tablets+. Chip cluster fills
@@ -530,6 +536,24 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .compare-table__remove:hover { color:var(--danger); }
 .compare-table thead .compare-table__col { position:relative; }
 body.modal-open { overflow:hidden; }
+
+/* Database quality dashboard — renders inside the shared compare-modal
+   shell. Headline stats up top (banned/restricted/allergen), then
+   coverage bars per field grouped by topic. */
+.quality-summary { display:grid; grid-template-columns:repeat(3, 1fr); gap:var(--space-3); padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border); }
+.quality-stat { display:flex; flex-direction:column; align-items:center; padding:var(--space-2); background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); }
+.quality-stat strong { font-size:1.4em; font-weight:var(--fw-semibold); color:var(--text); }
+.quality-stat span { font-size:var(--fs-xs); color:var(--text2); }
+.quality-section { font-size:var(--fs-sm); font-weight:var(--fw-medium); color:var(--text2); text-transform:uppercase; letter-spacing:.05em; margin:var(--space-3) var(--space-4) var(--space-2); }
+.quality-row { padding:6px var(--space-4); }
+.quality-row__head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+.quality-row__label { font-size:var(--fs-sm); color:var(--text); }
+.quality-row__count { font-size:var(--fs-xs); color:var(--text2); font-variant-numeric:tabular-nums; }
+.quality-row__count strong { color:var(--text); }
+.quality-bar { height:6px; background:var(--bg-muted); border-radius:3px; overflow:hidden; }
+.quality-bar__fill { height:100%; transition:width .25s ease; }
+.quality-note { padding:var(--space-3) var(--space-4); font-size:var(--fs-xs); color:var(--text-subtle); border-top:1px solid var(--border); margin:0; }
+.quality-note code { background:var(--bg-muted); border:1px solid var(--border); border-radius:var(--radius-sm); padding:1px 6px; font-family:'IBM Plex Mono',monospace; font-size:.95em; }
 
 /* Progress */
 .progress { display:none; height:4px; background:var(--border); border-radius:var(--radius-sm); margin:8px 0; overflow:hidden; }
@@ -839,6 +863,9 @@ html { scroll-behavior:smooth; }
     <p class="subtitle">PubChem compound data + perfumery knowledge</p>
   </div>
   <div class="header-actions">
+    <button id="dataQualityBtn" class="icon-btn" type="button" aria-label="Show database quality summary" title="Database quality" onclick="openDataQualityModal()">
+      <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+    </button>
     <button id="themeSwitch" class="icon-btn" type="button" aria-label="Switch to dark theme" aria-pressed="false" title="Toggle theme">
       <svg class="icon" aria-hidden="true"><use href="#i-moon"/></svg>
     </button>
@@ -948,6 +975,18 @@ html { scroll-behavior:smooth; }
   <a class="export-link" onclick="exportCSV()" role="button" tabindex="0" title="Download visible materials as a CSV"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-download"/></svg> CSV</a>
   <a class="formulate-link" onclick="sendToFormulator()">Formulate &#x2192;</a>
 </div>
+<div id="dataQualityModal" class="compare-modal" role="dialog" aria-modal="true" aria-labelledby="dataQualityModalTitle" hidden>
+  <div class="compare-modal__backdrop" onclick="closeDataQualityModal()"></div>
+  <div class="compare-modal__content" style="max-width:640px">
+    <div class="compare-modal__header">
+      <h2 id="dataQualityModalTitle" class="compare-modal__title">Database quality</h2>
+      <div class="compare-modal__actions">
+        <button type="button" class="compare-modal__close" onclick="closeDataQualityModal()" aria-label="Close">&times;</button>
+      </div>
+    </div>
+    <div class="compare-modal__body" id="dataQualityBody"></div>
+  </div>
+</div>
 <div id="compareModal" class="compare-modal" role="dialog" aria-modal="true" aria-labelledby="compareModalTitle" hidden>
   <div class="compare-modal__backdrop" onclick="closeCompareModal()"></div>
   <div class="compare-modal__content">
@@ -964,7 +1003,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v177"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v178"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -997,7 +1036,7 @@ function _devWarn(...args) { if (_DEBUG) console.warn(...args); }
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v177";
+const DATA_VERSION = "2026-04-25-rebuild-v178";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -2945,6 +2984,97 @@ for (const [cas, entry] of Object.entries(DB)) {
   if (getBanStatus({ safety: { ifra_guideline: entry.safety?.ifra, usage_levels: entry.safety?.usage } })) {
     BANNED_CAS.add(cas);
   }
+}
+
+// Stereoisomer / enantiomer aliases — variant CAS that refer to the
+// same compound under a single IFRA cap. Sourced from formulation_data
+// .js (kept inline so index.html doesn't have to load that module).
+// Map shape: variant CAS → canonical (parent) CAS. _STEREO_GROUPS is
+// the inverse used by the card renderer to surface "Related" links —
+// every CAS in a group points at its peers.
+const STEREO_ALIAS = {
+  '126-91-0': '78-70-6',     // (R)-(−)-Linalool
+  '126-90-9': '78-70-6',     // (S)-(+)-Linalool
+  '7705-14-8': '5989-27-5',  // (±)-Limonene
+  '5989-54-8': '5989-27-5',  // (S)-(−)-Limonene (l-Limonene)
+  '7540-51-4': '106-22-9',   // (R)-(+)-Citronellol
+  '1117-61-9': '106-22-9',   // (S)-(−)-Citronellol
+  '464-49-3':  '76-22-2',    // (+)-Camphor
+  '464-48-2':  '76-22-2'     // (−)-Camphor
+};
+const _STEREO_GROUPS = (function () {
+  // Build groups keyed by parent CAS so a card can list every other
+  // CAS in the same group. Filter to CAS the analyzer actually has in
+  // its DB so dead links never render.
+  const groups = {};
+  for (const [variant, parent] of Object.entries(STEREO_ALIAS)) {
+    if (!groups[parent]) groups[parent] = new Set([parent]);
+    groups[parent].add(variant);
+  }
+  // Index back from each member to its group set.
+  const memberIdx = {};
+  for (const set of Object.values(groups)) {
+    for (const cas of set) memberIdx[cas] = set;
+  }
+  return memberIdx;
+})();
+function getStereoPeers(cas) {
+  if (!cas) return [];
+  const set = _STEREO_GROUPS[cas];
+  if (!set) return [];
+  const out = [];
+  for (const peer of set) {
+    if (peer === cas) continue;
+    const dbEntry = DB[peer];
+    if (dbEntry) out.push({ cas: peer, name: dbEntry.name });
+  }
+  return out;
+}
+
+// Substitution suggestions — when a material is banned / restricted /
+// phototoxic, propose 3 candidates that share its perfumery role
+// (materialType + primary family) without carrying the same constraint.
+// Score = primary-family hits ×2 + secondary ×1 + facet ×1, ties
+// broken alphabetically. Read-only of FILTER_CACHE so it adds no
+// allocations on the hot search path; only invoked from card render
+// for cards whose subject is itself flagged.
+function getSubstitutionSuggestions(cas, max = 3) {
+  if (!cas) return [];
+  const fc = FILTER_CACHE.get(cas);
+  if (!fc) return [];
+  const flagged =
+    fc.regulatory.has('banned') ||
+    fc.regulatory.has('restricted') ||
+    fc.regulatory.has('phototoxic') ||
+    BANNED_CAS.has(cas);
+  if (!flagged) return [];
+  const myFams   = new Set([...(fc.primaryFamilies || []), ...(fc.secondaryFamilies || [])]);
+  const myFacets = new Set(fc.facets || []);
+  const myType   = fc.materialType;
+  const candidates = [];
+  for (const [otherCas, otherFc] of FILTER_CACHE) {
+    if (otherCas === cas) continue;
+    // Skip swaps that have the same hard blocker — banned/phototoxic
+    // make the alternative useless. 'restricted' is allowed on the
+    // alternative since "narrower cap" is still better than "banned".
+    if (otherFc.regulatory.has('banned') ||
+        otherFc.regulatory.has('phototoxic') ||
+        BANNED_CAS.has(otherCas)) continue;
+    if (myType && otherFc.materialType !== myType) continue;
+    let famScore = 0;
+    for (const f of (otherFc.primaryFamilies || []))   if (myFams.has(f)) famScore += 2;
+    for (const f of (otherFc.secondaryFamilies || [])) if (myFams.has(f)) famScore += 1;
+    if (!famScore) continue;
+    let facetScore = 0;
+    for (const f of (otherFc.facets || [])) if (myFacets.has(f)) facetScore += 1;
+    candidates.push({
+      cas:   otherCas,
+      name:  DB[otherCas]?.name || otherCas,
+      score: famScore + facetScore
+    });
+  }
+  candidates.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+  return candidates.slice(0, max);
 }
 
 // Multi-select pill axis helpers. Every sub-drawer built by
@@ -5460,6 +5590,99 @@ window.removeFromCompare = function (cas) {
   if (_compareCart.size < 2) closeCompareModal();
   else openCompareModal();
 };
+// Data-quality dashboard — read-only summary of how complete the
+// curated DB is. Computed on-demand (cheap; one pass over ~400 rows)
+// when the user opens the modal. Helps content editors spot gaps
+// (e.g. "13% of rows are missing odor descriptors") before a release.
+function _computeDataQuality() {
+  const total = PERFUMERY_DATA.perfumery_db.length;
+  let noOdor = 0, noNote = 0, noSafety = 0, noPerf = 0, noBlends = 0;
+  let noPrimary = 0, noFacets = 0, noFema = 0, noGhs = 0;
+  let banned = 0, restricted = 0, allergen = 0;
+  for (const e of PERFUMERY_DATA.perfumery_db) {
+    if (!e.odor || !e.odor.description) noOdor++;
+    if (!e.note) noNote++;
+    if (!e.safety || (!e.safety.ifra && !e.safety.usage)) noSafety++;
+    if (!e.performance || (!e.performance.tenacity && !e.performance.duration)) noPerf++;
+    if (!Array.isArray(e.blends_with) || !e.blends_with.length) noBlends++;
+    const cls = e.classification || {};
+    if (!Array.isArray(cls.primaryFamilies) || !cls.primaryFamilies.length) noPrimary++;
+    if (!Array.isArray(cls.facets) || !cls.facets.length) noFacets++;
+    if (!e.fema) noFema++;
+    if (!Array.isArray(e.ghs_codes) || !e.ghs_codes.length) noGhs++;
+    const fc = FILTER_CACHE.get(e.cas);
+    if (fc) {
+      if (fc.regulatory.has('banned') || BANNED_CAS.has(e.cas)) banned++;
+      if (fc.regulatory.has('restricted')) restricted++;
+      if (fc.regulatory.has('allergen')) allergen++;
+    }
+  }
+  return { total, noOdor, noNote, noSafety, noPerf, noBlends, noPrimary, noFacets, noFema, noGhs, banned, restricted, allergen };
+}
+function _qualityBar(label, missing, total, hint) {
+  const present = total - missing;
+  const pct = total ? Math.round(present / total * 100) : 0;
+  const colour = pct >= 90 ? 'var(--success, #15803d)' : pct >= 60 ? 'var(--accent)' : 'var(--danger)';
+  return (
+    '<div class="quality-row">' +
+      '<div class="quality-row__head">' +
+        '<span class="quality-row__label" title="' + esc(hint || '') + '">' + esc(label) + '</span>' +
+        '<span class="quality-row__count"><strong>' + present + '</strong> / ' + total + ' (' + pct + '%)</span>' +
+      '</div>' +
+      '<div class="quality-bar"><div class="quality-bar__fill" style="width:' + pct + '%; background:' + colour + '"></div></div>' +
+    '</div>'
+  );
+}
+window.openDataQualityModal = function () {
+  const modal = document.getElementById('dataQualityModal');
+  const body  = document.getElementById('dataQualityBody');
+  const title = document.getElementById('dataQualityModalTitle');
+  if (!modal || !body) return;
+  const q = _computeDataQuality();
+  if (title) title.textContent = 'Database quality (' + q.total + ' materials)';
+  const sections = [
+    { heading: 'Coverage — descriptive fields',
+      rows: [
+        { label: 'Odor description', missing: q.noOdor,    hint: 'Materials with no odor.description text' },
+        { label: 'Note position',    missing: q.noNote,    hint: 'Materials missing top/middle/base classification' },
+        { label: 'Performance',      missing: q.noPerf,    hint: 'Materials with no tenacity / duration' },
+        { label: 'Blend partners',   missing: q.noBlends,  hint: 'Materials with no curated blends_with list' }
+      ]
+    },
+    { heading: 'Coverage — taxonomy',
+      rows: [
+        { label: 'Primary family', missing: q.noPrimary, hint: 'Materials missing classification.primaryFamilies (rendered as Family / Main Family chips)' },
+        { label: 'Facets',         missing: q.noFacets,  hint: 'Materials missing classification.facets (granular descriptors)' }
+      ]
+    },
+    { heading: 'Coverage — regulatory + identifiers',
+      rows: [
+        { label: 'Safety / IFRA', missing: q.noSafety, hint: 'Materials with no IFRA cap or usage-level guidance' },
+        { label: 'GHS codes',     missing: q.noGhs,    hint: 'Materials with no GHS hazard codes (lazy-loaded from PubChem on first card open if absent)' },
+        { label: 'FEMA number',   missing: q.noFema,   hint: 'Flavor/Extract Manufacturers Association GRAS number — non-essential for fragrance-only materials' }
+      ]
+    }
+  ];
+  let html = '<div class="quality-summary">';
+  html += '<div class="quality-stat"><strong>' + q.banned + '</strong><span>banned</span></div>';
+  html += '<div class="quality-stat"><strong>' + q.restricted + '</strong><span>restricted</span></div>';
+  html += '<div class="quality-stat"><strong>' + q.allergen + '</strong><span>allergen labelling</span></div>';
+  html += '</div>';
+  for (const s of sections) {
+    html += '<h3 class="quality-section">' + esc(s.heading) + '</h3>';
+    for (const r of s.rows) html += _qualityBar(r.label, r.missing, q.total, r.hint);
+  }
+  html += '<p class="quality-note">Read-only snapshot of the bundled <code>perfumery_data.js</code> (' + esc(DATA_VERSION) + '). To audit specific rows, open the dev console with <code>?debug=1</code> in the URL.</p>';
+  body.innerHTML = html;
+  modal.removeAttribute('hidden');
+  document.body.classList.add('modal-open');
+};
+window.closeDataQualityModal = function () {
+  const modal = document.getElementById('dataQualityModal');
+  if (modal) modal.setAttribute('hidden', '');
+  document.body.classList.remove('modal-open');
+};
+
 window.clearCompareCart = function () {
   _compareCart.clear();
   _persistCompareCart();
@@ -5782,6 +6005,32 @@ function renderResults() {
   const chain = parts.join('<span class="tag-breadcrumb-sep">›</span>');
   return `<div class="tag-row"><span class="tag-axis-label" title="Main Family › Family › Facets">Class</span><span class="tag-chips">${chain}</span></div>`;
 })()}</div>`:""}
+          ${(() => {
+            // Stereoisomer cross-links — peers in the same IFRA-cap
+            // group (racemic / R / S / cis / trans variants of the
+            // same compound). Renders only when there are real DB
+            // peers so the row never shows an empty stub.
+            if (!id.cas) return '';
+            const peers = getStereoPeers(id.cas);
+            if (!peers.length) return '';
+            const chips = peers.map(p =>
+              `<a class="badge-related" onclick="event.stopPropagation();doSearch('${esc(p.name).replace(/'/g, "\\'")}')" role="button" tabindex="0">${esc(p.name)}</a>`
+            ).join('');
+            return `<div class="card-meta-row" style="margin:6px 0 10px 0"><div class="tag-row"><span class="tag-axis-label" title="Stereoisomer / enantiomer variants regulated under the same IFRA cap">Related</span><span class="tag-chips">${chips}</span></div></div>`;
+          })()}
+          ${(() => {
+            // Substitution suggestions — visible only on materials
+            // that themselves are banned / restricted / phototoxic.
+            // Helps a perfumer pick a usable alternative without
+            // breaking compliance.
+            if (!id.cas) return '';
+            const subs = getSubstitutionSuggestions(id.cas, 3);
+            if (!subs.length) return '';
+            const chips = subs.map(s =>
+              `<a class="badge-substitute" onclick="event.stopPropagation();doSearch('${esc(s.name).replace(/'/g, "\\'")}')" role="button" tabindex="0" title="Same family / type without the regulatory block">${esc(s.name)}</a>`
+            ).join('');
+            return `<div class="card-meta-row" style="margin:6px 0 10px 0"><div class="tag-row"><span class="tag-axis-label" title="Family-similar materials without the same regulatory block">Try</span><span class="tag-chips">${chips}</span></div></div>`;
+          })()}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="2D structure of ${esc(nm.canonical)}" loading="lazy" onerror="handleStructureImgError(this)"></div>`:""}
           <div class="col-info">
             <p><strong>${esc(nm.pubchem_title || (nm.synonyms||[]).find(s => !/^\d{2,7}-\d{2}-\d$/.test(s) && s.length > 2) || nm.canonical)}</strong></p>
@@ -6595,7 +6844,12 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.key === 'Escape') {
-    // Compare modal takes priority — it overlays everything else.
+    // Modals take priority over card / search Esc handling.
+    const dq = document.getElementById('dataQualityModal');
+    if (dq && !dq.hasAttribute('hidden')) {
+      if (typeof closeDataQualityModal === 'function') closeDataQualityModal();
+      return;
+    }
     const modal = document.getElementById('compareModal');
     if (modal && !modal.hasAttribute('hidden')) {
       if (typeof closeCompareModal === 'function') closeCompareModal();
