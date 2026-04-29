@@ -630,11 +630,6 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
     <input type="hidden" id="fragPct" value="18">
     <output id="fragPctOut" style="display:none">18%</output>
 
-    <!-- Auto-Allocate (chained Suggested → Optimized) -->
-    <div style="display:flex;gap:4px;margin-top:6px">
-      <button class="btn btn-primary" id="btnSmartAlloc" style="flex:1;font-size:0.75em" onclick="applyAllocation()" title="Apply Dirichlet baseline + iterative gradient/hill-climb refinement">Smart Allocate</button>
-    </div>
-
     <hr>
 
     <!-- Carrier / Solvent — material list -->
@@ -678,9 +673,15 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
       <span class="pct-val" id="matTotalPct">0%</span>
     </div>
 
-    <!-- Action Buttons — compact -->
+    <!-- Action Buttons — compact.
+         + Add sits above the action row using the same dashed style as
+         the Carrier section's add button so both list-add controls
+         match visually. The action row pairs Smart Allocate next to
+         Brief (both outlined "btn" — no fill) so the two creative-
+         start buttons read as a single visual group. -->
+    <button class="btn btn--dashed" id="btnAddMat" style="width:100%;margin-top:4px;font-size:0.75em">+ Add</button>
     <div style="display:flex;gap:4px;margin-top:8px">
-      <button class="btn btn-primary" id="btnAddMat" style="flex:1;white-space:nowrap">+ Add</button>
+      <button class="btn" id="btnSmartAlloc" style="flex:1;white-space:nowrap" onclick="applyAllocation()" title="Apply Dirichlet baseline + iterative gradient/hill-climb refinement">Smart Allocate</button>
       <button class="btn" id="btnBrief" style="flex:1;white-space:nowrap" title="Generate from creative brief">Brief</button>
     </div>
 
@@ -918,10 +919,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v213"></script>
-<script src="perfumery_data.js?v=2026-04-29-v213"></script>
-<script src="formulation_data.js?v=2026-04-29-v213"></script>
-<script src="formulation_engine.js?v=2026-04-29-v213"></script>
+<script src="taxonomy.js?v=2026-04-29-v214"></script>
+<script src="perfumery_data.js?v=2026-04-29-v214"></script>
+<script src="formulation_data.js?v=2026-04-29-v214"></script>
+<script src="formulation_engine.js?v=2026-04-29-v214"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
