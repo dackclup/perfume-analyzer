@@ -14,6 +14,15 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Perfume Raw Materials Analyzer</title>
+<!-- PWA manifest + theme — installable on Chrome/Edge/iOS Safari, and
+     the service worker (registered at the bottom of the page) caches
+     the shell so the app keeps working offline after the first load. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#3b82f6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0f17" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Perfume Analyzer">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
 /* ===== Design Tokens (WCAG AA verified) =====
@@ -1067,7 +1076,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v179"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v180"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1100,7 +1109,7 @@ function _devWarn(...args) { if (_DEBUG) console.warn(...args); }
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v179";
+const DATA_VERSION = "2026-04-25-rebuild-v180";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -7107,6 +7116,22 @@ window.showToast = function({ message, variant='info', retry=null, timeout=6000 
   if (timeout > 0) setTimeout(close, timeout);
   return close;
 };
+
+// ===== PWA service worker registration =====
+// Quietly registers the offline cache so a returning user can keep
+// searching the bundled DB without a network. Only attempts when the
+// page is loaded over http(s) (file:// protocol can't host an SW)
+// and never blocks first paint — the page works without the worker
+// active, the worker is purely a progressive enhancement.
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => {
+      // Soft-fail: SW registration losing to a network blip or a
+      // restrictive CSP is fine — site still works without it.
+      if (typeof _devWarn === 'function') _devWarn('SW register failed:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
