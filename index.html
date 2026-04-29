@@ -1082,7 +1082,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v184"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v185"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1130,7 +1130,7 @@ function _devWarn(...args) { if (_DEBUG) console.warn(...args); }
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v184";
+const DATA_VERSION = "2026-04-25-rebuild-v185";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -4388,8 +4388,11 @@ function showSearchError(msg) {
   _appendSearchError(esc(msg));
 }
 // "Not found" — neutral, non-technical, invites a spelling check.
+// Also surfaces a toast so the message is impossible to miss when the
+// user is scrolled away from the search-error region (mobile mostly).
 function showNotFoundMessage(name) {
   _appendSearchError(`<span>No material found for &ldquo;${esc(name)}&rdquo;. Check the spelling or try a different name.</span>`);
+  try { showToast({ message: 'No material found for "' + name + '"', variant: 'warn', timeout: 3500 }); } catch (e) {}
 }
 // "Not a perfumery material" — chemical exists but is outside scope.
 // Uses a softer color since this is informational, not an error.
@@ -4935,13 +4938,27 @@ async function scrapeMaterial(name) {
   // could still throw inside the helpers _applyLocalMatch chains
   // (applyPerfumery / _computeClassification / _enrichPubchem). We
   // wrap the whole local-match block so a single bad entry can't
-  // sink the entire search — fall through to the PubChem fallbacks
-  // below instead of rejecting the promise outright.
+  // sink the entire search. After a throw, if mat.found was already
+  // toggled true by _applyLocalMatch (i.e. CAS + name resolved before
+  // the classifier blew up) we return the partial match anyway —
+  // a card with a name and CAS is much better than the silent no-
+  // result the user reported when the helper threw mid-classification.
   try {
     const localMatch = matchByCAS(n) || matchByCanonicalName(n) || matchBySynonym(n) || matchByTradeName(n) || matchByAlias(n);
-    if (localMatch && _applyLocalMatch(mat, localMatch)) return mat;
+    if (localMatch) {
+      try {
+        if (_applyLocalMatch(mat, localMatch)) return mat;
+      } catch (e) {
+        console.error('[search] _applyLocalMatch threw for "' + name + '":', e);
+        if (mat.found) {
+          mat.match_info = (mat.match_info || '') + ' ⚠️ classification incomplete';
+          return mat;
+        }
+      }
+    }
   } catch (e) {
-    console.error('[search] local match threw for "' + name + '":', e);
+    console.error('[search] local match resolver threw for "' + name + '":', e);
+    if (mat.found) return mat;
   }
 
   // ── Step 6: Fuzzy local match ──
@@ -4952,10 +4969,19 @@ async function scrapeMaterial(name) {
         mat.record.match = fuzzyResult; mat.found = false; mat._ambiguous = true;
         return mat;
       }
-      if (_applyLocalMatch(mat, fuzzyResult)) return mat;
+      try {
+        if (_applyLocalMatch(mat, fuzzyResult)) return mat;
+      } catch (e) {
+        console.error('[search] fuzzy _applyLocalMatch threw for "' + name + '":', e);
+        if (mat.found) {
+          mat.match_info = (mat.match_info || '') + ' ⚠️ classification incomplete';
+          return mat;
+        }
+      }
     }
   } catch (e) {
     console.error('[search] fuzzy match threw for "' + name + '":', e);
+    if (mat.found) return mat;
   }
 
   // ── Steps 7-11: PubChem fallbacks (async) ──
