@@ -1076,7 +1076,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v180"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v181"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1109,7 +1109,7 @@ function _devWarn(...args) { if (_DEBUG) console.warn(...args); }
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v180";
+const DATA_VERSION = "2026-04-25-rebuild-v181";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -5987,6 +5987,19 @@ window.setSortOrder = function (order) {
   renderResults();
 };
 
+// Chunked render scheduling. Large result sets (50+ materials) take
+// long enough to parse via innerHTML that the main thread blocks
+// noticeably on lower-end devices. Splitting the work into chunks
+// keeps the first 30 cards on screen immediately, then drips the
+// remainder in via requestIdleCallback so the page remains
+// interactive (filter chips, sort dropdown, scroll all stay smooth).
+let _renderCancel = null;
+const _RENDER_CHUNK_FIRST = 30;
+const _RENDER_CHUNK_NEXT = 25;
+const _scheduleIdle = (typeof window !== 'undefined' && window.requestIdleCallback)
+  ? cb => window.requestIdleCallback(cb, { timeout: 200 })
+  : cb => requestAnimationFrame(() => cb(null));
+
 function renderResults() {
   const div = document.getElementById("results");
   // Save open states before re-render (skip if just searched)
@@ -5997,6 +6010,8 @@ function renderResults() {
     });
   }
   renderResults._forceCollapse = false;
+  // Cancel any in-flight chunked render before starting a new one.
+  if (_renderCancel) { _renderCancel(); _renderCancel = null; }
   // Apply current sort. _seq tiebreak keeps the order stable across
   // re-renders that don't change content (e.g. PubChem callbacks).
   results.forEach(_stampResultSeq);
@@ -6322,7 +6337,34 @@ function renderResults() {
     cards.push(`<div class="card"><div class="card-header"><h3>${esc(mat?.record?.names?.canonical||'Unknown material')} <span style="color:var(--danger);font-size:0.8em">(render error)</span></h3></div></div>`);
    }
   });
-  div.innerHTML = cards.join('');
+  // Small batches render synchronously — chunking only pays off when
+  // there are enough cards that the parse cost is observable.
+  if (cards.length <= _RENDER_CHUNK_FIRST) {
+    div.innerHTML = cards.join('');
+    return;
+  }
+  // First chunk paints immediately so the user sees results without
+  // waiting for an idle callback.
+  div.innerHTML = cards.slice(0, _RENDER_CHUNK_FIRST).join('');
+  let cursor = _RENDER_CHUNK_FIRST;
+  let cancelled = false;
+  _renderCancel = () => { cancelled = true; };
+  const flush = deadline => {
+    if (cancelled) return;
+    while (cursor < cards.length) {
+      const next = Math.min(cursor + _RENDER_CHUNK_NEXT, cards.length);
+      div.insertAdjacentHTML('beforeend', cards.slice(cursor, next).join(''));
+      cursor = next;
+      // raf fallback (deadline === null) — render one chunk per frame.
+      if (!deadline) break;
+      // requestIdleCallback path — keep going while the browser still
+      // has idle budget; stop early when the deadline is nearly out.
+      if (typeof deadline.timeRemaining === 'function' && deadline.timeRemaining() < 5) break;
+    }
+    if (cursor < cards.length) _scheduleIdle(flush);
+    else _renderCancel = null;
+  };
+  _scheduleIdle(flush);
 }
 
 // Background-only helper — called from doSearch() at the very end of

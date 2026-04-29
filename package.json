@@ -5,18 +5,21 @@
   "description": "Static-site perfumery raw materials analyzer + formulation engine. PubChem compound data, IFRA 51 caps, Edwards Fragrance Wheel taxonomy.",
   "type": "module",
   "scripts": {
-    "lint": "eslint --max-warnings=0 \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\"",
-    "lint:fix": "eslint --fix \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\"",
-    "format": "prettier --write \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"*.{json,md}\"",
-    "format:check": "prettier --check \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"*.{json,md}\"",
-    "lint:blends": "node tools/lint-blends.mjs"
+    "lint": "eslint --max-warnings=0 \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\"",
+    "lint:fix": "eslint --fix \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\"",
+    "format": "prettier --write \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\" \"tests/**/*.{js,mjs}\" \"*.{json,md}\"",
+    "format:check": "prettier --check \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\" \"tests/**/*.{js,mjs}\" \"*.{json,md}\"",
+    "lint:blends": "node tools/lint-blends.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "eslint": "^9.13.0",
     "@html-eslint/eslint-plugin": "^0.27.0",
     "@html-eslint/parser": "^0.27.0",
     "globals": "^15.11.0",
-    "prettier": "^3.3.3"
+    "prettier": "^3.3.3",
+    "vitest": "^2.1.4"
   },
   "engines": {
     "node": ">=18"
