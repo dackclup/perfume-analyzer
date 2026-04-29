@@ -537,6 +537,50 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .compare-table thead .compare-table__col { position:relative; }
 body.modal-open { overflow:hidden; }
 
+/* Edwards Fragrance Wheel — interactive SVG. The two rings (main +
+   sub) are pure SVG arcs; click handlers proxy to the existing
+   toggleMainFamilyChip / toggleSubFamilyChip so the drawer and the
+   wheel stay in lockstep. Colours echo the family fill scheme used
+   on the .badge-primary chips. */
+.wheel-host { display:flex; justify-content:center; padding:var(--space-3) var(--space-4) var(--space-4); }
+.wheel-svg { max-width:100%; height:auto; width:min(640px, 90vw); }
+.wheel-intro { padding:var(--space-3) var(--space-4) 0; margin:0; color:var(--text2); font-size:var(--fs-sm); }
+.wheel-main, .wheel-sub { cursor:pointer; stroke:var(--bg); stroke-width:1.5; transition:opacity .15s, filter .15s; }
+.wheel-main:hover, .wheel-sub:hover { filter:brightness(1.1); }
+.wheel-sub.is-empty { opacity:0.45; cursor:default; }
+.wheel-main.is-active, .wheel-sub.is-active { stroke:var(--accent); stroke-width:3; }
+/* Family fill colours — picked to echo the perfumery wheel's
+   conventional palette: cool/aquatic blues for Fresh, warm pinks for
+   Floral, golden ambers for Amber, earth browns for Woody. */
+.wheel-main--fresh   { fill:#cdeefb; }
+.wheel-main--floral  { fill:#fbe1ed; }
+.wheel-main--amber   { fill:#fbe5c2; }
+.wheel-main--woody   { fill:#dbcab0; }
+.wheel-sub--fresh    { fill:#a0d8f0; }
+.wheel-sub--floral   { fill:#f5b5d0; }
+.wheel-sub--amber    { fill:#f5cc88; }
+.wheel-sub--woody    { fill:#b89d75; }
+[data-theme="dark"] .wheel-main--fresh   { fill:#1d3a4d; }
+[data-theme="dark"] .wheel-main--floral  { fill:#3d2434; }
+[data-theme="dark"] .wheel-main--amber   { fill:#4a3520; }
+[data-theme="dark"] .wheel-main--woody   { fill:#3a2f1f; }
+[data-theme="dark"] .wheel-sub--fresh    { fill:#296085; }
+[data-theme="dark"] .wheel-sub--floral   { fill:#683a55; }
+[data-theme="dark"] .wheel-sub--amber    { fill:#7a5630; }
+[data-theme="dark"] .wheel-sub--woody    { fill:#5d4a30; }
+.wheel-main-label { fill:var(--text); font-size:14px; font-weight:600; pointer-events:none; }
+.wheel-label { fill:var(--text); font-size:11px; pointer-events:none; }
+@media (prefers-color-scheme: dark) {
+  .wheel-main--fresh   { fill:#1d3a4d; }
+  .wheel-main--floral  { fill:#3d2434; }
+  .wheel-main--amber   { fill:#4a3520; }
+  .wheel-main--woody   { fill:#3a2f1f; }
+  .wheel-sub--fresh    { fill:#296085; }
+  .wheel-sub--floral   { fill:#683a55; }
+  .wheel-sub--amber    { fill:#7a5630; }
+  .wheel-sub--woody    { fill:#5d4a30; }
+}
+
 /* Database quality dashboard — renders inside the shared compare-modal
    shell. Headline stats up top (banned/restricted/allergen), then
    coverage bars per field grouped by topic. */
@@ -855,6 +899,7 @@ html { scroll-behavior:smooth; }
     <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
     <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17z"/></symbol>
     <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+    <symbol id="i-wheel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></symbol>
   </defs>
 </svg>
 <div class="header-row">
@@ -863,6 +908,9 @@ html { scroll-behavior:smooth; }
     <p class="subtitle">PubChem compound data + perfumery knowledge</p>
   </div>
   <div class="header-actions">
+    <button id="wheelBtn" class="icon-btn" type="button" aria-label="Open Edwards Fragrance Wheel" title="Fragrance wheel" onclick="openWheelModal()">
+      <svg class="icon" aria-hidden="true"><use href="#i-wheel"/></svg>
+    </button>
     <button id="dataQualityBtn" class="icon-btn" type="button" aria-label="Show database quality summary" title="Database quality" onclick="openDataQualityModal()">
       <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
     </button>
@@ -975,6 +1023,22 @@ html { scroll-behavior:smooth; }
   <a class="export-link" onclick="exportCSV()" role="button" tabindex="0" title="Download visible materials as a CSV"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-download"/></svg> CSV</a>
   <a class="formulate-link" onclick="sendToFormulator()">Formulate &#x2192;</a>
 </div>
+<div id="wheelModal" class="compare-modal" role="dialog" aria-modal="true" aria-labelledby="wheelModalTitle" hidden>
+  <div class="compare-modal__backdrop" onclick="closeWheelModal()"></div>
+  <div class="compare-modal__content" style="max-width:760px">
+    <div class="compare-modal__header">
+      <h2 id="wheelModalTitle" class="compare-modal__title">Edwards Fragrance Wheel</h2>
+      <div class="compare-modal__actions">
+        <button type="button" class="compare-modal__clear" onclick="resetAllFilters();_redrawWheel();" title="Clear all family + facet selections">Clear</button>
+        <button type="button" class="compare-modal__close" onclick="closeWheelModal()" aria-label="Close">&times;</button>
+      </div>
+    </div>
+    <div class="compare-modal__body">
+      <p class="wheel-intro">Click an outer ring to filter by a sub-family, or an inner ring to pick a Main Family. Selection mirrors the Filter drawer below.</p>
+      <div id="wheelHost" class="wheel-host"></div>
+    </div>
+  </div>
+</div>
 <div id="dataQualityModal" class="compare-modal" role="dialog" aria-modal="true" aria-labelledby="dataQualityModalTitle" hidden>
   <div class="compare-modal__backdrop" onclick="closeDataQualityModal()"></div>
   <div class="compare-modal__content" style="max-width:640px">
@@ -1003,7 +1067,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v178"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v179"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1036,7 +1100,7 @@ function _devWarn(...args) { if (_DEBUG) console.warn(...args); }
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v178";
+const DATA_VERSION = "2026-04-25-rebuild-v179";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -5590,6 +5654,124 @@ window.removeFromCompare = function (cas) {
   if (_compareCart.size < 2) closeCompareModal();
   else openCompareModal();
 };
+// Edwards Fragrance Wheel — interactive SVG mirror of the Family
+// drawer. Inner ring = 4 main families (Fresh / Floral / Amber /
+// Woody), outer ring = 14 sub-families grouped by their main. Click
+// an arc to toggle the corresponding filter chip; the wheel and the
+// drawer share state via toggleMainFamilyChip / toggleSubFamilyChip
+// so the selection reads identically wherever it's surfaced.
+// Tiny SVG arc helper — donut segment from angles in degrees, where
+// 0° is straight up (12 o'clock) and angles increase clockwise.
+function _arcPath(cx, cy, rIn, rOut, startDeg, endDeg) {
+  const toRad = d => (d - 90) * Math.PI / 180;
+  const sa = toRad(startDeg), ea = toRad(endDeg);
+  const x1 = cx + rOut * Math.cos(sa), y1 = cy + rOut * Math.sin(sa);
+  const x2 = cx + rOut * Math.cos(ea), y2 = cy + rOut * Math.sin(ea);
+  const x3 = cx + rIn  * Math.cos(ea), y3 = cy + rIn  * Math.sin(ea);
+  const x4 = cx + rIn  * Math.cos(sa), y4 = cy + rIn  * Math.sin(sa);
+  const largeArc = (endDeg - startDeg) > 180 ? 1 : 0;
+  return 'M ' + x1 + ' ' + y1 +
+         ' A ' + rOut + ' ' + rOut + ' 0 ' + largeArc + ' 1 ' + x2 + ' ' + y2 +
+         ' L ' + x3 + ' ' + y3 +
+         ' A ' + rIn  + ' ' + rIn  + ' 0 ' + largeArc + ' 0 ' + x4 + ' ' + y4 +
+         ' Z';
+}
+function _wheelSubCount(sub) {
+  // Number of materials whose primary ∪ secondary ∪ facet-parent set
+  // hits any of this sub-family's legacy tokens. Cheap — we iterate
+  // FILTER_CACHE once per wheel render (≤ 500 entries today).
+  const toks = SUB_FAMILY_TO_LEGACY[sub];
+  if (!toks) return 0;
+  let n = 0;
+  for (const fc of FILTER_CACHE.values()) {
+    const combined = _combinedFamilyTokens(fc);
+    for (const t of toks) if (combined.has(t)) { n++; break; }
+  }
+  return n;
+}
+function _buildWheelSvg() {
+  const cx = 200, cy = 200;
+  const innerR1 = 50,  innerR2 = 110;  // main ring
+  const outerR1 = 110, outerR2 = 175;  // sub ring
+  const labelR  = 192;
+  let svg = '<svg viewBox="0 0 400 400" class="wheel-svg" role="img" aria-label="Edwards Fragrance Wheel" xmlns="http://www.w3.org/2000/svg">';
+  let mainStart = 0;
+  for (const main of MAIN_FAMILIES) {
+    const subs = [...MAIN_FAMILY_TO_SUBS[main]];
+    const mainEnd = mainStart + 90;
+    const isActiveMain = activeMainFamilyFilters.has(main);
+    svg += '<path d="' + _arcPath(cx, cy, innerR1, innerR2, mainStart, mainEnd) + '" '
+         + 'class="wheel-main wheel-main--' + main + (isActiveMain ? ' is-active' : '') + '" '
+         + 'data-main="' + main + '" '
+         + 'onclick="_wheelClickMain(\'' + main + '\')" '
+         + 'role="button" tabindex="0">'
+         + '<title>' + MAIN_FAMILY_LABELS[main] + '</title></path>';
+    const subSpan = 90 / subs.length;
+    let subStart = mainStart;
+    for (const sub of subs) {
+      const subEnd = subStart + subSpan;
+      const isActiveSub = activeSubFamilyFilters.has(sub);
+      const count = _wheelSubCount(sub);
+      svg += '<path d="' + _arcPath(cx, cy, outerR1, outerR2, subStart, subEnd) + '" '
+           + 'class="wheel-sub wheel-sub--' + main + (isActiveSub ? ' is-active' : '') + (count ? '' : ' is-empty') + '" '
+           + 'data-subfam="' + sub + '" '
+           + 'onclick="_wheelClickSub(\'' + sub + '\')" '
+           + 'role="button" tabindex="0">'
+           + '<title>' + SUB_FAMILY_LABELS[sub] + ' — ' + count + ' material' + (count === 1 ? '' : 's') + '</title>'
+           + '</path>';
+      // Label placement — text-anchor flips at 180° so labels read
+      // away from the wheel rather than into it.
+      const midDeg = (subStart + subEnd) / 2;
+      const midRad = (midDeg - 90) * Math.PI / 180;
+      const lx = cx + labelR * Math.cos(midRad);
+      const ly = cy + labelR * Math.sin(midRad);
+      const anchor = midDeg < 180 ? 'start' : 'end';
+      svg += '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" '
+           + 'class="wheel-label" text-anchor="' + anchor + '" dominant-baseline="middle">'
+           + SUB_FAMILY_LABELS[sub] + '</text>';
+      subStart = subEnd;
+    }
+    // Main label inside the inner ring, rotated radially so it sits
+    // along the arc's bisector.
+    const mainMidDeg = (mainStart + mainEnd) / 2;
+    const mainMidRad = (mainMidDeg - 90) * Math.PI / 180;
+    const mlx = cx + 80 * Math.cos(mainMidRad);
+    const mly = cy + 80 * Math.sin(mainMidRad);
+    svg += '<text x="' + mlx.toFixed(1) + '" y="' + mly.toFixed(1) + '" '
+         + 'class="wheel-main-label" text-anchor="middle" dominant-baseline="middle">'
+         + MAIN_FAMILY_LABELS[main] + '</text>';
+    mainStart = mainEnd;
+  }
+  svg += '</svg>';
+  return svg;
+}
+window._wheelClickMain = function (main) {
+  const chip = document.querySelector('#mainFamilyFilters .odor-tag[data-main="' + main + '"]');
+  if (chip) toggleMainFamilyChip(chip);
+  _redrawWheel();
+};
+window._wheelClickSub = function (sub) {
+  const chip = document.querySelector('#subFamilyFilters .odor-tag[data-subfam="' + sub + '"]');
+  if (chip) toggleSubFamilyChip(chip);
+  _redrawWheel();
+};
+function _redrawWheel() {
+  const host = document.getElementById('wheelHost');
+  if (host) host.innerHTML = _buildWheelSvg();
+}
+window.openWheelModal = function () {
+  const modal = document.getElementById('wheelModal');
+  if (!modal) return;
+  _redrawWheel();
+  modal.removeAttribute('hidden');
+  document.body.classList.add('modal-open');
+};
+window.closeWheelModal = function () {
+  const modal = document.getElementById('wheelModal');
+  if (modal) modal.setAttribute('hidden', '');
+  document.body.classList.remove('modal-open');
+};
+
 // Data-quality dashboard — read-only summary of how complete the
 // curated DB is. Computed on-demand (cheap; one pass over ~400 rows)
 // when the user opens the modal. Helps content editors spot gaps
@@ -6845,6 +7027,11 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'Escape') {
     // Modals take priority over card / search Esc handling.
+    const wheel = document.getElementById('wheelModal');
+    if (wheel && !wheel.hasAttribute('hidden')) {
+      if (typeof closeWheelModal === 'function') closeWheelModal();
+      return;
+    }
     const dq = document.getElementById('dataQualityModal');
     if (dq && !dq.hasAttribute('hidden')) {
       if (typeof closeDataQualityModal === 'function') closeDataQualityModal();
