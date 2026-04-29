@@ -321,6 +321,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
    Middle / Base for fragrance materials) instead of a CAS number
    that means nothing without a reference book. */
 .mr-cat { padding:2px 8px; border-radius:10px; font-size:0.72em; font-weight:600; letter-spacing:0.02em; text-transform:uppercase; white-space:nowrap; border:1px solid transparent; }
+/* When a material spans multiple tiers ("Top / Middle"), categoryPill
+   emits one pill per tier — give them a small gap so two pills sit
+   side-by-side rather than touching. */
+.mr-cat + .mr-cat { margin-left:4px; }
 .mr-cat.top { background:var(--badge-top-bg); color:var(--badge-top-fg); }
 .mr-cat.mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
 .mr-cat.base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
@@ -911,10 +915,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v210"></script>
-<script src="perfumery_data.js?v=2026-04-29-v210"></script>
-<script src="formulation_data.js?v=2026-04-29-v210"></script>
-<script src="formulation_engine.js?v=2026-04-29-v210"></script>
+<script src="taxonomy.js?v=2026-04-29-v211"></script>
+<script src="perfumery_data.js?v=2026-04-29-v211"></script>
+<script src="formulation_data.js?v=2026-04-29-v211"></script>
+<script src="formulation_engine.js?v=2026-04-29-v211"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1883,17 +1887,24 @@ function categoryPill(entry) {
   if (FUNCTIONAL[lower]) {
     return `<span class="mr-cat ${FUNCTIONAL[lower]}">${escHtml(note)}</span>`;
   }
-  // Fragrance materials — abbreviate Top/Middle/Base → T/M/B and join
-  // multi-tier notes with a slash. Class still reflects the leading
-  // tier so colour matches the existing palette.
-  const parts = lower.split(/\s*\/\s*/);
-  const TIER_ABBR = { top: 'T', middle: 'M', mid: 'M', heart: 'M', base: 'B' };
-  const abbr = parts.map(p => TIER_ABBR[p] || p.charAt(0).toUpperCase()).join('/');
-  let cls = 'other';
-  if (parts.includes('top')) cls = 'top';
-  else if (parts.some(p => p === 'middle' || p === 'mid' || p === 'heart')) cls = 'mid';
-  else if (parts.includes('base')) cls = 'base';
-  return `<span class="mr-cat ${cls}">${escHtml(abbr)}</span>`;
+  // Fragrance materials — render ONE pill per tier so a "Top / Middle"
+  // material shows a yellow T next to a blue M instead of merging both
+  // tiers under a single colour. Class still uses the existing palette
+  // (.mr-cat.top / .mid / .base).
+  const parts = lower.split(/\s*\/\s*/).filter(Boolean);
+  const TIER = {
+    top:    { abbr: 'T', cls: 'top' },
+    middle: { abbr: 'M', cls: 'mid' },
+    mid:    { abbr: 'M', cls: 'mid' },
+    heart:  { abbr: 'M', cls: 'mid' },
+    base:   { abbr: 'B', cls: 'base' },
+  };
+  const pills = parts.map(p => {
+    const t = TIER[p];
+    if (t) return `<span class="mr-cat ${t.cls}">${t.abbr}</span>`;
+    return `<span class="mr-cat other">${escHtml(p.charAt(0).toUpperCase())}</span>`;
+  });
+  return pills.join('');
 }
 
 // Return a small status badge HTML for a material in the Add-modal search.
