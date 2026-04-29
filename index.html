@@ -1082,7 +1082,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v191"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v192"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1125,6 +1125,15 @@ try {
   const _compareRaw = (typeof localStorage !== 'undefined') ? localStorage.getItem(_COMPARE_LS_KEY) : null;
   if (_compareRaw) for (const c of JSON.parse(_compareRaw)) if (typeof c === 'string') _compareCart.add(c);
 } catch (e) { /* ignore corrupt localStorage */ }
+
+// Results-persistence keys (was in v191 results-persistence block).
+// Hoisted because _restoreResults() runs at init (~line 4295) — long
+// before the original declaration site at ~line 5759. The init call
+// hit TDZ on _RESULTS_LS_KEY, the try/catch swallowed the throw, and
+// the user's saved cards never made it back to the screen on
+// navigation. Same TDZ family as v184/v187/v188/v189/v190.
+const _RESULTS_LS_KEY = 'perfume_analyzer_results';
+const _SORT_LS_KEY    = 'perfume_analyzer_sort';
 
 // Sort state (was in v175 sort block). Hoisted same as the chunked-
 // render state above so renderResults can read them at any time —
@@ -1209,7 +1218,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v191";
+const DATA_VERSION = "2026-04-25-rebuild-v192";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -5755,9 +5764,8 @@ function _persistCompareCart() {
 // back doesn't wipe the cards. External / PubChem-only matches are
 // skipped — only DB-backed materials round-trip cleanly because the
 // snapshot relies on _applyLocalMatch to rehydrate the full record
-// from the DB on restore.
-const _RESULTS_LS_KEY = 'perfume_analyzer_results';
-const _SORT_LS_KEY    = 'perfume_analyzer_sort';
+// from the DB on restore. Keys (_RESULTS_LS_KEY, _SORT_LS_KEY) live
+// at the top of the script — see the hoisted-state comment block.
 function _persistResults() {
   try {
     const minimal = [];
