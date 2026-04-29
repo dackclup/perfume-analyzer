@@ -1,0 +1,8 @@
+# Auto-generated / vendored / curated data files — keep formatting as-is
+node_modules/
+perfumery_data.js
+perfumery_data.backup.js
+formulation_data.js
+formulation_engine.js
+sw.js
+.git/
