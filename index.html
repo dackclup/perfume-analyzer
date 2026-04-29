@@ -819,11 +819,18 @@ html { scroll-behavior:smooth; }
    Consistent feel: cards rise, modals fade-scale, toasts slide up
    from the safe area, suggestion pills pop in light. Stagger via
    inline style="--anim-delay:Xms" set at render time. */
+/* Card slide-up uses a per-card --anim-delay set inline. The renderer
+   stamps `animation:none` on cards whose CAS already mounted earlier
+   in the session — without that guard a re-render (PubChem callback,
+   sort change, navigation reload, +Add) would re-fire the entrance
+   on every existing card and read as a flicker. */
 .card { animation:ui-slide-up 260ms var(--ease-out) backwards; animation-delay:var(--anim-delay, 0ms); }
-.card-body.open { animation:ui-fade-in 220ms var(--ease-out); }
+/* card-body and suggestion pill animations were dropped in v198 —
+   both surfaces re-render on every keystroke / toggle / sort, and
+   the entrance kept replaying. The page now relies on the existing
+   colour transitions for those interactions. */
 #statusBar[style*="flex"] { animation:ui-slide-down 220ms var(--ease-out); }
 .empty-state { animation:ui-fade-in 280ms var(--ease-out); }
-.pill, .pills .pill { animation:ui-fade-in 200ms var(--ease-out) backwards; }
 
 /* Toasts already fixed-positioned at the safe area — slide them in
    from below (mobile) / right (desktop) so they read as a transient
@@ -852,7 +859,7 @@ html { scroll-behavior:smooth; }
    sensitivities aren't forced through them. Pop on the wheel and
    the spinner already have their own reduced-motion guards. */
 @media (prefers-reduced-motion: reduce) {
-  .card, .empty-state, .toast, .pill, #statusBar[style*="flex"],
+  .card, .empty-state, .toast, #statusBar[style*="flex"],
   .compare-modal:not([hidden]) .compare-modal__backdrop,
   .compare-modal:not([hidden]) .compare-modal__content,
   .anim-fade, .anim-slide-up, .anim-pop { animation:none !important; }
@@ -1169,7 +1176,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v197"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v198"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1192,6 +1199,20 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Lifting the four declarations here makes them safe for every
 // caller, including the init-time first paint.
 let _renderCancel = null;
+// Tracks every CAS that has already mounted at least once during the
+// session. The card-mount slide-up animation in v197 fires whenever
+// the card HTML is rebuilt (new search match, _enrichPubchem
+// callback, sort change, navigation reload via _restoreResults), so a
+// single material can flash its entrance several times in a row.
+// Only animate on the first appearance per CAS — re-renders of the
+// same card stamp `animation:none` inline so the result list stays
+// calm.
+const _renderedCas = new Set();
+// The empty-state CTA inside #results animates similarly. Track
+// whether it has played once so subsequent re-renders (every search
+// that ends with 0 results, every sort flip on an empty list) skip
+// the fade.
+let _emptyStateAnimated = false;
 const _RENDER_CHUNK_FIRST = 30;
 const _RENDER_CHUNK_NEXT  = 25;
 const _scheduleIdle = (typeof window !== 'undefined' && window.requestIdleCallback)
@@ -1305,7 +1326,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v197";
+const DATA_VERSION = "2026-04-25-rebuild-v198";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -6603,8 +6624,12 @@ function _renderResultsCore() {
     const _resetCta = _filterN
       ? '<button type="button" class="empty-state__btn" onclick="resetAllFilters()">Reset filters</button>'
       : '';
+    // Skip the fade animation on subsequent re-renders so the empty
+    // state doesn't flash every time a search returns 0 results.
+    const _esStyle = _emptyStateAnimated ? ' style="animation:none"' : '';
+    _emptyStateAnimated = true;
     document.getElementById("results").innerHTML =
-      '<div class="empty-state">' +
+      '<div class="empty-state"' + _esStyle + '>' +
         '<svg class="empty-state__icon" aria-hidden="true"><use href="#i-search"/></svg>' +
         '<div class="empty-state__title">No materials yet</div>' +
         '<p class="empty-state__hint">' + _hint + '</p>' +
@@ -6742,8 +6767,20 @@ function _renderResultsCore() {
 
     const blendsArr = _blendsWithClean;
 
+    // Animate on first appearance per CAS only — re-renders of an
+    // already-mounted card emit animation:none so PubChem callbacks,
+    // sort changes, and navigation reloads don't replay the
+    // entrance and read as a flicker on the user's screen.
+    const _cardCas = id?.cas;
+    let _cardStyle;
+    if (_cardCas && _renderedCas.has(_cardCas)) {
+      _cardStyle = 'animation:none';
+    } else {
+      _cardStyle = '--anim-delay:' + (Math.min(idx, 8) * 30) + 'ms';
+      if (_cardCas) _renderedCas.add(_cardCas);
+    }
     cards.push(`
-      <div class="card" style="--anim-delay:${Math.min(idx, 8) * 30}ms">
+      <div class="card" style="${_cardStyle}">
         <div class="card-header" onclick="toggleCard(${idx})">
           <div style="flex:1;min-width:0">
             <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(nm.canonical)}${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''}${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
