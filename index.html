@@ -557,7 +557,16 @@ body.modal-open { overflow:hidden; }
 .wheel-host  { display:flex; justify-content:center; padding:var(--space-3) var(--space-4) var(--space-4); }
 .wheel-svg   { max-width:100%; height:auto; width:min(560px, 95vw); }
 .wheel-intro { padding:var(--space-3) var(--space-4) 0; margin:0; color:var(--text2); font-size:var(--fs-sm); }
-.wheel-seg, .wheel-band { transition:filter .25s ease, stroke-width .15s ease, stroke .15s ease; }
+.wheel-seg, .wheel-band {
+  transition:filter .25s ease, stroke-width .15s ease, stroke .15s ease;
+  /* Suppress the rectangular focus ring that browsers paint over a
+     tapped SVG path (looks like a blue box appearing then fading on
+     tap). The .popping/.active-seg classes already provide all the
+     feedback the user needs, and the focus rect is jarring on a
+     curved slice. */
+  outline:none !important;
+  -webkit-tap-highlight-color:transparent;
+}
 .wheel-seg:hover, .wheel-band:hover { filter:brightness(1.06) saturate(1.08); }
 .wheel-seg:focus, .wheel-seg:focus-visible,
 .wheel-band:focus, .wheel-band:focus-visible { outline:none; }
@@ -1079,7 +1088,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v194"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v195"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1215,7 +1224,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v194";
+const DATA_VERSION = "2026-04-25-rebuild-v195";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
