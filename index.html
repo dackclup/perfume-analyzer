@@ -1184,7 +1184,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v205"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v206"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1334,7 +1334,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v205";
+const DATA_VERSION = "2026-04-25-rebuild-v206";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -7360,11 +7360,27 @@ function classifyMaterialType(mat) {
   //    instead of in classifyUses so the Type label comes out right too.
   if (/\b(benzyl benzoate|triethyl citrate)\b/i.test(n)) return 'solvent';
 
+  // 0b) Note field as explicit Type override. When a curated entry sets
+  //    note to "Solvent" / "Carrier" / "Antioxidant" / "Preservative" /
+  //    "Solubilizer" / "Emulsifier", treat that as ground truth — no
+  //    keyword guessing needed. Lets us add functional ingredients with
+  //    accurate Type without packing more regexes below.
+  const _noteTrim = note.trim();
+  if (/^(solvent|carrier|antioxidant|preservative|solubilizer|emulsifier|wax|additive)$/i.test(_noteTrim)) {
+    return _noteTrim.toLowerCase();
+  }
+
   // 1) Antioxidants, preservatives, solubilizers, emulsifiers (most specific first).
-  if (/\b(antioxidant|tocopherol|bht|bha)\b/i.test(all)) return 'antioxidant';
-  if (/\b(preservative|biocide|paraben)\b/i.test(all)) return 'preservative';
-  if (/\b(solubilizer|solubilis|polysorbate|peg[- ]\d|hydrogenated castor)\b/i.test(all)) return 'solubilizer';
-  if (/\b(emulsifier|emulsifying|lecithin|ceteareth|stearate)\b/i.test(all)) return 'emulsifier';
+  //    Scope to name + note ONLY — earlier versions scanned `all` (which
+  //    includes safety.usage), which produced false positives like
+  //    Nerol/Phellandrene whose usage text says "always pair with BHT
+  //    for stability". The keyword has to be in the canonical name (e.g.
+  //    "BHT", "α-Tocopherol") for this branch to fire.
+  const _nameNote = n + ' ' + note;
+  if (/\b(antioxidant|tocopherol|bht|bha)\b/i.test(_nameNote)) return 'antioxidant';
+  if (/\b(preservative|biocide|paraben|phenoxyethanol)\b/i.test(_nameNote)) return 'preservative';
+  if (/\b(solubilizer|solubilis|polysorbate|peg[- ]\d|hydrogenated castor)\b/i.test(_nameNote)) return 'solubilizer';
+  if (/\b(emulsifier|emulsifying|lecithin|ceteareth|stearate)\b/i.test(_nameNote)) return 'emulsifier';
 
   // 2) Natural mixtures — sub-typed from the canonical name keyword,
   //    then defaulting to essential_oil for any unmatched mixture.
@@ -7392,8 +7408,8 @@ function classifyMaterialType(mat) {
   //    Type values via name and curated text. The override list above
   //    already caught the dual-role aromatic ones (BB / TEC).
   const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
-  const isCarrierName = /\b(dipropylene glycol|propylene glycol|mct oil|squalane|isododecane|isopropyl myristate|triacetin|diethyl phthalate)\b/i.test(n);
-  const isSolventName = /\b(ethanol|ethyl alcohol)\b/i.test(n);
+  const isCarrierName = /\b(dipropylene glycol|propylene glycol|mct oil|squalane|isododecane|isopropyl myristate|triacetin|diethyl phthalate|glyceryl triacetate)\b/i.test(n);
+  const isSolventName = /\b(ethanol|ethyl alcohol|benzyl alcohol)\b/i.test(n);
   if (!hasRealOdor && (isSolventName || /\bsolvent\b/i.test(note + ' ' + desc))) return 'solvent';
   if (!hasRealOdor && (isCarrierName || /\bcarrier\b/i.test(note + ' ' + desc))) return 'carrier';
 

@@ -887,9 +887,9 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 <!-- ?v= query suffix busts browser cache whenever the wheel palette /
      taxonomy changes. Bump this string on every deploy that touches
      the three loaded scripts below. -->
-<script src="perfumery_data.js?v=2026-04-29-codemap"></script>
-<script src="formulation_data.js?v=2026-04-29-codemap"></script>
-<script src="formulation_engine.js?v=2026-04-29-codemap"></script>
+<script src="perfumery_data.js?v=2026-04-29-v206"></script>
+<script src="formulation_data.js?v=2026-04-29-v206"></script>
+<script src="formulation_engine.js?v=2026-04-29-v206"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2374,11 +2374,20 @@ function capMaterialsToIFRA(catId, fragPct) {
 // because the DB is minified and users may add carriers with any CAS.
 function classifyCarrier(name) {
   const n = (name || '').toLowerCase();
+  // 1) Functional ingredients first — they are neither solvent nor carrier
+  //    on the IFRA-routing axis. Phenoxyethanol contains the substring
+  //    "ethanol" but is a preservative capped at 1% in cosmetics, so the
+  //    early check stops the alcohol branch from grabbing it.
+  if (n.includes('tocopherol') || n.includes('vitamin e') ||
+      n === 'bht' || n === 'bha' || n.includes('butylated hydroxytoluene') ||
+      n.includes('butylated hydroxyanisole') ||
+      n.includes('phenoxyethanol') || n.includes('parab')) return 'other';
   if (n.includes('ethanol') || n.includes('ethyl alcohol') || n === 'alcohol' || n.includes('denatured alcohol')) return 'alcohol';
   if (n.includes('glycol')) return 'glycol'; // DPG, PG, butylene glycol, etc.
   if (n.includes('myristate') || n.includes('palmitate') || n.includes('benzoate') ||
       n.includes('citrate') || n.includes('caprylic') || n.includes('capric') ||
-      n.includes('jojoba') || n.includes('squalane') || n.includes('oil')) return 'ester';
+      n.includes('jojoba') || n.includes('squalane') || n.includes('oil') ||
+      n.includes('phthalate') || n.includes('triacetin') || n.includes('glyceryl triacetate')) return 'ester';
   if (n.includes('water') || n.includes('aqua')) return 'water';
   return 'other';
 }
