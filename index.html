@@ -262,6 +262,11 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .card-body.open { display:block; }
 .card-del { color:var(--text2); font-size:1.1em; cursor:pointer; opacity:0.5; padding:4px 8px; }
 .card-del:hover { opacity:1; }
+.card-actions { display:inline-flex; align-items:center; gap:2px; flex-shrink:0; }
+.pin-btn { display:inline-flex; align-items:center; justify-content:center; background:transparent; border:none; padding:6px; cursor:pointer; color:var(--text2); opacity:0.55; transition:opacity .15s, color .15s; border-radius:var(--radius-sm); }
+.pin-btn:hover { opacity:1; color:var(--accent); }
+.pin-btn--on { opacity:1; color:var(--accent); }
+.pin-btn--on svg { fill:var(--accent); fill-opacity:0.18; }
 .copy-btn { display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; background:transparent; border:1px solid var(--border); border-radius:var(--radius-sm); padding:2px 6px; margin-left:4px; cursor:pointer; color:var(--text2); transition:opacity .15s, color .15s, border-color .15s; }
 .copy-btn:hover { color:var(--accent); border-color:var(--accent); }
 .copy-btn--ok { color:var(--success, #2a9d4a); border-color:var(--success, #2a9d4a); }
@@ -488,11 +493,43 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .pc-sub-content p { margin:2px 0; overflow-wrap:anywhere; }
 
 /* Download bar (sticky) */
-.downloads { position:fixed; bottom:0; left:0; right:0; z-index:100; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(8px); border-top:1px solid var(--border); padding:var(--space-3) var(--space-4); padding-bottom:calc(var(--space-3) + env(safe-area-inset-bottom)); display:flex; justify-content:space-between; align-items:center; box-shadow:var(--shadow-up); }
-.downloads a { color:var(--text); text-decoration:underline; font-size:0.9em; cursor:pointer; }
-.downloads a:hover { opacity:0.6; }
-.downloads .formulate-link { margin-left:auto; color:var(--text2); font-size:0.85em; text-decoration:none; cursor:pointer; white-space:nowrap; }
-.downloads .formulate-link:hover { text-decoration:underline; }
+.downloads { position:fixed; bottom:0; left:0; right:0; z-index:100; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(8px); border-top:1px solid var(--border); padding:var(--space-3) var(--space-4); padding-bottom:calc(var(--space-3) + env(safe-area-inset-bottom)); display:flex; gap:var(--space-3); align-items:center; box-shadow:var(--shadow-up); flex-wrap:wrap; }
+.downloads a { color:var(--text); text-decoration:none; font-size:0.85em; cursor:pointer; display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:var(--radius-sm); white-space:nowrap; }
+.downloads a:hover { color:var(--accent); background:var(--accent-soft); }
+.downloads .compare-link { color:var(--accent); font-weight:var(--fw-medium); border:1px solid var(--accent); }
+.downloads .compare-link:hover { background:var(--accent); color:var(--accent-text, #fff); }
+.downloads .export-link { color:var(--text2); }
+.downloads .formulate-link { margin-left:auto; color:var(--text2); }
+.downloads .formulate-link:hover { color:var(--accent); }
+@media (max-width:480px) { .downloads { gap:var(--space-2); } .downloads a { padding:4px 6px; font-size:0.8em; } }
+
+/* Compare modal — side-by-side comparison table for pinned materials.
+   Rendered as an overlay so it doesn't disturb the result list scroll.
+   The first table column is sticky (field labels) so users can scan
+   field-by-field while horizontally scrolling many materials. */
+.compare-modal { position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; padding:var(--space-3); }
+.compare-modal[hidden] { display:none; }
+.compare-modal__backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.55); backdrop-filter:blur(2px); }
+.compare-modal__content { position:relative; background:var(--card-bg, var(--bg)); border:1px solid var(--border); border-radius:var(--radius-lg, 12px); max-width:min(1200px, 96vw); max-height:90vh; width:100%; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.4); overflow:hidden; }
+.compare-modal__header { display:flex; align-items:center; gap:var(--space-2); padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border); background:var(--surface); }
+.compare-modal__title { flex:1; font-size:var(--fs-md); font-weight:var(--fw-medium); margin:0; }
+.compare-modal__actions { display:flex; gap:var(--space-2); align-items:center; }
+.compare-modal__clear { background:transparent; border:1px solid var(--border); border-radius:var(--radius-pill); padding:4px 12px; font-size:0.8em; color:var(--text2); cursor:pointer; font-family:inherit; }
+.compare-modal__clear:hover { color:var(--accent); border-color:var(--accent); }
+.compare-modal__close { background:transparent; border:none; color:var(--text2); font-size:1.5em; cursor:pointer; padding:4px 10px; line-height:1; }
+.compare-modal__close:hover { color:var(--accent); }
+.compare-modal__body { overflow:auto; flex:1; padding:0; }
+.compare-table { width:100%; border-collapse:collapse; font-size:0.85em; }
+.compare-table th, .compare-table td { padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--border); vertical-align:top; text-align:left; }
+.compare-table thead th { position:sticky; top:0; background:var(--surface); z-index:2; border-bottom:2px solid var(--border); font-weight:var(--fw-medium); }
+.compare-table .compare-table__field { position:sticky; left:0; background:var(--surface); font-weight:var(--fw-medium); color:var(--text2); z-index:1; min-width:110px; }
+.compare-table thead .compare-table__field { z-index:3; }
+.compare-table .compare-table__col { min-width:180px; max-width:240px; }
+.compare-table__name { font-weight:var(--fw-medium); color:var(--text); margin-right:24px; word-break:break-word; }
+.compare-table__remove { position:absolute; top:6px; right:6px; background:transparent; border:none; color:var(--text-subtle); font-size:1em; cursor:pointer; padding:2px 6px; line-height:1; }
+.compare-table__remove:hover { color:var(--danger); }
+.compare-table thead .compare-table__col { position:relative; }
+body.modal-open { overflow:hidden; }
 
 /* Progress */
 .progress { display:none; height:4px; background:var(--border); border-radius:var(--radius-sm); margin:8px 0; overflow:hidden; }
@@ -792,6 +829,8 @@ html { scroll-behavior:smooth; }
     <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
     <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
   </defs>
 </svg>
 <div class="header-row">
@@ -904,19 +943,35 @@ html { scroll-behavior:smooth; }
 <div id="results"></div>
 </main>
 <div class="downloads" id="downloads">
+  <a class="compare-link" id="compareLink" onclick="openCompareModal()" style="display:none" role="button" tabindex="0" title="Open side-by-side comparison">Compare (<span id="compareCount">0</span>) &#x2192;</a>
+  <a class="export-link" onclick="copyCASList()" role="button" tabindex="0" title="Copy CAS numbers of all visible materials"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-copy"/></svg> CAS</a>
+  <a class="export-link" onclick="exportCSV()" role="button" tabindex="0" title="Download visible materials as a CSV"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-download"/></svg> CSV</a>
   <a class="formulate-link" onclick="sendToFormulator()">Formulate &#x2192;</a>
+</div>
+<div id="compareModal" class="compare-modal" role="dialog" aria-modal="true" aria-labelledby="compareModalTitle" hidden>
+  <div class="compare-modal__backdrop" onclick="closeCompareModal()"></div>
+  <div class="compare-modal__content">
+    <div class="compare-modal__header">
+      <h2 id="compareModalTitle" class="compare-modal__title">Compare materials</h2>
+      <div class="compare-modal__actions">
+        <button type="button" class="compare-modal__clear" onclick="clearCompareCart()" title="Unpin all">Clear</button>
+        <button type="button" class="compare-modal__close" onclick="closeCompareModal()" aria-label="Close">&times;</button>
+      </div>
+    </div>
+    <div class="compare-modal__body" id="compareTable"></div>
+  </div>
 </div>
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v175"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v176"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v175";
+const DATA_VERSION = "2026-04-25-rebuild-v176";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -3839,6 +3894,8 @@ window.addEventListener('popstate', () => { _restoreUrlState(); });
 // with an empty `results` array, renderResults swaps in the empty-state
 // CTA instead of leaving the section blank.
 if (typeof renderResults === 'function') renderResults();
+// Surface compare cart count from localStorage on first paint.
+if (typeof _updateCompareCta === 'function') _updateCompareCta();
 
 // ═══════════════════════════════════════════════════════════════
 // MODULE: Filter Matching
@@ -5292,6 +5349,228 @@ function _cleanBlendsWith(arr) {
     return true;
   });
 }
+// Compare cart — Set of CAS numbers the user has pinned for side-by-
+// side comparison. Persisted in localStorage so the cart survives
+// reload, and surfaced as a floating "Compare (N)" pill in the
+// downloads strip whenever it has at least 2 entries.
+const _COMPARE_LS_KEY = 'perfume_compare_cart';
+const _COMPARE_LIMIT = 8;
+let _compareCart = new Set();
+try {
+  const raw = localStorage.getItem(_COMPARE_LS_KEY);
+  if (raw) for (const c of JSON.parse(raw)) if (typeof c === 'string') _compareCart.add(c);
+} catch (e) { /* ignore corrupt localStorage */ }
+function _persistCompareCart() {
+  try { localStorage.setItem(_COMPARE_LS_KEY, JSON.stringify([..._compareCart])); }
+  catch (e) { /* quota or private mode — ignore */ }
+}
+function _updateCompareCta() {
+  const link = document.getElementById('compareLink');
+  const count = document.getElementById('compareCount');
+  if (!link || !count) return;
+  const n = _compareCart.size;
+  count.textContent = n;
+  link.style.display = n >= 2 ? '' : 'none';
+}
+window.toggleCompare = function (cas, btn) {
+  if (!cas) return;
+  if (_compareCart.has(cas)) {
+    _compareCart.delete(cas);
+    if (btn) {
+      btn.classList.remove('pin-btn--on');
+      btn.setAttribute('aria-label', 'Pin to compare');
+      btn.setAttribute('title', 'Pin to compare');
+    }
+  } else {
+    if (_compareCart.size >= _COMPARE_LIMIT) {
+      try { showToast({ message: 'Compare cart full (max ' + _COMPARE_LIMIT + '). Unpin one first.', variant: 'warn', timeout: 2500 }); } catch (e) {}
+      return;
+    }
+    _compareCart.add(cas);
+    if (btn) {
+      btn.classList.add('pin-btn--on');
+      btn.setAttribute('aria-label', 'Remove from compare');
+      btn.setAttribute('title', 'Pinned — click to unpin');
+    }
+  }
+  _persistCompareCart();
+  _updateCompareCta();
+};
+
+// Build a structured snapshot of the fields shown in the compare modal.
+// Reads FILTER_CACHE first (canonical, normalized) and falls back to the
+// in-memory record for external/PubChem-only matches the cart was
+// pinned from.
+function _compareSnapshot(cas) {
+  const fc = FILTER_CACHE.get(cas);
+  const mat = results.find(r => r?.record?.identifiers?.cas === cas);
+  const rec = mat?.record || null;
+  const id = rec?.identifiers || {};
+  const nm = rec?.names || {};
+  const pf = rec?.perfumery || {};
+  const cls = rec?.classification || {};
+  const reg = fc ? [...(fc.regulatory || [])] : (Array.isArray(cls.regulatory) ? cls.regulatory : []);
+  const fns = fc ? [...(fc.functions || [])] : (Array.isArray(cls.functions) ? cls.functions : []);
+  const uses = fc ? [...(fc.uses || [])] : (Array.isArray(cls.industry_tags) ? cls.industry_tags : []);
+  const fams = fc
+    ? [...(fc.primaryFamilies || []), ...(fc.secondaryFamilies || [])]
+    : [...(cls.primaryFamilies || []), ...(cls.secondaryFamilies || [])];
+  const facets = fc ? [...(fc.facets || [])] : (Array.isArray(cls.facets) ? cls.facets : []);
+  return {
+    cas,
+    name: nm.canonical || cas,
+    type: (fc ? fc.materialType : cls.material_type) || '—',
+    source: (fc ? fc.source : cls.source) || '—',
+    note: pf.note || '—',
+    odorType: pf.odor_type || '',
+    odorStrength: pf.odor_strength || '',
+    tenacity: pf.tenacity || '',
+    functions: fns,
+    uses,
+    families: fams,
+    facets,
+    regulatory: reg,
+    inResults: !!mat
+  };
+}
+
+window.openCompareModal = function () {
+  if (_compareCart.size < 2) return;
+  const modal = document.getElementById('compareModal');
+  const tableHost = document.getElementById('compareTable');
+  const titleEl = document.getElementById('compareModalTitle');
+  if (!modal || !tableHost) return;
+  const cas = [..._compareCart];
+  const snaps = cas.map(_compareSnapshot);
+  if (titleEl) titleEl.textContent = 'Compare materials (' + snaps.length + ')';
+  const fmtList = (arr, labels) => arr.length ? arr.map(v => labels && labels[v] ? labels[v] : v).join(', ') : '—';
+  const rows = [
+    { label: 'CAS',         render: s => `<code>${esc(s.cas)}</code>` },
+    { label: 'Type',        render: s => esc(TYPE_LABELS[s.type] || s.type) },
+    { label: 'Source',      render: s => esc(SOURCE_LABELS[s.source] || s.source) },
+    { label: 'Function',    render: s => esc(fmtList(s.functions, FUNCTION_LABELS)) },
+    { label: 'Use',         render: s => esc(fmtList(s.uses, USE_LABELS)) },
+    { label: 'Note',        render: s => esc(s.note) },
+    { label: 'Odor type',   render: s => esc(s.odorType || '—') + (s.odorStrength ? ` <span style="color:var(--text2)">· ${esc(s.odorStrength)}</span>` : '') },
+    { label: 'Tenacity',    render: s => esc(s.tenacity || '—') },
+    { label: 'Family',      render: s => esc(fmtList(s.families)) },
+    { label: 'Facets',      render: s => esc(fmtList(s.facets)) },
+    { label: 'Regulatory',  render: s => s.regulatory.length ? s.regulatory.map(r => `<span class="badge-reg" title="${esc(REGULATORY_DESCRIPTIONS[r] || REGULATORY_LABELS[r] || r)}">${esc(REGULATORY_LABELS[r] || r)}</span>`).join(' ') : '—' }
+  ];
+  const head =
+    '<thead><tr><th class="compare-table__field">Field</th>' +
+    snaps.map(s =>
+      '<th class="compare-table__col">' +
+        '<div class="compare-table__name">' + esc(s.name) + '</div>' +
+        '<button type="button" class="compare-table__remove" onclick="removeFromCompare(\'' + esc(s.cas) + '\')" aria-label="Remove ' + esc(s.name) + ' from compare">&times;</button>' +
+      '</th>'
+    ).join('') +
+    '</tr></thead>';
+  const body =
+    '<tbody>' +
+    rows.map(r =>
+      '<tr><th class="compare-table__field">' + r.label + '</th>' +
+      snaps.map(s => '<td>' + r.render(s) + '</td>').join('') +
+      '</tr>'
+    ).join('') +
+    '</tbody>';
+  tableHost.innerHTML = '<table class="compare-table">' + head + body + '</table>';
+  modal.removeAttribute('hidden');
+  document.body.classList.add('modal-open');
+};
+window.closeCompareModal = function () {
+  const modal = document.getElementById('compareModal');
+  if (modal) modal.setAttribute('hidden', '');
+  document.body.classList.remove('modal-open');
+};
+window.removeFromCompare = function (cas) {
+  _compareCart.delete(cas);
+  _persistCompareCart();
+  _updateCompareCta();
+  // Also flip the pin button on any visible card matching this CAS.
+  document.querySelectorAll('.pin-btn--on').forEach(btn => {
+    const match = btn.getAttribute('onclick') || '';
+    if (match.includes("'" + cas + "'")) {
+      btn.classList.remove('pin-btn--on');
+      btn.setAttribute('aria-label', 'Pin to compare');
+      btn.setAttribute('title', 'Pin to compare');
+    }
+  });
+  if (_compareCart.size < 2) closeCompareModal();
+  else openCompareModal();
+};
+window.clearCompareCart = function () {
+  _compareCart.clear();
+  _persistCompareCart();
+  _updateCompareCta();
+  document.querySelectorAll('.pin-btn--on').forEach(btn => {
+    btn.classList.remove('pin-btn--on');
+    btn.setAttribute('aria-label', 'Pin to compare');
+    btn.setAttribute('title', 'Pin to compare');
+  });
+  closeCompareModal();
+};
+
+// Export — copy CAS list / download CSV. Both operate on the current
+// `results` array (visible cards), so what the user sees is what they
+// export. CSV is a small handcrafted serialiser — keeps the tool free
+// of third-party dependencies.
+function _csvEscape(value) {
+  const s = value == null ? '' : String(value);
+  if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+window.copyCASList = function () {
+  if (!results.length) {
+    try { showToast({ message: 'No materials to copy.', variant: 'info', timeout: 2000 }); } catch (e) {}
+    return;
+  }
+  const lines = results
+    .map(r => r?.record?.identifiers?.cas)
+    .filter(Boolean);
+  const text = lines.join('\n');
+  copyToClipboard(text);
+  try { showToast({ message: 'Copied ' + lines.length + ' CAS number' + (lines.length === 1 ? '' : 's'), variant: 'success', timeout: 2000 }); } catch (e) {}
+};
+window.exportCSV = function () {
+  if (!results.length) {
+    try { showToast({ message: 'No materials to export.', variant: 'info', timeout: 2000 }); } catch (e) {}
+    return;
+  }
+  const header = ['Name','CAS','Type','Source','Functions','Uses','Note','Tenacity','Families','Facets','Regulatory'];
+  const lines = [header.map(_csvEscape).join(',')];
+  for (const r of results) {
+    const cas = r?.record?.identifiers?.cas || '';
+    const s = cas ? _compareSnapshot(cas) : null;
+    if (!s) continue;
+    const row = [
+      s.name,
+      s.cas,
+      TYPE_LABELS[s.type] || s.type,
+      SOURCE_LABELS[s.source] || s.source,
+      s.functions.map(f => FUNCTION_LABELS[f] || f).join('; '),
+      s.uses.map(u => USE_LABELS[u] || u).join('; '),
+      s.note,
+      s.tenacity,
+      s.families.join('; '),
+      s.facets.join('; '),
+      s.regulatory.map(rg => REGULATORY_LABELS[rg] || rg).join('; ')
+    ];
+    lines.push(row.map(_csvEscape).join(','));
+  }
+  const csv = '﻿' + lines.join('\r\n'); // BOM so Excel reads UTF-8
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = 'perfumery-export-' + stamp + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
 // Sort state — applied to the results array before each render so the
 // idx in toggleCard / delResult / open-state tracking stays consistent
 // with the visible order. _seq is stamped on each match in doSearch so
@@ -5506,7 +5785,10 @@ function renderResults() {
             ${mat.match_info?`<p class="card-match" style="margin:4px 0 0 18px">${esc(mat.match_info)}</p>`:""}
             ${(_typeFuncJoined || displayRegulatory.length)?`<div class="card-meta-row">${_typeFuncJoined?`<div class="tag-row"><span class="tag-axis-label">Type</span><span class="tag-chips"><span class="badge-type">${_typeFuncJoined}</span></span></div>`:''}${displayRegulatory.length?`<div class="tag-row"><span class="tag-axis-label">Reg</span><span class="tag-chips">${displayRegulatory.map(r=>`<span class="badge-reg" title="${esc(REGULATORY_DESCRIPTIONS[r]||REGULATORY_LABELS[r]||r)}">${REGULATORY_LABELS[r]||r}</span>`).join('')}</span></div>`:''}</div>`:''}
           </div>
-          <span class="card-del" role="button" tabindex="0" aria-label="Remove from results" title="Remove from results" onclick="event.stopPropagation();delResult(${idx})">✕</span>
+          <span class="card-actions">
+            ${id.cas?`<button type="button" class="pin-btn${_compareCart.has(id.cas)?' pin-btn--on':''}" onclick="event.stopPropagation();toggleCompare('${esc(id.cas)}', this)" aria-label="${_compareCart.has(id.cas)?'Remove from compare':'Pin to compare'}" title="${_compareCart.has(id.cas)?'Pinned — click to unpin':'Pin to compare'}"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-pin"/></svg></button>`:''}
+            <span class="card-del" role="button" tabindex="0" aria-label="Remove from results" title="Remove from results" onclick="event.stopPropagation();delResult(${idx})">✕</span>
+          </span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
@@ -6352,6 +6634,12 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.key === 'Escape') {
+    // Compare modal takes priority — it overlays everything else.
+    const modal = document.getElementById('compareModal');
+    if (modal && !modal.hasAttribute('hidden')) {
+      if (typeof closeCompareModal === 'function') closeCompareModal();
+      return;
+    }
     const i = document.getElementById('searchInput');
     if (i && document.activeElement === i) {
       if (i.value) { i.value = ''; if (typeof _writeUrlState === 'function') _writeUrlState(); }
