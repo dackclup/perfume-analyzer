@@ -1082,10 +1082,25 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v183"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v184"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
+
+// Regex / token sets used by the search matchers and the classifiers.
+// Hoisted to the top of the script so that any classifier or matcher
+// invoked during module init (FILTER_CACHE build, taxonomy validation)
+// can read them without tripping a Temporal Dead Zone error. Previously
+// these lived in the matchers section ~3500 lines below; an init-time
+// caller would surface as the cryptic
+//   "Cannot access 'CAS_RE_SEARCH' before initialization"
+// User report on v182 traced to exactly that ordering issue.
+const CAS_RE_SEARCH = /^\d{2,7}-\d{2}-\d$/;
+const SMILES_RE_SEARCH = /^[A-Za-z0-9@+\-\[\]\(\)\\\/=#$.%]+$/;
+const AROMA_ELEMENTS_SET = new Set(['C','H','O','N','S','F','Cl','Br']);
+// Synonym blacklist — terms too generic/ambiguous for reliable matching.
+const SYNONYM_BLACKLIST = new Set(['pea','pg','alcohol','oil','musk','acid','ester','water','base','note','top']);
+const RISKY_SYNONYMS    = new Set(['ipm','dpg','mdj','ies','tec','aag','fcf','oud']);
 // Centralised network + UI timing constants. Network calls (PubChem)
 // are slower so they get larger budgets; UI debouncers are tuned for
 // snappy filter-and-suggest. Tuning happens here, not at call sites.
@@ -1115,7 +1130,7 @@ function _devWarn(...args) { if (_DEBUG) console.warn(...args); }
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v183";
+const DATA_VERSION = "2026-04-25-rebuild-v184";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -4610,14 +4625,10 @@ function _applyPubchemProps(mat, propsData, synsData, descData) {
 }
 
 // ===== Search Matchers =====
-
-// Synonym blacklist — terms too generic/ambiguous for reliable matching
-const SYNONYM_BLACKLIST = new Set(['pea','pg','alcohol','oil','musk','acid','ester','water','base','note','top']);
-const RISKY_SYNONYMS = new Set(['ipm','dpg','mdj','ies','tec','aag','fcf','oud']);
-
-const CAS_RE_SEARCH = /^\d{2,7}-\d{2}-\d$/;
-const SMILES_RE_SEARCH = /^[A-Za-z0-9@+\-\[\]\(\)\\\/=#$.%]+$/;
-const AROMA_ELEMENTS_SET = new Set(['C','H','O','N','S','F','Cl','Br']);
+// Regex constants (CAS_RE_SEARCH, SMILES_RE_SEARCH, AROMA_ELEMENTS_SET)
+// and the synonym blacklists (SYNONYM_BLACKLIST, RISKY_SYNONYMS) live
+// at the top of the script so they're initialized before any classifier
+// or matcher could run during FILTER_CACHE build.
 
 function normalizeInput(raw) {
   return (raw || '').toLowerCase().replace(/[\u00AE\u2122]/g, '').replace(/\s+/g, ' ').trim();
