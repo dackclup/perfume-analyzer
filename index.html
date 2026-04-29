@@ -1184,7 +1184,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v202"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v203"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1334,7 +1334,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v202";
+const DATA_VERSION = "2026-04-25-rebuild-v203";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1949,8 +1949,6 @@ let pcCache = {};
 // REGULATORY_VALUES / SOURCE_VALUES which are const-declared later in
 // the file. Placing it here would hit the temporal dead zone and
 // crash the entire module init with ReferenceError.
-
-const FUNC_TERMS = new Set(['functional','carrier','fixative','solvent','additive','preservative','repellent','mild','colorant','n/a']);
 
 // Pre-compiled regexes for matchesAllFilters hot path
 const RE_NOTE_OTHER = /top|middle|base/i;
@@ -3977,13 +3975,6 @@ function toggleFacetChip(el) {
   else { activeFacetFilters.add(v); el.classList.add('active'); }
   const allReset = document.querySelector('#facetFilters > div > .odor-tag:first-child');
   if (allReset) allReset.classList.toggle('active', !activeFacetFilters.size);
-  _updateFacetSelected();
-  _refreshPills();
-}
-function clearFacetFiltersUI(el) {
-  activeFacetFilters.clear();
-  document.querySelectorAll('#facetFilters .odor-tag').forEach(b => b.classList.remove('active'));
-  if (el) el.classList.add('active');
   _updateFacetSelected();
   _refreshPills();
 }
