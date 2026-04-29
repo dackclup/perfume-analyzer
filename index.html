@@ -876,14 +876,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v172"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v173"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v172";
+const DATA_VERSION = "2026-04-25-rebuild-v173";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1698,7 +1698,7 @@ const _NOTE_VALUES = ['top','middle','base','_other'];
 const _NOTE_LABELS = { top:'Top', middle:'Middle', base:'Base', _other:'Odorless' };
 const _filterAxes = {
   note:   { set: new Set(), elId: 'noteSelected',   values: _NOTE_VALUES,    labels: _NOTE_LABELS,       containerId: 'noteFilters'   },
-  type:   { set: new Set(), elId: 'typeSelected',   values: TYPE_VALUES,     labels: TYPE_LABELS,        containerId: 'typeFilters'   },
+  type:   { set: new Set(), elId: 'typeSelected',   values: TYPE_VALUES,     labels: TYPE_LABELS,        containerId: 'typeFilters',   singleSelect: true },
   func:   { set: new Set(), elId: 'funcSelected',   values: FUNCTION_VALUES, labels: FUNCTION_LABELS,    containerId: 'funcFilters'   },
   tag:    { set: new Set(), elId: 'tagSelected',    values: USE_VALUES,      labels: USE_LABELS,         containerId: 'tagFilters'    },
   reg:    { set: new Set(), elId: 'regSelected',    values: REGULATORY_VALUES, labels: REGULATORY_LABELS, containerId: 'regFilters'   },
@@ -2804,7 +2804,18 @@ function _togglePillFilter(axisName, value, el) {
   const ax = _filterAxes[axisName];
   if (!ax) return;
   if (ax.set.has(value)) { ax.set.delete(value); el.classList.remove('active'); }
-  else { ax.set.add(value); el.classList.add('active'); }
+  else {
+    // Single-select axes (e.g. Type — materialType is one value per
+    // material, so multi-select would compose as OR which conflicts
+    // with the AND-within mental model used by the rest of the
+    // filter UI). Clear sibling selections before adding the new one
+    // so the chip strip behaves like a radio group.
+    if (ax.singleSelect && ax.set.size) {
+      ax.set.clear();
+      document.querySelectorAll('#' + ax.containerId + ' .odor-tag[data-value]').forEach(b => b.classList.remove('active'));
+    }
+    ax.set.add(value); el.classList.add('active');
+  }
   const allBtn = document.querySelector('#' + ax.containerId + ' .odor-tag[data-axis-all]');
   if (allBtn) allBtn.classList.toggle('active', !ax.set.size);
   _updateAxisSelectedLabel(axisName);
