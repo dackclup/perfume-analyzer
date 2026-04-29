@@ -548,48 +548,33 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .compare-table thead .compare-table__col { position:relative; }
 body.modal-open { overflow:hidden; }
 
-/* Edwards Fragrance Wheel — interactive SVG. The two rings (main +
-   sub) are pure SVG arcs; click handlers proxy to the existing
-   toggleMainFamilyChip / toggleSubFamilyChip so the drawer and the
-   wheel stay in lockstep. Colours echo the family fill scheme used
-   on the .badge-primary chips. */
-.wheel-host { display:flex; justify-content:center; padding:var(--space-3) var(--space-4) var(--space-4); }
-.wheel-svg { max-width:100%; height:auto; width:min(640px, 90vw); }
+/* Edwards Fragrance Wheel — interactive SVG mirror of the formulator
+   page. Solid pastel slice fills come from _WHEEL_SEGMENTS / _WHEEL_
+   MAIN_COLORS in JS; the cream backdrop + white centre disc keep
+   Edwards' printed-wheel look on a dark UI theme. Click handlers on
+   .wheel-seg / .wheel-band proxy to the existing chip toggles so the
+   wheel and the Filter drawer stay in lockstep. */
+.wheel-host  { display:flex; justify-content:center; padding:var(--space-3) var(--space-4) var(--space-4); }
+.wheel-svg   { max-width:100%; height:auto; width:min(560px, 95vw); }
 .wheel-intro { padding:var(--space-3) var(--space-4) 0; margin:0; color:var(--text2); font-size:var(--fs-sm); }
-.wheel-main, .wheel-sub { cursor:pointer; stroke:var(--bg); stroke-width:1.5; transition:opacity .15s, filter .15s; }
-.wheel-main:hover, .wheel-sub:hover { filter:brightness(1.1); }
-.wheel-sub.is-empty { opacity:0.45; cursor:default; }
-.wheel-main.is-active, .wheel-sub.is-active { stroke:var(--accent); stroke-width:3; }
-/* Family fill colours — picked to echo the perfumery wheel's
-   conventional palette: cool/aquatic blues for Fresh, warm pinks for
-   Floral, golden ambers for Amber, earth browns for Woody. */
-.wheel-main--fresh   { fill:#cdeefb; }
-.wheel-main--floral  { fill:#fbe1ed; }
-.wheel-main--amber   { fill:#fbe5c2; }
-.wheel-main--woody   { fill:#dbcab0; }
-.wheel-sub--fresh    { fill:#a0d8f0; }
-.wheel-sub--floral   { fill:#f5b5d0; }
-.wheel-sub--amber    { fill:#f5cc88; }
-.wheel-sub--woody    { fill:#b89d75; }
-[data-theme="dark"] .wheel-main--fresh   { fill:#1d3a4d; }
-[data-theme="dark"] .wheel-main--floral  { fill:#3d2434; }
-[data-theme="dark"] .wheel-main--amber   { fill:#4a3520; }
-[data-theme="dark"] .wheel-main--woody   { fill:#3a2f1f; }
-[data-theme="dark"] .wheel-sub--fresh    { fill:#296085; }
-[data-theme="dark"] .wheel-sub--floral   { fill:#683a55; }
-[data-theme="dark"] .wheel-sub--amber    { fill:#7a5630; }
-[data-theme="dark"] .wheel-sub--woody    { fill:#5d4a30; }
-.wheel-main-label { fill:var(--text); font-size:14px; font-weight:600; pointer-events:none; }
-.wheel-label { fill:var(--text); font-size:11px; pointer-events:none; }
-@media (prefers-color-scheme: dark) {
-  .wheel-main--fresh   { fill:#1d3a4d; }
-  .wheel-main--floral  { fill:#3d2434; }
-  .wheel-main--amber   { fill:#4a3520; }
-  .wheel-main--woody   { fill:#3a2f1f; }
-  .wheel-sub--fresh    { fill:#296085; }
-  .wheel-sub--floral   { fill:#683a55; }
-  .wheel-sub--amber    { fill:#7a5630; }
-  .wheel-sub--woody    { fill:#5d4a30; }
+.wheel-seg, .wheel-band { transition:fill-opacity .15s ease, filter .15s ease; }
+.wheel-seg:hover, .wheel-band:hover { filter:brightness(1.05) saturate(1.1); }
+.wheel-seg:focus, .wheel-seg:focus-visible,
+.wheel-band:focus, .wheel-band:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.wheel-seg.is-empty { opacity:0.5; cursor:default; }
+.wheel-seg.popping  { animation:wheel-pop 500ms cubic-bezier(.34, 1.56, .64, 1); transform-origin:center; transform-box:fill-box; }
+.wheel-seg.active-seg, .wheel-band.active-band {
+  stroke:#1a1a1a;
+  stroke-width:3;
+  filter:drop-shadow(0 0 6px rgba(255,255,255,0.6));
+}
+@keyframes wheel-pop {
+  0%   { transform:scale(1); }
+  40%  { transform:scale(1.08); }
+  100% { transform:scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wheel-seg.popping { animation:none; }
 }
 
 /* Database quality dashboard — renders inside the shared compare-modal
@@ -1082,7 +1067,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v192"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v193"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1218,7 +1203,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v192";
+const DATA_VERSION = "2026-04-25-rebuild-v193";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -5960,31 +5945,77 @@ window.removeFromCompare = function (cas) {
   else openCompareModal();
 };
 // Edwards Fragrance Wheel — interactive SVG mirror of the Family
-// drawer. Inner ring = 4 main families (Fresh / Floral / Amber /
-// Woody), outer ring = 14 sub-families grouped by their main. Click
-// an arc to toggle the corresponding filter chip; the wheel and the
-// drawer share state via toggleMainFamilyChip / toggleSubFamilyChip
-// so the selection reads identically wherever it's surfaced.
-// Tiny SVG arc helper — donut segment from angles in degrees, where
-// 0° is straight up (12 o'clock) and angles increase clockwise.
-function _arcPath(cx, cy, rIn, rOut, startDeg, endDeg) {
-  const toRad = d => (d - 90) * Math.PI / 180;
-  const sa = toRad(startDeg), ea = toRad(endDeg);
-  const x1 = cx + rOut * Math.cos(sa), y1 = cy + rOut * Math.sin(sa);
-  const x2 = cx + rOut * Math.cos(ea), y2 = cy + rOut * Math.sin(ea);
-  const x3 = cx + rIn  * Math.cos(ea), y3 = cy + rIn  * Math.sin(ea);
-  const x4 = cx + rIn  * Math.cos(sa), y4 = cy + rIn  * Math.sin(sa);
-  const largeArc = (endDeg - startDeg) > 180 ? 1 : 0;
-  return 'M ' + x1 + ' ' + y1 +
-         ' A ' + rOut + ' ' + rOut + ' 0 ' + largeArc + ' 1 ' + x2 + ' ' + y2 +
-         ' L ' + x3 + ' ' + y3 +
-         ' A ' + rIn  + ' ' + rIn  + ' 0 ' + largeArc + ' 0 ' + x4 + ' ' + y4 +
-         ' Z';
-}
+// drawer. Two-ring layout following Michael Edwards' published
+// design: outer ring = 14 sub-family slices with curved label-paths;
+// inner ring = 4 main-family bands with curved "FAMILY NOTES"
+// wordmarks; centre = "THE FRAGRANCE WHEEL" white disc. Click an
+// outer slice to toggle the corresponding Sub-Family chip; click an
+// inner band to toggle the Main Family chip. State stays in sync
+// with the existing chip drawer via toggleMainFamilyChip /
+// toggleSubFamilyChip so the selection reads identically wherever
+// it's surfaced.
+//
+// Geometry / colours / segment widths are inlined here (mirror of
+// FRAGRANCE_WHEEL in formulation_data.js) so the analyzer doesn't
+// have to load the formulation engine just to draw a wheel. Edwards
+// 2021 places three transitional slices on the cardinal dividers
+// (Aromatic at 6 o'clock, Fruity at 9, Woods at 3) plus two more
+// inside an anchor band (Floral Amber, Woody Amber) — slice widths
+// vary so each main-family inner band stays exactly 90° wide.
+const _WHEEL_SEGMENTS = [
+  // FRESH band (90°–180° on the SVG clock)
+  { id: 'aromatic_fougere', angle: 90,     width: 25.71, color: '#b0bcbe', transitional: true },
+  { id: 'citrus',           angle: 113.57, width: 21.43, color: '#b9c5c9' },
+  { id: 'water',            angle: 135,    width: 21.43, color: '#a5b3bc' },
+  { id: 'green',            angle: 156.43, width: 21.43, color: '#8d9bb0' },
+  // FLORAL band (180°–270°)
+  { id: 'fruity',           angle: 180,    width: 25.71, color: '#c5b0c8', transitional: true },
+  { id: 'floral',           angle: 205.71, width: 25.71, color: '#a66882' },
+  { id: 'soft_floral',      angle: 231.43, width: 25.71, color: '#c08a9c' },
+  { id: 'floral_amber',     angle: 257.14, width: 25.71, color: '#b78595', transitional: true },
+  // AMBER band (270°–360°)
+  { id: 'soft_amber',       angle: 282.86, width: 25.71, color: '#edb299' },
+  { id: 'amber',            angle: 308.57, width: 25.71, color: '#e89578' },
+  { id: 'woody_amber',      angle: 334.29, width: 25.71, color: '#dda994', transitional: true },
+  // Pure transitional Amber↔Woody (3 o'clock)
+  { id: 'woods',            angle: 360,    width: 25.71, color: '#bfcdaa', transitional: true },
+  // WOODY band (0°–90°)
+  { id: 'mossy_woods',      angle: 28.93,  width: 32.14, color: '#a8b898' },
+  { id: 'dry_woods',        angle: 61.07,  width: 32.14, color: '#93a587' },
+];
+const _WHEEL_MAIN_BANDS = {
+  fresh:  [90,  180],
+  floral: [180, 270],
+  amber:  [270, 360],
+  woody:  [0,   90],
+};
+const _WHEEL_MAIN_COLORS = {
+  fresh:  '#a5b3bc',
+  floral: '#a66882',
+  amber:  '#e89578',
+  woody:  '#a8b898',
+};
+const _WHEEL_LABELS = {
+  aromatic_fougere: 'Aromatic Fougère',
+  citrus:           'Citrus',
+  water:            'Water',
+  green:            'Green',
+  fruity:           'Fruity',
+  floral:           'Floral',
+  soft_floral:      'Soft Floral',
+  floral_amber:     'Floral Amber',
+  soft_amber:       'Soft Amber',
+  amber:            'Amber',
+  woody_amber:      'Woody Amber',
+  woods:            'Woods',
+  mossy_woods:      'Mossy Woods',
+  dry_woods:        'Dry Woods'
+};
+
 function _wheelSubCount(sub) {
   // Number of materials whose primary ∪ secondary ∪ facet-parent set
-  // hits any of this sub-family's legacy tokens. Cheap — we iterate
-  // FILTER_CACHE once per wheel render (≤ 500 entries today).
+  // hits any of this sub-family's legacy tokens. Cheap — one walk of
+  // FILTER_CACHE per render (≤ 500 entries today).
   const toks = SUB_FAMILY_TO_LEGACY[sub];
   if (!toks) return 0;
   let n = 0;
@@ -5994,71 +6025,170 @@ function _wheelSubCount(sub) {
   }
   return n;
 }
+
 function _buildWheelSvg() {
-  const cx = 200, cy = 200;
-  const innerR1 = 50,  innerR2 = 110;  // main ring
-  const outerR1 = 110, outerR2 = 175;  // sub ring
-  const labelR  = 192;
-  let svg = '<svg viewBox="0 0 400 400" class="wheel-svg" role="img" aria-label="Edwards Fragrance Wheel" xmlns="http://www.w3.org/2000/svg">';
-  let mainStart = 0;
-  for (const main of MAIN_FAMILIES) {
-    const subs = [...MAIN_FAMILY_TO_SUBS[main]];
-    const mainEnd = mainStart + 90;
-    const isActiveMain = activeMainFamilyFilters.has(main);
-    svg += '<path d="' + _arcPath(cx, cy, innerR1, innerR2, mainStart, mainEnd) + '" '
-         + 'class="wheel-main wheel-main--' + main + (isActiveMain ? ' is-active' : '') + '" '
-         + 'data-main="' + main + '" '
-         + 'onclick="_wheelClickMain(\'' + main + '\')" '
-         + 'role="button" tabindex="0">'
-         + '<title>' + MAIN_FAMILY_LABELS[main] + '</title></path>';
-    const subSpan = 90 / subs.length;
-    let subStart = mainStart;
-    for (const sub of subs) {
-      const subEnd = subStart + subSpan;
-      const isActiveSub = activeSubFamilyFilters.has(sub);
-      const count = _wheelSubCount(sub);
-      svg += '<path d="' + _arcPath(cx, cy, outerR1, outerR2, subStart, subEnd) + '" '
-           + 'class="wheel-sub wheel-sub--' + main + (isActiveSub ? ' is-active' : '') + (count ? '' : ' is-empty') + '" '
-           + 'data-subfam="' + sub + '" '
-           + 'onclick="_wheelClickSub(\'' + sub + '\')" '
-           + 'role="button" tabindex="0">'
-           + '<title>' + SUB_FAMILY_LABELS[sub] + ' — ' + count + ' material' + (count === 1 ? '' : 's') + '</title>'
-           + '</path>';
-      // Label placement — text-anchor flips at 180° so labels read
-      // away from the wheel rather than into it.
-      const midDeg = (subStart + subEnd) / 2;
-      const midRad = (midDeg - 90) * Math.PI / 180;
-      const lx = cx + labelR * Math.cos(midRad);
-      const ly = cy + labelR * Math.sin(midRad);
-      const anchor = midDeg < 180 ? 'start' : 'end';
-      svg += '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" '
-           + 'class="wheel-label" text-anchor="' + anchor + '" dominant-baseline="middle">'
-           + SUB_FAMILY_LABELS[sub] + '</text>';
-      subStart = subEnd;
-    }
-    // Main label inside the inner ring, rotated radially so it sits
-    // along the arc's bisector.
-    const mainMidDeg = (mainStart + mainEnd) / 2;
-    const mainMidRad = (mainMidDeg - 90) * Math.PI / 180;
-    const mlx = cx + 80 * Math.cos(mainMidRad);
-    const mly = cy + 80 * Math.sin(mainMidRad);
-    svg += '<text x="' + mlx.toFixed(1) + '" y="' + mly.toFixed(1) + '" '
-         + 'class="wheel-main-label" text-anchor="middle" dominant-baseline="middle">'
-         + MAIN_FAMILY_LABELS[main] + '</text>';
-    mainStart = mainEnd;
+  // Geometry mirrors formulation.html's wheel — wider canvas leaves
+  // room for radial sub-family labels without clipping.
+  const size = 520;
+  const cx = size / 2, cy = size / 2;
+  const outerR  = 240;   // outer edge of subfamily ring
+  const midR    = 160;   // inner edge of subfamily ring / outer edge of main ring
+  const innerR  = 95;    // inner edge of main ring / outer edge of centre disc
+  const centerR = 90;
+
+  let svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
+    + 'viewBox="0 0 ' + size + ' ' + size + '" class="wheel-svg" role="img" '
+    + 'aria-label="Edwards Fragrance Wheel" '
+    + 'style="max-width:560px;width:100%;margin:0 auto;display:block">';
+
+  // Cream/ivory backdrop disc — matches Edwards' printed wheel so
+  // the muted pastel slice colours read correctly on the dark UI.
+  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (outerR + 10) + '" fill="#f4efe4"/>';
+
+  // ─── <defs>: curved text-paths for the four "FAMILY NOTES" labels ──
+  // SVG textPath places letter "tops" on the side AWAY from the arc's
+  // centre of curvature. For our concentric arcs, that means UP for
+  // arcs in the top half of the screen but DOWN (upside-down) for
+  // arcs in the bottom half. Flip the bottom-half arcs (swap
+  // endpoints + sweep=0) so every band's wordmark reads upright.
+  let defs = '<defs>';
+  for (const main of Object.keys(_WHEEL_MAIN_BANDS)) {
+    const [minA, maxA] = _WHEEL_MAIN_BANDS[main];
+    const maxAForMid = maxA < minA ? maxA + 360 : maxA;
+    const midA = ((minA + maxAForMid) / 2) % 360;
+    const textR = (midR + innerR) / 2;
+    const isBottom = midA > 0 && midA < 180;
+    const aStart = (isBottom ? maxA : minA) * Math.PI / 180;
+    const aEnd   = (isBottom ? minA : maxA) * Math.PI / 180;
+    const sweep = isBottom ? 0 : 1;
+    const x1 = cx + textR * Math.cos(aStart), y1 = cy + textR * Math.sin(aStart);
+    const x2 = cx + textR * Math.cos(aEnd),   y2 = cy + textR * Math.sin(aEnd);
+    defs += '<path id="arc_' + main + '" fill="none" d="M ' + x1.toFixed(2) + ' ' + y1.toFixed(2)
+      + ' A ' + textR + ' ' + textR + ' 0 0 ' + sweep + ' ' + x2.toFixed(2) + ' ' + y2.toFixed(2) + '"/>';
   }
+  defs += '</defs>';
+  svg += defs;
+
+  // ─── Outer ring: 14 sub-family slices ────────────────────────────
+  for (const s of _WHEEL_SEGMENTS) {
+    const sw = s.width;
+    const a1 = (s.angle - sw / 2) * Math.PI / 180;
+    const a2 = (s.angle + sw / 2) * Math.PI / 180;
+    const x1o = cx + outerR * Math.cos(a1), y1o = cy + outerR * Math.sin(a1);
+    const x2o = cx + outerR * Math.cos(a2), y2o = cy + outerR * Math.sin(a2);
+    const x1i = cx + midR   * Math.cos(a2), y1i = cy + midR   * Math.sin(a2);
+    const x2i = cx + midR   * Math.cos(a1), y2i = cy + midR   * Math.sin(a1);
+    const large = sw > 180 ? 1 : 0;
+    const path = 'M ' + x1o + ' ' + y1o + ' A ' + outerR + ' ' + outerR + ' 0 ' + large + ' 1 ' + x2o + ' ' + y2o
+      + ' L ' + x1i + ' ' + y1i + ' A ' + midR + ' ' + midR + ' 0 ' + large + ' 0 ' + x2i + ' ' + y2i + ' Z';
+
+    const isActive = activeSubFamilyFilters.has(s.id);
+    const count = _wheelSubCount(s.id);
+    const isEmpty = !count;
+    const cls = 'wheel-seg' + (isActive ? ' active-seg' : '') + (isEmpty ? ' is-empty' : '');
+    svg += '<path class="' + cls + '" data-seg="' + s.id + '" d="' + path + '" '
+      + 'fill="' + s.color + '" fill-opacity="' + (isActive ? '1' : '0.95') + '" '
+      + 'stroke="#fff" stroke-width="2" style="cursor:' + (isEmpty ? 'default' : 'pointer') + '" '
+      + 'onclick="_wheelClickSub(\'' + s.id + '\')" role="button" tabindex="0">'
+      + '<title>' + _WHEEL_LABELS[s.id] + (s.transitional ? ' (transitional)' : '') + ' — ' + count + ' material' + (count === 1 ? '' : 's') + '</title>'
+      + '</path>';
+
+    // Sub-family label — radial orientation so text reads outward.
+    // Bottom half (90°–270°) gets +180° rotation so labels aren't
+    // upside-down. Two-word labels stack onto two lines.
+    const labelR = (outerR + midR) / 2;
+    const lx = cx + labelR * Math.cos(s.angle * Math.PI / 180);
+    const ly = cy + labelR * Math.sin(s.angle * Math.PI / 180);
+    let rot = s.angle;
+    if (s.angle > 90 && s.angle < 270) rot += 180;
+    const fontStyle = s.transitional ? ' font-style="italic"' : '';
+    const words = _WHEEL_LABELS[s.id].split(' ');
+    svg += '<text x="' + lx.toFixed(2) + '" y="' + ly.toFixed(2) + '" '
+      + 'text-anchor="middle" dominant-baseline="middle" '
+      + 'transform="rotate(' + rot.toFixed(2) + ' ' + lx.toFixed(2) + ' ' + ly.toFixed(2) + ')" '
+      + 'font-size="12"' + fontStyle + ' fill="#2c1810" font-weight="500" style="pointer-events:none">';
+    if (words.length > 1) {
+      svg += '<tspan x="' + lx.toFixed(2) + '" dy="-0.35em">' + words[0] + '</tspan>';
+      svg += '<tspan x="' + lx.toFixed(2) + '" dy="1.1em">' + words.slice(1).join(' ') + '</tspan>';
+    } else {
+      svg += words[0];
+    }
+    svg += '</text>';
+  }
+
+  // ─── Inner ring: 4 main-family bands with curved wordmarks ───────
+  for (const main of Object.keys(_WHEEL_MAIN_BANDS)) {
+    const [minA, maxA] = _WHEEL_MAIN_BANDS[main];
+    const a1 = minA * Math.PI / 180;
+    const a2 = maxA * Math.PI / 180;
+    const x1o = cx + midR   * Math.cos(a1), y1o = cy + midR   * Math.sin(a1);
+    const x2o = cx + midR   * Math.cos(a2), y2o = cy + midR   * Math.sin(a2);
+    const x1i = cx + innerR * Math.cos(a2), y1i = cy + innerR * Math.sin(a2);
+    const x2i = cx + innerR * Math.cos(a1), y2i = cy + innerR * Math.sin(a1);
+    const large = (maxA - minA) > 180 ? 1 : 0;
+    const path = 'M ' + x1o + ' ' + y1o + ' A ' + midR + ' ' + midR + ' 0 ' + large + ' 1 ' + x2o + ' ' + y2o
+      + ' L ' + x1i + ' ' + y1i + ' A ' + innerR + ' ' + innerR + ' 0 ' + large + ' 0 ' + x2i + ' ' + y2i + ' Z';
+    const color = _WHEEL_MAIN_COLORS[main] || '#888';
+    const isActiveMain = activeMainFamilyFilters.has(main);
+    const cls = 'wheel-band' + (isActiveMain ? ' active-band' : '');
+    svg += '<path class="' + cls + '" data-main="' + main + '" d="' + path + '" '
+      + 'fill="' + color + '" fill-opacity="1" stroke="#fff" stroke-width="2" '
+      + 'style="cursor:pointer" '
+      + 'onclick="_wheelClickMain(\'' + main + '\')" role="button" tabindex="0">'
+      + '<title>' + main.charAt(0).toUpperCase() + main.slice(1) + ' Family</title></path>';
+
+    svg += '<text font-size="14" fill="#fff" font-weight="700" letter-spacing="3" style="pointer-events:none">';
+    svg += '<textPath href="#arc_' + main + '" xlink:href="#arc_' + main + '" startOffset="50%" text-anchor="middle">'
+      + main.toUpperCase() + ' NOTES</textPath></text>';
+  }
+
+  // ─── Cardinal divider lines at 12 / 3 / 6 / 9 o'clock ────────────
+  // 270° = 12 o'clock, 0° = 3, 90° = 6, 180° = 9. Confined to the
+  // inner band so they don't bleed into the outer ring.
+  for (const cardinal of [270, 0, 90, 180]) {
+    const rad = cardinal * Math.PI / 180;
+    const x1 = cx + centerR * Math.cos(rad);
+    const y1 = cy + centerR * Math.sin(rad);
+    const x2 = cx + midR    * Math.cos(rad);
+    const y2 = cy + midR    * Math.sin(rad);
+    svg += '<line x1="' + x1.toFixed(2) + '" y1="' + y1.toFixed(2)
+      + '" x2="' + x2.toFixed(2) + '" y2="' + y2.toFixed(2)
+      + '" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>';
+  }
+
+  // ─── Centre white disc + "THE FRAGRANCE WHEEL" wordmark ──────────
+  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + centerR + '" fill="#fff" stroke="#ddd" stroke-width="1"/>';
+  svg += '<text x="' + cx + '" y="' + (cy - 14) + '" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#666" letter-spacing="2">THE</text>';
+  svg += '<text x="' + cx + '" y="' + (cy + 4)  + '" text-anchor="middle" dominant-baseline="middle" font-size="15" fill="#1a1a1a" font-weight="700" letter-spacing="1">FRAGRANCE</text>';
+  svg += '<text x="' + cx + '" y="' + (cy + 22) + '" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#666" letter-spacing="2">WHEEL</text>';
   svg += '</svg>';
   return svg;
 }
 window._wheelClickMain = function (main) {
+  // Visible click pulse on the inner band before redrawing — without
+  // it the click felt unresponsive on slow devices.
+  const band = document.querySelector('.wheel-band[data-main="' + main + '"]');
+  if (band) {
+    band.classList.add('popping');
+    setTimeout(() => { try { band.classList.remove('popping'); } catch (_) {} }, 500);
+  }
   const chip = document.querySelector('#mainFamilyFilters .odor-tag[data-main="' + main + '"]');
   if (chip) toggleMainFamilyChip(chip);
-  _redrawWheel();
+  // Slight delay so the pop animation is seen before the redraw
+  // wipes the SVG and rebuilds it.
+  setTimeout(_redrawWheel, 80);
 };
 window._wheelClickSub = function (sub) {
+  // Skip if slice is greyed out (no DB coverage).
+  const seg = document.querySelector('.wheel-seg[data-seg="' + sub + '"]');
+  if (seg && seg.classList.contains('is-empty')) return;
+  if (seg) {
+    seg.classList.add('popping');
+    setTimeout(() => { try { seg.classList.remove('popping'); } catch (_) {} }, 500);
+  }
   const chip = document.querySelector('#subFamilyFilters .odor-tag[data-subfam="' + sub + '"]');
   if (chip) toggleSubFamilyChip(chip);
-  _redrawWheel();
+  setTimeout(_redrawWheel, 80);
 };
 function _redrawWheel() {
   const host = document.getElementById('wheelHost');
