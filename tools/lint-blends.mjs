@@ -46,7 +46,7 @@ const BLEND_GROUP_TOKENS = new Set([
 
 // ── Load DB
 const raw = fs.readFileSync(DB_PATH, "utf8");
-const data = JSON.parse(raw.replace(/^const PERFUMERY_DATA\s*=\s*/, "").replace(/;\s*$/, ""));
+const data = JSON.parse(raw.replace(/^[\s\S]*?const PERFUMERY_DATA\s*=\s*/, "").replace(/;\s*$/, ""));
 const db = data.perfumery_db;
 const trades = data.trade_names || {};
 

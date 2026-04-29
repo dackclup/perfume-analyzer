@@ -1182,9 +1182,15 @@ html { scroll-behavior:smooth; }
   </div>
 </div>
 
+<!-- Shared Edwards-2021 taxonomy — loaded before perfumery_data.js
+     so the inline script below can reference the MAIN_FAMILIES /
+     MAIN_FAMILY_TO_SUBS / SUB_FAMILY_TO_MAIN globals directly. The
+     formulation page loads the same file. Bumping its ?v= forces a
+     reload on both pages. -->
+<script src="taxonomy.js?v=2026-04-25-rebuild-v207"></script>
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v204"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v207"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1334,7 +1340,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v204";
+const DATA_VERSION = "2026-04-25-rebuild-v207";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -2320,28 +2326,18 @@ const SUB_FAMILY_TO_LEGACY = {
   dry_woods:        new Set(['smoky']),
 };
 
-// ── Edwards 2021 Main Family axis (4 buckets) ──────────────────────
-// Mirrors the inner ring of the Fragrance Wheel — Fresh / Floral /
-// Amber / Woody. Each main bucket owns 3-4 sub-families; chip
-// matching expands a main to the union of all legacy tokens its
-// sub-families hold. Identical layout to FRAGRANCE_WHEEL.mainOf in
-// formulation_data.js so the in-app filter mirrors the wheel UI 1:1.
-const MAIN_FAMILIES = ['fresh', 'floral', 'amber', 'woody'];
-const MAIN_FAMILY_LABELS = {
-  fresh:  'Fresh',
-  floral: 'Floral',
-  amber:  'Amber',
-  woody:  'Woody',
-};
-const MAIN_FAMILY_TO_SUBS = {
-  fresh:  new Set(['aromatic_fougere', 'citrus', 'water', 'green']),
-  floral: new Set(['fruity', 'floral', 'soft_floral', 'floral_amber']),
-  amber:  new Set(['soft_amber', 'amber', 'woody_amber']),
-  woody:  new Set(['woods', 'mossy_woods', 'dry_woods']),
-};
+// MAIN_FAMILIES / MAIN_FAMILY_LABELS / MAIN_FAMILY_TO_SUBS /
+// SUB_FAMILY_TO_MAIN now live in taxonomy.js (loaded above). This
+// keeps the wheel taxonomy in sync between the Analyzer and the
+// Formulator without manual mirroring.
+//
 // Derived: union of every legacy token whose sub-family belongs to a
 // main. Built once at module init so matchesAllFilters can do a
-// single Set lookup per chip.
+// single Set lookup per chip. The legacy-token map (SUB_FAMILY_TO_LEGACY)
+// stays here — it's an Analyzer-specific mapping from the curated
+// `primaryFamilies` tokens used by the data layer to the Edwards 14
+// sub-families. Hoisting it would couple the Formulator to the legacy
+// vocabulary without benefit.
 const MAIN_FAMILY_TO_LEGACY = (() => {
   const m = {};
   for (const main of MAIN_FAMILIES) {
@@ -2351,17 +2347,6 @@ const MAIN_FAMILY_TO_LEGACY = (() => {
       if (toks) for (const t of toks) set.add(t);
     }
     m[main] = set;
-  }
-  return m;
-})();
-// Reverse index: sub-family id → its parent main key. Used by the
-// Family-drawer chip builder to render group headers and by the
-// cascading-visibility helper to narrow the Family chip cloud after
-// a Main chip selection.
-const SUB_FAMILY_TO_MAIN = (() => {
-  const m = {};
-  for (const [main, subs] of Object.entries(MAIN_FAMILY_TO_SUBS)) {
-    for (const s of subs) m[s] = main;
   }
   return m;
 })();
@@ -7360,11 +7345,27 @@ function classifyMaterialType(mat) {
   //    instead of in classifyUses so the Type label comes out right too.
   if (/\b(benzyl benzoate|triethyl citrate)\b/i.test(n)) return 'solvent';
 
+  // 0b) Note field as explicit Type override. When a curated entry sets
+  //    note to "Solvent" / "Carrier" / "Antioxidant" / "Preservative" /
+  //    "Solubilizer" / "Emulsifier", treat that as ground truth — no
+  //    keyword guessing needed. Lets us add functional ingredients with
+  //    accurate Type without packing more regexes below.
+  const _noteTrim = note.trim();
+  if (/^(solvent|carrier|antioxidant|preservative|solubilizer|emulsifier|wax|additive)$/i.test(_noteTrim)) {
+    return _noteTrim.toLowerCase();
+  }
+
   // 1) Antioxidants, preservatives, solubilizers, emulsifiers (most specific first).
-  if (/\b(antioxidant|tocopherol|bht|bha)\b/i.test(all)) return 'antioxidant';
-  if (/\b(preservative|biocide|paraben)\b/i.test(all)) return 'preservative';
-  if (/\b(solubilizer|solubilis|polysorbate|peg[- ]\d|hydrogenated castor)\b/i.test(all)) return 'solubilizer';
-  if (/\b(emulsifier|emulsifying|lecithin|ceteareth|stearate)\b/i.test(all)) return 'emulsifier';
+  //    Scope to name + note ONLY — earlier versions scanned `all` (which
+  //    includes safety.usage), which produced false positives like
+  //    Nerol/Phellandrene whose usage text says "always pair with BHT
+  //    for stability". The keyword has to be in the canonical name (e.g.
+  //    "BHT", "α-Tocopherol") for this branch to fire.
+  const _nameNote = n + ' ' + note;
+  if (/\b(antioxidant|tocopherol|bht|bha)\b/i.test(_nameNote)) return 'antioxidant';
+  if (/\b(preservative|biocide|paraben|phenoxyethanol)\b/i.test(_nameNote)) return 'preservative';
+  if (/\b(solubilizer|solubilis|polysorbate|peg[- ]\d|hydrogenated castor)\b/i.test(_nameNote)) return 'solubilizer';
+  if (/\b(emulsifier|emulsifying|lecithin|ceteareth|stearate)\b/i.test(_nameNote)) return 'emulsifier';
 
   // 2) Natural mixtures — sub-typed from the canonical name keyword,
   //    then defaulting to essential_oil for any unmatched mixture.
@@ -7392,8 +7393,8 @@ function classifyMaterialType(mat) {
   //    Type values via name and curated text. The override list above
   //    already caught the dual-role aromatic ones (BB / TEC).
   const hasRealOdor = !!(pf.odor_description && !RE_ODORLESS.test(pf.odor_description));
-  const isCarrierName = /\b(dipropylene glycol|propylene glycol|mct oil|squalane|isododecane|isopropyl myristate|triacetin|diethyl phthalate)\b/i.test(n);
-  const isSolventName = /\b(ethanol|ethyl alcohol)\b/i.test(n);
+  const isCarrierName = /\b(dipropylene glycol|propylene glycol|mct oil|squalane|isododecane|isopropyl myristate|triacetin|diethyl phthalate|glyceryl triacetate)\b/i.test(n);
+  const isSolventName = /\b(ethanol|ethyl alcohol|benzyl alcohol)\b/i.test(n);
   if (!hasRealOdor && (isSolventName || /\bsolvent\b/i.test(note + ' ' + desc))) return 'solvent';
   if (!hasRealOdor && (isCarrierName || /\bcarrier\b/i.test(note + ' ' + desc))) return 'carrier';
 
