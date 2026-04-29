@@ -183,10 +183,19 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .filter-drawer { margin:8px 0; }
 .filter-header { display:flex; align-items:center; gap:8px; }
 .filter-toggle { cursor:pointer; font-size:0.85em; font-weight:500; color:var(--accent); padding:6px 0; user-select:none; }
+.filter-count { display:inline-block; min-width:18px; padding:0 6px; margin-left:6px; background:var(--accent); color:var(--accent-text, #fff); font-size:0.75em; font-weight:600; border-radius:var(--radius-pill); text-align:center; line-height:18px; }
 .filter-reset { font-size:0.75em; color:var(--text2); cursor:pointer; padding:2px 10px; border:1px solid var(--border); border-radius:var(--radius-pill); opacity:0.6; }
 .filter-reset:hover { opacity:1; color:var(--accent); border-color:var(--accent); }
 .filter-content { display:none; padding:0 0 0 4px; }
 .filter-content.open { display:block; }
+/* Mobile-only "Close filters" affordance at the bottom of the drawer.
+   Once the user has scrolled deep into the filter list on a phone,
+   reaching the top filter-toggle to collapse is awkward — this gives
+   them a thumb-reachable exit. Hidden on tablet/desktop where the top
+   toggle is already in view. */
+.filter-close { display:none; width:100%; margin:var(--space-3) 0 0; padding:10px; background:var(--bg2); color:var(--accent); border:1px solid var(--border); border-radius:var(--radius-md); font-size:0.85em; font-weight:var(--fw-medium); cursor:pointer; font-family:inherit; }
+.filter-close:hover { border-color:var(--accent); background:var(--accent-soft); }
+@media (max-width:600px) { .filter-close { display:block; } }
 .arrow { display:inline-block; font-size:0.7em; transition:transform var(--dur) var(--ease); }
 .filter-toggle.open .arrow, .sub-toggle.open .arrow { transform:rotate(90deg); }
 .sub-drawer { border-bottom:1px solid var(--border); transition:background var(--dur) var(--ease); }
@@ -235,9 +244,12 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 
 /* Status */
 .status { color:var(--text2); font-size:0.85em; }
-.clear-btn { padding:6px 18px; background:var(--accent); color:var(--accent-text, #fff); border:none; border-radius:8px; font-size:0.85em; cursor:pointer; font-family:inherit; font-weight:500; margin-left:auto; opacity:0.4; }
+.sort-select { font-size:0.8em; padding:4px 8px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text); font-family:inherit; cursor:pointer; margin-left:auto; }
+.sort-select:hover { border-color:var(--accent); }
+.sort-select:focus { outline:none; border-color:var(--accent); }
+.clear-btn { padding:6px 18px; background:var(--accent); color:var(--accent-text, #fff); border:none; border-radius:8px; font-size:0.85em; cursor:pointer; font-family:inherit; font-weight:500; opacity:0.4; }
 .clear-btn:hover { opacity:0.7; }
-#statusBar { align-items:center; margin-bottom:8px; }
+#statusBar { align-items:center; gap:8px; margin-bottom:8px; }
 
 /* Cards */
 .card { border:1px solid var(--border); border-radius:var(--radius); margin-bottom:var(--space-3); overflow:hidden; background:var(--surface); box-shadow:var(--shadow-xs); transition:box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease); }
@@ -250,6 +262,9 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .card-body.open { display:block; }
 .card-del { color:var(--text2); font-size:1.1em; cursor:pointer; opacity:0.5; padding:4px 8px; }
 .card-del:hover { opacity:1; }
+.copy-btn { display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; background:transparent; border:1px solid var(--border); border-radius:var(--radius-sm); padding:2px 6px; margin-left:4px; cursor:pointer; color:var(--text2); transition:opacity .15s, color .15s, border-color .15s; }
+.copy-btn:hover { color:var(--accent); border-color:var(--accent); }
+.copy-btn--ok { color:var(--success, #2a9d4a); border-color:var(--success, #2a9d4a); }
 .card-match { color:var(--text2); font-size:0.8em; margin-bottom:10px; }
 
 /* Layout */
@@ -618,6 +633,9 @@ html { scroll-behavior:smooth; }
 .empty-state__title { font-size:var(--fs-md); font-weight:var(--fw-medium); color:var(--text); margin-bottom:var(--space-2); }
 .empty-state__hint { font-size:var(--fs-sm); margin-bottom:var(--space-3); line-height:var(--lh); }
 .empty-state__actions { display:flex; gap:var(--space-2); justify-content:center; flex-wrap:wrap; }
+.empty-state__btn { background:var(--accent); color:var(--accent-text, #fff); border:none; border-radius:var(--radius-pill); padding:6px 16px; font-size:var(--fs-sm); font-weight:var(--fw-medium); cursor:pointer; font-family:inherit; }
+.empty-state__btn:hover { background:var(--accent-hover); }
+.empty-state code { background:var(--bg-muted); border:1px solid var(--border); border-radius:var(--radius-sm); padding:1px 6px; font-family:'IBM Plex Mono',monospace; font-size:.85em; color:var(--text); }
 
 /* ===== Skeleton loader ===== */
 .skeleton {
@@ -727,7 +745,14 @@ html { scroll-behavior:smooth; }
 .btn--ghost { background:transparent; border-color:transparent; color:var(--text-muted); }
 .btn--ghost:hover { background:var(--bg-subtle); color:var(--text); border-color:transparent; }
 .btn--sm { padding:5px 10px; font-size:var(--fs-xs); min-height:28px; }
-@media (max-width:600px) { .btn, .chip, .icon-btn { min-height:40px; } }
+@media (max-width:600px) {
+  .btn, .chip, .icon-btn { min-height:40px; }
+  /* Filter chips need the same minimum tap target on mobile so a finger
+     hit doesn't accidentally land on a neighbour. Padding scales rather
+     than min-height to preserve the multi-row chip layout. */
+  .odor-tag { padding:8px 12px; font-size:0.78em; }
+  .odor-tag .pill-count { font-size:0.95em; }
+}
 
 /* Card primitive (additive — existing .card rules still apply) */
 .card__title { font-size:var(--fs-md); font-weight:var(--fw-medium); flex:1; min-width:0; overflow-wrap:anywhere; }
@@ -766,6 +791,7 @@ html { scroll-behavior:smooth; }
     <symbol id="i-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
     <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
   </defs>
 </svg>
 <div class="header-row">
@@ -787,14 +813,14 @@ html { scroll-behavior:smooth; }
 
 <main id="main-content" role="main">
 <div class="search-box">
-  <input type="text" id="searchInput" placeholder="e.g. linalool, hedione, iso e super" autocomplete="off" aria-label="Search materials">
+  <input type="text" id="searchInput" placeholder="name (linalool), CAS (78-70-6), or trade name (Hedione)" autocomplete="off" aria-label="Search materials by name, CAS, or trade name">
   <button id="searchBtn" disabled>Search</button>
 </div>
-<p class="search-hint"><kbd>/</kbd> focus search <kbd>Enter</kbd> submit <kbd>Esc</kbd> clear</p>
+<p class="search-hint"><span>Search by <strong>name</strong>, <strong>CAS</strong>, or <strong>trade name</strong></span><kbd>/</kbd> focus <kbd>Enter</kbd> submit <kbd>Esc</kbd> clear</p>
 <div id="toastRegion" class="toast-region" role="region" aria-live="polite" aria-atomic="false"></div>
 <div class="filter-drawer">
   <div class="filter-header">
-    <span class="filter-toggle" onclick="toggleMainFilter()"><span class="arrow">▶</span> Filter</span>
+    <span class="filter-toggle" onclick="toggleMainFilter()"><span class="arrow">▶</span> Filter <span class="filter-count" id="filterCount" style="display:none" aria-label="active filter count"></span></span>
     <span class="filter-reset" onclick="resetAllFilters()">Reset</span>
   </div>
   <div class="filter-content" id="filterContent">
@@ -856,6 +882,7 @@ html { scroll-behavior:smooth; }
         <div id="facetGroups"></div>
       </div>
     </div>
+    <button type="button" class="filter-close" onclick="toggleMainFilter()" aria-label="Close filter drawer">▲ Close filters</button>
   </div>
 </div>
 <p id="searchError" style="display:none;color:var(--danger);font-size:0.85em;font-weight:500;margin:4px 0 0"></p>
@@ -866,6 +893,12 @@ html { scroll-behavior:smooth; }
 
 <div id="statusBar" style="display:none">
   <span class="status" id="statusText"></span>
+  <select id="sortSelect" class="sort-select" onchange="setSortOrder(this.value)" aria-label="Sort results">
+    <option value="search">Search order</option>
+    <option value="name">Name (A–Z)</option>
+    <option value="cas">CAS</option>
+    <option value="family">Family</option>
+  </select>
   <button class="clear-btn" onclick="clearAll()">Clear all</button>
 </div>
 <div id="results"></div>
@@ -876,14 +909,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v174"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v175"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v174";
+const DATA_VERSION = "2026-04-25-rebuild-v175";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1661,6 +1694,17 @@ const REGULATORY_VALUES = ['regulated','allergen','phototoxic','restricted','ban
 const REGULATORY_LABELS = {
   regulated:'Regulated', allergen:'Allergen', phototoxic:'Phototoxic',
   restricted:'Restricted', banned:'Banned', sensitizer:'Sensitizer'
+};
+// One-line descriptions surfaced as native title= tooltips on filter
+// chips and result-card badges so users hovering a label get plain-
+// language context instead of having to hunt for the IFRA categorisation.
+const REGULATORY_DESCRIPTIONS = {
+  regulated:  'Has an IFRA usage limit (capped, but allowed).',
+  allergen:   'EU labelling allergen — must be declared above threshold.',
+  phototoxic: 'Causes photo-irritation in skin exposed to UV.',
+  restricted: 'Allowed only in narrow product categories or below strict caps.',
+  banned:     'Prohibited by IFRA / regional regulators.',
+  sensitizer: 'Known skin sensitiser — may trigger contact dermatitis.'
 };
 // Legacy → canonical alias table for the regulatory axis. Read-only:
 // the classifier and UI never produce these keys, but if they show up
@@ -2840,11 +2884,116 @@ function _updateAxisSelectedLabel(axisName) {
   el.textContent = [...ax.set].map(v => ax.labels[v] || v).join(', ');
 }
 
+// URL hash sync — survives reload, makes filter+search state shareable.
+// Format: #q=linalool&type=ac&family=floral,citrus&facet=rose
+// Search query lives in 'q'; each axis gets its own key with a comma-
+// separated value list. Family/facet axes use the legacy keys
+// mainFamily/subFamily/facet to match their internal Set names.
+let _urlSyncSuspended = false;
+function _writeUrlState() {
+  if (_urlSyncSuspended) return;
+  const parts = [];
+  const q = (typeof input !== 'undefined' && input && input.value || '').trim();
+  if (q) parts.push('q=' + encodeURIComponent(q));
+  for (const [name, ax] of Object.entries(_filterAxes)) {
+    if (ax.set.size) parts.push(name + '=' + [...ax.set].map(encodeURIComponent).join(','));
+  }
+  if (activeMainFamilyFilters.size) parts.push('mainFamily=' + [...activeMainFamilyFilters].map(encodeURIComponent).join(','));
+  if (activeSubFamilyFilters.size)  parts.push('subFamily=' + [...activeSubFamilyFilters].map(encodeURIComponent).join(','));
+  if (activeFacetFilters.size)      parts.push('facet=' + [...activeFacetFilters].map(encodeURIComponent).join(','));
+  const next = parts.length ? '#' + parts.join('&') : location.pathname + location.search;
+  const desired = parts.length ? next : location.pathname + location.search;
+  try { history.replaceState(null, '', desired); } catch (e) { /* ignore */ }
+}
+function _parseUrlState() {
+  const hash = location.hash.replace(/^#/, '');
+  if (!hash) return null;
+  const out = {};
+  for (const part of hash.split('&')) {
+    const eq = part.indexOf('=');
+    if (eq < 0) continue;
+    const k = part.slice(0, eq);
+    const v = part.slice(eq + 1);
+    if (k) out[k] = decodeURIComponent(v);
+  }
+  return out;
+}
+function _restoreUrlState() {
+  const s = _parseUrlState();
+  if (!s) return;
+  _urlSyncSuspended = true;
+  try {
+    if (s.q && typeof input !== 'undefined' && input) {
+      input.value = s.q;
+      const sb = document.getElementById('searchBtn');
+      if (sb) sb.disabled = false;
+    }
+    for (const [name, ax] of Object.entries(_filterAxes)) {
+      if (!s[name]) continue;
+      const valid = new Set(ax.values || []);
+      if (name === 'note') valid.add('_other');
+      for (const v of s[name].split(',').filter(Boolean)) {
+        if (!valid.has(v)) continue;
+        ax.set.add(v);
+        const chip = document.querySelector('#' + ax.containerId + ' .odor-tag[data-value="' + v + '"]');
+        if (chip) chip.classList.add('active');
+      }
+      if (ax.set.size) {
+        const allBtn = document.querySelector('#' + ax.containerId + ' .odor-tag[data-axis-all]');
+        if (allBtn) allBtn.classList.remove('active');
+      }
+      _updateAxisSelectedLabel(name);
+    }
+    const _restoreFamilySet = (key, set, container, updateLabel) => {
+      if (!s[key]) return;
+      for (const v of s[key].split(',').filter(Boolean)) {
+        const chip = document.querySelector(container + ' .odor-tag[data-' + (key === 'mainFamily' ? 'main' : key === 'subFamily' ? 'subfam' : 'facet') + '="' + v + '"]');
+        if (!chip) continue;
+        set.add(v);
+        chip.classList.add('active');
+      }
+      if (set.size) {
+        const allBtn = document.querySelector(container + ' > div > .odor-tag:first-child');
+        if (allBtn) allBtn.classList.remove('active');
+      }
+      if (typeof updateLabel === 'function') updateLabel();
+    };
+    _restoreFamilySet('mainFamily', activeMainFamilyFilters, '#mainFamilyFilters', typeof _updateMainFamilySelected === 'function' ? _updateMainFamilySelected : null);
+    _restoreFamilySet('subFamily',  activeSubFamilyFilters,  '#subFamilyFilters',  typeof _updateSubFamilySelected  === 'function' ? _updateSubFamilySelected  : null);
+    _restoreFamilySet('facet',      activeFacetFilters,      '#facetFilters',      typeof _updateFacetSelected      === 'function' ? _updateFacetSelected      : null);
+    if (typeof _applyCascadingVisibility === 'function') _applyCascadingVisibility();
+    _updateActiveFilterCount();
+  } finally {
+    _urlSyncSuspended = false;
+  }
+  if (typeof _refreshPills === 'function') _refreshPills();
+}
+
+// Active filter count surfaced next to the Filter drawer toggle so the
+// user can see at-a-glance how many axes are constraining results.
+function _countActiveFilters() {
+  let n = 0;
+  for (const ax of Object.values(_filterAxes)) if (ax.set.size) n++;
+  if (activeMainFamilyFilters.size) n++;
+  if (activeSubFamilyFilters.size)  n++;
+  if (activeFacetFilters.size)      n++;
+  return n;
+}
+function _updateActiveFilterCount() {
+  const el = document.getElementById('filterCount');
+  if (!el) return;
+  const n = _countActiveFilters();
+  if (n) { el.textContent = n; el.style.display = ''; }
+  else   { el.textContent = '';  el.style.display = 'none'; }
+}
+
 let _visTimer;
 function _refreshPills() {
   showPills(input.value);
   clearTimeout(_visTimer);
   _visTimer = setTimeout(_updateFilterVisibility, 80);
+  _updateActiveFilterCount();
+  _writeUrlState();
 }
 
 // Per-axis failure set. Returns which axes the material would fail
@@ -3675,9 +3824,21 @@ input.addEventListener("input", () => {
   clearSearchError();
   clearTimeout(_pillTimer);
   _pillTimer = setTimeout(() => showPills(input.value), 150);
+  _writeUrlState();
 });
 input.addEventListener("keydown", e => { const v=input.value.trim(); if (e.key==="Enter"&&v) doSearch(v); });
 btn.addEventListener("click", () => { const v=input.value.trim(); if (v) doSearch(v); });
+
+// Restore filter + search state from URL hash (deep-link support).
+// Hooked here so the search input and filter UI both exist.
+_restoreUrlState();
+// Re-sync state when user navigates back/forward — covers the case
+// where browser history entries point to different filter setups.
+window.addEventListener('popstate', () => { _restoreUrlState(); });
+// First paint of the result region — when the user lands on the page
+// with an empty `results` array, renderResults swaps in the empty-state
+// CTA instead of leaving the section blank.
+if (typeof renderResults === 'function') renderResults();
 
 // ═══════════════════════════════════════════════════════════════
 // MODULE: Filter Matching
@@ -4047,6 +4208,7 @@ async function doSearch(term) {
   progText.textContent = "";
   input.value = "";
   btn.disabled = true;
+  if (typeof _writeUrlState === 'function') _writeUrlState();
   results.forEach(r => r._open = false);
   renderResults._forceCollapse = true;
   // Stash a one-line summary string for renderResults to surface in the
@@ -5130,6 +5292,47 @@ function _cleanBlendsWith(arr) {
     return true;
   });
 }
+// Sort state — applied to the results array before each render so the
+// idx in toggleCard / delResult / open-state tracking stays consistent
+// with the visible order. _seq is stamped on each match in doSearch so
+// 'search' (default) restores the original arrival order even after the
+// user has reshuffled by name / CAS / family.
+let _sortOrder = 'search';
+let _resultSeq = 0;
+function _stampResultSeq(r) { if (r && r._seq == null) r._seq = _resultSeq++; }
+function _compareForSort(order) {
+  if (order === 'name') {
+    return (a, b) => {
+      const an = (a?.record?.names?.canonical || '').toLowerCase();
+      const bn = (b?.record?.names?.canonical || '').toLowerCase();
+      return an < bn ? -1 : an > bn ? 1 : (a._seq||0) - (b._seq||0);
+    };
+  }
+  if (order === 'cas') {
+    return (a, b) => {
+      const ac = a?.record?.identifiers?.cas || '';
+      const bc = b?.record?.identifiers?.cas || '';
+      return ac < bc ? -1 : ac > bc ? 1 : (a._seq||0) - (b._seq||0);
+    };
+  }
+  if (order === 'family') {
+    return (a, b) => {
+      const af = (a?.record?.classification?.primaryFamilies || [])[0] || '~';
+      const bf = (b?.record?.classification?.primaryFamilies || [])[0] || '~';
+      if (af !== bf) return af < bf ? -1 : 1;
+      const an = (a?.record?.names?.canonical || '').toLowerCase();
+      const bn = (b?.record?.names?.canonical || '').toLowerCase();
+      return an < bn ? -1 : an > bn ? 1 : (a._seq||0) - (b._seq||0);
+    };
+  }
+  // 'search' (or anything unknown) — original arrival order
+  return (a, b) => (a._seq||0) - (b._seq||0);
+}
+window.setSortOrder = function (order) {
+  _sortOrder = order || 'search';
+  renderResults();
+};
+
 function renderResults() {
   const div = document.getElementById("results");
   // Save open states before re-render (skip if just searched)
@@ -5140,7 +5343,31 @@ function renderResults() {
     });
   }
   renderResults._forceCollapse = false;
+  // Apply current sort. _seq tiebreak keeps the order stable across
+  // re-renders that don't change content (e.g. PubChem callbacks).
+  results.forEach(_stampResultSeq);
+  results.sort(_compareForSort(_sortOrder));
   document.getElementById("statusBar").style.display = results.length?"flex":"none";
+  // Empty state — no search results yet. Hint at the next action so a
+  // first-time user isn't staring at a blank page. Adapts copy to whether
+  // any filter is active so the CTA matches the user's situation.
+  if (!results.length) {
+    const _filterN = (typeof _countActiveFilters === 'function') ? _countActiveFilters() : 0;
+    const _hint = _filterN
+      ? 'Filters narrow the suggestion chips below. Pick one to add it to your results, or type a name to search.'
+      : 'Search by name (e.g. <code>linalool</code>, <code>hedione</code>) or CAS (e.g. <code>78-70-6</code>). Suggestions appear as you type.';
+    const _resetCta = _filterN
+      ? '<button type="button" class="empty-state__btn" onclick="resetAllFilters()">Reset filters</button>'
+      : '';
+    document.getElementById("results").innerHTML =
+      '<div class="empty-state">' +
+        '<svg class="empty-state__icon" aria-hidden="true"><use href="#i-search"/></svg>' +
+        '<div class="empty-state__title">No materials yet</div>' +
+        '<p class="empty-state__hint">' + _hint + '</p>' +
+        (_resetCta ? '<div class="empty-state__actions">' + _resetCta + '</div>' : '') +
+      '</div>';
+    return;
+  }
   // Default status text is "N material(s)". If the most recent doSearch
   // attached a batch summary (ambiguous / not-perfumery counts), append it
   // after a bullet separator so the user sees both pieces of information.
@@ -5244,7 +5471,7 @@ function renderResults() {
     if (nl.includes("base")) badges += `<span class="badge badge-base">Base</span>`;
 
     const ids = [
-      id.cas?`<p><code>CAS</code> ${esc(id.cas)}</p>`:"",
+      id.cas?`<p><code>CAS</code> ${esc(id.cas)} <button type="button" class="copy-btn" onclick="copyToClipboard('${esc(id.cas)}', this)" aria-label="Copy CAS number" title="Copy CAS"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-copy"/></svg></button></p>`:"",
       id.fema?`<p><code>FEMA</code> ${esc(id.fema)}</p>`:"",
       id.iupac?`<p><code>IUPAC</code> ${esc(id.iupac)}</p>`:"",
       id.molecular_formula?`<p><code>Formula</code> ${esc(id.molecular_formula)}</p>`:"",
@@ -5277,9 +5504,9 @@ function renderResults() {
           <div style="flex:1;min-width:0">
             <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(nm.canonical)}${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''}${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
             ${mat.match_info?`<p class="card-match" style="margin:4px 0 0 18px">${esc(mat.match_info)}</p>`:""}
-            ${(_typeFuncJoined || displayRegulatory.length)?`<div class="card-meta-row">${_typeFuncJoined?`<div class="tag-row"><span class="tag-axis-label">Type</span><span class="tag-chips"><span class="badge-type">${_typeFuncJoined}</span></span></div>`:''}${displayRegulatory.length?`<div class="tag-row"><span class="tag-axis-label">Reg</span><span class="tag-chips">${displayRegulatory.map(r=>`<span class="badge-reg">${REGULATORY_LABELS[r]||r}</span>`).join('')}</span></div>`:''}</div>`:''}
+            ${(_typeFuncJoined || displayRegulatory.length)?`<div class="card-meta-row">${_typeFuncJoined?`<div class="tag-row"><span class="tag-axis-label">Type</span><span class="tag-chips"><span class="badge-type">${_typeFuncJoined}</span></span></div>`:''}${displayRegulatory.length?`<div class="tag-row"><span class="tag-axis-label">Reg</span><span class="tag-chips">${displayRegulatory.map(r=>`<span class="badge-reg" title="${esc(REGULATORY_DESCRIPTIONS[r]||REGULATORY_LABELS[r]||r)}">${REGULATORY_LABELS[r]||r}</span>`).join('')}</span></div>`:''}</div>`:''}
           </div>
-          <span class="card-del" onclick="event.stopPropagation();delResult(${idx})">✕</span>
+          <span class="card-del" role="button" tabindex="0" aria-label="Remove from results" title="Remove from results" onclick="event.stopPropagation();delResult(${idx})">✕</span>
         </div>
         <div class="card-body${mat._open?' open':''}" id="body${idx}">
           ${rec.metadata.is_external?`<p style="color:var(--accent);font-size:0.8em;margin:0 0 4px">ℹ️ Not in local perfumery DB — data from PubChem only</p>`:""}
@@ -6112,6 +6339,9 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 })();
 
 // ===== Keyboard shortcuts =====
+// `/` focuses search, Escape clears the input when focused, otherwise
+// collapses the open material card. Both are no-ops when the user is
+// typing in another text field.
 document.addEventListener('keydown', e => {
   const tag = (e.target && e.target.tagName) || '';
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(tag);
@@ -6119,12 +6349,51 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     const i = document.getElementById('searchInput');
     if (i) i.focus();
+    return;
   }
   if (e.key === 'Escape') {
     const i = document.getElementById('searchInput');
-    if (i && document.activeElement === i) { i.value = ''; i.blur(); }
+    if (i && document.activeElement === i) {
+      if (i.value) { i.value = ''; if (typeof _writeUrlState === 'function') _writeUrlState(); }
+      i.blur();
+      return;
+    }
+    if (typing) return;
+    const open = document.querySelector('.card-body.open');
+    if (open) {
+      const idx = parseInt(open.id.replace('body', ''), 10);
+      if (!Number.isNaN(idx) && typeof toggleCard === 'function') toggleCard(idx);
+    }
   }
 });
+
+// ===== Clipboard helper =====
+// Copies text via the modern clipboard API with a textarea fallback for
+// browsers that don't expose navigator.clipboard (older Safari, file://
+// origins). Briefly flips the trigger button's content to "✓" so the
+// user gets visible feedback without an extra toast.
+window.copyToClipboard = function (text, btn) {
+  const ok = () => {
+    if (!btn) { try { showToast({ message: 'Copied: ' + text, variant: 'success', timeout: 2000 }); } catch (e) {} return; }
+    const prev = btn.innerHTML;
+    btn.innerHTML = '<svg class="icon icon-sm" aria-hidden="true"><use href="#i-check"/></svg>';
+    btn.classList.add('copy-btn--ok');
+    setTimeout(() => { btn.innerHTML = prev; btn.classList.remove('copy-btn--ok'); }, 1200);
+  };
+  const fail = () => { try { showToast({ message: 'Copy failed', variant: 'warn', timeout: 2500 }); } catch (e) {} };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok, fail);
+    return;
+  }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    const success = document.execCommand('copy');
+    document.body.removeChild(ta);
+    success ? ok() : fail();
+  } catch (e) { fail(); }
+};
 
 // ===== Toast helper =====
 window.showToast = function({ message, variant='info', retry=null, timeout=6000 } = {}) {
