@@ -1082,7 +1082,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v186"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v187"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1095,6 +1095,22 @@ const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // caller would surface as the cryptic
 //   "Cannot access 'CAS_RE_SEARCH' before initialization"
 // User report on v182 traced to exactly that ordering issue.
+// Chunked render scheduling config. Hoisted to the top of the script
+// (next to the regex consts) because renderResults() is called from
+// the init block at the bottom of this file BEFORE the executor
+// reaches the original definition site below renderResults itself —
+// reading `_renderCancel` from there hit a Temporal Dead Zone, which
+// the v186 defensive wrapper exposed as
+//   "Render failed — Cannot access '_renderCancel' before initialization"
+// Lifting the four declarations here makes them safe for every
+// caller, including the init-time first paint.
+let _renderCancel = null;
+const _RENDER_CHUNK_FIRST = 30;
+const _RENDER_CHUNK_NEXT  = 25;
+const _scheduleIdle = (typeof window !== 'undefined' && window.requestIdleCallback)
+  ? cb => window.requestIdleCallback(cb, { timeout: 200 })
+  : cb => requestAnimationFrame(() => cb(null));
+
 const CAS_RE_SEARCH = /^\d{2,7}-\d{2}-\d$/;
 const SMILES_RE_SEARCH = /^[A-Za-z0-9@+\-\[\]\(\)\\\/=#$.%]+$/;
 const AROMA_ELEMENTS_SET = new Set(['C','H','O','N','S','F','Cl','Br']);
@@ -1143,7 +1159,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v186";
+const DATA_VERSION = "2026-04-25-rebuild-v187";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -6147,12 +6163,8 @@ window.setSortOrder = function (order) {
 // keeps the first 30 cards on screen immediately, then drips the
 // remainder in via requestIdleCallback so the page remains
 // interactive (filter chips, sort dropdown, scroll all stay smooth).
-let _renderCancel = null;
-const _RENDER_CHUNK_FIRST = 30;
-const _RENDER_CHUNK_NEXT = 25;
-const _scheduleIdle = (typeof window !== 'undefined' && window.requestIdleCallback)
-  ? cb => window.requestIdleCallback(cb, { timeout: 200 })
-  : cb => requestAnimationFrame(() => cb(null));
+// State (_renderCancel, _RENDER_CHUNK_FIRST/NEXT, _scheduleIdle) lives
+// at the top of the script — see the comment block there.
 
 function _renderResultsCore() {
   if (typeof _clickLog === 'function') _clickLog('renderResults: results.length=' + results.length);
