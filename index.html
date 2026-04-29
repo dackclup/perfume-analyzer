@@ -876,14 +876,14 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v173"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v174"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v173";
+const DATA_VERSION = "2026-04-25-rebuild-v174";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -1702,7 +1702,7 @@ const _filterAxes = {
   func:   { set: new Set(), elId: 'funcSelected',   values: FUNCTION_VALUES, labels: FUNCTION_LABELS,    containerId: 'funcFilters'   },
   tag:    { set: new Set(), elId: 'tagSelected',    values: USE_VALUES,      labels: USE_LABELS,         containerId: 'tagFilters'    },
   reg:    { set: new Set(), elId: 'regSelected',    values: REGULATORY_VALUES, labels: REGULATORY_LABELS, containerId: 'regFilters'   },
-  source: { set: new Set(), elId: 'sourceSelected', values: SOURCE_VALUES,   labels: SOURCE_LABELS,      containerId: 'sourceFilters' },
+  source: { set: new Set(), elId: 'sourceSelected', values: SOURCE_VALUES,   labels: SOURCE_LABELS,      containerId: 'sourceFilters', singleSelect: true },
 };
 // Family axis is two-level — Main Family (4 buckets, mirroring the
 // inner ring of the Fragrance Wheel) + Family (14 sub-families on
@@ -2850,87 +2850,105 @@ function _refreshPills() {
 // Per-axis failure set. Returns which axes the material would fail
 // under the current active filter combo. Used by _updateFilterVisibility
 // so each axis's chip visibility is computed against the OTHER axes
-// only — otherwise an AND-within selection hides every other chip in
-// the same group the moment the user picks the first one, making
-// multi-select impossible.
+// only — otherwise selecting one chip would hide every sibling chip
+// the moment it's picked, making multi-select unusable.
+// Mirrors _passFilter's OR-within / AND-across semantics: an axis is
+// flagged as failed only when NO selected value in that axis matches
+// the material.
 function _axesFailedBy(fc, cas) {
   const failed = new Set();
-  // Note
+  // Note — OR-within
   const noteSet = _filterAxes.note.set;
   if (noteSet.size) {
+    let pass = false;
     for (const v of noteSet) {
-      if (v === '_other') { if (RE_NOTE_OTHER.test(fc.noteLow)) { failed.add('note'); break; } }
-      else { if (!fc.noteLow.includes(v)) { failed.add('note'); break; } }
+      if (v === '_other') { if (!RE_NOTE_OTHER.test(fc.noteLow)) { pass = true; break; } }
+      else if (fc.noteLow.includes(v)) { pass = true; break; }
     }
+    if (!pass) failed.add('note');
   }
-  // Type (single-value)
+  // Type — single-value (singleSelect: at most 1 value)
   const typeSet = _filterAxes.type.set;
   if (typeSet.size && !typeSet.has(fc.materialType)) failed.add('type');
-  // Function
+  // Function — OR-within
   const funcSet = _filterAxes.func.set;
   if (funcSet.size) {
-    for (const f of funcSet) if (!fc.functions.has(f)) { failed.add('func'); break; }
+    let pass = false;
+    for (const f of funcSet) if (fc.functions.has(f)) { pass = true; break; }
+    if (!pass) failed.add('func');
   }
-  // Use
+  // Use — OR-within
   const tagSet = _filterAxes.tag.set;
   if (tagSet.size) {
-    for (const u of tagSet) if (!fc.uses.has(u)) { failed.add('tag'); break; }
+    let pass = false;
+    for (const u of tagSet) if (fc.uses.has(u)) { pass = true; break; }
+    if (!pass) failed.add('tag');
   }
-  // Regulatory (with legacy alias fallback + BANNED_CAS)
+  // Regulatory — OR-within with BANNED_CAS fallback + legacy aliases
   const regSet = _filterAxes.reg.set;
   if (regSet.size) {
+    let pass = false;
     for (const r of regSet) {
       const canon = _normalizeRegulatoryToken(r);
       if (canon === 'banned') {
-        if (!(BANNED_CAS.has(cas) || fc.regulatory.has('banned'))) { failed.add('reg'); break; }
-      } else if (!fc.regulatory.has(canon)) {
-        let hit = false;
+        if (BANNED_CAS.has(cas) || fc.regulatory.has('banned')) { pass = true; break; }
+      } else if (fc.regulatory.has(canon)) { pass = true; break; }
+      else {
+        let aliasHit = false;
         for (const [legacy, c] of Object.entries(REGULATORY_LEGACY_ALIASES)) {
-          if (c === canon && fc.regulatory.has(legacy)) { hit = true; break; }
+          if (c === canon && fc.regulatory.has(legacy)) { aliasHit = true; break; }
         }
-        if (!hit) { failed.add('reg'); break; }
+        if (aliasHit) { pass = true; break; }
       }
     }
+    if (!pass) failed.add('reg');
   }
-  // Source (single-value)
+  // Source — single-value (singleSelect)
   const sourceSet = _filterAxes.source.set;
   if (sourceSet.size && !sourceSet.has(fc.source)) failed.add('source');
-  // Main Family — AND-within / OR-inside-chip against the 4-bucket
-  // MAIN_FAMILY_TO_LEGACY Set.
+  // Main Family — OR across chips, OR across MAIN_FAMILY_TO_LEGACY
+  // tokens. Combined material set includes facet-derived parents.
   if (activeMainFamilyFilters.size) {
     const combined = new Set([
       ...(fc.primaryFamilies || []),
       ...(fc.secondaryFamilies || [])
     ]);
-    for (const main of activeMainFamilyFilters) {
+    for (const f of (fc.facets || [])) {
+      const parent = FACET_TAGS[f];
+      if (parent) combined.add(parent);
+    }
+    let pass = false;
+    outer: for (const main of activeMainFamilyFilters) {
       const toks = MAIN_FAMILY_TO_LEGACY[main];
       if (!toks) continue;
-      let hit = false;
-      for (const t of toks) if (combined.has(t)) { hit = true; break; }
-      if (!hit) { failed.add('mainFamily'); break; }
+      for (const t of toks) if (combined.has(t)) { pass = true; break outer; }
     }
+    if (!pass) failed.add('mainFamily');
   }
-  // Family — AND-within / OR-inside-chip against the Edwards 14-subfamily
-  // buckets (SUB_FAMILY_TO_LEGACY). Each active chip is expanded to its
-  // legacy-token Set; the chip is satisfied if ANY token from that Set
-  // appears in primaryFamilies ∪ secondaryFamilies.
+  // Family — OR across chips, OR across SUB_FAMILY_TO_LEGACY tokens.
   if (activeSubFamilyFilters.size) {
     const combined = new Set([
       ...(fc.primaryFamilies || []),
       ...(fc.secondaryFamilies || [])
     ]);
-    for (const sub of activeSubFamilyFilters) {
+    for (const f of (fc.facets || [])) {
+      const parent = FACET_TAGS[f];
+      if (parent) combined.add(parent);
+    }
+    let pass = false;
+    outer: for (const sub of activeSubFamilyFilters) {
       const toks = SUB_FAMILY_TO_LEGACY[sub];
       if (!toks) continue;
-      let hit = false;
-      for (const t of toks) if (combined.has(t)) { hit = true; break; }
-      if (!hit) { failed.add('subFamily'); break; }
+      for (const t of toks) if (combined.has(t)) { pass = true; break outer; }
     }
+    if (!pass) failed.add('subFamily');
   }
-  // Facet
+  // Facet — OR-within
   if (activeFacetFilters.size) {
     const fcFacets = fc.facets || [];
-    for (const facet of activeFacetFilters) if (!fcFacets.includes(facet)) { failed.add('facet'); break; }
+    let pass = false;
+    for (const facet of activeFacetFilters) if (fcFacets.includes(facet)) { pass = true; break; }
+    if (!pass) failed.add('facet');
   }
   return failed;
 }
@@ -3674,70 +3692,75 @@ function matchesAllFilters(cas) {
   const fc = cas ? FILTER_CACHE.get(cas) : null;
   if (!fc) return !_anyAxisActive();
 
-  // Filter rule: AND-within-group AND AND-across-groups.
-  //   - If the user selects multiple chips inside one axis, the
-  //     material must carry ALL of those values (strict AND).
-  //   - If the user selects chips across multiple axes, the material
-  //     must pass every axis's check.
-  //   - Axes the user leaves untouched don't constrain anything.
-  // Single-value material fields (Type, Source, Note literal) use
-  // the "material's value must be one of the selected values" rule,
-  // which is the natural equivalent of AND for a single slot.
+  // Filter rule: OR-within-axis, AND-across-axes.
+  //   - Multi-select inside one axis = union (any selected value
+  //     matches → material passes that axis). Mirrors the standard
+  //     filter pattern in e-commerce/search UIs.
+  //   - Multi-axis = intersection (every active axis must pass).
+  //   - Untouched axes don't constrain.
+  // Single-value axes (Type, Source) are wired with singleSelect:true
+  // in _filterAxes so the chip strip enforces radio behavior; only
+  // one value is ever in the Set, making OR/AND equivalent.
 
-  // Note — AND-within on multi-word material notes. '_other' means
-  // "no top/middle/base"; selecting it alongside a concrete note
-  // is intentionally contradictory (matches nothing).
+  // Note — OR-within on substring of fc.noteLow. '_other' (Odorless)
+  // matches when the material has no top/middle/base; combining it
+  // with a concrete note picks "Top OR Odorless" etc.
   const noteSet = _filterAxes.note.set;
   if (noteSet.size) {
+    let pass = false;
     for (const v of noteSet) {
-      if (v === '_other') { if (RE_NOTE_OTHER.test(fc.noteLow)) return false; }
-      else { if (!fc.noteLow.includes(v)) return false; }
+      if (v === '_other') { if (!RE_NOTE_OTHER.test(fc.noteLow)) { pass = true; break; } }
+      else if (fc.noteLow.includes(v)) { pass = true; break; }
     }
+    if (!pass) return false;
   }
-  // Type — single-value on material. Material's materialType must
-  // be one of the selected values.
+  // Type — single-value on material; singleSelect enforced in UI so
+  // typeSet.size <= 1. Set-membership test works for both 0 and 1.
   const typeSet = _filterAxes.type.set;
   if (typeSet.size && !typeSet.has(fc.materialType)) return false;
-  // Function — multi-value on material. AND-within.
+  // Function — OR-within on fc.functions Set.
   const funcSet = _filterAxes.func.set;
   if (funcSet.size) {
-    for (const f of funcSet) if (!fc.functions.has(f)) return false;
+    let pass = false;
+    for (const f of funcSet) if (fc.functions.has(f)) { pass = true; break; }
+    if (!pass) return false;
   }
-  // Use — multi-value on material. AND-within.
+  // Use — OR-within on fc.uses Set.
   const tagSet = _filterAxes.tag.set;
   if (tagSet.size) {
-    for (const u of tagSet) if (!fc.uses.has(u)) return false;
+    let pass = false;
+    for (const u of tagSet) if (fc.uses.has(u)) { pass = true; break; }
+    if (!pass) return false;
   }
-  // Regulatory — multi-value on material. AND-within with the
-  // _normalizeRegulatoryToken legacy fold and the BANNED_CAS
-  // fallback for the 'banned' token.
+  // Regulatory — OR-within with _normalizeRegulatoryToken canonical
+  // fold, BANNED_CAS fallback for the 'banned' token, and
+  // REGULATORY_LEGACY_ALIASES defensive lookup.
   const regSet = _filterAxes.reg.set;
   if (regSet.size) {
+    let pass = false;
     for (const r of regSet) {
       const canon = _normalizeRegulatoryToken(r);
       if (canon === 'banned') {
-        if (!(BANNED_CAS.has(cas) || fc.regulatory.has('banned'))) return false;
-      } else if (!fc.regulatory.has(canon)) {
-        // Legacy alias fallback (defensive).
-        let hit = false;
+        if (BANNED_CAS.has(cas) || fc.regulatory.has('banned')) { pass = true; break; }
+      } else if (fc.regulatory.has(canon)) { pass = true; break; }
+      else {
+        let aliasHit = false;
         for (const [legacy, c] of Object.entries(REGULATORY_LEGACY_ALIASES)) {
-          if (c === canon && fc.regulatory.has(legacy)) { hit = true; break; }
+          if (c === canon && fc.regulatory.has(legacy)) { aliasHit = true; break; }
         }
-        if (!hit) return false;
+        if (aliasHit) { pass = true; break; }
       }
     }
+    if (!pass) return false;
   }
-  // Source — single-value on material.
+  // Source — single-value on material; singleSelect enforced in UI.
   const sourceSet = _filterAxes.source.set;
   if (sourceSet.size && !sourceSet.has(fc.source)) return false;
-  // Main Family — Edwards 4-bucket AND-within, tokens within a chip's
-  // MAIN_FAMILY_TO_LEGACY Set OR-match.
-  // Note: combined set includes both explicit families AND facet-derived
-  // parents (via FACET_TAGS). This means a material tagged with facets
-  // like 'tobacco'/'hay' is reachable via the Smoky family chip even
-  // when 'smoky' isn't listed in primary/secondary — the facet axis is
-  // more granular than family, but parent-of-facet membership is
-  // logically implied.
+  // Main Family — OR across selected chips, OR across each chip's
+  // MAIN_FAMILY_TO_LEGACY token Set. Combined material set = primary
+  // ∪ secondary ∪ FACET_TAGS-parents, so a material tagged with facet
+  // 'tobacco' is reachable via the Smoky family chip even when
+  // 'smoky' isn't listed in primary/secondary.
   if (activeMainFamilyFilters.size) {
     const combined = new Set([
       ...(fc.primaryFamilies || []),
@@ -3747,17 +3770,16 @@ function matchesAllFilters(cas) {
       const parent = FACET_TAGS[f];
       if (parent) combined.add(parent);
     }
-    for (const main of activeMainFamilyFilters) {
+    let pass = false;
+    outer: for (const main of activeMainFamilyFilters) {
       const toks = MAIN_FAMILY_TO_LEGACY[main];
       if (!toks) continue;
-      let hit = false;
-      for (const t of toks) if (combined.has(t)) { hit = true; break; }
-      if (!hit) return false;
+      for (const t of toks) if (combined.has(t)) { pass = true; break outer; }
     }
+    if (!pass) return false;
   }
-  // Family — Edwards 14-subfamily AND-within, tokens within a chip's
-  // SUB_FAMILY_TO_LEGACY Set OR-match. Same facet→parent derivation
-  // as the Main Family axis above.
+  // Family — OR across chips, OR across SUB_FAMILY_TO_LEGACY tokens.
+  // Same facet→parent derivation as Main Family above.
   if (activeSubFamilyFilters.size) {
     const combined = new Set([
       ...(fc.primaryFamilies || []),
@@ -3767,20 +3789,20 @@ function matchesAllFilters(cas) {
       const parent = FACET_TAGS[f];
       if (parent) combined.add(parent);
     }
-    for (const sub of activeSubFamilyFilters) {
+    let pass = false;
+    outer: for (const sub of activeSubFamilyFilters) {
       const toks = SUB_FAMILY_TO_LEGACY[sub];
       if (!toks) continue;
-      let hit = false;
-      for (const t of toks) if (combined.has(t)) { hit = true; break; }
-      if (!hit) return false;
+      for (const t of toks) if (combined.has(t)) { pass = true; break outer; }
     }
+    if (!pass) return false;
   }
-  // Facet — multi-value on material. AND-within.
+  // Facet — OR-within on fc.facets array.
   if (activeFacetFilters.size) {
     const fcFacets = fc.facets || [];
-    for (const facet of activeFacetFilters) {
-      if (!fcFacets.includes(facet)) return false;
-    }
+    let pass = false;
+    for (const facet of activeFacetFilters) if (fcFacets.includes(facet)) { pass = true; break; }
+    if (!pass) return false;
   }
   return true;
 }
