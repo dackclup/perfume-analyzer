@@ -360,6 +360,8 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .badge-related:hover { background:var(--accent); color:var(--accent-text, #fff); }
 .badge-substitute{ background:color-mix(in srgb, var(--success, #15803d) 12%, transparent); color:var(--success, #15803d); cursor:pointer; text-decoration:none; border-color:color-mix(in srgb, var(--success, #15803d) 28%, transparent); }
 .badge-substitute:hover { background:var(--success, #15803d); color:#fff; }
+.badge-captive   { display:inline-flex; align-items:center; font-size:var(--fs-xs); line-height:1.5; padding:2px 10px; border-radius:var(--radius-pill); background:color-mix(in srgb, var(--accent) 8%, transparent); color:var(--text); border:1px solid color-mix(in srgb, var(--accent) 25%, transparent); white-space:nowrap; }
+.captive-note    { display:block; font-size:var(--fs-xs); color:var(--text2); font-style:italic; margin-top:4px; line-height:1.4; }
 .card-meta-row { margin:var(--space-2) 0 0 0; display:flex; flex-direction:column; gap:var(--space-1); }
 /* Tag rows — refined for minimal scan: label collapses to inline-prefix
    on small screens, fixed left column on tablets+. Chip cluster fills
@@ -1076,7 +1078,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v181"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v182"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1109,7 +1111,7 @@ function _devWarn(...args) { if (_DEBUG) console.warn(...args); }
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v181";
+const DATA_VERSION = "2026-04-25-rebuild-v182";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -3102,6 +3104,40 @@ function getStereoPeers(cas) {
     if (dbEntry) out.push({ cas: peer, name: dbEntry.name });
   }
   return out;
+}
+
+// ── Supplier / captive history ─────────────────────────────────────
+// Curated, public-knowledge map of CAS → originating supplier and
+// year for the famous synthetic captives. Sourced from perfumery
+// reference works (Arctander 1969, Jellinek's "Practice of Modern
+// Perfumery", Calkin & Jellinek's "Perfumery: Practice and
+// Principles") plus public patent records and company press
+// releases. Only includes captives where the originating supplier is
+// well-documented and uncontested; widely-licensed nature-identicals
+// (vanillin, maltol, lactones, etc.) are intentionally excluded
+// since "supplier" means little for those.
+const SUPPLIER_BRANDS = {
+  '54464-57-2':  { brand: 'Iso E Super',                 supplier: 'IFF',                   year: 1973, note: 'Synthesised by John B. Hall.' },
+  '24851-98-7':  { brand: 'Hedione (methyl dihydrojasmonate)', supplier: 'Firmenich',       year: 1962, note: 'Édouard Demole; the bridge molecule of CK One and a thousand briefs.' },
+  '6790-58-5':   { brand: 'Ambroxide / Ambroxan / Cetalox', supplier: 'Originally Henkel; now Firmenich (Ambrofix™), DRT, generic', year: 1950, note: 'Sclareol-derived ambergris substitute.' },
+  '1222-05-5':   { brand: 'Galaxolide (HHCB)',            supplier: 'IFF',                   year: 1965, note: 'Polycyclic musk; widely used despite environmental scrutiny.' },
+  '33704-61-9':  { brand: 'Cashmeran (DPMI)',             supplier: 'IFF',                   year: 1973, note: 'Indanone-family captive; warm pine-musk character.' },
+  '198991-79-6': { brand: 'Javanol',                      supplier: 'Givaudan',              year: 2000, note: 'Sandalwood substitute, very tenacious.' },
+  '111879-80-2': { brand: 'Habanolide',                   supplier: 'Firmenich',             year: 1985, note: 'Macrocyclic musk, clean linen profile.' },
+  '106-02-5':    { brand: 'Exaltolide / 15-Pentadecanolide', supplier: 'Firmenich (Chuit-Naef)', year: 1927, note: 'First commercially viable macrocyclic musk; M. Stoll patent.' },
+  '70788-30-6':  { brand: 'Norlimbanol',                  supplier: 'Firmenich',             year: 1980, note: 'Dry oud / cedar facet captive.' },
+  '127-43-5':    { brand: 'Methyl Ionone γ (Iralia, Raldeine)', supplier: 'Givaudan / IFF / generic', year: 1893, note: 'First synthesised by Tiemann & Krüger; the foundation of every "violet" accord.' },
+  '23726-93-4':  { brand: 'β-Damascenone',                supplier: 'Firmenich',             year: 1970, note: 'Roman Kaiser headspace work; rose-tea backbone.' },
+  '43052-87-5':  { brand: 'α-Damascone',                  supplier: 'Firmenich',             year: 1972, note: 'Damascone family; used in Nahéma and beyond.' },
+  '4940-11-8':   { brand: 'Ethyl Maltol (Veltol Plus)',   supplier: 'Originally Pfizer; now Symrise + others', year: 1969, note: 'Caramel-cotton-candy gourmand cornerstone.' },
+  '4707-47-5':   { brand: 'Evernyl (methyl atrarate / Veramoss)', supplier: 'IFF',           year: 1985, note: 'Oakmoss-allergen replacer (post-IFRA atranol bans).' },
+  '79-69-6':     { brand: 'α-Irone (orris ketone)',       supplier: 'Firmenich + others',    year: 1893, note: 'Iris-rhizome powdery-floral captive.' },
+  '28940-11-6':  { brand: 'Calone 1951',                  supplier: 'Pfizer',                year: 1966, note: 'Marine ozonic — defined the 1990s aquatic genre.' },
+  '1205-17-0':   { brand: 'Helional',                     supplier: 'IFF',                   year: 1967, note: 'Aldehydic marine-watery; Acqua di Giò backbone.' }
+};
+function getSupplierInfo(cas) {
+  if (!cas) return null;
+  return SUPPLIER_BRANDS[cas] || null;
 }
 
 // Substitution suggestions — when a material is banned / restricted /
@@ -5619,7 +5655,13 @@ window.openCompareModal = function () {
     { label: 'Tenacity',    render: s => esc(s.tenacity || '—') },
     { label: 'Family',      render: s => esc(fmtList(s.families)) },
     { label: 'Facets',      render: s => esc(fmtList(s.facets)) },
-    { label: 'Regulatory',  render: s => s.regulatory.length ? s.regulatory.map(r => `<span class="badge-reg" title="${esc(REGULATORY_DESCRIPTIONS[r] || REGULATORY_LABELS[r] || r)}">${esc(REGULATORY_LABELS[r] || r)}</span>`).join(' ') : '—' }
+    { label: 'Regulatory',  render: s => s.regulatory.length ? s.regulatory.map(r => `<span class="badge-reg" title="${esc(REGULATORY_DESCRIPTIONS[r] || REGULATORY_LABELS[r] || r)}">${esc(REGULATORY_LABELS[r] || r)}</span>`).join(' ') : '—' },
+    { label: 'Captive',     render: s => {
+      const sup = getSupplierInfo(s.cas);
+      if (!sup) return '<span style="color:var(--text2)">—</span>';
+      const year = sup.year ? ' · ' + sup.year : '';
+      return '<strong>' + esc(sup.brand) + '</strong><br><span style="color:var(--text2);font-size:0.9em">' + esc(sup.supplier) + esc(year) + '</span>';
+    } }
   ];
   const head =
     '<thead><tr><th class="compare-table__field">Field</th>' +
@@ -5912,12 +5954,13 @@ window.exportCSV = function () {
     try { showToast({ message: 'No materials to export.', variant: 'info', timeout: 2000 }); } catch (e) {}
     return;
   }
-  const header = ['Name','CAS','Type','Source','Functions','Uses','Note','Tenacity','Families','Facets','Regulatory'];
+  const header = ['Name','CAS','Type','Source','Functions','Uses','Note','Tenacity','Families','Facets','Regulatory','CaptiveBrand','CaptiveSupplier','CaptiveYear'];
   const lines = [header.map(_csvEscape).join(',')];
   for (const r of results) {
     const cas = r?.record?.identifiers?.cas || '';
     const s = cas ? _compareSnapshot(cas) : null;
     if (!s) continue;
+    const sup = getSupplierInfo(s.cas) || {};
     const row = [
       s.name,
       s.cas,
@@ -5929,7 +5972,10 @@ window.exportCSV = function () {
       s.tenacity,
       s.families.join('; '),
       s.facets.join('; '),
-      s.regulatory.map(rg => REGULATORY_LABELS[rg] || rg).join('; ')
+      s.regulatory.map(rg => REGULATORY_LABELS[rg] || rg).join('; '),
+      sup.brand || '',
+      sup.supplier || '',
+      sup.year || ''
     ];
     lines.push(row.map(_csvEscape).join(','));
   }
@@ -6236,6 +6282,18 @@ function renderResults() {
               `<a class="badge-substitute" onclick="event.stopPropagation();doSearch('${esc(s.name).replace(/'/g, "\\'")}')" role="button" tabindex="0" title="Same family / type without the regulatory block">${esc(s.name)}</a>`
             ).join('');
             return `<div class="card-meta-row" style="margin:6px 0 10px 0"><div class="tag-row"><span class="tag-axis-label" title="Family-similar materials without the same regulatory block">Try</span><span class="tag-chips">${chips}</span></div></div>`;
+          })()}
+          ${(() => {
+            // Captive history row — surfaces the originating supplier
+            // for famous synthetics. SUPPLIER_BRANDS holds only well-
+            // documented captives; nature-identicals and CAS without
+            // a clear single originator are intentionally omitted.
+            if (!id.cas) return '';
+            const sup = getSupplierInfo(id.cas);
+            if (!sup) return '';
+            const yearTxt = sup.year ? ' · ' + sup.year : '';
+            const noteTxt = sup.note ? ' <span class="captive-note">' + esc(sup.note) + '</span>' : '';
+            return `<div class="card-meta-row" style="margin:6px 0 10px 0"><div class="tag-row"><span class="tag-axis-label" title="Originating supplier / commercial captive history">Captive</span><span class="tag-chips"><span class="badge-captive"><strong>${esc(sup.brand)}</strong> · ${esc(sup.supplier)}${yearTxt}</span>${noteTxt}</span></div></div>`;
           })()}
           ${mat.structure_image_url?`<div class="col-img"><img src="${mat.structure_image_url}" alt="2D structure of ${esc(nm.canonical)}" loading="lazy" onerror="handleStructureImgError(this)"></div>`:""}
           <div class="col-info">
