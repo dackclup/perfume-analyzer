@@ -312,6 +312,20 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .modal-results li:hover { background:var(--bg2); }
 .modal-results .mr-name { font-weight:500; }
 .modal-results .mr-meta { color:var(--text2); font-size:0.85em; }
+/* Category pill — replaces the raw CAS column in the Add modal so
+   users see what role the material plays (Solvent / Carrier /
+   Antioxidant / Preservative for functional ingredients; Top /
+   Middle / Base for fragrance materials) instead of a CAS number
+   that means nothing without a reference book. */
+.mr-cat { padding:2px 8px; border-radius:10px; font-size:0.72em; font-weight:600; letter-spacing:0.02em; text-transform:uppercase; white-space:nowrap; border:1px solid transparent; }
+.mr-cat.top { background:var(--badge-top-bg); color:var(--badge-top-fg); }
+.mr-cat.mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
+.mr-cat.base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
+.mr-cat.solvent     { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); }
+.mr-cat.carrier     { background:var(--accent-soft); color:var(--accent); }
+.mr-cat.antioxidant { background:var(--success-bg);  color:var(--success); border-color:var(--success-border); }
+.mr-cat.preservative{ background:var(--warn-bg);     color:var(--warn);    border-color:var(--warn-border); }
+.mr-cat.other       { background:var(--bg2);         color:var(--text2);   border-color:var(--border); }
 
 /* ===== Confidence dots ===== */
 .conf-dot { display:inline-block; width:8px; height:8px; border-radius:50%; }
@@ -889,10 +903,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v207"></script>
-<script src="perfumery_data.js?v=2026-04-29-v207"></script>
-<script src="formulation_data.js?v=2026-04-29-v207"></script>
-<script src="formulation_engine.js?v=2026-04-29-v207"></script>
+<script src="taxonomy.js?v=2026-04-29-v208"></script>
+<script src="perfumery_data.js?v=2026-04-29-v208"></script>
+<script src="formulation_data.js?v=2026-04-29-v208"></script>
+<script src="formulation_engine.js?v=2026-04-29-v208"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1834,10 +1848,42 @@ modalSearch.addEventListener('input', () => {
     const badge = isCarrier ? '' : safetyBadgeForSearch(e, catId);
     return `<li onclick="${clickFn}('${escHtml(e.cas)}')">
       <span class="mr-name">${escHtml(e.name)}${badge}</span>
-      <span class="mr-meta">${escHtml(e.cas)}</span>
+      ${categoryPill(e)}
     </li>`;
   }).join('');
 });
+
+// Build the right-column category pill for the Add modal. Replaces the
+// raw CAS number — categories ("Solvent", "Carrier", "Antioxidant",
+// "Preservative" for functional ingredients; "Top", "Middle", "Base"
+// for fragrance materials) carry far more meaning at a glance.
+//
+// Source of truth is entry.note. Multi-tier strings like "Top / Middle"
+// or "Middle / Base" render the FIRST tier only as the primary chip
+// (matching the existing single-pill UX in the materials list); when
+// multi-tier matters the user can click in to see the full note.
+function categoryPill(entry) {
+  const note = (entry && entry.note) ? String(entry.note).trim() : '';
+  if (!note) return '<span class="mr-cat other">—</span>';
+  const lower = note.toLowerCase();
+  // Functional ingredients — single-word notes that map directly to a
+  // category class.
+  const FUNCTIONAL = {
+    solvent: 'solvent', carrier: 'carrier', antioxidant: 'antioxidant',
+    preservative: 'preservative', solubilizer: 'other', emulsifier: 'other',
+    wax: 'other', additive: 'other',
+  };
+  if (FUNCTIONAL[lower]) {
+    return `<span class="mr-cat ${FUNCTIONAL[lower]}">${escHtml(note)}</span>`;
+  }
+  // Fragrance materials — pick the leading tier of a multi-tier note
+  // ("Top / Middle" → Top, "Middle / Base" → Middle).
+  let cls = 'other';
+  if (/\btop\b/i.test(lower)) cls = 'top';
+  else if (/\b(middle|mid|heart)\b/i.test(lower)) cls = 'mid';
+  else if (/\bbase\b/i.test(lower)) cls = 'base';
+  return `<span class="mr-cat ${cls}">${escHtml(note)}</span>`;
+}
 
 // Return a small status badge HTML for a material in the Add-modal search.
 // Indicates the confidence of safety data so users can tell apart:
