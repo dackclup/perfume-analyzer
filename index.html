@@ -743,13 +743,17 @@ html { scroll-behavior:smooth; }
 /* ===== Empty state ===== */
 .empty-state {
   text-align:center; padding:var(--space-6) var(--space-4);
+  margin:var(--space-4) 0;
   color:var(--text-muted);
+  background:var(--surface, var(--bg2));
+  border:1px dashed var(--border);
+  border-radius:var(--radius-md);
 }
 .empty-state__icon { width:40px; height:40px; color:var(--text-subtle); margin:0 auto var(--space-3); display:block; }
-.empty-state__title { font-size:var(--fs-md); font-weight:var(--fw-medium); color:var(--text); margin-bottom:var(--space-2); }
-.empty-state__hint { font-size:var(--fs-sm); margin-bottom:var(--space-3); line-height:var(--lh); }
+.empty-state__title { font-size:var(--fs-lg, 1.15em); font-weight:var(--fw-medium); color:var(--text); margin-bottom:var(--space-2); }
+.empty-state__hint { font-size:var(--fs-sm); margin-bottom:var(--space-3); line-height:var(--lh); color:var(--text2); }
 .empty-state__actions { display:flex; gap:var(--space-2); justify-content:center; flex-wrap:wrap; }
-.empty-state__btn { background:var(--accent); color:var(--accent-text, #fff); border:none; border-radius:var(--radius-pill); padding:6px 16px; font-size:var(--fs-sm); font-weight:var(--fw-medium); cursor:pointer; font-family:inherit; }
+.empty-state__btn { background:var(--accent); color:var(--accent-text, #fff); border:none; border-radius:var(--radius-pill); padding:8px 20px; font-size:var(--fs-sm); font-weight:var(--fw-medium); cursor:pointer; font-family:inherit; }
 .empty-state__btn:hover { background:var(--accent-hover); }
 .empty-state code { background:var(--bg-muted); border:1px solid var(--border); border-radius:var(--radius-sm); padding:1px 6px; font-family:'IBM Plex Mono',monospace; font-size:.85em; color:var(--text); }
 
@@ -1078,7 +1082,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v182"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v183"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1111,7 +1115,7 @@ function _devWarn(...args) { if (_DEBUG) console.warn(...args); }
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v182";
+const DATA_VERSION = "2026-04-25-rebuild-v183";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -4429,8 +4433,14 @@ async function doSearch(term) {
     const settled = await Promise.allSettled(batch.map(n => scrapeMaterial(n)));
     settled.forEach((r, i) => {
       if (r.status === 'rejected') {
-        console.warn('scrapeMaterial rejected for "'+batch[i]+'":', r.reason);
-        showSearchError(`'${batch[i]}' — search error (see console)`);
+        console.error('[search] scrapeMaterial rejected for "' + batch[i] + '":', r.reason);
+        // Surface the actual error message instead of the opaque
+        // "search error (see console)" so the user can act on it
+        // (offline / blocked CDN / bad input). Truncated to keep the
+        // banner readable.
+        const reason = (r.reason && (r.reason.message || String(r.reason))) || 'unknown';
+        const reasonShort = reason.length > 80 ? reason.slice(0, 80) + '…' : reason;
+        showSearchError(`Couldn't load '${batch[i]}' — ${reasonShort}`);
         return;
       }
       const mat = r.value;
@@ -4859,10 +4869,16 @@ function _applyLocalMatch(mat, match) {
   mat.record.identifiers.cas = cas;
   mat.found = true;
   mat.match_info = (match.confidence >= 0.9 ? '\u2705 ' : '\u2139\uFE0F ') + match.reason + ' (' + cas + ')';
-  applyPerfumery(mat, cas);
+  // Each helper is wrapped because a throw from one (e.g. a malformed
+  // GHS code list, an unexpected facet token in classification) used
+  // to reject the whole scrapeMaterial promise and surface as a
+  // generic "search error (see console)". Now a partial card still
+  // renders with whatever data did succeed \u2014 the warn carries the
+  // root cause for follow-up.
+  try { applyPerfumery(mat, cas); } catch (e) { console.warn('[search] applyPerfumery failed for ' + cas + ':', e); }
   if (MIXTURES.has(cas)) mat.match_info = '\u2705 Natural mixture (' + cas + ')';
-  _computeClassification(mat);
-  _enrichPubchem(mat, cas);
+  try { _computeClassification(mat); } catch (e) { console.warn('[search] _computeClassification failed for ' + cas + ':', e); }
+  try { _enrichPubchem(mat, cas); } catch (e) { console.warn('[search] _enrichPubchem (sync setup) failed for ' + cas + ':', e); }
   return true;
 }
 
@@ -4904,17 +4920,31 @@ async function scrapeMaterial(name) {
   const n = normalizeInput(name);
 
   // ── Local DB matchers (Steps 1-5, synchronous, high confidence) ──
-  const localMatch = matchByCAS(n) || matchByCanonicalName(n) || matchBySynonym(n) || matchByTradeName(n) || matchByAlias(n);
-  if (localMatch && _applyLocalMatch(mat, localMatch)) return mat;
+  // Each matcher is a pure Map / Set lookup, but a malformed DB entry
+  // could still throw inside the helpers _applyLocalMatch chains
+  // (applyPerfumery / _computeClassification / _enrichPubchem). We
+  // wrap the whole local-match block so a single bad entry can't
+  // sink the entire search — fall through to the PubChem fallbacks
+  // below instead of rejecting the promise outright.
+  try {
+    const localMatch = matchByCAS(n) || matchByCanonicalName(n) || matchBySynonym(n) || matchByTradeName(n) || matchByAlias(n);
+    if (localMatch && _applyLocalMatch(mat, localMatch)) return mat;
+  } catch (e) {
+    console.error('[search] local match threw for "' + name + '":', e);
+  }
 
   // ── Step 6: Fuzzy local match ──
-  const fuzzyResult = matchFuzzyLocal(n);
-  if (fuzzyResult) {
-    if (fuzzyResult.type === 'ambiguous') {
-      mat.record.match = fuzzyResult; mat.found = false; mat._ambiguous = true;
-      return mat;
+  try {
+    const fuzzyResult = matchFuzzyLocal(n);
+    if (fuzzyResult) {
+      if (fuzzyResult.type === 'ambiguous') {
+        mat.record.match = fuzzyResult; mat.found = false; mat._ambiguous = true;
+        return mat;
+      }
+      if (_applyLocalMatch(mat, fuzzyResult)) return mat;
     }
-    if (_applyLocalMatch(mat, fuzzyResult)) return mat;
+  } catch (e) {
+    console.error('[search] fuzzy match threw for "' + name + '":', e);
   }
 
   // ── Steps 7-11: PubChem fallbacks (async) ──
