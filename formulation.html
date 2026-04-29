@@ -887,9 +887,9 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 <!-- ?v= query suffix busts browser cache whenever the wheel palette /
      taxonomy changes. Bump this string on every deploy that touches
      the three loaded scripts below. -->
-<script src="perfumery_data.js?v=2026-04-29-v206"></script>
-<script src="formulation_data.js?v=2026-04-29-v206"></script>
-<script src="formulation_engine.js?v=2026-04-29-v206"></script>
+<script src="perfumery_data.js?v=2026-04-29-v207"></script>
+<script src="formulation_data.js?v=2026-04-29-v207"></script>
+<script src="formulation_engine.js?v=2026-04-29-v207"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1903,8 +1903,13 @@ function addFromDB(cas) {
   const entry = DB[cas];
   if (!entry) return false;
   if (!entry.note || !/top|middle|mid|base/i.test(entry.note)) return false;
-  // A1: Merge MATERIAL_PROPERTIES enrichment data
+  // Engineering properties (mw, density, logP, bp, smiles) live on the
+  // DB entry as of v207. MATERIAL_PROPERTIES is now an orphan-fallback
+  // table — used only when the entry doesn't carry a particular field
+  // (e.g. older entries without density). Read DB-first, MP-second.
   const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[cas] || {} : {};
+  const _mw     = parseFloat(entry.weight) || mp.mw     || null;
+  const _xlogp  = parseFloat(entry.xlogp)  || mp.logP   || null;
   const enriched = {
     cas: entry.cas,
     name: entry.name,
@@ -1917,11 +1922,11 @@ function addFromDB(cas) {
     blends_with: entry.blends_with || [],
     ifra_guideline: entry.safety?.ifra || null,
     usage_levels: entry.safety?.usage || null,
-    molecular_weight: mp.mw || null,
-    density: mp.density || null,
-    xlogp: mp.logP || null,
-    boiling_point: mp.bp || null,
-    smiles: mp.smiles || null,
+    molecular_weight: _mw,
+    density: entry.density != null ? entry.density : (mp.density || null),
+    xlogp: _xlogp,
+    boiling_point: entry.boiling_point != null ? entry.boiling_point : (mp.bp || null),
+    smiles: entry.smiles || mp.smiles || null,
     primaryFamilies: [],
     secondaryFamilies: [],
     facets: [],
@@ -3678,6 +3683,7 @@ function briefToggleMaterial(btn) {
   const entry = DB[cas];
   if (!entry) return;
   const pct = parseFloat(btn.dataset.pct);
+  // DB-first read for engineering props (v207 — see addFromDB above)
   const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[cas] || {} : {};
   const enriched = {
     cas: entry.cas,
@@ -3691,11 +3697,11 @@ function briefToggleMaterial(btn) {
     blends_with: entry.blends_with || [],
     ifra_guideline: entry.safety?.ifra || null,
     usage_levels: entry.safety?.usage || null,
-    molecular_weight: mp.mw || null,
-    density: mp.density || null,
-    xlogp: mp.logP || null,
-    boiling_point: mp.bp || null,
-    smiles: mp.smiles || null,
+    molecular_weight: parseFloat(entry.weight) || mp.mw || null,
+    density: entry.density != null ? entry.density : (mp.density || null),
+    xlogp: parseFloat(entry.xlogp) || mp.logP || null,
+    boiling_point: entry.boiling_point != null ? entry.boiling_point : (mp.bp || null),
+    smiles: entry.smiles || mp.smiles || null,
     primaryFamilies: [], secondaryFamilies: [], facets: [], functions: [], regulatory: [],
   };
   const ok = formulation.addMaterial(cas, entry.name, isFinite(pct) && pct > 0 ? pct : 0, enriched);
@@ -3735,6 +3741,7 @@ function applyBriefFormula() {
     seen.add(r.cas);
     const entry = DB[r.cas];
     if (!entry) { skipped.push({ cas: r.cas, reason: 'not-in-db' }); continue; }
+    // DB-first read for engineering props (v207 — see addFromDB above)
     const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[r.cas] || {} : {};
     const enriched = {
       cas: entry.cas,
@@ -3748,11 +3755,11 @@ function applyBriefFormula() {
       blends_with: entry.blends_with || [],
       ifra_guideline: entry.safety?.ifra || null,
       usage_levels: entry.safety?.usage || null,
-      molecular_weight: mp.mw || null,
-      density: mp.density || null,
-      xlogp: mp.logP || null,
-      boiling_point: mp.bp || null,
-      smiles: mp.smiles || null,
+      molecular_weight: parseFloat(entry.weight) || mp.mw || null,
+      density: entry.density != null ? entry.density : (mp.density || null),
+      xlogp: parseFloat(entry.xlogp) || mp.logP || null,
+      boiling_point: entry.boiling_point != null ? entry.boiling_point : (mp.bp || null),
+      smiles: entry.smiles || mp.smiles || null,
       primaryFamilies: [], secondaryFamilies: [], facets: [], functions: [], regulatory: [],
     };
     const pct = (typeof r.suggestedPct === 'number' && isFinite(r.suggestedPct) && r.suggestedPct > 0)
