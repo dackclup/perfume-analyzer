@@ -1082,7 +1082,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v190"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v191"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1209,7 +1209,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v190";
+const DATA_VERSION = "2026-04-25-rebuild-v191";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -4287,6 +4287,13 @@ _restoreUrlState();
 // Re-sync state when user navigates back/forward — covers the case
 // where browser history entries point to different filter setups.
 window.addEventListener('popstate', () => { _restoreUrlState(); });
+// Rehydrate the result list from the previous session. Persisted on
+// every renderResults call, so navigating to formulation.html and
+// back lands the user on their existing cards instead of a blank
+// page. Wrapped in a try/catch so a malformed payload can't crash
+// the init chain.
+try { if (typeof _restoreResults === 'function') _restoreResults(); }
+catch (e) { console.error('[init] _restoreResults threw:', e); }
 // First paint of the result region — when the user lands on the page
 // with an empty `results` array, renderResults swaps in the empty-state
 // CTA instead of leaving the section blank. Each init call is wrapped
@@ -5741,6 +5748,68 @@ function _persistCompareCart() {
   try { localStorage.setItem(_COMPARE_LS_KEY, JSON.stringify([..._compareCart])); }
   catch (e) { /* quota or private mode — ignore */ }
 }
+
+// ── Results persistence ──────────────────────────────────────────
+// Saves a minimal snapshot of the result list (CAS + canonical name +
+// open state) to localStorage so navigating to formulation.html and
+// back doesn't wipe the cards. External / PubChem-only matches are
+// skipped — only DB-backed materials round-trip cleanly because the
+// snapshot relies on _applyLocalMatch to rehydrate the full record
+// from the DB on restore.
+const _RESULTS_LS_KEY = 'perfume_analyzer_results';
+const _SORT_LS_KEY    = 'perfume_analyzer_sort';
+function _persistResults() {
+  try {
+    const minimal = [];
+    for (const r of results) {
+      const cas = r?.record?.identifiers?.cas;
+      if (!cas) continue;
+      minimal.push({
+        cas,
+        name: r.record?.names?.canonical || '',
+        open: !!r._open
+      });
+    }
+    if (minimal.length) {
+      localStorage.setItem(_RESULTS_LS_KEY, JSON.stringify(minimal));
+    } else {
+      localStorage.removeItem(_RESULTS_LS_KEY);
+    }
+    if (_sortOrder && _sortOrder !== 'search') {
+      localStorage.setItem(_SORT_LS_KEY, _sortOrder);
+    } else {
+      localStorage.removeItem(_SORT_LS_KEY);
+    }
+  } catch (e) { /* quota / private mode — ignore */ }
+}
+function _restoreResults() {
+  try {
+    const raw = localStorage.getItem(_RESULTS_LS_KEY);
+    if (!raw) return;
+    const items = JSON.parse(raw);
+    if (!Array.isArray(items) || !items.length) return;
+    for (const item of items) {
+      if (!item || !item.cas || !DB[item.cas]) continue;
+      const mat = createResult(item.name || DB[item.cas].name);
+      const match = makeMatch('cas_exact', 0.99, item.name || item.cas, item.cas, DB[item.cas].name, 'Restored from previous session', 'local_db');
+      try {
+        if (_applyLocalMatch(mat, match)) {
+          if (item.open) mat._open = true;
+          results.push(mat);
+        }
+      } catch (e) { console.warn('[restore] _applyLocalMatch threw for ' + item.cas + ':', e); }
+    }
+    // Restore the user's sort preference if one was saved. Falls back
+    // to 'search' (insertion order) when the value is missing or
+    // unrecognised — defensive guard against future enum changes.
+    const savedSort = localStorage.getItem(_SORT_LS_KEY);
+    if (savedSort && ['name', 'cas', 'family'].includes(savedSort)) {
+      _sortOrder = savedSort;
+      const sel = document.getElementById('sortSelect');
+      if (sel) sel.value = savedSort;
+    }
+  } catch (e) { console.warn('[restore] outer:', e); }
+}
 function _updateCompareCta() {
   const link = document.getElementById('compareLink');
   const count = document.getElementById('compareCount');
@@ -6625,6 +6694,11 @@ function renderResults() {
     } catch (_) {}
     try { showToast({ message: 'Render failed: ' + (e && e.message ? e.message : e), variant: 'danger', timeout: 6000 }); } catch (_) {}
   }
+  // Persist after every render so the sidebar's open-state flips,
+  // sort changes, and results.unshift / clearAll all round-trip into
+  // localStorage. _persistResults swallows quota / private-mode
+  // errors so this never blocks the visible render.
+  if (typeof _persistResults === 'function') _persistResults();
 }
 
 // Background-only helper — called from doSearch() at the very end of
