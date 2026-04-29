@@ -38,6 +38,7 @@
   --warn:        #b45309; --warn-bg:   #fffbeb; --warn-border:   #fde68a;
   --success:     #15803d; --success-bg:#f0fdf4; --success-border:#bbf7d0;
   --info:        #1d4ed8; --info-bg:   #eff6ff; --info-border:   #bfdbfe;
+  --teal:        #0d9488; --teal-bg:   #f0fdfa; --teal-border:   #99f6e4;
   --note-top-bg: #fef9c3; --note-top-fg: #854d0e;
   --note-mid-bg: #dbeafe; --note-mid-fg: #1e40af;
   --note-base-bg:#ede9fe; --note-base-fg:#5b21b6;
@@ -83,6 +84,7 @@
     --warn:        #fbbf24; --warn-bg:   #241a07; --warn-border:   #78350f;
     --success:     #4ade80; --success-bg:#0e1f16; --success-border:#14532d;
     --info:        #93c5fd; --info-bg:   #0f1a32; --info-border:   #1e3a8a;
+    --teal:        #5eead4; --teal-bg:   #042f2e; --teal-border:   #115e59;
     --note-top-bg: #422006; --note-top-fg: #fbbf24;
     --note-mid-bg: #172554; --note-mid-fg: #60a5fa;
     --note-base-bg:#2e1065; --note-base-fg:#c4b5fd;
@@ -112,6 +114,7 @@
   --warn:        #fbbf24; --warn-bg:   #241a07; --warn-border:   #78350f;
   --success:     #4ade80; --success-bg:#0e1f16; --success-border:#14532d;
   --info:        #93c5fd; --info-bg:   #0f1a32; --info-border:   #1e3a8a;
+  --teal:        #5eead4; --teal-bg:   #042f2e; --teal-border:   #115e59;
   --note-top-bg: #422006; --note-top-fg: #fbbf24;
   --note-mid-bg: #172554; --note-mid-fg: #60a5fa;
   --note-base-bg:#2e1065; --note-base-fg:#c4b5fd;
@@ -321,8 +324,13 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .mr-cat.top { background:var(--badge-top-bg); color:var(--badge-top-fg); }
 .mr-cat.mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
 .mr-cat.base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
-.mr-cat.solvent     { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); }
-.mr-cat.carrier     { background:var(--accent-soft); color:var(--accent); }
+/* Functional categories — distinct hue per role so Solvent vs Carrier
+   reads at a glance. Blue (Solvent) and Teal (Carrier) are both
+   "liquid" colours but far apart on the wheel; Green = Antioxidant
+   (protective); Amber = Preservative (preservation/warmth). All
+   filled tints with subtle borders for the same visual weight. */
+.mr-cat.solvent     { background:var(--accent-soft); color:var(--accent);  border-color:var(--accent-soft); }
+.mr-cat.carrier     { background:var(--teal-bg);     color:var(--teal);    border-color:var(--teal-border); }
 .mr-cat.antioxidant { background:var(--success-bg);  color:var(--success); border-color:var(--success-border); }
 .mr-cat.preservative{ background:var(--warn-bg);     color:var(--warn);    border-color:var(--warn-border); }
 .mr-cat.other       { background:var(--bg2);         color:var(--text2);   border-color:var(--border); }
@@ -903,10 +911,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v208"></script>
-<script src="perfumery_data.js?v=2026-04-29-v208"></script>
-<script src="formulation_data.js?v=2026-04-29-v208"></script>
-<script src="formulation_engine.js?v=2026-04-29-v208"></script>
+<script src="taxonomy.js?v=2026-04-29-v209"></script>
+<script src="perfumery_data.js?v=2026-04-29-v209"></script>
+<script src="formulation_data.js?v=2026-04-29-v209"></script>
+<script src="formulation_engine.js?v=2026-04-29-v209"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
