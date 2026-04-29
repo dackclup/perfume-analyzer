@@ -1078,7 +1078,6 @@ html { scroll-behavior:smooth; }
     <div class="compare-modal__header">
       <h2 id="compareModalTitle" class="compare-modal__title">Compare materials</h2>
       <div class="compare-modal__actions">
-        <button type="button" class="compare-modal__clear" onclick="clearCompareCart()" title="Unpin all">Clear</button>
         <button type="button" class="compare-modal__close" onclick="closeCompareModal()" aria-label="Close">&times;</button>
       </div>
     </div>
@@ -1088,7 +1087,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v195"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v196"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1224,7 +1223,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v195";
+const DATA_VERSION = "2026-04-25-rebuild-v196";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -5825,10 +5824,17 @@ function _restoreResults() {
   } catch (e) { console.warn('[restore] outer:', e); }
 }
 function _updateCompareCta() {
+  // The Compare CTA now reflects the count of unique-CAS materials in
+  // the current results list (what the user can see on screen) rather
+  // than a separate pin cart. Keeps the feature one click away — open
+  // wheel → land on results → tap Compare — without an opaque "pin
+  // first, then compare" detour.
   const link = document.getElementById('compareLink');
   const count = document.getElementById('compareCount');
   if (!link || !count) return;
-  const n = _compareCart.size;
+  const n = (typeof results !== 'undefined' && Array.isArray(results))
+    ? results.filter(r => r?.record?.identifiers?.cas).length
+    : 0;
   count.textContent = n;
   link.style.display = n >= 2 ? '' : 'none';
 }
@@ -5895,12 +5901,27 @@ function _compareSnapshot(cas) {
 }
 
 window.openCompareModal = function () {
-  if (_compareCart.size < 2) return;
+  // Compare modal sources its rows from the current results list —
+  // every visible card with a CAS shows up as a column. The previous
+  // _compareCart pin flow was confusing for users (they didn't see
+  // the value over a button that just opens the same modal), so the
+  // pin step was dropped in v196. _compareCart still exists as a
+  // no-op for legacy callers.
   const modal = document.getElementById('compareModal');
   const tableHost = document.getElementById('compareTable');
   const titleEl = document.getElementById('compareModalTitle');
   if (!modal || !tableHost) return;
-  const cas = [..._compareCart];
+  const cas = [];
+  if (typeof results !== 'undefined' && Array.isArray(results)) {
+    for (const r of results) {
+      const c = r?.record?.identifiers?.cas;
+      if (c && !cas.includes(c)) cas.push(c);
+    }
+  }
+  if (cas.length < 2) {
+    try { showToast({ message: 'Need at least 2 materials to compare', variant: 'warn', timeout: 2200 }); } catch (e) {}
+    return;
+  }
   const snaps = cas.map(_compareSnapshot);
   if (titleEl) titleEl.textContent = 'Compare materials (' + snaps.length + ')';
   const fmtList = (arr, labels) => arr.length ? arr.map(v => labels && labels[v] ? labels[v] : v).join(', ') : '—';
@@ -5950,19 +5971,24 @@ window.closeCompareModal = function () {
   document.body.classList.remove('modal-open');
 };
 window.removeFromCompare = function (cas) {
+  // The compare modal now reflects the visible results list, so the
+  // per-column × button removes the matching result entirely (mirror
+  // of clicking the card's own × button). _compareCart stays as a
+  // legacy no-op store.
+  if (typeof results !== 'undefined' && Array.isArray(results)) {
+    const idx = results.findIndex(r => r?.record?.identifiers?.cas === cas);
+    if (idx >= 0) results.splice(idx, 1);
+  }
   _compareCart.delete(cas);
   _persistCompareCart();
+  if (typeof renderResults === 'function') renderResults();
   _updateCompareCta();
-  // Also flip the pin button on any visible card matching this CAS.
-  document.querySelectorAll('.pin-btn--on').forEach(btn => {
-    const match = btn.getAttribute('onclick') || '';
-    if (match.includes("'" + cas + "'")) {
-      btn.classList.remove('pin-btn--on');
-      btn.setAttribute('aria-label', 'Pin to compare');
-      btn.setAttribute('title', 'Pin to compare');
-    }
-  });
-  if (_compareCart.size < 2) closeCompareModal();
+  // Re-open the modal so the user keeps seeing the comparison they
+  // were working on; close it if there's no pair left.
+  const remaining = (typeof results !== 'undefined' && Array.isArray(results))
+    ? results.filter(r => r?.record?.identifiers?.cas).length
+    : 0;
+  if (remaining < 2) closeCompareModal();
   else openCompareModal();
 };
 // Edwards Fragrance Wheel — interactive SVG mirror of the Family
@@ -6356,14 +6382,12 @@ window.closeDataQualityModal = function () {
 };
 
 window.clearCompareCart = function () {
+  // "Clear" in the modal header now just closes the comparison view —
+  // the result list it sources from is owned by the page itself. Use
+  // the analyzer's own "Clear all" button to wipe the result list.
   _compareCart.clear();
   _persistCompareCart();
   _updateCompareCta();
-  document.querySelectorAll('.pin-btn--on').forEach(btn => {
-    btn.classList.remove('pin-btn--on');
-    btn.setAttribute('aria-label', 'Pin to compare');
-    btn.setAttribute('title', 'Pin to compare');
-  });
   closeCompareModal();
 };
 
@@ -6645,7 +6669,11 @@ function _renderResultsCore() {
             ${(_typeFuncJoined || displayRegulatory.length)?`<div class="card-meta-row">${_typeFuncJoined?`<div class="tag-row"><span class="tag-axis-label">Type</span><span class="tag-chips"><span class="badge-type">${_typeFuncJoined}</span></span></div>`:''}${displayRegulatory.length?`<div class="tag-row"><span class="tag-axis-label">Reg</span><span class="tag-chips">${displayRegulatory.map(r=>`<span class="badge-reg" title="${esc(REGULATORY_DESCRIPTIONS[r]||REGULATORY_LABELS[r]||r)}">${REGULATORY_LABELS[r]||r}</span>`).join('')}</span></div>`:''}</div>`:''}
           </div>
           <span class="card-actions">
-            ${id.cas?`<button type="button" class="pin-btn${_compareCart.has(id.cas)?' pin-btn--on':''}" onclick="event.stopPropagation();toggleCompare('${esc(id.cas)}', this)" aria-label="${_compareCart.has(id.cas)?'Remove from compare':'Pin to compare'}" title="${_compareCart.has(id.cas)?'Pinned — click to unpin':'Pin to compare'}"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-pin"/></svg></button>`:''}
+            ${''/* Pin/compare button removed in v196 — Compare(N) now reads
+                    directly from the current results list, which is what
+                    the user actually wants to compare side-by-side. The
+                    extra step of pinning each card was a barrier without
+                    a clear payoff. */}
             <span class="card-del" role="button" tabindex="0" aria-label="Remove from results" title="Remove from results" onclick="event.stopPropagation();delResult(${idx})">✕</span>
           </span>
         </div>
@@ -6892,6 +6920,10 @@ function renderResults() {
   // localStorage. _persistResults swallows quota / private-mode
   // errors so this never blocks the visible render.
   if (typeof _persistResults === 'function') _persistResults();
+  // Compare CTA reads from results.length — keep it in sync after
+  // every result mutation so the Compare(N) pill never lags the
+  // visible card list.
+  if (typeof _updateCompareCta === 'function') _updateCompareCta();
 }
 
 // Background-only helper — called from doSearch() at the very end of
