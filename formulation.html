@@ -321,10 +321,16 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
    Middle / Base for fragrance materials) instead of a CAS number
    that means nothing without a reference book. */
 .mr-cat { padding:2px 8px; border-radius:10px; font-size:0.72em; font-weight:600; letter-spacing:0.02em; text-transform:uppercase; white-space:nowrap; border:1px solid transparent; }
-/* When a material spans multiple tiers ("Top / Middle"), categoryPill
-   emits one pill per tier — give them a small gap so two pills sit
-   side-by-side rather than touching. */
-.mr-cat + .mr-cat { margin-left:4px; }
+/* Right-column pill container. For fragrance materials we render
+   THREE fixed slots (T / M / B) so single-tier and multi-tier rows
+   align vertically — a row with only "T" leaves the M and B slots
+   blank but reserves their width, so the eye can scan a column at
+   a glance. Functional rows (Solvent / Carrier / etc.) use the
+   non-tier variant which lets the single pill size to its label. */
+.mr-cats { display:inline-flex; align-items:center; justify-content:flex-end; gap:4px; flex-shrink:0; }
+.mr-cats.tiers { display:inline-grid; grid-template-columns: 28px 28px 28px; gap:4px; justify-items:center; }
+.mr-cats .mr-cat { width:100%; text-align:center; padding:2px 0; }
+.mr-cats:not(.tiers) .mr-cat { width:auto; padding:2px 8px; }
 .mr-cat.top { background:var(--badge-top-bg); color:var(--badge-top-fg); }
 .mr-cat.mid { background:var(--badge-mid-bg); color:var(--badge-mid-fg); }
 .mr-cat.base { background:var(--badge-base-bg); color:var(--badge-base-fg); }
@@ -915,10 +921,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v211"></script>
-<script src="perfumery_data.js?v=2026-04-29-v211"></script>
-<script src="formulation_data.js?v=2026-04-29-v211"></script>
-<script src="formulation_engine.js?v=2026-04-29-v211"></script>
+<script src="taxonomy.js?v=2026-04-29-v212"></script>
+<script src="perfumery_data.js?v=2026-04-29-v212"></script>
+<script src="formulation_data.js?v=2026-04-29-v212"></script>
+<script src="formulation_engine.js?v=2026-04-29-v212"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1876,35 +1882,33 @@ modalSearch.addEventListener('input', () => {
 // stays narrow enough not to crowd the row on mobile.
 function categoryPill(entry) {
   const note = (entry && entry.note) ? String(entry.note).trim() : '';
-  if (!note) return '<span class="mr-cat other">—</span>';
+  if (!note) return '<span class="mr-cats"><span class="mr-cat other">—</span></span>';
   const lower = note.toLowerCase();
-  // Functional ingredients — full-word notes map directly to a class.
+  // Functional ingredients — full-word notes render as one pill in
+  // the non-tier wrapper so the label can size to its content.
   const FUNCTIONAL = {
     solvent: 'solvent', carrier: 'carrier', antioxidant: 'antioxidant',
     preservative: 'preservative', solubilizer: 'other', emulsifier: 'other',
     wax: 'other', additive: 'other',
   };
   if (FUNCTIONAL[lower]) {
-    return `<span class="mr-cat ${FUNCTIONAL[lower]}">${escHtml(note)}</span>`;
+    return `<span class="mr-cats"><span class="mr-cat ${FUNCTIONAL[lower]}">${escHtml(note)}</span></span>`;
   }
-  // Fragrance materials — render ONE pill per tier so a "Top / Middle"
-  // material shows a yellow T next to a blue M instead of merging both
-  // tiers under a single colour. Class still uses the existing palette
-  // (.mr-cat.top / .mid / .base).
+  // Fragrance materials — emit THREE fixed slots so T / M / B columns
+  // line up vertically across rows. Empty slots stay blank but take
+  // their width so a row with only "T" doesn't shift the M and B
+  // columns leftwards.
   const parts = lower.split(/\s*\/\s*/).filter(Boolean);
-  const TIER = {
-    top:    { abbr: 'T', cls: 'top' },
-    middle: { abbr: 'M', cls: 'mid' },
-    mid:    { abbr: 'M', cls: 'mid' },
-    heart:  { abbr: 'M', cls: 'mid' },
-    base:   { abbr: 'B', cls: 'base' },
-  };
-  const pills = parts.map(p => {
-    const t = TIER[p];
-    if (t) return `<span class="mr-cat ${t.cls}">${t.abbr}</span>`;
-    return `<span class="mr-cat other">${escHtml(p.charAt(0).toUpperCase())}</span>`;
-  });
-  return pills.join('');
+  const has = { top: false, mid: false, base: false };
+  for (const p of parts) {
+    if (p === 'top') has.top = true;
+    else if (p === 'middle' || p === 'mid' || p === 'heart') has.mid = true;
+    else if (p === 'base') has.base = true;
+  }
+  const slot = (on, cls, label) => on
+    ? `<span class="mr-cat ${cls}">${label}</span>`
+    : '<span aria-hidden="true"></span>';
+  return `<span class="mr-cats tiers">${slot(has.top,'top','T')}${slot(has.mid,'mid','M')}${slot(has.base,'base','B')}</span>`;
 }
 
 // Return a small status badge HTML for a material in the Add-modal search.
