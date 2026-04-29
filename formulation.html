@@ -869,9 +869,9 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 <!-- ?v= query suffix busts browser cache whenever the wheel palette /
      taxonomy changes. Bump this string on every deploy that touches
      the three loaded scripts below. -->
-<script src="perfumery_data.js?v=2026-04-19-incompat-filter"></script>
-<script src="formulation_data.js?v=2026-04-19-incompat-filter"></script>
-<script src="formulation_engine.js?v=2026-04-19-incompat-filter"></script>
+<script src="perfumery_data.js?v=2026-04-29-tdz-fix"></script>
+<script src="formulation_data.js?v=2026-04-29-tdz-fix"></script>
+<script src="formulation_engine.js?v=2026-04-29-tdz-fix"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1208,6 +1208,19 @@ function validateMaterialPct(val) {
 }
 
 // ===== Formulation State =====
+// Locked-set + original-pct state. Hoisted up here because the
+// auto-import IIFE further down (~line 1940) calls addMaterial →
+// onChange → renderMaterialList, which reads lockedMaterials inside
+// the per-row template. The original declarations sat ~2200 lines
+// below the IIFE; on a fresh page load the materials count would
+// flip to "(1)" while the body kept its empty-state markup because
+// the TDZ throw on lockedMaterials aborted renderMaterialList halfway
+// (after count.textContent was set, before list.innerHTML was). Same
+// pattern as the v184/v187/v188/v189 TDZ fixes on the analyzer page.
+const lockedMaterials = new Set();
+const lockedCarriers  = new Set();
+let _originalPcts = {};
+
 // ===== A4: Undo/Redo System =====
 const formulationHistory = {
   _stack: [],
@@ -1935,6 +1948,13 @@ function importFromAnalyzer() {
 }
 
 // ===== Auto-import on page load if localStorage has data =====
+// Wrapped per-call so a single addMaterial throw (TDZ on a
+// downstream let, malformed payload, etc.) doesn't leave the
+// formulation in a half-baked state where the count says (N) but
+// the rendered list never updated. After the import we always force
+// a final renderMaterialList so the visible body matches the in-
+// memory array; if both throw the catch-all logs the cause and
+// resets the count display so the user isn't lied to.
 (function autoImport() {
   try {
     const raw = localStorage.getItem('perfume_formulation_materials');
@@ -1944,11 +1964,31 @@ function importFromAnalyzer() {
     if (Date.now() - parseInt(ts) > 30000) return;
     const items = JSON.parse(raw);
     if (!Array.isArray(items)) return;
+    let addedCount = 0;
     for (const item of items) {
-      if (item.cas) formulation.addMaterial(item.cas, item.name, 10, item);
+      if (!item || !item.cas) continue;
+      try {
+        if (formulation.addMaterial(item.cas, item.name, 10, item)) addedCount++;
+      } catch (perItemErr) {
+        console.error('[autoImport] addMaterial threw for ' + item.cas + ':', perItemErr);
+      }
     }
     localStorage.removeItem('perfume_formulation_ts');
-  } catch (e) { console.error('autoImport:', e); }
+    // Belt-and-suspenders: re-render so count + body cannot diverge
+    // from formulation.materials (the addMaterial → onChange chain
+    // could have thrown halfway and left them in disagreement).
+    try { if (typeof renderMaterialList === 'function') renderMaterialList(); } catch (e) {
+      console.error('[autoImport] final renderMaterialList threw:', e);
+    }
+  } catch (e) {
+    console.error('[autoImport] outer:', e);
+    // Reset visible count to match a known-good empty state so the
+    // sidebar header doesn't lie about the in-memory list.
+    try {
+      const c = document.getElementById('matCount');
+      if (c) c.textContent = '(' + (formulation && formulation.materials ? formulation.materials.length : 0) + ')';
+    } catch (_) {}
+  }
 })();
 
 // ===== Tab Render System =====
@@ -2188,7 +2228,8 @@ function renderCompatTab() {
 // argument ('suggested' | 'optimized') is still accepted for backwards
 // compatibility (old call sites / tests), but the default + UI is now
 // the chained 'smart' flow.
-let _originalPcts = {};
+// _originalPcts is declared at the top of this file alongside the
+// locked-set state — see the comment block there.
 
 function storeOriginalPcts() {
   _originalPcts = {};
@@ -3405,8 +3446,9 @@ function buildMultiCategoryIFRA(mats, fragPct) {
 }
 
 // ===== Material / Carrier Lock during Optimization =====
-const lockedMaterials = new Set();
-const lockedCarriers = new Set();
+// lockedMaterials + lockedCarriers are declared at the top of this
+// file alongside _originalPcts — see the comment block there. This
+// section keeps the toggle/predicate helpers.
 
 function toggleLock(cas) {
   if (lockedMaterials.has(cas)) lockedMaterials.delete(cas);
