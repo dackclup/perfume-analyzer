@@ -1184,7 +1184,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v203"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v204"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1334,7 +1334,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v203";
+const DATA_VERSION = "2026-04-25-rebuild-v204";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -4529,7 +4529,13 @@ function showPills(typed) {
 
 function renderPills(suggestions) {
   pillsDiv.innerHTML = suggestions.slice(0,10).map(s =>
-    `<span class="pill" onclick="doSearch('${s.name.replace(/'/g,"\\'")}')">${s.name}</span>`
+    // Two layers of escaping. esc() handles HTML attribute / text-
+    // content safety (& < > "); the .replace handles the JS string
+    // literal inside the onclick (`'`). The previous template
+    // dropped the raw name into the visible text content — fine for
+    // curated DB names, fragile if a PubChem-only match returns a
+    // synonym with a stray '<' or '&'.
+    `<span class="pill" onclick="doSearch('${esc(s.name).replace(/'/g, "\\'")}')">${esc(s.name)}</span>`
   ).join('');
 }
 
@@ -7029,7 +7035,11 @@ function renderResults() {
     console.error('[render] renderResults threw — full stack:', e);
     try {
       const div = document.getElementById('results');
-      if (div) div.innerHTML = '<div class="empty-state"><div class="empty-state__title">Render failed</div><p class="empty-state__hint">' + (e && (e.message || e)) + '</p></div>';
+      // Escape e.message into the inner HTML — TypeError messages
+      // can carry property names containing '<' / '>' / '&' that
+      // would otherwise corrupt the surrounding markup.
+      const _msg = (e && (e.message || String(e))) || 'unknown error';
+      if (div) div.innerHTML = '<div class="empty-state"><div class="empty-state__title">Render failed</div><p class="empty-state__hint">' + esc(_msg) + '</p></div>';
     } catch (_) {}
     try { showToast({ message: 'Render failed: ' + (e && e.message ? e.message : e), variant: 'danger', timeout: 6000 }); } catch (_) {}
   }
@@ -7253,13 +7263,23 @@ async function loadPubchemData(idx) {
 }
 
 function delResult(idx) {
-  results.splice(idx,1);
+  // Forget the just-removed CAS in the mount-once tracker so a later
+  // re-search of the same material animates fresh again. Without
+  // this, the user would delete a card, search the same name back,
+  // and get a card that pops into existence with no entrance.
+  const _gone = results[idx]?.record?.identifiers?.cas;
+  if (_gone) _renderedCas.delete(_gone);
+  results.splice(idx, 1);
   renderResults();
   showPills(input.value);
 }
 
 function clearAll() {
   results = [];
+  // Drop the entire mount-once tracker — every subsequent card is
+  // genuinely new from the user's perspective, so they should all
+  // animate on first paint.
+  _renderedCas.clear();
   renderResults();
   showPills(input.value);
 }
