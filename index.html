@@ -1082,7 +1082,7 @@ html { scroll-behavior:smooth; }
 
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v187"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v188"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1110,6 +1110,41 @@ const _RENDER_CHUNK_NEXT  = 25;
 const _scheduleIdle = (typeof window !== 'undefined' && window.requestIdleCallback)
   ? cb => window.requestIdleCallback(cb, { timeout: 200 })
   : cb => requestAnimationFrame(() => cb(null));
+
+// Sort state (was in v175 sort block). Hoisted same as the chunked-
+// render state above so renderResults can read them at any time —
+// init-time first paint, doSearch's end-of-batch render, and the
+// PubChem-callback re-renders all share one source of truth.
+let _sortOrder = 'search';
+let _resultSeq = 0;
+function _stampResultSeq(r) { if (r && r._seq == null) r._seq = _resultSeq++; }
+function _compareForSort(order) {
+  if (order === 'name') {
+    return (a, b) => {
+      const an = (a?.record?.names?.canonical || '').toLowerCase();
+      const bn = (b?.record?.names?.canonical || '').toLowerCase();
+      return an < bn ? -1 : an > bn ? 1 : (a._seq||0) - (b._seq||0);
+    };
+  }
+  if (order === 'cas') {
+    return (a, b) => {
+      const ac = a?.record?.identifiers?.cas || '';
+      const bc = b?.record?.identifiers?.cas || '';
+      return ac < bc ? -1 : ac > bc ? 1 : (a._seq||0) - (b._seq||0);
+    };
+  }
+  if (order === 'family') {
+    return (a, b) => {
+      const af = (a?.record?.classification?.primaryFamilies || [])[0] || '~';
+      const bf = (b?.record?.classification?.primaryFamilies || [])[0] || '~';
+      if (af !== bf) return af < bf ? -1 : 1;
+      const an = (a?.record?.names?.canonical || '').toLowerCase();
+      const bn = (b?.record?.names?.canonical || '').toLowerCase();
+      return an < bn ? -1 : an > bn ? 1 : (a._seq||0) - (b._seq||0);
+    };
+  }
+  return (a, b) => (a._seq||0) - (b._seq||0);
+}
 
 const CAS_RE_SEARCH = /^\d{2,7}-\d{2}-\d$/;
 const SMILES_RE_SEARCH = /^[A-Za-z0-9@+\-\[\]\(\)\\\/=#$.%]+$/;
@@ -1159,7 +1194,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v187";
+const DATA_VERSION = "2026-04-25-rebuild-v188";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -6121,37 +6156,8 @@ window.exportCSV = function () {
 // with the visible order. _seq is stamped on each match in doSearch so
 // 'search' (default) restores the original arrival order even after the
 // user has reshuffled by name / CAS / family.
-let _sortOrder = 'search';
-let _resultSeq = 0;
-function _stampResultSeq(r) { if (r && r._seq == null) r._seq = _resultSeq++; }
-function _compareForSort(order) {
-  if (order === 'name') {
-    return (a, b) => {
-      const an = (a?.record?.names?.canonical || '').toLowerCase();
-      const bn = (b?.record?.names?.canonical || '').toLowerCase();
-      return an < bn ? -1 : an > bn ? 1 : (a._seq||0) - (b._seq||0);
-    };
-  }
-  if (order === 'cas') {
-    return (a, b) => {
-      const ac = a?.record?.identifiers?.cas || '';
-      const bc = b?.record?.identifiers?.cas || '';
-      return ac < bc ? -1 : ac > bc ? 1 : (a._seq||0) - (b._seq||0);
-    };
-  }
-  if (order === 'family') {
-    return (a, b) => {
-      const af = (a?.record?.classification?.primaryFamilies || [])[0] || '~';
-      const bf = (b?.record?.classification?.primaryFamilies || [])[0] || '~';
-      if (af !== bf) return af < bf ? -1 : 1;
-      const an = (a?.record?.names?.canonical || '').toLowerCase();
-      const bn = (b?.record?.names?.canonical || '').toLowerCase();
-      return an < bn ? -1 : an > bn ? 1 : (a._seq||0) - (b._seq||0);
-    };
-  }
-  // 'search' (or anything unknown) — original arrival order
-  return (a, b) => (a._seq||0) - (b._seq||0);
-}
+// State (_sortOrder, _resultSeq, _stampResultSeq, _compareForSort) lives
+// at the top of the script — see the comment block there.
 window.setSortOrder = function (order) {
   _sortOrder = order || 'search';
   renderResults();
@@ -6528,8 +6534,20 @@ function _renderResultsCore() {
         </div>
       </div>`);
    } catch(e) {
-    console.error('renderResults: card ' + idx + ' (' + (mat?.record?.names?.canonical||'?') + ') threw:', e);
-    cards.push(`<div class="card"><div class="card-header"><h3>${esc(mat?.record?.names?.canonical||'Unknown material')} <span style="color:var(--danger);font-size:0.8em">(render error)</span></h3></div></div>`);
+    console.error('[render] card ' + idx + ' (' + (mat?.record?.names?.canonical || '?') + ') threw:', e);
+    // Surface the actual error message inside the fallback card so a
+    // mobile user without DevTools can read why the card body failed
+    // (TDZ on a const, missing field, etc.) and pass it back as a
+    // screenshot. The previous "(render error)" suffix gave no clue.
+    const _msg = (e && (e.message || String(e))) || 'unknown error';
+    cards.push(
+      '<div class="card"><div class="card-header"><h3>' +
+        esc(mat?.record?.names?.canonical || 'Unknown material') +
+        ' <span style="color:var(--danger);font-size:0.8em">(render error)</span></h3>' +
+      '</div><div class="card-body open" style="padding:8px 14px"><p style="color:var(--danger);font-size:0.85em;margin:0">' +
+      esc(_msg) +
+      '</p></div></div>'
+    );
    }
   });
   if (typeof _clickLog === 'function') _clickLog('renderResults: cards.length=' + cards.length);
