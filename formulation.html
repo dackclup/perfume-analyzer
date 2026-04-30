@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v250"></script>
-<script src="perfumery_data.js?v=2026-04-29-v250"></script>
-<script src="formulation_data.js?v=2026-04-29-v250"></script>
-<script src="formulation_engine.js?v=2026-04-29-v250"></script>
+<script src="taxonomy.js?v=2026-04-29-v251"></script>
+<script src="perfumery_data.js?v=2026-04-29-v251"></script>
+<script src="formulation_data.js?v=2026-04-29-v251"></script>
+<script src="formulation_engine.js?v=2026-04-29-v251"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2243,6 +2243,10 @@ let _compatGraph = null;
 // false = compact view (top 6 strongest + all discords); true = every pair.
 // Survives re-renders so toggling stays sticky while the user iterates.
 let _compatShowAllPairs = false;
+// Tier filter for the Compatible Materials suggestion table. 'all' shows
+// everything; 'top'/'middle'/'base' narrows to that note tier — useful when
+// the user has e.g. plenty of base notes and only wants top-note candidates.
+let _compatSuggestTierFilter = 'all';
 function getCompatGraph() {
   if (!_compatGraph) _compatGraph = buildCompatibilityGraph(DB);
   return _compatGraph;
@@ -2576,21 +2580,72 @@ function renderCompatTab() {
 
   // Compatible Material Suggestions
   if (suggestions.length) {
-    html += '<div class="analysis-card" id="compat-suggest"><h4>Compatible Materials</h4>';
-    html += '<p class="panel-desc">Materials that blend well with your current selection, ranked by compatibility score.</p>';
-    html += '<table class="data-table"><thead><tr><th>Material</th><th>Note</th><th>Odor Type</th><th>Score</th><th></th></tr></thead><tbody>';
-    for (const s of suggestions) {
-      const scorePct = Math.round(s.score / s.maxScore * 100);
-      const cls = scorePct >= 75 ? 'badge-ok' : scorePct >= 50 ? 'badge-warn' : 'badge-danger';
-      html += '<tr>';
-      html += '<td>' + escHtml(s.name) + '</td>';
-      html += '<td>' + escHtml(s.note || '—') + '</td>';
-      html += '<td>' + escHtml(s.odorType || '—') + '</td>';
-      html += '<td><span class="badge ' + cls + '">' + s.score + '/' + s.maxScore + '</span></td>';
-      html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + escHtml(s.cas) + '\')">+ Add</button></td>';
-      html += '</tr>';
+    // Pre-enrich each suggestion with its primary family + tier so we can
+    // surface them as colour-coded badges and let the user filter by tier.
+    // The previous renderer dumped raw 'note' text and 'odorType' text in
+    // separate columns, which both contained the same information for
+    // most rows.
+    const enrichedSuggestions = suggestions.map(s => {
+      const dbEntry = DB[s.cas] || {};
+      const fams = getMaterialFamilies({
+        odor_type: dbEntry.odor?.type,
+        primaryFamilies: (dbEntry.classification && dbEntry.classification.primaryFamilies) || [],
+        secondaryFamilies: (dbEntry.classification && dbEntry.classification.secondaryFamilies) || [],
+        facets: (dbEntry.classification && dbEntry.classification.facets) || [],
+      });
+      const family = fams[0] || 'other';
+      // classifyNoteTiers returns ['top'], ['mid'], ['base'], or
+      // combinations like ['top','mid'] for dual-note materials.
+      const tiers = classifyNoteTiers(dbEntry.note || s.note || '');
+      const primaryTier = tiers[0] || 'unclassified';
+      // Family colour from the wheel palette so the chip matches the
+      // hue used elsewhere (Map, Wheel legend).
+      const segId = (typeof FRAGRANCE_WHEEL !== 'undefined' && FRAGRANCE_WHEEL.familyToSegment)
+        ? FRAGRANCE_WHEEL.familyToSegment[family.toLowerCase()] : null;
+      const seg = (segId && typeof FRAGRANCE_WHEEL !== 'undefined') ? FRAGRANCE_WHEEL.segments.find(x => x.id === segId) : null;
+      const familyColor = (seg && seg.color) || '#888';
+      return { ...s, family, primaryTier, tiers, familyColor };
+    });
+    // Apply tier filter (if any).
+    const tierFilter = _compatSuggestTierFilter;
+    const filtered = (tierFilter === 'all')
+      ? enrichedSuggestions
+      : enrichedSuggestions.filter(s => s.tiers.some(t => (t === 'mid' ? 'middle' : t) === tierFilter));
+
+    html += '<div class="analysis-card" id="compat-suggest"><h4>Compatible Materials <span style="font-size:0.78em;color:var(--text2);font-weight:400">— ' + filtered.length + ' of ' + enrichedSuggestions.length + '</span></h4>';
+    html += '<p class="panel-desc">Materials that blend well with your current selection, ranked by compatibility score. Filter by note tier to find what your formula needs.</p>';
+
+    // Tier filter chips — All / Top / Middle / Base.
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;margin-bottom:6px">';
+    for (const [key, label] of [['all', 'All'], ['top', 'Top'], ['middle', 'Middle'], ['base', 'Base']]) {
+      const isOn = tierFilter === key;
+      const cls = isOn ? 'btn btn-sm btn-primary' : 'btn btn-sm';
+      html += '<button class="' + cls + '" type="button" data-compat-tier="' + key + '" aria-pressed="' + isOn + '">' + label + '</button>';
     }
-    html += '</tbody></table></div>';
+    html += '</div>';
+
+    if (!filtered.length) {
+      html += '<p class="panel-desc" style="margin-top:6px">No suggestions match the active tier filter. Try a different tier or clear it.</p>';
+    } else {
+      html += '<table class="data-table"><thead><tr><th>Material</th><th>Family</th><th>Tier</th><th>Score</th><th></th></tr></thead><tbody>';
+      for (const s of filtered) {
+        const scorePct = Math.round(s.score / s.maxScore * 100);
+        const cls = scorePct >= 75 ? 'badge-ok' : scorePct >= 50 ? 'badge-warn' : 'badge-danger';
+        const famPretty = s.family.charAt(0).toUpperCase() + s.family.slice(1).replace(/_/g, ' ');
+        const tierPretty = s.primaryTier === 'unclassified'
+          ? '—'
+          : s.primaryTier === 'mid' ? 'Middle' : (s.primaryTier.charAt(0).toUpperCase() + s.primaryTier.slice(1));
+        html += '<tr>';
+        html += '<td>' + escHtml(s.name) + '</td>';
+        html += '<td><span class="badge" style="background:' + s.familyColor + '33;color:' + s.familyColor + ';font-size:0.7em;font-weight:600">' + escHtml(famPretty) + '</span></td>';
+        html += '<td><span class="badge" style="background:var(--bg2);color:var(--text2);font-size:0.7em">' + escHtml(tierPretty) + '</span></td>';
+        html += '<td><span class="badge ' + cls + '">' + s.score + '/' + s.maxScore + '</span></td>';
+        html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + escHtml(s.cas) + '\')">+ Add</button></td>';
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+    }
+    html += '</div>';
   }
 
   el.innerHTML = html;
@@ -2636,6 +2691,14 @@ function renderCompatTab() {
   if (pairToggle) pairToggle.addEventListener('click', () => {
     _compatShowAllPairs = !_compatShowAllPairs;
     renderCompatTab();
+  });
+
+  // Compatible-Materials tier filter chips.
+  el.querySelectorAll('[data-compat-tier]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _compatSuggestTierFilter = btn.getAttribute('data-compat-tier');
+      renderCompatTab();
+    });
   });
 }
 
