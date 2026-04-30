@@ -196,9 +196,9 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .search-box { display:flex; gap:8px; margin-bottom:8px; }
 #searchInput { flex:1; padding:10px 14px; border:2px solid var(--border); border-radius:8px; font-size:1em; background:var(--bg2); color:var(--text); outline:none; font-family:inherit; }
 #searchInput:focus { border-color:var(--accent); }
-#searchBtn { padding:10px 24px; background:var(--accent); color:var(--accent-text, #fff); border:none; border-radius:8px; font-size:1em; cursor:pointer; font-family:inherit; font-weight:500; white-space:nowrap; }
-#searchBtn:hover { opacity:0.85; }
-#searchBtn:disabled { opacity:0.4; cursor:default; }
+#searchBtn { padding:10px 24px; background:var(--accent); color:var(--accent-text, #fff); border:none; border-radius:8px; font-size:1em; cursor:pointer; font-family:inherit; font-weight:500; white-space:nowrap; transition:background var(--dur) var(--ease), opacity var(--dur) var(--ease); }
+#searchBtn:hover:not(:disabled) { background:var(--accent-hover); }
+#searchBtn:disabled { background:var(--bg-muted, var(--bg2)); color:var(--text-muted, var(--text2)); cursor:default; }
 
 /* Filter drawer */
 .filter-drawer { margin:8px 0; }
@@ -268,8 +268,9 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .sort-select { font-size:0.8em; padding:4px 8px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text); font-family:inherit; cursor:pointer; margin-left:auto; }
 .sort-select:hover { border-color:var(--accent); }
 .sort-select:focus { outline:none; border-color:var(--accent); }
-.clear-btn { padding:6px 18px; background:var(--accent); color:var(--accent-text, #fff); border:none; border-radius:8px; font-size:0.85em; cursor:pointer; font-family:inherit; font-weight:500; opacity:0.4; }
-.clear-btn:hover { opacity:0.7; }
+.clear-btn { padding:6px 18px; background:var(--accent); color:var(--accent-text, #fff); border:none; border-radius:8px; font-size:0.85em; cursor:pointer; font-family:inherit; font-weight:500; transition:background var(--dur) var(--ease); }
+.clear-btn:hover { background:var(--accent-hover); }
+.clear-btn:disabled { opacity:0.4; cursor:default; }
 #statusBar { align-items:center; gap:8px; margin-bottom:8px; }
 
 /* Cards */
@@ -1136,8 +1137,7 @@ html { scroll-behavior:smooth; }
 <div id="results"></div>
 </main>
 <div class="downloads" id="downloads">
-  <a class="compare-link" id="compareLink" onclick="openCompareModal()" style="display:none" role="button" tabindex="0" title="Open side-by-side comparison">Compare (<span id="compareCount">0</span>) &#x2192;</a>
-  <a class="export-link" onclick="copyCASList()" role="button" tabindex="0" title="Copy CAS numbers of all visible materials"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-copy"/></svg> CAS</a>
+  <a class="compare-link" id="compareLink" onclick="openCompareModal()" style="display:none" role="button" tabindex="0" title="Open side-by-side comparison">Compare (<span id="compareCount">0</span>)</a>
   <a class="export-link" onclick="exportCSV()" role="button" tabindex="0" title="Download visible materials as a CSV"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-download"/></svg> CSV</a>
   <a class="formulate-link" onclick="sendToFormulator()">Formulate &#x2192;</a>
 </div>
@@ -1187,10 +1187,10 @@ html { scroll-behavior:smooth; }
      MAIN_FAMILY_TO_SUBS / SUB_FAMILY_TO_MAIN globals directly. The
      formulation page loads the same file. Bumping its ?v= forces a
      reload on both pages. -->
-<script src="taxonomy.js?v=2026-04-25-rebuild-v207"></script>
+<script src="taxonomy.js?v=2026-04-25-rebuild-v215"></script>
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v207"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v215"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1340,7 +1340,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v207";
+const DATA_VERSION = "2026-04-25-rebuild-v215";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -6493,18 +6493,6 @@ function _csvEscape(value) {
   if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
   return s;
 }
-window.copyCASList = function () {
-  if (!results.length) {
-    try { showToast({ message: 'No materials to copy.', variant: 'info', timeout: 2000 }); } catch (e) {}
-    return;
-  }
-  const lines = results
-    .map(r => r?.record?.identifiers?.cas)
-    .filter(Boolean);
-  const text = lines.join('\n');
-  copyToClipboard(text);
-  try { showToast({ message: 'Copied ' + lines.length + ' CAS number' + (lines.length === 1 ? '' : 's'), variant: 'success', timeout: 2000 }); } catch (e) {}
-};
 window.exportCSV = function () {
   if (!results.length) {
     try { showToast({ message: 'No materials to export.', variant: 'info', timeout: 2000 }); } catch (e) {}
