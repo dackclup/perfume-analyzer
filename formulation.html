@@ -929,10 +929,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v216"></script>
-<script src="perfumery_data.js?v=2026-04-29-v216"></script>
-<script src="formulation_data.js?v=2026-04-29-v216"></script>
-<script src="formulation_engine.js?v=2026-04-29-v216"></script>
+<script src="taxonomy.js?v=2026-04-29-v217"></script>
+<script src="perfumery_data.js?v=2026-04-29-v217"></script>
+<script src="formulation_data.js?v=2026-04-29-v217"></script>
+<script src="formulation_engine.js?v=2026-04-29-v217"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -3407,6 +3407,7 @@ function renderSafetyTab() {
   const catId = document.getElementById('productCategory').value;
   const fragPct = parseInt(document.getElementById('fragPct').value);
   const carrier = document.getElementById('carrierSelect').value;
+  const cat = IFRA_CATEGORIES[catId];
 
   // Run engine
   const compliance = checkIFRACompliance(mats, catId, fragPct);
@@ -3414,24 +3415,60 @@ function renderSafetyTab() {
   const summary = getSafetySummary(compliance, allergens);
   const inci = generateINCILabel(mats, allergens, carrier);
 
+  // Pre-compute use-rate warnings — needed both for verdict counters and the
+  // detailed table below. (Was previously calculated inline mid-render; moved
+  // up so the banner can show the count without recomputing.)
+  const useRateWarnings = [];
+  for (const mat of mats) {
+    const range = parseUsageRange(mat.data?.usage_levels);
+    const pctInProd = mat.pct * (fragPct / 100);
+    if (range.max != null && pctInProd > range.max) {
+      useRateWarnings.push({ name: mat.name, pctConc: mat.pct, pctProd: roundN(pctInProd, 2), max: range.max });
+    }
+  }
+
   // Build HTML
   let html = '';
 
-  // Summary card
-  const statusClass = summary.overallStatus === 'ok' ? 'badge-ok' : summary.overallStatus === 'warn' ? 'badge-warn' : 'badge-danger';
-  const statusLabel = summary.overallStatus === 'ok' ? 'Compliant' : summary.overallStatus === 'banned' ? 'BANNED Material' : summary.overallStatus === 'danger' ? 'Over IFRA Limit' : 'Caution';
-  html += '<div class="analysis-card">';
-  html += '<h4>Overall Status <span class="badge ' + statusClass + '">' + statusLabel + '</span></h4>';
-  html += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.85em;color:var(--text2);margin-top:8px">';
-  if (summary.bannedCount)  html += '<span style="color:var(--danger)">Banned: ' + summary.bannedCount + '</span>';
-  if (summary.dangerCount)  html += '<span style="color:var(--danger)">Over limit: ' + summary.dangerCount + '</span>';
-  if (summary.warnCount)    html += '<span style="color:var(--warn)">Caution: ' + summary.warnCount + '</span>';
-  html += '<span>OK: ' + summary.okCount + '</span>';
-  html += '<span>Allergens to declare: ' + summary.declaredAllergenCount + '</span>';
-  html += '</div></div>';
+  // ===== Verdict banner =====
+  const verdict = (summary.overallStatus === 'ok')      ? { icon: '✓', label: 'Compliant',                tone: 'success', desc: 'No IFRA violations detected for this category.' }
+                : (summary.overallStatus === 'warn')    ? { icon: '⚠', label: 'Caution',                  tone: 'warn',    desc: 'No IFRA caps exceeded but some materials are at usage-range edges.' }
+                : (summary.overallStatus === 'banned')  ? { icon: '✗', label: 'Banned material present',   tone: 'danger',  desc: 'Formula contains an IFRA-prohibited material — must be substituted before use.' }
+                :                                         { icon: '✗', label: 'Over IFRA limit',           tone: 'danger',  desc: 'One or more materials exceed their IFRA cap for this category.' };
+  const verdictBadgeCls = verdict.tone === 'success' ? 'badge-ok' : verdict.tone === 'warn' ? 'badge-warn' : 'badge-danger';
+  html += '<div class="analysis-card" style="border-left:4px solid var(--' + verdict.tone + ')">';
+  html += '<div style="display:flex;align-items:flex-start;gap:14px">';
+  html += '<div style="font-size:2.2em;line-height:1;color:var(--' + verdict.tone + ')">' + verdict.icon + '</div>';
+  html += '<div style="flex:1;min-width:0">';
+  html += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
+  html += '<h4 style="margin:0">' + verdict.label + '</h4>';
+  html += '<span class="badge ' + verdictBadgeCls + '">' + verdict.label + '</span>';
+  html += '</div>';
+  html += '<p style="margin:6px 0 0;color:var(--text2);font-size:0.85em">' + verdict.desc + '</p>';
+  html += '<p style="margin:6px 0 0;color:var(--text2);font-size:0.78em">';
+  html += '<strong>' + escHtml(cat ? cat.name : '—') + '</strong>';
+  html += ' · ' + (cat && cat.rinseOff ? 'Rinse-off' : 'Leave-on');
+  html += ' · ' + fragPct + '% in product';
+  html += ' · ' + mats.length + ' material' + (mats.length === 1 ? '' : 's');
+  html += '</p>';
+  // Counter chips: each links to the relevant section via smooth-scroll. Hidden
+  // when count is 0 (except the OK reference chip, which always shows).
+  const mkChip = (count, label, tone, anchor) => count
+    ? '<a href="#' + anchor + '" data-safety-jump="' + anchor + '" class="badge ' + tone + '" style="text-decoration:none;cursor:pointer" title="Jump to ' + label + ' details">' + count + ' ' + label + '</a>'
+    : '';
+  const chips = [
+    mkChip(summary.bannedCount, 'banned', 'badge-danger', 'safety-ifra'),
+    mkChip(summary.dangerCount, 'over limit', 'badge-danger', 'safety-ifra'),
+    mkChip(summary.warnCount, 'caution', 'badge-warn', 'safety-ifra'),
+    mkChip(useRateWarnings.length, 'use-rate over', 'badge-warn', 'safety-usage'),
+    mkChip(summary.declaredAllergenCount, 'allergens to declare', 'badge-warn', 'safety-allergens'),
+    '<span class="badge badge-ok">' + summary.okCount + ' OK</span>',
+  ].filter(Boolean);
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">' + chips.join('') + '</div>';
+  html += '</div></div></div>';
 
   // IFRA Compliance table
-  html += '<div class="analysis-card"><h4>IFRA Compliance — ' + IFRA_CATEGORIES[catId].name + ' (' + fragPct + '% in product)</h4>';
+  html += '<div class="analysis-card" id="safety-ifra"><h4>IFRA Compliance — ' + IFRA_CATEGORIES[catId].name + ' (' + fragPct + '% in product)</h4>';
   html += '<table class="data-table"><thead><tr><th>Material</th><th>% Conc.</th><th>% Product</th><th>IFRA Max</th><th>Margin</th><th>Status</th></tr></thead><tbody>';
   for (const r of compliance) {
     const cls = r.status === 'ok' ? 'badge-ok' : r.status === 'warn' ? 'badge-warn' : 'badge-danger';
@@ -3449,7 +3486,7 @@ function renderSafetyTab() {
 
   // Allergen panel
   if (allergens.allergens.length) {
-    html += '<div class="analysis-card"><h4>EU Allergen Declaration (threshold: ' + allergens.threshold + ' ppm, ' + (allergens.isRinseOff ? 'rinse-off' : 'leave-on') + ')</h4>';
+    html += '<div class="analysis-card" id="safety-allergens"><h4>EU Allergen Declaration (threshold: ' + allergens.threshold + ' ppm, ' + (allergens.isRinseOff ? 'rinse-off' : 'leave-on') + ')</h4>';
     html += '<table class="data-table"><thead><tr><th>Allergen</th><th>INCI</th><th>Total ppm</th><th>Sources</th><th>Declare?</th></tr></thead><tbody>';
     for (const a of allergens.allergens) {
       const cls = a.exceedsThreshold ? 'badge-danger' : 'badge-ok';
@@ -3465,17 +3502,9 @@ function renderSafetyTab() {
     html += '</tbody></table></div>';
   }
 
-  // Use-Rate Warnings — compare % in product (conc% × fragPct/100)
-  const useRateWarnings = [];
-  for (const mat of mats) {
-    const range = parseUsageRange(mat.data?.usage_levels);
-    const pctInProd = mat.pct * (fragPct / 100);
-    if (range.max != null && pctInProd > range.max) {
-      useRateWarnings.push({ name: mat.name, pctConc: mat.pct, pctProd: roundN(pctInProd, 2), max: range.max });
-    }
-  }
+  // Use-Rate Warnings — useRateWarnings[] precomputed above for the verdict counter
   if (useRateWarnings.length) {
-    html += '<div class="analysis-card"><h4>Use-Rate Warnings <span class="badge badge-warn">' + useRateWarnings.length + '</span></h4>';
+    html += '<div class="analysis-card" id="safety-usage"><h4>Use-Rate Warnings <span class="badge badge-warn">' + useRateWarnings.length + '</span></h4>';
     html += '<table class="data-table"><thead><tr><th>Material</th><th>% in Product</th><th>Max %</th><th>Over By</th></tr></thead><tbody>';
     for (const w of useRateWarnings) {
       html += '<tr><td>' + escHtml(w.name) + '</td><td>' + w.pctProd + '%</td>';
@@ -3513,7 +3542,7 @@ function renderSafetyTab() {
 
   // Multi-Category IFRA Check
   const multiIFRA = buildMultiCategoryIFRA(mats, fragPct);
-  html += '<div class="analysis-card"><h4>Multi-Category IFRA Compatibility</h4>';
+  html += '<div class="analysis-card" id="safety-multi"><h4>Multi-Category IFRA Compatibility</h4>';
   html += '<p class="panel-desc">Shows which product categories this formula can be used in.</p>';
   html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">';
   for (const [cId, r] of Object.entries(multiIFRA)) {
@@ -3569,7 +3598,7 @@ function renderSafetyTab() {
   }
 
   // INCI Label
-  html += '<div class="analysis-card"><h4>INCI Label</h4>';
+  html += '<div class="analysis-card" id="safety-inci"><h4>INCI Label</h4>';
   html += '<div style="background:var(--bg2);padding:12px;border-radius:8px;font-size:0.85em;line-height:1.6;word-break:break-word;user-select:all">';
   html += inci;
   html += '</div>';
@@ -3581,6 +3610,15 @@ function renderSafetyTab() {
   html += '</div>';
 
   el.innerHTML = html;
+
+  // Wire smooth-scroll jump from verdict-banner counter chips → relevant section
+  el.querySelectorAll('[data-safety-jump]').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.getElementById(a.getAttribute('data-safety-jump'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
 }
 
 
