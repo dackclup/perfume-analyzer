@@ -542,6 +542,29 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
   outline-offset: 2px;
 }
 
+/* Odor Map dots — small dots get a hover lift and the currently-inspected
+   dot gets a permanent stroke ring so the user can see which point feeds
+   the inspector card. Both effects use stroke + filter only — fill colour
+   stays as the family palette. */
+.map-dot {
+  transition: r 120ms ease-out, stroke-width 120ms ease-out, filter 120ms ease-out;
+}
+.map-dot:hover {
+  filter: brightness(1.15);
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+.map-dot:focus-visible {
+  outline: none;
+  stroke: var(--accent, #4a90e2);
+  stroke-width: 2.5;
+}
+.map-dot-selected {
+  stroke: var(--accent, #4a90e2);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 6px rgba(74,144,226,0.55));
+}
+
 /* Analysis card hover + shadow */
 .analysis-card {
   transition:box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
@@ -956,10 +979,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v233"></script>
-<script src="perfumery_data.js?v=2026-04-29-v233"></script>
-<script src="formulation_data.js?v=2026-04-29-v233"></script>
-<script src="formulation_engine.js?v=2026-04-29-v233"></script>
+<script src="taxonomy.js?v=2026-04-29-v234"></script>
+<script src="perfumery_data.js?v=2026-04-29-v234"></script>
+<script src="formulation_data.js?v=2026-04-29-v234"></script>
+<script src="formulation_engine.js?v=2026-04-29-v234"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -4962,6 +4985,11 @@ document.getElementById('compareRun').addEventListener('click', () => {
 
 
 // ===== C1: Odor Map Renderer =====
+// Module-level state — survives re-renders so a tab switch doesn't drop the
+// inspector selection. Stores the CAS of the material currently displayed
+// in the inspector card; null = no card open.
+let _mapInspectorCas = null;
+
 function renderMapTab() {
   const el = document.getElementById('mapContent');
   const formulationCAS = new Set(formulation.materials.map(m => m.cas));
@@ -4994,32 +5022,115 @@ function renderMapTab() {
   svg += '<text x="' + (W/2) + '" y="' + (pad+12) + '" text-anchor="middle" font-size="10" fill="var(--text2)">Floral</text>';
   svg += '<text x="' + (W/2) + '" y="' + (H-pad-5) + '" text-anchor="middle" font-size="10" fill="var(--text2)">Woody</text>';
 
-  // Draw all non-formulation points (small dots)
+  // Draw all non-formulation points (small dots). Click opens the inspector
+  // card below the map — does NOT auto-add to formula. The previous
+  // behaviour added the material on every dot tap, which made an accidental
+  // touchscreen tap permanently mutate the user's formula with no preview.
   for (const p of points) {
     if (p.inFormulation) continue;
     const sx = toSVGX(p.x), sy = toSVGY(p.y);
-    svg += '<circle cx="' + sx + '" cy="' + sy + '" r="3" fill="' + p.color + '" fill-opacity="0.4" ';
-    svg += 'style="cursor:pointer" onclick="addFromDB(\'' + escHtml(p.cas) + '\')">';
-    svg += '<title>' + escHtml(p.name) + ' (' + escHtml(p.family) + ')</title></circle>';
+    svg += '<circle class="map-dot" data-cas="' + escHtml(p.cas) + '" cx="' + sx + '" cy="' + sy + '" r="3" fill="' + p.color + '" fill-opacity="0.4" ';
+    svg += 'style="cursor:pointer">';
+    svg += '<title>' + escHtml(p.name) + ' (' + escHtml(p.family) + ') — click for details</title></circle>';
   }
 
   // Draw formulation points (larger, with label)
   for (const p of points) {
     if (!p.inFormulation) continue;
     const sx = toSVGX(p.x), sy = toSVGY(p.y);
-    svg += '<circle cx="' + sx + '" cy="' + sy + '" r="7" fill="' + p.color + '" stroke="var(--text)" stroke-width="2">';
-    svg += '<title>' + escHtml(p.name) + '</title></circle>';
-    svg += '<text x="' + (sx + 10) + '" y="' + (sy + 4) + '" font-size="9" fill="var(--text)" font-weight="600">' + escHtml(p.name).slice(0, 15) + '</text>';
+    svg += '<circle class="map-dot map-dot-active" data-cas="' + escHtml(p.cas) + '" cx="' + sx + '" cy="' + sy + '" r="7" fill="' + p.color + '" stroke="var(--text)" stroke-width="2" style="cursor:pointer">';
+    svg += '<title>' + escHtml(p.name) + ' — already in your formula</title></circle>';
+    svg += '<text x="' + (sx + 10) + '" y="' + (sy + 4) + '" font-size="9" fill="var(--text)" font-weight="600" style="pointer-events:none">' + escHtml(p.name).slice(0, 15) + '</text>';
   }
 
   svg += '</svg>';
 
   let html = '<div class="analysis-card">' + svg;
   html += '<p class="panel-desc" style="margin-top:8px">' + points.length + ' aromatic materials positioned by olfactive profile. ';
-  html += 'Large circles = your formulation. Click any dot to add it.</p>';
+  html += 'Large circles = your formulation. <strong>Tap a dot</strong> to inspect — nothing is added to your formula until you press <em>Add</em>.</p>';
+  // Inspector slot — re-hydrated below if there's an active selection.
+  html += '<div id="mapInspector" style="margin-top:12px"></div>';
   html += '</div>';
 
   el.innerHTML = html;
+
+  // Wire dot click → inspector. Delegated via querySelectorAll so the same
+  // handler runs for both small (.map-dot) and formulation (.map-dot-active)
+  // circles. The actual rendering of the inspector lives in
+  // renderMapInspector() so a re-render call site (Add button, formula
+  // change, tab switch) can hydrate it without reattaching listeners.
+  el.querySelectorAll('.map-dot').forEach(circle => {
+    circle.addEventListener('click', () => {
+      _mapInspectorCas = circle.getAttribute('data-cas');
+      renderMapInspector(points);
+      highlightMapDot(_mapInspectorCas);
+    });
+  });
+
+  // Persisted selection from a previous render.
+  if (_mapInspectorCas) {
+    renderMapInspector(points);
+    highlightMapDot(_mapInspectorCas);
+  }
+}
+
+// Inspector card — shows the selected material's details (name, CAS, family,
+// note, current state) and an explicit Add / Already-in-formula button. Lives
+// below the SVG so it doesn't occlude the map. Re-rendered without rebuilding
+// the SVG so toggle clicks feel snappy.
+function renderMapInspector(points) {
+  const slot = document.getElementById('mapInspector');
+  if (!slot) return;
+  if (!_mapInspectorCas) { slot.innerHTML = ''; return; }
+  const p = points.find(pt => pt.cas === _mapInspectorCas);
+  if (!p) { slot.innerHTML = ''; return; }
+  const dbEntry = DB[p.cas] || {};
+  const note = dbEntry.note || '';
+  const odorType = dbEntry.odor?.type || '';
+  let html = '<div style="border:1px solid var(--border);border-left:4px solid ' + p.color + ';border-radius:6px;padding:10px 12px;background:var(--bg)">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">';
+  html += '<div style="flex:1;min-width:160px">';
+  html += '<div style="font-weight:600">' + escHtml(p.name) + '</div>';
+  html += '<div style="font-family:var(--mono,monospace);font-size:0.78em;color:var(--text2)">CAS ' + escHtml(p.cas || '-') + '</div>';
+  html += '<div style="margin-top:4px"><span class="badge" style="background:' + p.color + '33;color:' + p.color + ';font-size:0.7em">' + escHtml(p.family) + '</span>';
+  if (odorType) html += ' <span style="font-size:0.78em;color:var(--text2)">' + escHtml(odorType) + '</span>';
+  html += '</div>';
+  if (note) html += '<div style="margin-top:4px;font-size:0.82em;color:var(--text2)">' + escHtml(note) + '</div>';
+  html += '</div>';
+  html += '<div style="display:flex;gap:6px;align-items:center">';
+  if (p.inFormulation) {
+    html += '<button class="btn btn-sm" type="button" disabled title="Already in your formula">In formula</button>';
+  } else {
+    html += '<button id="mapAddBtn" class="btn btn-sm btn-primary" type="button">+ Add to formula</button>';
+  }
+  html += '<button id="mapInspectorCloseBtn" class="btn btn-sm" type="button" aria-label="Close inspector">×</button>';
+  html += '</div>';
+  html += '</div>';
+  html += '</div>';
+  slot.innerHTML = html;
+
+  const addBtn = document.getElementById('mapAddBtn');
+  if (addBtn) addBtn.addEventListener('click', () => {
+    addFromDB(p.cas);
+    // addFromDB triggers a global re-render which calls renderMapTab again —
+    // so the inspector will repopulate itself with the now-in-formula state
+    // (button → "In formula"). No further action needed here.
+  });
+  const closeBtn = document.getElementById('mapInspectorCloseBtn');
+  if (closeBtn) closeBtn.addEventListener('click', () => {
+    _mapInspectorCas = null;
+    slot.innerHTML = '';
+    // Drop the highlight ring on the previously-selected dot.
+    document.querySelectorAll('.map-dot.map-dot-selected').forEach(c => c.classList.remove('map-dot-selected'));
+  });
+}
+
+// Adds a transient highlight ring to the dot for the inspector's current
+// selection. Other dots get the class removed so only one is ever active.
+function highlightMapDot(cas) {
+  document.querySelectorAll('.map-dot.map-dot-selected').forEach(c => c.classList.remove('map-dot-selected'));
+  const sel = document.querySelector('.map-dot[data-cas="' + CSS.escape(cas) + '"]');
+  if (sel) sel.classList.add('map-dot-selected');
 }
 
 // ===== C2: i18n Helper =====
