@@ -929,10 +929,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v224"></script>
-<script src="perfumery_data.js?v=2026-04-29-v224"></script>
-<script src="formulation_data.js?v=2026-04-29-v224"></script>
-<script src="formulation_engine.js?v=2026-04-29-v224"></script>
+<script src="taxonomy.js?v=2026-04-29-v225"></script>
+<script src="perfumery_data.js?v=2026-04-29-v225"></script>
+<script src="formulation_data.js?v=2026-04-29-v225"></script>
+<script src="formulation_engine.js?v=2026-04-29-v225"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -4393,6 +4393,40 @@ function renderWheelTab() {
     (mainGroups[main] = mainGroups[main] || []).push(s);
   }
 
+  // Pre-compute per-segment material counts once. The previous renderer
+  // ran a fresh DB.filter() inside every legend-pill iteration plus a
+  // mats.some() inside every slice — O(slices × DB) on each render.
+  // Building two segId→count maps up front collapses that to O(DB + mats).
+  const segIdsForFamilies = (axes) => {
+    const fams = getMaterialFamilies(axes);
+    const segs = new Set();
+    for (const f of fams) {
+      const id = FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()];
+      if (id) segs.add(id);
+    }
+    return segs;
+  };
+  const inFormulaBySeg = {}; // count of formula materials per slice
+  for (const m of mats) {
+    for (const sid of segIdsForFamilies(m.data || {})) {
+      inFormulaBySeg[sid] = (inFormulaBySeg[sid] || 0) + 1;
+    }
+  }
+  const dbBySeg = {}; // count of catalogue materials per slice
+  for (const e of Object.values(DB)) {
+    const cls = e.classification || {};
+    const axes = {
+      odor_type: e.odor?.type,
+      primaryFamilies: cls.primaryFamilies || [],
+      secondaryFamilies: cls.secondaryFamilies || [],
+      facets: cls.facets || [],
+    };
+    for (const sid of segIdsForFamilies(axes)) {
+      dbBySeg[sid] = (dbBySeg[sid] || 0) + 1;
+    }
+  }
+  const hasAnyMats = mats.length > 0;
+
   let svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
     + 'viewBox="0 0 ' + size + ' ' + size + '" style="max-width:560px;width:100%;margin:0 auto;display:block">';
 
@@ -4452,18 +4486,23 @@ function renderWheelTab() {
     const path = 'M ' + x1o + ' ' + y1o + ' A ' + outerR + ' ' + outerR + ' 0 ' + large + ' 1 ' + x2o + ' ' + y2o +
       ' L ' + x1i + ' ' + y1i + ' A ' + midR + ' ' + midR + ' 0 ' + large + ' 0 ' + x2i + ' ' + y2i + ' Z';
 
-    const hasActive = mats.some(m => {
-      const families = getMaterialFamilies(m.data || {});
-      return families.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === s.id);
-    });
+    const inFormulaCount = inFormulaBySeg[s.id] || 0;
+    const hasActive = inFormulaCount > 0;
+    // When the user has materials, mute slices that don't contain any
+    // formula material so the active subfamilies pop out — the previous
+    // 0.95 vs 1.0 contrast was imperceptible. With an empty formula we
+    // keep all slices full-saturation so the wheel still reads as a
+    // reference card.
+    const fillOpacity = !hasAnyMats ? 0.95 : (hasActive ? 1 : 0.5);
 
     // Every slice uses a solid colour from `s.color` — transitional ones
     // carry an intermediate hue (e.g. Fruity = lavender between Fresh blue
     // and Floral rose) instead of a two-tone gradient fill.
-    svg += '<path class="wheel-seg" data-seg="' + s.id + '" d="' + path + '" fill="' + s.color + '" fill-opacity="' + (hasActive ? '1' : '0.95') + '" ';
+    svg += '<path class="wheel-seg" data-seg="' + s.id + '" d="' + path + '" fill="' + s.color + '" fill-opacity="' + fillOpacity + '" ';
     svg += 'stroke="#fff" stroke-width="2" style="cursor:pointer" ';
     svg += 'onclick="filterByWheelSegment(\'' + s.id + '\', event)" ';
-    svg += '><title>' + prettyLabel(s.id) + ' (' + s.quadrant + (s.transitional ? ' — transitional' : '') + ')</title></path>';
+    const titleSuffix = inFormulaCount > 0 ? ' — ' + inFormulaCount + ' in formula' : '';
+    svg += '><title>' + prettyLabel(s.id) + ' (' + s.quadrant + (s.transitional ? ' — transitional' : '') + ')' + titleSuffix + '</title></path>';
 
     // Subfamily label — oriented radially (rotated so text reads outward).
     // Bottom half (angles 90–270 in screen coords where 0 is 3 o'clock and +y
@@ -4490,6 +4529,21 @@ function renderWheelTab() {
       svg += words[0];
     }
     svg += '</text>';
+
+    // In-formula count badge — small white circle with the count, drawn on
+    // the slice's mid-angle near the outer edge. Only when the user has at
+    // least one material classified into this slice. The badge sits past
+    // the radial label (which is centred at (outerR+midR)/2) so it doesn't
+    // crowd two-word labels like "Soft Floral".
+    if (inFormulaCount > 0) {
+      const badgeR = outerR - 18;
+      const bx = cx + badgeR * Math.cos(s.angle * Math.PI / 180);
+      const by = cy + badgeR * Math.sin(s.angle * Math.PI / 180);
+      svg += '<g style="pointer-events:none">';
+      svg += '<circle cx="' + bx.toFixed(2) + '" cy="' + by.toFixed(2) + '" r="9" fill="#fff" stroke="' + s.color + '" stroke-width="2"/>';
+      svg += '<text x="' + bx.toFixed(2) + '" y="' + by.toFixed(2) + '" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#1a1a1a">' + inFormulaCount + '</text>';
+      svg += '</g>';
+    }
   }
 
   // ─── Inner ring: 4 main-family bands with curved "FAMILY NOTES" labels ──
@@ -4545,27 +4599,25 @@ function renderWheelTab() {
   svg += '<text x="' + cx + '" y="' + (cy + 22) + '" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#666" letter-spacing="2">WHEEL</text>';
   svg += '</svg>';
 
-  // Material count per segment. Transitional pills get a two-stop linear
-  // gradient background so their "bridge" nature reads at a glance.
+  // Legend pills — one per subfamily, showing total catalogue count and (when
+  // the user has materials there) the in-formula count as well. Pills with
+  // formula materials get a denser background tint + bolder text so they
+  // stand out from the rest of the row.
   let legend = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;justify-content:center">';
   for (const s of segments) {
-    const count = Object.values(DB).filter(e => {
-      const cls = e.classification || {};
-      const fams = getMaterialFamilies({
-        odor_type: e.odor?.type,
-        primaryFamilies: cls.primaryFamilies || [],
-        secondaryFamilies: cls.secondaryFamilies || [],
-        facets: cls.facets || [],
-      });
-      return fams.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === s.id);
-    }).length;
-    // Solid-colour pill for every subfamily (no more two-tone linear-
-    // gradient on transitionals). `+ '33'` appends ~20% alpha so the
-    // pill background reads as a translucent tint of the slice colour.
-    const pillBg = s.color + '33';
+    const dbCount = dbBySeg[s.id] || 0;
+    const inFormulaCount = inFormulaBySeg[s.id] || 0;
+    const active = inFormulaCount > 0;
+    // Denser tint (~33% alpha) when the slice carries formula materials,
+    // light tint (~20% alpha) otherwise. `+ 'XX'` appends an alpha hex.
+    const pillBg = s.color + (active ? '55' : '22');
     const pillFg = s.color;
-    const pillStyle = s.transitional ? ';font-style:italic' : '';
-    legend += '<span class="badge" style="background:' + pillBg + ';color:' + pillFg + ';font-size:0.72em' + pillStyle + '">' + prettyLabel(s.id) + ' (' + count + ')</span>';
+    const transitionalStyle = s.transitional ? ';font-style:italic' : '';
+    const weightStyle = active ? ';font-weight:600' : '';
+    const countText = active
+      ? '<strong style="color:#1a1a1a">' + inFormulaCount + '</strong>/' + dbCount
+      : dbCount;
+    legend += '<span class="badge" style="background:' + pillBg + ';color:' + pillFg + ';font-size:0.72em' + transitionalStyle + weightStyle + '">' + prettyLabel(s.id) + ' (' + countText + ')</span>';
   }
   legend += '</div>';
 
