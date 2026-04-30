@@ -268,8 +268,13 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .sort-select { font-size:0.8em; padding:4px 8px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text); font-family:inherit; cursor:pointer; margin-left:auto; }
 .sort-select:hover { border-color:var(--accent); }
 .sort-select:focus { outline:none; border-color:var(--accent); }
-.clear-btn { padding:6px 18px; background:var(--accent); color:var(--accent-text, #fff); border:none; border-radius:8px; font-size:0.85em; cursor:pointer; font-family:inherit; font-weight:500; transition:background var(--dur) var(--ease); }
-.clear-btn:hover { background:var(--accent-hover); }
+/* Destructive action — red palette so the button reads as a warn-
+   level "you sure?" prompt instead of mimicking the primary
+   accent. Visible only when the status bar is mounted, which
+   already requires results.length > 0, so the disabled state
+   never triggers in practice — kept as a defensive fallback. */
+.clear-btn { padding:6px 18px; background:var(--danger); color:#fff; border:none; border-radius:8px; font-size:0.85em; cursor:pointer; font-family:inherit; font-weight:500; transition:background var(--dur) var(--ease), filter var(--dur) var(--ease); }
+.clear-btn:hover { filter:brightness(0.9); }
 .clear-btn:disabled { opacity:0.4; cursor:default; }
 #statusBar { align-items:center; gap:8px; margin-bottom:8px; }
 
@@ -1187,10 +1192,10 @@ html { scroll-behavior:smooth; }
      MAIN_FAMILY_TO_SUBS / SUB_FAMILY_TO_MAIN globals directly. The
      formulation page loads the same file. Bumping its ?v= forces a
      reload on both pages. -->
-<script src="taxonomy.js?v=2026-04-25-rebuild-v215"></script>
+<script src="taxonomy.js?v=2026-04-25-rebuild-v216"></script>
 <!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
      re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v215"></script>
+<script src="perfumery_data.js?v=2026-04-25-rebuild-v216"></script>
 <script>
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1340,7 +1345,7 @@ function _clickLog(...args) {
 // Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v215";
+const DATA_VERSION = "2026-04-25-rebuild-v216";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
