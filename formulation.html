@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v271"></script>
-<script src="perfumery_data.js?v=2026-04-29-v271"></script>
-<script src="formulation_data.js?v=2026-04-29-v271"></script>
-<script src="formulation_engine.js?v=2026-04-29-v271"></script>
+<script src="taxonomy.js?v=2026-04-29-v272"></script>
+<script src="perfumery_data.js?v=2026-04-29-v272"></script>
+<script src="formulation_data.js?v=2026-04-29-v272"></script>
+<script src="formulation_engine.js?v=2026-04-29-v272"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -3028,14 +3028,17 @@ function applyAllocation(type) {
       : (_originalPcts[m.cas] != null ? _originalPcts[m.cas] : m.pct),
   }));
 
-  // Round 1 alignment: thread the pyramid family override + ambient
-  // temp into the optimizer so its fitness function scores the SAME
-  // formula the user-facing Pyramid + Harmony cards display. Without
-  // this the optimizer was climbing a slightly different surface (no
-  // override → wrong family target; no tempC → wrong VP curves) and
-  // could produce 'optimized' compositions whose visible score went
-  // DOWN.
   const allocOpts = { tempC: tempC, familyOverride: _pyramidFamilyOverride };
+
+  // Round 4: capture before/after fitness so we can show the user how
+  // much Smart Allocate actually improved the formula. Without this
+  // toast users had no signal whether the click did anything beyond
+  // shuffling numbers.
+  const fitnessOpts = {
+    catId, fragPct, tempC, graph,
+    familyOverride: _pyramidFamilyOverride,
+  };
+  const beforeFit = computeFormulaFitness(originalMats, fitnessOpts);
 
   formulation.batchUpdate(() => {
     // Phase 1 — Suggested baseline (skipped if pure 'optimized' mode)
@@ -3059,6 +3062,27 @@ function applyAllocation(type) {
     // Cap each material to its IFRA max for the selected category.
     capMaterialsToIFRA(catId, fragPct);
   });
+
+  // Round 4: post-allocation fitness + delta toast.
+  const afterFit = computeFormulaFitness(formulation.materials, fitnessOpts);
+  const delta = (afterFit.score || 0) - (beforeFit.score || 0);
+  if (typeof showToast === 'function') {
+    let msg, variant;
+    if (delta >= 3) {
+      msg = 'Smart Allocate · +' + Math.round(delta) + ' pts (' + Math.round(beforeFit.score) + ' → ' + Math.round(afterFit.score) + ')';
+      variant = 'success';
+    } else if (delta >= 0.5) {
+      msg = 'Smart Allocate · +' + delta.toFixed(1) + ' pts (small improvement)';
+      variant = 'success';
+    } else if (delta >= -0.5) {
+      msg = 'Smart Allocate · already near optimum (no change)';
+      variant = 'info';
+    } else {
+      msg = 'Smart Allocate · score dropped ' + delta.toFixed(1) + ' pts — formula may be at a local maximum the optimiser couldn\'t leave';
+      variant = 'warn';
+    }
+    showToast({ message: msg, variant: variant });
+  }
 
   // Rebalance existing carrier %s, then normalize against dilution minimums.
   rebalanceExistingCarriers(mode === 'suggested' ? 'suggested' : 'optimized', catId);
