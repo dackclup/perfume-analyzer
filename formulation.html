@@ -944,10 +944,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v226"></script>
-<script src="perfumery_data.js?v=2026-04-29-v226"></script>
-<script src="formulation_data.js?v=2026-04-29-v226"></script>
-<script src="formulation_engine.js?v=2026-04-29-v226"></script>
+<script src="taxonomy.js?v=2026-04-29-v227"></script>
+<script src="perfumery_data.js?v=2026-04-29-v227"></script>
+<script src="formulation_data.js?v=2026-04-29-v227"></script>
+<script src="formulation_engine.js?v=2026-04-29-v227"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -4373,6 +4373,12 @@ function showSubstitutes(cas) {
 // Module-level state — persists across re-renders so switching tabs (or
 // editing the formula) doesn't drop the user's active filter.
 let _wheelSelectedSegId = null;
+// Default-collapsed result list shows the first 15 matches; user can expand
+// to the full list. Reset on segment change so each new selection starts
+// collapsed. Without a reset a user who hit "Show all" on Floral and then
+// switched to Citrus would also see Citrus expanded — surprising.
+let _wheelShowAllResults = false;
+const WHEEL_RESULTS_INITIAL = 15;
 
 function renderWheelTab() {
   const el = document.getElementById('wheelContent');
@@ -4686,6 +4692,7 @@ function renderWheelTab() {
 
 function clearWheelFilter() {
   _wheelSelectedSegId = null;
+  _wheelShowAllResults = false;
   // Cheaper than full re-render: drop the active class + clear the results,
   // then rebuild the toolbar in place.
   document.querySelectorAll('.wheel-seg').forEach(p => p.classList.remove('active-seg', 'popping'));
@@ -4704,6 +4711,7 @@ function filterByWheelSegment(segId /*, evt */) {
   // Persist + visual click feedback (pop animation on clicked slice;
   // .active-seg stays until the next slice is selected or Clear is pressed).
   _wheelSelectedSegId = segId;
+  _wheelShowAllResults = false; // each new selection re-collapses the list
   document.querySelectorAll('.wheel-seg').forEach(p => p.classList.remove('active-seg', 'popping'));
   const clickedPath = document.querySelector('.wheel-seg[data-seg="' + segId + '"]');
   if (clickedPath) {
@@ -4720,10 +4728,16 @@ function filterByWheelSegment(segId /*, evt */) {
 // Renders the table of DB materials matching the active segment into the
 // #wheelFilterResults pane. Split out from filterByWheelSegment so that
 // renderWheelTab() can re-hydrate it on tab return / formula change.
+//
+// Result-cap policy: collect every match up front (we need the true total
+// for the 'Showing X of Y' counter), then slice to WHEEL_RESULTS_INITIAL
+// unless the user has pressed 'Show all'. The previous renderer stopped
+// the iteration at 15 silently — users with a 60-material match set never
+// knew there were 45 more.
 function renderWheelFilterResults(segId) {
   const el = document.getElementById('wheelFilterResults');
   if (!el) return;
-  const matches = [];
+  const allMatches = [];
   for (const [cas, e] of Object.entries(DB)) {
     if (formulation.materials.find(m => m.cas === cas)) continue;
     const cls = e.classification || {};
@@ -4734,19 +4748,44 @@ function renderWheelFilterResults(segId) {
       facets: cls.facets || [],
     });
     if (fams.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === segId)) {
-      matches.push(e);
+      allMatches.push(e);
     }
-    if (matches.length >= 15) break;
   }
-  let html = '<h4>' + segId.replace(/_/g, ' ') + ' — ' + matches.length + ' materials</h4>';
-  html += '<table class="data-table"><thead><tr><th>Material</th><th>Note</th><th>Odor</th><th></th></tr></thead><tbody>';
-  for (const m of matches) {
-    html += '<tr><td>' + escHtml(m.name) + '</td><td>' + escHtml(m.note || '-') + '</td>';
-    html += '<td>' + escHtml(m.odor?.type || '-') + '</td>';
-    html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + escHtml(m.cas) + '\')">+ Add</button></td></tr>';
+  const total = allMatches.length;
+  const visible = _wheelShowAllResults ? allMatches : allMatches.slice(0, WHEEL_RESULTS_INITIAL);
+  const overflow = total - visible.length;
+
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
+  html += '<h4 style="margin:0">' + segId.replace(/_/g, ' ') + ' <span style="color:var(--text2);font-weight:400">— showing ' + visible.length + ' of ' + total + '</span></h4>';
+  if (total > WHEEL_RESULTS_INITIAL) {
+    const btnLabel = _wheelShowAllResults
+      ? 'Show first ' + WHEEL_RESULTS_INITIAL
+      : 'Show all (' + total + ')';
+    html += '<button id="wheelToggleAllBtn" class="btn btn-sm" type="button">' + btnLabel + '</button>';
   }
-  html += '</tbody></table>';
+  html += '</div>';
+
+  if (!total) {
+    html += '<p class="panel-desc">No catalogue materials match this slice (or all matches are already in your formula).</p>';
+  } else {
+    html += '<table class="data-table"><thead><tr><th>Material</th><th>Note</th><th>Odor</th><th></th></tr></thead><tbody>';
+    for (const m of visible) {
+      html += '<tr><td>' + escHtml(m.name) + '</td><td>' + escHtml(m.note || '-') + '</td>';
+      html += '<td>' + escHtml(m.odor?.type || '-') + '</td>';
+      html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + escHtml(m.cas) + '\')">+ Add</button></td></tr>';
+    }
+    html += '</tbody></table>';
+    if (overflow > 0) {
+      html += '<p class="panel-desc" style="margin-top:6px">+' + overflow + ' more — press "Show all" to expand.</p>';
+    }
+  }
   el.innerHTML = html;
+
+  const toggleBtn = document.getElementById('wheelToggleAllBtn');
+  if (toggleBtn) toggleBtn.addEventListener('click', () => {
+    _wheelShowAllResults = !_wheelShowAllResults;
+    renderWheelFilterResults(segId);
+  });
 }
 
 // ===== B4: Compare Modal =====
