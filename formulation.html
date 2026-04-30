@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v245"></script>
-<script src="perfumery_data.js?v=2026-04-29-v245"></script>
-<script src="formulation_data.js?v=2026-04-29-v245"></script>
-<script src="formulation_engine.js?v=2026-04-29-v245"></script>
+<script src="taxonomy.js?v=2026-04-29-v246"></script>
+<script src="perfumery_data.js?v=2026-04-29-v246"></script>
+<script src="formulation_data.js?v=2026-04-29-v246"></script>
+<script src="formulation_engine.js?v=2026-04-29-v246"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2267,9 +2267,51 @@ function renderCompatTab() {
 
   let html = '';
 
+  // ===== Verdict banner =====
+  // Plain-language summary at the top so the user doesn't have to scan four
+  // cards to know how their formula is doing. Mirrors the Safety tab pattern:
+  //   - large icon + verdict label
+  //   - one-line description tying the score to the most-relevant signal
+  //   - counter chips for the things the user might want to act on
+  const score = harmony.score;
+  const verdict = score >= 70
+    ? { icon: '✓', label: 'Strong harmony',  tone: 'success', desc: 'Most pairs are well-connected. Note balance and discord checks below.' }
+    : score >= 40
+    ? { icon: '⚠', label: 'Mixed harmony',   tone: 'warn',    desc: 'Some pairs are weakly connected. Review the components below before scaling up.' }
+    : { icon: '✗', label: 'Low harmony',     tone: 'danger',  desc: 'Few pairs share strong family or descriptor links. Consider substitutions or a different brief.' };
+  // Override to danger if a discord is present, regardless of score.
+  if (harmony.discords.length) {
+    verdict.icon = '✗';
+    verdict.label = 'Discord present';
+    verdict.tone = 'danger';
+    verdict.desc = harmony.discords.length + ' known family clash' + (harmony.discords.length === 1 ? '' : 'es') + ' detected. See discord card below — substitution recommended before this ships.';
+  }
+  const verdictBadgeCls = verdict.tone === 'success' ? 'badge-ok' : verdict.tone === 'warn' ? 'badge-warn' : 'badge-danger';
+  html += '<div class="analysis-card" style="border-left:4px solid var(--' + verdict.tone + ')">';
+  html += '<div style="display:flex;align-items:flex-start;gap:14px">';
+  html += '<div style="font-size:2.2em;line-height:1;color:var(--' + verdict.tone + ')">' + verdict.icon + '</div>';
+  html += '<div style="flex:1;min-width:0">';
+  html += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
+  html += '<h4 style="margin:0">' + verdict.label + '</h4>';
+  html += '<span class="badge ' + verdictBadgeCls + '">' + score + '%</span>';
+  html += '</div>';
+  html += '<p style="margin:6px 0 0;color:var(--text2);font-size:0.85em">' + verdict.desc + '</p>';
+  // Counter chips that act as quick-jump anchors to the relevant subsection.
+  const chips = [];
+  const pushChip = (cnt, label, tone, anchor) => {
+    if (!cnt) return;
+    chips.push('<a href="#' + anchor + '" data-compat-jump="' + anchor + '" class="badge ' + tone + '" style="text-decoration:none;cursor:pointer" title="Jump to details">' + cnt + ' ' + label + '</a>');
+  };
+  pushChip(harmony.discords.length, 'discord' + (harmony.discords.length === 1 ? '' : 's'), 'badge-danger', 'compat-harmony');
+  if (balance.missing && balance.missing.length) pushChip(balance.missing.length, 'missing tier' + (balance.missing.length === 1 ? '' : 's'), 'badge-warn', 'compat-pyramid');
+  if (balance.outOfRange && balance.outOfRange.length) pushChip(balance.outOfRange.length, 'tier off-target', 'badge-warn', 'compat-pyramid');
+  if (suggestions.length) pushChip(suggestions.length, 'suggested addition' + (suggestions.length === 1 ? '' : 's'), 'badge-ok', 'compat-suggest');
+  if (chips.length) html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">' + chips.join('') + '</div>';
+  html += '</div></div></div>';
+
   // Harmony Score (multi-factor: graph + descriptor + discord + triangle + tier diversity)
   const harmClass = harmony.score >= 70 ? 'badge-ok' : harmony.score >= 40 ? 'badge-warn' : 'badge-danger';
-  html += '<div class="analysis-card"><h4>Harmony Score <span class="badge ' + harmClass + '">' + harmony.score + '%</span></h4>';
+  html += '<div class="analysis-card" id="compat-harmony"><h4>Harmony Score <span class="badge ' + harmClass + '">' + harmony.score + '%</span></h4>';
   html += '<p class="panel-desc">Multi-factor: pairwise graph + descriptor similarity, discord penalty, triangle synergy, note-tier diversity.</p>';
 
   // Component breakdown
@@ -2338,7 +2380,7 @@ function renderCompatTab() {
       o.tier.charAt(0).toUpperCase() + o.tier.slice(1) + ' ' + (o.direction === 'high' ? 'high' : 'low')
     ).join(', ');
   }
-  html += '<div class="analysis-card"><h4>Fragrance Pyramid <span class="badge ' + balClass + '">' + balLabel + '</span></h4>';
+  html += '<div class="analysis-card" id="compat-pyramid"><h4>Fragrance Pyramid <span class="badge ' + balClass + '">' + balLabel + '</span></h4>';
   // Method + family subtitle
   const methodLabel = balance.method === 'perception'
     ? 'Perception-weighted (time-integrated PSI)'
@@ -2373,7 +2415,7 @@ function renderCompatTab() {
   html += '</div>';
 
   // Suggested Allocation — combined MATERIALS + SOLVENT/CARRIER/OTHER
-  html += '<div class="analysis-card"><h4>Suggested Allocation</h4>';
+  html += '<div class="analysis-card" id="compat-allocation"><h4>Suggested Allocation</h4>';
   html += '<p class="panel-desc">Materials use Dirichlet weights by note tier and inverse odor strength. Carriers rebalance by IFRA category (locked rows are preserved). Click "Apply" to use.</p>';
 
   // Materials section — lock button here is the only way to pin a material's %
@@ -2412,7 +2454,7 @@ function renderCompatTab() {
 
   // Compatible Material Suggestions
   if (suggestions.length) {
-    html += '<div class="analysis-card"><h4>Compatible Materials</h4>';
+    html += '<div class="analysis-card" id="compat-suggest"><h4>Compatible Materials</h4>';
     html += '<p class="panel-desc">Materials that blend well with your current selection, ranked by compatibility score.</p>';
     html += '<table class="data-table"><thead><tr><th>Material</th><th>Note</th><th>Odor Type</th><th>Score</th><th></th></tr></thead><tbody>';
     for (const s of suggestions) {
@@ -2430,6 +2472,16 @@ function renderCompatTab() {
   }
 
   el.innerHTML = html;
+
+  // Wire smooth-scroll jump from verdict-banner counter chips → the relevant
+  // subsection card. Same pattern as the Safety tab.
+  el.querySelectorAll('[data-compat-jump]').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.getElementById(a.getAttribute('data-compat-jump'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
 }
 
 // Smart Allocate — chained Suggested → Optimized.
