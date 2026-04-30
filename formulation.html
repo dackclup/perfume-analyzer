@@ -481,10 +481,22 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
   -webkit-tap-highlight-color: transparent;
 }
 .wheel-seg:focus,
-.wheel-seg:focus-visible {
+.wheel-seg:focus-visible,
+.wheel-main:focus,
+.wheel-main:focus-visible {
   outline: none;
 }
-.wheel-seg:hover {
+/* Keyboard focus indicator on SVG paths — outline rectangles around curved
+   slices look terrible, so we use a thicker stroke + brightness boost
+   instead. Mouse users get the same feedback via :hover; keyboard users
+   get it via :focus-visible (and not :focus, so click doesn't trigger it). */
+.wheel-seg:focus-visible,
+.wheel-main:focus-visible {
+  filter: brightness(1.10) drop-shadow(0 0 4px rgba(0,0,0,0.35));
+  stroke-width: 4;
+}
+.wheel-seg:hover,
+.wheel-main:hover {
   filter: brightness(1.06);
   stroke-width: 3;
 }
@@ -944,10 +956,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v229"></script>
-<script src="perfumery_data.js?v=2026-04-29-v229"></script>
-<script src="formulation_data.js?v=2026-04-29-v229"></script>
-<script src="formulation_engine.js?v=2026-04-29-v229"></script>
+<script src="taxonomy.js?v=2026-04-29-v230"></script>
+<script src="perfumery_data.js?v=2026-04-29-v230"></script>
+<script src="formulation_data.js?v=2026-04-29-v230"></script>
+<script src="formulation_engine.js?v=2026-04-29-v230"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -4525,8 +4537,11 @@ function renderWheelTab() {
     // Every slice uses a solid colour from `s.color` — transitional ones
     // carry an intermediate hue (e.g. Fruity = lavender between Fresh blue
     // and Floral rose) instead of a two-tone gradient fill.
+    const isSelectedSlice = _wheelSelectedSegId === s.id;
+    const sliceAria = prettyLabel(s.id) + ' subfamily, ' + s.quadrant + (s.transitional ? ', transitional' : '') + (inFormulaCount > 0 ? ', ' + inFormulaCount + ' in formula' : '') + ' — press Enter to filter';
     svg += '<path class="wheel-seg" data-seg="' + s.id + '" d="' + path + '" fill="' + s.color + '" fill-opacity="' + fillOpacity + '" ';
     svg += 'stroke="#fff" stroke-width="2" style="cursor:pointer" ';
+    svg += 'role="button" tabindex="0" aria-label="' + escHtml(sliceAria) + '" aria-pressed="' + isSelectedSlice + '" ';
     svg += 'onclick="filterByWheelSegment(\'' + s.id + '\', event)" ';
     const titleSuffix = inFormulaCount > 0 ? ' — ' + inFormulaCount + ' in formula' : '';
     svg += '><title>' + prettyLabel(s.id) + ' (' + s.quadrant + (s.transitional ? ' — transitional' : '') + ')' + titleSuffix + '</title></path>';
@@ -4598,7 +4613,8 @@ function renderWheelTab() {
     // The inner band is now clickable — filters the result list to ALL
     // subfamilies inside that main family. The text label is left
     // pointer-events:none so its <textPath> doesn't intercept clicks.
-    svg += '<path class="wheel-main" data-main="' + main + '" d="' + path + '" fill="' + mainColor + '" fill-opacity="' + (mainSelected ? '1' : '0.95') + '" stroke="#fff" stroke-width="' + (mainSelected ? '3' : '2') + '" style="cursor:pointer" onclick="filterByWheelMain(\'' + main + '\')"><title>' + main.toUpperCase() + ' band — click to filter all ' + main + ' subfamilies</title></path>';
+    const mainAria = main.toUpperCase() + ' notes band — press Enter to filter all ' + main + ' subfamilies';
+    svg += '<path class="wheel-main" data-main="' + main + '" d="' + path + '" fill="' + mainColor + '" fill-opacity="' + (mainSelected ? '1' : '0.95') + '" stroke="#fff" stroke-width="' + (mainSelected ? '3' : '2') + '" style="cursor:pointer" role="button" tabindex="0" aria-label="' + escHtml(mainAria) + '" aria-pressed="' + mainSelected + '" onclick="filterByWheelMain(\'' + main + '\')"><title>' + main.toUpperCase() + ' band — click to filter all ' + main + ' subfamilies</title></path>';
 
     svg += '<text font-size="14" fill="#fff" font-weight="700" letter-spacing="3" style="pointer-events:none">';
     // href is SVG 2; xlink:href keeps older mobile WebKit happy.
@@ -4706,6 +4722,20 @@ function renderWheelTab() {
   // same way (clicking the already-selected pill clears the filter).
   el.querySelectorAll('.wheel-legend-pill').forEach(pill => {
     pill.addEventListener('click', () => filterByWheelSegment(pill.dataset.seg));
+  });
+
+  // Keyboard activation for SVG slice + main-band paths. tabindex="0" on the
+  // path makes it focusable; pressing Enter or Space triggers the same
+  // onclick handler the mouse uses. dispatchEvent(MouseEvent) is used
+  // because Element.click() isn't universally supported on SVGElement
+  // across older mobile WebKit.
+  el.querySelectorAll('.wheel-seg, .wheel-main').forEach(p => {
+    p.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        p.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      }
+    });
   });
 }
 
