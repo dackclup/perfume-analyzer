@@ -814,7 +814,12 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
     ovList.push(ov);
   }
   const odtCoverage = withODT / materials.length;
-  const useOVWeight = odtCoverage >= 0.5;
+  // OV weighting requires EVERY material to have a usable ODT. Audit #1:
+  // mixing OV-weighted pairs (units: log-ppb⁻¹) with pct-weighted pairs
+  // (units: %) in the same average is meaningless. Either go all-OV or
+  // all-pct. The 50% threshold is kept only for downstream display
+  // (data-quality footnote).
+  const useOVWeight = withODT === materials.length;
 
   function cosSim(v1, v2) {
     let dot = 0, n1 = 0, n2 = 0;
@@ -857,7 +862,10 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
       //   - Otherwise: U-curve complementarity from descriptor sim,
       //     LIFTED by the family compatibility matrix when available
       //     (rose+oud, vanilla+amber, etc. that aren't in blends_with).
-      //   - Discord penalty subtracts up to 50%.
+      //   - Discord penalty subtracts up to (0.5 × max severity in
+      //     DISCORD_PAIRS, currently 0.7) → max ~0.35 of the pair
+      //     score. Audit #5: previous comment claimed '50%' which is
+      //     only true if severity hit 1.0; it never does in the table.
       // The U-curve replaces the previous linear `0.3 + 0.7×sim`. Linear
       // similarity rewarded carbon-copy materials (sim≈1) over genuine
       // complements (sim≈0.5), which inverts the perfumery rule of thumb
@@ -872,18 +880,15 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
       }
       pairScore = Math.max(0, pairScore - 0.5 * discordSev);
 
-      // Weight pair by geometric mean of OLFACTORY VALUE (perceptual
-      // strength = pct / ODT) when ODT data is available for ≥50 % of
-      // the formula; otherwise fall back to pct so we never score on
-      // noise. Geometric mean keeps the metric symmetric and stops a
-      // single huge outlier from dominating the sum.
+      // Weight pair by geometric mean of OLFACTORY VALUE (= pct / ODT)
+      // when EVERY material has a usable ODT — otherwise fall back to
+      // pct for the entire batch. Audit #1: mixing OV (log-ppb⁻¹) and
+      // pct (%) weights inside the same weighted average is unitless
+      // and was scrambling the score on partially-characterised
+      // formulas. log1p compression keeps the 6+ order-of-magnitude
+      // OV span tractable (damascone ≫ vanillin ≫ ethanol).
       let w;
-      if (useOVWeight && ovList[i] != null && ovList[j] != null) {
-        // log1p compression — raw OV spans 6+ orders of magnitude
-        // (vanillin vs damascone), and a linear weighting would
-        // collapse the harmony score to whichever pair contains the
-        // lowest-threshold material. log1p flattens that range while
-        // still ranking strong materials above weak ones.
+      if (useOVWeight) {
         const ovA = Math.log1p(ovList[i]);
         const ovB = Math.log1p(ovList[j]);
         w = Math.max(0.01, Math.sqrt(ovA * ovB));
@@ -931,15 +936,18 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
   // is backwards compatible.
   let tiersPresent;
   let tierSource = 'label';
+  // Audit #6: a tier counts as 'present' only when it carries ≥5 % of the
+  // classified mass. The previous threshold (>0) treated a 0.3 %
+  // sliver as full coverage, so cologne or oriental formulas that
+  // deliberately skip a tier still got the 3/3 multiplier they
+  // shouldn't. Boolean shape stays exact (the caller already filtered).
+  const TIER_PRESENT_PCT = 5;
   if (opts.tierContext && typeof opts.tierContext === 'object') {
-    // Accept either { top: bool, middle: bool, base: bool } or a balance
-    // object with numeric { top, middle, base } percentages. Treat >0 as
-    // present in the latter shape.
     const ctx = opts.tierContext;
     tiersPresent = {
-      top:    typeof ctx.top    === 'boolean' ? ctx.top    : (ctx.top    || 0) > 0,
-      middle: typeof ctx.middle === 'boolean' ? ctx.middle : (ctx.middle || 0) > 0,
-      base:   typeof ctx.base   === 'boolean' ? ctx.base   : (ctx.base   || 0) > 0,
+      top:    typeof ctx.top    === 'boolean' ? ctx.top    : (ctx.top    || 0) >= TIER_PRESENT_PCT,
+      middle: typeof ctx.middle === 'boolean' ? ctx.middle : (ctx.middle || 0) >= TIER_PRESENT_PCT,
+      base:   typeof ctx.base   === 'boolean' ? ctx.base   : (ctx.base   || 0) >= TIER_PRESENT_PCT,
     };
     tierSource = ctx.method || 'perception';
   } else {
@@ -987,7 +995,30 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
     monoculture: dominantPct > 70,
   };
 
-  const baseScore = totalWeight > 0 ? (weightedSum / totalWeight) * 100 : 100;
+  // Audit #3: if every pair has zero weight (e.g. all materials locked at
+  // 0% pct, or every OV is ~0) the weighted average is undefined. The
+  // previous fallback returned baseScore=100 → a 'perfect harmony' that
+  // came from a vacuum. Treat as insufficient instead.
+  if (totalWeight === 0 || !isFinite(totalWeight)) {
+    return {
+      score: null,
+      insufficient: true,
+      reason: 'all-zero-weight',
+      connectedPairs: 0, totalPairs: pairs.length,
+      pairs: [],
+      discords: [],
+      triangleBonus: 0, fullTriangles: 0, totalTriangles: 0,
+      diversityFactor: 1, tierCount: 0,
+      baseScore: null,
+      familyBalance: { dominantFamily: null, dominantPct: 0, monoculture: false, familyMass: {} },
+      monoculturePenalty: 1,
+      weightSource: useOVWeight ? 'ov' : 'pct',
+      odtCoverage: roundN(odtCoverage, 2),
+      tierSource,
+      method: 'multi-factor',
+    };
+  }
+  const baseScore = (weightedSum / totalWeight) * 100;
   const finalScore = Math.max(0, Math.min(100,
     Math.round((baseScore + triangleBonus) * diversityFactor * monoculturePenalty)
   ));
