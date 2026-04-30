@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v240"></script>
-<script src="perfumery_data.js?v=2026-04-29-v240"></script>
-<script src="formulation_data.js?v=2026-04-29-v240"></script>
-<script src="formulation_engine.js?v=2026-04-29-v240"></script>
+<script src="taxonomy.js?v=2026-04-29-v241"></script>
+<script src="perfumery_data.js?v=2026-04-29-v241"></script>
+<script src="formulation_data.js?v=2026-04-29-v241"></script>
+<script src="formulation_engine.js?v=2026-04-29-v241"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -5301,15 +5301,35 @@ function renderMapInspector(points) {
   const dbEntry = DB[p.cas] || {};
   const note = dbEntry.note || '';
   const odorType = dbEntry.odor?.type || '';
+  // Title-case the family id so the chip reads 'Citrus' not 'citrus'.
+  // Also handles multi-word ids like 'soft_floral' → 'Soft Floral'.
+  const prettyFamily = p.family
+    .split('_')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+  // Drop the odor.type if it just repeats the family name — 'Citrus' /
+  // 'Floral' / 'Woody' map 1:1 to the chip and showed up as a duplicate.
+  // Keep it when it adds info ('Citrus, Aldehydic' / 'Floral - Green').
+  const odorTypeShown = (odorType && odorType.toLowerCase().trim() !== p.family.toLowerCase()) ? odorType : '';
+  // Pull the note-level word (Top / Heart / Base etc.) and surface it as
+  // a small badge alongside the family chip instead of an orphan line.
+  const noteLevelMatch = (note.match(/(top|heart|middle|mid|base)/i) || [])[0];
+  const noteLevel = noteLevelMatch ? noteLevelMatch.charAt(0).toUpperCase() + noteLevelMatch.slice(1).toLowerCase() : '';
   let html = '<div style="border:1px solid var(--border);border-left:4px solid ' + p.color + ';border-radius:6px;padding:10px 12px;background:var(--bg)">';
   html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">';
   html += '<div style="flex:1;min-width:160px">';
   html += '<div style="font-weight:600">' + escHtml(p.name) + '</div>';
   html += '<div style="font-family:var(--mono,monospace);font-size:0.78em;color:var(--text2)">CAS ' + escHtml(p.cas || '-') + '</div>';
-  html += '<div style="margin-top:4px"><span class="badge" style="background:' + p.color + '33;color:' + p.color + ';font-size:0.7em">' + escHtml(p.family) + '</span>';
-  if (odorType) html += ' <span style="font-size:0.78em;color:var(--text2)">' + escHtml(odorType) + '</span>';
+  // Single chip row: family · note level · (optional) richer odor.type
+  html += '<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">';
+  html += '<span class="badge" style="background:' + p.color + '33;color:' + p.color + ';font-size:0.72em;font-weight:600">' + escHtml(prettyFamily) + '</span>';
+  if (noteLevel) html += '<span class="badge" style="background:var(--bg2);color:var(--text2);font-size:0.7em">' + escHtml(noteLevel) + '</span>';
+  if (odorTypeShown) html += '<span style="font-size:0.78em;color:var(--text2)">' + escHtml(odorTypeShown) + '</span>';
   html += '</div>';
-  if (note) html += '<div style="margin-top:4px;font-size:0.82em;color:var(--text2)">' + escHtml(note) + '</div>';
+  // Free-text note (e.g. 'Bright, sparkling citrus oil pressed from rind').
+  // Skipped when the only content is the note-level word we already chip'd.
+  const noteRest = note.replace(/(top|heart|middle|mid|base)\s*[\/\-—]?\s*/i, '').trim();
+  if (noteRest) html += '<div style="margin-top:4px;font-size:0.82em;color:var(--text2);line-height:1.4">' + escHtml(noteRest) + '</div>';
   html += '</div>';
   html += '<div style="display:flex;gap:6px;align-items:center">';
   if (p.inFormulation) {
