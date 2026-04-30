@@ -1374,12 +1374,20 @@ function analyzeNoteBalancePerception(materials, tempC, opts) {
   const windows = { top: [0, 0.25], middle: [0.25, 4], base: [4, 24] };
   const integrals = { top: 0, middle: 0, base: 0 };
 
+  // Audit #17: track which materials were skipped by the perception
+  // integral so the renderer can surface a 'N material(s) silently
+  // excluded' notice — currently they were just dropped without any
+  // signal to the user.
+  const perceptionMissing = [];
   for (let mi = 0; mi < materials.length; mi++) {
     const mat = materials[mi];
     const odt = getODT(mat.cas, mat.data);
     const n = getStevensExponent(mat.data);
     const curve = sim.curves[mi];
-    if (!odt || odt.ppb == null || !(odt.ppb > 0) || !curve) continue;
+    if (!odt || odt.ppb == null || !(odt.ppb > 0) || !curve) {
+      perceptionMissing.push({ cas: mat.cas, name: mat.name, pct: mat.pct, reason: !curve ? 'no-vp' : 'no-odt' });
+      continue;
+    }
 
     const psi = times.map((t, ti) => {
       const conc = curve.concentrations[ti] || 0;
@@ -1490,6 +1498,7 @@ function analyzeNoteBalancePerception(materials, tempC, opts) {
     method: 'perception',
     odtCoverage: roundN(odtCoverage, 2),
     vpCoverage:  roundN(vpCoverage,  2),
+    perceptionMissing, // Audit #17: materials skipped by the integral
   };
 }
 

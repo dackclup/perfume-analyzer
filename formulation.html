@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v264"></script>
-<script src="perfumery_data.js?v=2026-04-29-v264"></script>
-<script src="formulation_data.js?v=2026-04-29-v264"></script>
-<script src="formulation_engine.js?v=2026-04-29-v264"></script>
+<script src="taxonomy.js?v=2026-04-29-v265"></script>
+<script src="perfumery_data.js?v=2026-04-29-v265"></script>
+<script src="formulation_data.js?v=2026-04-29-v265"></script>
+<script src="formulation_engine.js?v=2026-04-29-v265"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2640,10 +2640,12 @@ function renderCompatTab() {
     ).join(', ');
   }
   html += '<div class="analysis-card" id="compat-pyramid"><h4>Fragrance Pyramid <span class="badge ' + balClass + '">' + balLabel + '</span></h4>';
-  // Method + family subtitle
+  // Method + family subtitle. Audit #4: when perception falls back to
+  // label-based (insufficient ODT or VP data), make it loud — a high
+  // "Perception-weighted" implies a precision the data doesn't have.
   const methodLabel = balance.method === 'perception'
-    ? 'Perception-weighted (time-integrated PSI)'
-    : 'Label-based (fallback — ODT coverage ' + Math.round((balance.odtCoverage || 0) * 100) + '%, VP coverage ' + Math.round((balance.vpCoverage || 0) * 100) + '%)';
+    ? 'Perception-weighted (time-integrated PSI · ODT ' + Math.round((balance.odtCoverage || 0) * 100) + '% · VP ' + Math.round((balance.vpCoverage || 0) * 100) + '%)'
+    : '<span style="color:var(--warn)">⚠ Label-based fallback</span> — perception simulation skipped (ODT ' + Math.round((balance.odtCoverage || 0) * 100) + '% · VP ' + Math.round((balance.vpCoverage || 0) * 100) + '%, both need ≥ 50%)';
   let subtitle = methodLabel;
   if (balance.family && balance.family !== 'default') {
     const tag = balance.familySource === 'override'
@@ -2743,6 +2745,20 @@ function renderCompatTab() {
     html += '<strong>' + balance.unclassifiedMats.length + ' material' + (balance.unclassifiedMats.length === 1 ? '' : 's') + ' uncategorised — ' + unclPct + '% of the formula:</strong> ';
     html += balance.unclassifiedMats.map(m => escHtml(m.name)).join(', ');
     if (heavy) html += '<br><em style="color:var(--text2);font-size:0.95em">Pyramid range checks paused — too much of the formula lacks note classification for the band comparison to be meaningful.</em>';
+    html += '</div>';
+  }
+  // Audit #17: materials excluded from the perception integral due to
+  // missing ODT or VP data. Previously these were silently dropped and
+  // the user had no signal that part of the formula didn't make it
+  // into the simulation.
+  if (balance.method === 'perception' && balance.perceptionMissing && balance.perceptionMissing.length) {
+    const missingNames = balance.perceptionMissing.map(m => escHtml(m.name)).join(', ');
+    const reasons = balance.perceptionMissing.some(m => m.reason === 'no-odt') && balance.perceptionMissing.some(m => m.reason === 'no-vp')
+      ? 'missing ODT or VP'
+      : balance.perceptionMissing.some(m => m.reason === 'no-odt') ? 'missing ODT'
+      : 'missing VP';
+    html += '<div style="margin-top:6px;padding:6px 10px;background:var(--bg2);border-left:3px solid var(--text2);border-radius:6px;font-size:0.78em;color:var(--text2)">';
+    html += '<em>' + balance.perceptionMissing.length + ' material' + (balance.perceptionMissing.length === 1 ? '' : 's') + ' excluded from perception integral (' + reasons + '):</em> ' + missingNames;
     html += '</div>';
   }
   html += '</div>';
