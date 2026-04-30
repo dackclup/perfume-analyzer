@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v238"></script>
-<script src="perfumery_data.js?v=2026-04-29-v238"></script>
-<script src="formulation_data.js?v=2026-04-29-v238"></script>
-<script src="formulation_engine.js?v=2026-04-29-v238"></script>
+<script src="taxonomy.js?v=2026-04-29-v239"></script>
+<script src="perfumery_data.js?v=2026-04-29-v239"></script>
+<script src="formulation_data.js?v=2026-04-29-v239"></script>
+<script src="formulation_engine.js?v=2026-04-29-v239"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -5088,8 +5088,15 @@ function renderMapTab() {
   for (const p of points) {
     if (p.inFormulation) continue;
     const sx = toSVGX(p.x), sy = toSVGY(p.y);
-    const dotOpacity = isVisible(p) ? 0.4 : 0.06;
+    const visible = isVisible(p);
+    const dotOpacity = visible ? 0.4 : 0.06;
+    // Hidden dots leave the tab order — tabbing through 200+ dimmed circles
+    // would be miserable. Only visible dots receive tabindex='0'. The
+    // selected dot keeps tabindex='0' for screen-reader return.
+    const tabIdx = visible ? '0' : '-1';
+    const a11yLabel = p.name + ', ' + p.family + (p.inFormulation ? ', already in formula' : '') + ' — press Enter to inspect';
     svg += '<circle class="map-dot" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="3" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" ';
+    svg += 'role="button" tabindex="' + tabIdx + '" aria-label="' + escHtml(a11yLabel) + '" ';
     svg += 'style="cursor:pointer">';
     svg += '<title>' + escHtml(p.name) + ' (' + escHtml(p.family) + ') — click for details</title></circle>';
   }
@@ -5103,7 +5110,9 @@ function renderMapTab() {
     const visible = isVisible(p);
     const dotOpacity = visible ? 1 : 0.15;
     const labelOpacity = visible ? 1 : 0.2;
-    svg += '<circle class="map-dot map-dot-active" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="7" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" stroke="var(--text)" stroke-width="2" stroke-opacity="' + dotOpacity + '" style="cursor:pointer">';
+    const tabIdx = visible ? '0' : '-1';
+    const a11yLabel = p.name + ', ' + p.family + ', already in formula — press Enter to inspect';
+    svg += '<circle class="map-dot map-dot-active" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="7" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" stroke="var(--text)" stroke-width="2" stroke-opacity="' + dotOpacity + '" role="button" tabindex="' + tabIdx + '" aria-label="' + escHtml(a11yLabel) + '" style="cursor:pointer">';
     svg += '<title>' + escHtml(p.name) + ' — already in your formula</title></circle>';
     if (_mapShowLabels) {
       svg += '<text x="' + (sx + 10) + '" y="' + (sy + 4) + '" font-size="9" fill="var(--text)" font-weight="600" fill-opacity="' + labelOpacity + '" style="pointer-events:none">' + escHtml(p.name).slice(0, 15) + '</text>';
@@ -5179,6 +5188,15 @@ function renderMapTab() {
       _mapInspectorCas = circle.getAttribute('data-cas');
       renderMapInspector(points);
       highlightMapDot(_mapInspectorCas);
+    });
+    // Keyboard activation. Enter / Space dispatch a synthetic click — same
+    // pattern as the Wheel-tab paths, since SVGElement.click() isn't
+    // universally supported on older mobile WebKit.
+    circle.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        circle.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      }
     });
   });
 
