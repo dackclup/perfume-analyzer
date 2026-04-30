@@ -1215,25 +1215,43 @@ function analyzeNoteBalance(materials, opts) {
   // teaching guidelines — modern niche perfumery (post-2010) often
   // deliberately violates them, so the band is generous and the UI
   // describes the result as 'typical' not 'ideal'.
-  // Audit #2: respect a user-set family override (from the Brief modal
-  // or the Pyramid card override select). User intent wins over
-  // detection — if they say 'I'm making a cologne', use cologne ratios
-  // even if their current materials lean Floral. The detected family
-  // is still surfaced separately so the user can compare.
-  const detectedFamily = detectDominantFamily(materials);
+  // Audit #2 + #8: family target resolution.
+  //   - User override (Brief / manual select) wins outright; the centre
+  //     is the override family's classical ratio and the band is its
+  //     skewed/balanced bucket.
+  //   - Otherwise we use the formula's family DISTRIBUTION (not just
+  //     the winner) and weighted-average the centres so a 51/49
+  //     Floral/Citrus split lands between 20/50/30 and 35/35/30.
+  //     blendFamilyCentre() short-circuits to the dominant centre once
+  //     one family carries ≥70% of the formula.
+  const familyDist = detectFamilyDistribution(materials);
+  const detectedFamily = familyDist.dominant;
   const familySource = opts.familyOverride && (typeof FAMILY_NOTE_RATIOS !== 'undefined') && FAMILY_NOTE_RATIOS[opts.familyOverride]
     ? 'override'
     : 'detected';
   const dominantFamily = familySource === 'override' ? opts.familyOverride : detectedFamily;
-  // Default fallback now sums to 1.00 (was 0.925 — every named family
-  // already sums correctly; only the catch-all was off).
-  const center = (typeof FAMILY_NOTE_RATIOS !== 'undefined' && FAMILY_NOTE_RATIOS[dominantFamily])
-    ? FAMILY_NOTE_RATIOS[dominantFamily]
-    : { top: 0.25, mid: 0.45, base: 0.30 }; // 15–35 / 30–60 / 15–45 general default
+  let center;
+  if (familySource === 'override') {
+    center = (typeof FAMILY_NOTE_RATIOS !== 'undefined' && FAMILY_NOTE_RATIOS[dominantFamily])
+      ? FAMILY_NOTE_RATIOS[dominantFamily]
+      : { top: 0.25, mid: 0.45, base: 0.30 };
+  } else {
+    center = blendFamilyCentre(familyDist.weights, detectedFamily);
+  }
   // Band widens for highly-skewed families (cologne tops can hit 50%, oriental
   // bases 60-70%) where ±10pp would falsely flag the genre's own classic
   // examples. Balanced families keep the tighter ±10pp window.
-  const skewedFamilies = new Set(['citrus', 'fresh', 'water', 'oriental', 'amber', 'soft_amber', 'woody_amber', 'animalic', 'gourmand', 'dry_woods']);
+  const skewedFamilies = new Set([
+    // Top-heavy classics
+    'citrus', 'fresh', 'water', 'aquatic',
+    // Base-heavy classics
+    'oriental', 'amber', 'soft_amber', 'woody_amber',
+    'animalic', 'gourmand', 'dry_woods',
+    // Audit #7: expanded — chypre / fougère anchors deliberately push
+    // base 50-65 % which the prior ±10pp band would falsely flag.
+    'mossy', 'mossy_woods', 'aromatic_fougere', 'fougere',
+    'floral_amber',
+  ]);
   const band = skewedFamilies.has(dominantFamily) ? 15 : 10;
   const clamp01 = (v) => Math.max(0, Math.min(100, v));
   const idealRanges = {
@@ -1341,10 +1359,19 @@ function analyzeNoteBalancePerception(materials, tempC, opts) {
     });
   }
 
-  // Dense sample points so trapezoidal integration captures the top burst
-  const times = [0, 0.083, 0.25, 0.5, 1, 2, 4, 6, 8, 12];
+  // Audit #5/#6: window boundaries + total integration length retuned
+  // against classical perfumery (French school): top is the headspace
+  // burst (0-15 min), heart spans 15 min - 4 h, base is the drydown
+  // 4 h - 24 h. Previous 12 h cap silently truncated long-lasting
+  // bases (musk, oakmoss, vanillin extend to 48 h+ on skin); 30-min
+  // top window over-counted fast-fading materials (5-10 min) into
+  // the top integral.
+  // Sample times denser in the first 30 min so trapezoidal integration
+  // captures the top burst accurately, and extended out to 24 h so the
+  // base window contributes its full evolution.
+  const times = [0, 0.05, 0.083, 0.167, 0.25, 0.5, 1, 2, 4, 6, 8, 12, 18, 24];
   const sim = simulateEvaporation(materials, tempC || 25, times);
-  const windows = { top: [0, 0.5], middle: [0.5, 4], base: [4, 12] };
+  const windows = { top: [0, 0.25], middle: [0.25, 4], base: [4, 24] };
   const integrals = { top: 0, middle: 0, base: 0 };
 
   for (let mi = 0; mi < materials.length; mi++) {
@@ -1396,16 +1423,33 @@ function analyzeNoteBalancePerception(materials, tempC, opts) {
 
   // Family-specific typical ranges (same shape + sources as label method —
   // see analyzeNoteBalance comment block for citations).
-  // Audit #2: respect user-set family override here too.
-  const detectedFamily = detectDominantFamily(materials);
+  // Audit #2 + #8: respect user override; otherwise blend centres by the
+  // formula's family distribution.
+  const familyDistP = detectFamilyDistribution(materials);
+  const detectedFamily = familyDistP.dominant;
   const familySource = opts.familyOverride && (typeof FAMILY_NOTE_RATIOS !== 'undefined') && FAMILY_NOTE_RATIOS[opts.familyOverride]
     ? 'override'
     : 'detected';
   const dominantFamily = familySource === 'override' ? opts.familyOverride : detectedFamily;
-  const center = (typeof FAMILY_NOTE_RATIOS !== 'undefined' && FAMILY_NOTE_RATIOS[dominantFamily])
-    ? FAMILY_NOTE_RATIOS[dominantFamily]
-    : { top: 0.25, mid: 0.45, base: 0.30 };
-  const skewedFamilies = new Set(['citrus', 'fresh', 'water', 'oriental', 'amber', 'soft_amber', 'woody_amber', 'animalic', 'gourmand', 'dry_woods']);
+  let center;
+  if (familySource === 'override') {
+    center = (typeof FAMILY_NOTE_RATIOS !== 'undefined' && FAMILY_NOTE_RATIOS[dominantFamily])
+      ? FAMILY_NOTE_RATIOS[dominantFamily]
+      : { top: 0.25, mid: 0.45, base: 0.30 };
+  } else {
+    center = blendFamilyCentre(familyDistP.weights, detectedFamily);
+  }
+  const skewedFamilies = new Set([
+    // Top-heavy classics
+    'citrus', 'fresh', 'water', 'aquatic',
+    // Base-heavy classics
+    'oriental', 'amber', 'soft_amber', 'woody_amber',
+    'animalic', 'gourmand', 'dry_woods',
+    // Audit #7: expanded — chypre / fougère anchors deliberately push
+    // base 50-65 % which the prior ±10pp band would falsely flag.
+    'mossy', 'mossy_woods', 'aromatic_fougere', 'fougere',
+    'floral_amber',
+  ]);
   const band = skewedFamilies.has(dominantFamily) ? 15 : 10;
   const clamp01 = v => Math.max(0, Math.min(100, v));
   const idealRanges = {
@@ -1800,23 +1844,81 @@ function suggestAllocation(materials, fragPct, locked) {
  * Weighted by percentage — the family with highest total % wins.
  */
 function detectDominantFamily(materials) {
+  const dist = detectFamilyDistribution(materials);
+  return dist.dominant;
+}
+
+/**
+ * Audit #8: full family-share distribution so callers can build a
+ * weighted-blend centre when the formula is split (51 % Floral /
+ * 49 % Citrus shouldn't ignore citrus). Returns a normalised
+ * `weights` map that sums to 1 (or to 0 when there are no families).
+ *
+ * @param {Array} materials
+ * @returns {{ dominant: string, dominantPct: number, weights: Object }}
+ */
+function detectFamilyDistribution(materials) {
   const familyPct = {};
-  for (const mat of materials) {
+  let totalShare = 0;
+  for (const mat of materials || []) {
     const families = getMaterialFamilies(mat.data || {});
-    const share = mat.pct / (families.length || 1);
+    const share = (mat.pct || 0) / (families.length || 1);
     for (const f of families) {
       const fl = f.toLowerCase();
-      // Map to wheel segment names
       const seg = (typeof FRAGRANCE_WHEEL !== 'undefined' && FRAGRANCE_WHEEL.familyToSegment)
         ? FRAGRANCE_WHEEL.familyToSegment[fl] || fl : fl;
       familyPct[seg] = (familyPct[seg] || 0) + share;
+      totalShare += share;
     }
   }
-  let best = 'default', bestPct = 0;
-  for (const [fam, pct] of Object.entries(familyPct)) {
-    if (pct > bestPct) { best = fam; bestPct = pct; }
+  const weights = {};
+  if (totalShare > 0) {
+    for (const [fam, pct] of Object.entries(familyPct)) {
+      weights[fam] = pct / totalShare;
+    }
   }
-  return best;
+  let dominant = 'default', dominantPct = 0;
+  for (const [fam, w] of Object.entries(weights)) {
+    if (w > dominantPct) { dominant = fam; dominantPct = w; }
+  }
+  return { dominant, dominantPct, weights };
+}
+
+/**
+ * Audit #8: blend FAMILY_NOTE_RATIOS centres by the formula's family
+ * distribution so a 51/49 Floral/Citrus split lands at a 28/43/30
+ * weighted target instead of pure Floral 20/50/30. When one family
+ * carries >= 70 % of the mass we skip the blend and use the dominant
+ * family's centre directly — at that point the formula IS that family
+ * and the secondary noise just adds rounding error.
+ */
+function blendFamilyCentre(weights, fallbackKey) {
+  if (typeof FAMILY_NOTE_RATIOS === 'undefined') {
+    return { top: 0.25, mid: 0.45, base: 0.30 };
+  }
+  const entries = Object.entries(weights || {})
+    .filter(([fam]) => FAMILY_NOTE_RATIOS[fam])
+    .sort((a, b) => b[1] - a[1]);
+  if (!entries.length) {
+    return FAMILY_NOTE_RATIOS[fallbackKey] || { top: 0.25, mid: 0.45, base: 0.30 };
+  }
+  // Single-family or near-monoculture → use that centre directly.
+  if (entries[0][1] >= 0.70 || entries.length === 1) {
+    return FAMILY_NOTE_RATIOS[entries[0][0]];
+  }
+  // Otherwise renormalise across the families that have entries in the
+  // ratio table and weight-average their centres.
+  let sumW = 0;
+  for (const [, w] of entries) sumW += w;
+  const blended = { top: 0, mid: 0, base: 0 };
+  for (const [fam, w] of entries) {
+    const c = FAMILY_NOTE_RATIOS[fam];
+    const fw = w / sumW;
+    blended.top  += c.top  * fw;
+    blended.mid  += c.mid  * fw;
+    blended.base += c.base * fw;
+  }
+  return blended;
 }
 
 function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, locked) {
