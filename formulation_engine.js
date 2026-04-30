@@ -123,10 +123,14 @@ function classifyNoteTier(note) {
   if (!note) return [];
   const n = note.toLowerCase();
   const tiers = [];
-  if (n.includes('top'))    tiers.push('top');
-  if (n.includes('middle') || n.includes('mid') || n.includes('heart')) tiers.push('middle');
-  if (n.includes('base'))   tiers.push('base');
-  return tiers.length ? tiers : [];
+  // Audit #1 + #15: word-boundary regex prevents 'stop'/'amid'/'pyramid'
+  // /'midnight' false positives, and adds canonical synonyms users
+  // often type — 'head note' (top), 'heart' / 'core' / 'soul'
+  // (middle), 'drydown' / 'dry down' / 'fond' (base).
+  if (/\b(top|head)\b/.test(n))                 tiers.push('top');
+  if (/\b(middle|mid|heart|core|soul)\b/.test(n)) tiers.push('middle');
+  if (/\b(base|drydown|dry[\s\-]down|fond)\b/.test(n)) tiers.push('base');
+  return tiers;
 }
 
 // Get primary note tier (first match)
@@ -1227,32 +1231,49 @@ function analyzeNoteBalance(materials) {
     middle: { min: clamp01(center.mid * 100 - band),  max: clamp01(center.mid * 100 + band) },
     base:   { min: clamp01(center.base * 100 - band), max: clamp01(center.base * 100 + band) },
   };
-  const classifiedTotal = tiers.top + tiers.middle + tiers.base;
-  const pctOf = v => classifiedTotal > 0 ? (v / classifiedTotal) * 100 : 0;
-  const tierPct = { top: pctOf(tiers.top), middle: pctOf(tiers.middle), base: pctOf(tiers.base) };
+  // Audit #3: tier % previously divided by classifiedTotal so a formula
+  // with 80 % Floral (top) + 20 % unknown rendered as 100 % Top — the
+  // unclassified mass was silently excluded from the denominator and
+  // the user had no signal that the system didn't understand part of
+  // the formula. Now we divide by total (including unclassified) so
+  // tier % adds up to (100 − unclassified%). The renderer surfaces
+  // the unclassified band so it stays visible.
+  const totalForPct = total > 0 ? total : 1;
+  const tierPct = {
+    top:    (tiers.top    / totalForPct) * 100,
+    middle: (tiers.middle / totalForPct) * 100,
+    base:   (tiers.base   / totalForPct) * 100,
+  };
+  // Out-of-range still uses the family centre + band targets which are
+  // expressed as 'share of classified output'. Skip the check when the
+  // tier carries 0 % (already in `missing`) and when more than 30 % of
+  // the formula is unclassified — the % numbers are unreliable then.
   const outOfRange = [];
-  for (const t of ['top', 'middle', 'base']) {
-    if (tiers[t] === 0) continue; // already captured in `missing`
-    if (tierPct[t] < idealRanges[t].min) outOfRange.push({ tier: t, actual: roundN(tierPct[t], 1), direction: 'low', ideal: idealRanges[t] });
-    else if (tierPct[t] > idealRanges[t].max) outOfRange.push({ tier: t, actual: roundN(tierPct[t], 1), direction: 'high', ideal: idealRanges[t] });
+  const unclassifiedFraction = unclassifiedPct / totalForPct;
+  if (unclassifiedFraction < 0.3) {
+    for (const t of ['top', 'middle', 'base']) {
+      if (tiers[t] === 0) continue;
+      if (tierPct[t] < idealRanges[t].min) outOfRange.push({ tier: t, actual: roundN(tierPct[t], 1), direction: 'low', ideal: idealRanges[t] });
+      else if (tierPct[t] > idealRanges[t].max) outOfRange.push({ tier: t, actual: roundN(tierPct[t], 1), direction: 'high', ideal: idealRanges[t] });
+    }
   }
 
+  // Audit #14: idealRanges (numeric) is now the single source of truth.
+  // The legacy `ideal` string field is derived from it on demand by the
+  // renderer (formatRange helper) so a future change to numeric values
+  // can't drift out of sync with the display strings.
   return {
-    top:    roundN(tiers.top, 1),
-    middle: roundN(tiers.middle, 1),
-    base:   roundN(tiers.base, 1),
+    top:    roundN(tierPct.top, 1),
+    middle: roundN(tierPct.middle, 1),
+    base:   roundN(tierPct.base, 1),
     unclassified: roundN(unclassifiedPct, 1),
+    unclassifiedPct: roundN((unclassifiedPct / totalForPct) * 100, 1),
     unclassifiedMats,
     total:  roundN(total, 1),
     missing,
     outOfRange,
     balanced: missing.length === 0 && outOfRange.length === 0,
     family: dominantFamily,
-    ideal: {
-      top:    Math.round(idealRanges.top.min) + '-' + Math.round(idealRanges.top.max) + '%',
-      middle: Math.round(idealRanges.middle.min) + '-' + Math.round(idealRanges.middle.max) + '%',
-      base:   Math.round(idealRanges.base.min) + '-' + Math.round(idealRanges.base.max) + '%',
-    },
     idealRanges,
     method: 'label',
   };
@@ -1394,15 +1415,13 @@ function analyzeNoteBalancePerception(materials, tempC) {
     unclassified: 0,
     unclassifiedMats: [],
     total: 100,
+    unclassifiedPct: 0,
     missing,
     outOfRange,
     balanced: missing.length === 0 && outOfRange.length === 0,
     family: dominantFamily,
-    ideal: {
-      top:    Math.round(idealRanges.top.min) + '-' + Math.round(idealRanges.top.max) + '%',
-      middle: Math.round(idealRanges.middle.min) + '-' + Math.round(idealRanges.middle.max) + '%',
-      base:   Math.round(idealRanges.base.min) + '-' + Math.round(idealRanges.base.max) + '%',
-    },
+    // Audit #14: idealRanges is the single source of truth — render it
+    // to a string at display time, not here.
     idealRanges,
     method: 'perception',
     odtCoverage: roundN(odtCoverage, 2),
