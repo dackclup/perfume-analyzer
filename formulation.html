@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v242"></script>
-<script src="perfumery_data.js?v=2026-04-29-v242"></script>
-<script src="formulation_data.js?v=2026-04-29-v242"></script>
-<script src="formulation_engine.js?v=2026-04-29-v242"></script>
+<script src="taxonomy.js?v=2026-04-29-v243"></script>
+<script src="perfumery_data.js?v=2026-04-29-v243"></script>
+<script src="formulation_data.js?v=2026-04-29-v243"></script>
+<script src="formulation_engine.js?v=2026-04-29-v243"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -5320,34 +5320,58 @@ function renderMapInspector(points) {
   // 'Floral' / 'Woody' map 1:1 to the chip and showed up as a duplicate.
   // Keep it when it adds info ('Citrus, Aldehydic' / 'Floral - Green').
   const odorTypeShown = (odorType && odorType.toLowerCase().trim() !== p.family.toLowerCase()) ? odorType : '';
-  // Pull the note-level word (Top / Heart / Base etc.) and surface it as
-  // a small badge alongside the family chip instead of an orphan line.
-  const noteLevelMatch = (note.match(/(top|heart|middle|mid|base)/i) || [])[0];
-  const noteLevel = noteLevelMatch ? noteLevelMatch.charAt(0).toUpperCase() + noteLevelMatch.slice(1).toLowerCase() : '';
-  let html = '<div style="border:1px solid var(--border);border-left:4px solid ' + p.color + ';border-radius:6px;padding:10px 12px;background:var(--bg)">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">';
-  html += '<div style="flex:1;min-width:160px">';
-  html += '<div style="font-weight:600">' + escHtml(p.name) + '</div>';
-  html += '<div style="font-family:var(--mono,monospace);font-size:0.78em;color:var(--text2)">CAS ' + escHtml(p.cas || '-') + '</div>';
-  // Single chip row: family · note level · (optional) richer odor.type
-  html += '<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">';
+  // Pull EVERY note-level word out of the note (e.g. 'Top / Middle' for
+  // Parsley Seed Oil yields ['Top', 'Middle']). The previous regex was
+  // single-match without /g — it stripped the first level but left the
+  // second one floating as a stray 'Middle' line below the chip row.
+  const levelMatches = note.match(/\b(top|heart|middle|mid|base)\b/gi) || [];
+  const seenLevels = new Set();
+  const noteLevels = [];
+  for (const lvl of levelMatches) {
+    const titled = lvl.charAt(0).toUpperCase() + lvl.slice(1).toLowerCase();
+    if (!seenLevels.has(titled)) {
+      seenLevels.add(titled);
+      noteLevels.push(titled);
+    }
+  }
+  // Free-text note remainder — strip ALL level words plus their separators
+  // so Parsley's 'Top / Middle' note doesn't leave 'Middle' or '/' as
+  // stragglers.
+  const noteRest = note
+    .replace(/\b(top|heart|middle|mid|base)\b/gi, '')
+    .replace(/^[\s\/\-—,]+|[\s\/\-—,]+$/g, '')
+    .replace(/[\s\/\-—,]{2,}/g, ' ')
+    .trim();
+  let html = '<div style="border:1px solid var(--border);border-left:4px solid ' + p.color + ';border-radius:6px;padding:12px;background:var(--bg);position:relative">';
+  // Close button pinned to the top-right corner of the card — standard
+  // dismiss pattern. Smaller than the previous 40px square button so it
+  // doesn't compete with the primary action.
+  html += '<button id="mapInspectorCloseBtn" type="button" aria-label="Close inspector" style="position:absolute;top:6px;right:6px;width:28px;height:28px;border:none;border-radius:6px;background:transparent;color:var(--text2);font-size:1.1em;cursor:pointer;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background=\'var(--bg2)\';this.style.color=\'var(--text)\'" onmouseout="this.style.background=\'transparent\';this.style.color=\'var(--text2)\'">×</button>';
+  // Material identity — name + CAS sit side-by-side in a single header so
+  // the body has more room for the chip row + description.
+  html += '<div style="padding-right:32px">'; // pad so the close button doesn't overlap a long name
+  html += '<div style="font-weight:600;font-size:1em">' + escHtml(p.name) + '</div>';
+  html += '<div style="font-family:var(--mono,monospace);font-size:0.78em;color:var(--text2);margin-top:1px">CAS ' + escHtml(p.cas || '-') + '</div>';
+  html += '</div>';
+  // Chip row: family + every note level present in the DB note.
+  html += '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">';
   html += '<span class="badge" style="background:' + p.color + '33;color:' + p.color + ';font-size:0.72em;font-weight:600">' + escHtml(prettyFamily) + '</span>';
-  if (noteLevel) html += '<span class="badge" style="background:var(--bg2);color:var(--text2);font-size:0.7em">' + escHtml(noteLevel) + '</span>';
+  for (const lvl of noteLevels) {
+    html += '<span class="badge" style="background:var(--bg2);color:var(--text2);font-size:0.7em">' + escHtml(lvl) + '</span>';
+  }
   if (odorTypeShown) html += '<span style="font-size:0.78em;color:var(--text2)">' + escHtml(odorTypeShown) + '</span>';
   html += '</div>';
-  // Free-text note (e.g. 'Bright, sparkling citrus oil pressed from rind').
-  // Skipped when the only content is the note-level word we already chip'd.
-  const noteRest = note.replace(/(top|heart|middle|mid|base)\s*[\/\-—]?\s*/i, '').trim();
-  if (noteRest) html += '<div style="margin-top:4px;font-size:0.82em;color:var(--text2);line-height:1.4">' + escHtml(noteRest) + '</div>';
-  html += '</div>';
-  html += '<div style="display:flex;gap:6px;align-items:center">';
+  if (noteRest) html += '<div style="margin-top:6px;font-size:0.82em;color:var(--text2);line-height:1.4">' + escHtml(noteRest) + '</div>';
+  // Primary action — full-width button at the bottom of the card. Promoted
+  // from a constrained-width pill so it's an obvious tap target on mobile,
+  // and so the card visually balances (no more orphan whitespace on the
+  // right side of the bottom row).
+  html += '<div style="margin-top:12px">';
   if (p.inFormulation) {
-    html += '<button class="btn btn-sm" type="button" disabled title="Already in your formula">In formula</button>';
+    html += '<button class="btn" type="button" disabled title="Already in your formula" style="width:100%">✓ In formula</button>';
   } else {
-    html += '<button id="mapAddBtn" class="btn btn-sm btn-primary" type="button">+ Add to formula</button>';
+    html += '<button id="mapAddBtn" class="btn btn-primary" type="button" style="width:100%">+ Add to formula</button>';
   }
-  html += '<button id="mapInspectorCloseBtn" class="btn btn-sm" type="button" aria-label="Close inspector">×</button>';
-  html += '</div>';
   html += '</div>';
   html += '</div>';
   slot.innerHTML = html;
