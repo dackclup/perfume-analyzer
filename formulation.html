@@ -582,6 +582,48 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
   filter: drop-shadow(0 0 6px rgba(74,144,226,0.55));
 }
 
+/* Map hover/focus tooltip — replaces the slow native <title> tooltip with
+   an instant, styled popover. Positioned absolutely inside .map-svg-wrap;
+   transform centres horizontally on the dot and floats above it. The native
+   <title> elements are kept for screen-reader fallback (announced by SR
+   regardless of CSS visibility). prefers-reduced-motion users skip the
+   fade-in to avoid an attention shift on every hover. */
+.map-svg-wrap { position: relative; }
+.map-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-size: 0.78em;
+  line-height: 1.35;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 90ms ease-out;
+  z-index: 5;
+  max-width: 240px;
+}
+.map-tooltip-visible {
+  opacity: 1;
+  visibility: visible;
+}
+.map-tooltip-name {
+  font-weight: 600;
+  white-space: normal;
+}
+.map-tooltip-meta {
+  color: var(--text2);
+  font-size: 0.92em;
+  margin-top: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-tooltip { transition: none; }
+}
+
 /* Family-filter chips below the Odor Map. Same lift-on-hover pattern as the
    Wheel-tab pills so the two interaction surfaces feel consistent. */
 .map-family-chip {
@@ -1010,10 +1052,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v278"></script>
-<script src="perfumery_data.js?v=2026-04-29-v278"></script>
-<script src="formulation_data.js?v=2026-04-29-v278"></script>
-<script src="formulation_engine.js?v=2026-04-29-v278"></script>
+<script src="taxonomy.js?v=2026-04-29-v279"></script>
+<script src="perfumery_data.js?v=2026-04-29-v279"></script>
+<script src="formulation_data.js?v=2026-04-29-v279"></script>
+<script src="formulation_engine.js?v=2026-04-29-v279"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -5684,7 +5726,37 @@ function renderWheelFilterResults() {
   const visible = _wheelShowAllResults ? allMatches : allMatches.slice(0, WHEEL_RESULTS_INITIAL);
   const overflow = total - visible.length;
 
-  let html = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
+  // Resolve a colour swatch + display label for the active filter so
+  // the badge above the table reads in the same hue as the slice the
+  // user clicked. Subfamily case → exact slice colour; main-band case
+  // → main-family hue from FRAGRANCE_WHEEL.mainColors.
+  let filterColour = '#888';
+  let filterLabel = heading;
+  if (_wheelSelectedSegId) {
+    const segMeta = (typeof FRAGRANCE_WHEEL !== 'undefined' && FRAGRANCE_WHEEL.segments)
+      ? FRAGRANCE_WHEEL.segments.find(s => s.id === _wheelSelectedSegId) : null;
+    if (segMeta && segMeta.color) filterColour = segMeta.color;
+  } else if (_wheelSelectedMain) {
+    if (FRAGRANCE_WHEEL.mainColors && FRAGRANCE_WHEEL.mainColors[_wheelSelectedMain]) {
+      filterColour = FRAGRANCE_WHEEL.mainColors[_wheelSelectedMain];
+    }
+  }
+
+  // Filter-status banner — sits directly above the result table so the
+  // user sees what the table is filtered by even after they've scrolled
+  // past the wheel SVG. Mirrors the header toolbar but lives next to
+  // the data it's gating.
+  let html = '';
+  html += '<div id="wheelResultsFilterBanner" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:8px 10px;background:' + filterColour + '14;border-left:3px solid ' + filterColour + ';border-radius:6px">';
+  html += '<div style="font-size:0.85em;color:var(--text2);display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
+  html += '<span style="font-weight:500;color:var(--text)">Filtered:</span>';
+  html += '<span class="badge" style="background:' + filterColour + '33;color:' + filterColour + ';font-weight:600">' + escHtml(filterLabel) + '</span>';
+  html += '<span>· ' + total + ' material' + (total === 1 ? '' : 's') + '</span>';
+  html += '</div>';
+  html += '<button id="wheelResultsClearBtn" class="btn btn-sm" type="button" aria-label="Clear filter and show all materials">✕ Clear filter</button>';
+  html += '</div>';
+
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
   html += '<h4 style="margin:0">' + heading + ' <span style="color:var(--text2);font-weight:400">— showing ' + visible.length + ' of ' + total + '</span></h4>';
   if (total > WHEEL_RESULTS_INITIAL) {
     const btnLabel = _wheelShowAllResults
@@ -5725,6 +5797,11 @@ function renderWheelFilterResults() {
     _wheelShowAllResults = !_wheelShowAllResults;
     renderWheelFilterResults();
   });
+  // Clear button on the filter-status banner above the table — mirrors
+  // the toolbar's Clear button so the user can dismiss the filter from
+  // either end of the page without scrolling back to the SVG.
+  const clearResultsBtn = document.getElementById('wheelResultsClearBtn');
+  if (clearResultsBtn) clearResultsBtn.addEventListener('click', clearWheelFilter);
 }
 
 // ===== B4: Compare Modal =====
@@ -5890,25 +5967,46 @@ function renderMapTab() {
   // Draw formulation points (larger, with label). Filter dims labels too —
   // otherwise the formula labels stay sharp while their dot fades, which
   // looks like a render bug.
+  //
+  // Task 2 visibility boost: each in-formula dot now renders as a STACK
+  //   1. soft halo  (r=16, fill in family colour at 25 % alpha,
+  //                  pointer-events:none) — makes the dot pop on a
+  //                  dark theme even when it sits in a dense cluster
+  //   2. inner ring (r=12, fill=family colour, white stroke 3px) —
+  //                  the actual click target with high-contrast outline
+  // The halo is non-interactive so the existing role='button' + click
+  // handler remain on the inner ring exactly as before.
   for (const p of points) {
     if (!p.inFormulation) continue;
     const sx = toSVGX(p.x), sy = toSVGY(p.y);
     const visible = isVisible(p);
     const dotOpacity = visible ? 1 : 0.15;
+    const haloOpacity = visible ? 0.30 : 0.05;
     const labelOpacity = visible ? 1 : 0.2;
     const tabIdx = visible ? '0' : '-1';
     const ptrEvents = visible ? 'auto' : 'none';
     const a11yLabel = p.name + ', ' + p.family + ', already in formula — press Enter to inspect';
-    svg += '<circle class="map-dot map-dot-active" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="9" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" stroke="var(--text)" stroke-width="2" stroke-opacity="' + dotOpacity + '" pointer-events="' + ptrEvents + '" role="button" tabindex="' + tabIdx + '" aria-label="' + escHtml(a11yLabel) + '" style="cursor:pointer">';
+    // Halo first (drawn under). Pointer-events:none so it never
+    // intercepts the click target's hit test.
+    svg += '<circle class="map-dot-halo" cx="' + sx + '" cy="' + sy + '" r="16" fill="' + p.color + '" fill-opacity="' + haloOpacity + '" stroke="none" pointer-events="none"></circle>';
+    // Inner ring — the interactive dot itself.
+    svg += '<circle class="map-dot map-dot-active" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="12" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" stroke="var(--text)" stroke-width="3" stroke-opacity="' + dotOpacity + '" pointer-events="' + ptrEvents + '" role="button" tabindex="' + tabIdx + '" aria-label="' + escHtml(a11yLabel) + '" style="cursor:pointer">';
     svg += '<title>' + escHtml(p.name) + ' — already in your formula</title></circle>';
     if (_mapShowLabels) {
-      svg += '<text x="' + (sx + 10) + '" y="' + (sy + 4) + '" font-size="9" fill="var(--text)" font-weight="600" fill-opacity="' + labelOpacity + '" style="pointer-events:none">' + escHtml(p.name).slice(0, 15) + '</text>';
+      svg += '<text x="' + (sx + 14) + '" y="' + (sy + 4) + '" font-size="9" fill="var(--text)" font-weight="600" fill-opacity="' + labelOpacity + '" style="pointer-events:none">' + escHtml(p.name).slice(0, 15) + '</text>';
     }
   }
 
   svg += '</svg>';
 
-  let html = '<div class="analysis-card">' + svg;
+  // Wrap the SVG so the absolute-positioned hover tooltip can be anchored
+  // to the same coordinate space as the dots. The tooltip lives next to
+  // the SVG (not inside it) because <foreignObject> hover hit-testing is
+  // unreliable across browsers, and a sibling div is trivially styleable.
+  let html = '<div class="analysis-card">';
+  html += '<div class="map-svg-wrap">' + svg;
+  html += '<div id="mapTooltip" class="map-tooltip" role="tooltip" aria-hidden="true"></div>';
+  html += '</div>';
 
   // Inspector slot — placed IMMEDIATELY below the SVG so a tap on a dot
   // produces a visible response without the user having to scroll past
@@ -5975,6 +6073,42 @@ function renderMapTab() {
   // circles. The actual rendering of the inspector lives in
   // renderMapInspector() so a re-render call site (Add button, formula
   // change, tab switch) can hydrate it without reattaching listeners.
+  // Hover/focus tooltip wiring. Lookup-by-CAS is O(n) over a small array
+  // (≤ a couple hundred dots) so a Map cache isn't worth the complexity —
+  // tooltip is mouse-driven and runs once per pointer-enter, not per frame.
+  const tooltipEl = document.getElementById('mapTooltip');
+  const wrapEl = el.querySelector('.map-svg-wrap');
+  const pointByCas = new Map(points.map(p => [p.cas, p]));
+  const showTip = (circle) => {
+    if (!tooltipEl || !wrapEl) return;
+    const cas = circle.getAttribute('data-cas');
+    const p = pointByCas.get(cas);
+    if (!p) return;
+    const mat = p.inFormulation ? formulation.materials.find(m => m.cas === cas) : null;
+    let body = '<div class="map-tooltip-name">' + escHtml(p.name) + '</div>';
+    body += '<div class="map-tooltip-meta">' + escHtml(p.family || '');
+    if (mat) body += ' · <strong>' + _formatPctDisplay(mat.pct) + '%</strong> in formula';
+    body += '</div>';
+    tooltipEl.innerHTML = body;
+    // Position above the dot using the dot's bounding rect translated into
+    // the wrapper's local coordinate system. Works for both halo+ring
+    // formulation dots (rect of the inner ring) and single small dots.
+    const rDot = circle.getBoundingClientRect();
+    const rWrap = wrapEl.getBoundingClientRect();
+    const cx = rDot.left + rDot.width / 2 - rWrap.left;
+    const cy = rDot.top - rWrap.top - 6;
+    tooltipEl.style.left = cx + 'px';
+    tooltipEl.style.top = cy + 'px';
+    tooltipEl.style.transform = 'translate(-50%, -100%)';
+    tooltipEl.classList.add('map-tooltip-visible');
+    tooltipEl.setAttribute('aria-hidden', 'false');
+  };
+  const hideTip = () => {
+    if (!tooltipEl) return;
+    tooltipEl.classList.remove('map-tooltip-visible');
+    tooltipEl.setAttribute('aria-hidden', 'true');
+  };
+
   el.querySelectorAll('.map-dot').forEach(circle => {
     circle.addEventListener('click', () => {
       _mapInspectorCas = circle.getAttribute('data-cas');
@@ -5996,6 +6130,13 @@ function renderMapTab() {
         circle.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
       }
     });
+    // Tooltip: mouseenter/leave for pointer users, focus/blur for keyboard.
+    // The native <title> on each circle still fires for screen readers, so
+    // SR users get the same data without depending on the styled popover.
+    circle.addEventListener('mouseenter', () => showTip(circle));
+    circle.addEventListener('mouseleave', hideTip);
+    circle.addEventListener('focus', () => showTip(circle));
+    circle.addEventListener('blur', hideTip);
   });
 
   // Family-filter chip clicks. Toggle the family in/out of the filter set
