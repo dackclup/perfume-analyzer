@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v235"></script>
-<script src="perfumery_data.js?v=2026-04-29-v235"></script>
-<script src="formulation_data.js?v=2026-04-29-v235"></script>
-<script src="formulation_engine.js?v=2026-04-29-v235"></script>
+<script src="taxonomy.js?v=2026-04-29-v236"></script>
+<script src="perfumery_data.js?v=2026-04-29-v236"></script>
+<script src="formulation_data.js?v=2026-04-29-v236"></script>
+<script src="formulation_engine.js?v=2026-04-29-v236"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -5008,6 +5008,10 @@ let _mapInspectorCas = null;
 // render at full opacity; everything else dims to 0.1 so the layout context
 // stays visible.
 let _mapFamilyFilter = new Set();
+// Free-text search query — case-insensitive substring match against material
+// name. Empty string = match all. Survives re-renders so the user can edit
+// the formula and the search query stays in place.
+let _mapSearchQuery = '';
 
 function renderMapTab() {
   const el = document.getElementById('mapContent');
@@ -5044,7 +5048,10 @@ function renderMapTab() {
   const familyList = Object.entries(familyIndex)
     .sort((a, b) => b[1].count - a[1].count); // most-populated first
   const filterActive = _mapFamilyFilter.size > 0;
-  const isVisible = (fam) => !filterActive || _mapFamilyFilter.has(fam);
+  const searchQ = _mapSearchQuery.trim().toLowerCase();
+  const searchActive = searchQ.length > 0;
+  const matchesSearch = (p) => !searchActive || (p.name || '').toLowerCase().includes(searchQ);
+  const isVisible = (p) => (!filterActive || _mapFamilyFilter.has(p.family)) && matchesSearch(p);
 
   let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;max-width:' + W + 'px;background:var(--bg2);border-radius:8px">';
 
@@ -5064,7 +5071,7 @@ function renderMapTab() {
   for (const p of points) {
     if (p.inFormulation) continue;
     const sx = toSVGX(p.x), sy = toSVGY(p.y);
-    const dotOpacity = isVisible(p.family) ? 0.4 : 0.06;
+    const dotOpacity = isVisible(p) ? 0.4 : 0.06;
     svg += '<circle class="map-dot" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="3" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" ';
     svg += 'style="cursor:pointer">';
     svg += '<title>' + escHtml(p.name) + ' (' + escHtml(p.family) + ') — click for details</title></circle>';
@@ -5076,7 +5083,7 @@ function renderMapTab() {
   for (const p of points) {
     if (!p.inFormulation) continue;
     const sx = toSVGX(p.x), sy = toSVGY(p.y);
-    const visible = isVisible(p.family);
+    const visible = isVisible(p);
     const dotOpacity = visible ? 1 : 0.15;
     const labelOpacity = visible ? 1 : 0.2;
     svg += '<circle class="map-dot map-dot-active" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="7" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" stroke="var(--text)" stroke-width="2" stroke-opacity="' + dotOpacity + '" style="cursor:pointer">';
@@ -5087,6 +5094,18 @@ function renderMapTab() {
   svg += '</svg>';
 
   let html = '<div class="analysis-card">' + svg;
+
+  // Search row — case-insensitive substring match against material name.
+  // Sits above the family-chip row so the user can filter by either or
+  // both. The query persists across re-renders via _mapSearchQuery so
+  // typing isn't disrupted by formula edits.
+  const visibleCount = points.filter(p => isVisible(p)).length;
+  html += '<div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">';
+  html += '<input type="search" id="mapSearchInput" placeholder="Search materials by name…" value="' + escHtml(_mapSearchQuery) + '" style="flex:1;min-width:180px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.85em" autocomplete="off">';
+  if (searchActive || filterActive) {
+    html += '<span style="font-size:0.78em;color:var(--text2);white-space:nowrap">' + visibleCount + ' / ' + points.length + ' visible</span>';
+  }
+  html += '</div>';
 
   // Family legend / filter row. Chips show colour swatch + family name +
   // count. Clicking a chip toggles its membership in _mapFamilyFilter; an
@@ -5143,6 +5162,49 @@ function renderMapTab() {
     _mapFamilyFilter.clear();
     renderMapTab();
   });
+
+  // Search input — DON'T full-re-render on every keystroke, the input would
+  // lose focus + cursor position. Instead update each dot's opacity in place
+  // so typing stays smooth. A 250ms debounce updates the visible-count chip
+  // (which lives in the search row sibling) and refreshes the family chip
+  // row only on commit (Enter / blur) — typing alone never re-runs the
+  // family-count layout.
+  const searchInput = document.getElementById('mapSearchInput');
+  if (searchInput) {
+    const applyLiveFilter = () => {
+      _mapSearchQuery = searchInput.value;
+      const sq = _mapSearchQuery.trim().toLowerCase();
+      const sActive = sq.length > 0;
+      el.querySelectorAll('.map-dot').forEach(c => {
+        const cas = c.getAttribute('data-cas');
+        const fam = c.getAttribute('data-family');
+        const p = points.find(pt => pt.cas === cas);
+        if (!p) return;
+        const famOk = !filterActive || _mapFamilyFilter.has(fam);
+        const nameOk = !sActive || (p.name || '').toLowerCase().includes(sq);
+        const isActive = c.classList.contains('map-dot-active');
+        const ok = famOk && nameOk;
+        if (isActive) {
+          c.setAttribute('fill-opacity', ok ? '1' : '0.15');
+          c.setAttribute('stroke-opacity', ok ? '1' : '0.15');
+        } else {
+          c.setAttribute('fill-opacity', ok ? '0.4' : '0.06');
+        }
+      });
+    };
+    searchInput.addEventListener('input', applyLiveFilter);
+    // Commit on Enter or blur to refresh the visible-count chip + the
+    // ephemeral state-dependent UI (chip outlines etc.). Avoids re-rendering
+    // the SVG which would lose focus mid-typing.
+    searchInput.addEventListener('change', () => renderMapTab());
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        searchInput.value = '';
+        _mapSearchQuery = '';
+        renderMapTab();
+      }
+    });
+  }
 
   // Persisted selection from a previous render.
   if (_mapInspectorCas) {
