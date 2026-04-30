@@ -150,6 +150,91 @@ function roundN(val, n) {
   return Math.round(val * f) / f;
 }
 
+/**
+ * Round an array of percentages to `decimals` precision while guaranteeing
+ * the total sums to exactly the target (default 100). Uses the Largest
+ * Remainder Method (Hamilton's apportionment) — the standard technique for
+ * distributing rounding error fairly. Used in seat-apportionment, vote
+ * counting, and any context where the sum must be exact.
+ *
+ * Naïve `Math.round(p * 100) / 100` per element + 'give all leftover to the
+ * largest' is what the previous code did. That dumps every fraction-of-a-cent
+ * into one material, distorting whichever happens to be biggest. LRM
+ * distributes the leftover one centi-percent at a time to the materials with
+ * the largest fractional remainder — yielding the minimum total deviation
+ * from the unrounded values.
+ *
+ * Locked materials pass through unchanged; their pct is treated as exact
+ * (the user pinned it). LRM only redistributes the unlocked tail.
+ *
+ * @param {Array<number>} pcts - input percentages
+ * @param {Array<boolean>|Set<number>} lockedFlags - true for locked indices
+ * @param {number} decimals - precision (default 2)
+ * @param {number} target - total target (default 100)
+ * @returns {Array<number>} rounded pcts that sum to `target` ± floating-pt eps
+ */
+function roundPctsTo100(pcts, lockedFlags, decimals, target) {
+  decimals = (decimals != null) ? decimals : 2;
+  target = (target != null) ? target : 100;
+  const scale = Math.pow(10, decimals);
+  const n = pcts.length;
+  const isLocked = (i) => {
+    if (Array.isArray(lockedFlags)) return !!lockedFlags[i];
+    if (lockedFlags && typeof lockedFlags.has === 'function') return lockedFlags.has(i);
+    return false;
+  };
+
+  // 1. Locked pcts pass through. Compute target for the unlocked tail.
+  let lockedSum = 0;
+  for (let i = 0; i < n; i++) if (isLocked(i)) lockedSum += pcts[i];
+  const targetUnlocked = target - lockedSum;
+  const targetUnlockedScaled = Math.round(targetUnlocked * scale);
+
+  // 2. Floor each unlocked pct to N decimals; capture fractional parts for
+  //    the LRM tie-break.
+  const floors = new Array(n).fill(0);
+  const fracs  = new Array(n).fill(0);
+  const unlockedIdx = [];
+  let unlockedFloorSum = 0;
+  for (let i = 0; i < n; i++) {
+    if (isLocked(i)) continue;
+    const x = pcts[i] * scale;
+    const fl = Math.floor(x);
+    floors[i] = fl;
+    fracs[i]  = x - fl;
+    unlockedFloorSum += fl;
+    unlockedIdx.push(i);
+  }
+
+  // 3. Distribute the remainder (in centi-pct units) to materials with the
+  //    largest fractional parts. Each receives +1 unit until the budget is
+  //    exhausted; if the input was net-negative (rare; happens when locked
+  //    pcts already overshoot target) we subtract from the smallest-fraction
+  //    materials so the negative drift lands on the values closest to a
+  //    'fair' rounding-down anyway.
+  const remainder = targetUnlockedScaled - unlockedFloorSum;
+  if (remainder > 0) {
+    const order = unlockedIdx.slice().sort((a, b) => fracs[b] - fracs[a]);
+    for (let k = 0; k < remainder; k++) {
+      floors[order[k % order.length]] += 1;
+    }
+  } else if (remainder < 0) {
+    const order = unlockedIdx.slice().sort((a, b) => fracs[a] - fracs[b]);
+    let toRemove = -remainder;
+    for (let k = 0; k < order.length && toRemove > 0; k++) {
+      const i = order[k];
+      if (floors[i] > 0) { floors[i] -= 1; toRemove -= 1; }
+    }
+  }
+
+  // 4. Convert back to pcts.
+  const out = pcts.slice();
+  for (let i = 0; i < n; i++) {
+    if (!isLocked(i)) out[i] = floors[i] / scale;
+  }
+  return out;
+}
+
 // Resolve a material name to CAS using DB, NAME_TO_CAS, TRADES, and BLEND_TARGET_RESOLUTION
 // This function expects these globals to be available from the page context
 function resolveNameToCAS(name) {
@@ -1889,25 +1974,21 @@ function suggestAllocation(materials, fragPct, locked) {
     }
   }
 
-  // Re-normalize ONLY non-fixed materials to fill remaining budget
+  // Re-normalize ONLY non-fixed materials to fill remaining budget. No
+  // rounding here — defer all precision-drift handling to the Largest
+  // Remainder pass below so we don't double-round.
   const fixedSum = [...fixed].reduce((s, i) => s + pcts[i], 0);
   const remainTarget = 100 - fixedSum;
   const remainSum = pcts.reduce((s, p, i) => s + (fixed.has(i) ? 0 : p), 0);
   if (remainSum > 0 && remainTarget > 0) {
     for (let i = 0; i < pcts.length; i++) {
-      if (!fixed.has(i)) pcts[i] = roundN(pcts[i] / remainSum * remainTarget, 2);
+      if (!fixed.has(i)) pcts[i] = pcts[i] / remainSum * remainTarget;
     }
   }
-
-  // Fix rounding drift: adjust largest non-fixed material so total is exactly 100%
-  const finalSum = pcts.reduce((a, b) => a + b, 0);
-  if (Math.abs(finalSum - 100) > 0.005) {
-    let maxIdx = -1, maxVal = 0;
-    for (let i = 0; i < pcts.length; i++) {
-      if (!fixed.has(i) && pcts[i] > maxVal) { maxVal = pcts[i]; maxIdx = i; }
-    }
-    if (maxIdx >= 0) pcts[maxIdx] = roundN(pcts[maxIdx] + (100 - finalSum), 2);
-  }
+  // Apply LRM with `fixed` (= IFRA-clamped + locked) treated as locked.
+  // Guarantees 2-dp pcts that sum to exactly 100 with rounding error
+  // distributed by largest fractional remainder.
+  pcts = roundPctsTo100(pcts, (i) => fixed.has(i), 2, 100);
 
   // ─── Polish: 40-iter hill-climb on fitness ───────────────────────────
   // Same objective as Apply Optimized but fewer iterations — turns the
@@ -1925,15 +2006,11 @@ function suggestAllocation(materials, fragPct, locked) {
       });
       const result = _hillClimbFitness(pcts, materials, unlockedIdx, ifraMaxes,
         { catId: null, fragPct: fragPct, tempC: 25, graph: null }, 25);
-      for (let i = 0; i < materials.length; i++) pcts[i] = roundN(result.pcts[i], 2);
+      for (let i = 0; i < materials.length; i++) pcts[i] = result.pcts[i];
 
-      // Re-fix sum to 100 after rounding
-      const s2 = pcts.reduce((a, b) => a + b, 0);
-      if (Math.abs(s2 - 100) > 0.005) {
-        let mi = -1, mv = 0;
-        for (let i = 0; i < pcts.length; i++) if (!fixed.has(i) && pcts[i] > mv) { mv = pcts[i]; mi = i; }
-        if (mi >= 0) pcts[mi] = roundN(pcts[mi] + (100 - s2), 2);
-      }
+      // Final precision: LRM keeps the sum at exactly 100 with fairly
+      // distributed rounding error.
+      pcts = roundPctsTo100(pcts, (i) => fixed.has(i), 2, 100);
     }
   }
 
@@ -2199,17 +2276,12 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
     }
   }
 
-  // Round and fix sum to exactly 100%
-  let rounded = pcts.map(p => roundN(p, 2));
-  const roundedSum = rounded.reduce((a, b) => a + b, 0);
-  if (roundedSum > 0 && Math.abs(roundedSum - 100) > 0.005) {
-    // Adjust the largest unlocked material to compensate rounding error
-    let maxIdx = 0, maxVal = 0;
-    for (let i = 0; i < rounded.length; i++) {
-      if (!locked.has(materials[i].cas) && rounded[i] > maxVal) { maxVal = rounded[i]; maxIdx = i; }
-    }
-    rounded[maxIdx] = roundN(rounded[maxIdx] + (100 - roundedSum), 2);
-  }
+  // Final precision pass via Largest Remainder Method — guarantees the
+  // returned pcts sum to exactly 100 with rounding error fairly
+  // distributed (instead of the previous 'dump leftover into the
+  // largest material' which distorted whichever happened to be biggest).
+  const lockedFlags = materials.map(m => locked.has(m.cas));
+  const rounded = roundPctsTo100(pcts, lockedFlags, 2, 100);
 
   return materials.map((m, i) => ({
     cas: m.cas,
