@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v243"></script>
-<script src="perfumery_data.js?v=2026-04-29-v243"></script>
-<script src="formulation_data.js?v=2026-04-29-v243"></script>
-<script src="formulation_engine.js?v=2026-04-29-v243"></script>
+<script src="taxonomy.js?v=2026-04-29-v244"></script>
+<script src="perfumery_data.js?v=2026-04-29-v244"></script>
+<script src="formulation_data.js?v=2026-04-29-v244"></script>
+<script src="formulation_engine.js?v=2026-04-29-v244"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1395,6 +1395,13 @@ const formulation = {
     const dil = (dilution != null) ? validateDilution(dilution) : 100;
     const dilSolv = (dil < 100 && dilutionSolvent) ? String(dilutionSolvent) : '';
     this.materials.push({ cas, name, pct: pct || 10, dilution: dil, dilutionSolvent: dilSolv, data: data || {} });
+    // Inside a batch (e.g. Creative-Brief Apply All) the caller fires a
+    // single onChange after the loop. Per-iteration rendering wasn't just
+    // wasteful — if a tab's renderer threw mid-loop (e.g. optimizeAllocation
+    // on a transient 2-material state during Compat-tab refresh) the
+    // exception would propagate up and abort the rest of the additions,
+    // leaving the user with only the first material.
+    if (this._batching) return true;
     this.onChange();
     storeOriginalPcts();
     return true;
@@ -4328,40 +4335,61 @@ function applyBriefFormula() {
   // already curated by the scoring engine, so bypass that filter and
   // construct the enriched entry inline. This fixes the "Apply All only
   // added one material" bug where most picks were silently rejected.
+  //
+  // Wrapped in batchUpdate so addMaterial doesn't fire a per-iteration
+  // onChange → renderActiveTab. The per-add render was both wasteful AND
+  // a foot-gun: if the active tab's renderer threw on a transient
+  // partial-formula state (Compatibility-tab + 2-material optimizer was
+  // the reproducer), the exception would propagate up and abort the loop,
+  // leaving only the first added material. Each addMaterial call is also
+  // try/caught so a single bad CAS can't prevent later picks from
+  // landing.
   const seen = new Set();
   const skipped = [];
-  for (const r of results) {
-    if (!r || !r.cas) { skipped.push({ reason: 'no-cas', r }); continue; }
-    if (seen.has(r.cas)) { skipped.push({ cas: r.cas, reason: 'dup' }); continue; }
-    seen.add(r.cas);
-    const entry = DB[r.cas];
-    if (!entry) { skipped.push({ cas: r.cas, reason: 'not-in-db' }); continue; }
-    // DB-first read for engineering props (v207 — see addFromDB above)
-    const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[r.cas] || {} : {};
-    const enriched = {
-      cas: entry.cas,
-      name: entry.name,
-      note: entry.note || r.note || '',
-      odor_type: entry.odor?.type || null,
-      odor_strength: entry.odor?.strength || null,
-      odor_description: entry.odor?.description || null,
-      tenacity: entry.performance?.tenacity || null,
-      tenacity_hours: entry.performance?.duration || null,
-      blends_with: entry.blends_with || [],
-      ifra_guideline: entry.safety?.ifra || null,
-      usage_levels: entry.safety?.usage || null,
-      molecular_weight: parseFloat(entry.weight) || mp.mw || null,
-      density: entry.density != null ? entry.density : (mp.density || null),
-      xlogp: parseFloat(entry.xlogp) || mp.logP || null,
-      boiling_point: entry.boiling_point != null ? entry.boiling_point : (mp.bp || null),
-      smiles: entry.smiles || mp.smiles || null,
-      primaryFamilies: [], secondaryFamilies: [], facets: [], functions: [], regulatory: [],
-    };
-    const pct = (typeof r.suggestedPct === 'number' && isFinite(r.suggestedPct) && r.suggestedPct > 0)
-      ? r.suggestedPct : 0;
-    const ok = formulation.addMaterial(r.cas, entry.name, pct, enriched);
-    if (!ok) skipped.push({ cas: r.cas, reason: 'add-failed' });
-  }
+  formulation.batchUpdate(() => {
+    for (const r of results) {
+      if (!r || !r.cas) { skipped.push({ reason: 'no-cas', r }); continue; }
+      if (seen.has(r.cas)) { skipped.push({ cas: r.cas, reason: 'dup' }); continue; }
+      seen.add(r.cas);
+      const entry = DB[r.cas];
+      if (!entry) { skipped.push({ cas: r.cas, reason: 'not-in-db' }); continue; }
+      try {
+        // DB-first read for engineering props (v207 — see addFromDB above)
+        const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[r.cas] || {} : {};
+        const enriched = {
+          cas: entry.cas,
+          name: entry.name,
+          note: entry.note || r.note || '',
+          odor_type: entry.odor?.type || null,
+          odor_strength: entry.odor?.strength || null,
+          odor_description: entry.odor?.description || null,
+          tenacity: entry.performance?.tenacity || null,
+          tenacity_hours: entry.performance?.duration || null,
+          blends_with: entry.blends_with || [],
+          ifra_guideline: entry.safety?.ifra || null,
+          usage_levels: entry.safety?.usage || null,
+          molecular_weight: parseFloat(entry.weight) || mp.mw || null,
+          density: entry.density != null ? entry.density : (mp.density || null),
+          xlogp: parseFloat(entry.xlogp) || mp.logP || null,
+          boiling_point: entry.boiling_point != null ? entry.boiling_point : (mp.bp || null),
+          smiles: entry.smiles || mp.smiles || null,
+          primaryFamilies: [], secondaryFamilies: [], facets: [], functions: [], regulatory: [],
+        };
+        const pct = (typeof r.suggestedPct === 'number' && isFinite(r.suggestedPct) && r.suggestedPct > 0)
+          ? r.suggestedPct : 0;
+        const ok = formulation.addMaterial(r.cas, entry.name, pct, enriched);
+        if (!ok) skipped.push({ cas: r.cas, reason: 'add-failed' });
+      } catch (err) {
+        // Defensive: never let one bad CAS abort the rest of the loop.
+        console.error('Creative Brief Apply All — addMaterial threw for', r.cas, err);
+        skipped.push({ cas: r.cas, reason: 'threw', err: String(err && err.message || err) });
+      }
+    }
+  });
+  // batchUpdate fired a single onChange at the end, but storeOriginalPcts
+  // is normally called by addMaterial after onChange — we suppressed it
+  // per-iteration so do it once now to seed the Reset-to-original snapshot.
+  storeOriginalPcts();
   if (skipped.length) {
     console.warn('Creative Brief Apply All — skipped:', skipped);
   }
