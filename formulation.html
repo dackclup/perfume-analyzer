@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v241"></script>
-<script src="perfumery_data.js?v=2026-04-29-v241"></script>
-<script src="formulation_data.js?v=2026-04-29-v241"></script>
-<script src="formulation_engine.js?v=2026-04-29-v241"></script>
+<script src="taxonomy.js?v=2026-04-29-v242"></script>
+<script src="perfumery_data.js?v=2026-04-29-v242"></script>
+<script src="formulation_data.js?v=2026-04-29-v242"></script>
+<script src="formulation_engine.js?v=2026-04-29-v242"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -5091,15 +5091,19 @@ function renderMapTab() {
     const visible = isVisible(p);
     const dotOpacity = visible ? 0.55 : 0.06;
     // Hidden dots leave the tab order — tabbing through 200+ dimmed circles
-    // would be miserable. Only visible dots receive tabindex='0'. The
-    // selected dot keeps tabindex='0' for screen-reader return.
+    // would be miserable. Only visible dots receive tabindex='0'.
     const tabIdx = visible ? '0' : '-1';
+    // Hidden dots also have to leave the POINTER hit-test. Otherwise on a
+    // crowded map a user filtering to 'woody' would tap near a woody dot
+    // and accidentally hit a dimmed herbal dot drawn on top — opening the
+    // inspector for a material that isn't in their filter at all.
+    const ptrEvents = visible ? 'auto' : 'none';
     const a11yLabel = p.name + ', ' + p.family + ' — press Enter to inspect';
     // Visible radius bumped 3 → 5 to make taps reliable on mobile (the 700px
     // viewBox scales to ~360 on phones, so r=3 became a ~1.5px target on
     // screen — below WCAG's 24×24 minimum). r=5 is still readable as a
     // dot, not an oversized blob.
-    svg += '<circle class="map-dot" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="5" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" ';
+    svg += '<circle class="map-dot" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="5" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" pointer-events="' + ptrEvents + '" ';
     svg += 'role="button" tabindex="' + tabIdx + '" aria-label="' + escHtml(a11yLabel) + '" ';
     svg += 'style="cursor:pointer">';
     svg += '<title>' + escHtml(p.name) + ' (' + escHtml(p.family) + ') — click for details</title></circle>';
@@ -5115,8 +5119,9 @@ function renderMapTab() {
     const dotOpacity = visible ? 1 : 0.15;
     const labelOpacity = visible ? 1 : 0.2;
     const tabIdx = visible ? '0' : '-1';
+    const ptrEvents = visible ? 'auto' : 'none';
     const a11yLabel = p.name + ', ' + p.family + ', already in formula — press Enter to inspect';
-    svg += '<circle class="map-dot map-dot-active" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="9" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" stroke="var(--text)" stroke-width="2" stroke-opacity="' + dotOpacity + '" role="button" tabindex="' + tabIdx + '" aria-label="' + escHtml(a11yLabel) + '" style="cursor:pointer">';
+    svg += '<circle class="map-dot map-dot-active" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="9" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" stroke="var(--text)" stroke-width="2" stroke-opacity="' + dotOpacity + '" pointer-events="' + ptrEvents + '" role="button" tabindex="' + tabIdx + '" aria-label="' + escHtml(a11yLabel) + '" style="cursor:pointer">';
     svg += '<title>' + escHtml(p.name) + ' — already in your formula</title></circle>';
     if (_mapShowLabels) {
       svg += '<text x="' + (sx + 10) + '" y="' + (sy + 4) + '" font-size="9" fill="var(--text)" font-weight="600" fill-opacity="' + labelOpacity + '" style="pointer-events:none">' + escHtml(p.name).slice(0, 15) + '</text>';
@@ -5263,8 +5268,12 @@ function renderMapTab() {
           c.setAttribute('fill-opacity', ok ? '1' : '0.15');
           c.setAttribute('stroke-opacity', ok ? '1' : '0.15');
         } else {
-          c.setAttribute('fill-opacity', ok ? '0.4' : '0.06');
+          c.setAttribute('fill-opacity', ok ? '0.55' : '0.06');
         }
+        // Drop the pointer hit-test on dimmed dots so a tap near a filtered
+        // dot doesn't accidentally hit a dimmed neighbour drawn on top.
+        c.setAttribute('pointer-events', ok ? 'auto' : 'none');
+        c.setAttribute('tabindex', ok ? '0' : '-1');
       });
     };
     searchInput.addEventListener('input', applyLiveFilter);
