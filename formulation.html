@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v265"></script>
-<script src="perfumery_data.js?v=2026-04-29-v265"></script>
-<script src="formulation_data.js?v=2026-04-29-v265"></script>
-<script src="formulation_engine.js?v=2026-04-29-v265"></script>
+<script src="taxonomy.js?v=2026-04-29-v266"></script>
+<script src="perfumery_data.js?v=2026-04-29-v266"></script>
+<script src="formulation_data.js?v=2026-04-29-v266"></script>
+<script src="formulation_engine.js?v=2026-04-29-v266"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2260,6 +2260,32 @@ function getCompatGraph() {
 
 function renderCompatTab() {
   const el = document.getElementById('compatContent');
+  try {
+    return _renderCompatTabImpl(el);
+  } catch (err) {
+    // Without this, a throw mid-render leaves whatever HTML was there
+    // before — typically the static 'Add materials to see analysis'
+    // empty state (post-i18n switch) — and the user thinks the tab is
+    // broken or that their materials weren't accepted. Surface the
+    // failure inline so it's debuggable without opening DevTools.
+    console.error('[renderCompatTab]', err);
+    if (el) {
+      el.innerHTML = '<div class="analysis-card" style="border-left:4px solid var(--danger)">'
+        + '<h4 style="color:var(--danger);margin:0">⚠ Compatibility analysis failed to render</h4>'
+        + '<p class="panel-desc" style="margin-top:6px">'
+        +   'An internal error occurred while computing the score for this formula. '
+        +   'The Materials list and other tabs are unaffected. Open the browser console '
+        +   '(or refresh the page) for the full stack trace.'
+        + '</p>'
+        + '<pre style="margin-top:8px;padding:8px;background:var(--bg2);border-radius:6px;font-size:0.78em;color:var(--text2);overflow-x:auto;white-space:pre-wrap">'
+        +   escHtml(String((err && err.stack) || err))
+        + '</pre>'
+        + '</div>';
+    }
+  }
+}
+
+function _renderCompatTabImpl(el) {
   const mats = formulation.materials;
   if (!mats.length) {
     // Empty-state nudges. The previous 'Add materials to see compatibility
