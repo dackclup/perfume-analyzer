@@ -804,21 +804,31 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
   // matches the Pyramid Perception card's policy.
   const ovList = [];
   let withODT = 0;
+  // Audit #7: ODT confidence wasn't weighted — a QSAR estimate (±2 orders
+  // of magnitude error) counted as much as a literature value toward
+  // 'coverage'. We now compute a confidence-weighted coverage so the
+  // data-quality footnote and downstream multiplier (Audit #8) reflect
+  // how reliable the underlying numbers actually are.
+  //   high   → 1.00
+  //   medium → 0.60
+  //   low    → 0.30
+  let odtConfidenceSum = 0;
   for (const m of materials) {
     const odt = (typeof getODT === 'function') ? getODT(m.cas, m.data) : null;
     const ppb = odt && odt.ppb != null && isFinite(odt.ppb) && odt.ppb > 0 ? odt.ppb : null;
-    if (ppb != null) withODT++;
+    if (ppb != null) {
+      withODT++;
+      const conf = odt.confidence;
+      odtConfidenceSum += conf === 'high' ? 1.0 : conf === 'medium' ? 0.6 : 0.3;
+    }
     // pct is in % (0-100); ODT is in ppb. The ratio is unitful but only
     // RELATIVE values matter for weighting, so the unit cancels.
     const ov = ppb != null ? ((m.pct || 0) / ppb) : null;
     ovList.push(ov);
   }
   const odtCoverage = withODT / materials.length;
-  // OV weighting requires EVERY material to have a usable ODT. Audit #1:
-  // mixing OV-weighted pairs (units: log-ppb⁻¹) with pct-weighted pairs
-  // (units: %) in the same average is meaningless. Either go all-OV or
-  // all-pct. The 50% threshold is kept only for downstream display
-  // (data-quality footnote).
+  const odtConfidence = materials.length > 0 ? odtConfidenceSum / materials.length : 0;
+  // OV weighting requires EVERY material to have a usable ODT.
   const useOVWeight = withODT === materials.length;
 
   function cosSim(v1, v2) {
@@ -966,11 +976,11 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
   // 'flat' and rarely succeeds; classical structure expects 2-4 families
   // working together. We weight by pct so 'dominant' means the family
   // carrying most of the formula's mass, not just material count.
-  // Cut-offs are conservative:
-  //   < 70%  → no penalty           (×1.00)
-  //   70–80% → mild monoculture     (×0.85)
-  //   80–90% → strong monoculture   (×0.70)
-  //    >90%  → near-pure monoculture (×0.55)
+  //
+  // Audit #2: previous threshold cliffs (70/80/90 → 0.85/0.70/0.55) caused
+  // a 0.2pp formula change to flip the score by 15 points. Now smooth
+  // linear interpolation from 60% (no penalty) to 100% (×0.55):
+  //   penalty = clamp(1 − 0.45 × (dominantPct − 60) / 40, 0.55, 1.00)
   const familyMass = {};
   let totalPct = 0;
   for (let i = 0; i < materials.length; i++) {
@@ -984,15 +994,17 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
     if (mass > dominantMass) { dominantMass = mass; dominantFamily = fam; }
   }
   const dominantPct = totalPct > 0 ? (dominantMass / totalPct) * 100 : 0;
-  let monoculturePenalty = 1;
-  if (dominantPct > 90) monoculturePenalty = 0.55;
-  else if (dominantPct > 80) monoculturePenalty = 0.70;
-  else if (dominantPct > 70) monoculturePenalty = 0.85;
+  let monoculturePenalty;
+  if (dominantPct <= 60) monoculturePenalty = 1.00;
+  else if (dominantPct >= 100) monoculturePenalty = 0.55;
+  else monoculturePenalty = 1 - 0.45 * (dominantPct - 60) / 40;
   const familyBalance = {
     dominantFamily,
     dominantPct: roundN(dominantPct, 1),
     familyMass: Object.fromEntries(Object.entries(familyMass).map(([f, m]) => [f, roundN((m / (totalPct || 1)) * 100, 1)])),
-    monoculture: dominantPct > 70,
+    // 'Monoculture' label kept for the verdict-banner override; threshold
+    // matches the smooth curve's 'noticeably flat' inflection point.
+    monoculture: dominantPct > 75,
   };
 
   // Audit #3: if every pair has zero weight (e.g. all materials locked at
@@ -1019,8 +1031,27 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
     };
   }
   const baseScore = (weightedSum / totalWeight) * 100;
+
+  // Audit #14: applying tier × monoculture multiplicatively double-counts
+  // — a Floral-only formula is BOTH 100% one family AND likely 1/3 tiers,
+  // so the user is penalised twice for one underlying issue (single-axis
+  // thinking). Take the WORST of the two structural penalties instead of
+  // their product. The other components (triangleBonus additive into
+  // base, OV/pct weighting via baseScore) stay independent.
+  const structuralPenalty = Math.min(diversityFactor, monoculturePenalty);
+
+  // Audit #8: data-quality multiplier. A score computed on entirely
+  // QSAR-estimated ODTs (or no ODT data at all) shouldn't read the same
+  // as one computed on literature values. Confidence multiplier eats up
+  // to 15% of the score on zero data, leaves a high-confidence formula
+  // fully intact.
+  //   confidence 1.0 → ×1.00
+  //   confidence 0.0 → ×0.85
+  const dataQualityMult = useOVWeight
+    ? 0.85 + 0.15 * odtConfidence  // genuine OV weighting — confidence matters
+    : 0.92;                        // pct fallback — fixed conservative discount
   const finalScore = Math.max(0, Math.min(100,
-    Math.round((baseScore + triangleBonus) * diversityFactor * monoculturePenalty)
+    Math.round((baseScore + triangleBonus) * structuralPenalty * dataQualityMult)
   ));
 
   return {
@@ -1030,12 +1061,15 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
     triangleBonus: roundN(triangleBonus, 1),
     diversityFactor: roundN(diversityFactor, 2),
     monoculturePenalty: roundN(monoculturePenalty, 2),
+    structuralPenalty: roundN(structuralPenalty, 2),
+    dataQualityMult: roundN(dataQualityMult, 2),
     familyBalance,
     tierCount,
     tiersPresent,
     tierSource, // 'perception' (passed via opts.tierContext) or 'label'
     weightSource: useOVWeight ? 'ov' : 'pct',
     odtCoverage: roundN(odtCoverage, 2),
+    odtConfidence: roundN(odtConfidence, 2),
     connectedPairs: connectedCount,
     totalPairs: pairs.length,
     fullTriangles,
