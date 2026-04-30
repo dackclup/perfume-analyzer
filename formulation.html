@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v257"></script>
-<script src="perfumery_data.js?v=2026-04-29-v257"></script>
-<script src="formulation_data.js?v=2026-04-29-v257"></script>
-<script src="formulation_engine.js?v=2026-04-29-v257"></script>
+<script src="taxonomy.js?v=2026-04-29-v258"></script>
+<script src="perfumery_data.js?v=2026-04-29-v258"></script>
+<script src="formulation_data.js?v=2026-04-29-v258"></script>
+<script src="formulation_engine.js?v=2026-04-29-v258"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2447,41 +2447,76 @@ function renderCompatTab() {
     // Component breakdown is meaningless on a 1-material formula.
     html += '<p class="panel-desc" style="margin-top:8px"><em>Component breakdown will appear once the formula has 2+ materials.</em></p>';
   } else if (harmony.method === 'multi-factor') {
+    // ===== Score waterfall =====
+    // Show how the final score is built so the user can see WHICH factor
+    // moved the needle. The chain is:
+    //   final = round((baseScore + triangleBonus) × diversityFactor × monoculturePenalty)
+    // Each step's point delta is computed inline so we can show '−24 pts'
+    // next to the multiplier, which is far easier to interpret than the
+    // raw 0.95 / 0.70 numbers.
+    const baseStart = harmony.baseScore || 0;
+    const afterTri  = baseStart + (harmony.triangleBonus || 0);
+    const afterTier = afterTri * (harmony.diversityFactor || 1);
+    const afterFam  = afterTier * (harmony.monoculturePenalty || 1);
+    const triDelta  = +(afterTri - baseStart).toFixed(1);
+    const tierDelta = Math.round(afterTier - afterTri);
+    const famDelta  = Math.round(afterFam - afterTier);
+    const fmtDelta = (d) => {
+      if (Math.abs(d) < 0.5) return '<span style="color:var(--text2)">no change</span>';
+      const sign = d > 0 ? '+' : '';
+      const colour = d > 0 ? 'var(--success)' : 'var(--warn)';
+      return '<span style="color:' + colour + '">' + sign + d + ' pts</span>';
+    };
+
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px;font-size:0.82em">';
+    // Pairwise base — the starting point. No delta here (it's the seed).
     html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:8px">'
       + '<div style="color:var(--text2);font-size:0.78em">Pairwise base</div>'
       + '<div style="font-weight:600">' + (harmony.baseScore != null ? harmony.baseScore + '%' : '—') + '</div>'
       + '<div style="font-size:0.75em;color:var(--text2)">' + harmony.connectedPairs + '/' + harmony.totalPairs + ' connected</div></div>';
-    const triClr = harmony.triangleBonus > 0 ? 'var(--ok,#22c55e)' : 'var(--text2)';
+    // Triangle synergy — additive bonus.
+    const triClr = harmony.triangleBonus > 0 ? 'var(--success)' : 'var(--text2)';
     html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:8px">'
       + '<div style="color:var(--text2);font-size:0.78em">Triangle synergy</div>'
       + '<div style="font-weight:600;color:' + triClr + '">+' + harmony.triangleBonus + '</div>'
-      + '<div style="font-size:0.75em;color:var(--text2)">' + harmony.fullTriangles + '/' + harmony.totalTriangles + ' full triples</div></div>';
-    const divClr = harmony.tierCount === 3 ? 'var(--ok,#22c55e)' : 'var(--warn,#eab308)';
+      + '<div style="font-size:0.75em">' + fmtDelta(triDelta) + ' · ' + harmony.fullTriangles + '/' + harmony.totalTriangles + '</div></div>';
+    // Tier diversity — multiplicative.
+    const divClr = harmony.tierCount === 3 ? 'var(--success)' : 'var(--warn)';
     html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:8px">'
       + '<div style="color:var(--text2);font-size:0.78em">Tier diversity ×</div>'
-      + '<div style="font-weight:600;color:' + divClr + '">' + harmony.diversityFactor + '</div>'
-      + '<div style="font-size:0.75em;color:var(--text2)">' + harmony.tierCount + '/3 tiers</div></div>';
-    const discClr = harmony.discords.length ? 'var(--danger,#ef4444)' : 'var(--text2)';
-    html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:8px">'
-      + '<div style="color:var(--text2);font-size:0.78em">Discord hits</div>'
-      + '<div style="font-weight:600;color:' + discClr + '">' + harmony.discords.length + '</div>'
-      + '<div style="font-size:0.75em;color:var(--text2)">family clashes</div></div>';
-    // Family-balance tile — surfaces the monoculture penalty (Calkin &
-    // Jellinek 1994) so the user can see why the score may be reduced
-    // even when all pairs connect cleanly.
+      + '<div style="font-weight:600;color:' + divClr + '">×' + harmony.diversityFactor + '</div>'
+      + '<div style="font-size:0.75em">' + fmtDelta(tierDelta) + ' · ' + harmony.tierCount + '/3 tiers</div></div>';
+    // Family balance — multiplicative monoculture penalty.
     if (harmony.familyBalance) {
       const fb = harmony.familyBalance;
-      const monoClr = fb.monoculture ? 'var(--warn,#eab308)' : 'var(--text2)';
+      const monoClr = fb.monoculture ? 'var(--warn)' : 'var(--text2)';
       const famLabel = fb.dominantFamily
         ? fb.dominantFamily.charAt(0).toUpperCase() + fb.dominantFamily.slice(1).replace(/_/g, ' ')
         : '—';
+      const monoMult = harmony.monoculturePenalty != null ? harmony.monoculturePenalty : 1;
       html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:8px">'
         + '<div style="color:var(--text2);font-size:0.78em">Family balance ×</div>'
-        + '<div style="font-weight:600;color:' + monoClr + '">' + (harmony.monoculturePenalty != null ? harmony.monoculturePenalty : 1) + '</div>'
-        + '<div style="font-size:0.75em;color:var(--text2)">' + (fb.dominantPct != null ? Math.round(fb.dominantPct) + '% ' + escHtml(famLabel) : '—') + '</div></div>';
+        + '<div style="font-weight:600;color:' + monoClr + '">×' + monoMult + '</div>'
+        + '<div style="font-size:0.75em">' + fmtDelta(famDelta) + ' · ' + (fb.dominantPct != null ? Math.round(fb.dominantPct) + '% ' + escHtml(famLabel) : '—') + '</div></div>';
     }
+    // Discord — informational tile, the actual penalty is already baked
+    // into baseScore via per-pair severity, so no extra delta here.
+    const discClr = harmony.discords.length ? 'var(--danger)' : 'var(--text2)';
+    html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:8px">'
+      + '<div style="color:var(--text2);font-size:0.78em">Discord hits</div>'
+      + '<div style="font-weight:600;color:' + discClr + '">' + harmony.discords.length + '</div>'
+      + '<div style="font-size:0.75em;color:var(--text2)">' + (harmony.discords.length ? 'baked into base' : 'family clashes') + '</div></div>';
     html += '</div>';
+
+    // Final breakdown line — explicit math so the user can verify the
+    // numbers. Helps build trust in the score.
+    html += '<p class="panel-desc" style="margin-top:8px;font-size:0.78em">';
+    html += '<strong>' + harmony.baseScore + '</strong>';
+    if (harmony.triangleBonus > 0) html += ' + ' + harmony.triangleBonus;
+    html += ' × ' + harmony.diversityFactor;
+    if (harmony.monoculturePenalty != null && harmony.monoculturePenalty < 1) html += ' × ' + harmony.monoculturePenalty;
+    html += ' = <strong>' + harmony.score + '%</strong>';
+    html += '</p>';
 
     // Discord detail list
     if (harmony.discords.length) {
