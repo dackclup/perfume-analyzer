@@ -956,10 +956,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v230"></script>
-<script src="perfumery_data.js?v=2026-04-29-v230"></script>
-<script src="formulation_data.js?v=2026-04-29-v230"></script>
-<script src="formulation_engine.js?v=2026-04-29-v230"></script>
+<script src="taxonomy.js?v=2026-04-29-v231"></script>
+<script src="perfumery_data.js?v=2026-04-29-v231"></script>
+<script src="formulation_data.js?v=2026-04-29-v231"></script>
+<script src="formulation_engine.js?v=2026-04-29-v231"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -4673,6 +4673,19 @@ function renderWheelTab() {
     legend += '<button type="button" class="badge wheel-legend-pill" data-seg="' + s.id + '" aria-pressed="' + isSelected + '" style="background:' + pillBg + ';color:' + pillFg + ';font-size:0.72em;border:none;cursor:pointer' + transitionalStyle + weightStyle + selectedStyle + '">' + prettyLabel(s.id) + ' (' + countText + ')</button>';
   }
   legend += '</div>';
+
+  // Footnote explaining the italic transitional pills + how scope levels
+  // work. Sized small so it sits under the legend without competing for
+  // attention; collapses on second open so power users can hide it.
+  legend += '<details style="margin-top:10px;font-size:0.78em;color:var(--text2)">';
+  legend += '<summary style="cursor:pointer">About the wheel <span style="opacity:0.5">— click for details</span></summary>';
+  legend += '<ul style="margin:6px 0 0 18px;padding:0;line-height:1.55">';
+  legend += '<li><strong>Inner ring</strong> — four <em>main families</em> (FRESH / FLORAL / AMBER / WOODY). Click a band to filter every subfamily inside it.</li>';
+  legend += '<li><strong>Outer ring</strong> — 14 <em>subfamilies</em>. Click a slice (or its legend pill) to filter just that subfamily.</li>';
+  legend += '<li><em>Italic</em> pills (Aromatic, Fruity, Floral Amber, Woody Amber, Woods) are <strong>transitional</strong> subfamilies that bridge two main families — their hue is a blend of the neighbouring bands.</li>';
+  legend += '<li>Pill counts read as <strong>(in-formula / catalogue)</strong>. Slices with formula materials carry a small numbered badge near the rim and stay full-saturation while the rest dim out.</li>';
+  legend += '</ul>';
+  legend += '</details>';
 
   // Filtered results area
   legend += '<div id="wheelFilterResults" style="margin-top:16px"></div>';
