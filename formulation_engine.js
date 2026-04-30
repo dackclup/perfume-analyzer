@@ -594,6 +594,117 @@ const DISCORD_PAIRS = [
   { a: 'rubbery',    b: 'gourmand',   severity: 0.4 },
 ];
 
+// Family complementarity — positive counterpart to DISCORD_PAIRS. Two
+// materials that don't share `blends_with` graph edges and don't have
+// matching descriptors might still be a CLASSIC pairing the curated graph
+// just hasn't covered (rose+oud, vanilla+amber, citrus+floral, etc.).
+// This matrix lifts the pair score for those known harmonies.
+//
+// Sources: Edwards 2007 'Fragrances of the World' (4-quadrant wheel
+// adjacencies), Calkin & Jellinek 1994, classical accord literature
+// (cologne, fougère, chypre, oriental). Bonus values 0–0.2 — added on top
+// of the U-curve descriptor score, capped at pairScore=1.0.
+const FAMILY_COMPATIBILITY = [
+  // Citrus is the ultimate connector — pairs cleanly with most families.
+  { a: 'citrus', b: 'floral',   bonus: 0.20 },
+  { a: 'citrus', b: 'fresh',    bonus: 0.20 },
+  { a: 'citrus', b: 'aromatic', bonus: 0.20 },
+  { a: 'citrus', b: 'green',    bonus: 0.18 },
+  { a: 'citrus', b: 'fruity',   bonus: 0.18 },
+  { a: 'citrus', b: 'woody',    bonus: 0.15 },
+  { a: 'citrus', b: 'spicy',    bonus: 0.12 },
+  // Floral + soft anchors — the heart of most modern fragrances.
+  { a: 'floral', b: 'fruity',     bonus: 0.18 },
+  { a: 'floral', b: 'musk',       bonus: 0.18 },
+  { a: 'floral', b: 'soft_amber', bonus: 0.18 },
+  { a: 'floral', b: 'amber',      bonus: 0.15 },
+  { a: 'floral', b: 'woody',      bonus: 0.15 },
+  { a: 'floral', b: 'green',      bonus: 0.15 },
+  { a: 'floral', b: 'gourmand',   bonus: 0.15 },
+  { a: 'floral', b: 'powdery',    bonus: 0.15 },
+  { a: 'floral', b: 'aldehydic',  bonus: 0.18 }, // aldehydic-floral classic
+  // Amber / oriental anchor pairings.
+  { a: 'amber',    b: 'woody',    bonus: 0.20 },
+  { a: 'amber',    b: 'gourmand', bonus: 0.20 },
+  { a: 'amber',    b: 'spicy',    bonus: 0.18 },
+  { a: 'amber',    b: 'musk',     bonus: 0.18 },
+  { a: 'amber',    b: 'animalic', bonus: 0.15 },
+  { a: 'oriental', b: 'woody',    bonus: 0.20 },
+  { a: 'oriental', b: 'gourmand', bonus: 0.20 },
+  { a: 'oriental', b: 'spicy',    bonus: 0.18 },
+  { a: 'oriental', b: 'floral',   bonus: 0.15 },
+  // Woody complements.
+  { a: 'woody', b: 'aromatic', bonus: 0.18 }, // fougère DNA
+  { a: 'woody', b: 'spicy',    bonus: 0.18 },
+  { a: 'woody', b: 'musk',     bonus: 0.18 },
+  { a: 'woody', b: 'mossy',    bonus: 0.15 }, // chypre DNA
+  { a: 'woody', b: 'animalic', bonus: 0.12 },
+  // Aromatic-fougère family.
+  { a: 'aromatic', b: 'spicy', bonus: 0.15 },
+  { a: 'aromatic', b: 'green', bonus: 0.15 },
+  { a: 'aromatic', b: 'mint',  bonus: 0.15 },
+  // Gourmand + balm.
+  { a: 'gourmand', b: 'spicy',    bonus: 0.15 },
+  { a: 'gourmand', b: 'musk',     bonus: 0.15 },
+  { a: 'gourmand', b: 'animalic', bonus: 0.12 },
+  // Fresh / aquatic family.
+  { a: 'fresh',   b: 'green',    bonus: 0.18 },
+  { a: 'fresh',   b: 'aromatic', bonus: 0.15 },
+  { a: 'aquatic', b: 'fresh',    bonus: 0.18 },
+  { a: 'aquatic', b: 'citrus',   bonus: 0.18 },
+  { a: 'aquatic', b: 'green',    bonus: 0.15 },
+  // Fougère anchor pairs.
+  { a: 'fougere', b: 'aromatic', bonus: 0.20 },
+  { a: 'fougere', b: 'woody',    bonus: 0.18 },
+  { a: 'fougere', b: 'mossy',    bonus: 0.18 },
+  // Modern subfamilies (Edwards 2021 transitionals).
+  { a: 'soft_floral',  b: 'floral',   bonus: 0.15 },
+  { a: 'soft_floral',  b: 'musk',     bonus: 0.15 },
+  { a: 'floral_amber', b: 'amber',    bonus: 0.18 },
+  { a: 'floral_amber', b: 'floral',   bonus: 0.18 },
+  { a: 'woody_amber',  b: 'amber',    bonus: 0.18 },
+  { a: 'woody_amber',  b: 'woody',    bonus: 0.18 },
+  { a: 'dry_woods',    b: 'woody',    bonus: 0.18 },
+  { a: 'dry_woods',    b: 'spicy',    bonus: 0.15 },
+  { a: 'mossy_woods',  b: 'woody',    bonus: 0.18 },
+  { a: 'mossy_woods',  b: 'aromatic', bonus: 0.15 },
+];
+
+// Symmetric lookup of the matrix above. Returns the maximum bonus when any
+// family in A pairs with any family in B (multi-family materials get the
+// best of their cross-products, not the sum — to avoid double-counting).
+function detectFamilyCompatibility(familiesA, familiesB) {
+  if (!familiesA || !familiesB || !familiesA.length || !familiesB.length) return 0;
+  const aSet = familiesA.map(f => String(f).toLowerCase().trim());
+  const bSet = familiesB.map(f => String(f).toLowerCase().trim());
+  let best = 0;
+  for (const fa of aSet) {
+    for (const fb of bSet) {
+      for (const r of FAMILY_COMPATIBILITY) {
+        if ((r.a === fa && r.b === fb) || (r.a === fb && r.b === fa)) {
+          if (r.bonus > best) best = r.bonus;
+        }
+      }
+    }
+  }
+  return best;
+}
+
+// U-curve — peaks at sim=0.5 (genuine complementarity), drops at both
+// extremes. Pure similarity (sim≈1) reads monotonous; total contrast
+// (sim≈0) is just unrelated noise unless lifted by family/graph signals.
+//   sim 0.00 → 0.50  (neutral, room for family/graph to lift)
+//   sim 0.25 → 0.875 (warming up)
+//   sim 0.50 → 1.00  ★ ideal complement
+//   sim 0.75 → 0.875
+//   sim 1.00 → 0.50  (monotonous penalty)
+function uCurveComplementarity(sim) {
+  const s = Math.max(0, Math.min(1, sim || 0));
+  const dist = s - 0.5;
+  const u = 1 - 4 * dist * dist; // 0 at extremes, 1 at peak
+  return 0.5 + 0.5 * u;
+}
+
 function detectDiscord(familiesA, familiesB) {
   if (!familiesA || !familiesB || !familiesA.length || !familiesB.length) return 0;
   const aSet = new Set(familiesA.map(f => String(f).toLowerCase().trim()));
@@ -741,12 +852,24 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
       // Factor 3 — discord penalty (known bad family pairs)
       const discordSev = detectDiscord(familiesList[i], familiesList[j]);
 
-      // Combined pair score: explicit connection = 1.0; otherwise scale
-      // descriptor sim into 0.3..1.0 so unrelated materials don't tank
-      // the score when the DB graph is sparse. Discord reduces up to 50%.
-      // In fastMode (sim=0) unrelated pairs score 0.3 which is still a
-      // valid gradient signal.
-      let pairScore = connected ? 1.0 : 0.3 + 0.7 * sim;
+      // Combined pair score:
+      //   - Explicit graph connection → 1.0 (curated knowledge wins).
+      //   - Otherwise: U-curve complementarity from descriptor sim,
+      //     LIFTED by the family compatibility matrix when available
+      //     (rose+oud, vanilla+amber, etc. that aren't in blends_with).
+      //   - Discord penalty subtracts up to 50%.
+      // The U-curve replaces the previous linear `0.3 + 0.7×sim`. Linear
+      // similarity rewarded carbon-copy materials (sim≈1) over genuine
+      // complements (sim≈0.5), which inverts the perfumery rule of thumb
+      // — two identical citruses harmonize less than citrus + floral.
+      const familyBonus = fastMode ? 0 : detectFamilyCompatibility(familiesList[i], familiesList[j]);
+      let pairScore;
+      if (connected) {
+        pairScore = 1.0;
+      } else {
+        const baseFromSim = uCurveComplementarity(sim);
+        pairScore = Math.min(1.0, baseFromSim + familyBonus);
+      }
       pairScore = Math.max(0, pairScore - 0.5 * discordSev);
 
       // Weight pair by geometric mean of OLFACTORY VALUE (perceptual
@@ -774,6 +897,7 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
         pairs.push({
           a: a.cas, b: b.cas, connected,
           descriptorSim: roundN(sim, 2),
+          familyBonus: roundN(familyBonus, 2),
           discord: roundN(discordSev, 2),
           pairScore: roundN(pairScore, 2),
           weight: roundN(w, 2),
