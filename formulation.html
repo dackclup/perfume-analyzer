@@ -929,10 +929,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v221"></script>
-<script src="perfumery_data.js?v=2026-04-29-v221"></script>
-<script src="formulation_data.js?v=2026-04-29-v221"></script>
-<script src="formulation_engine.js?v=2026-04-29-v221"></script>
+<script src="taxonomy.js?v=2026-04-29-v222"></script>
+<script src="perfumery_data.js?v=2026-04-29-v222"></script>
+<script src="formulation_data.js?v=2026-04-29-v222"></script>
+<script src="formulation_engine.js?v=2026-04-29-v222"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -3398,6 +3398,20 @@ function toggleMoodTarget(dim) {
   renderMoodTab();
 }
 
+// Temporarily change a button's text and restore it after `durationMs`.
+// Used for Copy/Apply/Saved feedback. Re-clicking resets the timer cleanly so
+// rapid clicks don't leave the button stuck in the new-text state.
+function tempButtonText(btn, newText, durationMs) {
+  if (!btn) return;
+  if (btn._restoreTimer) clearTimeout(btn._restoreTimer);
+  if (btn._origText == null) btn._origText = btn.textContent;
+  btn.textContent = newText;
+  btn._restoreTimer = setTimeout(() => {
+    btn.textContent = btn._origText;
+    btn._restoreTimer = null;
+  }, durationMs || 2000);
+}
+
 // ===== Tab 1: Safety & Compliance (System 5) =====
 // null = auto (default to ON when there are any problems, OFF otherwise)
 // true/false = user-pinned override that survives subsequent re-renders
@@ -3681,11 +3695,15 @@ function renderSafetyTab() {
   html += '<div style="background:var(--bg2);padding:12px;border-radius:8px;font-size:0.85em;line-height:1.6;word-break:break-word;user-select:all">';
   html += inci;
   html += '</div>';
-  html += '<button class="btn btn-sm" style="margin-top:8px" id="copyInciBtn">Copy INCI</button>';
-  setTimeout(() => {
-    const btn = document.getElementById('copyInciBtn');
-    if (btn) btn.addEventListener('click', () => { navigator.clipboard.writeText(inci); btn.textContent = 'Copied!'; });
-  }, 0);
+  html += '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">';
+  html += '<button class="btn btn-sm" id="copyInciBtn">Copy INCI</button>';
+  html += '<details style="flex:1"><summary style="cursor:pointer;color:var(--text2);font-size:0.82em">How this is built</summary>';
+  html += '<ol style="margin:6px 0 0 20px;padding:0;color:var(--text2);font-size:0.82em;line-height:1.6">';
+  html += '<li>Carrier/solvent first (largest single ingredient by weight)</li>';
+  html += '<li><code>PARFUM</code> — the fragrance compound itself</li>';
+  html += '<li>Declared allergens — only those exceeding the threshold for this product, sorted by total ppm descending</li>';
+  html += '</ol></details>';
+  html += '</div>';
   html += '</div>';
 
   el.innerHTML = html;
@@ -3698,6 +3716,18 @@ function renderSafetyTab() {
       if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
+
+  // Wire Copy INCI button — tempButtonText restores the label after 2s so the
+  // button doesn't get stuck on "Copied!" indefinitely.
+  const copyInciBtn = document.getElementById('copyInciBtn');
+  if (copyInciBtn) {
+    copyInciBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(inci).then(
+        () => tempButtonText(copyInciBtn, 'Copied!'),
+        () => tempButtonText(copyInciBtn, 'Copy failed')
+      );
+    });
+  }
 
   // Wire "Show problems only / Show all" toggle on IFRA Compliance card
   const toggleBtn = document.getElementById('safetyToggleProblems');
