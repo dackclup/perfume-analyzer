@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v262"></script>
-<script src="perfumery_data.js?v=2026-04-29-v262"></script>
-<script src="formulation_data.js?v=2026-04-29-v262"></script>
-<script src="formulation_engine.js?v=2026-04-29-v262"></script>
+<script src="taxonomy.js?v=2026-04-29-v263"></script>
+<script src="perfumery_data.js?v=2026-04-29-v263"></script>
+<script src="formulation_data.js?v=2026-04-29-v263"></script>
+<script src="formulation_engine.js?v=2026-04-29-v263"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2247,6 +2247,12 @@ let _compatShowAllPairs = false;
 // everything; 'top'/'middle'/'base' narrows to that note tier — useful when
 // the user has e.g. plenty of base notes and only wants top-note candidates.
 let _compatSuggestTierFilter = 'all';
+// Pyramid family override — null = auto-detect from formula composition,
+// otherwise a family id ('citrus', 'floral', 'oriental', etc.) that
+// forces the pyramid centre + band to that family's classical target.
+// Set automatically when the user runs Brief Apply All; can also be
+// overridden manually via the select on the Pyramid card.
+let _pyramidFamilyOverride = null;
 function getCompatGraph() {
   if (!_compatGraph) _compatGraph = buildCompatibilityGraph(DB);
   return _compatGraph;
@@ -2303,7 +2309,11 @@ function renderCompatTab() {
   // counts a 'base' tier as covered only when actual VP-derived volatility
   // says so, not just because a material's note label said 'Base'.
   const tempC = parseInt(document.getElementById('tempSlider').value) || 25;
-  const balance = analyzeNoteBalancePerception(mats, tempC);
+  // Audit #2: pyramid family override flows through opts so the engine
+  // knows which family's centre + band to use (cologne brief should not
+  // be judged against floral targets just because the user dropped a
+  // floral material in mid-iteration).
+  const balance = analyzeNoteBalancePerception(mats, tempC, { familyOverride: _pyramidFamilyOverride });
 
   // Defensive shape guard — earlier versions of computeHarmonyScore had a
   // 1-material early-return that omitted .discords / .triangleBonus etc.
@@ -2636,12 +2646,39 @@ function renderCompatTab() {
     : 'Label-based (fallback — ODT coverage ' + Math.round((balance.odtCoverage || 0) * 100) + '%, VP coverage ' + Math.round((balance.vpCoverage || 0) * 100) + '%)';
   let subtitle = methodLabel;
   if (balance.family && balance.family !== 'default') {
-    subtitle += ' · typical ranges for <strong>' + escHtml(balance.family) + '</strong> family';
+    const tag = balance.familySource === 'override'
+      ? '<strong>' + escHtml(balance.family) + '</strong> (manual target)'
+      : '<strong>' + escHtml(balance.family) + '</strong> family';
+    subtitle += ' · typical ranges for ' + tag;
   }
   html += '<p class="panel-desc">' + subtitle + '</p>';
+
+  // Audit #2: family-target override control. User intent (brief / manual
+  // pick) outranks formula auto-detect — without this, a user who builds
+  // a cologne brief but then adds a heavy floral mid-iteration would see
+  // their pyramid suddenly judged against floral targets.
+  // Options pulled from FAMILY_NOTE_RATIOS so the list always matches
+  // what the engine can resolve.
+  const familyKeys = (typeof FAMILY_NOTE_RATIOS !== 'undefined') ? Object.keys(FAMILY_NOTE_RATIOS) : [];
+  const detectedLabel = balance.detectedFamily || balance.family || 'default';
+  html += '<div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap;font-size:0.85em">';
+  html += '<label for="pyramidFamilyOverride" style="color:var(--text2)">Target family:</label>';
+  html += '<select id="pyramidFamilyOverride" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.85em">';
+  html += '<option value="">Auto-detect (' + escHtml(detectedLabel) + ')</option>';
+  for (const k of familyKeys) {
+    const sel = (_pyramidFamilyOverride === k) ? ' selected' : '';
+    const pretty = k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, ' ');
+    html += '<option value="' + escHtml(k) + '"' + sel + '>' + escHtml(pretty) + '</option>';
+  }
+  html += '</select>';
+  if (_pyramidFamilyOverride) {
+    html += '<button id="pyramidFamilyReset" class="btn btn-sm" type="button" style="font-size:0.78em">Reset to detected</button>';
+  }
+  html += '</div>';
+
   // Disclaimer that the bands are guidance, not enforcement — modern
   // perfumery routinely violates classic pyramid ratios on purpose.
-  html += '<p class="panel-desc" style="font-size:0.78em;margin-top:-2px"><em>Reference bands from classic perfumery (Carles, Edwards, Sell). Modern fragrances often deviate intentionally — treat as guidance, not a rule.</em></p>';
+  html += '<p class="panel-desc" style="font-size:0.78em;margin-top:6px"><em>Reference bands from classic perfumery (Carles, Edwards, Sell). Modern fragrances often deviate intentionally — treat as guidance, not a rule.</em></p>';
   // Pyramid bars now show the IDEAL RANGE as a faint backdrop band so the
   // user can read 'in range / low / high' at a glance instead of having
   // to compare two numbers (actual % vs the '15-30%' label). Each column
@@ -2895,6 +2932,20 @@ function renderCompatTab() {
       _compatSuggestTierFilter = btn.getAttribute('data-compat-tier');
       renderCompatTab();
     });
+  });
+
+  // Pyramid family-target override. Empty value = auto-detect (no
+  // override); any other value pins the pyramid centre + band to that
+  // family's classical target.
+  const famOverride = document.getElementById('pyramidFamilyOverride');
+  if (famOverride) famOverride.addEventListener('change', (e) => {
+    _pyramidFamilyOverride = e.target.value || null;
+    renderCompatTab();
+  });
+  const famReset = document.getElementById('pyramidFamilyReset');
+  if (famReset) famReset.addEventListener('click', () => {
+    _pyramidFamilyOverride = null;
+    renderCompatTab();
   });
 }
 
@@ -4755,8 +4806,12 @@ document.getElementById('briefGenerate').addEventListener('click', () => {
   html += '<button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="applyBriefFormula()">Apply All (' + results.length + ' materials)</button>';
   el.innerHTML = html;
 
-  // Store results for "Apply All"
+  // Store results for "Apply All". Capture the brief's olfactive family
+  // alongside so applyBriefFormula() can pin the Pyramid target to that
+  // intent — without this the Pyramid card would auto-detect from the
+  // (still-being-built) formula and lose the user's stated direction.
   el._briefResults = results;
+  el._briefFamily = brief.family || null;
 });
 
 // Toggle a single brief-result material in/out of the formulation.
@@ -4806,8 +4861,15 @@ function briefToggleMaterial(btn) {
 }
 
 function applyBriefFormula() {
-  const results = document.getElementById('briefResults')._briefResults;
+  const briefEl = document.getElementById('briefResults');
+  const results = briefEl && briefEl._briefResults;
   if (!results || !results.length) return;
+
+  // Audit #2: pin the Pyramid family target to the brief's stated
+  // family. The user explicitly chose 'Citrus' or 'Oriental' — that
+  // intent should outrank what the materials happen to look like
+  // mid-iteration. Cleared on workspace Reset (handled elsewhere).
+  if (briefEl._briefFamily) _pyramidFamilyOverride = briefEl._briefFamily;
 
   // ── 1. Full workspace reset ──────────────────────────────────────────
   // Clear every piece of state that could leak an older formulation into

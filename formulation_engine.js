@@ -1177,7 +1177,8 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
  * @param {Array} materials - [{cas, pct, data:{note}}]
  * @returns {Object} {top, middle, base, missing[], balanced}
  */
-function analyzeNoteBalance(materials) {
+function analyzeNoteBalance(materials, opts) {
+  opts = opts || {};
   const tiers = { top: 0, middle: 0, base: 0 };
   let unclassifiedPct = 0;
   const unclassifiedMats = [];
@@ -1214,7 +1215,16 @@ function analyzeNoteBalance(materials) {
   // teaching guidelines — modern niche perfumery (post-2010) often
   // deliberately violates them, so the band is generous and the UI
   // describes the result as 'typical' not 'ideal'.
-  const dominantFamily = detectDominantFamily(materials);
+  // Audit #2: respect a user-set family override (from the Brief modal
+  // or the Pyramid card override select). User intent wins over
+  // detection — if they say 'I'm making a cologne', use cologne ratios
+  // even if their current materials lean Floral. The detected family
+  // is still surfaced separately so the user can compare.
+  const detectedFamily = detectDominantFamily(materials);
+  const familySource = opts.familyOverride && (typeof FAMILY_NOTE_RATIOS !== 'undefined') && FAMILY_NOTE_RATIOS[opts.familyOverride]
+    ? 'override'
+    : 'detected';
+  const dominantFamily = familySource === 'override' ? opts.familyOverride : detectedFamily;
   // Default fallback now sums to 1.00 (was 0.925 — every named family
   // already sums correctly; only the catch-all was off).
   const center = (typeof FAMILY_NOTE_RATIOS !== 'undefined' && FAMILY_NOTE_RATIOS[dominantFamily])
@@ -1274,6 +1284,8 @@ function analyzeNoteBalance(materials) {
     outOfRange,
     balanced: missing.length === 0 && outOfRange.length === 0,
     family: dominantFamily,
+    detectedFamily,
+    familySource, // 'override' | 'detected'
     idealRanges,
     method: 'label',
   };
@@ -1295,9 +1307,10 @@ function analyzeNoteBalance(materials) {
  * @param {number} tempC - skin/ambient temperature
  * @returns same shape as analyzeNoteBalance plus { method, odtCoverage }
  */
-function analyzeNoteBalancePerception(materials, tempC) {
+function analyzeNoteBalancePerception(materials, tempC, opts) {
+  opts = opts || {};
   if (!materials || !materials.length) {
-    return analyzeNoteBalance(materials || []);
+    return analyzeNoteBalance(materials || [], opts);
   }
 
   // Data-quality gate: the perception integral is only meaningful when
@@ -1321,7 +1334,7 @@ function analyzeNoteBalancePerception(materials, tempC) {
   const odtCoverage = withODT / materials.length;
   const vpCoverage  = withVP  / materials.length;
   if (odtCoverage < 0.5 || vpCoverage < 0.5) {
-    return Object.assign({}, analyzeNoteBalance(materials), {
+    return Object.assign({}, analyzeNoteBalance(materials, opts), {
       method: 'label',
       odtCoverage: roundN(odtCoverage, 2),
       vpCoverage:  roundN(vpCoverage,  2),
@@ -1372,7 +1385,7 @@ function analyzeNoteBalancePerception(materials, tempC) {
   const total = integrals.top + integrals.middle + integrals.base;
   if (total <= 0) {
     // Simulation produced no perceivable intensity — fall back to label
-    return Object.assign({}, analyzeNoteBalance(materials), { method: 'label', odtCoverage: roundN(odtCoverage, 2) });
+    return Object.assign({}, analyzeNoteBalance(materials, opts), { method: 'label', odtCoverage: roundN(odtCoverage, 2) });
   }
 
   const pct = {
@@ -1383,7 +1396,12 @@ function analyzeNoteBalancePerception(materials, tempC) {
 
   // Family-specific typical ranges (same shape + sources as label method —
   // see analyzeNoteBalance comment block for citations).
-  const dominantFamily = detectDominantFamily(materials);
+  // Audit #2: respect user-set family override here too.
+  const detectedFamily = detectDominantFamily(materials);
+  const familySource = opts.familyOverride && (typeof FAMILY_NOTE_RATIOS !== 'undefined') && FAMILY_NOTE_RATIOS[opts.familyOverride]
+    ? 'override'
+    : 'detected';
+  const dominantFamily = familySource === 'override' ? opts.familyOverride : detectedFamily;
   const center = (typeof FAMILY_NOTE_RATIOS !== 'undefined' && FAMILY_NOTE_RATIOS[dominantFamily])
     ? FAMILY_NOTE_RATIOS[dominantFamily]
     : { top: 0.25, mid: 0.45, base: 0.30 };
@@ -1420,6 +1438,8 @@ function analyzeNoteBalancePerception(materials, tempC) {
     outOfRange,
     balanced: missing.length === 0 && outOfRange.length === 0,
     family: dominantFamily,
+    detectedFamily,
+    familySource,
     // Audit #14: idealRanges is the single source of truth — render it
     // to a string at display time, not here.
     idealRanges,
