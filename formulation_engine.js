@@ -790,15 +790,28 @@ function analyzeNoteBalance(materials) {
   if (tiers.middle === 0) missing.push('middle');
   if (tiers.base === 0) missing.push('base');
 
-  // Ideal tier ranges depend on fragrance family — an oriental or woody
+  // Typical tier ranges depend on fragrance family — an oriental or woody
   // scent is legitimately base-heavy (~55% base) and shouldn't be flagged
   // against a floral/general-purpose range. Use FAMILY_NOTE_RATIOS as the
-  // center target and apply a ±10% window around each center.
+  // centre target and apply a per-family band around each centre.
+  //
+  // Sources: Carles 1961 'Méthode de Construction d'un Parfum'; Jellinek
+  // 1949 'Practice of Modern Perfumery'; Edwards 2007 'Fragrances of the
+  // World'; Sell 2006 'The Chemistry of Fragrances' (2nd ed.). These are
+  // teaching guidelines — modern niche perfumery (post-2010) often
+  // deliberately violates them, so the band is generous and the UI
+  // describes the result as 'typical' not 'ideal'.
   const dominantFamily = detectDominantFamily(materials);
+  // Default fallback now sums to 1.00 (was 0.925 — every named family
+  // already sums correctly; only the catch-all was off).
   const center = (typeof FAMILY_NOTE_RATIOS !== 'undefined' && FAMILY_NOTE_RATIOS[dominantFamily])
     ? FAMILY_NOTE_RATIOS[dominantFamily]
-    : { top: 0.225, mid: 0.40, base: 0.30 }; // 15–30 / 30–50 / 20–40 general default
-  const band = 10; // ±10% window
+    : { top: 0.25, mid: 0.45, base: 0.30 }; // 15–35 / 30–60 / 15–45 general default
+  // Band widens for highly-skewed families (cologne tops can hit 50%, oriental
+  // bases 60-70%) where ±10pp would falsely flag the genre's own classic
+  // examples. Balanced families keep the tighter ±10pp window.
+  const skewedFamilies = new Set(['citrus', 'fresh', 'water', 'oriental', 'amber', 'soft_amber', 'woody_amber', 'animalic', 'gourmand', 'dry_woods']);
+  const band = skewedFamilies.has(dominantFamily) ? 15 : 10;
   const clamp01 = (v) => Math.max(0, Math.min(100, v));
   const idealRanges = {
     top:    { min: clamp01(center.top * 100 - band),  max: clamp01(center.top * 100 + band) },
@@ -938,12 +951,14 @@ function analyzeNoteBalancePerception(materials, tempC) {
     base:   (integrals.base   / total) * 100,
   };
 
-  // Family-specific ideal ranges (same as label method)
+  // Family-specific typical ranges (same shape + sources as label method —
+  // see analyzeNoteBalance comment block for citations).
   const dominantFamily = detectDominantFamily(materials);
   const center = (typeof FAMILY_NOTE_RATIOS !== 'undefined' && FAMILY_NOTE_RATIOS[dominantFamily])
     ? FAMILY_NOTE_RATIOS[dominantFamily]
-    : { top: 0.225, mid: 0.40, base: 0.30 };
-  const band = 10;
+    : { top: 0.25, mid: 0.45, base: 0.30 };
+  const skewedFamilies = new Set(['citrus', 'fresh', 'water', 'oriental', 'amber', 'soft_amber', 'woody_amber', 'animalic', 'gourmand', 'dry_woods']);
+  const band = skewedFamilies.has(dominantFamily) ? 15 : 10;
   const clamp01 = v => Math.max(0, Math.min(100, v));
   const idealRanges = {
     top:    { min: clamp01(center.top * 100 - band),  max: clamp01(center.top * 100 + band) },
