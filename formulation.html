@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v246"></script>
-<script src="perfumery_data.js?v=2026-04-29-v246"></script>
-<script src="formulation_data.js?v=2026-04-29-v246"></script>
-<script src="formulation_engine.js?v=2026-04-29-v246"></script>
+<script src="taxonomy.js?v=2026-04-29-v247"></script>
+<script src="perfumery_data.js?v=2026-04-29-v247"></script>
+<script src="formulation_data.js?v=2026-04-29-v247"></script>
+<script src="formulation_engine.js?v=2026-04-29-v247"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2309,6 +2309,36 @@ function renderCompatTab() {
   if (chips.length) html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">' + chips.join('') + '</div>';
   html += '</div></div></div>';
 
+  // ===== Discord callout =====
+  // Promoted from a small block tucked inside the Harmony card. A known
+  // family clash is the single biggest reason to NOT ship a formula, and
+  // burying it three sections deep made it easy to miss. The callout sits
+  // immediately after the verdict so a user who clicks the discord chip
+  // lands on something visible without further scrolling.
+  if (harmony.discords.length) {
+    html += '<div class="analysis-card" id="compat-discord" style="border-left:4px solid var(--danger);background:rgba(239,68,68,0.04)">';
+    html += '<h4 style="color:var(--danger);margin:0">⚠ Known discord' + (harmony.discords.length === 1 ? '' : 's') + ' detected</h4>';
+    html += '<p class="panel-desc" style="margin-top:4px">Pairs flagged in the compatibility graph as olfactively clashing. Severity 1 = minor; 2 = noticeable; 3 = strong. Substitution recommended before scaling up.</p>';
+    html += '<table class="data-table" style="margin-top:8px"><thead><tr><th>Pair</th><th>Severity</th><th></th></tr></thead><tbody>';
+    for (const d of harmony.discords) {
+      const sevBadge = d.severity >= 3 ? 'badge-danger' : d.severity === 2 ? 'badge-warn' : 'badge-warn';
+      const sevLabel = d.severity >= 3 ? 'Strong' : d.severity === 2 ? 'Noticeable' : 'Minor';
+      html += '<tr>';
+      html += '<td>' + escHtml(d.nameA) + ' + ' + escHtml(d.nameB) + '</td>';
+      html += '<td><span class="badge ' + sevBadge + '">' + sevLabel + ' (' + d.severity + ')</span></td>';
+      // Substitute shortcut: reuses the existing showSubstitutes(cas) flow
+      // so the user can swap one of the clashing pair without leaving the
+      // Compat tab.
+      // Discord rows carry `a` and `b` (CAS) per the engine's harmony.discords shape.
+      const subShort = d.nameA.length > 14 ? d.nameA.slice(0, 14) + '…' : d.nameA;
+      html += '<td><button class="btn btn-sm" type="button" data-compat-substitute="' + escHtml(d.a) + '">Substitute ' + escHtml(subShort) + '</button></td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+    html += '<div id="subResults" style="margin-top:10px"></div>';
+    html += '</div>';
+  }
+
   // Harmony Score (multi-factor: graph + descriptor + discord + triangle + tier diversity)
   const harmClass = harmony.score >= 70 ? 'badge-ok' : harmony.score >= 40 ? 'badge-warn' : 'badge-danger';
   html += '<div class="analysis-card" id="compat-harmony"><h4>Harmony Score <span class="badge ' + harmClass + '">' + harmony.score + '%</span></h4>';
@@ -2480,6 +2510,19 @@ function renderCompatTab() {
       e.preventDefault();
       const target = document.getElementById(a.getAttribute('data-compat-jump'));
       if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  // Discord-card 'Substitute X' buttons: fetch substitute candidates for
+  // the clashing material and render them inline below the discord table.
+  el.querySelectorAll('[data-compat-substitute]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cas = btn.getAttribute('data-compat-substitute');
+      const subResults = document.getElementById('subResults');
+      if (subResults) {
+        subResults.innerHTML = showSubstitutes(cas);
+        subResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     });
   });
 }
