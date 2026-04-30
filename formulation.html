@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v237"></script>
-<script src="perfumery_data.js?v=2026-04-29-v237"></script>
-<script src="formulation_data.js?v=2026-04-29-v237"></script>
-<script src="formulation_engine.js?v=2026-04-29-v237"></script>
+<script src="taxonomy.js?v=2026-04-29-v238"></script>
+<script src="perfumery_data.js?v=2026-04-29-v238"></script>
+<script src="formulation_data.js?v=2026-04-29-v238"></script>
+<script src="formulation_engine.js?v=2026-04-29-v238"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -5149,8 +5149,20 @@ function renderMapTab() {
   }
   html += '</div>';
 
-  html += '<p class="panel-desc" style="margin-top:8px">' + points.length + ' aromatic materials positioned by olfactive profile. ';
-  html += 'Large circles = your formulation. <strong>Tap a dot</strong> to inspect — nothing is added to your formula until you press <em>Add</em>.</p>';
+  // Footer stats — counts adapt to the active filters so the user always
+  // knows what they're looking at. The first sentence is the user-facing
+  // 'how to read this' line; the second sentence carries the live tally.
+  html += '<p class="panel-desc" style="margin-top:8px;line-height:1.5">';
+  html += 'X-axis runs <strong>Fresh ↔ Amber</strong>; Y-axis runs <strong>Floral ↔ Woody</strong>. Position is a 2-D projection of each material’s family weights. ';
+  html += 'Large circles = your formulation. <strong>Tap a dot</strong> to inspect — nothing is added to your formula until you press <em>Add</em>.';
+  html += '</p>';
+  html += '<p class="panel-desc" style="font-size:0.8em">';
+  html += '<strong>' + points.length + '</strong> catalogue materials';
+  if (inFormulaCount > 0) html += ' · <strong>' + inFormulaCount + '</strong> in your formula';
+  if (filterActive) html += ' · ' + _mapFamilyFilter.size + ' family filter' + (_mapFamilyFilter.size === 1 ? '' : 's') + ' active';
+  if (searchActive) html += ' · search “' + escHtml(searchQ) + '”';
+  if (filterActive || searchActive) html += ' · <strong>' + visibleCount + '</strong> visible';
+  html += '</p>';
   // Inspector slot — re-hydrated below if there's an active selection.
   html += '<div id="mapInspector" style="margin-top:12px"></div>';
   html += '</div>';
