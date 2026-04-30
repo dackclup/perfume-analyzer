@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v255"></script>
-<script src="perfumery_data.js?v=2026-04-29-v255"></script>
-<script src="formulation_data.js?v=2026-04-29-v255"></script>
-<script src="formulation_engine.js?v=2026-04-29-v255"></script>
+<script src="taxonomy.js?v=2026-04-29-v256"></script>
+<script src="perfumery_data.js?v=2026-04-29-v256"></script>
+<script src="formulation_data.js?v=2026-04-29-v256"></script>
+<script src="formulation_engine.js?v=2026-04-29-v256"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2298,6 +2298,13 @@ function renderCompatTab() {
   const catId = document.getElementById('productCategory').value;
   const fragPct = parseInt(document.getElementById('fragPct').value);
 
+  // Compute the perception-based balance FIRST so we can pass its tier
+  // information into the harmony score below — that way diversityFactor
+  // counts a 'base' tier as covered only when actual VP-derived volatility
+  // says so, not just because a material's note label said 'Base'.
+  const tempC = parseInt(document.getElementById('tempSlider').value) || 25;
+  const balance = analyzeNoteBalancePerception(mats, tempC);
+
   // Defensive shape guard — earlier versions of computeHarmonyScore had a
   // 1-material early-return that omitted .discords / .triangleBonus etc.
   // Reading those undefined properties below threw mid-render and left
@@ -2305,7 +2312,9 @@ function renderCompatTab() {
   // material, Suggested Allocation table still shows the deleted row).
   // The engine has been fixed but we keep this defaulting in case any
   // future code path returns a partial shape.
-  const _h = computeHarmonyScore(mats, graph) || {};
+  const _h = computeHarmonyScore(mats, graph, {
+    tierContext: { top: balance.top, middle: balance.middle, base: balance.base, method: balance.method },
+  }) || {};
   const harmony = {
     score: 100, connectedPairs: 0, totalPairs: 0, pairs: [],
     discords: [], triangleBonus: 0, fullTriangles: 0, totalTriangles: 0,
@@ -2313,11 +2322,9 @@ function renderCompatTab() {
     method: 'multi-factor',
     ..._h,
   };
-  // Perception-based pyramid (integrates headspace PSI over time windows).
-  // Automatically falls back to label-based analyzeNoteBalance when ODT
-  // coverage is < 50% of materials.
-  const tempC = parseInt(document.getElementById('tempSlider').value) || 25;
-  const balance = analyzeNoteBalancePerception(mats, tempC);
+  // tempC + balance computed above (before harmony) so harmony can read
+  // perception-derived tier context. analyzeNoteBalancePerception() falls
+  // back to the label-based path automatically when ODT coverage < 50%.
   const suggestions = findCompatibleMaterials(selected, graph, DB, 10);
   const allocation = suggestAllocation(mats, validateFragPct(document.getElementById('fragPct').value), lockedMaterials);
   const optimized = optimizeAllocation(mats, graph, catId, fragPct, 50, lockedMaterials);
@@ -2424,6 +2431,17 @@ function renderCompatTab() {
   const harmBadgeText = harmony.insufficient ? '— %' : (harmony.score + '%');
   html += '<div class="analysis-card" id="compat-harmony"><h4>Harmony Score <span class="badge ' + harmClass + '">' + harmBadgeText + '</span></h4>';
   html += '<p class="panel-desc">Multi-factor: pairwise graph + descriptor similarity, discord penalty, triangle synergy, note-tier diversity, family balance.</p>';
+  // Data-quality footnote — tells the user whether the pair weighting is
+  // perception-correct (OV = pct/ODT) or pct-only, and whether tiers came
+  // from real volatility or just note labels. ODT/VP coverage % surfaces
+  // the confidence behind the score so a 90% on sparse data doesn't read
+  // the same as a 90% on a fully-characterised formula.
+  if (!harmony.insufficient) {
+    const wLabel = harmony.weightSource === 'ov' ? 'olfactory value (ODT-based)' : 'pct-only (low ODT coverage)';
+    const tLabel = harmony.tierSource === 'perception' ? 'volatility-binned (PSI)' : 'label-based';
+    const odtPct = harmony.odtCoverage != null ? Math.round(harmony.odtCoverage * 100) : 0;
+    html += '<p class="panel-desc" style="font-size:0.78em;margin-top:-2px"><em>Pair weights: ' + escHtml(wLabel) + ' · tier check: ' + escHtml(tLabel) + ' · ODT data covers ' + odtPct + '% of materials.</em></p>';
+  }
 
   if (harmony.insufficient) {
     // Component breakdown is meaningless on a 1-material formula.

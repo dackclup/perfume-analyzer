@@ -680,6 +680,31 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
   });
   const familiesList = materials.map(m => getMaterialFamilies(m.data || {}));
 
+  // Olfactory Value (OV) per material = pct / ODT. This is what the nose
+  // actually weighs when comparing materials. 1% of damascone (ODT ~0.1
+  // ppb) carries hundreds of times more perceptual mass than 1% of
+  // vanillin (ODT ~50 ppb). The previous renderer weighted pairs by
+  // geometric-mean pct, which inflated the importance of weak materials
+  // simply because they took up volume.
+  //
+  // Fall back to pct-weighting when fewer than half the materials have
+  // a usable ODT — the OV weighting becomes noisy when most values are
+  // QSAR estimates with order-of-magnitude error bars. The fallback
+  // matches the Pyramid Perception card's policy.
+  const ovList = [];
+  let withODT = 0;
+  for (const m of materials) {
+    const odt = (typeof getODT === 'function') ? getODT(m.cas, m.data) : null;
+    const ppb = odt && odt.ppb != null && isFinite(odt.ppb) && odt.ppb > 0 ? odt.ppb : null;
+    if (ppb != null) withODT++;
+    // pct is in % (0-100); ODT is in ppb. The ratio is unitful but only
+    // RELATIVE values matter for weighting, so the unit cancels.
+    const ov = ppb != null ? ((m.pct || 0) / ppb) : null;
+    ovList.push(ov);
+  }
+  const odtCoverage = withODT / materials.length;
+  const useOVWeight = odtCoverage >= 0.5;
+
   function cosSim(v1, v2) {
     let dot = 0, n1 = 0, n2 = 0;
     for (let k = 0; k < v1.length; k++) {
@@ -724,8 +749,24 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
       let pairScore = connected ? 1.0 : 0.3 + 0.7 * sim;
       pairScore = Math.max(0, pairScore - 0.5 * discordSev);
 
-      // Weight by geometric mean of pct — significant pairs matter more.
-      const w = Math.max(0.01, Math.sqrt((a.pct || 0) * (b.pct || 0)));
+      // Weight pair by geometric mean of OLFACTORY VALUE (perceptual
+      // strength = pct / ODT) when ODT data is available for ≥50 % of
+      // the formula; otherwise fall back to pct so we never score on
+      // noise. Geometric mean keeps the metric symmetric and stops a
+      // single huge outlier from dominating the sum.
+      let w;
+      if (useOVWeight && ovList[i] != null && ovList[j] != null) {
+        // log1p compression — raw OV spans 6+ orders of magnitude
+        // (vanillin vs damascone), and a linear weighting would
+        // collapse the harmony score to whichever pair contains the
+        // lowest-threshold material. log1p flattens that range while
+        // still ranking strong materials above weak ones.
+        const ovA = Math.log1p(ovList[i]);
+        const ovB = Math.log1p(ovList[j]);
+        w = Math.max(0.01, Math.sqrt(ovA * ovB));
+      } else {
+        w = Math.max(0.01, Math.sqrt((a.pct || 0) * (b.pct || 0)));
+      }
 
       weightedSum += pairScore * w;
       totalWeight += w;
@@ -758,11 +799,31 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
   const triangleBonus = totalTriangles > 0 ? (fullTriangles / totalTriangles) * 5 : 0; // up to +5
 
   // Note-tier diversity — classical perfumery prefers top+middle+base coverage.
-  // Missing a tier hurts; all three present gets the full multiplier.
-  const tiersPresent = { top: false, middle: false, base: false };
-  for (const m of materials) {
-    const ts = classifyNoteTier(m.data?.note || '');
-    for (const t of ts) tiersPresent[t] = true;
+  // Caller may pass `opts.tierContext` from analyzeNoteBalancePerception so
+  // the diversity check uses ACTUAL volatility-binned tiers rather than the
+  // material's note label (a base note labelled 'middle' shouldn't count as
+  // covering the middle tier when it's actually heavy and slow). Falls
+  // back to label-based when no perception context is provided — the API
+  // is backwards compatible.
+  let tiersPresent;
+  let tierSource = 'label';
+  if (opts.tierContext && typeof opts.tierContext === 'object') {
+    // Accept either { top: bool, middle: bool, base: bool } or a balance
+    // object with numeric { top, middle, base } percentages. Treat >0 as
+    // present in the latter shape.
+    const ctx = opts.tierContext;
+    tiersPresent = {
+      top:    typeof ctx.top    === 'boolean' ? ctx.top    : (ctx.top    || 0) > 0,
+      middle: typeof ctx.middle === 'boolean' ? ctx.middle : (ctx.middle || 0) > 0,
+      base:   typeof ctx.base   === 'boolean' ? ctx.base   : (ctx.base   || 0) > 0,
+    };
+    tierSource = ctx.method || 'perception';
+  } else {
+    tiersPresent = { top: false, middle: false, base: false };
+    for (const m of materials) {
+      const ts = classifyNoteTier(m.data?.note || '');
+      for (const t of ts) tiersPresent[t] = true;
+    }
   }
   const tierCount = (tiersPresent.top ? 1 : 0) + (tiersPresent.middle ? 1 : 0) + (tiersPresent.base ? 1 : 0);
   // 0 → 0.85, 1 → 0.90, 2 → 0.95, 3 → 1.00
@@ -817,6 +878,9 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
     familyBalance,
     tierCount,
     tiersPresent,
+    tierSource, // 'perception' (passed via opts.tierContext) or 'label'
+    weightSource: useOVWeight ? 'ov' : 'pct',
+    odtCoverage: roundN(odtCoverage, 2),
     connectedPairs: connectedCount,
     totalPairs: pairs.length,
     fullTriangles,
