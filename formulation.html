@@ -565,6 +565,20 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
   filter: drop-shadow(0 0 6px rgba(74,144,226,0.55));
 }
 
+/* Family-filter chips below the Odor Map. Same lift-on-hover pattern as the
+   Wheel-tab pills so the two interaction surfaces feel consistent. */
+.map-family-chip {
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out;
+}
+.map-family-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.map-family-chip:focus-visible {
+  outline: 2px solid var(--accent, #4a90e2);
+  outline-offset: 2px;
+}
+
 /* Analysis card hover + shadow */
 .analysis-card {
   transition:box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
@@ -979,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v234"></script>
-<script src="perfumery_data.js?v=2026-04-29-v234"></script>
-<script src="formulation_data.js?v=2026-04-29-v234"></script>
-<script src="formulation_engine.js?v=2026-04-29-v234"></script>
+<script src="taxonomy.js?v=2026-04-29-v235"></script>
+<script src="perfumery_data.js?v=2026-04-29-v235"></script>
+<script src="formulation_data.js?v=2026-04-29-v235"></script>
+<script src="formulation_engine.js?v=2026-04-29-v235"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -4989,6 +5003,11 @@ document.getElementById('compareRun').addEventListener('click', () => {
 // inspector selection. Stores the CAS of the material currently displayed
 // in the inspector card; null = no card open.
 let _mapInspectorCas = null;
+// Optional set of family ids that the user has narrowed the map to. Empty
+// set = "show everything" (the default). Non-empty = only those families
+// render at full opacity; everything else dims to 0.1 so the layout context
+// stays visible.
+let _mapFamilyFilter = new Set();
 
 function renderMapTab() {
   const el = document.getElementById('mapContent');
@@ -5011,6 +5030,22 @@ function renderMapTab() {
   function toSVGX(x) { return (W/2) + (x / absX) * ((W - 2 * pad) / 2); }
   function toSVGY(y) { return (H/2) - (y / absY) * ((H - 2 * pad) / 2); }
 
+  // Build a present-only family index so the legend below only shows
+  // families that actually appear in the projection. A given family's color
+  // is the first one we encounter (all materials in the same family share
+  // the same hex via FRAGRANCE_WHEEL.familyToSegment, so any one is fine).
+  const familyIndex = {}; // family → { count, color }
+  let inFormulaCount = 0;
+  for (const p of points) {
+    if (!familyIndex[p.family]) familyIndex[p.family] = { count: 0, color: p.color };
+    familyIndex[p.family].count += 1;
+    if (p.inFormulation) inFormulaCount += 1;
+  }
+  const familyList = Object.entries(familyIndex)
+    .sort((a, b) => b[1].count - a[1].count); // most-populated first
+  const filterActive = _mapFamilyFilter.size > 0;
+  const isVisible = (fam) => !filterActive || _mapFamilyFilter.has(fam);
+
   let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;max-width:' + W + 'px;background:var(--bg2);border-radius:8px">';
 
   // Axes
@@ -5029,23 +5064,48 @@ function renderMapTab() {
   for (const p of points) {
     if (p.inFormulation) continue;
     const sx = toSVGX(p.x), sy = toSVGY(p.y);
-    svg += '<circle class="map-dot" data-cas="' + escHtml(p.cas) + '" cx="' + sx + '" cy="' + sy + '" r="3" fill="' + p.color + '" fill-opacity="0.4" ';
+    const dotOpacity = isVisible(p.family) ? 0.4 : 0.06;
+    svg += '<circle class="map-dot" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="3" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" ';
     svg += 'style="cursor:pointer">';
     svg += '<title>' + escHtml(p.name) + ' (' + escHtml(p.family) + ') — click for details</title></circle>';
   }
 
-  // Draw formulation points (larger, with label)
+  // Draw formulation points (larger, with label). Filter dims labels too —
+  // otherwise the formula labels stay sharp while their dot fades, which
+  // looks like a render bug.
   for (const p of points) {
     if (!p.inFormulation) continue;
     const sx = toSVGX(p.x), sy = toSVGY(p.y);
-    svg += '<circle class="map-dot map-dot-active" data-cas="' + escHtml(p.cas) + '" cx="' + sx + '" cy="' + sy + '" r="7" fill="' + p.color + '" stroke="var(--text)" stroke-width="2" style="cursor:pointer">';
+    const visible = isVisible(p.family);
+    const dotOpacity = visible ? 1 : 0.15;
+    const labelOpacity = visible ? 1 : 0.2;
+    svg += '<circle class="map-dot map-dot-active" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="7" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" stroke="var(--text)" stroke-width="2" stroke-opacity="' + dotOpacity + '" style="cursor:pointer">';
     svg += '<title>' + escHtml(p.name) + ' — already in your formula</title></circle>';
-    svg += '<text x="' + (sx + 10) + '" y="' + (sy + 4) + '" font-size="9" fill="var(--text)" font-weight="600" style="pointer-events:none">' + escHtml(p.name).slice(0, 15) + '</text>';
+    svg += '<text x="' + (sx + 10) + '" y="' + (sy + 4) + '" font-size="9" fill="var(--text)" font-weight="600" fill-opacity="' + labelOpacity + '" style="pointer-events:none">' + escHtml(p.name).slice(0, 15) + '</text>';
   }
 
   svg += '</svg>';
 
   let html = '<div class="analysis-card">' + svg;
+
+  // Family legend / filter row. Chips show colour swatch + family name +
+  // count. Clicking a chip toggles its membership in _mapFamilyFilter; an
+  // empty filter means "show everything", non-empty means "only these".
+  // Mirrors the Wheel-tab pill UX so the two tabs read consistently.
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center">';
+  html += '<span style="font-size:0.78em;color:var(--text2);margin-right:4px">Filter:</span>';
+  for (const [fam, info] of familyList) {
+    const isOn = _mapFamilyFilter.has(fam);
+    const chipBg = info.color + (isOn ? '55' : '22');
+    const chipFg = info.color;
+    const selectedStyle = isOn ? ';outline:2px solid ' + info.color + ';outline-offset:1px' : '';
+    html += '<button type="button" class="badge map-family-chip" data-family="' + escHtml(fam) + '" aria-pressed="' + isOn + '" style="background:' + chipBg + ';color:' + chipFg + ';font-size:0.72em;border:none;cursor:pointer' + selectedStyle + '">' + escHtml(fam) + ' (' + info.count + ')</button>';
+  }
+  if (filterActive) {
+    html += '<button id="mapClearFilterBtn" class="btn btn-sm" type="button" style="margin-left:6px">Clear (' + _mapFamilyFilter.size + ')</button>';
+  }
+  html += '</div>';
+
   html += '<p class="panel-desc" style="margin-top:8px">' + points.length + ' aromatic materials positioned by olfactive profile. ';
   html += 'Large circles = your formulation. <strong>Tap a dot</strong> to inspect — nothing is added to your formula until you press <em>Add</em>.</p>';
   // Inspector slot — re-hydrated below if there's an active selection.
@@ -5065,6 +5125,23 @@ function renderMapTab() {
       renderMapInspector(points);
       highlightMapDot(_mapInspectorCas);
     });
+  });
+
+  // Family-filter chip clicks. Toggle the family in/out of the filter set
+  // and re-render — re-render is cheaper than surgically updating every
+  // dot's opacity attribute, and keeps the chip aria-pressed state in sync.
+  el.querySelectorAll('.map-family-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const fam = chip.getAttribute('data-family');
+      if (_mapFamilyFilter.has(fam)) _mapFamilyFilter.delete(fam);
+      else _mapFamilyFilter.add(fam);
+      renderMapTab();
+    });
+  });
+  const clearBtn = document.getElementById('mapClearFilterBtn');
+  if (clearBtn) clearBtn.addEventListener('click', () => {
+    _mapFamilyFilter.clear();
+    renderMapTab();
   });
 
   // Persisted selection from a previous render.
