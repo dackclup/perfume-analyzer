@@ -1657,6 +1657,18 @@ function _hillClimbFitness(pctsIn, materials, unlockedIdx, ifraMaxes, opts, iter
   iters = iters || 50;
   const pcts = pctsIn.slice();
   const matsWithPct = () => materials.map((m, i) => ({ cas: m.cas, name: m.name, pct: pcts[i], data: m.data }));
+  // Floor for unlocked, non-banned materials. The user added these on
+  // purpose; the optimiser is allowed to MINIMISE their contribution
+  // but never silently delete them. Banned materials (ifraMax === 0)
+  // stay at 0; everyone else respects the floor.
+  // Bug report: with high fragPct values the per-material IFRA cap in
+  // concentrate terms tightens, the gradient pushed pct below 0 (or
+  // SA accepted a downhill move that did), and Math.max(0, …)
+  // clamped to 0 — material vanished from the bars. The floor
+  // protects user intent without preventing the optimiser from
+  // deprioritising a poor pick.
+  const MIN_UNLOCKED_PCT = 0.1;
+  const minFloor = (i) => ifraMaxes[i] > 0 ? Math.min(MIN_UNLOCKED_PCT, ifraMaxes[i]) : 0;
   // Inside the hill-climb the fitness is called hundreds of times; use
   // label-based pyramid (~10x cheaper than perception-based) — the label
   // and perception pyramid agree on gradient direction for small pct
@@ -1715,10 +1727,10 @@ function _hillClimbFitness(pctsIn, materials, unlockedIdx, ifraMaxes, opts, iter
     for (const i of unlockedIdx) {
       for (const sign of [1, -1]) {
         const step = sign * delta;
-        const newI = Math.min(ifraMaxes[i], Math.max(0, pcts[i] + step));
+        const newI = Math.min(ifraMaxes[i], Math.max(minFloor(i), pcts[i] + step));
         const diff = newI - pcts[i];
         if (Math.abs(diff) < 1e-6) continue;
-        const peers = unlockedIdx.filter(k => k !== i && pcts[k] > 0 && pcts[k] < ifraMaxes[k] - 0.001);
+        const peers = unlockedIdx.filter(k => k !== i && pcts[k] > minFloor(k) + 0.001 && pcts[k] < ifraMaxes[k] - 0.001);
         if (!peers.length) continue;
         const peerSum = peers.reduce((s, k) => s + pcts[k], 0);
         if (peerSum <= 0) continue;
@@ -1726,7 +1738,11 @@ function _hillClimbFitness(pctsIn, materials, unlockedIdx, ifraMaxes, opts, iter
         const savedI = pcts[i];
         const saved = peers.map(k => pcts[k]);
         pcts[i] = newI;
-        for (const k of peers) pcts[k] = Math.max(0, pcts[k] - diff * (pcts[k] / peerSum));
+        // Redistribute proportionally but never push a peer below its floor.
+        for (const k of peers) {
+          const target = pcts[k] - diff * (pcts[k] / peerSum);
+          pcts[k] = Math.max(minFloor(k), Math.min(ifraMaxes[k], target));
+        }
         const newFit = computeFormulaFitness(matsWithPct(), hcOpts).score;
         const accepted = trySAStep(newFit, () => {
           pcts[i] = savedI;
@@ -1745,7 +1761,9 @@ function _hillClimbFitness(pctsIn, materials, unlockedIdx, ifraMaxes, opts, iter
         const j = unlockedIdx[(a + 1 + (iter % stride)) % unlockedIdx.length];
         if (i === j) continue;
         const k = delta; // transfer amount
-        if (pcts[i] - k < 0 || pcts[j] + k > ifraMaxes[j]) continue;
+        // Don't push the donor below its floor or the recipient above
+        // its IFRA cap.
+        if (pcts[i] - k < minFloor(i) || pcts[j] + k > ifraMaxes[j]) continue;
         const savedI = pcts[i], savedJ = pcts[j];
         pcts[i] -= k;
         pcts[j] += k;
@@ -2090,10 +2108,16 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
     const lockedSum = materials.reduce((s, m, i) => s + (locked.has(m.cas) ? pcts[i] : 0), 0);
     const targetUnlocked = Math.max(100 - lockedSum, 0);
     const ifraCapped = new Set();
+    // Floor for unlocked, non-banned materials. Same MIN_UNLOCKED_PCT
+    // logic as the hill-climb (kept in sync — see comment block in
+    // _hillClimbFitness for rationale). Banned materials have
+    // ifraMaxes[i] === 0 and clamp to 0; everyone else stays ≥ floor.
+    const MIN_UNLOCKED_PCT = 0.1;
     for (let i = 0; i < n; i++) {
       if (locked.has(materials[i].cas)) continue;
       const before = pcts[i];
-      pcts[i] = clamp(pcts[i], Math.min(0.01, ifraMaxes[i]), ifraMaxes[i]);
+      const floor = ifraMaxes[i] > 0 ? Math.min(MIN_UNLOCKED_PCT, ifraMaxes[i]) : 0;
+      pcts[i] = clamp(pcts[i], floor, ifraMaxes[i]);
       if (pcts[i] < before) ifraCapped.add(i);
     }
     // Exclude IFRA-capped materials from re-normalization so they stay within limits
@@ -2108,10 +2132,16 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
     }
   }
 
-  // Final IFRA clamp after optimization loop
+  // Final IFRA clamp + floor enforcement after the gradient loop. The
+  // re-normalisation step above can shrink already-tiny pcts further
+  // (it divides by remainSum then multiplies by remainTarget, which
+  // may pull a 0.15% material to 0.05% if the remainTarget is small).
+  // This pass guarantees floor before handing to the hill-climb.
+  const MIN_UNLOCKED_FINAL = 0.1;
   for (let i = 0; i < n; i++) {
     if (locked.has(materials[i].cas)) continue;
-    pcts[i] = Math.min(pcts[i], ifraMaxes[i]);
+    const floor = ifraMaxes[i] > 0 ? Math.min(MIN_UNLOCKED_FINAL, ifraMaxes[i]) : 0;
+    pcts[i] = Math.max(floor, Math.min(pcts[i], ifraMaxes[i]));
   }
 
   // ─── Phase 2: harmony/pyramid-aware hill climb + random restarts ──────
