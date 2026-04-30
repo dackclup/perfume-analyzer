@@ -1509,8 +1509,14 @@ function analyzeNoteBalancePerception(materials, tempC, opts) {
  * as the optimization target, and reported as a before/after delta in
  * the UI so users can see the button actually improved the formula.
  *
+ * Round 1 alignment fix: opts.familyOverride and opts.tempC flow through
+ * to the same engine calls the user-facing render uses, so the optimizer
+ * targets the SAME score the user sees. Without this the optimizer was
+ * climbing a slightly different surface and could land at a peak the
+ * displayed score still flagged as 'low'.
+ *
  * @param {Array} materials - [{cas, name, pct, data}]
- * @param {Object} opts - { catId, fragPct, tempC, graph }
+ * @param {Object} opts - { catId, fragPct, tempC, graph, fastMode, familyOverride }
  * @returns {{ score, harmony, pyramid, ifra, discordFree, breakdown }}
  */
 function computeFormulaFitness(materials, opts) {
@@ -1519,8 +1525,24 @@ function computeFormulaFitness(materials, opts) {
     return { score: 0, harmony: 0, pyramid: 0, ifra: 100, discordFree: 100, breakdown: null };
   }
 
-  // 1. Harmony (0–100)
-  const harm = computeHarmonyScore(materials, opts.graph || new Map(), { fastMode: !!opts.fastMode });
+  // Pyramid first — its tier output feeds the harmony tierContext so
+  // both metrics agree on which tiers are 'present' (Audit Pyramid #2,
+  // #6 in the user-facing chain).
+  const balanceOpts = { familyOverride: opts.familyOverride || null };
+  let bal = null;
+  if (materials.length >= 2) {
+    bal = opts.fastMode
+      ? analyzeNoteBalance(materials, balanceOpts)
+      : analyzeNoteBalancePerception(materials, opts.tempC || 25, balanceOpts);
+  }
+
+  // Harmony — pass the perception-tier context so the optimizer sees
+  // the same diversityFactor + monoculture as the user-facing card.
+  const harmonyOpts = { fastMode: !!opts.fastMode };
+  if (bal) {
+    harmonyOpts.tierContext = { top: bal.top, middle: bal.middle, base: bal.base, method: bal.method };
+  }
+  const harm = computeHarmonyScore(materials, opts.graph || new Map(), harmonyOpts);
   const harmony = harm.score || 0;
 
   // 2. Pyramid alignment (0–100) — 100 if balanced, penalty grows with
@@ -1528,15 +1550,14 @@ function computeFormulaFitness(materials, opts) {
   //    fastMode uses label-based analyzeNoteBalance which skips the
   //    simulateEvaporation pass — ~10x cheaper, used inside hill-climb.
   let pyramid = 100;
-  if (materials.length >= 2) {
-    const bal = opts.fastMode
-      ? analyzeNoteBalance(materials)
-      : analyzeNoteBalancePerception(materials, opts.tempC || 25);
+  if (bal) {
     if (bal.missing && bal.missing.length) pyramid -= bal.missing.length * 20;
     if (bal.outOfRange && bal.outOfRange.length) {
-      const classifiedTotal = (bal.top || 0) + (bal.middle || 0) + (bal.base || 0);
+      // Engine returns bal.{top,middle,base} as percentages of total
+      // (Pyramid Round A — divides by total, including unclassified).
+      // Use them directly; no second normalisation needed.
       for (const o of bal.outOfRange) {
-        const actualPct = classifiedTotal > 0 ? (bal[o.tier] / classifiedTotal) * 100 : 0;
+        const actualPct = bal[o.tier] || 0;
         const range = o.ideal;
         const dist = o.direction === 'low'
           ? Math.max(0, range.min - actualPct)
@@ -1930,9 +1951,10 @@ function blendFamilyCentre(weights, fallbackKey) {
   return blended;
 }
 
-function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, locked) {
+function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, locked, opts) {
   iterations = iterations || 50;
   locked = locked || new Set();
+  opts = opts || {};
   if (materials.length < 2) {
     return materials.map(m => ({ cas: m.cas, name: m.name, optimizedPct: m.pct }));
   }
@@ -1966,11 +1988,21 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
       }
     }
 
-    // C4: Use family-specific note ratios if available
+    // C4: Use family-specific note ratios. Round 1 alignment: when the
+    // caller passes opts.familyOverride (Brief / Pyramid card override),
+    // pin the gradient target to that family's classical centre. With
+    // no override we use blendFamilyCentre so a 51/49 split lands at
+    // the weighted-average target, not pure-winner. This matches what
+    // the user-facing Pyramid card displays — without the alignment
+    // the optimizer was climbing toward a target the user couldn't see.
     const total = pcts.reduce((a, b) => a + b, 0) || 1;
-    const dominantFamily = detectDominantFamily(materials);
-    const ratios = (typeof FAMILY_NOTE_RATIOS !== 'undefined' && FAMILY_NOTE_RATIOS[dominantFamily])
-      ? FAMILY_NOTE_RATIOS[dominantFamily] : { top: 0.20, mid: 0.45, base: 0.35 };
+    let ratios;
+    if (opts.familyOverride && (typeof FAMILY_NOTE_RATIOS !== 'undefined') && FAMILY_NOTE_RATIOS[opts.familyOverride]) {
+      ratios = FAMILY_NOTE_RATIOS[opts.familyOverride];
+    } else {
+      const dist = detectFamilyDistribution(materials);
+      ratios = blendFamilyCentre(dist.weights, dist.dominant);
+    }
     const targetTop = total * ratios.top;
     const targetMid = total * ratios.mid;
     const targetBase = total * ratios.base;
@@ -2023,7 +2055,19 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
   for (let i = 0; i < n; i++) if (!locked.has(materials[i].cas)) unlockedIdx.push(i);
 
   if (unlockedIdx.length >= 2) {
-    const fitnessOpts = { catId: categoryId, fragPct: fragPct, tempC: 25, graph: graph };
+    // Round 1 alignment: thread familyOverride + tempC through to the
+    // hill-climb fitness so it scores the SAME thing the user-facing
+    // render does. Previously fitnessOpts didn't include familyOverride
+    // and the hill-climb's internal computeFormulaFitness call used
+    // detected family even when the user had pinned a specific target
+    // via the brief / Pyramid card override.
+    const fitnessOpts = {
+      catId: categoryId,
+      fragPct: fragPct,
+      tempC: opts.tempC || 25,
+      graph: graph,
+      familyOverride: opts.familyOverride || null,
+    };
 
     // Run 2 starting points: current pcts + one perturbed variant. More
     // restarts gave marginal fitness gains (<1 point) at 50%+ time cost,
