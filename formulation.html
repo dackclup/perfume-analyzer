@@ -929,10 +929,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v223"></script>
-<script src="perfumery_data.js?v=2026-04-29-v223"></script>
-<script src="formulation_data.js?v=2026-04-29-v223"></script>
-<script src="formulation_engine.js?v=2026-04-29-v223"></script>
+<script src="taxonomy.js?v=2026-04-29-v224"></script>
+<script src="perfumery_data.js?v=2026-04-29-v224"></script>
+<script src="formulation_data.js?v=2026-04-29-v224"></script>
+<script src="formulation_engine.js?v=2026-04-29-v224"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -4354,6 +4354,11 @@ function showSubstitutes(cas) {
 //   • Center    — white disc with "THE FRAGRANCE WHEEL" wordmark
 // Transitional subfamilies (Fruity / Floral Amber / Woody Amber) render with
 // a linearGradient fill blending their two adjacent main-family hues.
+
+// Module-level state — persists across re-renders so switching tabs (or
+// editing the formula) doesn't drop the user's active filter.
+let _wheelSelectedSegId = null;
+
 function renderWheelTab() {
   const el = document.getElementById('wheelContent');
   const segments = FRAGRANCE_WHEEL.segments;
@@ -4567,33 +4572,81 @@ function renderWheelTab() {
   // Filtered results area
   legend += '<div id="wheelFilterResults" style="margin-top:16px"></div>';
 
-  el.innerHTML = '<div class="analysis-card">' + svg + legend + '</div>';
+  // Toolbar above the wheel — shows the current filter and a Clear button
+  // when a slice is active. Hidden state when nothing is selected so the
+  // wheel itself dominates the viewport.
+  let toolbar = '<div id="wheelToolbar" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;min-height:32px;flex-wrap:wrap">';
+  if (_wheelSelectedSegId) {
+    const selSeg = segments.find(s => s.id === _wheelSelectedSegId);
+    const selLabel = selSeg ? prettyLabel(selSeg.id) : _wheelSelectedSegId;
+    const selColor = selSeg ? selSeg.color : '#888';
+    toolbar += '<div style="font-size:0.85em;color:var(--text2)">';
+    toolbar += 'Filtering by ';
+    toolbar += '<span class="badge" style="background:' + selColor + '33;color:' + selColor + ';font-weight:600">' + escHtml(selLabel) + '</span>';
+    toolbar += '</div>';
+    toolbar += '<button id="wheelClearBtn" class="btn btn-sm" type="button">Clear filter</button>';
+  } else {
+    toolbar += '<div style="font-size:0.82em;color:var(--text2);font-style:italic">Click a slice (or a legend pill) to filter materials by family.</div>';
+    toolbar += '<span></span>';
+  }
+  toolbar += '</div>';
+
+  el.innerHTML = '<div class="analysis-card">' + toolbar + svg + legend + '</div>';
+
+  // Re-apply persisted selection after the SVG is rebuilt — paths are fresh
+  // DOM nodes on every render, so the .active-seg class would be lost.
+  if (_wheelSelectedSegId) {
+    const path = el.querySelector('.wheel-seg[data-seg="' + _wheelSelectedSegId + '"]');
+    if (path) path.classList.add('active-seg');
+    renderWheelFilterResults(_wheelSelectedSegId);
+  }
+
+  const clearBtn = document.getElementById('wheelClearBtn');
+  if (clearBtn) clearBtn.addEventListener('click', clearWheelFilter);
 }
 
-function filterByWheelSegment(segId, evt) {
-  // Visual click feedback: pop animation on clicked slice.
-  // Persistent .active-seg highlight stays until the next slice is
-  // selected. (`evt` arg retained for backwards compat / future use.)
-  const allSegs = document.querySelectorAll('.wheel-seg');
-  allSegs.forEach(p => { p.classList.remove('active-seg'); p.classList.remove('popping'); });
+function clearWheelFilter() {
+  _wheelSelectedSegId = null;
+  // Cheaper than full re-render: drop the active class + clear the results,
+  // then rebuild the toolbar in place.
+  document.querySelectorAll('.wheel-seg').forEach(p => p.classList.remove('active-seg', 'popping'));
+  const results = document.getElementById('wheelFilterResults');
+  if (results) results.innerHTML = '';
+  renderWheelTab();
+}
+
+function filterByWheelSegment(segId /*, evt */) {
+  // Toggle off: clicking the already-active slice clears the filter so the
+  // user has a way to return to the unfiltered wheel without leaving the tab.
+  if (_wheelSelectedSegId === segId) {
+    clearWheelFilter();
+    return;
+  }
+  // Persist + visual click feedback (pop animation on clicked slice;
+  // .active-seg stays until the next slice is selected or Clear is pressed).
+  _wheelSelectedSegId = segId;
+  document.querySelectorAll('.wheel-seg').forEach(p => p.classList.remove('active-seg', 'popping'));
   const clickedPath = document.querySelector('.wheel-seg[data-seg="' + segId + '"]');
   if (clickedPath) {
-    // Force reflow so the keyframe re-runs even if the same slice is
-    // clicked twice in a row.
+    // Force reflow so the keyframe re-runs even if the same slice was
+    // animated previously.
     void clickedPath.getBoundingClientRect();
     clickedPath.classList.add('popping', 'active-seg');
     setTimeout(() => clickedPath.classList.remove('popping'), 500);
   }
+  // Re-render so the toolbar updates to show the active filter + Clear button.
+  renderWheelTab();
+}
 
+// Renders the table of DB materials matching the active segment into the
+// #wheelFilterResults pane. Split out from filterByWheelSegment so that
+// renderWheelTab() can re-hydrate it on tab return / formula change.
+function renderWheelFilterResults(segId) {
   const el = document.getElementById('wheelFilterResults');
   if (!el) return;
   const matches = [];
   for (const [cas, e] of Object.entries(DB)) {
     if (formulation.materials.find(m => m.cas === cas)) continue;
-    // Pass curated classification if present so the wheel match honors
-    // the new Family axis directly. Fallback path (text split of
-    // odor_type) still applies for materials without a classification
-    // block.
     const cls = e.classification || {};
     const fams = getMaterialFamilies({
       odor_type: e.odor?.type,
