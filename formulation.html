@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v247"></script>
-<script src="perfumery_data.js?v=2026-04-29-v247"></script>
-<script src="formulation_data.js?v=2026-04-29-v247"></script>
-<script src="formulation_engine.js?v=2026-04-29-v247"></script>
+<script src="taxonomy.js?v=2026-04-29-v248"></script>
+<script src="perfumery_data.js?v=2026-04-29-v248"></script>
+<script src="formulation_data.js?v=2026-04-29-v248"></script>
+<script src="formulation_engine.js?v=2026-04-29-v248"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2446,21 +2446,47 @@ function renderCompatTab() {
 
   // Suggested Allocation — combined MATERIALS + SOLVENT/CARRIER/OTHER
   html += '<div class="analysis-card" id="compat-allocation"><h4>Suggested Allocation</h4>';
-  html += '<p class="panel-desc">Materials use Dirichlet weights by note tier and inverse odor strength. Carriers rebalance by IFRA category (locked rows are preserved). Click "Apply" to use.</p>';
+  html += '<p class="panel-desc">Materials use Dirichlet weights by note tier and inverse odor strength. Carriers rebalance by IFRA category (locked rows are preserved).</p>';
+
+  // Inline action row — replaces the disconnected sidebar Smart Allocate
+  // button as the primary path. Three buttons match the three modes the
+  // engine already supports (suggested / optimized / smart). The previous
+  // "Click 'Apply' to use" caption referred to a button that didn't exist
+  // anywhere on the card, leaving users stranded.
+  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;margin-bottom:6px">';
+  html += '<button class="btn btn-sm btn-primary" id="compatApplySuggested" type="button" title="Use the Dirichlet-baseline percentages">Apply Suggested</button>';
+  html += '<button class="btn btn-sm btn-primary" id="compatApplyOptimized" type="button" title="Use the gradient/hill-climb refined percentages">Apply Optimized</button>';
+  html += '<button class="btn btn-sm" id="compatApplySmart" type="button" title="Run Suggested → Optimized in sequence">Smart Allocate</button>';
+  html += '</div>';
+
+  // Helper: render a single allocation row with delta arrow + colour. The
+  // delta column condenses 'Current vs Suggested' into one glance — green
+  // up-arrow if increase, amber down-arrow if decrease, neutral dash when
+  // the change is below 0.5pp (visual noise floor).
+  const renderDelta = (cur, target) => {
+    if (target == null) return '<span style="color:var(--text2)">—</span>';
+    const diff = target - cur;
+    if (Math.abs(diff) < 0.5) return '<span style="color:var(--text2)">≈</span>';
+    const sign = diff > 0 ? '+' : '';
+    const arrow = diff > 0 ? '↑' : '↓';
+    const colour = diff > 0 ? 'var(--success)' : 'var(--warn)';
+    return '<span style="color:' + colour + ';font-weight:500;white-space:nowrap">' + arrow + ' ' + sign + diff.toFixed(1) + '%</span>';
+  };
 
   // Materials section — lock button here is the only way to pin a material's %
-  html += '<table class="data-table" style="margin-top:10px"><thead><tr><th></th><th>Material</th><th>Current %</th><th>Suggested %</th><th>Optimized %</th></tr></thead><tbody>';
+  html += '<table class="data-table" style="margin-top:6px"><thead><tr><th></th><th>Material</th><th>Current</th><th>Suggested</th><th>Δ</th><th>Optimized</th></tr></thead><tbody>';
   for (let i = 0; i < mats.length; i++) {
     const m = mats[i];
     const sug = allocation.find(a => a.cas === m.cas);
     const opt = optimized.find(o => o.cas === m.cas);
     const isLocked = lockedMaterials.has(m.cas);
     html += '<tr>';
-    html += '<td><button class="btn btn-sm" onclick="toggleLock(\'' + escHtml(m.cas) + '\')" title="' + (isLocked ? 'Unlock' : 'Lock') + '" style="font-size:0.75em;padding:2px 6px">' + (isLocked ? '&#128274;' : '&#128275;') + '</button></td>';
+    html += '<td><button class="btn btn-sm" onclick="toggleLock(\'' + escHtml(m.cas) + '\')" title="' + (isLocked ? 'Unlock' : 'Lock') + '" style="font-size:0.85em;padding:4px 8px">' + (isLocked ? '🔒' : '🔓') + '</button></td>';
     html += '<td>' + escHtml(m.name) + (isLocked ? ' <span style="color:var(--warn);font-size:0.8em">(locked)</span>' : '') + '</td>';
     html += '<td>' + m.pct + '%</td>';
-    html += '<td>' + (sug ? sug.suggestedPct : '—') + '%</td>';
-    html += '<td>' + (opt ? opt.optimizedPct : '—') + '%</td></tr>';
+    html += '<td>' + (sug ? sug.suggestedPct + '%' : '—') + '</td>';
+    html += '<td>' + renderDelta(m.pct, sug ? sug.suggestedPct : null) + '</td>';
+    html += '<td>' + (opt ? opt.optimizedPct + '%' : '—') + '</td></tr>';
   }
   html += '</tbody></table>';
 
@@ -2525,6 +2551,17 @@ function renderCompatTab() {
       }
     });
   });
+
+  // Inline allocation buttons — wire to the existing applyAllocation()
+  // engine. The three modes are exactly the ones the engine already
+  // supports; a previous version of this card mentioned 'Click Apply' but
+  // had no button, forcing users up to the disconnected sidebar control.
+  const applySug = document.getElementById('compatApplySuggested');
+  const applyOpt = document.getElementById('compatApplyOptimized');
+  const applySmart = document.getElementById('compatApplySmart');
+  if (applySug) applySug.addEventListener('click', () => applyAllocation('suggested'));
+  if (applyOpt) applyOpt.addEventListener('click', () => applyAllocation('optimized'));
+  if (applySmart) applySmart.addEventListener('click', () => applyAllocation('smart'));
 }
 
 // Smart Allocate — chained Suggested → Optimized.
