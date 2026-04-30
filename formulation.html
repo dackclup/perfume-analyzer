@@ -712,6 +712,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
       <button class="tab-btn" data-tab="tab-mood">Mood</button>
       <button class="tab-btn" data-tab="tab-wheel">Wheel</button>
       <button class="tab-btn" data-tab="tab-map">Map</button>
+      <button class="tab-btn" data-tab="tab-gcms">GC-MS</button>
     </div>
 
     <!-- Tab 1: Safety & Compliance (System 5) -->
@@ -783,6 +784,15 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
       <p class="panel-desc">CARTO-inspired 2D projection — aromatic materials positioned by olfactive similarity. Formulation materials highlighted.</p>
       <div id="mapContent">
         <div class="empty-state"><p>2D odor space visualization</p></div>
+      </div>
+    </div>
+
+    <!-- Tab 9: Predicted GC-MS -->
+    <div class="tab-panel" id="tab-gcms">
+      <h3>Predicted GC-MS</h3>
+      <p class="panel-desc">Predicted chromatogram from boiling point. Standard method (DB-5, 50&rarr;280&deg;C @ 5&deg;C/min). Peak metadata pulled from the curated DB &mdash; no fragmentation simulation. Naturals show as a single peak at their bulk BP.</p>
+      <div id="gcmsContent">
+        <div class="empty-state"><p>Add materials to see predicted GC-MS trace</p></div>
       </div>
     </div>
   </div>
@@ -919,10 +929,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v214"></script>
-<script src="perfumery_data.js?v=2026-04-29-v214"></script>
-<script src="formulation_data.js?v=2026-04-29-v214"></script>
-<script src="formulation_engine.js?v=2026-04-29-v214"></script>
+<script src="taxonomy.js?v=2026-04-29-v215"></script>
+<script src="perfumery_data.js?v=2026-04-29-v215"></script>
+<script src="formulation_data.js?v=2026-04-29-v215"></script>
+<script src="formulation_engine.js?v=2026-04-29-v215"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -976,6 +986,9 @@ const LANG_FORM = {
     // C2: Analysis content i18n
     tabWheel: 'Wheel',
     tabMap: 'Map',
+    tabGCMS: 'GC-MS',
+    gcmsTitle: 'Predicted GC-MS',
+    gcmsDesc: 'Predicted chromatogram from boiling point. Standard method (DB-5, 50→280°C @ 5°C/min). Peak metadata pulled from the curated DB — no fragmentation simulation. Naturals show as a single peak at their bulk BP.',
     overallStatus: 'Overall Status',
     compliant: 'Compliant',
     banned: 'BANNED Material',
@@ -1047,6 +1060,9 @@ const LANG_FORM = {
     searchPlaceholder: '\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E15\u0E32\u0E21\u0E0A\u0E37\u0E48\u0E2D\u0E2B\u0E23\u0E37\u0E2D CAS...',
     tabWheel: '\u0E27\u0E07\u0E25\u0E49\u0E2D\u0E01\u0E25\u0E34\u0E48\u0E19',
     tabMap: '\u0E41\u0E1C\u0E19\u0E17\u0E35\u0E48',
+    tabGCMS: 'GC-MS',
+    gcmsTitle: '\u0E1C\u0E25\u0E17\u0E33\u0E19\u0E32\u0E22 GC-MS',
+    gcmsDesc: '\u0E17\u0E33\u0E19\u0E32\u0E22\u0E42\u0E04\u0E23\u0E21\u0E32\u0E42\u0E17\u0E01\u0E23\u0E21\u0E08\u0E32\u0E01\u0E08\u0E38\u0E14\u0E40\u0E14\u0E37\u0E2D\u0E14 \u0E27\u0E34\u0E18\u0E35\u0E21\u0E32\u0E15\u0E23\u0E10\u0E32\u0E19 (DB-5, 50\u2192280\u00B0C @ 5\u00B0C/min) \u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25 peak \u0E14\u0E36\u0E07\u0E08\u0E32\u0E01 DB \u0E15\u0E23\u0E07 \u0E46 \u0E44\u0E21\u0E48\u0E08\u0E33\u0E25\u0E2D\u0E07 fragmentation \u2014 \u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E18\u0E23\u0E23\u0E21\u0E0A\u0E32\u0E15\u0E34\u0E41\u0E2A\u0E14\u0E07\u0E40\u0E1B\u0E47\u0E19 peak \u0E40\u0E14\u0E35\u0E48\u0E22\u0E27 \u0E15\u0E32\u0E21 BP \u0E23\u0E27\u0E21',
     overallStatus: '\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E23\u0E27\u0E21',
     compliant: '\u0E1C\u0E48\u0E32\u0E19',
     banned: '\u0E2A\u0E32\u0E23\u0E15\u0E49\u0E2D\u0E07\u0E2B\u0E49\u0E32\u0E21',
@@ -1109,7 +1125,7 @@ function applyLangForm() {
   document.getElementById('btnImport').textContent = t.importBtn;
   // Tabs
   const tabs = document.querySelectorAll('.tab-btn');
-  const tabKeys = ['tabSafety','tabCompat','tabThermo','tabOdor','tabStability','tabMood','tabWheel','tabMap'];
+  const tabKeys = ['tabSafety','tabCompat','tabThermo','tabOdor','tabStability','tabMood','tabWheel','tabMap','tabGCMS'];
   tabs.forEach((tab, i) => { if (tabKeys[i]) tab.textContent = t[tabKeys[i]]; });
   // Tab panels
   const panels = [
@@ -1119,6 +1135,7 @@ function applyLangForm() {
     {id:'tab-odor', title:'odorTitle', desc:'odorDesc'},
     {id:'tab-stability', title:'stabilityTitle', desc:'stabilityDesc'},
     {id:'tab-mood', title:'moodTitle', desc:'moodDesc'},
+    {id:'tab-gcms', title:'gcmsTitle', desc:'gcmsDesc'},
   ];
   for (const p of panels) {
     const el = document.getElementById(p.id);
@@ -2119,6 +2136,7 @@ function renderActiveTab() {
   if (id === 'tab-mood')      renderMoodTab();
   if (id === 'tab-wheel')     renderWheelTab();
   if (id === 'tab-map')       renderMapTab();
+  if (id === 'tab-gcms')      renderGCMSTab();
 }
 
 // Stub renderers for tabs not yet implemented
@@ -2861,6 +2879,261 @@ function renderThermoTab() {
     },
   });
 }
+
+// ===== Tab 9: Predicted GC-MS =====
+// RT proxy from boiling point on a hypothetical DB-5 column ramped 5°C/min
+// from 50°C. Not a real Kovats RI — only useful for design intuition. Naturals
+// (Lavender Oil, Bergamot, etc.) come through as a single peak at their bulk
+// BP because the curated DB does not store structured component breakdowns.
+let _gcmsChart = null;
+let _gcmsSelectedCas = null;
+const GCMS_RT_MIN = 0;
+const GCMS_RT_MAX = 50;
+const GCMS_STEP = 0.1;
+const GCMS_COELUTE_THRESH = 0.3; // min — any closer pair is flagged
+
+function gcmsPredictRT(bp, mw, noteTier) {
+  // Primary path: linear program from 50°C, 5°C/min ramp, +1 min void.
+  if (bp != null && isFinite(bp)) {
+    const rt = (bp - 50) / 5 + 1;
+    return Math.min(GCMS_RT_MAX, Math.max(1, rt));
+  }
+  // Fallback: estimate from MW + leading note tier when BP is missing.
+  if (mw != null && isFinite(mw)) {
+    if (noteTier === 'top')  return Math.min(GCMS_RT_MAX, Math.max(1, 5  + (mw - 100) * 0.05));
+    if (noteTier === 'mid')  return Math.min(GCMS_RT_MAX, Math.max(1, 20 + (mw - 150) * 0.05));
+    if (noteTier === 'base') return Math.min(GCMS_RT_MAX, Math.max(1, 35 + (mw - 200) * 0.05));
+    return Math.min(GCMS_RT_MAX, Math.max(1, 15 + (mw - 150) * 0.05));
+  }
+  return null;
+}
+
+function gcmsPeakSigma(rt) {
+  // Peaks broaden with RT on a temperature-programmed column. Picked to give
+  // a baseline width ~0.1 min at the front and ~0.3 min at the tail.
+  return 0.05 + 0.005 * rt;
+}
+
+function gcmsBuildPeaks(mats) {
+  const peaks = [];
+  for (const m of mats) {
+    const d = m.data || {};
+    const dbEntry = DB[m.cas] || {};
+    const tier = classifyNote(d.note || dbEntry.note || '');
+    const bp = (d.boiling_point != null) ? d.boiling_point : (dbEntry.boiling_point || null);
+    const mw = d.molecular_weight || parseFloat(dbEntry.weight) || null;
+    const rt = gcmsPredictRT(bp, mw, tier);
+    peaks.push({
+      cas: m.cas,
+      name: m.name,
+      pct: m.pct,
+      tier: tier,
+      note: d.note || dbEntry.note || '',
+      bp: bp,
+      mw: mw,
+      formula: dbEntry.formula || '',
+      smiles: d.smiles || dbEntry.smiles || '',
+      density: d.density || null,
+      xlogp: d.xlogp || null,
+      odor: d.odor_description || dbEntry.odor?.description || '',
+      rt: rt,
+      // Area proxy: pct × MW (rough FID response). Solvents w/o MW use pct.
+      area: rt != null ? (m.pct * (mw || 50)) : 0,
+      hasData: rt != null,
+    });
+  }
+  // Normalize area to %
+  const totalArea = peaks.reduce((s, p) => s + p.area, 0) || 1;
+  for (const p of peaks) p.areaPct = (p.area / totalArea) * 100;
+  return peaks;
+}
+
+function gcmsDetectCoelutions(peaks) {
+  const coel = {};
+  for (let i = 0; i < peaks.length; i++) {
+    if (!peaks[i].hasData) continue;
+    for (let j = i + 1; j < peaks.length; j++) {
+      if (!peaks[j].hasData) continue;
+      if (Math.abs(peaks[i].rt - peaks[j].rt) < GCMS_COELUTE_THRESH) {
+        (coel[peaks[i].cas] = coel[peaks[i].cas] || []).push(peaks[j].name);
+        (coel[peaks[j].cas] = coel[peaks[j].cas] || []).push(peaks[i].name);
+      }
+    }
+  }
+  return coel;
+}
+
+function gcmsBuildTrace(peaks) {
+  const xs = [];
+  for (let t = GCMS_RT_MIN; t <= GCMS_RT_MAX + 1e-9; t += GCMS_STEP) xs.push(+t.toFixed(2));
+  const total = new Array(xs.length).fill(0);
+  const perPeak = peaks.map(p => {
+    if (!p.hasData) return null;
+    const sigma = gcmsPeakSigma(p.rt);
+    const A = Math.max(p.area, 0.0001);
+    const ys = xs.map(x => {
+      const d = (x - p.rt) / sigma;
+      return A * Math.exp(-0.5 * d * d);
+    });
+    for (let k = 0; k < ys.length; k++) total[k] += ys[k];
+    return ys;
+  });
+  return { xs, total, perPeak };
+}
+
+function renderGCMSTab() {
+  const el = document.getElementById('gcmsContent');
+  const mats = formulation.materials;
+  if (!mats.length) {
+    if (_gcmsChart) { _gcmsChart.destroy(); _gcmsChart = null; }
+    _gcmsSelectedCas = null;
+    el.innerHTML = '<div class="empty-state"><p>Add materials to see predicted GC-MS trace</p></div>';
+    return;
+  }
+
+  const peaks = gcmsBuildPeaks(mats);
+  const coel = gcmsDetectCoelutions(peaks);
+  const sortedPeaks = peaks.slice().sort((a, b) => {
+    if (!a.hasData && !b.hasData) return 0;
+    if (!a.hasData) return 1;
+    if (!b.hasData) return -1;
+    return a.rt - b.rt;
+  });
+
+  let html = '';
+
+  // Chromatogram
+  html += '<div class="analysis-card"><h4>Predicted Chromatogram</h4>';
+  html += '<p class="panel-desc" style="margin-bottom:8px">Method: DB-5 30m × 0.25mm, He carrier, 50→280°C @ 5°C/min. RT estimated from boiling point.</p>';
+  html += '<div class="chart-wrap wide"><canvas id="gcmsChart"></canvas></div></div>';
+
+  // Peak list
+  const validCount = peaks.filter(p => p.hasData).length;
+  const skipCount = peaks.length - validCount;
+  html += '<div class="analysis-card"><h4>Peaks (n=' + validCount + ')</h4>';
+  if (skipCount > 0) {
+    html += '<p class="panel-desc">' + skipCount + ' material' + (skipCount === 1 ? '' : 's') + ' missing BP/MW data — listed at the end without a predicted peak.</p>';
+  } else {
+    html += '<p class="panel-desc">Click a row to highlight its peak and view MS metadata.</p>';
+  }
+  html += '<table class="data-table"><thead><tr><th>#</th><th>RT (min)</th><th>Material</th><th>Note</th><th>MW</th><th>Formula</th><th>Area %</th><th></th></tr></thead><tbody>';
+  let idx = 0;
+  for (const p of sortedPeaks) {
+    idx++;
+    const isSel = (p.cas === _gcmsSelectedCas);
+    const tierBadge = p.tier ? '<span style="font-size:0.7em;padding:1px 5px;background:var(--bg2);border-radius:4px;color:var(--text2);text-transform:uppercase">' + p.tier + '</span>' : '';
+    const coelChip = coel[p.cas] ? ' <span style="font-size:0.7em;padding:1px 5px;background:#f59e0b22;color:#b45309;border-radius:4px" title="Co-elutes with ' + escHtml(coel[p.cas].join(', ')) + '">co-elutes</span>' : '';
+    const noDataChip = !p.hasData ? ' <span style="font-size:0.7em;padding:1px 5px;background:#ef444422;color:#b91c1c;border-radius:4px">no BP data</span>' : '';
+    const rowStyle = isSel ? 'background:var(--bg2);font-weight:600' : 'cursor:pointer';
+    html += '<tr data-gcms-cas="' + escHtml(p.cas) + '" style="' + rowStyle + '">';
+    html += '<td>' + idx + '</td>';
+    html += '<td>' + (p.hasData ? p.rt.toFixed(1) : '—') + '</td>';
+    html += '<td>' + escHtml(p.name) + coelChip + noDataChip + '</td>';
+    html += '<td>' + tierBadge + '</td>';
+    html += '<td>' + (p.mw ? p.mw.toFixed(2) : '—') + '</td>';
+    html += '<td style="font-family:monospace;font-size:0.85em">' + escHtml(p.formula || '—') + '</td>';
+    html += '<td>' + (p.hasData ? p.areaPct.toFixed(1) : '—') + '</td>';
+    html += '<td style="color:var(--text2)">' + (p.hasData ? '▸' : '') + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+
+  // MS panel
+  if (_gcmsSelectedCas) {
+    const sel = peaks.find(p => p.cas === _gcmsSelectedCas);
+    if (sel) {
+      html += '<div class="analysis-card"><h4>MS &mdash; ' + escHtml(sel.name) + '</h4>';
+      html += '<table class="data-table" style="font-size:0.85em"><tbody>';
+      const rows = [
+        ['CAS', sel.cas],
+        ['Formula', sel.formula || '—'],
+        ['MW (g/mol)', sel.mw ? sel.mw.toFixed(2) : '—'],
+        ['Boiling point (°C)', sel.bp != null ? sel.bp : '—'],
+        ['Density (g/cm³)', sel.density != null ? sel.density : '—'],
+        ['logP', sel.xlogp != null ? sel.xlogp : '—'],
+        ['SMILES', sel.smiles || '—'],
+        ['Note', sel.note || '—'],
+        ['Predicted RT (min)', sel.hasData ? sel.rt.toFixed(2) : '—'],
+        ['Predicted peak width σ (min)', sel.hasData ? gcmsPeakSigma(sel.rt).toFixed(3) : '—'],
+        ['Area %', sel.hasData ? sel.areaPct.toFixed(2) : '—'],
+        ['Odor', sel.odor || '—'],
+      ];
+      for (const [k, v] of rows) {
+        html += '<tr><td style="color:var(--text2);width:30%">' + k + '</td><td style="font-family:monospace;font-size:0.95em">' + escHtml(String(v)) + '</td></tr>';
+      }
+      html += '</tbody></table></div>';
+    }
+  }
+
+  el.innerHTML = html;
+
+  // Wire up row clicks
+  el.querySelectorAll('tr[data-gcms-cas]').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const cas = tr.getAttribute('data-gcms-cas');
+      _gcmsSelectedCas = (_gcmsSelectedCas === cas) ? null : cas;
+      renderGCMSTab();
+    });
+  });
+
+  // Render Chart.js trace
+  const canvas = document.getElementById('gcmsChart');
+  if (!canvas) return;
+  if (_gcmsChart) _gcmsChart.destroy();
+
+  const trace = gcmsBuildTrace(peaks);
+  const noteColors = { top: '#eab308', mid: '#3b82f6', base: '#8b5cf6' };
+  const datasets = [];
+
+  // Per-peak filled curves (low opacity)
+  peaks.forEach((p, i) => {
+    if (!p.hasData) return;
+    const isSel = (p.cas === _gcmsSelectedCas);
+    const color = noteColors[p.tier] || '#94a3b8';
+    datasets.push({
+      label: p.name,
+      data: trace.perPeak[i],
+      borderColor: color,
+      backgroundColor: color + (isSel ? '66' : '22'),
+      borderWidth: isSel ? 2.5 : 1,
+      fill: true,
+      tension: 0.3,
+      pointRadius: 0,
+    });
+  });
+
+  // Total trace (foreground line, no fill)
+  datasets.push({
+    label: 'Total',
+    data: trace.total,
+    borderColor: 'var(--text)',
+    borderWidth: 1.5,
+    fill: false,
+    tension: 0.2,
+    pointRadius: 0,
+  });
+
+  _gcmsChart = new Chart(canvas, {
+    type: 'line',
+    data: { labels: trace.xs, datasets },
+    options: {
+      responsive: true,
+      animation: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
+        tooltip: { mode: 'nearest', intersect: false },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Retention time (min)' },
+          ticks: { callback: function(v, i) { const x = trace.xs[i]; return (x % 5 === 0) ? x : ''; }, maxRotation: 0 },
+        },
+        y: { title: { display: true, text: 'Intensity (a.u.)' }, beginAtZero: true },
+      },
+    },
+  });
+}
+
 // ===== Tab 4: Odor Profile & Perception (System 2) =====
 let _radarChart = null;
 function renderOdorTab() {
