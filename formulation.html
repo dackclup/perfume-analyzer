@@ -704,41 +704,41 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
   <div class="main">
     <!-- Tab Navigation -->
     <div class="tab-nav">
-      <button class="tab-btn active" data-tab="tab-safety">Safety</button>
-      <button class="tab-btn" data-tab="tab-compat">Compatibility</button>
-      <button class="tab-btn" data-tab="tab-thermo">Evaporation</button>
-      <button class="tab-btn" data-tab="tab-odor">Odor Profile</button>
-      <button class="tab-btn" data-tab="tab-stability">Stability</button>
-      <button class="tab-btn" data-tab="tab-mood">Mood</button>
-      <button class="tab-btn" data-tab="tab-wheel">Wheel</button>
+      <button class="tab-btn active" data-tab="tab-wheel">Wheel</button>
       <button class="tab-btn" data-tab="tab-map">Map</button>
+      <button class="tab-btn" data-tab="tab-compat">Compatibility</button>
+      <button class="tab-btn" data-tab="tab-odor">Odor Profile</button>
+      <button class="tab-btn" data-tab="tab-mood">Mood</button>
+      <button class="tab-btn" data-tab="tab-thermo">Evaporation</button>
       <button class="tab-btn" data-tab="tab-gcms">GC-MS</button>
+      <button class="tab-btn" data-tab="tab-stability">Stability</button>
+      <button class="tab-btn" data-tab="tab-safety">Safety</button>
     </div>
 
-    <!-- Tab 1: Safety & Compliance (System 5) -->
-    <div class="tab-panel active" id="tab-safety">
-      <h3>IFRA Safety &amp; Compliance</h3>
-      <p class="panel-desc">MAC enforcement, allergen aggregation, and INCI label generation per IFRA 51st Amendment.</p>
-      <div id="safetyContent">
-        <div class="empty-state"><p>Add materials to see safety analysis</p></div>
+    <!-- Tab 1: Fragrance Wheel (B3) -->
+    <div class="tab-panel active" id="tab-wheel">
+      <h3>Fragrance Wheel</h3>
+      <p class="panel-desc">Michael Edwards classification — click a segment to filter materials by olfactive family.</p>
+      <div id="wheelContent">
+        <div class="empty-state"><p>Visual fragrance classification wheel</p></div>
       </div>
     </div>
 
-    <!-- Tab 2: Compatibility & Allocation (System 3) -->
+    <!-- Tab 2: Odor Map (C1) -->
+    <div class="tab-panel" id="tab-map">
+      <h3>Odor Map</h3>
+      <p class="panel-desc">CARTO-inspired 2D projection — aromatic materials positioned by olfactive similarity. Formulation materials highlighted.</p>
+      <div id="mapContent">
+        <div class="empty-state"><p>2D odor space visualization</p></div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Compatibility & Allocation (System 3) -->
     <div class="tab-panel" id="tab-compat">
       <h3>Compatibility &amp; Allocation</h3>
       <p class="panel-desc">Graph-based harmony analysis, material suggestions via DFS, and Dirichlet percentage allocation.</p>
       <div id="compatContent">
         <div class="empty-state"><p>Add materials to see compatibility analysis</p></div>
-      </div>
-    </div>
-
-    <!-- Tab 3: Evaporation & Thermodynamics (System 1) -->
-    <div class="tab-panel" id="tab-thermo">
-      <h3>Evaporation &amp; Thermodynamics</h3>
-      <p class="panel-desc">Antoine / Clausius-Clapeyron vapor pressure, Raoult's law, and Potts-Guy skin absorption model.</p>
-      <div id="thermoContent">
-        <div class="empty-state"><p>Add materials to see evaporation analysis</p></div>
       </div>
     </div>
 
@@ -751,16 +751,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
       </div>
     </div>
 
-    <!-- Tab 5: Stability & Maturation (System 4) -->
-    <div class="tab-panel" id="tab-stability">
-      <h3>Stability &amp; Maturation</h3>
-      <p class="panel-desc">Functional group detection from SMILES, reactive pair warnings, and substitution recommendations.</p>
-      <div id="stabilityContent">
-        <div class="empty-state"><p>Add materials to see stability analysis</p></div>
-      </div>
-    </div>
-
-    <!-- Tab 6: Mood & Aromachology (System 6) -->
+    <!-- Tab 5: Mood & Aromachology (System 6) -->
     <div class="tab-panel" id="tab-mood">
       <h3>Mood &amp; Aromachology</h3>
       <p class="panel-desc">Physiological mood scoring, 8-axis mood radar, and material suggestions by target mood.</p>
@@ -769,30 +760,39 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
       </div>
     </div>
 
-    <!-- Tab 7: Fragrance Wheel (B3) -->
-    <div class="tab-panel" id="tab-wheel">
-      <h3>Fragrance Wheel</h3>
-      <p class="panel-desc">Michael Edwards classification — click a segment to filter materials by olfactive family.</p>
-      <div id="wheelContent">
-        <div class="empty-state"><p>Visual fragrance classification wheel</p></div>
+    <!-- Tab 6: Evaporation & Thermodynamics (System 1) -->
+    <div class="tab-panel" id="tab-thermo">
+      <h3>Evaporation &amp; Thermodynamics</h3>
+      <p class="panel-desc">Antoine / Clausius-Clapeyron vapor pressure, Raoult's law, and Potts-Guy skin absorption model.</p>
+      <div id="thermoContent">
+        <div class="empty-state"><p>Add materials to see evaporation analysis</p></div>
       </div>
     </div>
 
-    <!-- Tab 8: Odor Map (C1) -->
-    <div class="tab-panel" id="tab-map">
-      <h3>Odor Map</h3>
-      <p class="panel-desc">CARTO-inspired 2D projection — aromatic materials positioned by olfactive similarity. Formulation materials highlighted.</p>
-      <div id="mapContent">
-        <div class="empty-state"><p>2D odor space visualization</p></div>
-      </div>
-    </div>
-
-    <!-- Tab 9: Predicted GC-MS -->
+    <!-- Tab 7: Predicted GC-MS -->
     <div class="tab-panel" id="tab-gcms">
       <h3>Predicted GC-MS</h3>
       <p class="panel-desc">Predicted chromatogram from boiling point. Standard method (DB-5, 50&rarr;280&deg;C @ 5&deg;C/min). Peak metadata pulled from the curated DB &mdash; no fragmentation simulation. Naturals show as a single peak at their bulk BP.</p>
       <div id="gcmsContent">
         <div class="empty-state"><p>Add materials to see predicted GC-MS trace</p></div>
+      </div>
+    </div>
+
+    <!-- Tab 8: Stability & Maturation (System 4) -->
+    <div class="tab-panel" id="tab-stability">
+      <h3>Stability &amp; Maturation</h3>
+      <p class="panel-desc">Functional group detection from SMILES, reactive pair warnings, and substitution recommendations.</p>
+      <div id="stabilityContent">
+        <div class="empty-state"><p>Add materials to see stability analysis</p></div>
+      </div>
+    </div>
+
+    <!-- Tab 9: Safety & Compliance (System 5) -->
+    <div class="tab-panel" id="tab-safety">
+      <h3>IFRA Safety &amp; Compliance</h3>
+      <p class="panel-desc">MAC enforcement, allergen aggregation, and INCI label generation per IFRA 51st Amendment.</p>
+      <div id="safetyContent">
+        <div class="empty-state"><p>Add materials to see safety analysis</p></div>
       </div>
     </div>
   </div>
@@ -929,10 +929,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v215"></script>
-<script src="perfumery_data.js?v=2026-04-29-v215"></script>
-<script src="formulation_data.js?v=2026-04-29-v215"></script>
-<script src="formulation_engine.js?v=2026-04-29-v215"></script>
+<script src="taxonomy.js?v=2026-04-29-v216"></script>
+<script src="perfumery_data.js?v=2026-04-29-v216"></script>
+<script src="formulation_data.js?v=2026-04-29-v216"></script>
+<script src="formulation_engine.js?v=2026-04-29-v216"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1125,17 +1125,18 @@ function applyLangForm() {
   document.getElementById('btnImport').textContent = t.importBtn;
   // Tabs
   const tabs = document.querySelectorAll('.tab-btn');
-  const tabKeys = ['tabSafety','tabCompat','tabThermo','tabOdor','tabStability','tabMood','tabWheel','tabMap','tabGCMS'];
+  const tabKeys = ['tabWheel','tabMap','tabCompat','tabOdor','tabMood','tabThermo','tabGCMS','tabStability','tabSafety'];
   tabs.forEach((tab, i) => { if (tabKeys[i]) tab.textContent = t[tabKeys[i]]; });
-  // Tab panels
+  // Tab panels (order matches tab-nav buttons; affects nothing functional —
+  // each entry just localises h3/.panel-desc text)
   const panels = [
-    {id:'tab-safety', title:'safetyTitle', desc:'safetyDesc'},
     {id:'tab-compat', title:'compatTitle', desc:'compatDesc'},
     {id:'tab-thermo', title:'thermoTitle', desc:'thermoDesc'},
     {id:'tab-odor', title:'odorTitle', desc:'odorDesc'},
     {id:'tab-stability', title:'stabilityTitle', desc:'stabilityDesc'},
     {id:'tab-mood', title:'moodTitle', desc:'moodDesc'},
     {id:'tab-gcms', title:'gcmsTitle', desc:'gcmsDesc'},
+    {id:'tab-safety', title:'safetyTitle', desc:'safetyDesc'},
   ];
   for (const p of panels) {
     const el = document.getElementById(p.id);
