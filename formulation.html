@@ -929,10 +929,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v217"></script>
-<script src="perfumery_data.js?v=2026-04-29-v217"></script>
-<script src="formulation_data.js?v=2026-04-29-v217"></script>
-<script src="formulation_engine.js?v=2026-04-29-v217"></script>
+<script src="taxonomy.js?v=2026-04-29-v218"></script>
+<script src="perfumery_data.js?v=2026-04-29-v218"></script>
+<script src="formulation_data.js?v=2026-04-29-v218"></script>
+<script src="formulation_engine.js?v=2026-04-29-v218"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -3467,19 +3467,46 @@ function renderSafetyTab() {
   html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">' + chips.join('') + '</div>';
   html += '</div></div></div>';
 
-  // IFRA Compliance table
+  // IFRA Compliance table — sorted by severity (banned > danger > warn > ok)
+  // so problems are at the top regardless of material insertion order.
+  // % Conc. column dropped (redundant with % in Product, which is conc × fragPct).
+  // Margin column replaced with a visual Headroom bar showing fill of IFRA cap.
+  const severityRank = { banned: 0, danger: 1, warn: 2, ok: 3 };
+  const sortedCompliance = compliance.slice().sort((a, b) => (severityRank[a.status] ?? 99) - (severityRank[b.status] ?? 99));
   html += '<div class="analysis-card" id="safety-ifra"><h4>IFRA Compliance — ' + IFRA_CATEGORIES[catId].name + ' (' + fragPct + '% in product)</h4>';
-  html += '<table class="data-table"><thead><tr><th>Material</th><th>% Conc.</th><th>% Product</th><th>IFRA Max</th><th>Margin</th><th>Status</th></tr></thead><tbody>';
-  for (const r of compliance) {
+  html += '<p class="panel-desc">Each material checked against the IFRA 51 cap for the active category. Sorted by severity.</p>';
+  html += '<table class="data-table"><thead><tr><th>Material</th><th>% in Product</th><th>IFRA Max</th><th>Headroom</th><th>Status</th></tr></thead><tbody>';
+  for (const r of sortedCompliance) {
     const cls = r.status === 'ok' ? 'badge-ok' : r.status === 'warn' ? 'badge-warn' : 'badge-danger';
+    const icon = r.status === 'ok' ? '✓' : r.status === 'warn' ? '⚠' : '✗';
     const statusTxt = r.banStatus === 'banned' ? 'BANNED' : r.status === 'danger' ? 'OVER' : r.status === 'warn' ? 'Caution' : 'OK';
+    // Build headroom cell: banned = "prohibited", missing cap = "no cap",
+    // 0% cat cap = "0% cat" (not permitted in this category), else visual bar.
+    let headroomCell;
+    if (r.banStatus === 'banned') {
+      headroomCell = '<span style="color:var(--danger);font-weight:500">prohibited</span>';
+    } else if (r.ifraMax == null) {
+      headroomCell = '<span style="color:var(--text2)">no cap</span>';
+    } else if (r.ifraMax === 0) {
+      headroomCell = '<span style="color:var(--danger);font-weight:500">0% in cat</span>';
+    } else {
+      const fillPct = (r.pctInProduct / r.ifraMax) * 100;
+      const barWidth = Math.min(100, Math.max(0, fillPct));
+      const barColor = fillPct >= 100 ? 'var(--danger)' : fillPct >= 80 ? 'var(--warn)' : 'var(--success)';
+      headroomCell = '<div style="display:flex;align-items:center;gap:6px" title="' + fillPct.toFixed(0) + '% of IFRA cap used">'
+                   +   '<div style="flex:1;min-width:50px;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden">'
+                   +     '<div style="width:' + barWidth.toFixed(0) + '%;height:100%;background:' + barColor + '"></div>'
+                   +   '</div>'
+                   +   '<span style="font-size:0.78em;color:var(--text2);white-space:nowrap">' + fillPct.toFixed(0) + '%</span>'
+                   + '</div>';
+    }
+    const sourceLine = r.ifraSource ? '<div style="font-size:0.72em;color:var(--text2);margin-top:2px">' + escHtml(r.ifraSource) + '</div>' : '';
     html += '<tr>';
-    html += '<td>' + escHtml(r.name) + '</td>';
-    html += '<td>' + r.pctInConcentrate + '%</td>';
+    html += '<td>' + escHtml(r.name) + sourceLine + '</td>';
     html += '<td>' + r.pctInProduct + '%</td>';
     html += '<td>' + (r.ifraMax != null ? r.ifraMax + '%' : '—') + '</td>';
-    html += '<td>' + (r.margin != null ? r.margin + '%' : '—') + '</td>';
-    html += '<td><span class="badge ' + cls + '">' + statusTxt + '</span></td>';
+    html += '<td>' + headroomCell + '</td>';
+    html += '<td><span class="badge ' + cls + '">' + icon + ' ' + statusTxt + '</span></td>';
     html += '</tr>';
   }
   html += '</tbody></table></div>';
