@@ -1010,10 +1010,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v277"></script>
-<script src="perfumery_data.js?v=2026-04-29-v277"></script>
-<script src="formulation_data.js?v=2026-04-29-v277"></script>
-<script src="formulation_engine.js?v=2026-04-29-v277"></script>
+<script src="taxonomy.js?v=2026-04-29-v278"></script>
+<script src="perfumery_data.js?v=2026-04-29-v278"></script>
+<script src="formulation_data.js?v=2026-04-29-v278"></script>
+<script src="formulation_engine.js?v=2026-04-29-v278"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1354,7 +1354,25 @@ function validateMaterialPct(val) {
   const v = parseFloat(val);
   if (isNaN(v) || v < 0) return 0;
   if (v > 100) return 100;
-  return Math.round(v * 100) / 100;
+  // 4-decimal precision so 0.0001 % (1 ppm) inputs round-trip cleanly
+  // and trace-quantity formulas (vanillin / ionones at 0.05–0.15 %)
+  // keep their typed value instead of being rounded to the nearest
+  // 0.01 %. The previous 2-dp ceiling was visible on the materials
+  // list — typing 0.155 reverted to 0.16 on commit.
+  return Math.round(v * 10000) / 10000;
+}
+
+// Format a stored pct value for display in editable input fields. Strips
+// trailing zeros so 0.1500 reads as '0.15' (not '0.1500'), but keeps
+// significant digits for traces (0.0001 stays '0.0001'). Used by both
+// the materials list and the carrier list so the input always shows
+// the user's typed value when they type something at the limit of
+// validateMaterialPct's precision.
+function _formatPctDisplay(v) {
+  if (v == null || isNaN(v)) return '0';
+  // Use up to 4dp then trim trailing zeros + the now-orphan dot.
+  const s = (Math.round(v * 10000) / 10000).toFixed(4);
+  return s.replace(/\.?0+$/, '');
 }
 
 // ===== Formulation State =====
@@ -1528,11 +1546,16 @@ const formulation = {
       existingWarn.remove();
     }
   },
-  // Update total percentage display without full re-render
+  // Update total percentage display without full re-render. Task 3:
+  // the gram calculation now uses rawPct (unrounded sum) instead of the
+  // 2-dp rounded display value, so a 99.997 % formula doesn't show as
+  // '100.00 % / 18.00 g used' — it shows the actual derived weight.
+  // Display itself still rounds to 2 dp for legibility.
   _updateTotalDisplay() {
     if (!this.materials.length) return;
     const rawPct = this.totalPct();
-    const pct = isNaN(rawPct) ? 0 : Math.round(rawPct * 100) / 100;
+    const safeRaw = isNaN(rawPct) ? 0 : rawPct;
+    const pctDisplay = Math.round(safeRaw * 100) / 100;
     const pctEl = document.getElementById('matTotalPct');
     const batchSize = validateBatchSize(document.getElementById('batchSize').value);
     const batchUnit = document.getElementById('batchUnit').value;
@@ -1542,14 +1565,16 @@ const formulation = {
     const fragVal = batchUnit === 'ml' ? fragGrams / 0.9 : fragGrams;
     const fragUnit = batchUnit === 'ml' ? 'ml' : 'g';
     const fragDisplay = fmtAmt(fragVal) + fragUnit;
-    const actualVal = fragVal * (pct / 100);
+    // Use the raw 4-dp pct sum for the gram conversion so the displayed
+    // weight is exact even when the rendered percent is rounded.
+    const actualVal = fragVal * (safeRaw / 100);
     const actualDisplay = fmtAmt(actualVal) + fragUnit;
-    if (pct > 100) {
-      pctEl.textContent = pct + '% (over!) / ' + actualDisplay + ' used, ' + fragDisplay + ' target';
+    if (pctDisplay > 100) {
+      pctEl.textContent = pctDisplay + '% (over!) / ' + actualDisplay + ' used, ' + fragDisplay + ' target';
     } else {
-      pctEl.textContent = pct + '% / ' + fragDisplay + ' Fragrance in Product';
+      pctEl.textContent = pctDisplay + '% / ' + fragDisplay + ' Fragrance in Product';
     }
-    pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
+    pctEl.className = 'pct-val ' + (pctDisplay > 100 ? 'over' : pctDisplay < 100 ? 'under' : 'ok');
     document.getElementById('matTotal').style.display = 'flex';
 
     // Trigger carrier update (budget depends on dilution)
@@ -1695,7 +1720,13 @@ function renderMaterialList() {
     html += `<span class="mat-name" title="${safeName}">${safeName}${isMatLocked ? ' <span style="color:var(--warn,var(--warn));font-size:0.75em;font-weight:500">(locked)</span>' : ''}</span>`;
     html += warnHtml;
     html += `<span class="mat-grams">${amtStr}${unit}</span>`;
-    html += `<input type="number" class="mat-pct" value="${m.pct}" min="0" max="100" step="0.01"
+    // step="any" lifts the browser's spinner-step constraint, so
+    // arbitrary decimals (0.0001 %) round-trip without being snapped
+    // to 0.01 increments. validateMaterialPct still caps precision at
+    // 4dp internally to keep storage clean.
+    // _formatPctDisplay strips trailing zeros so '0.15' shows as '0.15'
+    // and '0.1500' doesn't render as a noisy 4-dp string.
+    html += `<input type="number" class="mat-pct" value="${_formatPctDisplay(m.pct)}" min="0" max="100" step="any"
       onchange="formulation.updatePct('${safeCas}',this.value)"
       onblur="if(this.value==='')this.value=0;formulation.updatePct('${safeCas}',this.value)">`;
     html += `<span style="font-size:0.75em;color:var(--text2)">%</span>`;
@@ -1897,7 +1928,10 @@ function renderCarrierList() {
     html += '<div class="mat-item" data-carrier-cas="' + safeCas + '"' + (isCarrierLocked ? ' style="opacity:0.85"' : '') + '>';
     html += '<span class="mat-name" title="' + safeName + '">' + safeName + (isCarrierLocked ? ' <span style="color:var(--warn,var(--warn));font-size:0.75em;font-weight:500">(locked)</span>' : '') + '</span>';
     html += '<span class="mat-grams">' + amtStr + unit + dilNote + '</span>';
-    html += '<input type="number" class="mat-pct" value="' + m.pct + '" min="0" max="100" step="1"' + (isCarrierLocked ? ' disabled' : '') + ' onchange="updateCarrierPct(\'' + safeCas + '\',this.value)" onblur="if(this.value===\'\'){this.value=0;updateCarrierPct(\'' + safeCas + '\',0);}">';
+    // step="any" — same precision policy as the materials list so a
+    // user splitting carriers 33.3333 / 33.3333 / 33.3334 doesn't get
+    // their entries snapped to integer increments.
+    html += '<input type="number" class="mat-pct" value="' + _formatPctDisplay(m.pct) + '" min="0" max="100" step="any"' + (isCarrierLocked ? ' disabled' : '') + ' onchange="updateCarrierPct(\'' + safeCas + '\',this.value)" onblur="if(this.value===\'\'){this.value=0;updateCarrierPct(\'' + safeCas + '\',0);}">';
     html += '<span style="font-size:0.75em;color:var(--text2)">%</span>';
     html += '<button class="mat-del" onclick="removeCarrierMaterial(\'' + safeCas + '\')" title="Remove">&times;</button>';
     html += '</div>';
@@ -2178,6 +2212,26 @@ function importFromAnalyzer() {
 // memory array; if both throw the catch-all logs the cause and
 // resets the count display so the user isn't lied to.
 (function autoImport() {
+  // Belt-and-suspenders against duplicate hydration on F5:
+  //   1. ts (localStorage) — primary gate. Set by index.html when the
+  //      user clicks 'Formulate →'. Cleared in the finally block below
+  //      whether the import succeeded or threw, so a refresh always
+  //      sees ts=null and skips.
+  //   2. consumed flag (sessionStorage) — survives the same tab session
+  //      but NOT a fresh new-tab open. Catches the edge case where a
+  //      retry / extension write somehow restored ts within the
+  //      30-second window: even with ts present, sessionStorage says
+  //      'this tab already imported' and skips.
+  //   3. 30-second TTL — primary clamp on staleness; legacy materials
+  //      from a previous session don't auto-fire.
+  // The materials key is intentionally NOT removed — the manual
+  // 'Analyzer Import' button reads from it on demand, so clearing
+  // would break the explicit re-pull path. The ts + sessionStorage
+  // pair is sufficient to gate the AUTOMATIC fire.
+  const SESSION_FLAG = 'perfume_formulator_autoimport_done_v1';
+  try {
+    if (sessionStorage.getItem(SESSION_FLAG) === '1') return;
+  } catch (_) { /* sessionStorage may be disabled — fall through to ts gate */ }
   try {
     const raw = localStorage.getItem('perfume_formulation_materials');
     const ts = localStorage.getItem('perfume_formulation_ts');
@@ -2186,24 +2240,35 @@ function importFromAnalyzer() {
     if (Date.now() - parseInt(ts) > 30000) return;
     const items = JSON.parse(raw);
     if (!Array.isArray(items)) return;
+    // Mark the session as 'consumed' BEFORE the import runs so even if
+    // batchUpdate or the per-item addMaterial throws halfway, a F5
+    // within the same tab won't replay the import.
+    try { sessionStorage.setItem(SESSION_FLAG, '1'); } catch (_) {}
     let addedCount = 0;
-    // Wrap in batchUpdate so addMaterial doesn't fire a render per item.
-    // Auto-import already had a per-item try/catch (so a single throw
-    // didn't abort the rest), but per-iteration renders were still
-    // wasteful — and on first paint with the Compatibility tab active
-    // the partial-formula state could still trigger expensive optimizer
-    // work N times.
-    formulation.batchUpdate(() => {
-      for (const item of items) {
-        if (!item || !item.cas) continue;
-        try {
-          if (formulation.addMaterial(item.cas, item.name, 10, item)) addedCount++;
-        } catch (perItemErr) {
-          console.error('[autoImport] addMaterial threw for ' + item.cas + ':', perItemErr);
+    try {
+      // Wrap in batchUpdate so addMaterial doesn't fire a render per item.
+      // Auto-import already had a per-item try/catch (so a single throw
+      // didn't abort the rest), but per-iteration renders were still
+      // wasteful — and on first paint with the Compatibility tab active
+      // the partial-formula state could still trigger expensive optimizer
+      // work N times.
+      formulation.batchUpdate(() => {
+        for (const item of items) {
+          if (!item || !item.cas) continue;
+          try {
+            if (formulation.addMaterial(item.cas, item.name, 10, item)) addedCount++;
+          } catch (perItemErr) {
+            console.error('[autoImport] addMaterial threw for ' + item.cas + ':', perItemErr);
+          }
         }
-      }
-    });
-    localStorage.removeItem('perfume_formulation_ts');
+      });
+    } finally {
+      // Always clear ts — even if batchUpdate threw before the original
+      // single-line removeItem ran. Without this guarantee a thrown
+      // batch could leave ts set and the next F5 would replay the
+      // import despite the sessionStorage flag (different tab session).
+      try { localStorage.removeItem('perfume_formulation_ts'); } catch (_) {}
+    }
     // Belt-and-suspenders: re-render so count + body cannot diverge
     // from formulation.materials (the addMaterial → onChange chain
     // could have thrown halfway and left them in disagreement).
@@ -4465,13 +4530,26 @@ document.querySelectorAll('.preset-chip').forEach(chip => {
   });
 });
 
-// Custom input handler (debounce expensive renders, keep label updates instant)
-const _debouncedFragRender = debounce(() => { renderMaterialList(); renderCarrierList(); renderActiveTab(); }, 200);
+// Custom input handler. Task 3: split the work into IMMEDIATE state
+// updates (cheap — Total and Carrier %s recompute now) and a DEBOUNCED
+// heavy render pass (expensive — 200 ms after last keystroke). The
+// previous setup put renderMaterialList behind the debounce too, which
+// meant the Total line lagged 200 ms behind every fragPct keystroke
+// and the user briefly saw '100% / 18g Fragrance' while typing 25.
+const _debouncedFragRender = debounce(() => { renderMaterialList(); renderActiveTab(); }, 200);
 document.getElementById('fragPctCustom').addEventListener('input', () => {
   let val = parseFloat(document.getElementById('fragPctCustom').value);
   if (!isNaN(val) && val >= 1 && val <= 100) {
     document.getElementById('fragPct').value = val;
     document.getElementById('fragPctOut').textContent = val + '%';
+    // Immediate refresh — sidebar Total line + Solvent/Carrier list
+    // both depend on fragPct for their gram math. Cheap to recompute
+    // (a single sum + a sub-50-row template), so let the user see the
+    // grams update under their finger while they type.
+    try { formulation._updateTotalDisplay(); } catch (_) {}
+    try { renderCarrierList(); } catch (_) {}
+    // Heavy pass (full materials table re-template + active analysis
+    // tab re-render) stays debounced so rapid keystrokes don't churn.
     _debouncedFragRender();
   }
 });
@@ -4496,7 +4574,16 @@ function updatePresetHighlight() {
 }
 
 // ===== Batch & Carrier change triggers =====
-document.getElementById('batchSize').addEventListener('input', debounce(() => { renderMaterialList(); renderCarrierList(); }, 150));
+// Task 3: same split-render pattern as the fragPct input — Total line
+// + Carrier list refresh IMMEDIATELY (gram math is cheap) so the user
+// sees the new weights as they type the batch size, while the heavy
+// materials-table re-template is debounced 150 ms.
+const _debouncedBatchRender = debounce(() => { renderMaterialList(); }, 150);
+document.getElementById('batchSize').addEventListener('input', () => {
+  try { formulation._updateTotalDisplay(); } catch (_) {}
+  try { renderCarrierList(); } catch (_) {}
+  _debouncedBatchRender();
+});
 document.getElementById('batchSize').addEventListener('blur', () => {
   const el = document.getElementById('batchSize');
   el.value = validateBatchSize(el.value);
