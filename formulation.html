@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v253"></script>
-<script src="perfumery_data.js?v=2026-04-29-v253"></script>
-<script src="formulation_data.js?v=2026-04-29-v253"></script>
-<script src="formulation_engine.js?v=2026-04-29-v253"></script>
+<script src="taxonomy.js?v=2026-04-29-v254"></script>
+<script src="perfumery_data.js?v=2026-04-29-v254"></script>
+<script src="formulation_data.js?v=2026-04-29-v254"></script>
+<script src="formulation_engine.js?v=2026-04-29-v254"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2298,7 +2298,21 @@ function renderCompatTab() {
   const catId = document.getElementById('productCategory').value;
   const fragPct = parseInt(document.getElementById('fragPct').value);
 
-  const harmony = computeHarmonyScore(mats, graph);
+  // Defensive shape guard — earlier versions of computeHarmonyScore had a
+  // 1-material early-return that omitted .discords / .triangleBonus etc.
+  // Reading those undefined properties below threw mid-render and left
+  // the DOM showing the previous formula's data (visible bug: delete a
+  // material, Suggested Allocation table still shows the deleted row).
+  // The engine has been fixed but we keep this defaulting in case any
+  // future code path returns a partial shape.
+  const _h = computeHarmonyScore(mats, graph) || {};
+  const harmony = {
+    score: 100, connectedPairs: 0, totalPairs: 0, pairs: [],
+    discords: [], triangleBonus: 0, fullTriangles: 0, totalTriangles: 0,
+    diversityFactor: 1, tierCount: 0, baseScore: null,
+    method: 'multi-factor',
+    ..._h,
+  };
   // Perception-based pyramid (integrates headspace PSI over time windows).
   // Automatically falls back to label-based analyzeNoteBalance when ODT
   // coverage is < 50% of materials.

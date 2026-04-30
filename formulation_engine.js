@@ -617,7 +617,12 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
   const isLegacy = materialsOrCases.length > 0 && typeof materialsOrCases[0] === 'string';
   if (isLegacy) {
     const selectedCASes = materialsOrCases;
-    if (selectedCASes.length < 2) return { score: 100, connectedPairs: 0, totalPairs: 0, pairs: [], method: 'graph-binary' };
+    if (selectedCASes.length < 2) return {
+      score: 100, connectedPairs: 0, totalPairs: 0, pairs: [],
+      discords: [], triangleBonus: 0, fullTriangles: 0, totalTriangles: 0,
+      diversityFactor: 1, tierCount: selectedCASes.length ? 1 : 0, baseScore: 100,
+      method: 'graph-binary',
+    };
     const pairs = [];
     let connectedPairs = 0, totalPairs = 0;
     for (let i = 0; i < selectedCASes.length; i++) {
@@ -637,7 +642,21 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
   // Multi-factor weighted harmony
   const materials = materialsOrCases;
   if (materials.length < 2) {
-    return { score: 100, connectedPairs: 0, totalPairs: 0, pairs: [], method: 'multi-factor' };
+    // Single-material early return must carry the full schema callers
+    // expect, otherwise downstream renderers throw on access (e.g.
+    // renderCompatTab reads harmony.discords.length, harmony.triangleBonus
+    // — undefined for a 1-mat formula crashes the render mid-way and
+    // leaves the previous formula's DOM stale).
+    return {
+      score: 100,
+      connectedPairs: 0, totalPairs: 0,
+      pairs: [],
+      discords: [],
+      triangleBonus: 0, fullTriangles: 0, totalTriangles: 0,
+      diversityFactor: 1, tierCount: materials.length ? 1 : 0,
+      baseScore: 100,
+      method: 'multi-factor',
+    };
   }
 
   // Pre-compute heavy per-material data. In fastMode we skip the radar
