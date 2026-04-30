@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v236"></script>
-<script src="perfumery_data.js?v=2026-04-29-v236"></script>
-<script src="formulation_data.js?v=2026-04-29-v236"></script>
-<script src="formulation_engine.js?v=2026-04-29-v236"></script>
+<script src="taxonomy.js?v=2026-04-29-v237"></script>
+<script src="perfumery_data.js?v=2026-04-29-v237"></script>
+<script src="formulation_data.js?v=2026-04-29-v237"></script>
+<script src="formulation_engine.js?v=2026-04-29-v237"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -5012,6 +5012,15 @@ let _mapFamilyFilter = new Set();
 // name. Empty string = match all. Survives re-renders so the user can edit
 // the formula and the search query stays in place.
 let _mapSearchQuery = '';
+// Whether to render labels next to formulation dots. Default ON for short
+// formulas, OFF when there are many materials so the labels don't pile up
+// into an unreadable stack. The user can flip the toggle either way.
+let _mapShowLabels = true;
+// Threshold above which labels auto-collapse on FIRST render. The user can
+// still flip them back on; we just don't want a 30-material formula to look
+// like an ink blot on the user's first glimpse of the tab.
+const MAP_LABEL_AUTO_HIDE_THRESHOLD = 8;
+let _mapLabelDefaultApplied = false;
 
 function renderMapTab() {
   const el = document.getElementById('mapContent');
@@ -5044,6 +5053,14 @@ function renderMapTab() {
     if (!familyIndex[p.family]) familyIndex[p.family] = { count: 0, color: p.color };
     familyIndex[p.family].count += 1;
     if (p.inFormulation) inFormulaCount += 1;
+  }
+  // First-time label heuristic: hide labels by default if the formula has
+  // grown past the threshold. The user can still toggle them back on.
+  // Re-applies only once per session so a user who deliberately turned
+  // labels back on doesn't get them auto-hidden again on the next render.
+  if (!_mapLabelDefaultApplied) {
+    if (inFormulaCount > MAP_LABEL_AUTO_HIDE_THRESHOLD) _mapShowLabels = false;
+    _mapLabelDefaultApplied = true;
   }
   const familyList = Object.entries(familyIndex)
     .sort((a, b) => b[1].count - a[1].count); // most-populated first
@@ -5088,7 +5105,9 @@ function renderMapTab() {
     const labelOpacity = visible ? 1 : 0.2;
     svg += '<circle class="map-dot map-dot-active" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="7" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" stroke="var(--text)" stroke-width="2" stroke-opacity="' + dotOpacity + '" style="cursor:pointer">';
     svg += '<title>' + escHtml(p.name) + ' — already in your formula</title></circle>';
-    svg += '<text x="' + (sx + 10) + '" y="' + (sy + 4) + '" font-size="9" fill="var(--text)" font-weight="600" fill-opacity="' + labelOpacity + '" style="pointer-events:none">' + escHtml(p.name).slice(0, 15) + '</text>';
+    if (_mapShowLabels) {
+      svg += '<text x="' + (sx + 10) + '" y="' + (sy + 4) + '" font-size="9" fill="var(--text)" font-weight="600" fill-opacity="' + labelOpacity + '" style="pointer-events:none">' + escHtml(p.name).slice(0, 15) + '</text>';
+    }
   }
 
   svg += '</svg>';
@@ -5102,6 +5121,11 @@ function renderMapTab() {
   const visibleCount = points.filter(p => isVisible(p)).length;
   html += '<div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">';
   html += '<input type="search" id="mapSearchInput" placeholder="Search materials by name…" value="' + escHtml(_mapSearchQuery) + '" style="flex:1;min-width:180px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.85em" autocomplete="off">';
+  // Labels toggle — only relevant when there ARE formula dots to label.
+  if (inFormulaCount > 0) {
+    const labelBtnLabel = _mapShowLabels ? 'Hide labels' : 'Show labels (' + inFormulaCount + ')';
+    html += '<button id="mapLabelsToggleBtn" class="btn btn-sm" type="button" aria-pressed="' + _mapShowLabels + '">' + labelBtnLabel + '</button>';
+  }
   if (searchActive || filterActive) {
     html += '<span style="font-size:0.78em;color:var(--text2);white-space:nowrap">' + visibleCount + ' / ' + points.length + ' visible</span>';
   }
@@ -5160,6 +5184,12 @@ function renderMapTab() {
   const clearBtn = document.getElementById('mapClearFilterBtn');
   if (clearBtn) clearBtn.addEventListener('click', () => {
     _mapFamilyFilter.clear();
+    renderMapTab();
+  });
+
+  const labelsBtn = document.getElementById('mapLabelsToggleBtn');
+  if (labelsBtn) labelsBtn.addEventListener('click', () => {
+    _mapShowLabels = !_mapShowLabels;
     renderMapTab();
   });
 
