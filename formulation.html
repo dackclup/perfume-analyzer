@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v248"></script>
-<script src="perfumery_data.js?v=2026-04-29-v248"></script>
-<script src="formulation_data.js?v=2026-04-29-v248"></script>
-<script src="formulation_engine.js?v=2026-04-29-v248"></script>
+<script src="taxonomy.js?v=2026-04-29-v249"></script>
+<script src="perfumery_data.js?v=2026-04-29-v249"></script>
+<script src="formulation_data.js?v=2026-04-29-v249"></script>
+<script src="formulation_engine.js?v=2026-04-29-v249"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2420,19 +2420,54 @@ function renderCompatTab() {
     subtitle += ' · target ranges for <strong>' + escHtml(balance.family) + '</strong> family';
   }
   html += '<p class="panel-desc">' + subtitle + '</p>';
+  // Pyramid bars now show the IDEAL RANGE as a faint backdrop band so the
+  // user can read 'in range / low / high' at a glance instead of having
+  // to compare two numbers (actual % vs the '15-30%' label). Each column
+  // is a 60px tall scale 0–100%, with:
+  //   - faint coloured band painted at min..max of the ideal zone
+  //   - opaque bar at the actual %, coloured by tier (in range) or by
+  //     status tone (out-of-range)
+  //   - status text under the value: 'in range' / 'low' / 'high'
   html += '<div style="display:flex;gap:20px;margin-top:10px;flex-wrap:wrap">';
   const classifiedTotal = balance.top + balance.middle + balance.base;
-  for (const [tier, val, color, ideal] of [['Top', balance.top, 'var(--badge-top-fg)', balance.ideal.top], ['Middle', balance.middle, 'var(--badge-mid-fg)', balance.ideal.middle], ['Base', balance.base, 'var(--badge-base-fg)', balance.ideal.base]]) {
+  // Tier metadata in one place — pulls in the engine's numeric idealRanges
+  // (which sit alongside the legacy display string) so we don't have to
+  // re-parse '15-30%' for the bar geometry.
+  const tierMeta = [
+    ['Top',    'top',    balance.top,    'var(--badge-top-fg)',  balance.ideal.top],
+    ['Middle', 'middle', balance.middle, 'var(--badge-mid-fg)', balance.ideal.middle],
+    ['Base',   'base',   balance.base,   'var(--badge-base-fg)', balance.ideal.base],
+  ];
+  // PX_PER_PCT scales 0–100% to 60px column height.
+  const PX_PER_PCT = 0.6;
+  for (const [tier, key, val, color, ideal] of tierMeta) {
     const pct = Math.round(val / (classifiedTotal || 1) * 100);
+    const range = (balance.idealRanges && balance.idealRanges[key]) || { min: 0, max: 100 };
+    let status, statusColor, barColor;
+    if (val === 0) {
+      status = 'missing'; statusColor = 'var(--danger)'; barColor = 'var(--text2)';
+    } else if (pct < range.min) {
+      status = 'low'; statusColor = 'var(--warn)'; barColor = 'var(--warn)';
+    } else if (pct > range.max) {
+      status = 'high'; statusColor = 'var(--warn)'; barColor = 'var(--warn)';
+    } else {
+      status = 'in range'; statusColor = 'var(--success)'; barColor = color;
+    }
     html += '<div style="flex:1;min-width:80px;text-align:center">';
-    // Reserve 2 lines of height on the label so the "Middle (25-45%)" case,
-    // which wraps on narrow viewports, doesn't push its bar container lower
-    // than the Top / Base columns — misaligning the bar bottoms.
     html += '<div style="font-size:0.78em;color:var(--text2);line-height:1.25;min-height:2.5em;display:flex;align-items:flex-end;justify-content:center">' + tier + ' (' + ideal + ')</div>';
-    html += '<div style="height:60px;display:flex;align-items:flex-end;justify-content:center">';
-    html += '<div style="width:40px;height:' + Math.max(pct * 0.6, 4) + 'px;background:' + color + ';border-radius:var(--radius-sm) 3px 0 0;opacity:0.8"></div>';
+    // Bar column — relative-positioned wrapper so the ideal band can
+    // anchor to the bottom and the actual bar overlays in front. Width
+    // 50px keeps the band wider than the 40px bar so the band edge is
+    // visible left/right.
+    const bandBottom = (range.min * PX_PER_PCT).toFixed(1);
+    const bandHeight = ((range.max - range.min) * PX_PER_PCT).toFixed(1);
+    const barHeight = Math.max(pct * PX_PER_PCT, 4).toFixed(1);
+    html += '<div style="position:relative;height:60px;width:50px;margin:0 auto">';
+    html += '<div style="position:absolute;left:0;right:0;bottom:' + bandBottom + 'px;height:' + bandHeight + 'px;background:rgba(34,197,94,0.16);border-top:1px dashed rgba(34,197,94,0.5);border-bottom:1px dashed rgba(34,197,94,0.5);border-radius:2px" title="ideal range ' + ideal + '"></div>';
+    html += '<div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:40px;height:' + barHeight + 'px;background:' + barColor + ';border-radius:var(--radius-sm) 3px 0 0;opacity:0.95"></div>';
     html += '</div>';
-    html += '<div style="font-size:0.85em;font-weight:600">' + val + '%</div>';
+    html += '<div style="font-size:0.85em;font-weight:600;margin-top:2px">' + val + '%</div>';
+    html += '<div style="font-size:0.7em;color:' + statusColor + ';margin-top:1px">' + status + '</div>';
     html += '</div>';
   }
   html += '</div>';
