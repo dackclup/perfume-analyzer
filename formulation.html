@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v268"></script>
-<script src="perfumery_data.js?v=2026-04-29-v268"></script>
-<script src="formulation_data.js?v=2026-04-29-v268"></script>
-<script src="formulation_engine.js?v=2026-04-29-v268"></script>
+<script src="taxonomy.js?v=2026-04-29-v269"></script>
+<script src="perfumery_data.js?v=2026-04-29-v269"></script>
+<script src="formulation_data.js?v=2026-04-29-v269"></script>
+<script src="formulation_engine.js?v=2026-04-29-v269"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -3019,6 +3019,7 @@ function applyAllocation(type) {
   const catId = document.getElementById('productCategory').value;
   const fragPct = validateFragPct(document.getElementById('fragPct').value);
   const graph = getCompatGraph();
+  const tempC = parseInt(document.getElementById('tempSlider').value) || 25;
   const mode = type || 'smart';
 
   // Use original percentages for unlocked materials, current for locked
@@ -3026,6 +3027,15 @@ function applyAllocation(type) {
     ...m, pct: lockedMaterials.has(m.cas) ? m.pct
       : (_originalPcts[m.cas] != null ? _originalPcts[m.cas] : m.pct),
   }));
+
+  // Round 1 alignment: thread the pyramid family override + ambient
+  // temp into the optimizer so its fitness function scores the SAME
+  // formula the user-facing Pyramid + Harmony cards display. Without
+  // this the optimizer was climbing a slightly different surface (no
+  // override → wrong family target; no tempC → wrong VP curves) and
+  // could produce 'optimized' compositions whose visible score went
+  // DOWN.
+  const allocOpts = { tempC: tempC, familyOverride: _pyramidFamilyOverride };
 
   formulation.batchUpdate(() => {
     // Phase 1 — Suggested baseline (skipped if pure 'optimized' mode)
@@ -3041,7 +3051,7 @@ function applyAllocation(type) {
     // stale/random current pcts.
     if (mode === 'optimized' || mode === 'smart') {
       const startMats = (mode === 'smart') ? formulation.materials : originalMats;
-      const optAlloc = optimizeAllocation(startMats, graph, catId, fragPct, 50, lockedMaterials);
+      const optAlloc = optimizeAllocation(startMats, graph, catId, fragPct, 50, lockedMaterials, allocOpts);
       optAlloc.forEach(a => {
         if (!lockedMaterials.has(a.cas)) formulation.updatePct(a.cas, a.optimizedPct);
       });
