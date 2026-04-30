@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v251"></script>
-<script src="perfumery_data.js?v=2026-04-29-v251"></script>
-<script src="formulation_data.js?v=2026-04-29-v251"></script>
-<script src="formulation_engine.js?v=2026-04-29-v251"></script>
+<script src="taxonomy.js?v=2026-04-29-v252"></script>
+<script src="perfumery_data.js?v=2026-04-29-v252"></script>
+<script src="formulation_data.js?v=2026-04-29-v252"></script>
+<script src="formulation_engine.js?v=2026-04-29-v252"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2255,7 +2255,43 @@ function getCompatGraph() {
 function renderCompatTab() {
   const el = document.getElementById('compatContent');
   const mats = formulation.materials;
-  if (!mats.length) { el.innerHTML = '<div class="empty-state"><p>Add materials to see compatibility analysis</p></div>'; return; }
+  if (!mats.length) {
+    // Empty-state nudges. The previous 'Add materials to see compatibility
+    // analysis' message left users at a dead end — they had to figure out
+    // on their own that the Brief modal, Wheel slice, or Map dot would
+    // populate this view. Surface those three paths as explicit shortcuts.
+    let h = '<div class="empty-state" style="padding:24px 12px;text-align:center">';
+    h += '<p style="font-size:1.05em;margin-bottom:6px">Add materials to see compatibility analysis</p>';
+    h += '<p style="color:var(--text2);font-size:0.85em;margin-bottom:14px">Three quick ways to start:</p>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">';
+    h += '<button class="btn btn-sm btn-primary" id="compatEmptyBrief" type="button">📝 Creative Brief</button>';
+    h += '<button class="btn btn-sm" id="compatEmptyWheel" type="button">🧭 Browse the Wheel</button>';
+    h += '<button class="btn btn-sm" id="compatEmptyMap" type="button">🗺 Open the Map</button>';
+    h += '</div>';
+    h += '<p style="color:var(--text2);font-size:0.78em;margin-top:14px">Or click the <strong>Add</strong> button in the sidebar to search by name / CAS.</p>';
+    h += '</div>';
+    el.innerHTML = h;
+    // Wire the three shortcuts. Brief opens its modal via the existing
+    // sidebar handler (click() proxies through). Wheel/Map switch tabs
+    // by simulating a click on the corresponding tab button so the
+    // existing tab nav logic runs.
+    const briefBtn = document.getElementById('compatEmptyBrief');
+    if (briefBtn) briefBtn.addEventListener('click', () => {
+      const sb = document.getElementById('btnBrief');
+      if (sb) sb.click();
+    });
+    const wheelBtn = document.getElementById('compatEmptyWheel');
+    if (wheelBtn) wheelBtn.addEventListener('click', () => {
+      const tab = document.querySelector('.tab-btn[data-tab="tab-wheel"]');
+      if (tab) tab.click();
+    });
+    const mapBtn = document.getElementById('compatEmptyMap');
+    if (mapBtn) mapBtn.addEventListener('click', () => {
+      const tab = document.querySelector('.tab-btn[data-tab="tab-map"]');
+      if (tab) tab.click();
+    });
+    return;
+  }
 
   const graph = getCompatGraph();
   const selected = mats.map(m => m.cas);
