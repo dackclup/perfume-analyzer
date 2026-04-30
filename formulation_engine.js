@@ -647,14 +647,25 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
     // renderCompatTab reads harmony.discords.length, harmony.triangleBonus
     // — undefined for a 1-mat formula crashes the render mid-way and
     // leaves the previous formula's DOM stale).
+    //
+    // `insufficient: true` flags that the metric is not meaningful with
+    // <2 materials. Renderers should display 'N/A' or 'Add 2+ materials'
+    // instead of '100%' which falsely signals 'perfect harmony'. score
+    // is set to null so a careless `harmony.score + ' %'` displays as
+    // 'null%' and stands out in dev — callers should branch on
+    // `insufficient` before showing a number.
     return {
-      score: 100,
+      score: null,
+      insufficient: true,
+      reason: materials.length === 0 ? 'no-materials' : 'single-material',
       connectedPairs: 0, totalPairs: 0,
       pairs: [],
       discords: [],
       triangleBonus: 0, fullTriangles: 0, totalTriangles: 0,
       diversityFactor: 1, tierCount: materials.length ? 1 : 0,
-      baseScore: 100,
+      baseScore: null,
+      familyBalance: { dominantFamily: null, dominantPct: 0, monoculture: false },
+      monoculturePenalty: 1,
       method: 'multi-factor',
     };
   }
@@ -757,14 +768,53 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
   // 0 → 0.85, 1 → 0.90, 2 → 0.95, 3 → 1.00
   const diversityFactor = 0.85 + 0.05 * tierCount;
 
+  // Family monoculture penalty — Calkin & Jellinek 1994 'Perfumery: Practice
+  // and Principles' notes that a fragrance dominated by a single family is
+  // 'flat' and rarely succeeds; classical structure expects 2-4 families
+  // working together. We weight by pct so 'dominant' means the family
+  // carrying most of the formula's mass, not just material count.
+  // Cut-offs are conservative:
+  //   < 70%  → no penalty           (×1.00)
+  //   70–80% → mild monoculture     (×0.85)
+  //   80–90% → strong monoculture   (×0.70)
+  //    >90%  → near-pure monoculture (×0.55)
+  const familyMass = {};
+  let totalPct = 0;
+  for (let i = 0; i < materials.length; i++) {
+    const fam = (familiesList[i] && familiesList[i][0]) || 'other';
+    const p = materials[i].pct || 0;
+    familyMass[fam] = (familyMass[fam] || 0) + p;
+    totalPct += p;
+  }
+  let dominantFamily = null, dominantMass = 0;
+  for (const [fam, mass] of Object.entries(familyMass)) {
+    if (mass > dominantMass) { dominantMass = mass; dominantFamily = fam; }
+  }
+  const dominantPct = totalPct > 0 ? (dominantMass / totalPct) * 100 : 0;
+  let monoculturePenalty = 1;
+  if (dominantPct > 90) monoculturePenalty = 0.55;
+  else if (dominantPct > 80) monoculturePenalty = 0.70;
+  else if (dominantPct > 70) monoculturePenalty = 0.85;
+  const familyBalance = {
+    dominantFamily,
+    dominantPct: roundN(dominantPct, 1),
+    familyMass: Object.fromEntries(Object.entries(familyMass).map(([f, m]) => [f, roundN((m / (totalPct || 1)) * 100, 1)])),
+    monoculture: dominantPct > 70,
+  };
+
   const baseScore = totalWeight > 0 ? (weightedSum / totalWeight) * 100 : 100;
-  const finalScore = Math.max(0, Math.min(100, Math.round((baseScore + triangleBonus) * diversityFactor)));
+  const finalScore = Math.max(0, Math.min(100,
+    Math.round((baseScore + triangleBonus) * diversityFactor * monoculturePenalty)
+  ));
 
   return {
     score: finalScore,
+    insufficient: false,
     baseScore: Math.round(baseScore),
     triangleBonus: roundN(triangleBonus, 1),
     diversityFactor: roundN(diversityFactor, 2),
+    monoculturePenalty: roundN(monoculturePenalty, 2),
+    familyBalance,
     tierCount,
     tiersPresent,
     connectedPairs: connectedCount,

@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v254"></script>
-<script src="perfumery_data.js?v=2026-04-29-v254"></script>
-<script src="formulation_data.js?v=2026-04-29-v254"></script>
-<script src="formulation_engine.js?v=2026-04-29-v254"></script>
+<script src="taxonomy.js?v=2026-04-29-v255"></script>
+<script src="perfumery_data.js?v=2026-04-29-v255"></script>
+<script src="formulation_data.js?v=2026-04-29-v255"></script>
+<script src="formulation_engine.js?v=2026-04-29-v255"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2331,13 +2331,29 @@ function renderCompatTab() {
   //   - one-line description tying the score to the most-relevant signal
   //   - counter chips for the things the user might want to act on
   const score = harmony.score;
-  const verdict = score >= 70
-    ? { icon: '✓', label: 'Strong harmony',  tone: 'success', desc: 'Most pairs are well-connected. Note balance and discord checks below.' }
-    : score >= 40
-    ? { icon: '⚠', label: 'Mixed harmony',   tone: 'warn',    desc: 'Some pairs are weakly connected. Review the components below before scaling up.' }
-    : { icon: '✗', label: 'Low harmony',     tone: 'danger',  desc: 'Few pairs share strong family or descriptor links. Consider substitutions or a different brief.' };
-  // Override to danger if a discord is present, regardless of score.
-  if (harmony.discords.length) {
+  let verdict;
+  if (harmony.insufficient) {
+    // 1-material formulas can't be scored on harmony — there are no pairs
+    // to evaluate. Showing 100% would falsely signal 'perfect' so we
+    // explicitly mark the metric as not-applicable and prompt the user
+    // to add more materials before judging.
+    verdict = { icon: 'ℹ', label: 'Add 2+ materials to score harmony', tone: 'warn', desc: 'Harmony is a pairwise + family-balance metric. With a single material there\'s nothing to compare yet.' };
+  } else if (score >= 70) {
+    verdict = { icon: '✓', label: 'Strong harmony',  tone: 'success', desc: 'Most pairs are well-connected. Note balance and discord checks below.' };
+  } else if (score >= 40) {
+    verdict = { icon: '⚠', label: 'Mixed harmony',   tone: 'warn',    desc: 'Some pairs are weakly connected. Review the components below before scaling up.' };
+  } else {
+    verdict = { icon: '✗', label: 'Low harmony',     tone: 'danger',  desc: 'Few pairs share strong family or descriptor links. Consider substitutions or a different brief.' };
+  }
+  // Override priorities (highest wins): discord > monoculture > score-band.
+  if (!harmony.insufficient && harmony.familyBalance && harmony.familyBalance.monoculture) {
+    verdict.icon = '⚠';
+    verdict.label = 'Family monoculture';
+    verdict.tone = 'warn';
+    const fam = harmony.familyBalance.dominantFamily || 'one family';
+    verdict.desc = Math.round(harmony.familyBalance.dominantPct) + '% of the mass comes from ' + escHtml(fam) + '. Classical structure usually blends 2–4 families — adding a contrasting note will broaden the profile.';
+  }
+  if (!harmony.insufficient && harmony.discords.length) {
     verdict.icon = '✗';
     verdict.label = 'Discord present';
     verdict.tone = 'danger';
@@ -2350,7 +2366,10 @@ function renderCompatTab() {
   html += '<div style="flex:1;min-width:0">';
   html += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
   html += '<h4 style="margin:0">' + verdict.label + '</h4>';
-  html += '<span class="badge ' + verdictBadgeCls + '">' + score + '%</span>';
+  // 'N/A' replaces the misleading 'null%' / '100%' badge on a 1-material
+  // formula where harmony cannot be measured.
+  const scoreBadgeText = harmony.insufficient ? '— %' : (score + '%');
+  html += '<span class="badge ' + verdictBadgeCls + '">' + scoreBadgeText + '</span>';
   html += '</div>';
   html += '<p style="margin:6px 0 0;color:var(--text2);font-size:0.85em">' + verdict.desc + '</p>';
   // Counter chips that act as quick-jump anchors to the relevant subsection.
@@ -2396,13 +2415,20 @@ function renderCompatTab() {
     html += '</div>';
   }
 
-  // Harmony Score (multi-factor: graph + descriptor + discord + triangle + tier diversity)
-  const harmClass = harmony.score >= 70 ? 'badge-ok' : harmony.score >= 40 ? 'badge-warn' : 'badge-danger';
-  html += '<div class="analysis-card" id="compat-harmony"><h4>Harmony Score <span class="badge ' + harmClass + '">' + harmony.score + '%</span></h4>';
-  html += '<p class="panel-desc">Multi-factor: pairwise graph + descriptor similarity, discord penalty, triangle synergy, note-tier diversity.</p>';
+  // Harmony Score (multi-factor: graph + descriptor + discord + triangle + tier diversity + family balance)
+  // Insufficient state (1 material) renders as '— %' / outline badge so the
+  // user doesn't read it as 'perfect'.
+  const harmClass = harmony.insufficient
+    ? 'badge-outline'
+    : (harmony.score >= 70 ? 'badge-ok' : harmony.score >= 40 ? 'badge-warn' : 'badge-danger');
+  const harmBadgeText = harmony.insufficient ? '— %' : (harmony.score + '%');
+  html += '<div class="analysis-card" id="compat-harmony"><h4>Harmony Score <span class="badge ' + harmClass + '">' + harmBadgeText + '</span></h4>';
+  html += '<p class="panel-desc">Multi-factor: pairwise graph + descriptor similarity, discord penalty, triangle synergy, note-tier diversity, family balance.</p>';
 
-  // Component breakdown
-  if (harmony.method === 'multi-factor') {
+  if (harmony.insufficient) {
+    // Component breakdown is meaningless on a 1-material formula.
+    html += '<p class="panel-desc" style="margin-top:8px"><em>Component breakdown will appear once the formula has 2+ materials.</em></p>';
+  } else if (harmony.method === 'multi-factor') {
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px;font-size:0.82em">';
     html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:8px">'
       + '<div style="color:var(--text2);font-size:0.78em">Pairwise base</div>'
@@ -2423,6 +2449,20 @@ function renderCompatTab() {
       + '<div style="color:var(--text2);font-size:0.78em">Discord hits</div>'
       + '<div style="font-weight:600;color:' + discClr + '">' + harmony.discords.length + '</div>'
       + '<div style="font-size:0.75em;color:var(--text2)">family clashes</div></div>';
+    // Family-balance tile — surfaces the monoculture penalty (Calkin &
+    // Jellinek 1994) so the user can see why the score may be reduced
+    // even when all pairs connect cleanly.
+    if (harmony.familyBalance) {
+      const fb = harmony.familyBalance;
+      const monoClr = fb.monoculture ? 'var(--warn,#eab308)' : 'var(--text2)';
+      const famLabel = fb.dominantFamily
+        ? fb.dominantFamily.charAt(0).toUpperCase() + fb.dominantFamily.slice(1).replace(/_/g, ' ')
+        : '—';
+      html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:8px">'
+        + '<div style="color:var(--text2);font-size:0.78em">Family balance ×</div>'
+        + '<div style="font-weight:600;color:' + monoClr + '">' + (harmony.monoculturePenalty != null ? harmony.monoculturePenalty : 1) + '</div>'
+        + '<div style="font-size:0.75em;color:var(--text2)">' + (fb.dominantPct != null ? Math.round(fb.dominantPct) + '% ' + escHtml(famLabel) : '—') + '</div></div>';
+    }
     html += '</div>';
 
     // Discord detail list
