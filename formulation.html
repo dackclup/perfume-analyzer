@@ -929,10 +929,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v218"></script>
-<script src="perfumery_data.js?v=2026-04-29-v218"></script>
-<script src="formulation_data.js?v=2026-04-29-v218"></script>
-<script src="formulation_engine.js?v=2026-04-29-v218"></script>
+<script src="taxonomy.js?v=2026-04-29-v219"></script>
+<script src="perfumery_data.js?v=2026-04-29-v219"></script>
+<script src="formulation_data.js?v=2026-04-29-v219"></script>
+<script src="formulation_engine.js?v=2026-04-29-v219"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -3399,6 +3399,10 @@ function toggleMoodTarget(dim) {
 }
 
 // ===== Tab 1: Safety & Compliance (System 5) =====
+// null = auto (default to ON when there are any problems, OFF otherwise)
+// true/false = user-pinned override that survives subsequent re-renders
+let _safetyShowProblemsOnly = null;
+
 function renderSafetyTab() {
   const el = document.getElementById('safetyContent');
   const mats = formulation.materials;
@@ -3473,10 +3477,24 @@ function renderSafetyTab() {
   // Margin column replaced with a visual Headroom bar showing fill of IFRA cap.
   const severityRank = { banned: 0, danger: 1, warn: 2, ok: 3 };
   const sortedCompliance = compliance.slice().sort((a, b) => (severityRank[a.status] ?? 99) - (severityRank[b.status] ?? 99));
-  html += '<div class="analysis-card" id="safety-ifra"><h4>IFRA Compliance — ' + IFRA_CATEGORIES[catId].name + ' (' + fragPct + '% in product)</h4>';
-  html += '<p class="panel-desc">Each material checked against the IFRA 51 cap for the active category. Sorted by severity.</p>';
+  // Toggle state: null = auto (ON when problems exist), explicit bool = user override
+  const hasProblems = summary.bannedCount + summary.dangerCount + summary.warnCount > 0;
+  const showProblemsOnly = _safetyShowProblemsOnly !== null ? _safetyShowProblemsOnly : hasProblems;
+  const problemRows = sortedCompliance.filter(r => r.status !== 'ok');
+  const filteredCompliance = showProblemsOnly ? problemRows : sortedCompliance;
+  html += '<div class="analysis-card" id="safety-ifra">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">';
+  html += '<h4 style="margin:0">IFRA Compliance — ' + IFRA_CATEGORIES[catId].name + ' (' + fragPct + '% in product)</h4>';
+  if (hasProblems) {
+    const toggleLabel = showProblemsOnly
+      ? 'Show all (' + sortedCompliance.length + ')'
+      : 'Show problems only (' + problemRows.length + ')';
+    html += '<button id="safetyToggleProblems" class="preset-chip' + (showProblemsOnly ? ' active' : '') + '" aria-pressed="' + showProblemsOnly + '" style="font-size:0.78em">' + toggleLabel + '</button>';
+  }
+  html += '</div>';
+  html += '<p class="panel-desc" style="margin-top:8px">Each material checked against the IFRA 51 cap for the active category. Sorted by severity.</p>';
   html += '<table class="data-table"><thead><tr><th>Material</th><th>% in Product</th><th>IFRA Max</th><th>Headroom</th><th>Status</th></tr></thead><tbody>';
-  for (const r of sortedCompliance) {
+  for (const r of filteredCompliance) {
     const cls = r.status === 'ok' ? 'badge-ok' : r.status === 'warn' ? 'badge-warn' : 'badge-danger';
     const icon = r.status === 'ok' ? '✓' : r.status === 'warn' ? '⚠' : '✗';
     const statusTxt = r.banStatus === 'banned' ? 'BANNED' : r.status === 'danger' ? 'OVER' : r.status === 'warn' ? 'Caution' : 'OK';
@@ -3646,6 +3664,17 @@ function renderSafetyTab() {
       if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
+
+  // Wire "Show problems only / Show all" toggle on IFRA Compliance card
+  const toggleBtn = document.getElementById('safetyToggleProblems');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      // First click pins the opposite of the current effective state; null
+      // (auto) gets resolved on next render.
+      _safetyShowProblemsOnly = !(toggleBtn.getAttribute('aria-pressed') === 'true');
+      renderSafetyTab();
+    });
+  }
 }
 
 
