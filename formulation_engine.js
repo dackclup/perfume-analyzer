@@ -1629,13 +1629,54 @@ function _hillClimbFitness(pctsIn, materials, unlockedIdx, ifraMaxes, opts, iter
   // and perception pyramid agree on gradient direction for small pct
   // perturbations, so the final local optimum is essentially the same.
   const hcOpts = Object.assign({}, opts, { fastMode: true });
+  // Round 2 upgrade: simulated annealing replaces pure greedy hill-climb
+  // so the optimizer can escape local maxima. Acceptance rule:
+  //   accept if newFit > currentFit (always improving moves), OR
+  //   random() < exp((newFit − currentFit) / T) (downhill move,
+  //                                              probability shrinks as T cools)
+  // Linear cooling from T0 to Tend over the iteration budget. T0 ≈ 5
+  // means a 5-point dip is accepted with probability ~37% at iter 0,
+  // dropping toward 0% as T → 0.
+  //
+  // We track THREE pcts:
+  //   - `pcts`        — current trajectory state (may dip below best)
+  //   - `bestPcts`    — best ever seen (returned at the end)
+  //   - `bestFitness` — its score (used for early-exit budget)
+  let bestPcts = pcts.slice();
   let bestFitness = computeFormulaFitness(matsWithPct(), hcOpts).score;
-  let stagnant = 0; // consecutive no-improvement passes
+  let currentFitness = bestFitness;
+  const T0 = 5.0;
+  const T_END = 0.4;
+  // Audit-style early exit: stop once we've gone many iters without
+  // touching bestFitness. Looser than the previous 'stagnant trajectory'
+  // rule because SA legitimately produces no-improvement passes while
+  // exploring; we only quit when even the best-ever has plateaued.
+  let noBestImprovement = 0;
+  const NO_BEST_BUDGET = 12;
 
   for (let iter = 0; iter < iters; iter++) {
     const progress = iter / iters;
     const delta = 2.5 * (1 - progress) + 0.5; // 3.0 → 0.5
-    let improvedAny = false;
+    const T = T0 * (1 - progress) + T_END * progress; // 5.0 → 0.4
+    let improvedBest = false;
+
+    // Helper — applies an SA acceptance test. revertFn() restores state
+    // when the move is rejected. Returns true when accepted.
+    const trySAStep = (newFit, revertFn) => {
+      const dF = newFit - currentFitness;
+      const accept = dF > 0 || Math.random() < Math.exp(dF / Math.max(0.01, T));
+      if (accept) {
+        currentFitness = newFit;
+        if (newFit > bestFitness + 0.01) {
+          bestFitness = newFit;
+          bestPcts = pcts.slice();
+          improvedBest = true;
+        }
+        return true;
+      }
+      revertFn();
+      return false;
+    };
 
     // Move A — single-index ±δ with proportional peer redistribution
     for (const i of unlockedIdx) {
@@ -1654,14 +1695,11 @@ function _hillClimbFitness(pctsIn, materials, unlockedIdx, ifraMaxes, opts, iter
         pcts[i] = newI;
         for (const k of peers) pcts[k] = Math.max(0, pcts[k] - diff * (pcts[k] / peerSum));
         const newFit = computeFormulaFitness(matsWithPct(), hcOpts).score;
-        if (newFit > bestFitness + 0.01) {
-          bestFitness = newFit;
-          improvedAny = true;
-          break;
-        } else {
+        const accepted = trySAStep(newFit, () => {
           pcts[i] = savedI;
           peers.forEach((k, idx) => { pcts[k] = saved[idx]; });
-        }
+        });
+        if (accepted && improvedBest) break; // greedy on improving steps for speed
       }
     }
 
@@ -1679,24 +1717,22 @@ function _hillClimbFitness(pctsIn, materials, unlockedIdx, ifraMaxes, opts, iter
         pcts[i] -= k;
         pcts[j] += k;
         const newFit = computeFormulaFitness(matsWithPct(), hcOpts).score;
-        if (newFit > bestFitness + 0.01) {
-          bestFitness = newFit;
-          improvedAny = true;
-        } else {
+        trySAStep(newFit, () => {
           pcts[i] = savedI;
           pcts[j] = savedJ;
-        }
+        });
       }
     }
 
-    // Stronger early exit: stop after 3 consecutive stagnant passes
-    // (4 in the first 30% to let the optimizer warm up)
-    if (improvedAny) stagnant = 0;
-    else stagnant++;
-    const allowed = progress < 0.3 ? 4 : 3;
-    if (stagnant >= allowed) break;
+    if (improvedBest) noBestImprovement = 0;
+    else noBestImprovement++;
+    if (noBestImprovement >= NO_BEST_BUDGET) break;
   }
-  return { pcts, fitness: bestFitness };
+  // Round 2: return BEST ever seen, not the SA trajectory's last point —
+  // the trajectory may have wandered downhill at the end while exploring.
+  // Without this fix the optimizer could finish on a worse score than
+  // it had visited mid-run.
+  return { pcts: bestPcts.slice(), fitness: bestFitness };
 }
 
 /**
