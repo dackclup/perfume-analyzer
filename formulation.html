@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v260"></script>
-<script src="perfumery_data.js?v=2026-04-29-v260"></script>
-<script src="formulation_data.js?v=2026-04-29-v260"></script>
-<script src="formulation_engine.js?v=2026-04-29-v260"></script>
+<script src="taxonomy.js?v=2026-04-29-v261"></script>
+<script src="perfumery_data.js?v=2026-04-29-v261"></script>
+<script src="formulation_data.js?v=2026-04-29-v261"></script>
+<script src="formulation_engine.js?v=2026-04-29-v261"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2479,12 +2479,21 @@ function renderCompatTab() {
       + '<div style="color:var(--text2);font-size:0.78em">Pairwise base</div>'
       + '<div style="font-weight:600">' + (harmony.baseScore != null ? harmony.baseScore + '%' : '—') + '</div>'
       + '<div style="font-size:0.75em;color:var(--text2)">' + harmony.connectedPairs + '/' + harmony.totalPairs + ' connected</div></div>';
-    // Triangle synergy — additive bonus.
+    // Triangle synergy — additive bonus from EITHER graph triples (rare)
+    // OR known family accords (cologne / fougère / chypre / oriental /
+    // gourmand). When the family path fires we show the accord names so
+    // the user knows which classical structure their formula matches.
     const triClr = harmony.triangleBonus > 0 ? 'var(--success)' : 'var(--text2)';
+    let triDetail;
+    if (harmony.familyTriangles && harmony.familyTriangles.length) {
+      triDetail = harmony.familyTriangles.join(', ') + ' accord' + (harmony.familyTriangles.length === 1 ? '' : 's');
+    } else {
+      triDetail = harmony.fullTriangles + '/' + harmony.totalTriangles + ' graph triples';
+    }
     html += '<div style="padding:8px 10px;background:var(--bg2);border-radius:8px">'
       + '<div style="color:var(--text2);font-size:0.78em">Triangle synergy</div>'
       + '<div style="font-weight:600;color:' + triClr + '">+' + harmony.triangleBonus + '</div>'
-      + '<div style="font-size:0.75em">' + fmtDelta(triDelta) + ' · ' + harmony.fullTriangles + '/' + harmony.totalTriangles + '</div></div>';
+      + '<div style="font-size:0.75em">' + fmtDelta(triDelta) + ' · ' + escHtml(triDetail) + '</div></div>';
     // Structural penalty = min(tier-diversity, family-balance). Audit #14:
     // these two penalties were multiplied, double-counting the same
     // 'single-axis' formula problem. We surface BOTH source values so
