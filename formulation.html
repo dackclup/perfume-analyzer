@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v266"></script>
-<script src="perfumery_data.js?v=2026-04-29-v266"></script>
-<script src="formulation_data.js?v=2026-04-29-v266"></script>
-<script src="formulation_engine.js?v=2026-04-29-v266"></script>
+<script src="taxonomy.js?v=2026-04-29-v267"></script>
+<script src="perfumery_data.js?v=2026-04-29-v267"></script>
+<script src="formulation_data.js?v=2026-04-29-v267"></script>
+<script src="formulation_engine.js?v=2026-04-29-v267"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2728,7 +2728,14 @@ function _renderCompatTabImpl(el) {
   // PX_PER_PCT scales 0–100% to 60px column height.
   const PX_PER_PCT = 0.6;
   for (const [tier, key, val, color, ideal] of tierMeta) {
-    const pct = Math.round(val / (classifiedTotal || 1) * 100);
+    // After Pyramid Round A, balance.{top,middle,base} are already
+    // expressed as percentages of the total formula (the engine now
+    // divides by total — including unclassified — instead of
+    // classifiedTotal). The renderer used to do the division a second
+    // time using a `const classifiedTotal` that no longer existed,
+    // which threw `ReferenceError: classifiedTotal is not defined` and
+    // collapsed the entire Compat tab to its empty-state fallback.
+    const pct = Math.round(val);
     const range = (balance.idealRanges && balance.idealRanges[key]) || { min: 0, max: 100 };
     let status, statusColor, barColor;
     if (val === 0) {
