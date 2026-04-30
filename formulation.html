@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v239"></script>
-<script src="perfumery_data.js?v=2026-04-29-v239"></script>
-<script src="formulation_data.js?v=2026-04-29-v239"></script>
-<script src="formulation_engine.js?v=2026-04-29-v239"></script>
+<script src="taxonomy.js?v=2026-04-29-v240"></script>
+<script src="perfumery_data.js?v=2026-04-29-v240"></script>
+<script src="formulation_data.js?v=2026-04-29-v240"></script>
+<script src="formulation_engine.js?v=2026-04-29-v240"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -5089,13 +5089,17 @@ function renderMapTab() {
     if (p.inFormulation) continue;
     const sx = toSVGX(p.x), sy = toSVGY(p.y);
     const visible = isVisible(p);
-    const dotOpacity = visible ? 0.4 : 0.06;
+    const dotOpacity = visible ? 0.55 : 0.06;
     // Hidden dots leave the tab order — tabbing through 200+ dimmed circles
     // would be miserable. Only visible dots receive tabindex='0'. The
     // selected dot keeps tabindex='0' for screen-reader return.
     const tabIdx = visible ? '0' : '-1';
-    const a11yLabel = p.name + ', ' + p.family + (p.inFormulation ? ', already in formula' : '') + ' — press Enter to inspect';
-    svg += '<circle class="map-dot" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="3" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" ';
+    const a11yLabel = p.name + ', ' + p.family + ' — press Enter to inspect';
+    // Visible radius bumped 3 → 5 to make taps reliable on mobile (the 700px
+    // viewBox scales to ~360 on phones, so r=3 became a ~1.5px target on
+    // screen — below WCAG's 24×24 minimum). r=5 is still readable as a
+    // dot, not an oversized blob.
+    svg += '<circle class="map-dot" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="5" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" ';
     svg += 'role="button" tabindex="' + tabIdx + '" aria-label="' + escHtml(a11yLabel) + '" ';
     svg += 'style="cursor:pointer">';
     svg += '<title>' + escHtml(p.name) + ' (' + escHtml(p.family) + ') — click for details</title></circle>';
@@ -5112,7 +5116,7 @@ function renderMapTab() {
     const labelOpacity = visible ? 1 : 0.2;
     const tabIdx = visible ? '0' : '-1';
     const a11yLabel = p.name + ', ' + p.family + ', already in formula — press Enter to inspect';
-    svg += '<circle class="map-dot map-dot-active" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="7" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" stroke="var(--text)" stroke-width="2" stroke-opacity="' + dotOpacity + '" role="button" tabindex="' + tabIdx + '" aria-label="' + escHtml(a11yLabel) + '" style="cursor:pointer">';
+    svg += '<circle class="map-dot map-dot-active" data-cas="' + escHtml(p.cas) + '" data-family="' + escHtml(p.family) + '" cx="' + sx + '" cy="' + sy + '" r="9" fill="' + p.color + '" fill-opacity="' + dotOpacity + '" stroke="var(--text)" stroke-width="2" stroke-opacity="' + dotOpacity + '" role="button" tabindex="' + tabIdx + '" aria-label="' + escHtml(a11yLabel) + '" style="cursor:pointer">';
     svg += '<title>' + escHtml(p.name) + ' — already in your formula</title></circle>';
     if (_mapShowLabels) {
       svg += '<text x="' + (sx + 10) + '" y="' + (sy + 4) + '" font-size="9" fill="var(--text)" font-weight="600" fill-opacity="' + labelOpacity + '" style="pointer-events:none">' + escHtml(p.name).slice(0, 15) + '</text>';
@@ -5122,6 +5126,13 @@ function renderMapTab() {
   svg += '</svg>';
 
   let html = '<div class="analysis-card">' + svg;
+
+  // Inspector slot — placed IMMEDIATELY below the SVG so a tap on a dot
+  // produces a visible response without the user having to scroll past
+  // the search row, family chips, axis caption, and stats line. The slot
+  // is empty when nothing is selected, and renderMapInspector hydrates
+  // it after a click.
+  html += '<div id="mapInspector" style="margin-top:10px"></div>';
 
   // Search row — case-insensitive substring match against material name.
   // Sits above the family-chip row so the user can filter by either or
@@ -5172,8 +5183,6 @@ function renderMapTab() {
   if (searchActive) html += ' · search “' + escHtml(searchQ) + '”';
   if (filterActive || searchActive) html += ' · <strong>' + visibleCount + '</strong> visible';
   html += '</p>';
-  // Inspector slot — re-hydrated below if there's an active selection.
-  html += '<div id="mapInspector" style="margin-top:12px"></div>';
   html += '</div>';
 
   el.innerHTML = html;
@@ -5188,6 +5197,12 @@ function renderMapTab() {
       _mapInspectorCas = circle.getAttribute('data-cas');
       renderMapInspector(points);
       highlightMapDot(_mapInspectorCas);
+      // Bring the inspector into view in case the user is mid-scroll. The
+      // slot now lives directly below the SVG so this is a small move on
+      // most devices, but on long-scroll mobile portraits it's the
+      // difference between 'click did something' and 'click did nothing'.
+      const slot = document.getElementById('mapInspector');
+      if (slot) slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
     // Keyboard activation. Enter / Space dispatch a synthetic click — same
     // pattern as the Wheel-tab paths, since SVGElement.click() isn't
@@ -5310,10 +5325,41 @@ function renderMapInspector(points) {
 
   const addBtn = document.getElementById('mapAddBtn');
   if (addBtn) addBtn.addEventListener('click', () => {
-    addFromDB(p.cas);
-    // addFromDB triggers a global re-render which calls renderMapTab again —
-    // so the inspector will repopulate itself with the now-in-formula state
-    // (button → "In formula"). No further action needed here.
+    // addFromDB rejects materials whose `note` doesn't contain a
+    // top/middle/mid/base classification — a guard to keep solvents out of
+    // the fragrance list when added via the search modal. Map dots are
+    // already filtered to aromatic-only by buildOdorMap (non-aromatic CAS
+    // are excluded from the projection), but a handful of catalogue rows
+    // describe their note tag without using those exact words. Surface the
+    // failure with a toast so the user isn't left wondering why the click
+    // 'did nothing'.
+    const ok = addFromDB(p.cas);
+    if (!ok) {
+      // Try a direct path that bypasses the note-text guard since the user
+      // explicitly chose this material from the inspector. Default the
+      // missing fields to safe values.
+      const e = DB[p.cas];
+      if (e) {
+        const fallbackOk = formulation.addMaterial(p.cas, e.name, 10, {
+          cas: e.cas,
+          name: e.name,
+          note: e.note || 'Middle',
+          odor_type: e.odor?.type || null,
+          odor_description: e.odor?.description || null,
+          primaryFamilies: [],
+          secondaryFamilies: [],
+          facets: [],
+        });
+        if (!fallbackOk) {
+          showToast({ message: 'Could not add ' + p.name + ' — already in formula or limit reached.', variant: 'warn' });
+        }
+      } else {
+        showToast({ message: 'Could not add ' + p.name + ' — not found in catalogue.', variant: 'warn' });
+      }
+    }
+    // On success, addMaterial → onChange → global re-render → renderMapTab
+    // repopulates the inspector with the now-in-formula state (button →
+    // 'In formula'). No further action needed here.
   });
   const closeBtn = document.getElementById('mapInspectorCloseBtn');
   if (closeBtn) closeBtn.addEventListener('click', () => {
