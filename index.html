@@ -3549,12 +3549,34 @@ function _updateActiveFilterCount() {
 }
 
 let _visTimer;
+let _heavyTimer;
+// Filter-axis change pipeline.
+//   IMMEDIATE  — _updateActiveFilterCount  (just sums set sizes; ~free)
+//   DEBOUNCED  — showPills (DB scan up to 400 entries),
+//                _updateFilterVisibility (FILTER_CACHE walk + chip recount),
+//                _writeUrlState (URL hash write triggers a popstate budget)
+//
+// Stacking 3-4 filter chips in rapid succession used to trigger the
+// heavy work (showPills + _writeUrlState) on EVERY click — even though
+// only the final state matters to the user. Coalescing them behind the
+// same debounce as filterVisibility means N rapid toggles cost one
+// heavy pass total instead of N. The chip-active class flip is still
+// instant because that's done by the per-axis click handler before
+// _refreshPills is called.
 function _refreshPills() {
-  showPills(input.value);
+  // Active-filter pill count is cheap (sums Set.size across axes) — keep
+  // it sync so the ▶ Filter ▼ counter never lags the chip-active class.
+  _updateActiveFilterCount();
+  // Coalesce the heavy refreshes. Re-using the existing DEBOUNCE.filterVisibility
+  // window so behaviour stays predictable for users who tested the previous
+  // 80 ms latency.
   clearTimeout(_visTimer);
   _visTimer = setTimeout(_updateFilterVisibility, DEBOUNCE.filterVisibility);
-  _updateActiveFilterCount();
-  _writeUrlState();
+  clearTimeout(_heavyTimer);
+  _heavyTimer = setTimeout(() => {
+    showPills(input.value);
+    _writeUrlState();
+  }, DEBOUNCE.filterVisibility);
 }
 
 // ── Filter axis predicates ─────────────────────────────────────────
@@ -4384,8 +4406,41 @@ input.addEventListener("input", () => {
   _pillTimer = setTimeout(() => showPills(input.value), DEBOUNCE.pillSuggestions);
   _writeUrlState();
 });
-input.addEventListener("keydown", e => { const v=input.value.trim(); if (e.key==="Enter"&&v) doSearch(v); });
-btn.addEventListener("click", () => { const v=input.value.trim(); if (v) doSearch(v); });
+// Auto-trim pasted content. CAS numbers and material names copied from
+// PDFs / Excel / Wikipedia routinely arrive with leading or trailing
+// whitespace (often a non-breaking space or zero-width char), which
+// makes the exact-match path silently fail — the user types '78-70-6',
+// pastes ' 78-70-6 ', clicks Search, and gets 'no match'. Trim during
+// the paste event so the visible text is clean before any handler
+// reads input.value.
+input.addEventListener('paste', (e) => {
+  // Normalise any NBSP ( ) and zero-width space (​) to plain
+  // space first, so the trailing trim() catches them too.
+  setTimeout(() => {
+    const cleaned = input.value.replace(/[ ​]/g, ' ').trim();
+    if (cleaned !== input.value) {
+      input.value = cleaned;
+      btn.disabled = !cleaned;
+      clearTimeout(_pillTimer);
+      _pillTimer = setTimeout(() => showPills(cleaned), DEBOUNCE.pillSuggestions);
+      _writeUrlState();
+    }
+  }, 0); // setTimeout 0 — let the paste insertion finish first
+});
+// On commit (Enter / button click) trim the visible field too so the
+// user sees a clean value matching what was searched.
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    const v = input.value.trim();
+    if (v !== input.value) input.value = v;
+    if (v) doSearch(v);
+  }
+});
+btn.addEventListener("click", () => {
+  const v = input.value.trim();
+  if (v !== input.value) input.value = v;
+  if (v) doSearch(v);
+});
 
 // Restore filter + search state from URL hash (deep-link support).
 // Hooked here so the search input and filter UI both exist.
@@ -4631,6 +4686,14 @@ function _showDidYouMean(input, candidates) {
 async function doSearch(term) {
   if (typeof _clickLog === 'function') _clickLog('doSearch entry:', term);
   clearSearchError();
+  // Defensive trim — call sites already pass trimmed values, but this
+  // function is also reachable via deep-link restore + saved-pill clicks
+  // where the source string may have been written by an older code
+  // path that didn't trim. Normalising here means the comma-split below
+  // can't be confused by a phantom leading space (which would yield an
+  // empty string for the first piece and skip it).
+  term = String(term || '').trim();
+  if (!term) return;
   const names = term.split(',').map(s=>s.trim()).filter(Boolean);
   // Dedup by canonical name AND by resolved CAS. The audit found that
   // a pill's display name can diverge from the canonical name stored
