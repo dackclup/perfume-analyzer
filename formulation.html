@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v244"></script>
-<script src="perfumery_data.js?v=2026-04-29-v244"></script>
-<script src="formulation_data.js?v=2026-04-29-v244"></script>
-<script src="formulation_engine.js?v=2026-04-29-v244"></script>
+<script src="taxonomy.js?v=2026-04-29-v245"></script>
+<script src="perfumery_data.js?v=2026-04-29-v245"></script>
+<script src="formulation_data.js?v=2026-04-29-v245"></script>
+<script src="formulation_engine.js?v=2026-04-29-v245"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1436,12 +1436,19 @@ const formulation = {
     this._scheduleCommit();
   },
   _batching: false,
-  // Batch multiple updatePct calls into a single render (used by applyAllocation)
+  // Batch multiple updatePct calls into a single render (used by applyAllocation,
+  // applyBriefFormula, importFromAnalyzer). A try/finally protects the flag
+  // and the final onChange so a throw inside fn() can't leave _batching=true
+  // (which would silently mask all subsequent onChange calls site-wide).
   batchUpdate(fn) {
     this._batching = true;
-    fn();
-    this._batching = false;
-    this.onChange();
+    try {
+      fn();
+    } finally {
+      this._batching = false;
+      try { this.onChange(); }
+      catch (e) { console.error('[formulation.batchUpdate] onChange threw:', e); }
+    }
   },
   // Fast path: update display in-place without DOM rebuild, debounce expensive work
   _onPctChange(cas) {
@@ -2118,11 +2125,22 @@ function importFromAnalyzer() {
     const items = JSON.parse(raw);
     if (!Array.isArray(items) || !items.length) { alert('No valid materials found in storage.'); return; }
     let added = 0;
-    for (const item of items) {
-      if (!item.cas || typeof item.cas !== 'string') continue;
-      if (!item.name || typeof item.name !== 'string') continue;
-      if (formulation.addMaterial(item.cas, item.name, 10, item)) added++;
-    }
+    // Same single-material-bug shape as the Creative Brief flow before v244:
+    // each addMaterial fired onChange → renderActiveTab, and a throw in the
+    // active tab's renderer would abort the rest of the loop. Wrap in
+    // batchUpdate so per-iteration renders are suppressed, plus a per-item
+    // try/catch so one bad CAS can't take down later imports.
+    formulation.batchUpdate(() => {
+      for (const item of items) {
+        if (!item.cas || typeof item.cas !== 'string') continue;
+        if (!item.name || typeof item.name !== 'string') continue;
+        try {
+          if (formulation.addMaterial(item.cas, item.name, 10, item)) added++;
+        } catch (perItemErr) {
+          console.error('importFromAnalyzer: addMaterial threw for', item.cas, perItemErr);
+        }
+      }
+    });
     if (added) {
       showToast({ message: `Imported ${added} material(s)`, variant: 'success' });
     } else {
@@ -2152,14 +2170,22 @@ function importFromAnalyzer() {
     const items = JSON.parse(raw);
     if (!Array.isArray(items)) return;
     let addedCount = 0;
-    for (const item of items) {
-      if (!item || !item.cas) continue;
-      try {
-        if (formulation.addMaterial(item.cas, item.name, 10, item)) addedCount++;
-      } catch (perItemErr) {
-        console.error('[autoImport] addMaterial threw for ' + item.cas + ':', perItemErr);
+    // Wrap in batchUpdate so addMaterial doesn't fire a render per item.
+    // Auto-import already had a per-item try/catch (so a single throw
+    // didn't abort the rest), but per-iteration renders were still
+    // wasteful — and on first paint with the Compatibility tab active
+    // the partial-formula state could still trigger expensive optimizer
+    // work N times.
+    formulation.batchUpdate(() => {
+      for (const item of items) {
+        if (!item || !item.cas) continue;
+        try {
+          if (formulation.addMaterial(item.cas, item.name, 10, item)) addedCount++;
+        } catch (perItemErr) {
+          console.error('[autoImport] addMaterial threw for ' + item.cas + ':', perItemErr);
+        }
       }
-    }
+    });
     localStorage.removeItem('perfume_formulation_ts');
     // Belt-and-suspenders: re-render so count + body cannot diverge
     // from formulation.materials (the addMaterial → onChange chain
