@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v252"></script>
-<script src="perfumery_data.js?v=2026-04-29-v252"></script>
-<script src="formulation_data.js?v=2026-04-29-v252"></script>
-<script src="formulation_engine.js?v=2026-04-29-v252"></script>
+<script src="taxonomy.js?v=2026-04-29-v253"></script>
+<script src="perfumery_data.js?v=2026-04-29-v253"></script>
+<script src="formulation_data.js?v=2026-04-29-v253"></script>
+<script src="formulation_engine.js?v=2026-04-29-v253"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2469,7 +2469,9 @@ function renderCompatTab() {
   html += '</div>';
 
   // Note Balance — badge reflects BOTH missing tiers and tiers outside
-  // their conventional ideal range (15-30 / 30-50 / 20-40 of classified total)
+  // the typical band for the dominant family (per FAMILY_NOTE_RATIOS in
+  // the data layer, with a wider ±15pp window for skewed families like
+  // citrus/oriental and ±10pp for balanced ones).
   const balClass = balance.balanced ? 'badge-ok' : 'badge-warn';
   let balLabel;
   if (balance.balanced) {
@@ -2488,9 +2490,12 @@ function renderCompatTab() {
     : 'Label-based (fallback — ODT coverage ' + Math.round((balance.odtCoverage || 0) * 100) + '%, VP coverage ' + Math.round((balance.vpCoverage || 0) * 100) + '%)';
   let subtitle = methodLabel;
   if (balance.family && balance.family !== 'default') {
-    subtitle += ' · target ranges for <strong>' + escHtml(balance.family) + '</strong> family';
+    subtitle += ' · typical ranges for <strong>' + escHtml(balance.family) + '</strong> family';
   }
   html += '<p class="panel-desc">' + subtitle + '</p>';
+  // Disclaimer that the bands are guidance, not enforcement — modern
+  // perfumery routinely violates classic pyramid ratios on purpose.
+  html += '<p class="panel-desc" style="font-size:0.78em;margin-top:-2px"><em>Reference bands from classic perfumery (Carles, Edwards, Sell). Modern fragrances often deviate intentionally — treat as guidance, not a rule.</em></p>';
   // Pyramid bars now show the IDEAL RANGE as a faint backdrop band so the
   // user can read 'in range / low / high' at a glance instead of having
   // to compare two numbers (actual % vs the '15-30%' label). Each column
@@ -2534,7 +2539,7 @@ function renderCompatTab() {
     const bandHeight = ((range.max - range.min) * PX_PER_PCT).toFixed(1);
     const barHeight = Math.max(pct * PX_PER_PCT, 4).toFixed(1);
     html += '<div style="position:relative;height:60px;width:50px;margin:0 auto">';
-    html += '<div style="position:absolute;left:0;right:0;bottom:' + bandBottom + 'px;height:' + bandHeight + 'px;background:rgba(34,197,94,0.16);border-top:1px dashed rgba(34,197,94,0.5);border-bottom:1px dashed rgba(34,197,94,0.5);border-radius:2px" title="ideal range ' + ideal + '"></div>';
+    html += '<div style="position:absolute;left:0;right:0;bottom:' + bandBottom + 'px;height:' + bandHeight + 'px;background:rgba(34,197,94,0.16);border-top:1px dashed rgba(34,197,94,0.5);border-bottom:1px dashed rgba(34,197,94,0.5);border-radius:2px" title="typical range ' + ideal + ' for this family"></div>';
     html += '<div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:40px;height:' + barHeight + 'px;background:' + barColor + ';border-radius:var(--radius-sm) 3px 0 0;opacity:0.95"></div>';
     html += '</div>';
     html += '<div style="font-size:0.85em;font-weight:600;margin-top:2px">' + val + '%</div>';
