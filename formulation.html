@@ -515,6 +515,21 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
   .wheel-seg.active-seg { animation: none; }
 }
 
+/* Legend pills under the wheel — clickable, mirror slice click. The pill
+   uses inline-set background/colour so transitions only animate scale +
+   translate to avoid fighting the per-pill colour palette. */
+.wheel-legend-pill {
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out;
+}
+.wheel-legend-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.wheel-legend-pill:focus-visible {
+  outline: 2px solid var(--accent, #4a90e2);
+  outline-offset: 2px;
+}
+
 /* Analysis card hover + shadow */
 .analysis-card {
   transition:box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
@@ -929,10 +944,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v225"></script>
-<script src="perfumery_data.js?v=2026-04-29-v225"></script>
-<script src="formulation_data.js?v=2026-04-29-v225"></script>
-<script src="formulation_engine.js?v=2026-04-29-v225"></script>
+<script src="taxonomy.js?v=2026-04-29-v226"></script>
+<script src="perfumery_data.js?v=2026-04-29-v226"></script>
+<script src="formulation_data.js?v=2026-04-29-v226"></script>
+<script src="formulation_engine.js?v=2026-04-29-v226"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -4602,22 +4617,28 @@ function renderWheelTab() {
   // Legend pills — one per subfamily, showing total catalogue count and (when
   // the user has materials there) the in-formula count as well. Pills with
   // formula materials get a denser background tint + bolder text so they
-  // stand out from the rest of the row.
+  // stand out from the rest of the row. Clicking a pill is equivalent to
+  // clicking the matching wheel slice — duplicates the affordance for users
+  // who scan the legend list more naturally than the radial layout.
   let legend = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;justify-content:center">';
   for (const s of segments) {
     const dbCount = dbBySeg[s.id] || 0;
     const inFormulaCount = inFormulaBySeg[s.id] || 0;
     const active = inFormulaCount > 0;
+    const isSelected = _wheelSelectedSegId === s.id;
     // Denser tint (~33% alpha) when the slice carries formula materials,
     // light tint (~20% alpha) otherwise. `+ 'XX'` appends an alpha hex.
     const pillBg = s.color + (active ? '55' : '22');
     const pillFg = s.color;
     const transitionalStyle = s.transitional ? ';font-style:italic' : '';
     const weightStyle = active ? ';font-weight:600' : '';
+    // Outline the currently-filtered pill so users can read the active
+    // selection from the legend without looking back at the wheel.
+    const selectedStyle = isSelected ? ';outline:2px solid ' + s.color + ';outline-offset:1px' : '';
     const countText = active
       ? '<strong style="color:#1a1a1a">' + inFormulaCount + '</strong>/' + dbCount
       : dbCount;
-    legend += '<span class="badge" style="background:' + pillBg + ';color:' + pillFg + ';font-size:0.72em' + transitionalStyle + weightStyle + '">' + prettyLabel(s.id) + ' (' + countText + ')</span>';
+    legend += '<button type="button" class="badge wheel-legend-pill" data-seg="' + s.id + '" aria-pressed="' + isSelected + '" style="background:' + pillBg + ';color:' + pillFg + ';font-size:0.72em;border:none;cursor:pointer' + transitionalStyle + weightStyle + selectedStyle + '">' + prettyLabel(s.id) + ' (' + countText + ')</button>';
   }
   legend += '</div>';
 
@@ -4655,6 +4676,12 @@ function renderWheelTab() {
 
   const clearBtn = document.getElementById('wheelClearBtn');
   if (clearBtn) clearBtn.addEventListener('click', clearWheelFilter);
+
+  // Legend pills mirror the wheel-slice click behaviour. Toggle-off works the
+  // same way (clicking the already-selected pill clears the filter).
+  el.querySelectorAll('.wheel-legend-pill').forEach(pill => {
+    pill.addEventListener('click', () => filterByWheelSegment(pill.dataset.seg));
+  });
 }
 
 function clearWheelFilter() {
