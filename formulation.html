@@ -944,10 +944,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v227"></script>
-<script src="perfumery_data.js?v=2026-04-29-v227"></script>
-<script src="formulation_data.js?v=2026-04-29-v227"></script>
-<script src="formulation_engine.js?v=2026-04-29-v227"></script>
+<script src="taxonomy.js?v=2026-04-29-v228"></script>
+<script src="perfumery_data.js?v=2026-04-29-v228"></script>
+<script src="formulation_data.js?v=2026-04-29-v228"></script>
+<script src="formulation_engine.js?v=2026-04-29-v228"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -4734,12 +4734,17 @@ function filterByWheelSegment(segId /*, evt */) {
 // unless the user has pressed 'Show all'. The previous renderer stopped
 // the iteration at 15 silently — users with a 60-material match set never
 // knew there were 45 more.
+//
+// In-formula materials: included in the result list and marked 'in formula'
+// (Add button disabled). The previous renderer skipped them, so the count
+// disagreed with the legend pill total. Showing them lets the user spot
+// duplicates and reach the material via the same surface.
 function renderWheelFilterResults(segId) {
   const el = document.getElementById('wheelFilterResults');
   if (!el) return;
+  const inFormulaCas = new Set(formulation.materials.map(m => m.cas));
   const allMatches = [];
   for (const [cas, e] of Object.entries(DB)) {
-    if (formulation.materials.find(m => m.cas === cas)) continue;
     const cls = e.classification || {};
     const fams = getMaterialFamilies({
       odor_type: e.odor?.type,
@@ -4748,9 +4753,15 @@ function renderWheelFilterResults(segId) {
       facets: cls.facets || [],
     });
     if (fams.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === segId)) {
-      allMatches.push(e);
+      allMatches.push({ ...e, _inFormula: inFormulaCas.has(cas) });
     }
   }
+  // Sort: in-formula items first (so they're visible above the cap), then
+  // alphabetical by name. The previous renderer used DB-iteration order.
+  allMatches.sort((a, b) => {
+    if (a._inFormula !== b._inFormula) return a._inFormula ? -1 : 1;
+    return (a.name || '').localeCompare(b.name || '');
+  });
   const total = allMatches.length;
   const visible = _wheelShowAllResults ? allMatches : allMatches.slice(0, WHEEL_RESULTS_INITIAL);
   const overflow = total - visible.length;
@@ -4766,13 +4777,23 @@ function renderWheelFilterResults(segId) {
   html += '</div>';
 
   if (!total) {
-    html += '<p class="panel-desc">No catalogue materials match this slice (or all matches are already in your formula).</p>';
+    html += '<p class="panel-desc">No catalogue materials match this slice.</p>';
   } else {
-    html += '<table class="data-table"><thead><tr><th>Material</th><th>Note</th><th>Odor</th><th></th></tr></thead><tbody>';
+    html += '<table class="data-table"><thead><tr><th>Material</th><th>CAS</th><th>Note</th><th>Odor</th><th></th></tr></thead><tbody>';
     for (const m of visible) {
-      html += '<tr><td>' + escHtml(m.name) + '</td><td>' + escHtml(m.note || '-') + '</td>';
+      html += '<tr' + (m._inFormula ? ' style="opacity:0.7"' : '') + '>';
+      html += '<td>' + escHtml(m.name);
+      if (m._inFormula) html += ' <span class="badge badge-ok" style="font-size:0.65em;margin-left:4px">in formula</span>';
+      html += '</td>';
+      html += '<td style="font-family:var(--mono,monospace);font-size:0.78em;color:var(--text2)">' + escHtml(m.cas || '-') + '</td>';
+      html += '<td>' + escHtml(m.note || '-') + '</td>';
       html += '<td>' + escHtml(m.odor?.type || '-') + '</td>';
-      html += '<td><button class="btn btn-sm btn-primary" onclick="addFromDB(\'' + escHtml(m.cas) + '\')">+ Add</button></td></tr>';
+      if (m._inFormula) {
+        html += '<td><button class="btn btn-sm" type="button" disabled title="Already in your formula">Added</button></td>';
+      } else {
+        html += '<td><button class="btn btn-sm btn-primary" type="button" onclick="addFromDB(\'' + escHtml(m.cas) + '\')">+ Add</button></td>';
+      }
+      html += '</tr>';
     }
     html += '</tbody></table>';
     if (overflow > 0) {
