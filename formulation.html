@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v256"></script>
-<script src="perfumery_data.js?v=2026-04-29-v256"></script>
-<script src="formulation_data.js?v=2026-04-29-v256"></script>
-<script src="formulation_engine.js?v=2026-04-29-v256"></script>
+<script src="taxonomy.js?v=2026-04-29-v257"></script>
+<script src="perfumery_data.js?v=2026-04-29-v257"></script>
+<script src="formulation_data.js?v=2026-04-29-v257"></script>
+<script src="formulation_engine.js?v=2026-04-29-v257"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2527,9 +2527,17 @@ function renderCompatTab() {
       let icon = '';
       if (p.discord > 0) { cls = 'badge-danger'; icon = ' ⚠'; }
       else if (p.connected) { cls = 'badge-ok'; icon = ' ★'; }
+      else if (p.familyBonus != null && p.familyBonus >= 0.15) {
+        // 'classical pairing' from the family-compatibility matrix —
+        // the materials don't share a graph edge but their families
+        // are a known harmony (rose+oud, citrus+floral, …).
+        cls = 'badge-ok'; icon = ' ◆';
+      }
       else if (p.descriptorSim != null && p.descriptorSim >= 0.4) { cls = 'badge-warn'; icon = ' ~' + Math.round(p.descriptorSim * 100) + '%'; }
       else { cls = 'badge-danger'; icon = ''; }
-      const title = 'pair score ' + (p.pairScore || 0) + (p.discord > 0 ? ', discord ' + p.discord : '');
+      const title = 'pair score ' + (p.pairScore || 0)
+        + (p.discord > 0 ? ', discord ' + p.discord : '')
+        + (p.familyBonus > 0 ? ', family bonus +' + p.familyBonus : '');
       html += '<span class="badge ' + cls + '" style="font-size:0.72em" title="' + escHtml(title) + '">' + escHtml(nA) + ' + ' + escHtml(nB) + icon + '</span>';
     }
     html += '</div>';
