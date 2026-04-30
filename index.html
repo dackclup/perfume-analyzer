@@ -6144,13 +6144,23 @@ window.removeFromCompare = function (cas) {
   _persistCompareCart();
   if (typeof renderResults === 'function') renderResults();
   _updateCompareCta();
-  // Re-open the modal so the user keeps seeing the comparison they
-  // were working on; close it if there's no pair left.
+  // Drop below the 'comparable' threshold → close the modal cleanly.
+  // Otherwise keep the modal open and rebuild its contents IN PLACE so
+  // the user sees the smaller set without flicker. Previously we did
+  // closeCompareModal() + openCompareModal() which toggled the modal
+  // host's hidden attribute, removing/restoring document.body.modal-open
+  // in the process — visible flash on slow-paint mobile devices and a
+  // brief focus-trap reset that screen-readers re-announced. The
+  // in-place rebuild avoids both.
   const remaining = (typeof results !== 'undefined' && Array.isArray(results))
     ? results.filter(r => r?.record?.identifiers?.cas).length
     : 0;
-  if (remaining < 2) closeCompareModal();
-  else openCompareModal();
+  if (remaining < 2) { closeCompareModal(); return; }
+  // Modal already open — rebuild only the table host + title to reflect
+  // the new column set. openCompareModal handles both 'open from
+  // closed' and 'rebuild while open' since modal.removeAttribute is a
+  // no-op when the attribute isn't there.
+  openCompareModal();
 };
 // Edwards Fragrance Wheel — interactive SVG mirror of the Family
 // drawer. Two-ring layout following Michael Edwards' published
@@ -6561,6 +6571,21 @@ function _csvEscape(value) {
   if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
   return s;
 }
+// CAS numbers like '103-36-6' look like dates to Excel — opening the
+// CSV converts them to a date serial silently. The widely-used
+// workaround is to wrap the cell value in an Excel formula literal:
+//   ="103-36-6"
+// which Excel imports as the literal string '103-36-6' in a Text
+// cell. Google Sheets, Numbers, LibreOffice all handle this the same
+// way (they strip the leading = and quotes; the cell ends up as text).
+// We keep the inner double-quotes escaped through _csvEscape so a
+// hostile CAS containing quotes can't break out of the field.
+function _csvCAS(cas) {
+  if (!cas) return '';
+  // Inner string is wrapped in literal quotes per the Excel idiom; the
+  // outer _csvEscape adds CSV-level quoting + doubles any inner ".
+  return _csvEscape('="' + String(cas) + '"');
+}
 window.exportCSV = function () {
   if (!results.length) {
     try { showToast({ message: 'No materials to export.', variant: 'info', timeout: 2000 }); } catch (e) {}
@@ -6574,22 +6599,24 @@ window.exportCSV = function () {
     if (!s) continue;
     const sup = getSupplierInfo(s.cas) || {};
     const row = [
-      s.name,
-      s.cas,
-      TYPE_LABELS[s.type] || s.type,
-      SOURCE_LABELS[s.source] || s.source,
-      s.functions.map(f => FUNCTION_LABELS[f] || f).join('; '),
-      s.uses.map(u => USE_LABELS[u] || u).join('; '),
-      s.note,
-      s.tenacity,
-      s.families.join('; '),
-      s.facets.join('; '),
-      s.regulatory.map(rg => REGULATORY_LABELS[rg] || rg).join('; '),
-      sup.brand || '',
-      sup.supplier || '',
-      sup.year || ''
+      _csvEscape(s.name),
+      // CAS uses the Excel-formula-literal idiom (="…") — see _csvCAS.
+      // All other fields use plain CSV escaping.
+      _csvCAS(s.cas),
+      _csvEscape(TYPE_LABELS[s.type] || s.type),
+      _csvEscape(SOURCE_LABELS[s.source] || s.source),
+      _csvEscape(s.functions.map(f => FUNCTION_LABELS[f] || f).join('; ')),
+      _csvEscape(s.uses.map(u => USE_LABELS[u] || u).join('; ')),
+      _csvEscape(s.note),
+      _csvEscape(s.tenacity),
+      _csvEscape(s.families.join('; ')),
+      _csvEscape(s.facets.join('; ')),
+      _csvEscape(s.regulatory.map(rg => REGULATORY_LABELS[rg] || rg).join('; ')),
+      _csvEscape(sup.brand || ''),
+      _csvEscape(sup.supplier || ''),
+      _csvEscape(sup.year || ''),
     ];
-    lines.push(row.map(_csvEscape).join(','));
+    lines.push(row.join(','));
   }
   const csv = '﻿' + lines.join('\r\n'); // BOM so Excel reads UTF-8
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -7329,49 +7356,92 @@ function clearAll() {
 // ===== Send to Formulator =====
 function sendToFormulator() {
   const found = results.filter(r => r.found);
-  try {
-    if (found.length) {
-      const payload = found.map(mat => {
-        const src = mat.record;
-        const fc = src.identifiers?.cas ? FILTER_CACHE.get(src.identifiers.cas) : null;
-        return {
-          cas: src.identifiers.cas || null,
-          name: src.names.canonical,
-          smiles: src.identifiers.canonical_smiles || null,
-          molecular_weight: src.properties.molecular_weight || null,
-          xlogp: src.properties.xlogp || null,
-          tpsa: src.properties.tpsa || null,
-          hbond_donor: src.properties.hbond_donor || null,
-          hbond_acceptor: src.properties.hbond_acceptor || null,
-          note: src.perfumery.note || null,
-          odor_type: src.perfumery.odor_type || null,
-          odor_strength: src.perfumery.odor_strength || null,
-          odor_description: src.perfumery.odor_description || null,
-          tenacity: src.perfumery.tenacity || null,
-          tenacity_hours: src.perfumery.tenacity_hours || null,
-          blends_with: src.perfumery.blends_with || [],
-          ifra_guideline: src.safety.ifra_guideline || null,
-          usage_levels: src.safety.usage_levels || null,
-          primaryFamilies: fc ? [...(fc.primaryFamilies || [])] : (src.classification?.primaryFamilies || []),
-          secondaryFamilies: fc ? [...(fc.secondaryFamilies || [])] : (src.classification?.secondaryFamilies || []),
-          facets: fc ? [...(fc.facets || [])] : (src.classification?.facets || []),
-          functions: fc ? [...(fc.functions || [])] : (src.classification?.functions || []),
-          regulatory: fc ? [...(fc.regulatory || [])] : (src.classification?.regulatory || []),
-          // Phase 5 (simplified Obsidian export) — the remaining 3 filter
-          // axes so formulation.html can render full 9-axis membership
-          // without re-deriving anything.
-          uses:         fc ? [...(fc.uses || [])] : (src.classification?.uses         || []),
-          materialType: fc ? (fc.materialType || null) : (src.classification?.material_type || null),
-          source:       fc ? (fc.source || null)       : (src.classification?.source        || null),
-        };
-      });
-      localStorage.setItem('perfume_formulation_materials', JSON.stringify(payload));
+  // Why localStorage and not a URL query string:
+  //   A 10-material payload with full classification + perfumery +
+  //   safety axes serialises to ~25-40 KB. Browser URL limits vary
+  //   (Chrome ~32 KB, Edge 2 KB practical, Safari 80 KB) and any
+  //   intermediate proxy / extension that mirrors the URL into
+  //   history can truncate or refuse it. localStorage has no path
+  //   length involved, persists across the new-tab boundary, and is
+  //   already the channel formulation.html's autoImport reads from.
+  //
+  //   The handshake:
+  //     index.html → setItem('perfume_formulation_materials', JSON)
+  //                  setItem('perfume_formulation_ts', Date.now())
+  //     formulation.html (autoImport) → reads both, accepts only when
+  //                  ts is within 30 s, then removes ts so a second
+  //                  formulation.html tab opened later doesn't double-
+  //                  import the same payload.
+  let writeOk = false;
+  let writeErr = null;
+  if (found.length) {
+    const payload = found.map(mat => {
+      const src = mat.record;
+      const fc = src.identifiers?.cas ? FILTER_CACHE.get(src.identifiers.cas) : null;
+      return {
+        cas: src.identifiers.cas || null,
+        name: src.names.canonical,
+        smiles: src.identifiers.canonical_smiles || null,
+        molecular_weight: src.properties.molecular_weight || null,
+        xlogp: src.properties.xlogp || null,
+        tpsa: src.properties.tpsa || null,
+        hbond_donor: src.properties.hbond_donor || null,
+        hbond_acceptor: src.properties.hbond_acceptor || null,
+        note: src.perfumery.note || null,
+        odor_type: src.perfumery.odor_type || null,
+        odor_strength: src.perfumery.odor_strength || null,
+        odor_description: src.perfumery.odor_description || null,
+        tenacity: src.perfumery.tenacity || null,
+        tenacity_hours: src.perfumery.tenacity_hours || null,
+        blends_with: src.perfumery.blends_with || [],
+        ifra_guideline: src.safety.ifra_guideline || null,
+        usage_levels: src.safety.usage_levels || null,
+        primaryFamilies: fc ? [...(fc.primaryFamilies || [])] : (src.classification?.primaryFamilies || []),
+        secondaryFamilies: fc ? [...(fc.secondaryFamilies || [])] : (src.classification?.secondaryFamilies || []),
+        facets: fc ? [...(fc.facets || [])] : (src.classification?.facets || []),
+        functions: fc ? [...(fc.functions || [])] : (src.classification?.functions || []),
+        regulatory: fc ? [...(fc.regulatory || [])] : (src.classification?.regulatory || []),
+        // Phase 5 (simplified Obsidian export) — the remaining 3 filter
+        // axes so formulation.html can render full 9-axis membership
+        // without re-deriving anything.
+        uses:         fc ? [...(fc.uses || [])] : (src.classification?.uses         || []),
+        materialType: fc ? (fc.materialType || null) : (src.classification?.material_type || null),
+        source:       fc ? (fc.source || null)       : (src.classification?.source        || null),
+      };
+    });
+    try {
+      const json = JSON.stringify(payload);
+      // Defensive check — localStorage quota is typically 5-10 MB but
+      // the handoff is generally well under 1 MB. If the payload is
+      // unexpectedly huge surface a soft warning so the user knows the
+      // formulation tab will load with a partial set rather than
+      // silently failing.
+      if (json.length > 4 * 1024 * 1024) {
+        try { showToast({ message: 'Payload over 4 MB — some materials may be dropped if storage is tight.', variant: 'warn', timeout: 4000 }); } catch (e) {}
+      }
+      localStorage.setItem('perfume_formulation_materials', json);
       localStorage.setItem('perfume_formulation_ts', Date.now().toString());
+      writeOk = true;
+    } catch (e) {
+      // QuotaExceededError, SecurityError (private mode), DOMException
+      // when localStorage is disabled by the user. Open the new tab
+      // anyway with an empty workspace and warn so they can re-pick.
+      writeErr = e;
+      console.error('sendToFormulator: localStorage write failed:', e);
+      try { showToast({ message: 'Could not hand materials to Formulator — storage blocked or full. Opening blank workspace.', variant: 'danger', timeout: 5000 }); } catch (_) {}
     }
+  }
+  // Friendly success feedback so the user can see the handoff worked
+  // even if focus jumped to the new tab.
+  if (writeOk) {
+    try { showToast({ message: 'Sent ' + found.length + ' material' + (found.length === 1 ? '' : 's') + ' to Formulator.', variant: 'success', timeout: 2500 }); } catch (_) {}
+  }
+  // Always open the new tab — even on write failure the user can
+  // import manually from the formulator.
+  try {
     window.open('formulation.html', '_blank');
   } catch (e) {
-    console.error('sendToFormulator:', e);
-    window.open('formulation.html', '_blank');
+    console.error('sendToFormulator: window.open failed:', e);
   }
 }
 
