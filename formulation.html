@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v267"></script>
-<script src="perfumery_data.js?v=2026-04-29-v267"></script>
-<script src="formulation_data.js?v=2026-04-29-v267"></script>
-<script src="formulation_engine.js?v=2026-04-29-v267"></script>
+<script src="taxonomy.js?v=2026-04-29-v268"></script>
+<script src="perfumery_data.js?v=2026-04-29-v268"></script>
+<script src="formulation_data.js?v=2026-04-29-v268"></script>
+<script src="formulation_engine.js?v=2026-04-29-v268"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2800,15 +2800,15 @@ function _renderCompatTabImpl(el) {
   html += '<div class="analysis-card" id="compat-allocation"><h4>Suggested Allocation</h4>';
   html += '<p class="panel-desc">Materials use Dirichlet weights by note tier and inverse odor strength. Carriers rebalance by IFRA category (locked rows are preserved).</p>';
 
-  // Inline action row — replaces the disconnected sidebar Smart Allocate
-  // button as the primary path. Three buttons match the three modes the
-  // engine already supports (suggested / optimized / smart). The previous
-  // "Click 'Apply' to use" caption referred to a button that didn't exist
-  // anywhere on the card, leaving users stranded.
+  // Inline action row — Smart Allocate runs the chained
+  // Suggested → Optimized flow which is the recommended path for
+  // most users. The two single-stage buttons (Apply Suggested /
+  // Apply Optimized) used to live here as well but were removed
+  // by user request — the table still shows the per-row Suggested
+  // / Optimized columns + Δ delta arrow so the user can compare
+  // before committing.
   html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;margin-bottom:6px">';
-  html += '<button class="btn btn-sm btn-primary" id="compatApplySuggested" type="button" title="Use the Dirichlet-baseline percentages">Apply Suggested</button>';
-  html += '<button class="btn btn-sm btn-primary" id="compatApplyOptimized" type="button" title="Use the gradient/hill-climb refined percentages">Apply Optimized</button>';
-  html += '<button class="btn btn-sm" id="compatApplySmart" type="button" title="Run Suggested → Optimized in sequence">Smart Allocate</button>';
+  html += '<button class="btn btn-sm btn-primary" id="compatApplySmart" type="button" title="Run Suggested → Optimized in sequence">Smart Allocate</button>';
   html += '</div>';
 
   // Helper: render a single allocation row with delta arrow + colour. The
@@ -2955,15 +2955,10 @@ function _renderCompatTabImpl(el) {
     });
   });
 
-  // Inline allocation buttons — wire to the existing applyAllocation()
-  // engine. The three modes are exactly the ones the engine already
-  // supports; a previous version of this card mentioned 'Click Apply' but
-  // had no button, forcing users up to the disconnected sidebar control.
-  const applySug = document.getElementById('compatApplySuggested');
-  const applyOpt = document.getElementById('compatApplyOptimized');
+  // Smart Allocate — chained Suggested → Optimized via applyAllocation().
+  // Apply Suggested / Apply Optimized used to live here too but were
+  // removed by user request; Smart Allocate is the recommended path.
   const applySmart = document.getElementById('compatApplySmart');
-  if (applySug) applySug.addEventListener('click', () => applyAllocation('suggested'));
-  if (applyOpt) applyOpt.addEventListener('click', () => applyAllocation('optimized'));
   if (applySmart) applySmart.addEventListener('click', () => applyAllocation('smart'));
 
   // Pair-list toggle — flips between compact (top 6 + discords) and full
