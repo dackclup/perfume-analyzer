@@ -956,10 +956,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v232"></script>
-<script src="perfumery_data.js?v=2026-04-29-v232"></script>
-<script src="formulation_data.js?v=2026-04-29-v232"></script>
-<script src="formulation_engine.js?v=2026-04-29-v232"></script>
+<script src="taxonomy.js?v=2026-04-29-v233"></script>
+<script src="perfumery_data.js?v=2026-04-29-v233"></script>
+<script src="formulation_data.js?v=2026-04-29-v233"></script>
+<script src="formulation_engine.js?v=2026-04-29-v233"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -4667,15 +4667,14 @@ function renderWheelTab() {
     // Outline the currently-filtered pill so users can read the active
     // selection from the legend without looking back at the wheel.
     const selectedStyle = isSelected ? ';outline:2px solid ' + s.color + ';outline-offset:1px' : '';
-    // Inline the in-formula count in the same weight as the surrounding
-    // pill text — switching to <strong> introduced a perceptible word-
-    // spacing gap on Android Chrome (browser defaults bold to 700 even
-    // inside a 600 parent, and the cross-weight kerning showed up as
-    // '( 7 /149)' instead of '(7/149)'). A span with explicit
-    // font-weight inherit + dark colour fixes the spacing without losing
-    // the visual emphasis.
+    // Inline the in-formula count in the same colour + weight as the
+    // surrounding pill text. The previous version forced #1a1a1a so the
+    // count would 'pop' against the coloured pill, but on a coloured
+    // background it just looked like a stray black inkblot. Inherit
+    // colour and weight so the only emphasis is positional (the
+    // in-formula number always comes first).
     const countText = active
-      ? '<span style="color:#1a1a1a;font-weight:inherit">' + inFormulaCount + '</span>/' + dbCount
+      ? inFormulaCount + '/' + dbCount
       : dbCount;
     legend += '<button type="button" class="badge wheel-legend-pill" data-seg="' + s.id + '" aria-pressed="' + isSelected + '" style="background:' + pillBg + ';color:' + pillFg + ';font-size:0.72em;border:none;cursor:pointer' + transitionalStyle + weightStyle + selectedStyle + '">' + prettyLabel(s.id) + ' (' + countText + ')</button>';
   }
