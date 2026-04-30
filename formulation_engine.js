@@ -1569,36 +1569,69 @@ function computeFormulaFitness(materials, opts) {
     pyramid = Math.max(0, Math.min(100, pyramid));
   }
 
-  // 3. IFRA compliance (0–100) — % of materials compliant for the category
+  // 3. IFRA — converted to a HARD MULTIPLICATIVE GATE (Round 3).
+  //    Previously a 15 %-weighted soft term, but IFRA caps are already
+  //    clamped per-iteration in optimizeAllocation, so violators are
+  //    rare in normal operation. When they DO appear (banned material
+  //    present, or an unrecoverable over-cap survives the projection)
+  //    the formula must read as 'fail', not '−5 points'. Two tiers:
+  //      banned material present  → ×0.30  (severe)
+  //      over-cap, recoverable    → ×0.75  (caution)
+  //      compliant                → ×1.00
+  let ifraGate = 1.0;
+  let bannedPresent = false, overCapPresent = false;
   let ifra = 100;
   if (opts.catId && opts.fragPct) {
     const comp = checkIFRACompliance(materials, opts.catId, opts.fragPct);
+    bannedPresent = comp.some(c => c.banStatus === 'banned');
+    overCapPresent = comp.some(c => c.compliant === false && c.banStatus !== 'banned');
+    if (bannedPresent) ifraGate = 0.30;
+    else if (overCapPresent) ifraGate = 0.75;
     const total = comp.length || 1;
     const violators = comp.filter(c => c.compliant === false || c.banStatus === 'banned').length;
     ifra = Math.max(0, Math.min(100, ((total - violators) / total) * 100));
   }
 
-  // 4. Discord-free (0–100) — 100 if no discord, else 100 − 100×max severity
-  let discordFree = 100;
+  // 4. Discord — STRONGER penalty (Round 3). Was 10 %-weighted on a
+  //    `100 − 100 × maxSev` scale, so a severity-0.7 discord cost only
+  //    7 points off the final score and the optimizer happily ignored
+  //    it while chasing harmony/pyramid. Now each discord subtracts
+  //    `severity × 25` points (so a sev-0.7 hit costs 17.5; sev-0.5
+  //    medium discord costs 12.5), and multiple discords stack up to
+  //    a cap of 60 points so a discord-laden formula cannot top 40 %.
+  let discordPenalty = 0;
   if (harm.discords && harm.discords.length) {
-    const maxSev = harm.discords.reduce((m, d) => Math.max(m, d.severity || 0), 0);
-    discordFree = Math.max(0, Math.min(100, 100 - maxSev * 100));
+    for (const d of harm.discords) {
+      discordPenalty += (d.severity || 0) * 25;
+    }
+    discordPenalty = Math.min(60, discordPenalty);
   }
+  const discordFree = Math.max(0, Math.min(100, 100 - discordPenalty));
 
-  const score = Math.round(
-    0.40 * harmony +
-    0.35 * pyramid +
-    0.15 * ifra +
-    0.10 * discordFree
-  );
+  // Round 3 weighting: IFRA out of the soft sum (it's the gate now);
+  // harmony + pyramid carry the structural objective; discord is a
+  // raw subtraction, not a weighted average. This puts harmony +
+  // pyramid at 100 % weight which is closer to what the user-facing
+  // verdict reflects.
+  const baseScore = 0.55 * harmony + 0.45 * pyramid;
+  const score = Math.round(Math.max(0, Math.min(100, (baseScore - discordPenalty) * ifraGate)));
 
   return {
     score: Math.max(0, Math.min(100, score)),
     harmony: Math.round(harmony),
     pyramid: Math.round(pyramid),
     ifra: Math.round(ifra),
+    ifraGate: roundN(ifraGate, 2),
+    bannedPresent,
+    overCapPresent,
     discordFree: Math.round(discordFree),
-    breakdown: { harmWeight: 0.40, pyrWeight: 0.35, ifraWeight: 0.15, discWeight: 0.10 },
+    discordPenalty: roundN(discordPenalty, 1),
+    breakdown: {
+      // Round 3 weighting: harmony + pyramid sum to 1.0; IFRA is a
+      // multiplicative gate; discord is a raw point subtraction.
+      harmWeight: 0.55, pyrWeight: 0.45,
+      ifraGate, discordPenalty,
+    },
   };
 }
 
