@@ -670,6 +670,26 @@ const FAMILY_COMPATIBILITY = [
   { a: 'mossy_woods',  b: 'aromatic', bonus: 0.15 },
 ];
 
+// Audit #4: family-accord triangles. The existing graph-based triangle
+// bonus required all 3 pairs to share an explicit blends_with edge, which
+// the sparse curated graph almost never satisfies — so the bonus was a
+// no-op in practice. This table encodes classical 3-family ACCORDS that
+// are universally understood to harmonise even without per-CAS edges:
+//   Cologne          = citrus + floral + musk
+//   Fougère (classic) = aromatic + woody + mossy
+//   Chypre           = citrus + floral + mossy/woody (oakmoss + bergamot + rose)
+//   Oriental         = amber + woody + spicy
+//   Gourmand         = gourmand + amber + spicy
+// Detection: a single material per family slot is enough — the triangle
+// fires when the formula contains AT LEAST one material in each family.
+const FAMILY_ACCORD_TRIANGLES = [
+  { id: 'cologne',  fams: ['citrus', 'floral', 'musk'] },
+  { id: 'fougere',  fams: ['aromatic', 'woody', 'mossy'] },
+  { id: 'chypre',   fams: ['citrus', 'floral', 'mossy'] },
+  { id: 'oriental', fams: ['amber', 'woody', 'spicy'] },
+  { id: 'gourmand', fams: ['gourmand', 'amber', 'spicy'] },
+];
+
 // Symmetric lookup of the matrix above. Returns the maximum bonus when any
 // family in A pairs with any family in B (multi-family materials get the
 // best of their cross-products, not the sum — to avoid double-counting).
@@ -790,6 +810,15 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
     return RADAR_AXES.map(a => w[a] || 0);
   });
   const familiesList = materials.map(m => getMaterialFamilies(m.data || {}));
+  // Audit #9: per-material note tier — used to exempt 'same-family but
+  // different-tier' pairs from the U-curve monotony penalty (Bergamot top
+  // + Vetiver base is a classical layering technique, not a redundant
+  // copy). classifyNoteTier returns ['top','mid'], ['base'], etc. We
+  // collapse to a Set of tier tokens for cheap O(1) overlap testing.
+  const tierSetList = materials.map(m => {
+    const ts = classifyNoteTier(m.data?.note || '');
+    return new Set(ts);
+  });
 
   // Olfactory Value (OV) per material = pct / ODT. This is what the nose
   // actually weighs when comparing materials. 1% of damascone (ODT ~0.1
@@ -880,10 +909,32 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
       // similarity rewarded carbon-copy materials (sim≈1) over genuine
       // complements (sim≈0.5), which inverts the perfumery rule of thumb
       // — two identical citruses harmonize less than citrus + floral.
-      const familyBonus = fastMode ? 0 : detectFamilyCompatibility(familiesList[i], familiesList[j]);
+      //
+      // Audit #10: family bonus is now a cheap matrix lookup, no longer
+      // skipped in fastMode. Optimizer's hill climb needs to see this
+      // signal in its gradient, otherwise it converges to compositions
+      // that score worse on the user-facing render than its own metric.
+      const familyBonus = detectFamilyCompatibility(familiesList[i], familiesList[j]);
+      // Audit #9: same-family BUT different-tier pairs (Bergamot top +
+      // Vetiver base) shouldn't be hit by the U-curve monotony penalty.
+      // The pair shares descriptors so the cosine sim is high, but the
+      // structural role is different — that IS harmony, not redundancy.
+      // Detect: (a) cosine similarity ≥ 0.7, AND (b) the two materials
+      // occupy disjoint note-tier sets. When both hold, replace
+      // uCurve(sim) with a flat 0.85 (treat as a graph-equivalent
+      // 'good pair' minus a small layering uncertainty).
+      const aTiers = tierSetList[i], bTiers = tierSetList[j];
+      let tiersDisjoint = false;
+      if (aTiers.size && bTiers.size) {
+        let overlap = false;
+        for (const t of aTiers) { if (bTiers.has(t)) { overlap = true; break; } }
+        tiersDisjoint = !overlap;
+      }
       let pairScore;
       if (connected) {
         pairScore = 1.0;
+      } else if (sim >= 0.7 && tiersDisjoint) {
+        pairScore = Math.min(1.0, 0.85 + familyBonus);
       } else {
         const baseFromSim = uCurveComplementarity(sim);
         pairScore = Math.min(1.0, baseFromSim + familyBonus);
@@ -935,7 +986,26 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
       }
     }
   }
-  const triangleBonus = totalTriangles > 0 ? (fullTriangles / totalTriangles) * 5 : 0; // up to +5
+  const graphTriangleBonus = totalTriangles > 0 ? (fullTriangles / totalTriangles) * 5 : 0; // up to +5
+
+  // Audit #4: family-accord triangle bonus. Walks every classical accord
+  // and checks whether the formula has at least one material in each of
+  // the three slots (multi-family materials count for any of their
+  // listed families). Each fired accord contributes +2; capped at +5
+  // total so it can't overwhelm the pairwise signal.
+  const familyTriangles = [];
+  for (const accord of FAMILY_ACCORD_TRIANGLES) {
+    const filled = accord.fams.every(f =>
+      familiesList.some(fams => fams && fams.some(famX => String(famX).toLowerCase().trim() === f))
+    );
+    if (filled) familyTriangles.push(accord.id);
+  }
+  const accordTriangleBonus = Math.min(5, familyTriangles.length * 2);
+  // Combine — keep total triangleBonus capped at +5 so a formula firing
+  // both graph-based AND family-accord triangles doesn't get an
+  // unbounded bump. We take the max instead of adding so the user
+  // can't game the metric by tagging extra families.
+  const triangleBonus = Math.max(graphTriangleBonus, accordTriangleBonus);
 
   // Note-tier diversity — classical perfumery prefers top+middle+base coverage.
   // Caller may pass `opts.tierContext` from analyzeNoteBalancePerception so
@@ -981,12 +1051,26 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
   // a 0.2pp formula change to flip the score by 15 points. Now smooth
   // linear interpolation from 60% (no penalty) to 100% (×0.55):
   //   penalty = clamp(1 − 0.45 × (dominantPct − 60) / 40, 0.55, 1.00)
+  // Audit #11: multi-family materials previously credited 100% of their
+  // mass to familiesList[i][0] (the primary). 'Floral / Fruity' counted
+  // entirely as Floral, so a formula of 5 such materials all marked
+  // 'Floral / X' read as 100% Floral monoculture even when the secondary
+  // axis was diverse. Now we split the pct evenly across the listed
+  // families — a 'Floral / Fruity' material at 10 % contributes 5 % to
+  // Floral and 5 % to Fruity. Capped at first 3 family entries to avoid
+  // pathological 5+ family lists diluting the dominant signal beyond
+  // recognition.
   const familyMass = {};
   let totalPct = 0;
   for (let i = 0; i < materials.length; i++) {
-    const fam = (familiesList[i] && familiesList[i][0]) || 'other';
+    const fams = (familiesList[i] || []).slice(0, 3);
+    const fallback = ['other'];
+    const used = fams.length ? fams : fallback;
     const p = materials[i].pct || 0;
-    familyMass[fam] = (familyMass[fam] || 0) + p;
+    const share = used.length > 0 ? p / used.length : 0;
+    for (const fam of used) {
+      familyMass[fam] = (familyMass[fam] || 0) + share;
+    }
     totalPct += p;
   }
   let dominantFamily = null, dominantMass = 0;
@@ -1059,6 +1143,9 @@ function computeHarmonyScore(materialsOrCases, graph, opts) {
     insufficient: false,
     baseScore: Math.round(baseScore),
     triangleBonus: roundN(triangleBonus, 1),
+    graphTriangleBonus: roundN(graphTriangleBonus, 1),
+    accordTriangleBonus: roundN(accordTriangleBonus, 1),
+    familyTriangles, // ['cologne', 'chypre', ...]
     diversityFactor: roundN(diversityFactor, 2),
     monoculturePenalty: roundN(monoculturePenalty, 2),
     structuralPenalty: roundN(structuralPenalty, 2),
