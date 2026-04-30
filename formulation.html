@@ -944,10 +944,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v228"></script>
-<script src="perfumery_data.js?v=2026-04-29-v228"></script>
-<script src="formulation_data.js?v=2026-04-29-v228"></script>
-<script src="formulation_engine.js?v=2026-04-29-v228"></script>
+<script src="taxonomy.js?v=2026-04-29-v229"></script>
+<script src="perfumery_data.js?v=2026-04-29-v229"></script>
+<script src="formulation_data.js?v=2026-04-29-v229"></script>
+<script src="formulation_engine.js?v=2026-04-29-v229"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -4372,7 +4372,13 @@ function showSubstitutes(cas) {
 
 // Module-level state — persists across re-renders so switching tabs (or
 // editing the formula) doesn't drop the user's active filter.
-let _wheelSelectedSegId = null;
+//
+// Exactly one of (_wheelSelectedSegId, _wheelSelectedMain) is ever non-null.
+// The setters in filterByWheelSegment / filterByWheelMain enforce this so
+// the rendering code can branch on whichever is set without worrying about
+// dual-selection edge cases.
+let _wheelSelectedSegId = null;   // subfamily id (e.g. 'floral')
+let _wheelSelectedMain  = null;   // main-family id (e.g. 'fresh')
 // Default-collapsed result list shows the first 15 matches; user can expand
 // to the full list. Reset on segment change so each new selection starts
 // collapsed. Without a reset a user who hit "Show all" on Floral and then
@@ -4588,7 +4594,11 @@ function renderWheelTab() {
     const path = 'M ' + x1o + ' ' + y1o + ' A ' + midR + ' ' + midR + ' 0 ' + large + ' 1 ' + x2o + ' ' + y2o +
       ' L ' + x1i + ' ' + y1i + ' A ' + innerR + ' ' + innerR + ' 0 ' + large + ' 0 ' + x2i + ' ' + y2i + ' Z';
     const mainColor = (FRAGRANCE_WHEEL.mainColors && FRAGRANCE_WHEEL.mainColors[main]) || '#888';
-    svg += '<path d="' + path + '" fill="' + mainColor + '" fill-opacity="1" stroke="#fff" stroke-width="2"/>';
+    const mainSelected = _wheelSelectedMain === main;
+    // The inner band is now clickable — filters the result list to ALL
+    // subfamilies inside that main family. The text label is left
+    // pointer-events:none so its <textPath> doesn't intercept clicks.
+    svg += '<path class="wheel-main" data-main="' + main + '" d="' + path + '" fill="' + mainColor + '" fill-opacity="' + (mainSelected ? '1' : '0.95') + '" stroke="#fff" stroke-width="' + (mainSelected ? '3' : '2') + '" style="cursor:pointer" onclick="filterByWheelMain(\'' + main + '\')"><title>' + main.toUpperCase() + ' band — click to filter all ' + main + ' subfamilies</title></path>';
 
     svg += '<text font-size="14" fill="#fff" font-weight="700" letter-spacing="3" style="pointer-events:none">';
     // href is SVG 2; xlink:href keeps older mobile WebKit happy.
@@ -4652,20 +4662,27 @@ function renderWheelTab() {
   legend += '<div id="wheelFilterResults" style="margin-top:16px"></div>';
 
   // Toolbar above the wheel — shows the current filter and a Clear button
-  // when a slice is active. Hidden state when nothing is selected so the
-  // wheel itself dominates the viewport.
+  // when a slice OR a main-family band is active. Hidden state when nothing
+  // is selected so the wheel itself dominates the viewport.
   let toolbar = '<div id="wheelToolbar" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;min-height:32px;flex-wrap:wrap">';
   if (_wheelSelectedSegId) {
     const selSeg = segments.find(s => s.id === _wheelSelectedSegId);
     const selLabel = selSeg ? prettyLabel(selSeg.id) : _wheelSelectedSegId;
     const selColor = selSeg ? selSeg.color : '#888';
     toolbar += '<div style="font-size:0.85em;color:var(--text2)">';
-    toolbar += 'Filtering by ';
+    toolbar += 'Filtering by subfamily ';
     toolbar += '<span class="badge" style="background:' + selColor + '33;color:' + selColor + ';font-weight:600">' + escHtml(selLabel) + '</span>';
     toolbar += '</div>';
     toolbar += '<button id="wheelClearBtn" class="btn btn-sm" type="button">Clear filter</button>';
+  } else if (_wheelSelectedMain) {
+    const mainColor = (FRAGRANCE_WHEEL.mainColors && FRAGRANCE_WHEEL.mainColors[_wheelSelectedMain]) || '#888';
+    toolbar += '<div style="font-size:0.85em;color:var(--text2)">';
+    toolbar += 'Filtering by main family ';
+    toolbar += '<span class="badge" style="background:' + mainColor + '33;color:' + mainColor + ';font-weight:600">' + _wheelSelectedMain.toUpperCase() + ' NOTES</span>';
+    toolbar += '</div>';
+    toolbar += '<button id="wheelClearBtn" class="btn btn-sm" type="button">Clear filter</button>';
   } else {
-    toolbar += '<div style="font-size:0.82em;color:var(--text2);font-style:italic">Click a slice (or a legend pill) to filter materials by family.</div>';
+    toolbar += '<div style="font-size:0.82em;color:var(--text2);font-style:italic">Click a slice, a legend pill, or an inner "FAMILY NOTES" band to filter materials.</div>';
     toolbar += '<span></span>';
   }
   toolbar += '</div>';
@@ -4677,7 +4694,9 @@ function renderWheelTab() {
   if (_wheelSelectedSegId) {
     const path = el.querySelector('.wheel-seg[data-seg="' + _wheelSelectedSegId + '"]');
     if (path) path.classList.add('active-seg');
-    renderWheelFilterResults(_wheelSelectedSegId);
+    renderWheelFilterResults();
+  } else if (_wheelSelectedMain) {
+    renderWheelFilterResults();
   }
 
   const clearBtn = document.getElementById('wheelClearBtn');
@@ -4692,6 +4711,7 @@ function renderWheelTab() {
 
 function clearWheelFilter() {
   _wheelSelectedSegId = null;
+  _wheelSelectedMain = null;
   _wheelShowAllResults = false;
   // Cheaper than full re-render: drop the active class + clear the results,
   // then rebuild the toolbar in place.
@@ -4711,7 +4731,8 @@ function filterByWheelSegment(segId /*, evt */) {
   // Persist + visual click feedback (pop animation on clicked slice;
   // .active-seg stays until the next slice is selected or Clear is pressed).
   _wheelSelectedSegId = segId;
-  _wheelShowAllResults = false; // each new selection re-collapses the list
+  _wheelSelectedMain = null;       // mutually exclusive with main-band selection
+  _wheelShowAllResults = false;    // each new selection re-collapses the list
   document.querySelectorAll('.wheel-seg').forEach(p => p.classList.remove('active-seg', 'popping'));
   const clickedPath = document.querySelector('.wheel-seg[data-seg="' + segId + '"]');
   if (clickedPath) {
@@ -4722,6 +4743,20 @@ function filterByWheelSegment(segId /*, evt */) {
     setTimeout(() => clickedPath.classList.remove('popping'), 500);
   }
   // Re-render so the toolbar updates to show the active filter + Clear button.
+  renderWheelTab();
+}
+
+// Click handler for the inner main-family band. Selecting a band filters
+// the result table to every catalogue material whose family axis maps
+// into that main family — i.e. all subfamilies inside the band.
+function filterByWheelMain(main) {
+  if (_wheelSelectedMain === main) {
+    clearWheelFilter();
+    return;
+  }
+  _wheelSelectedMain = main;
+  _wheelSelectedSegId = null;
+  _wheelShowAllResults = false;
   renderWheelTab();
 }
 
@@ -4739,9 +4774,28 @@ function filterByWheelSegment(segId /*, evt */) {
 // (Add button disabled). The previous renderer skipped them, so the count
 // disagreed with the legend pill total. Showing them lets the user spot
 // duplicates and reach the material via the same surface.
-function renderWheelFilterResults(segId) {
+function renderWheelFilterResults() {
   const el = document.getElementById('wheelFilterResults');
   if (!el) return;
+  // Decide the match predicate from whichever selection is active. The
+  // subfamily case checks the slice id; the main-band case accepts any
+  // family that maps into a slice owned by the active main family.
+  let predicate;
+  let heading;
+  if (_wheelSelectedSegId) {
+    const segId = _wheelSelectedSegId;
+    predicate = (fams) => fams.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === segId);
+    heading = segId.replace(/_/g, ' ');
+  } else if (_wheelSelectedMain) {
+    const main = _wheelSelectedMain;
+    predicate = (fams) => fams.some(f => {
+      const sid = FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()];
+      return sid && FRAGRANCE_WHEEL.mainOf[sid] === main;
+    });
+    heading = main.toUpperCase() + ' notes';
+  } else {
+    return; // nothing selected
+  }
   const inFormulaCas = new Set(formulation.materials.map(m => m.cas));
   const allMatches = [];
   for (const [cas, e] of Object.entries(DB)) {
@@ -4752,7 +4806,7 @@ function renderWheelFilterResults(segId) {
       secondaryFamilies: cls.secondaryFamilies || [],
       facets: cls.facets || [],
     });
-    if (fams.some(f => FRAGRANCE_WHEEL.familyToSegment[f.toLowerCase()] === segId)) {
+    if (predicate(fams)) {
       allMatches.push({ ...e, _inFormula: inFormulaCas.has(cas) });
     }
   }
@@ -4767,7 +4821,7 @@ function renderWheelFilterResults(segId) {
   const overflow = total - visible.length;
 
   let html = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
-  html += '<h4 style="margin:0">' + segId.replace(/_/g, ' ') + ' <span style="color:var(--text2);font-weight:400">— showing ' + visible.length + ' of ' + total + '</span></h4>';
+  html += '<h4 style="margin:0">' + heading + ' <span style="color:var(--text2);font-weight:400">— showing ' + visible.length + ' of ' + total + '</span></h4>';
   if (total > WHEEL_RESULTS_INITIAL) {
     const btnLabel = _wheelShowAllResults
       ? 'Show first ' + WHEEL_RESULTS_INITIAL
@@ -4805,7 +4859,7 @@ function renderWheelFilterResults(segId) {
   const toggleBtn = document.getElementById('wheelToggleAllBtn');
   if (toggleBtn) toggleBtn.addEventListener('click', () => {
     _wheelShowAllResults = !_wheelShowAllResults;
-    renderWheelFilterResults(segId);
+    renderWheelFilterResults();
   });
 }
 
