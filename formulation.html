@@ -956,10 +956,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v231"></script>
-<script src="perfumery_data.js?v=2026-04-29-v231"></script>
-<script src="formulation_data.js?v=2026-04-29-v231"></script>
-<script src="formulation_engine.js?v=2026-04-29-v231"></script>
+<script src="taxonomy.js?v=2026-04-29-v232"></script>
+<script src="perfumery_data.js?v=2026-04-29-v232"></script>
+<script src="formulation_data.js?v=2026-04-29-v232"></script>
+<script src="formulation_engine.js?v=2026-04-29-v232"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -4573,17 +4573,17 @@ function renderWheelTab() {
     svg += '</text>';
 
     // In-formula count badge — small white circle with the count, drawn on
-    // the slice's mid-angle near the outer edge. Only when the user has at
-    // least one material classified into this slice. The badge sits past
-    // the radial label (which is centred at (outerR+midR)/2) so it doesn't
-    // crowd two-word labels like "Soft Floral".
+    // the slice's mid-angle. Positioned at outerR-9 (just inside the outer
+    // rim, well past the radial label which is centred at (outerR+midR)/2
+    // = 200 and extends to ~216 for two-line labels). Smaller r=7 + smaller
+    // font keep it from crowding adjacent slices on narrow widths.
     if (inFormulaCount > 0) {
-      const badgeR = outerR - 18;
+      const badgeR = outerR - 9;
       const bx = cx + badgeR * Math.cos(s.angle * Math.PI / 180);
       const by = cy + badgeR * Math.sin(s.angle * Math.PI / 180);
       svg += '<g style="pointer-events:none">';
-      svg += '<circle cx="' + bx.toFixed(2) + '" cy="' + by.toFixed(2) + '" r="9" fill="#fff" stroke="' + s.color + '" stroke-width="2"/>';
-      svg += '<text x="' + bx.toFixed(2) + '" y="' + by.toFixed(2) + '" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#1a1a1a">' + inFormulaCount + '</text>';
+      svg += '<circle cx="' + bx.toFixed(2) + '" cy="' + by.toFixed(2) + '" r="7" fill="#fff" stroke="' + s.color + '" stroke-width="1.5"/>';
+      svg += '<text x="' + bx.toFixed(2) + '" y="' + by.toFixed(2) + '" text-anchor="middle" dominant-baseline="central" font-size="9" font-weight="700" fill="#1a1a1a">' + inFormulaCount + '</text>';
       svg += '</g>';
     }
   }
@@ -4667,8 +4667,15 @@ function renderWheelTab() {
     // Outline the currently-filtered pill so users can read the active
     // selection from the legend without looking back at the wheel.
     const selectedStyle = isSelected ? ';outline:2px solid ' + s.color + ';outline-offset:1px' : '';
+    // Inline the in-formula count in the same weight as the surrounding
+    // pill text — switching to <strong> introduced a perceptible word-
+    // spacing gap on Android Chrome (browser defaults bold to 700 even
+    // inside a 600 parent, and the cross-weight kerning showed up as
+    // '( 7 /149)' instead of '(7/149)'). A span with explicit
+    // font-weight inherit + dark colour fixes the spacing without losing
+    // the visual emphasis.
     const countText = active
-      ? '<strong style="color:#1a1a1a">' + inFormulaCount + '</strong>/' + dbCount
+      ? '<span style="color:#1a1a1a;font-weight:inherit">' + inFormulaCount + '</span>/' + dbCount
       : dbCount;
     legend += '<button type="button" class="badge wheel-legend-pill" data-seg="' + s.id + '" aria-pressed="' + isSelected + '" style="background:' + pillBg + ';color:' + pillFg + ';font-size:0.72em;border:none;cursor:pointer' + transitionalStyle + weightStyle + selectedStyle + '">' + prettyLabel(s.id) + ' (' + countText + ')</button>';
   }
