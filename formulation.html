@@ -929,10 +929,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v220"></script>
-<script src="perfumery_data.js?v=2026-04-29-v220"></script>
-<script src="formulation_data.js?v=2026-04-29-v220"></script>
-<script src="formulation_engine.js?v=2026-04-29-v220"></script>
+<script src="taxonomy.js?v=2026-04-29-v221"></script>
+<script src="perfumery_data.js?v=2026-04-29-v221"></script>
+<script src="formulation_data.js?v=2026-04-29-v221"></script>
+<script src="formulation_engine.js?v=2026-04-29-v221"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -3531,16 +3531,22 @@ function renderSafetyTab() {
 
   // Allergen panel
   if (allergens.allergens.length) {
-    html += '<div class="analysis-card" id="safety-allergens"><h4>EU Allergen Declaration (threshold: ' + allergens.threshold + ' ppm, ' + (allergens.isRinseOff ? 'rinse-off' : 'leave-on') + ')</h4>';
+    const thresholdTip = 'EU 1223/2009 — leave-on threshold 10 ppm, rinse-off 100 ppm. Below threshold: not required on the INCI label. Above: must be declared.';
+    html += '<div class="analysis-card" id="safety-allergens">';
+    html += '<h4>EU Allergen Declaration <span class="badge badge-outline" title="' + escHtml(thresholdTip) + '" style="cursor:help;font-weight:500">threshold ' + allergens.threshold + ' ppm · ' + (allergens.isRinseOff ? 'rinse-off' : 'leave-on') + '</span></h4>';
     html += '<table class="data-table"><thead><tr><th>Allergen</th><th>INCI</th><th>Total ppm</th><th>Sources</th><th>Declare?</th></tr></thead><tbody>';
     for (const a of allergens.allergens) {
       const cls = a.exceedsThreshold ? 'badge-danger' : 'badge-ok';
-      const srcTxt = a.sources.map(s => s.from + ' (' + s.ppm + ')').join(', ');
+      // Sources rendered as chips (one per material that contributes this
+      // allergen) so the breakdown is scannable instead of a wall of text.
+      const sourceChips = a.sources
+        .map(s => '<span class="badge badge-outline" style="font-size:0.7em;font-weight:500" title="' + escHtml(s.from + ' contributes ' + s.ppm + ' ppm of ' + a.name) + '">' + escHtml(s.from) + ' &middot; ' + s.ppm + '</span>')
+        .join(' ');
       html += '<tr>';
       html += '<td>' + escHtml(a.name) + '</td>';
       html += '<td><code>' + a.inci + '</code></td>';
       html += '<td>' + a.totalPpm + '</td>';
-      html += '<td style="font-size:0.8em">' + srcTxt + '</td>';
+      html += '<td><div style="display:flex;flex-wrap:wrap;gap:4px">' + sourceChips + '</div></td>';
       html += '<td><span class="badge ' + cls + '">' + (a.exceedsThreshold ? 'YES' : 'No') + '</span></td>';
       html += '</tr>';
     }
