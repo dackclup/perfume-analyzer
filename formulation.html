@@ -929,10 +929,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v222"></script>
-<script src="perfumery_data.js?v=2026-04-29-v222"></script>
-<script src="formulation_data.js?v=2026-04-29-v222"></script>
-<script src="formulation_engine.js?v=2026-04-29-v222"></script>
+<script src="taxonomy.js?v=2026-04-29-v223"></script>
+<script src="perfumery_data.js?v=2026-04-29-v223"></script>
+<script src="formulation_data.js?v=2026-04-29-v223"></script>
+<script src="formulation_engine.js?v=2026-04-29-v223"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -3582,28 +3582,8 @@ function renderSafetyTab() {
   // other additive is priced individually from MATERIAL_COSTS using its CAS.
   const batchSizeG = validateBatchSize(document.getElementById('batchSize').value);
   const costData = calculateFormulaCost(mats, batchSizeG, carrierMaterials, fragPct);
-  html += '<div class="analysis-card"><h4>Cost Estimate <span class="badge badge-ok">$' + costData.totalCost + '</span></h4>';
-  html += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.85em;color:var(--text2);margin-top:6px">';
-  html += '<span>Fragrance: $' + costData.fragCost + '</span>';
-  html += '<span>Carrier: $' + costData.carrierCost + '</span>';
-  html += '<span>Per ml: $' + costData.costPerMl + '</span>';
-  html += '<span>Per kg: $' + costData.costPerKg + '</span>';
-  if (costData.unpricedMats.length) html += '<span style="color:var(--warn)">Unpriced: ' + costData.unpricedMats.length + ' materials</span>';
-  html += '</div>';
-  if (costData.perMaterial.some(m => m.cost !== null)) {
-    html += '<table class="data-table" style="margin-top:8px"><thead><tr><th>Material</th><th>Grams</th><th>$/g</th><th>Cost</th><th>Tier</th></tr></thead><tbody>';
-    for (const pm of costData.perMaterial) {
-      const tierCls = pm.tier === 'precious' ? 'badge-danger' : pm.tier === 'specialty' ? 'badge-warn' : 'badge-ok';
-      const carrierTag = pm.isCarrier ? ' <span style="font-size:0.7em;padding:1px 5px;background:var(--bg2);border-radius:4px;color:var(--text2)">carrier</span>' : '';
-      html += '<tr><td>' + escHtml(pm.name) + carrierTag + '</td>';
-      html += '<td>' + pm.grams + 'g</td>';
-      html += '<td>' + (pm.cost_g != null ? '$' + pm.cost_g : '\u2014') + '</td>';
-      html += '<td>' + (pm.cost != null ? '$' + pm.cost : '\u2014') + '</td>';
-      html += '<td><span class="badge ' + tierCls + '">' + pm.tier + '</span></td></tr>';
-    }
-    html += '</tbody></table>';
-  }
-  html += '</div>';
+  // (Cost Estimate card moved to the Production overview section below the
+  // INCI label \u2014 see the appended block after `el.innerHTML = html`.)
 
   // Multi-Category IFRA Check — chips grouped by status so the user can see at
   // a glance which categories the formula is permitted / caution / blocked in.
@@ -3645,6 +3625,57 @@ function renderSafetyTab() {
   html += renderMultiGroup('Permitted', 'success', multiGroups.ok);
   html += '</div>';
 
+  // (Carrier Summary card moved to the Production overview section below the
+  // INCI label — see the appended block after the INCI card.)
+
+  // INCI Label
+  html += '<div class="analysis-card" id="safety-inci"><h4>INCI Label</h4>';
+  html += '<div style="background:var(--bg2);padding:12px;border-radius:8px;font-size:0.85em;line-height:1.6;word-break:break-word;user-select:all">';
+  html += inci;
+  html += '</div>';
+  html += '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">';
+  html += '<button class="btn btn-sm" id="copyInciBtn">Copy INCI</button>';
+  html += '<details style="flex:1"><summary style="cursor:pointer;color:var(--text2);font-size:0.82em">How this is built</summary>';
+  html += '<ol style="margin:6px 0 0 20px;padding:0;color:var(--text2);font-size:0.82em;line-height:1.6">';
+  html += '<li>Carrier/solvent first (largest single ingredient by weight)</li>';
+  html += '<li><code>PARFUM</code> — the fragrance compound itself</li>';
+  html += '<li>Declared allergens — only those exceeding the threshold for this product, sorted by total ppm descending</li>';
+  html += '</ol></details>';
+  html += '</div>';
+  html += '</div>';
+
+  // ===== Production overview =====
+  // Cost + Carrier are not part of IFRA compliance but live on this tab for
+  // batch-planning convenience. Visually demarcated with a subhead so the user
+  // doesn't read these as safety findings.
+  html += '<div id="safety-production" style="margin-top:18px;border-top:1px dashed var(--border);padding-top:14px">';
+  html += '<h4 style="color:var(--text2);font-weight:500;margin-bottom:4px">Production overview</h4>';
+  html += '<p class="panel-desc" style="margin-bottom:12px">Cost and carrier breakdown — informational only, not part of IFRA compliance.</p>';
+
+  // Cost Estimate
+  html += '<div class="analysis-card"><h4>Cost Estimate <span class="badge badge-ok">$' + costData.totalCost + '</span></h4>';
+  html += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.85em;color:var(--text2);margin-top:6px">';
+  html += '<span>Fragrance: $' + costData.fragCost + '</span>';
+  html += '<span>Carrier: $' + costData.carrierCost + '</span>';
+  html += '<span>Per ml: $' + costData.costPerMl + '</span>';
+  html += '<span>Per kg: $' + costData.costPerKg + '</span>';
+  if (costData.unpricedMats.length) html += '<span style="color:var(--warn)">Unpriced: ' + costData.unpricedMats.length + ' materials</span>';
+  html += '</div>';
+  if (costData.perMaterial.some(m => m.cost !== null)) {
+    html += '<table class="data-table" style="margin-top:8px"><thead><tr><th>Material</th><th>Grams</th><th>$/g</th><th>Cost</th><th>Tier</th></tr></thead><tbody>';
+    for (const pm of costData.perMaterial) {
+      const tierCls = pm.tier === 'precious' ? 'badge-danger' : pm.tier === 'specialty' ? 'badge-warn' : 'badge-ok';
+      const carrierTag = pm.isCarrier ? ' <span style="font-size:0.7em;padding:1px 5px;background:var(--bg2);border-radius:4px;color:var(--text2)">carrier</span>' : '';
+      html += '<tr><td>' + escHtml(pm.name) + carrierTag + '</td>';
+      html += '<td>' + pm.grams + 'g</td>';
+      html += '<td>' + (pm.cost_g != null ? '$' + pm.cost_g : '—') + '</td>';
+      html += '<td>' + (pm.cost != null ? '$' + pm.cost : '—') + '</td>';
+      html += '<td><span class="badge ' + tierCls + '">' + pm.tier + '</span></td></tr>';
+    }
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+
   // Carrier Summary
   if (carrierMaterials.length) {
     const batchSize = validateBatchSize(document.getElementById('batchSize').value);
@@ -3666,14 +3697,12 @@ function renderSafetyTab() {
       html += '</tr>';
     }
     html += '</tbody></table>';
-    // Warnings
     const ethanolCas = Object.keys(DB).find(k => DB[k].name === 'Ethanol');
     const ethCarrier = carrierMaterials.find(c => c.cas === ethanolCas);
     const warns = [];
     if (Math.abs(carrierPctSum - 100) > 0.1) warns.push('Carrier % does not sum to 100 (' + (Math.round(carrierPctSum * 100) / 100) + '%)');
     if (ethCarrier && ethCarrier.pct > 95 && carrierMaterials.length === 1) warns.push('Ethanol >95% — typical perfume uses 70–95% denatured alcohol');
     if (Math.abs(totalWithFrag - 100) > 0.1) warns.push('Fragrance + carrier does not equal 100% of batch');
-    // Over-limit additives
     for (const c of carrierMaterials) {
       if (classifyCarrier(c.name) === 'other') {
         const maxPct = getCarrierMaxPct(c.name);
@@ -3690,21 +3719,7 @@ function renderSafetyTab() {
     html += '</div>';
   }
 
-  // INCI Label
-  html += '<div class="analysis-card" id="safety-inci"><h4>INCI Label</h4>';
-  html += '<div style="background:var(--bg2);padding:12px;border-radius:8px;font-size:0.85em;line-height:1.6;word-break:break-word;user-select:all">';
-  html += inci;
-  html += '</div>';
-  html += '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">';
-  html += '<button class="btn btn-sm" id="copyInciBtn">Copy INCI</button>';
-  html += '<details style="flex:1"><summary style="cursor:pointer;color:var(--text2);font-size:0.82em">How this is built</summary>';
-  html += '<ol style="margin:6px 0 0 20px;padding:0;color:var(--text2);font-size:0.82em;line-height:1.6">';
-  html += '<li>Carrier/solvent first (largest single ingredient by weight)</li>';
-  html += '<li><code>PARFUM</code> — the fragrance compound itself</li>';
-  html += '<li>Declared allergens — only those exceeding the threshold for this product, sorted by total ppm descending</li>';
-  html += '</ol></details>';
-  html += '</div>';
-  html += '</div>';
+  html += '</div>'; // /safety-production
 
   el.innerHTML = html;
 
