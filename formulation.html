@@ -525,6 +525,23 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 @media (prefers-reduced-motion: reduce) {
   .wheel-seg.popping { animation: none; }
   .wheel-seg.active-seg { animation: none; }
+  .wheel-results-pulse { animation: none; }
+}
+
+/* Wheel result-table pulse — fired after a slice / main-band click so
+   the user can see the table updated. On small screens the table sits
+   below the SVG fold, and the pulse + smooth-scroll combo (see
+   _flashWheelResults) makes the cause-and-effect link visible. Two
+   short flashes of a translucent accent ring rather than a full
+   coloured background to stay legible on every theme. */
+.wheel-results-pulse {
+  animation: wheel-results-pulse 900ms ease-out;
+}
+@keyframes wheel-results-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(74,144,226,0.0); }
+  20%  { box-shadow: 0 0 0 6px rgba(74,144,226,0.35); }
+  60%  { box-shadow: 0 0 0 4px rgba(74,144,226,0.18); }
+  100% { box-shadow: 0 0 0 0 rgba(74,144,226,0.0); }
 }
 
 /* Legend pills under the wheel — clickable, mirror slice click. The pill
@@ -993,10 +1010,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v275"></script>
-<script src="perfumery_data.js?v=2026-04-29-v275"></script>
-<script src="formulation_data.js?v=2026-04-29-v275"></script>
-<script src="formulation_engine.js?v=2026-04-29-v275"></script>
+<script src="taxonomy.js?v=2026-04-29-v276"></script>
+<script src="perfumery_data.js?v=2026-04-29-v276"></script>
+<script src="formulation_data.js?v=2026-04-29-v276"></script>
+<script src="formulation_engine.js?v=2026-04-29-v276"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -5466,6 +5483,11 @@ function filterByWheelSegment(segId /*, evt */) {
   }
   // Re-render so the toolbar updates to show the active filter + Clear button.
   renderWheelTab();
+  // Confirm filtering happened by drawing the user's eye to the result
+  // table that was just populated. On phones / tablets the SVG fills
+  // the viewport and the table sits below the fold — without the
+  // scroll + pulse cue users miss that the click did anything.
+  _flashWheelResults();
 }
 
 // Click handler for the inner main-family band. Selecting a band filters
@@ -5480,6 +5502,39 @@ function filterByWheelMain(main) {
   _wheelSelectedSegId = null;
   _wheelShowAllResults = false;
   renderWheelTab();
+  _flashWheelResults();
+}
+
+// Visual confirmation cue after the user clicks a slice or main band.
+// Phones / tablets put the result table below the SVG, so without the
+// scroll + pulse the user has no signal that the click did anything
+// other than recolour a slice. Two complementary signals:
+//   1. Smooth-scroll the table into view (only when it's actually below
+//      the viewport — desktop with table already visible doesn't move).
+//   2. CSS-driven pulse animation on the table card so the eye is drawn
+//      to the new content even when the user is already looking at it.
+function _flashWheelResults() {
+  const el = document.getElementById('wheelFilterResults');
+  if (!el) return;
+  // Empty results-pane = no filter actually fired (toggle-off path),
+  // skip the cue.
+  if (!el.firstChild) return;
+  // Only auto-scroll when the table is below the viewport — avoid
+  // jerking the page on desktop where the layout already shows it.
+  try {
+    const rect = el.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    if (rect.top > vh * 0.8) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  } catch (e) { /* defensive — old WebKit without scrollIntoView opts */ }
+  // Pulse class restarts the keyframe cleanly even when the user
+  // hammer-clicks slices. Force reflow so re-adding the class on the
+  // SAME element re-runs the animation.
+  el.classList.remove('wheel-results-pulse');
+  void el.getBoundingClientRect();
+  el.classList.add('wheel-results-pulse');
+  setTimeout(() => el.classList.remove('wheel-results-pulse'), 900);
 }
 
 // Renders the table of DB materials matching the active segment into the
