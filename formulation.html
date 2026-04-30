@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v249"></script>
-<script src="perfumery_data.js?v=2026-04-29-v249"></script>
-<script src="formulation_data.js?v=2026-04-29-v249"></script>
-<script src="formulation_engine.js?v=2026-04-29-v249"></script>
+<script src="taxonomy.js?v=2026-04-29-v250"></script>
+<script src="perfumery_data.js?v=2026-04-29-v250"></script>
+<script src="formulation_data.js?v=2026-04-29-v250"></script>
+<script src="formulation_engine.js?v=2026-04-29-v250"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2240,6 +2240,9 @@ function renderActiveTab() {
 // Stub renderers for tabs not yet implemented
 // ===== Tab 2: Compatibility & Allocation (System 3) =====
 let _compatGraph = null;
+// false = compact view (top 6 strongest + all discords); true = every pair.
+// Survives re-renders so toggling stays sticky while the user iterates.
+let _compatShowAllPairs = false;
 function getCompatGraph() {
   if (!_compatGraph) _compatGraph = buildCompatibilityGraph(DB);
   return _compatGraph;
@@ -2379,9 +2382,33 @@ function renderCompatTab() {
     }
   }
 
-  if (harmony.pairs.length && harmony.pairs.length <= 15) {
-    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">';
-    for (const p of harmony.pairs) {
+  // Pair badges — compact view shows the strongest 6 pairs plus every
+  // discord (so problems are never hidden), full view shows every pair.
+  // The previous renderer hard-capped at 15 and hid the entire row beyond
+  // that, which meant 7-material formulas (21 pairs) saw nothing.
+  if (harmony.pairs.length) {
+    const PAIRS_COMPACT = 6;
+    // Sort by pair score descending — strongest pairs first. Discords are
+    // pulled out so they appear regardless of the compact cap.
+    const pairsSorted = harmony.pairs.slice().sort((a, b) => (b.pairScore || 0) - (a.pairScore || 0));
+    const pairsDiscord = pairsSorted.filter(p => p.discord > 0);
+    const pairsConnect = pairsSorted.filter(p => !(p.discord > 0));
+    const visible = _compatShowAllPairs
+      ? pairsSorted
+      : [...pairsConnect.slice(0, PAIRS_COMPACT), ...pairsDiscord];
+    const hidden = harmony.pairs.length - visible.length;
+    html += '<div style="margin-top:12px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">';
+    html += '<div style="font-size:0.78em;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">Pairs</div>';
+    if (harmony.pairs.length > PAIRS_COMPACT + pairsDiscord.length) {
+      const togLabel = _compatShowAllPairs
+        ? 'Show top ' + PAIRS_COMPACT + ' + discords'
+        : 'Show all ' + harmony.pairs.length + ' pairs';
+      html += '<button id="compatPairToggle" class="btn btn-sm" type="button">' + togLabel + '</button>';
+    }
+    html += '</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+    for (const p of visible) {
       const nA = DB[p.a] ? DB[p.a].name : p.a;
       const nB = DB[p.b] ? DB[p.b].name : p.b;
       let cls;
@@ -2391,7 +2418,11 @@ function renderCompatTab() {
       else if (p.descriptorSim != null && p.descriptorSim >= 0.4) { cls = 'badge-warn'; icon = ' ~' + Math.round(p.descriptorSim * 100) + '%'; }
       else { cls = 'badge-danger'; icon = ''; }
       const title = 'pair score ' + (p.pairScore || 0) + (p.discord > 0 ? ', discord ' + p.discord : '');
-      html += '<span class="badge ' + cls + '" style="font-size:0.72em" title="' + title + '">' + escHtml(nA) + ' + ' + escHtml(nB) + icon + '</span>';
+      html += '<span class="badge ' + cls + '" style="font-size:0.72em" title="' + escHtml(title) + '">' + escHtml(nA) + ' + ' + escHtml(nB) + icon + '</span>';
+    }
+    html += '</div>';
+    if (hidden > 0 && !_compatShowAllPairs) {
+      html += '<p class="panel-desc" style="margin-top:6px;font-size:0.78em">+' + hidden + ' more pairs hidden — click "Show all" to expand.</p>';
     }
     html += '</div>';
   }
@@ -2597,6 +2628,15 @@ function renderCompatTab() {
   if (applySug) applySug.addEventListener('click', () => applyAllocation('suggested'));
   if (applyOpt) applyOpt.addEventListener('click', () => applyAllocation('optimized'));
   if (applySmart) applySmart.addEventListener('click', () => applyAllocation('smart'));
+
+  // Pair-list toggle — flips between compact (top 6 + discords) and full
+  // view. State is persisted in _compatShowAllPairs so re-renders honour
+  // the user's choice.
+  const pairToggle = document.getElementById('compatPairToggle');
+  if (pairToggle) pairToggle.addEventListener('click', () => {
+    _compatShowAllPairs = !_compatShowAllPairs;
+    renderCompatTab();
+  });
 }
 
 // Smart Allocate — chained Suggested → Optimized.
