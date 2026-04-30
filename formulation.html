@@ -993,10 +993,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v261"></script>
-<script src="perfumery_data.js?v=2026-04-29-v261"></script>
-<script src="formulation_data.js?v=2026-04-29-v261"></script>
-<script src="formulation_engine.js?v=2026-04-29-v261"></script>
+<script src="taxonomy.js?v=2026-04-29-v262"></script>
+<script src="perfumery_data.js?v=2026-04-29-v262"></script>
+<script src="formulation_data.js?v=2026-04-29-v262"></script>
+<script src="formulation_engine.js?v=2026-04-29-v262"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -2651,14 +2651,14 @@ function renderCompatTab() {
   //     status tone (out-of-range)
   //   - status text under the value: 'in range' / 'low' / 'high'
   html += '<div style="display:flex;gap:20px;margin-top:10px;flex-wrap:wrap">';
-  const classifiedTotal = balance.top + balance.middle + balance.base;
-  // Tier metadata in one place — pulls in the engine's numeric idealRanges
-  // (which sit alongside the legacy display string) so we don't have to
-  // re-parse '15-30%' for the bar geometry.
+  // Audit #14: format the ideal-range string from numeric idealRanges so
+  // there's only one source of truth (the legacy `balance.ideal` string
+  // field has been removed from the engine).
+  const fmtRange = r => r ? Math.round(r.min) + '-' + Math.round(r.max) + '%' : '—';
   const tierMeta = [
-    ['Top',    'top',    balance.top,    'var(--badge-top-fg)',  balance.ideal.top],
-    ['Middle', 'middle', balance.middle, 'var(--badge-mid-fg)', balance.ideal.middle],
-    ['Base',   'base',   balance.base,   'var(--badge-base-fg)', balance.ideal.base],
+    ['Top',    'top',    balance.top,    'var(--badge-top-fg)',  fmtRange(balance.idealRanges && balance.idealRanges.top)],
+    ['Middle', 'middle', balance.middle, 'var(--badge-mid-fg)',  fmtRange(balance.idealRanges && balance.idealRanges.middle)],
+    ['Base',   'base',   balance.base,   'var(--badge-base-fg)', fmtRange(balance.idealRanges && balance.idealRanges.base)],
   ];
   // PX_PER_PCT scales 0–100% to 60px column height.
   const PX_PER_PCT = 0.6;
@@ -2694,9 +2694,18 @@ function renderCompatTab() {
   }
   html += '</div>';
   if (balance.unclassified > 0) {
-    html += '<div style="margin-top:8px;padding:8px 10px;background:var(--warn-bg);border-radius:8px;font-size:0.82em;color:var(--warn)">';
-    html += balance.unclassifiedMats.length + ' material(s) (' + balance.unclassified + '%) have no note classification: ';
+    // Audit #3: surface the unclassified share so users can see when
+    // the pyramid percentages don't add to 100. unclassifiedPct is the
+    // share of the formula (not just absolute pct) which is what users
+    // expect to see — '12% of the formula has no note classification'.
+    const unclPct = balance.unclassifiedPct != null ? balance.unclassifiedPct : balance.unclassified;
+    const heavy = unclPct >= 30;
+    const tone = heavy ? 'var(--danger)' : 'var(--warn)';
+    const bg = heavy ? 'rgba(239,68,68,0.10)' : 'var(--warn-bg)';
+    html += '<div style="margin-top:8px;padding:8px 10px;background:' + bg + ';border-left:3px solid ' + tone + ';border-radius:8px;font-size:0.82em;color:' + tone + '">';
+    html += '<strong>' + balance.unclassifiedMats.length + ' material' + (balance.unclassifiedMats.length === 1 ? '' : 's') + ' uncategorised — ' + unclPct + '% of the formula:</strong> ';
     html += balance.unclassifiedMats.map(m => escHtml(m.name)).join(', ');
+    if (heavy) html += '<br><em style="color:var(--text2);font-size:0.95em">Pyramid range checks paused — too much of the formula lacks note classification for the band comparison to be meaningful.</em>';
     html += '</div>';
   }
   html += '</div>';
