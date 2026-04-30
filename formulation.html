@@ -929,10 +929,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v219"></script>
-<script src="perfumery_data.js?v=2026-04-29-v219"></script>
-<script src="formulation_data.js?v=2026-04-29-v219"></script>
-<script src="formulation_engine.js?v=2026-04-29-v219"></script>
+<script src="taxonomy.js?v=2026-04-29-v220"></script>
+<script src="perfumery_data.js?v=2026-04-29-v220"></script>
+<script src="formulation_data.js?v=2026-04-29-v220"></script>
+<script src="formulation_engine.js?v=2026-04-29-v220"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -3585,17 +3585,45 @@ function renderSafetyTab() {
   }
   html += '</div>';
 
-  // Multi-Category IFRA Check
+  // Multi-Category IFRA Check — chips grouped by status so the user can see at
+  // a glance which categories the formula is permitted / caution / blocked in.
+  // Each chip carries a tooltip listing up to 3 blocking materials.
   const multiIFRA = buildMultiCategoryIFRA(mats, fragPct);
-  html += '<div class="analysis-card" id="safety-multi"><h4>Multi-Category IFRA Compatibility</h4>';
-  html += '<p class="panel-desc">Shows which product categories this formula can be used in.</p>';
-  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">';
+  const multiGroups = { ok: [], warn: [], blocked: [] };
   for (const [cId, r] of Object.entries(multiIFRA)) {
-    const cls = r.status === 'ok' ? 'badge-ok' : r.status === 'warn' ? 'badge-warn' : 'badge-danger';
-    const icon = r.status === 'ok' ? '&#10003;' : r.bannedCount > 0 ? '&#10007;' : '!';
-    html += '<span class="badge ' + cls + '" style="font-size:0.72em">' + icon + ' ' + r.name + '</span>';
+    const bucket = r.status === 'ok' ? 'ok'
+                 : (r.bannedCount > 0 || r.dangerCount > 0) ? 'blocked'
+                 : 'warn';
+    multiGroups[bucket].push({ cId, ...r });
   }
-  html += '</div></div>';
+  html += '<div class="analysis-card" id="safety-multi"><h4>Multi-Category IFRA Compatibility</h4>';
+  html += '<p class="panel-desc">Categories this formula can be sold under at the current %. Hover a chip to see what is blocking it.</p>';
+  const renderMultiGroup = (label, color, items) => {
+    if (!items.length) return '';
+    let g = '<div style="margin-top:10px">';
+    g += '<div style="font-size:0.78em;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">' + label + ' <span style="opacity:0.6">(' + items.length + ')</span></div>';
+    g += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+    for (const r of items) {
+      const cls = r.status === 'ok' ? 'badge-ok' : r.status === 'warn' ? 'badge-warn' : 'badge-danger';
+      const icon = r.status === 'ok' ? '✓' : r.bannedCount > 0 ? '✗' : r.dangerCount > 0 ? '✗' : '⚠';
+      const top = (r.problems || []).slice(0, 3);
+      const remain = (r.problems || []).length - top.length;
+      let tip;
+      if (r.status === 'ok') {
+        tip = 'Cat.' + r.cId + ' — Permitted at the current frag %';
+      } else {
+        const list = top.map(p => p.name + ' (' + p.status + ')').join(', ');
+        tip = 'Cat.' + r.cId + ' — Blocked by: ' + list + (remain > 0 ? ' +' + remain + ' more' : '');
+      }
+      g += '<span class="badge ' + cls + '" style="font-size:0.75em" title="' + escHtml(tip) + '">' + icon + ' Cat.' + r.cId + ' — ' + escHtml(r.name) + '</span>';
+    }
+    g += '</div></div>';
+    return g;
+  };
+  html += renderMultiGroup('Blocked', 'danger', multiGroups.blocked);
+  html += renderMultiGroup('Caution', 'warn', multiGroups.warn);
+  html += renderMultiGroup('Permitted', 'success', multiGroups.ok);
+  html += '</div>';
 
   // Carrier Summary
   if (carrierMaterials.length) {
@@ -3903,11 +3931,19 @@ document.getElementById('btnNew').addEventListener('click', () => {
 });
 
 // ===== Multi-Category IFRA Check =====
+// Returns one entry per IFRA category with summary counts AND a short list of
+// problem materials (banned > danger > warn) so the UI can surface "blocked
+// by …" tooltips without re-running compliance per chip.
 function buildMultiCategoryIFRA(mats, fragPct) {
   const results = {};
+  const sevRank = { banned: 0, danger: 1, warn: 2 };
   for (const catId of Object.keys(IFRA_CATEGORIES)) {
     const compliance = checkIFRACompliance(mats, catId, fragPct);
     const summary = getSafetySummary(compliance, null);
+    const problems = compliance
+      .filter(r => r.status !== 'ok')
+      .sort((a, b) => (sevRank[a.status] ?? 9) - (sevRank[b.status] ?? 9))
+      .map(r => ({ name: r.name, status: r.banStatus === 'banned' ? 'banned' : r.status }));
     results[catId] = {
       name: IFRA_CATEGORIES[catId].name,
       status: summary.overallStatus,
@@ -3915,6 +3951,7 @@ function buildMultiCategoryIFRA(mats, fragPct) {
       dangerCount: summary.dangerCount,
       warnCount: summary.warnCount,
       okCount: summary.okCount,
+      problems,
     };
   }
   return results;
