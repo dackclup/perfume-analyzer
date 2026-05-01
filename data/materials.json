@@ -3338,14 +3338,13 @@
         "primaryFamilies": [
           "aldehydic"
         ],
-        "secondaryFamilies": [
-          "soft_floral"
-        ],
+        "secondaryFamilies": [],
         "facets": [
           "aldehyde",
           "fatty",
           "waxy",
-          "waxy_aldehyde"
+          "waxy_aldehyde",
+          "soft_floral"
         ]
       },
       "pubchem_cid": "8126",
@@ -3980,14 +3979,13 @@
         "primaryFamilies": [
           "aldehydic"
         ],
-        "secondaryFamilies": [
-          "soft_floral"
-        ],
+        "secondaryFamilies": [],
         "facets": [
           "aldehyde",
           "fatty",
           "waxy",
-          "waxy_aldehyde"
+          "waxy_aldehyde",
+          "soft_floral"
         ]
       },
       "pubchem_cid": "8186",
@@ -4978,12 +4976,11 @@
         "primaryFamilies": [
           "herbal"
         ],
-        "secondaryFamilies": [
-          "powdery"
-        ],
+        "secondaryFamilies": [],
         "facets": [
           "clover",
-          "coumarin"
+          "coumarin",
+          "powdery"
         ]
       },
       "pubchem_cid": "7152",
@@ -5483,9 +5480,7 @@
         "primaryFamilies": [
           "aquatic"
         ],
-        "secondaryFamilies": [
-          "ozonic"
-        ],
+        "secondaryFamilies": [],
         "facets": [
           "aquatic",
           "ozonic",
@@ -7229,11 +7224,10 @@
         "primaryFamilies": [
           "floral"
         ],
-        "secondaryFamilies": [
-          "powdery"
-        ],
+        "secondaryFamilies": [],
         "facets": [
-          "violet"
+          "violet",
+          "powdery"
         ]
       },
       "pubchem_cid": "8051",
@@ -7295,11 +7289,10 @@
         "primaryFamilies": [
           "floral"
         ],
-        "secondaryFamilies": [
-          "powdery"
-        ],
+        "secondaryFamilies": [],
         "facets": [
-          "violet"
+          "violet",
+          "powdery"
         ]
       },
       "ghs_codes": [
@@ -10602,11 +10595,10 @@
         "primaryFamilies": [
           "herbal"
         ],
-        "secondaryFamilies": [
-          "soft_floral"
-        ],
+        "secondaryFamilies": [],
         "facets": [
-          "chamomile"
+          "chamomile",
+          "soft_floral"
         ]
       },
       "pubchem_cid": "442343",
@@ -11149,6 +11141,51 @@
       "ghs_codes": [],
       "boiling_point": 156,
       "pubchem_cid": "62444"
+    },
+    {
+      "name": "1-Octen-3-yl Acetate",
+      "cas": "2442-10-6",
+      "fema": "3582",
+      "iupac": "oct-1-en-3-yl acetate",
+      "formula": "C10H18O2",
+      "weight": "170.25",
+      "smiles": "CCCCCC(C=C)OC(=O)C",
+      "inchi": "InChI=1S/C10H18O2/c1-3-4-5-6-10(7-2)12-9(11)8/h7,10H,2-6H2,1,8H3",
+      "synonyms": [
+        "1-octen-3-yl acetate",
+        "mushroom acetate",
+        "oct-1-en-3-yl acetate",
+        "1-vinylhexyl acetate"
+      ],
+      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/16668",
+      "pubchem_cid": "16668",
+      "odor": {
+        "description": "Mushroom-like, earthy, vegetable, with green nuance — classic mushroom-alcohol acetate.",
+        "type": "Earthy / Mushroom",
+        "strength": "High"
+      },
+      "note": "Top / Middle",
+      "performance": {
+        "tenacity": "Medium — 4-6 hours",
+        "duration": "4-6 hours"
+      },
+      "safety": {
+        "ifra": "IFRA 51 — see IFRA_51_LIMITS for category caps.",
+        "usage": "Refer to IFRA 51 amendment for finished-product limits."
+      },
+      "blends_with": [],
+      "classification": {
+        "primaryFamilies": [
+          "herbal"
+        ],
+        "secondaryFamilies": [],
+        "facets": [
+          "mushroom",
+          "earthy",
+          "vegetable"
+        ]
+      },
+      "ghs_codes": []
     },
     {
       "name": "Daucene",
@@ -12191,9 +12228,7 @@
         "primaryFamilies": [
           "aquatic"
         ],
-        "secondaryFamilies": [
-          "ozonic"
-        ],
+        "secondaryFamilies": [],
         "facets": [
           "aquatic",
           "marine",
@@ -12201,7 +12236,8 @@
           "sea",
           "seaweed",
           "dewy",
-          "iodine"
+          "iodine",
+          "ozonic"
         ]
       },
       "pubchem_cid": "120101",
@@ -18782,7 +18818,6 @@
           "aquatic"
         ],
         "secondaryFamilies": [
-          "ozonic",
           "floral"
         ],
         "facets": [
@@ -21268,11 +21303,10 @@
         "primaryFamilies": [
           "floral"
         ],
-        "secondaryFamilies": [
-          "powdery"
-        ],
+        "secondaryFamilies": [],
         "facets": [
-          "violet"
+          "violet",
+          "powdery"
         ]
       },
       "pubchem_cid": "5371002",
@@ -22743,11 +22777,10 @@
         "primaryFamilies": [
           "floral"
         ],
-        "secondaryFamilies": [
-          "powdery"
-        ],
+        "secondaryFamilies": [],
         "facets": [
-          "violet"
+          "violet",
+          "powdery"
         ]
       },
       "ghs_codes": [
@@ -26599,12 +26632,11 @@
         "primaryFamilies": [
           "floral"
         ],
-        "secondaryFamilies": [
-          "powdery"
-        ],
+        "secondaryFamilies": [],
         "facets": [
           "cassie",
-          "mimosa"
+          "mimosa",
+          "powdery"
         ]
       },
       "ghs_codes": [
@@ -26910,11 +26942,10 @@
         "primaryFamilies": [
           "floral"
         ],
-        "secondaryFamilies": [
-          "powdery"
-        ],
+        "secondaryFamilies": [],
         "facets": [
-          "lilac"
+          "lilac",
+          "powdery"
         ]
       },
       "ghs_codes": [
@@ -27170,11 +27201,10 @@
         "primaryFamilies": [
           "floral"
         ],
-        "secondaryFamilies": [
-          "powdery"
-        ],
+        "secondaryFamilies": [],
         "facets": [
-          "mimosa"
+          "mimosa",
+          "powdery"
         ]
       },
       "ghs_codes": [
@@ -27268,11 +27298,11 @@
           "floral_amber"
         ],
         "secondaryFamilies": [
-          "floral",
-          "powdery"
+          "floral"
         ],
         "facets": [
-          "heliotrope"
+          "heliotrope",
+          "powdery"
         ]
       },
       "ghs_codes": [
@@ -29245,12 +29275,11 @@
         "primaryFamilies": [
           "herbal"
         ],
-        "secondaryFamilies": [
-          "powdery"
-        ],
+        "secondaryFamilies": [],
         "facets": [
           "clover",
-          "coumarin"
+          "coumarin",
+          "powdery"
         ]
       },
       "ghs_codes": [
@@ -34449,7 +34478,7 @@
     "african basil": "84775-72-4",
     "agarospirol": "1460-73-7",
     "agarwood": "94350-09-1",
-    "alcohol denat": "ethanol",
+    "alcohol denat": "64-17-5",
     "aldehyde c-10": "112-31-2",
     "aldehyde c-11": "112-44-7",
     "aldehyde c-12 mna": "110-41-8",
@@ -34592,7 +34621,7 @@
     "bulgarian rose": "8007-01-0",
     "bulnesia sarmientoi": "8016-23-7",
     "burmese teak": "90131-58-1",
-    "butylated hydroxytoluene": "bht",
+    "butylated hydroxytoluene": "128-37-0",
     "butylidene phthalide": "17369-59-4",
     "cacao": "8002-31-1",
     "cade": "8013-10-3",
@@ -34747,7 +34776,7 @@
     "cyclopentadecanolide": "106-02-5",
     "cyperus papyrus": "90131-25-2",
     "cypress": "8013-86-3",
-    "d-alpha-tocopherol": "alpha-tocopherol",
+    "d-alpha-tocopherol": "59-02-9",
     "d-borneol": "464-43-7",
     "d-carvone": "2244-16-8",
     "d-fenchone": "1195-79-5",
@@ -34770,7 +34799,7 @@
     "delta-3-carene": "13466-78-9",
     "delta-damascone": "57378-68-4",
     "delta-terpinene": "586-62-9",
-    "dep": "diethyl phthalate",
+    "dep": "84-66-2",
     "dhm": "18479-58-8",
     "dianthus caryophyllus": "8000-67-7",
     "dihydrocarvone": "7764-50-3",
@@ -34784,7 +34813,7 @@
     "dimetol": "78-69-3",
     "dipteryx odorata": "8046-22-8",
     "dmhf": "3658-77-3",
-    "dpg": "dipropylene glycol",
+    "dpg": "25265-71-8",
     "dpmi": "33704-61-9",
     "dryobalanops aromatica": "464-43-7",
     "earth molecule": "16423-19-1",
@@ -34798,7 +34827,7 @@
     "estragole": "140-67-0",
     "estragon": "8016-88-4",
     "estragon oil": "8016-88-4",
-    "ethyl alcohol": "ethanol",
+    "ethyl alcohol": "64-17-5",
     "ethyl linalool": "10339-55-6",
     "ethyl maltol": "4940-11-8",
     "ethyl menthane carboxamide": "39711-79-0",
@@ -34883,7 +34912,7 @@
     "german chamomile": "8002-66-2",
     "ginger": "8007-08-7",
     "ginger oil": "8007-08-7",
-    "glyceryl triacetate": "triacetin",
+    "glyceryl triacetate": "102-76-1",
     "gomenol": "8014-68-4",
     "grapefruit": "8016-20-4",
     "grapefruit ketone": "4674-50-4",
@@ -34929,7 +34958,7 @@
     "indian dill": "8006-75-5",
     "indole": "120-72-9",
     "ionone": "127-41-3",
-    "ipm": "isopropyl myristate",
+    "ipm": "110-27-0",
     "iris": "8002-73-1",
     "iris absolute": "8002-73-1",
     "iris butter": "8002-73-1",
@@ -35215,8 +35244,8 @@
     "petitgrain": "8014-17-3",
     "petitgrain oil": "8014-17-3",
     "petroselinum crispum": "8000-68-8",
-    "pg": "propylene glycol",
-    "phenoxetol": "phenoxyethanol",
+    "pg": "57-55-6",
+    "phenoxetol": "122-99-6",
     "phenyl ethyl acetate (sec)": "93-92-5",
     "phenylethyl alcohol": "60-12-8",
     "pine": "8002-09-3",
@@ -35347,7 +35376,7 @@
     "tea tree oil": "68647-73-4",
     "teaberry": "68917-75-9",
     "teak": "90131-58-1",
-    "tec": "triethyl citrate",
+    "tec": "77-93-0",
     "tectona grandis": "90131-58-1",
     "terpinen-4-ol": "562-74-3",
     "terpineol": "98-55-5",
@@ -35375,7 +35404,7 @@
     "tilleul": "97676-14-9",
     "tobacco": "8037-19-2",
     "tobacco absolute": "8037-19-2",
-    "tocopherol": "alpha-tocopherol",
+    "tocopherol": "59-02-9",
     "tolu balsam": "9000-64-0",
     "tomato leaf": "84929-31-7",
     "tonka": "8046-22-8",
@@ -35423,7 +35452,7 @@
     "violet leaf absolute": "8024-08-6",
     "violet leaf aldehyde": "557-48-2",
     "virginian cedarwood": "8000-27-9",
-    "vitamin e": "alpha-tocopherol",
+    "vitamin e": "59-02-9",
     "white camphor": "8008-51-3",
     "white cedar": "8007-20-3",
     "white tea": "92128-85-9",

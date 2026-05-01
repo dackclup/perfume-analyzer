@@ -11,8 +11,8 @@ export default [
   {
     ignores: [
       "node_modules/**",
+      "audit/**",
       "perfumery_data.js",
-      "perfumery_data.backup.js",
       "formulation_data.js",
       "formulation_engine.js",
       "sw.js"

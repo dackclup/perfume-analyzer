@@ -2525,11 +2525,17 @@ function addFromDB(cas) {
     xlogp: _xlogp,
     boiling_point: entry.boiling_point != null ? entry.boiling_point : (mp.bp || null),
     smiles: entry.smiles || mp.smiles || null,
-    primaryFamilies: [],
-    secondaryFamilies: [],
-    facets: [],
-    functions: [],
-    regulatory: [],
+    // Audit-coherence C3.2 — preserve curated classification when
+    // adding from the formulator's own search modal. Previously these
+    // five fields were forced to [] which made `materialToRadarWeights`
+    // fall back to odor_type parsing and produced different chip /
+    // radar output depending on whether the user added via Analyzer-
+    // handoff (which DOES populate them) vs Formulator's own modal.
+    primaryFamilies:   entry.classification?.primaryFamilies   || [],
+    secondaryFamilies: entry.classification?.secondaryFamilies || [],
+    facets:            entry.classification?.facets            || [],
+    functions:         entry.classification?.functions         || [],
+    regulatory:        entry.classification?.regulatory        || [],
   };
   const ok = formulation.addMaterial(cas, entry.name, 10, enriched);
   addModal.classList.remove('open');
@@ -5556,7 +5562,12 @@ function briefToggleMaterial(btn) {
     xlogp: parseFloat(entry.xlogp) || mp.logP || null,
     boiling_point: entry.boiling_point != null ? entry.boiling_point : (mp.bp || null),
     smiles: entry.smiles || mp.smiles || null,
-    primaryFamilies: [], secondaryFamilies: [], facets: [], functions: [], regulatory: [],
+    // Audit-coherence C3.3 — same classification preservation as addFromDB.
+    primaryFamilies:   entry.classification?.primaryFamilies   || [],
+    secondaryFamilies: entry.classification?.secondaryFamilies || [],
+    facets:            entry.classification?.facets            || [],
+    functions:         entry.classification?.functions         || [],
+    regulatory:        entry.classification?.regulatory        || [],
   };
   const ok = formulation.addMaterial(cas, entry.name, isFinite(pct) && pct > 0 ? pct : 0, enriched);
   if (ok) {
@@ -5632,7 +5643,12 @@ function applyBriefFormula() {
           xlogp: parseFloat(entry.xlogp) || mp.logP || null,
           boiling_point: entry.boiling_point != null ? entry.boiling_point : (mp.bp || null),
           smiles: entry.smiles || mp.smiles || null,
-          primaryFamilies: [], secondaryFamilies: [], facets: [], functions: [], regulatory: [],
+          // Audit-coherence C3.3 — preserve curated classification.
+          primaryFamilies:   entry.classification?.primaryFamilies   || [],
+          secondaryFamilies: entry.classification?.secondaryFamilies || [],
+          facets:            entry.classification?.facets            || [],
+          functions:         entry.classification?.functions         || [],
+          regulatory:        entry.classification?.regulatory        || [],
         };
         const pct = (typeof r.suggestedPct === 'number' && isFinite(r.suggestedPct) && r.suggestedPct > 0)
           ? r.suggestedPct : 0;
@@ -6983,9 +6999,10 @@ function renderMapInspector(points) {
           note: e.note || 'Middle',
           odor_type: e.odor?.type || null,
           odor_description: e.odor?.description || null,
-          primaryFamilies: [],
-          secondaryFamilies: [],
-          facets: [],
+          // Audit-coherence C3.3 — preserve curated classification on fallback path too.
+          primaryFamilies:   e.classification?.primaryFamilies   || [],
+          secondaryFamilies: e.classification?.secondaryFamilies || [],
+          facets:            e.classification?.facets            || [],
         });
         if (!fallbackOk) {
           showToast({ message: 'Could not add ' + p.name + ' — already in formula or limit reached.', variant: 'warn' });

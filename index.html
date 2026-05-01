@@ -8061,7 +8061,12 @@ function classifyRegulatory(mat) {
     /\bnot\s+(?:an?|on|in|part\s+of|listed\s+(?:on|in))\s+(?:the\s+)?(?:[a-z0-9\s/+,.\-]{0,40})?allergen\b/i.test(all);
   if (!negAllergen && (
       /\b(allergen|26 allergens|annex iii|labeling required)\b/i.test(all) ||
-      /\b(linalool|limonene|citral|geraniol|eugenol|coumarin|farnesol|citronellol|cinnamal|cinnamic alcohol|cinnamyl alcohol|isoeugenol|benzyl alcohol|benzyl salicylate|benzyl benzoate|benzyl cinnamate|hydroxycitronellal|amyl cinnamal|amylcinnamyl alcohol|hexyl cinnamal|methyl heptine carbonate|alpha-isomethyl ionone|oakmoss|treemoss|evernia)\b/i.test(n))) {
+      // Audit-coherence C7.1 — full EU 26 + 2023/1545 token list, sourced
+      // from formulation_data.js EU_ALLERGENS_CURRENT (50 names: 26 from
+      // 2003/15/EC + 24 added by 2023/1545). Tier-2 plan moves both lists
+      // behind a shared module so this regex regenerates automatically;
+      // until then a CI delta-check (lint-data) catches drift.
+      /\b(linalool|limonene|l-limonene|citral|geraniol|nerol|eugenol|coumarin|vanillin|farnesol|citronellol|cinnamal|cinnamaldehyde|cinnamic alcohol|cinnamyl alcohol|isoeugenol|benzyl alcohol|benzyl salicylate|benzyl benzoate|benzyl cinnamate|hydroxycitronellal|amyl cinnamal|amylcinnamyl alcohol|hexyl cinnamal|hexyl cinnamaldehyde|methyl heptine carbonate|methyl 2-octynoate|methyl salicylate|alpha-isomethyl ionone|alpha-bisabolol|bisabolol|alpha-terpineol|terpineol|anise alcohol|anisyl alcohol|butylphenyl methylpropional|lilial|hydroxyisohexyl 3-cyclohexene carboxaldehyde|lyral|camphor|caryophyllene|beta-caryophyllene|myrcene|ocimene|beta-ocimene|beta-cis-ocimene|beta-trans-ocimene|oakmoss|evernia prunastri|treemoss|evernia furfuracea|evernia)\b/i.test(n))) {
     out.push('allergen');
   }
   // Phototoxic: explicit cue OR known phototoxic citrus / furocoumarin.

@@ -57,18 +57,25 @@ init code might touch:
 
 ## Cache-busting
 
-The PWA service worker uses **network-first for HTML** and
-**cache-first for `perfumery_data.js?v=...`**. The query-string is
-the cache key, so:
+The PWA service worker uses **network-first for HTML**, **stale-while-
+revalidate with version-key match for `data/materials.json`**, and
+**cache-first for the bundled JS** (taxonomy / formulation_data /
+formulation_engine).
 
-- Bump `index.html`'s `v=2026-04-25-rebuild-vNNN` on every change.
-  `index.html`'s `DATA_VERSION` const must match (also `vNNN`).
-- Bump `formulation.html`'s `?v=2026-04-29-...` on every change.
-- The HTML auto-refreshes; the `.js` files do too once the new HTML
-  references a new `?v=` string.
+Both pages share a single version string of the form `2026-04-29-vNNN`.
+**Do not bump it manually** — run:
 
-There's a single grep-replace pattern: search for the current
-version string and bump it everywhere it appears.
+```sh
+npm run release    # bumps version.json + every cache-bust string + DATA_VERSION
+```
+
+`scripts/release.mjs` asserts the repo settles on one distinct version
+string afterwards; any drift fails the release.
+
+`sw.js`'s `CACHE_VERSION` is independent — it tracks the *shell*
+(HTML + manifest) and is derived from a content hash of `SHELL_ASSETS`
+by the same release script. You should never edit `CACHE_VERSION`
+by hand.
 
 ## Conventions
 
