@@ -91,8 +91,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -105,7 +105,8 @@
           "sweet-aromatic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 147
     },
     {
       "name": "2-Methylcinnamic Aldehyde",
@@ -138,8 +139,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -154,7 +155,8 @@
           "anise"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 182
     },
     {
       "name": "Methyl Phenylacetate",
@@ -187,8 +189,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -201,7 +203,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 185
     },
     {
       "name": "(2,2-Dimethoxyethyl)Benzene",
@@ -234,8 +237,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -247,7 +250,8 @@
           "aldehydic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 200
     },
     {
       "name": "2-(Phenylmethylidene)Octanal",
@@ -280,8 +284,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -296,7 +300,8 @@
           "spicy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 245
     },
     {
       "name": "Lomerizine",
@@ -329,8 +334,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -338,7 +343,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 472
     },
     {
       "name": "Ethyl Phenylacetate",
@@ -371,8 +377,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -385,7 +391,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 198
     },
     {
       "name": "Isobutyl Phenylacetate",
@@ -418,8 +425,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -432,7 +439,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 223
     },
     {
       "name": "Phenethyl Phenylacetate",
@@ -465,8 +473,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -480,7 +488,8 @@
           "floral"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 266
     },
     {
       "name": "Triacetin",
@@ -677,8 +686,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -692,7 +701,8 @@
           "balsamic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 209
     },
     {
       "name": "Benzyl Isovalerate",
@@ -725,8 +735,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -739,7 +749,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 223
     },
     {
       "name": "Benzyl 3-Phenylprop-2-Enoate",
@@ -772,8 +783,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -787,7 +798,8 @@
           "balsamic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 264
     },
     {
       "name": "Ethyl Phenylacetate",
@@ -820,8 +832,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -834,7 +846,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 198
     },
     {
       "name": "Phenethyl Isobutyrate",
@@ -867,8 +880,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -882,7 +895,8 @@
           "floral"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 223
     },
     {
       "name": "Cinnamyl Acetate",
@@ -943,7 +957,8 @@
       "heavy_atoms": "13",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 209
     },
     {
       "name": "Schembl1299325",
@@ -974,8 +989,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -983,7 +998,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 221
     },
     {
       "name": "Ethyl Linalool",
@@ -1045,7 +1061,8 @@
       "heavy_atoms": "12",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 201
     },
     {
       "name": "4-Methoxybenzyl Acetate",
@@ -1078,8 +1095,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -1092,7 +1109,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 212
     },
     {
       "name": "1-Methoxy-4-Prop-1-Enylbenzene",
@@ -1125,8 +1143,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -1139,7 +1157,8 @@
           "sweet-aromatic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 183
     },
     {
       "name": "γ-Octalactone",
@@ -1200,7 +1219,8 @@
       "hbond_acceptor": "2",
       "rotatable_bonds": "3",
       "heavy_atoms": "10",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 178
     },
     {
       "name": "Cinnamyl Alcohol",
@@ -1440,8 +1460,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -1454,7 +1474,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 196
     },
     {
       "name": "gamma-Undecalactone",
@@ -1626,8 +1647,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -1640,7 +1661,8 @@
           "sweet"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 165
     },
     {
       "name": "4-Chlorophenol",
@@ -1673,8 +1695,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -1682,7 +1704,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 166
     },
     {
       "name": "Benzyl 4-Hydroxybenzoate",
@@ -1715,8 +1738,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -1729,7 +1752,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 255
     },
     {
       "name": "Acetal",
@@ -1762,8 +1786,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -1775,7 +1799,8 @@
           "aldehydic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 156
     },
     {
       "name": "3,4-Dichlorophenol",
@@ -1808,8 +1833,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -1817,7 +1842,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 197
     },
     {
       "name": "Geranyl Acetate",
@@ -2122,8 +2148,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -2138,7 +2164,8 @@
           "aldehydic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 189
     },
     {
       "name": "Geraniol",
@@ -2346,7 +2373,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 187
     },
     {
       "name": "Ethyl Heptanoate",
@@ -2379,8 +2407,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -2393,7 +2421,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 192
     },
     {
       "name": "Ethyl Octanoate",
@@ -2426,8 +2455,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -2440,7 +2469,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 205
     },
     {
       "name": "P-Cresol",
@@ -2473,8 +2503,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -2489,7 +2519,8 @@
           "medicinal"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 147
     },
     {
       "name": "Methyl Hexanoate",
@@ -2522,8 +2553,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -2536,7 +2567,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 167
     },
     {
       "name": "Melonal",
@@ -2600,7 +2632,8 @@
       "heavy_atoms": "10",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 176
     },
     {
       "name": "Methyl Heptanoate",
@@ -2633,8 +2666,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -2647,7 +2680,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 180
     },
     {
       "name": "Hydroxycitronellal",
@@ -2744,8 +2778,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -2753,7 +2787,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 250
     },
     {
       "name": "2,4-Dimethylpentane",
@@ -2786,8 +2821,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -2795,7 +2830,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 140
     },
     {
       "name": "Gamma-Valerolactone",
@@ -2828,8 +2864,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -2842,7 +2878,8 @@
           "sweet"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 140
     },
     {
       "name": "Succinic Anhydride",
@@ -2875,8 +2912,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -2884,7 +2921,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 140
     },
     {
       "name": "2,6-Dimethylpyrazine",
@@ -2917,8 +2955,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -2931,7 +2969,8 @@
           "nutty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 147
     },
     {
       "name": "Propylene Glycol Methyl Ether Acetate",
@@ -2964,8 +3003,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -2978,7 +3017,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 169
     },
     {
       "name": "3-Chloropropionic Acid",
@@ -3011,8 +3051,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -3026,7 +3066,8 @@
           "cheesy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 148
     },
     {
       "name": "2-Methylpyrazine",
@@ -3059,8 +3100,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -3073,7 +3114,8 @@
           "nutty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 135
     },
     {
       "name": "Isobutyl Acetate",
@@ -3106,8 +3148,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -3120,7 +3162,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 155
     },
     {
       "name": "Isopropyl Myristate",
@@ -3193,8 +3236,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -3207,7 +3250,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 230
     },
     {
       "name": "Aldehyde C-12 MNA",
@@ -3275,7 +3319,8 @@
       "heavy_atoms": "13",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 216
     },
     {
       "name": "Squalane",
@@ -3349,8 +3394,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -3363,7 +3408,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 192
     },
     {
       "name": "Methyl Heptine Carbonate",
@@ -3458,8 +3504,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -3473,7 +3519,8 @@
           "green"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 142
     },
     {
       "name": "1-Heptanol",
@@ -3506,8 +3553,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -3521,7 +3568,8 @@
           "green"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 155
     },
     {
       "name": "Heptanal",
@@ -3554,8 +3602,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -3569,7 +3617,8 @@
           "soapy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 153
     },
     {
       "name": "Methyl Laurate",
@@ -3602,8 +3651,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -3616,7 +3665,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 243
     },
     {
       "name": "1-Octanol",
@@ -3649,8 +3699,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -3664,7 +3714,8 @@
           "green"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 167
     },
     {
       "name": "Habanolide",
@@ -3715,7 +3766,8 @@
           "musk"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 265
     },
     {
       "name": "1-Decanol",
@@ -3748,8 +3800,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -3763,7 +3815,8 @@
           "green"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 192
     },
     {
       "name": "Aldehyde C-10",
@@ -3934,8 +3987,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -3949,7 +4002,8 @@
           "green"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 218
     },
     {
       "name": "Dodecanal",
@@ -3982,8 +4036,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -3997,7 +4051,8 @@
           "soapy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 216
     },
     {
       "name": "1-Tetradecanol",
@@ -4030,8 +4085,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -4047,7 +4102,8 @@
           "musk"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 243
     },
     {
       "name": "Phenyl 800/1",
@@ -4080,8 +4136,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -4089,7 +4145,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 210
     },
     {
       "name": "Oxoisophorone",
@@ -4153,7 +4210,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 187
     },
     {
       "name": "α-Santalol",
@@ -4209,7 +4267,8 @@
       "hbond_acceptor": "1",
       "rotatable_bonds": "4",
       "heavy_atoms": "16",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 248
     },
     {
       "name": "Linalyl Acetate",
@@ -4342,7 +4401,8 @@
       "hbond_acceptor": "2",
       "rotatable_bonds": "6",
       "heavy_atoms": "13",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 214
     },
     {
       "name": "Safranal",
@@ -4459,7 +4519,8 @@
           "vetiver"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 286
     },
     {
       "name": "Phenyl Salicylate",
@@ -4492,8 +4553,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -4508,7 +4569,8 @@
           "sun-tan"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 243
     },
     {
       "name": "Benzyl Salicylate",
@@ -4610,8 +4672,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -4625,7 +4687,8 @@
           "cheesy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 179
     },
     {
       "name": "Maltol",
@@ -4727,8 +4790,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -4743,7 +4806,8 @@
           "medicinal"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 173
     },
     {
       "name": "Methyl Salicylate",
@@ -4876,7 +4940,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 183
     },
     {
       "name": "Fenchone",
@@ -5008,7 +5073,8 @@
       "hbond_acceptor": "1",
       "rotatable_bonds": "1",
       "heavy_atoms": "11",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 187
     },
     {
       "name": "3,4-Dimethoxybenzaldehyde",
@@ -5041,8 +5107,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -5056,7 +5122,8 @@
           "powdery"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 200
     },
     {
       "name": "Isobutyl Benzoate",
@@ -5089,8 +5156,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -5103,7 +5170,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 210
     },
     {
       "name": "Benzyl Benzoate",
@@ -5575,7 +5643,8 @@
       "heavy_atoms": "16",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 252
     },
     {
       "name": "Cuminaldehyde",
@@ -5639,7 +5708,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 183
     },
     {
       "name": "5,5'-Methylenedisalicylic Acid",
@@ -5672,8 +5742,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -5681,7 +5751,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 309
     },
     {
       "name": "9-Octadecenoic Acid (9z)-, 1,1',1''-(1,2,3-Propanetriyl) Ester",
@@ -5714,8 +5785,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -5723,7 +5794,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 847
     },
     {
       "name": "Alpha-Amylcinnamaldehyde",
@@ -5756,8 +5828,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -5772,7 +5844,8 @@
           "spicy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 232
     },
     {
       "name": "2-Propenoic Acid, 3-Phenyl-, 3-Phenyl-2-Propenyl Ester",
@@ -5805,8 +5878,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -5820,7 +5893,8 @@
           "balsamic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 288
     },
     {
       "name": "Phenylacetaldehyde",
@@ -5853,8 +5927,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -5866,7 +5940,8 @@
           "aldehydic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 158
     },
     {
       "name": "Phenoxyethanol",
@@ -5910,7 +5985,8 @@
       },
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 174
     },
     {
       "name": "Galaxolide (HHCB)",
@@ -6080,8 +6156,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -6094,7 +6170,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 207
     },
     {
       "name": "Ethyl Nonanoate",
@@ -6127,8 +6204,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -6141,7 +6218,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 218
     },
     {
       "name": "2,5-Dimethylpiperazine",
@@ -6174,8 +6252,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -6183,7 +6261,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 153
     },
     {
       "name": "Myrcene",
@@ -6291,8 +6370,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -6306,7 +6385,8 @@
           "green"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 129
     },
     {
       "name": "N-(2-(((2-(Dimethylamino)Ethyl)Amino)Carbonyl)-1-Methyl-1h-Imidazol-4-Yl)-4-(((4-(Formylamino)-1-Methyl-1h-Imidazol-2-Yl)Carbonyl)Amino)-1-Methyl-1h-Imidazole-2-Carboxamide",
@@ -6335,8 +6415,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -6344,7 +6424,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 487
     },
     {
       "name": "Allyl Caproate (Pineapple)",
@@ -6406,7 +6487,8 @@
       "ghs_codes": [
         "GHS06",
         "GHS09"
-      ]
+      ],
+      "boiling_point": 191
     },
     {
       "name": "1-Oxacycloheptadec-8-En-2-One",
@@ -6439,8 +6521,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -6448,7 +6530,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 277
     },
     {
       "name": "Isoamyl Acetate",
@@ -6481,8 +6564,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -6495,7 +6578,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 167
     },
     {
       "name": "Octan-2-Ol",
@@ -6528,8 +6612,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -6543,7 +6627,8 @@
           "green"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 167
     },
     {
       "name": "Octanoic Acid",
@@ -6576,8 +6661,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -6591,7 +6676,8 @@
           "cheesy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 180
     },
     {
       "name": "Octanal",
@@ -6624,8 +6710,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -6639,7 +6725,8 @@
           "soapy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 165
     },
     {
       "name": "Aldehyde C-9 (Pelargonaldehyde)",
@@ -6773,7 +6860,8 @@
       "heavy_atoms": "14",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 227
     },
     {
       "name": "Isopropylphenylbutanal",
@@ -6806,8 +6894,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -6821,7 +6909,8 @@
           "floral"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 221
     },
     {
       "name": "(S)-(+)-Linalool",
@@ -6886,7 +6975,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 189
     },
     {
       "name": "(R)-(−)-Linalool",
@@ -6953,7 +7043,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 189
     },
     {
       "name": "alpha-Ionone",
@@ -7080,7 +7171,8 @@
       "heavy_atoms": "15",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 236
     },
     {
       "name": "alpha-Isomethyl Ionone",
@@ -7284,8 +7376,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -7298,7 +7390,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 216
     },
     {
       "name": "Dtxsid6026240",
@@ -7331,8 +7424,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -7346,7 +7439,8 @@
           "floral"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 236
     },
     {
       "name": "2-Ethyl-5-Methylpyrazine",
@@ -7379,8 +7473,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -7393,7 +7487,8 @@
           "nutty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 160
     },
     {
       "name": "2-Butanone Peroxide",
@@ -7426,8 +7521,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -7441,7 +7536,8 @@
           "popcorn"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 239
     },
     {
       "name": "Methyl Anthranilate",
@@ -7571,7 +7667,8 @@
         "GHS07",
         "GHS08",
         "GHS09"
-      ]
+      ],
+      "boiling_point": 173
     },
     {
       "name": "Isododecane",
@@ -7610,7 +7707,8 @@
       },
       "ghs_codes": [
         "GHS02"
-      ]
+      ],
+      "boiling_point": 203
     },
     {
       "name": "Linalool Oxide (furanoid)",
@@ -7676,7 +7774,8 @@
       "heavy_atoms": "12",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 203
     },
     {
       "name": "trans-Sabinyl Acetate",
@@ -7759,8 +7858,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -7774,7 +7873,8 @@
           "green"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 129
     },
     {
       "name": "Beta-Cubebene",
@@ -7807,8 +7907,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -7823,7 +7923,8 @@
           "green"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 234
     },
     {
       "name": "Beta-Ocimene",
@@ -7856,8 +7957,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -7872,7 +7973,8 @@
           "fresh"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 173
     },
     {
       "name": "2-Ethyl-6-Methylpyrazine",
@@ -7905,8 +8007,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -7919,7 +8021,8 @@
           "nutty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 160
     },
     {
       "name": "Benzyl Acetate",
@@ -8021,8 +8124,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -8036,7 +8139,8 @@
           "narcotic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 185
     },
     {
       "name": "Methyl Chavicol",
@@ -8169,7 +8273,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 189
     },
     {
       "name": "3,7-Dimethylocta-2,6-Dienyl Acetate",
@@ -8202,8 +8307,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -8218,7 +8323,8 @@
           "rosy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 227
     },
     {
       "name": "Rhodinol",
@@ -8282,7 +8388,8 @@
       "heavy_atoms": "",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 191
     },
     {
       "name": "Geranial",
@@ -8348,7 +8455,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 187
     },
     {
       "name": "Ethyl Acetate",
@@ -8381,8 +8489,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -8395,7 +8503,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 129
     },
     {
       "name": "Hexetidine",
@@ -8428,8 +8537,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -8437,7 +8546,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 356
     },
     {
       "name": "3-Hydroxypyridine",
@@ -8470,8 +8580,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -8479,7 +8589,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 136
     },
     {
       "name": "Allyl Heptanoate",
@@ -8512,8 +8623,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -8526,7 +8637,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 203
     },
     {
       "name": "Hexanoic Acid",
@@ -8559,8 +8671,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -8574,7 +8686,8 @@
           "cheesy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 155
     },
     {
       "name": "Hexa-2,4-Dienal",
@@ -8607,8 +8720,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -8623,7 +8736,8 @@
           "fatty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 137
     },
     {
       "name": "Isopropyl Palmitate",
@@ -8656,8 +8770,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -8670,7 +8784,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 319
     },
     {
       "name": "Hexyl Acetate",
@@ -8703,8 +8818,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -8717,7 +8832,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 180
     },
     {
       "name": "10-Undecenal",
@@ -8750,8 +8866,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -8765,7 +8881,8 @@
           "soapy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 201
     },
     {
       "name": "Linalyl Propionate",
@@ -8831,7 +8948,8 @@
       "heavy_atoms": "15",
       "ghs_codes": [
         "GHS09"
-      ]
+      ],
+      "boiling_point": 239
     },
     {
       "name": "Agarospirol",
@@ -8913,8 +9031,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -8927,7 +9045,8 @@
           "nutty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 160
     },
     {
       "name": "Menthol",
@@ -8960,8 +9079,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -8976,7 +9095,8 @@
           "herbal"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 191
     },
     {
       "name": "Refchem:1069765",
@@ -9009,8 +9129,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -9018,7 +9138,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 223
     },
     {
       "name": "N-(6-Chloropyridazin-3-Yl)Acetamide",
@@ -9051,8 +9172,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -9060,7 +9181,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 204
     },
     {
       "name": "Citronellyl Acetate",
@@ -9093,8 +9215,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -9109,7 +9231,8 @@
           "rosy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 228
     },
     {
       "name": "p-Cresyl Methyl Ether",
@@ -9171,7 +9294,8 @@
       "heavy_atoms": "9",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 160
     },
     {
       "name": "2-Ethyl-3-Methylpyrazine",
@@ -9204,8 +9328,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -9218,7 +9342,8 @@
           "nutty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 160
     },
     {
       "name": "Pent-2-Enal",
@@ -9251,8 +9376,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -9267,7 +9392,8 @@
           "aldehydic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 126
     },
     {
       "name": "α-Vetivone",
@@ -9311,7 +9437,8 @@
           "vetiver"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 246
     },
     {
       "name": "Fenchol (endo-Fenchol)",
@@ -9407,8 +9534,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -9421,7 +9548,8 @@
           "green-floral"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 189
     },
     {
       "name": "Geosmin",
@@ -9480,7 +9608,8 @@
       "heavy_atoms": "13",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 214
     },
     {
       "name": "(Z)-3-Butylidene Phthalide",
@@ -9533,7 +9662,8 @@
       },
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 207
     },
     {
       "name": "Dicyclohexyl Peroxide",
@@ -9566,8 +9696,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -9575,7 +9705,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 228
     },
     {
       "name": "ar-Curcumene",
@@ -9634,7 +9765,8 @@
       "heavy_atoms": "15",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 232
     },
     {
       "name": "1,3,8-p-Menthatriene",
@@ -9696,7 +9828,8 @@
       "hbond_donor": "0",
       "hbond_acceptor": "0",
       "rotatable_bonds": "1",
-      "heavy_atoms": "10"
+      "heavy_atoms": "10",
+      "boiling_point": 171
     },
     {
       "name": "Dihydromyrcenol",
@@ -9796,8 +9929,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -9811,7 +9944,8 @@
           "mossy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 214
     },
     {
       "name": "Javanol",
@@ -9901,8 +10035,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -9914,7 +10048,8 @@
           "musk"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 283
     },
     {
       "name": "Terpinyl Butyrate",
@@ -9975,7 +10110,8 @@
       "hbond_acceptor": "2",
       "rotatable_bonds": "5",
       "heavy_atoms": "16",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 252
     },
     {
       "name": "4-Dodecen-1-Al",
@@ -10007,8 +10143,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -10021,7 +10157,8 @@
           "fatty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 214
     },
     {
       "name": "Acetylpyrazine",
@@ -10054,8 +10191,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -10068,7 +10205,8 @@
           "nutty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 160
     },
     {
       "name": "l-Menthol",
@@ -10136,7 +10274,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 191
     },
     {
       "name": "Menthol",
@@ -10169,8 +10308,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -10185,7 +10324,8 @@
           "herbal"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 191
     },
     {
       "name": "(S)-(+)-Carvone",
@@ -10249,7 +10389,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 185
     },
     {
       "name": "Bisabolol Oxide A",
@@ -10304,7 +10445,8 @@
       "hbond_acceptor": "2",
       "rotatable_bonds": "1",
       "heavy_atoms": "17",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 265
     },
     {
       "name": "alpha-Bisabolol",
@@ -10362,7 +10504,8 @@
       "hbond_acceptor": "1",
       "rotatable_bonds": "4",
       "heavy_atoms": "16",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 250
     },
     {
       "name": "Deca-2,4-Dienal",
@@ -10395,8 +10538,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -10411,7 +10554,8 @@
           "fatty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 187
     },
     {
       "name": "Oct-2-Enal",
@@ -10444,8 +10588,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -10460,7 +10604,8 @@
           "aldehydic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 164
     },
     {
       "name": "Dtxsid6041397",
@@ -10493,8 +10638,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -10508,7 +10653,8 @@
           "floral"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 221
     },
     {
       "name": "2-Methylisoborneol (2-MIB)",
@@ -10573,7 +10719,8 @@
       "heavy_atoms": "12",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 201
     },
     {
       "name": "Dtxsid1067885",
@@ -10606,8 +10753,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -10621,7 +10768,8 @@
           "floral"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 223
     },
     {
       "name": "Dtxsid1067885",
@@ -10654,8 +10802,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -10669,7 +10817,8 @@
           "floral"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 223
     },
     {
       "name": "β-Damascenone",
@@ -10736,7 +10885,8 @@
       "heavy_atoms": "14",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 221
     },
     {
       "name": "5-Methyl-6,7-Dihydro-5h-Cyclopenta[B]Pyrazine",
@@ -10769,8 +10919,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -10783,7 +10933,8 @@
           "nutty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 171
     },
     {
       "name": "9-Methyladenine",
@@ -10816,8 +10967,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -10825,7 +10976,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 184
     },
     {
       "name": "Methyl Thiobutyrate",
@@ -10858,8 +11010,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -10872,7 +11024,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 156
     },
     {
       "name": "Daucene",
@@ -10986,7 +11139,8 @@
       "heavy_atoms": "12",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 200
     },
     {
       "name": "Dtxsid0052097",
@@ -11019,8 +11173,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -11034,7 +11188,8 @@
           "floral"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 223
     },
     {
       "name": "Hedione",
@@ -11158,7 +11313,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 187
     },
     {
       "name": "Dipropylene Glycol",
@@ -11231,8 +11387,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -11247,7 +11403,8 @@
           "sun-tan"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 248
     },
     {
       "name": "2-Isopropyl-3-Methoxypyrazine",
@@ -11280,8 +11437,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -11294,7 +11451,8 @@
           "nutty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 187
     },
     {
       "name": "Lavandulyl Acetate",
@@ -11354,7 +11512,8 @@
       "hbond_acceptor": "2",
       "rotatable_bonds": "6",
       "heavy_atoms": "14",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 227
     },
     {
       "name": "Bisabolol Oxide B",
@@ -11409,7 +11568,8 @@
       "hbond_acceptor": "2",
       "rotatable_bonds": "2",
       "heavy_atoms": "17",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 265
     },
     {
       "name": "L-Menthyl Acetate",
@@ -11471,7 +11631,8 @@
       "heavy_atoms": "14",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 228
     },
     {
       "name": "4-Vinylphenol",
@@ -11504,8 +11665,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -11520,7 +11681,8 @@
           "medicinal"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 158
     },
     {
       "name": "2-Ethyl-4-Hydroxy-5-Methyl-3(2h)-Furanone",
@@ -11553,8 +11715,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -11567,7 +11729,8 @@
           "sweet"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 178
     },
     {
       "name": "Dtxsid0044814",
@@ -11600,8 +11763,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -11609,7 +11772,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 238
     },
     {
       "name": "Isoamyl Angelate",
@@ -11668,7 +11832,8 @@
       "heavy_atoms": "12",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 203
     },
     {
       "name": "Ambrettolide",
@@ -11731,7 +11896,8 @@
       "heavy_atoms": "18",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 277
     },
     {
       "name": "Sotolon",
@@ -11798,7 +11964,8 @@
       "heavy_atoms": "9",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 165
     },
     {
       "name": "2-Methoxy-5-Methylpyrazine",
@@ -11831,8 +11998,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -11845,7 +12012,8 @@
           "nutty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 162
     },
     {
       "name": "Calone 1951",
@@ -11952,8 +12120,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -11966,7 +12134,8 @@
           "green-floral"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 189
     },
     {
       "name": "Pinocarvone",
@@ -12031,7 +12200,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 185
     },
     {
       "name": "Cyclohexadecanone",
@@ -12064,8 +12234,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -12077,7 +12247,8 @@
           "musk"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 265
     },
     {
       "name": "Methionol",
@@ -12110,8 +12281,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -12124,7 +12295,8 @@
           "savory"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 146
     },
     {
       "name": "(Z)-β-Ocimene",
@@ -12191,7 +12363,8 @@
         "GHS02",
         "GHS07",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 173
     },
     {
       "name": "Decanoic Acid",
@@ -12224,8 +12397,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -12239,7 +12412,8 @@
           "cheesy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 205
     },
     {
       "name": "Cashmeran",
@@ -12440,7 +12614,8 @@
       "heavy_atoms": "9",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 165
     },
     {
       "name": "Theaspirane",
@@ -12555,7 +12730,8 @@
       "heavy_atoms": "9",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 165
     },
     {
       "name": "1-Hexadecanol",
@@ -12588,8 +12764,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -12605,7 +12781,8 @@
           "musk"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 268
     },
     {
       "name": "cis-3-Hexenyl Acetate",
@@ -12672,7 +12849,8 @@
       "heavy_atoms": "10",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 343
     },
     {
       "name": "α-Bulnesene",
@@ -12763,8 +12941,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -12779,7 +12957,8 @@
           "clean"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 264
     },
     {
       "name": "Sanabolicum",
@@ -12812,8 +12991,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -12826,7 +13005,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 421
     },
     {
       "name": "(E)-β-Ocimene",
@@ -12896,7 +13076,8 @@
         "GHS02",
         "GHS07",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 173
     },
     {
       "name": "6,10-Dimethylundeca-5,9-Dien-2-One",
@@ -12929,8 +13110,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -12945,7 +13126,8 @@
           "rosy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 225
     },
     {
       "name": "Dec-2-Enal",
@@ -12978,8 +13160,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -12994,7 +13176,8 @@
           "fatty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 189
     },
     {
       "name": "WS-3 (N-Ethyl-p-menthane-3-carboxamide)",
@@ -13057,7 +13240,8 @@
       "heavy_atoms": "15",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 240
     },
     {
       "name": "3,7,11-Trimethyldodeca-1,6,10-Trien-3-Ol",
@@ -13090,8 +13274,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -13106,7 +13290,8 @@
           "rosy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 250
     },
     {
       "name": "Farnesyl Acetate",
@@ -13139,8 +13324,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -13153,7 +13338,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 288
     },
     {
       "name": "Norpatchoulenol",
@@ -13206,7 +13392,8 @@
       "hbond_acceptor": "",
       "rotatable_bonds": "",
       "heavy_atoms": "",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 236
     },
     {
       "name": "trans-Anethole",
@@ -13277,7 +13464,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 183
     },
     {
       "name": "PMD (p-Menthane-3,8-diol)",
@@ -13338,7 +13526,8 @@
       "hbond_acceptor": "2",
       "rotatable_bonds": "1",
       "heavy_atoms": "12",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 205
     },
     {
       "name": "alpha-Damascone",
@@ -13434,8 +13623,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -13449,7 +13638,8 @@
           "popcorn"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 127
     },
     {
       "name": "1-Octen-3-One",
@@ -13482,8 +13672,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -13497,7 +13687,8 @@
           "mossy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 164
     },
     {
       "name": "Beta-Cyclocitral",
@@ -13530,8 +13721,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -13546,7 +13737,8 @@
           "aldehydic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 187
     },
     {
       "name": "2-Ethyl-4-Methyl-1,3-Dioxolane",
@@ -13579,8 +13771,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -13588,7 +13780,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 155
     },
     {
       "name": "3-Phenylprop-2-En-1-Ol",
@@ -13621,8 +13814,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -13636,7 +13829,8 @@
           "balsamic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 171
     },
     {
       "name": "Octahydrocoumarin",
@@ -13698,7 +13892,8 @@
       "hbond_acceptor": "2",
       "rotatable_bonds": "0",
       "heavy_atoms": "11",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 189
     },
     {
       "name": "Ligustilide",
@@ -13877,7 +14072,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 189
     },
     {
       "name": "Carotol",
@@ -14018,8 +14214,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -14027,7 +14223,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 234
     },
     {
       "name": "Eucalyptol",
@@ -14168,7 +14365,8 @@
       "hbond_acceptor": "4",
       "rotatable_bonds": "2",
       "heavy_atoms": "14",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 227
     },
     {
       "name": "beta-Thujone",
@@ -14239,7 +14437,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 187
     },
     {
       "name": "Longifolene",
@@ -14299,7 +14498,8 @@
       "heavy_atoms": "15",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 234
     },
     {
       "name": "Bergapten",
@@ -14363,7 +14563,8 @@
         "GHS06",
         "GHS07",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 245
     },
     {
       "name": "Dill Apiole",
@@ -14473,7 +14674,8 @@
       "ghs_codes": [
         "GHS07",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 237
     },
     {
       "name": "cis-Jasmone",
@@ -14537,7 +14739,8 @@
       "heavy_atoms": "12",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 198
     },
     {
       "name": "4-Hydroxyisophorone",
@@ -14595,7 +14798,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 189
     },
     {
       "name": "Piperitenone",
@@ -14657,7 +14861,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 185
     },
     {
       "name": "Menthofuran",
@@ -14720,7 +14925,8 @@
         "GHS06",
         "GHS07",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 185
     },
     {
       "name": "Ethyl Maltol",
@@ -14852,7 +15058,8 @@
       "heavy_atoms": "15",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 234
     },
     {
       "name": "beta-Bisabolene",
@@ -14963,7 +15170,8 @@
       "heavy_atoms": "15",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 234
     },
     {
       "name": "Acetovanillone",
@@ -14996,8 +15204,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -15011,7 +15219,8 @@
           "powdery"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 200
     },
     {
       "name": "Lavandulol",
@@ -15071,7 +15280,8 @@
       "hbond_acceptor": "1",
       "rotatable_bonds": "4",
       "heavy_atoms": "11",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 189
     },
     {
       "name": "Carvacrol",
@@ -15272,7 +15482,8 @@
       "heavy_atoms": "12",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 204
     },
     {
       "name": "Acetoin",
@@ -15305,8 +15516,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -15320,7 +15531,8 @@
           "popcorn"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 129
     },
     {
       "name": "Sclareol",
@@ -15386,7 +15598,8 @@
       "hbond_acceptor": "2",
       "rotatable_bonds": "4",
       "heavy_atoms": "22",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 328
     },
     {
       "name": "3-Mercapto-1-Hexanol",
@@ -15419,8 +15632,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -15434,7 +15647,8 @@
           "green"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 171
     },
     {
       "name": "Apiole",
@@ -15497,7 +15711,8 @@
         "GHS06",
         "GHS07",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 250
     },
     {
       "name": "Chamazulene",
@@ -15556,7 +15771,8 @@
       "heavy_atoms": "14",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 216
     },
     {
       "name": "7-Methoxycoumarin (Herniarin)",
@@ -15619,7 +15835,8 @@
       "heavy_atoms": "13",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 209
     },
     {
       "name": "Cuminol",
@@ -15652,8 +15869,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -15661,7 +15878,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 185
     },
     {
       "name": "Ethyl Pentanoate",
@@ -15694,8 +15912,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -15708,7 +15926,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 167
     },
     {
       "name": "Citral",
@@ -15815,8 +16034,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -15824,7 +16043,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 123
     },
     {
       "name": "Muscone",
@@ -15925,8 +16145,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -15939,7 +16159,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 223
     },
     {
       "name": "Civetone (Synthetic)",
@@ -16004,7 +16225,8 @@
       "heavy_atoms": "18",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 275
     },
     {
       "name": "Iso E Super",
@@ -16117,7 +16339,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 187
     },
     {
       "name": "alpha-Thujone",
@@ -16189,7 +16412,8 @@
       "ghs_codes": [
         "GHS06",
         "GHS07"
-      ]
+      ],
+      "boiling_point": 187
     },
     {
       "name": "Pinocamphone",
@@ -16250,7 +16474,8 @@
         "GHS06",
         "GHS07",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 187
     },
     {
       "name": "Raspberry Ketone",
@@ -16314,7 +16539,8 @@
       "heavy_atoms": "12",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 198
     },
     {
       "name": "β-Phellandrene",
@@ -16384,7 +16610,8 @@
         "GHS02",
         "GHS07",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 173
     },
     {
       "name": "Cucumber Aldehyde",
@@ -16445,7 +16672,8 @@
       "heavy_atoms": "10",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 174
     },
     {
       "name": "Phenethyl Tiglate",
@@ -16478,8 +16706,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -16493,7 +16721,8 @@
           "floral"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 234
     },
     {
       "name": "Terpinen-4-ol",
@@ -16633,7 +16862,8 @@
       "hbond_acceptor": "2",
       "rotatable_bonds": "0",
       "heavy_atoms": "18",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 275
     },
     {
       "name": "Propylene Glycol",
@@ -16737,7 +16967,8 @@
       "heavy_atoms": "14",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 223
     },
     {
       "name": "3-Butenal, 2-Methyl-4-(2,6,6-Trimethyl-2-Cyclohexen-1-Yl)-",
@@ -16770,8 +17001,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -16784,7 +17015,8 @@
           "fatty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 236
     },
     {
       "name": "Khusimone",
@@ -16829,7 +17061,8 @@
           "vetiver"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 234
     },
     {
       "name": "Terpinolene",
@@ -16940,7 +17173,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 438
     },
     {
       "name": "Alpha-Angelica Lactone",
@@ -16973,8 +17207,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -16987,7 +17221,8 @@
           "sweet"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 138
     },
     {
       "name": "2,3-Dimethylpyrazine",
@@ -17020,8 +17255,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -17034,7 +17269,8 @@
           "nutty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 147
     },
     {
       "name": "Menthyl Lactate (Frescolat MGA)",
@@ -17097,7 +17333,8 @@
       "hbond_acceptor": "3",
       "rotatable_bonds": "3",
       "heavy_atoms": "16",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 255
     },
     {
       "name": "beta-Agarofuran",
@@ -17206,7 +17443,8 @@
       "hbond_acceptor": "1",
       "rotatable_bonds": "4",
       "heavy_atoms": "21",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 311
     },
     {
       "name": "(5e)-2,6-Dimethylocta-5,7-Dien-2-Ol",
@@ -17239,8 +17477,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -17248,7 +17486,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 189
     },
     {
       "name": "Patchoulol",
@@ -17526,7 +17765,8 @@
       "heavy_atoms": "12",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 203
     },
     {
       "name": "Sedanonic Anhydride",
@@ -17634,7 +17874,8 @@
       "heavy_atoms": "14",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 221
     },
     {
       "name": "Myristicin",
@@ -17693,7 +17934,8 @@
       "ghs_codes": [
         "GHS07",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 223
     },
     {
       "name": "Stemone (Fig Leaf)",
@@ -17825,8 +18067,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -17839,7 +18081,8 @@
           "savory"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 119
     },
     {
       "name": "Dimethyl Disulfide",
@@ -17872,8 +18115,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -17886,7 +18129,8 @@
           "savory"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 135
     },
     {
       "name": "Hexyl Salicylate",
@@ -17989,8 +18233,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -18003,7 +18247,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 230
     },
     {
       "name": "Ethanol",
@@ -18116,7 +18361,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 185
     },
     {
       "name": "Maltol Isobutyrate",
@@ -18149,8 +18395,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -18163,7 +18409,8 @@
           "sweet"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 227
     },
     {
       "name": "Isobutyl Quinoline",
@@ -18221,7 +18468,8 @@
       "heavy_atoms": "14",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 217
     },
     {
       "name": "Hexenal",
@@ -18254,8 +18502,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -18270,7 +18518,8 @@
           "aldehydic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 138
     },
     {
       "name": "Floralozone",
@@ -18338,7 +18587,8 @@
       "heavy_atoms": "14",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 221
     },
     {
       "name": "Schembl180489",
@@ -18367,8 +18617,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -18376,7 +18626,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 238
     },
     {
       "name": "Ambroxide",
@@ -18476,8 +18727,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -18490,7 +18741,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 248
     },
     {
       "name": "Triplal",
@@ -18550,7 +18802,8 @@
       "heavy_atoms": "10",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 174
     },
     {
       "name": "Bromomethyl 3-Methoxyphenyl Ketone",
@@ -18583,8 +18836,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -18592,7 +18845,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 256
     },
     {
       "name": "WS-5 (Ethyl 2-(p-menthane-3-carboxamido)acetate)",
@@ -18653,7 +18907,8 @@
       "heavy_atoms": "19",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 292
     },
     {
       "name": "WS-12 (N-(p-Methoxyphenyl)-p-menthane-3-carboxamide)",
@@ -18715,7 +18970,8 @@
       "heavy_atoms": "21",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 310
     },
     {
       "name": "Tea Tree Oil",
@@ -18854,8 +19110,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -18870,7 +19126,8 @@
           "rosy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 225
     },
     {
       "name": "Osmanthus Absolute",
@@ -19110,8 +19367,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -19124,7 +19381,8 @@
           "sweet"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 178
     },
     {
       "name": "gamma-Decalactone",
@@ -19245,7 +19503,8 @@
       },
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 254
     },
     {
       "name": "Gamma-Undecalactone",
@@ -19278,8 +19537,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -19292,7 +19551,8 @@
           "sweet"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 216
     },
     {
       "name": "Delta-Dodecalactone",
@@ -19325,8 +19585,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -19341,7 +19601,8 @@
           "creamy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 228
     },
     {
       "name": "2,6-Di-Tert-Butyl-P-Benzoquinone",
@@ -19374,8 +19635,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -19383,7 +19644,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 248
     },
     {
       "name": "Nerolidol",
@@ -19611,7 +19873,8 @@
       "hbond_acceptor": "3",
       "rotatable_bonds": "2",
       "heavy_atoms": "16",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 255
     },
     {
       "name": "Dill Ether (Anethofuran)",
@@ -19693,8 +19956,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -19708,7 +19971,8 @@
           "cheesy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 223
     },
     {
       "name": "Dimethyl Sulfide",
@@ -19741,8 +20005,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -19755,7 +20019,8 @@
           "savory"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 106
     },
     {
       "name": "Trimethylamine",
@@ -19788,8 +20053,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -19803,7 +20068,8 @@
           "animalic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 103
     },
     {
       "name": "Pivalic Acid",
@@ -19836,8 +20102,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -19851,7 +20117,8 @@
           "cheesy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 142
     },
     {
       "name": "Camphor",
@@ -20053,7 +20320,8 @@
       "hbond_acceptor": "1",
       "rotatable_bonds": "4",
       "heavy_atoms": "16",
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 248
     },
     {
       "name": "Cedrol",
@@ -20265,7 +20533,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 187
     },
     {
       "name": "Cuminyl Acetaldehyde",
@@ -20298,8 +20567,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -20314,7 +20583,8 @@
           "anise"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 209
     },
     {
       "name": "Dtxsid6026240",
@@ -20347,8 +20617,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -20362,7 +20632,8 @@
           "floral"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 236
     },
     {
       "name": "1-Oxacycloheptadec-8-En-2-One",
@@ -20395,8 +20666,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -20404,7 +20675,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 277
     },
     {
       "name": "Isobutyl Angelate",
@@ -20463,7 +20735,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 191
     },
     {
       "name": "2-Methylbutyl Angelate",
@@ -20520,7 +20793,8 @@
       "heavy_atoms": "12",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 203
     },
     {
       "name": "Isophorone",
@@ -20580,7 +20854,8 @@
         "GHS02",
         "GHS06",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 174
     },
     {
       "name": "Tetrahydrolinalool",
@@ -20643,7 +20918,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 192
     },
     {
       "name": "Linalool",
@@ -20775,7 +21051,8 @@
       "heavy_atoms": "15",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 236
     },
     {
       "name": "beta-Ionone",
@@ -20841,7 +21118,8 @@
       "heavy_atoms": "14",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 223
     },
     {
       "name": "Tetramethylsilane",
@@ -20874,8 +21152,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -20883,7 +21161,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 129
     },
     {
       "name": "Dtxsid7047229",
@@ -20916,8 +21195,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -20931,7 +21210,8 @@
           "cheesy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 247
     },
     {
       "name": "Camphene",
@@ -21070,7 +21350,8 @@
       "heavy_atoms": "14",
       "ghs_codes": [
         "GHS09"
-      ]
+      ],
+      "boiling_point": 282
     },
     {
       "name": "α-Pinene",
@@ -21215,7 +21496,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 185
     },
     {
       "name": "Cyclotene",
@@ -21248,8 +21530,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -21262,7 +21544,8 @@
           "sweet"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 151
     },
     {
       "name": "Rosemary Oil",
@@ -21320,7 +21603,8 @@
           "camphor"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 318
     },
     {
       "name": "Cedarwood Oil (Virginian)",
@@ -21460,8 +21744,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -21476,7 +21760,8 @@
           "aldehydic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 189
     },
     {
       "name": "Clove Bud Oil",
@@ -21642,7 +21927,8 @@
       },
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 263
     },
     {
       "name": "Eucalyptus Oil",
@@ -22155,8 +22441,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -22169,7 +22455,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 213
     },
     {
       "name": "Orris Butter (Iris pallida)",
@@ -22651,7 +22938,8 @@
       },
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 919
     },
     {
       "name": "Peru Balsam",
@@ -22766,7 +23054,8 @@
       },
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 189
     },
     {
       "name": "Ginger Oil",
@@ -23659,8 +23948,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -23673,7 +23962,8 @@
           "fatty"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 246
     },
     {
       "name": "Spearmint Oil",
@@ -23730,7 +24020,8 @@
       },
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 66
     },
     {
       "name": "Wormwood Oil",
@@ -23785,7 +24076,8 @@
         "GHS06",
         "GHS07",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 66
     },
     {
       "name": "Cajeput Oil",
@@ -23869,8 +24161,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -23884,7 +24176,8 @@
           "narcotic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 238
     },
     {
       "name": "Beeswax Absolute",
@@ -25041,7 +25334,8 @@
       },
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 416
     },
     {
       "name": "Lovage Root Oil",
@@ -25142,7 +25436,8 @@
       },
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 645
     },
     {
       "name": "Myrrh Oil",
@@ -25194,7 +25489,8 @@
       },
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 505
     },
     {
       "name": "Neroli Oil",
@@ -27127,8 +27423,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -27142,7 +27438,8 @@
           "cheesy"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 322
     },
     {
       "name": "Boronia Absolute",
@@ -28993,8 +29290,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -29008,7 +29305,8 @@
           "narcotic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 199
     },
     {
       "name": "Cassis Buds Absolute",
@@ -29297,8 +29595,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -29313,7 +29611,8 @@
           "sun-tan"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 237
     },
     {
       "name": "β-Caryophyllene",
@@ -29386,7 +29685,8 @@
       "ghs_codes": [
         "GHS07",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 234
     },
     {
       "name": "Daucol",
@@ -29459,8 +29759,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -29468,7 +29768,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 209
     },
     {
       "name": "Menthol",
@@ -29501,8 +29802,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -29517,7 +29818,8 @@
           "herbal"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 191
     },
     {
       "name": "Iso-pulegol",
@@ -29582,7 +29884,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 189
     },
     {
       "name": "Piperitone",
@@ -29652,7 +29955,8 @@
       "heavy_atoms": "11",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 187
     },
     {
       "name": "Pulegone",
@@ -29718,7 +30022,8 @@
         "GHS06",
         "GHS07",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 187
     },
     {
       "name": "Thymol",
@@ -30673,8 +30978,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -30689,7 +30994,8 @@
           "medicinal"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 174
     },
     {
       "name": "Coumarin",
@@ -31516,8 +31822,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -31531,7 +31837,8 @@
           "sweet"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 192
     },
     {
       "name": "2-Acetylnaphthalene",
@@ -31564,8 +31871,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -31579,7 +31886,8 @@
           "sweet"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 203
     },
     {
       "name": "Methyl Eugenol",
@@ -31713,7 +32021,8 @@
       "ghs_codes": [
         "GHS07",
         "GHS08"
-      ]
+      ],
+      "boiling_point": 210
     },
     {
       "name": "Eugenyl Acetate",
@@ -31779,7 +32088,8 @@
       "heavy_atoms": "15",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 236
     },
     {
       "name": "Diafen Nn",
@@ -31812,8 +32122,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -31821,7 +32131,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 374
     },
     {
       "name": "2-Phenylpropanal",
@@ -31854,8 +32165,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -31867,7 +32178,8 @@
           "aldehydic"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 171
     },
     {
       "name": "Methyl Benzoate",
@@ -31968,8 +32280,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -31982,7 +32294,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 185
     },
     {
       "name": "Styrallyl Acetate",
@@ -32046,7 +32359,8 @@
       "heavy_atoms": "12",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 198
     },
     {
       "name": "Lavandin Absolute",
@@ -32134,8 +32448,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -32143,7 +32457,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 225
     },
     {
       "name": "Isoamyl Benzoate",
@@ -32176,8 +32491,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -32190,7 +32505,8 @@
           "ester"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 223
     },
     {
       "name": "Piperine",
@@ -32246,7 +32562,8 @@
       "heavy_atoms": "21",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 307
     },
     {
       "name": "2-Ethoxy-5-Prop-1-Enylphenol",
@@ -32279,8 +32596,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -32288,7 +32605,8 @@
         "secondaryFamilies": [],
         "facets": []
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 210
     },
     {
       "name": "Magnolia Flower Absolute",
@@ -32667,8 +32985,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -32682,7 +33000,8 @@
           "powdery"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 200
     },
     {
       "name": "α-Terpineol",
@@ -32809,7 +33128,8 @@
       "heavy_atoms": "9",
       "ghs_codes": [
         "GHS07"
-      ]
+      ],
+      "boiling_point": 160
     },
     {
       "name": "Acetophenone",
@@ -32842,8 +33162,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -32857,7 +33177,8 @@
           "sweet"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 158
     },
     {
       "name": "Carveol",
@@ -32890,8 +33211,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -32906,7 +33227,8 @@
           "herbal"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 187
     },
     {
       "name": "α-Phellandrene",
@@ -33046,7 +33368,8 @@
         "GHS02",
         "GHS08",
         "GHS09"
-      ]
+      ],
+      "boiling_point": 173
     },
     {
       "name": "alpha-Terpinene",
@@ -33112,7 +33435,8 @@
         "GHS07",
         "GHS08",
         "GHS09"
-      ]
+      ],
+      "boiling_point": 173
     },
     {
       "name": "p-Cymene",
@@ -33182,7 +33506,8 @@
         "GHS07",
         "GHS08",
         "GHS09"
-      ]
+      ],
+      "boiling_point": 171
     },
     {
       "name": "4'-Bromoacetophenone",
@@ -33215,8 +33540,8 @@
         "duration": ""
       },
       "safety": {
-        "ifra": "",
-        "usage": ""
+        "ifra": "Awaiting curation — treat as restricted. Consult IFRA 51 + CosIng directly before use. (Auto-generated stub from PubChem.)",
+        "usage": "No curated usage range — start <0.1% in product and review against IFRA 51 / RIFM safety files before scaling."
       },
       "blends_with": [],
       "classification": {
@@ -33230,7 +33555,8 @@
           "sweet"
         ]
       },
-      "ghs_codes": []
+      "ghs_codes": [],
+      "boiling_point": 229
     },
     {
       "name": "Banana Accord (Synthetic)",

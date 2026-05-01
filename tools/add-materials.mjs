@@ -43,6 +43,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { classifyAndFill } from './lib/material-classifier.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
@@ -488,6 +489,16 @@ function mergeEntry(existing, fetched) {
   if (!existing) {
     const e = SKELETON();
     Object.assign(e, fetched);
+    // Phase 1 schema fallback: PubChem never returns olfactive metadata
+    // (Main Family, Odor Type, IFRA limits, BP). Run the shared keyword
+    // classifier inline so each new entry lands with at least heuristic
+    // primaryFamilies + odor.type + note + facets, plus a conservative
+    // safety.ifra warning so the IFRA engine flags the row as restricted
+    // until a perfumer curates it (the engine treats an empty
+    // safety.ifra as "no restriction" — dangerous default for a fresh
+    // import). BP is also estimated from MW so the thermo engine has a
+    // starting point instead of flat-line null curves.
+    classifyAndFill(e);
     return e;
   }
   const merged = JSON.parse(JSON.stringify(existing));
@@ -496,6 +507,11 @@ function mergeEntry(existing, fetched) {
     // name + cas are keys; only fill if missing on existing
     else if ((k === 'name' || k === 'cas') && !merged[k]) merged[k] = fetched[k];
   }
+  // Even on update — if the existing row was a stub left over from a
+  // previous run that pre-dated the classifier (e.g. data corruption,
+  // partial migration), fill any still-empty olfactive / safety fields.
+  // Idempotent: classifyAndFill never overwrites populated fields.
+  classifyAndFill(merged);
   return merged;
 }
 
