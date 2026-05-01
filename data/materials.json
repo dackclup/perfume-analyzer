@@ -106,7 +106,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 147
+      "boiling_point": 147,
+      "pubchem_cid": "7519"
     },
     {
       "name": "2-Methylcinnamic Aldehyde",
@@ -156,7 +157,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 182
+      "boiling_point": 182,
+      "pubchem_cid": "7557"
     },
     {
       "name": "Methyl Phenylacetate",
@@ -204,7 +206,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 185
+      "boiling_point": 185,
+      "pubchem_cid": "7559"
     },
     {
       "name": "(2,2-Dimethoxyethyl)Benzene",
@@ -251,7 +254,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 200
+      "boiling_point": 200,
+      "pubchem_cid": "60995"
     },
     {
       "name": "2-(Phenylmethylidene)Octanal",
@@ -301,7 +305,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 245
+      "boiling_point": 245,
+      "pubchem_cid": "7585"
     },
     {
       "name": "Lomerizine",
@@ -344,7 +349,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 472
+      "boiling_point": 472,
+      "pubchem_cid": "3949"
     },
     {
       "name": "Ethyl Phenylacetate",
@@ -392,7 +398,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 198
+      "boiling_point": 198,
+      "pubchem_cid": "7590"
     },
     {
       "name": "Isobutyl Phenylacetate",
@@ -440,7 +447,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 223
+      "boiling_point": 223,
+      "pubchem_cid": "60998"
     },
     {
       "name": "Phenethyl Phenylacetate",
@@ -489,7 +497,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 266
+      "boiling_point": 266,
+      "pubchem_cid": "7601"
     },
     {
       "name": "Triacetin",
@@ -530,7 +539,8 @@
       },
       "ghs_codes": [],
       "density": 1.16,
-      "boiling_point": 259
+      "boiling_point": 259,
+      "pubchem_cid": "5541"
     },
     {
       "name": "Oud Oil (Cambodian)",
@@ -702,7 +712,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 209
+      "boiling_point": 209,
+      "pubchem_cid": "7649"
     },
     {
       "name": "Benzyl Isovalerate",
@@ -750,7 +761,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 223
+      "boiling_point": 223,
+      "pubchem_cid": "7651"
     },
     {
       "name": "Benzyl 3-Phenylprop-2-Enoate",
@@ -799,7 +811,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 264
+      "boiling_point": 264,
+      "pubchem_cid": "7652"
     },
     {
       "name": "Ethyl Phenylacetate",
@@ -847,7 +860,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 198
+      "boiling_point": 198,
+      "pubchem_cid": "7590"
     },
     {
       "name": "Phenethyl Isobutyrate",
@@ -896,7 +910,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 223
+      "boiling_point": 223,
+      "pubchem_cid": "7655"
     },
     {
       "name": "Cinnamyl Acetate",
@@ -999,7 +1014,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 221
+      "boiling_point": 221,
+      "pubchem_cid": "7687"
     },
     {
       "name": "Ethyl Linalool",
@@ -1110,7 +1126,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 212
+      "boiling_point": 212,
+      "pubchem_cid": "7695"
     },
     {
       "name": "1-Methoxy-4-Prop-1-Enylbenzene",
@@ -1158,7 +1175,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 183
+      "boiling_point": 183,
+      "pubchem_cid": "7703"
     },
     {
       "name": "γ-Octalactone",
@@ -1475,7 +1493,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 196
+      "boiling_point": 196,
+      "pubchem_cid": "7712"
     },
     {
       "name": "gamma-Undecalactone",
@@ -1662,7 +1681,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 165
+      "boiling_point": 165,
+      "pubchem_cid": "7742"
     },
     {
       "name": "4-Chlorophenol",
@@ -1705,7 +1725,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 166
+      "boiling_point": 166,
+      "pubchem_cid": "4684"
     },
     {
       "name": "Benzyl 4-Hydroxybenzoate",
@@ -1753,7 +1774,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 255
+      "boiling_point": 255,
+      "pubchem_cid": "7180"
     },
     {
       "name": "Acetal",
@@ -1800,7 +1822,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 156
+      "boiling_point": 156,
+      "pubchem_cid": "7765"
     },
     {
       "name": "3,4-Dichlorophenol",
@@ -1843,7 +1866,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 197
+      "boiling_point": 197,
+      "pubchem_cid": "7258"
     },
     {
       "name": "Geranyl Acetate",
@@ -2165,7 +2189,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 189
+      "boiling_point": 189,
+      "pubchem_cid": "7794"
     },
     {
       "name": "Geraniol",
@@ -2422,7 +2447,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 192
+      "boiling_point": 192,
+      "pubchem_cid": "7797"
     },
     {
       "name": "Ethyl Octanoate",
@@ -2470,7 +2496,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 205
+      "boiling_point": 205,
+      "pubchem_cid": "7799"
     },
     {
       "name": "P-Cresol",
@@ -2520,7 +2547,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 147
+      "boiling_point": 147,
+      "pubchem_cid": "2879"
     },
     {
       "name": "Methyl Hexanoate",
@@ -2568,7 +2596,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 167
+      "boiling_point": 167,
+      "pubchem_cid": "7824"
     },
     {
       "name": "Melonal",
@@ -2681,7 +2710,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 180
+      "boiling_point": 180,
+      "pubchem_cid": "7826"
     },
     {
       "name": "Hydroxycitronellal",
@@ -2788,7 +2818,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 250
+      "boiling_point": 250,
+      "pubchem_cid": "15984303"
     },
     {
       "name": "2,4-Dimethylpentane",
@@ -2831,7 +2862,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 140
+      "boiling_point": 140,
+      "pubchem_cid": "7907"
     },
     {
       "name": "Gamma-Valerolactone",
@@ -2879,7 +2911,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 140
+      "boiling_point": 140,
+      "pubchem_cid": "7921"
     },
     {
       "name": "Succinic Anhydride",
@@ -2922,7 +2955,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 140
+      "boiling_point": 140,
+      "pubchem_cid": "7922"
     },
     {
       "name": "2,6-Dimethylpyrazine",
@@ -2970,7 +3004,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 147
+      "boiling_point": 147,
+      "pubchem_cid": "7938"
     },
     {
       "name": "Propylene Glycol Methyl Ether Acetate",
@@ -3018,7 +3053,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 169
+      "boiling_point": 169,
+      "pubchem_cid": "7946"
     },
     {
       "name": "3-Chloropropionic Acid",
@@ -3067,7 +3103,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 148
+      "boiling_point": 148,
+      "pubchem_cid": "7899"
     },
     {
       "name": "2-Methylpyrazine",
@@ -3115,7 +3152,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 135
+      "boiling_point": 135,
+      "pubchem_cid": "7976"
     },
     {
       "name": "Isobutyl Acetate",
@@ -3163,7 +3201,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 155
+      "boiling_point": 155,
+      "pubchem_cid": "8038"
     },
     {
       "name": "Isopropyl Myristate",
@@ -3203,7 +3242,8 @@
       },
       "ghs_codes": [],
       "density": 0.853,
-      "boiling_point": 315
+      "boiling_point": 315,
+      "pubchem_cid": "8042"
     },
     {
       "name": "Ethyl Decanoate",
@@ -3251,7 +3291,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 230
+      "boiling_point": 230,
+      "pubchem_cid": "8048"
     },
     {
       "name": "Aldehyde C-12 MNA",
@@ -3361,7 +3402,8 @@
       },
       "ghs_codes": [],
       "density": 0.81,
-      "boiling_point": 350
+      "boiling_point": 350,
+      "pubchem_cid": "15858"
     },
     {
       "name": "Methyl Octanoate",
@@ -3409,7 +3451,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 192
+      "boiling_point": 192,
+      "pubchem_cid": "8091"
     },
     {
       "name": "Methyl Heptine Carbonate",
@@ -3520,7 +3563,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 142
+      "boiling_point": 142,
+      "pubchem_cid": "8103"
     },
     {
       "name": "1-Heptanol",
@@ -3569,7 +3613,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 155
+      "boiling_point": 155,
+      "pubchem_cid": "8129"
     },
     {
       "name": "Heptanal",
@@ -3618,7 +3663,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 153
+      "boiling_point": 153,
+      "pubchem_cid": "8130"
     },
     {
       "name": "Methyl Laurate",
@@ -3666,7 +3712,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 243
+      "boiling_point": 243,
+      "pubchem_cid": "8139"
     },
     {
       "name": "1-Octanol",
@@ -3715,7 +3762,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 167
+      "boiling_point": 167,
+      "pubchem_cid": "957"
     },
     {
       "name": "Habanolide",
@@ -3767,7 +3815,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 265
+      "boiling_point": 265,
+      "pubchem_cid": "9856149"
     },
     {
       "name": "1-Decanol",
@@ -3816,7 +3865,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 192
+      "boiling_point": 192,
+      "pubchem_cid": "8174"
     },
     {
       "name": "Aldehyde C-10",
@@ -4003,7 +4053,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 218
+      "boiling_point": 218,
+      "pubchem_cid": "8193"
     },
     {
       "name": "Dodecanal",
@@ -4052,7 +4103,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 216
+      "boiling_point": 216,
+      "pubchem_cid": "8194"
     },
     {
       "name": "1-Tetradecanol",
@@ -4103,7 +4155,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 243
+      "boiling_point": 243,
+      "pubchem_cid": "8209"
     },
     {
       "name": "Phenyl 800/1",
@@ -4146,7 +4199,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 210
+      "boiling_point": 210,
+      "pubchem_cid": "14303"
     },
     {
       "name": "Oxoisophorone",
@@ -4520,7 +4574,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 286
+      "boiling_point": 286,
+      "pubchem_cid": "8347"
     },
     {
       "name": "Phenyl Salicylate",
@@ -4570,7 +4625,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 243
+      "boiling_point": 243,
+      "pubchem_cid": "8361"
     },
     {
       "name": "Benzyl Salicylate",
@@ -4688,7 +4744,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 179
+      "boiling_point": 179,
+      "pubchem_cid": "8315"
     },
     {
       "name": "Maltol",
@@ -4807,7 +4864,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 173
+      "boiling_point": 173,
+      "pubchem_cid": "8375"
     },
     {
       "name": "Methyl Salicylate",
@@ -5123,7 +5181,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 200
+      "boiling_point": 200,
+      "pubchem_cid": "8419"
     },
     {
       "name": "Isobutyl Benzoate",
@@ -5171,7 +5230,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 210
+      "boiling_point": 210,
+      "pubchem_cid": "61048"
     },
     {
       "name": "Benzyl Benzoate",
@@ -5521,22 +5581,21 @@
       "name": "Vanillin",
       "cas": "121-33-5",
       "fema": "3107",
-      "iupac": "propanedioic acid",
-      "formula": "C3H4O4",
-      "weight": "104.06",
-      "smiles": "",
-      "inchi": "InChI=1S/C3H4O4/c4-2(5)1-3(6)7/h1H2,(H,4,5)(H,6,7)",
+      "iupac": "4-hydroxy-3-methoxybenzaldehyde",
+      "formula": "C8H8O3",
+      "weight": "152.15",
+      "smiles": "COC1=CC(=CC=C1O)C=O",
+      "inchi": "InChI=1S/C8H8O3/c1-11-8-4-6(5-9)2-3-7(8)10/h2-5,10H,1H3",
       "synonyms": [
-        "malonic acid",
-        "propanedioic acid",
-        "dicarboxymethane",
-        "carboxyacetic acid",
-        "methanedicarboxylic acid",
-        "malonate",
-        "kyselina malonova",
-        "usaf ek-695"
+        "vanillin",
+        "4-hydroxy-3-methoxybenzaldehyde",
+        "methylprotocatechuic aldehyde",
+        "vanillic aldehyde",
+        "3-methoxy-4-hydroxybenzaldehyde",
+        "methyl vanillin",
+        "protocatechualdehyde 3-methyl ether"
       ],
-      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/867",
+      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/1183",
       "odor": {
         "description": "Sweet, creamy, vanilla-balsamic with mild phenolic lift; clean and direct; the reference 'vanilla' impression as a single molecule",
         "type": "Gourmand / Sweet",
@@ -5752,7 +5811,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 309
+      "boiling_point": 309,
+      "pubchem_cid": "67145"
     },
     {
       "name": "9-Octadecenoic Acid (9z)-, 1,1',1''-(1,2,3-Propanetriyl) Ester",
@@ -5795,7 +5855,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 847
+      "boiling_point": 847,
+      "pubchem_cid": "31207"
     },
     {
       "name": "Alpha-Amylcinnamaldehyde",
@@ -5845,7 +5906,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 232
+      "boiling_point": 232,
+      "pubchem_cid": "31209"
     },
     {
       "name": "2-Propenoic Acid, 3-Phenyl-, 3-Phenyl-2-Propenyl Ester",
@@ -5894,7 +5956,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 288
+      "boiling_point": 288,
+      "pubchem_cid": "31224"
     },
     {
       "name": "Phenylacetaldehyde",
@@ -5941,7 +6004,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 158
+      "boiling_point": 158,
+      "pubchem_cid": "998"
     },
     {
       "name": "Phenoxyethanol",
@@ -5986,7 +6050,8 @@
       "ghs_codes": [
         "GHS07"
       ],
-      "boiling_point": 174
+      "boiling_point": 174,
+      "pubchem_cid": "31236"
     },
     {
       "name": "Galaxolide (HHCB)",
@@ -6171,7 +6236,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 207
+      "boiling_point": 207,
+      "pubchem_cid": "31249"
     },
     {
       "name": "Ethyl Nonanoate",
@@ -6219,7 +6285,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 218
+      "boiling_point": 218,
+      "pubchem_cid": "31251"
     },
     {
       "name": "2,5-Dimethylpiperazine",
@@ -6262,7 +6329,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 153
+      "boiling_point": 153,
+      "pubchem_cid": "7816"
     },
     {
       "name": "Myrcene",
@@ -6386,7 +6454,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 129
+      "boiling_point": 129,
+      "pubchem_cid": "31260"
     },
     {
       "name": "N-(2-(((2-(Dimethylamino)Ethyl)Amino)Carbonyl)-1-Methyl-1h-Imidazol-4-Yl)-4-(((4-(Formylamino)-1-Methyl-1h-Imidazol-2-Yl)Carbonyl)Amino)-1-Methyl-1h-Imidazole-2-Carboxamide",
@@ -6425,7 +6494,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 487
+      "boiling_point": 487,
+      "pubchem_cid": "1265"
     },
     {
       "name": "Allyl Caproate (Pineapple)",
@@ -6531,7 +6601,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 277
+      "boiling_point": 277,
+      "pubchem_cid": "31267"
     },
     {
       "name": "Isoamyl Acetate",
@@ -6579,7 +6650,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 167
+      "boiling_point": 167,
+      "pubchem_cid": "31276"
     },
     {
       "name": "Octan-2-Ol",
@@ -6628,7 +6700,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 167
+      "boiling_point": 167,
+      "pubchem_cid": "20083"
     },
     {
       "name": "Octanoic Acid",
@@ -6677,7 +6750,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 180
+      "boiling_point": 180,
+      "pubchem_cid": "379"
     },
     {
       "name": "Octanal",
@@ -6726,7 +6800,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 165
+      "boiling_point": 165,
+      "pubchem_cid": "454"
     },
     {
       "name": "Aldehyde C-9 (Pelargonaldehyde)",
@@ -6910,7 +6985,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 221
+      "boiling_point": 221,
+      "pubchem_cid": "86209"
     },
     {
       "name": "(S)-(+)-Linalool",
@@ -7229,7 +7305,8 @@
         "GHS07"
       ],
       "density": 0.928,
-      "boiling_point": 250
+      "boiling_point": 250,
+      "pubchem_cid": "61073"
     },
     {
       "name": "β-Pinene",
@@ -7345,7 +7422,8 @@
         "GHS09"
       ],
       "density": 1.048,
-      "boiling_point": 265
+      "boiling_point": 265,
+      "pubchem_cid": "31404"
     },
     {
       "name": "3-Nonenyl Acetate",
@@ -7391,7 +7469,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 216
+      "boiling_point": 216,
+      "pubchem_cid": "536907"
     },
     {
       "name": "Dtxsid6026240",
@@ -7440,7 +7519,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 236
+      "boiling_point": 236,
+      "pubchem_cid": "61071"
     },
     {
       "name": "2-Ethyl-5-Methylpyrazine",
@@ -7488,7 +7568,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 160
+      "boiling_point": 160,
+      "pubchem_cid": "25915"
     },
     {
       "name": "2-Butanone Peroxide",
@@ -7537,7 +7618,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 239
+      "boiling_point": 239,
+      "pubchem_cid": "3672772"
     },
     {
       "name": "Methyl Anthranilate",
@@ -7708,7 +7790,8 @@
       "ghs_codes": [
         "GHS02"
       ],
-      "boiling_point": 203
+      "boiling_point": 203,
+      "pubchem_cid": "26012"
     },
     {
       "name": "Linalool Oxide (furanoid)",
@@ -7874,7 +7957,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 129
+      "boiling_point": 129,
+      "pubchem_cid": "8723"
     },
     {
       "name": "Beta-Cubebene",
@@ -7924,7 +8008,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 234
+      "boiling_point": 234,
+      "pubchem_cid": "93081"
     },
     {
       "name": "Beta-Ocimene",
@@ -7974,7 +8059,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 173
+      "boiling_point": 173,
+      "pubchem_cid": "18756"
     },
     {
       "name": "2-Ethyl-6-Methylpyrazine",
@@ -8022,7 +8108,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 160
+      "boiling_point": 160,
+      "pubchem_cid": "26332"
     },
     {
       "name": "Benzyl Acetate",
@@ -8140,7 +8227,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 185
+      "boiling_point": 185,
+      "pubchem_cid": "8797"
     },
     {
       "name": "Methyl Chavicol",
@@ -8324,7 +8412,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 227
+      "boiling_point": 227,
+      "pubchem_cid": "7780"
     },
     {
       "name": "Rhodinol",
@@ -8376,7 +8465,7 @@
           "geranium"
         ]
       },
-      "pubchem_cid": "",
+      "pubchem_cid": "81263",
       "isomeric_smiles": "",
       "inchi_key": "",
       "xlogp": "",
@@ -8504,7 +8593,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 129
+      "boiling_point": 129,
+      "pubchem_cid": "8857"
     },
     {
       "name": "Hexetidine",
@@ -8547,7 +8637,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 356
+      "boiling_point": 356,
+      "pubchem_cid": "3607"
     },
     {
       "name": "3-Hydroxypyridine",
@@ -8590,7 +8681,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 136
+      "boiling_point": 136,
+      "pubchem_cid": "7971"
     },
     {
       "name": "Allyl Heptanoate",
@@ -8638,7 +8730,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 203
+      "boiling_point": 203,
+      "pubchem_cid": "8878"
     },
     {
       "name": "Hexanoic Acid",
@@ -8687,7 +8780,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 155
+      "boiling_point": 155,
+      "pubchem_cid": "8892"
     },
     {
       "name": "Hexa-2,4-Dienal",
@@ -8737,7 +8831,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 137
+      "boiling_point": 137,
+      "pubchem_cid": "8901"
     },
     {
       "name": "Isopropyl Palmitate",
@@ -8785,7 +8880,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 319
+      "boiling_point": 319,
+      "pubchem_cid": "8907"
     },
     {
       "name": "Hexyl Acetate",
@@ -8833,7 +8929,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 180
+      "boiling_point": 180,
+      "pubchem_cid": "8908"
     },
     {
       "name": "10-Undecenal",
@@ -8882,7 +8979,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 201
+      "boiling_point": 201,
+      "pubchem_cid": "8187"
     },
     {
       "name": "Linalyl Propionate",
@@ -9046,7 +9144,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 160
+      "boiling_point": 160,
+      "pubchem_cid": "26808"
     },
     {
       "name": "Menthol",
@@ -9096,7 +9195,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 191
+      "boiling_point": 191,
+      "pubchem_cid": "1254"
     },
     {
       "name": "Refchem:1069765",
@@ -9139,7 +9239,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 223
+      "boiling_point": 223,
+      "pubchem_cid": "26955"
     },
     {
       "name": "N-(6-Chloropyridazin-3-Yl)Acetamide",
@@ -9182,7 +9283,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 204
+      "boiling_point": 204,
+      "pubchem_cid": "19095604"
     },
     {
       "name": "Citronellyl Acetate",
@@ -9232,7 +9334,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 228
+      "boiling_point": 228,
+      "pubchem_cid": "9017"
     },
     {
       "name": "p-Cresyl Methyl Ether",
@@ -9343,7 +9446,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 160
+      "boiling_point": 160,
+      "pubchem_cid": "27457"
     },
     {
       "name": "Pent-2-Enal",
@@ -9393,7 +9497,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 126
+      "boiling_point": 126,
+      "pubchem_cid": "12993"
     },
     {
       "name": "α-Vetivone",
@@ -9438,7 +9543,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 246
+      "boiling_point": 246,
+      "pubchem_cid": "85904"
     },
     {
       "name": "Fenchol (endo-Fenchol)",
@@ -9549,7 +9655,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 189
+      "boiling_point": 189,
+      "pubchem_cid": "27866"
     },
     {
       "name": "Geosmin",
@@ -9663,7 +9770,8 @@
       "ghs_codes": [
         "GHS07"
       ],
-      "boiling_point": 207
+      "boiling_point": 207,
+      "pubchem_cid": "28500"
     },
     {
       "name": "Dicyclohexyl Peroxide",
@@ -9706,7 +9814,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 228
+      "boiling_point": 228,
+      "pubchem_cid": "74472"
     },
     {
       "name": "ar-Curcumene",
@@ -9945,7 +10054,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 214
+      "boiling_point": 214,
+      "pubchem_cid": "1213"
     },
     {
       "name": "Javanol",
@@ -10049,7 +10159,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 283
+      "boiling_point": 283,
+      "pubchem_cid": "89440"
     },
     {
       "name": "Terpinyl Butyrate",
@@ -10158,7 +10269,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 214
+      "boiling_point": 214,
+      "pubchem_cid": "121780"
     },
     {
       "name": "Acetylpyrazine",
@@ -10206,7 +10318,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 160
+      "boiling_point": 160,
+      "pubchem_cid": "30914"
     },
     {
       "name": "l-Menthol",
@@ -10325,7 +10438,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 191
+      "boiling_point": 191,
+      "pubchem_cid": "1254"
     },
     {
       "name": "(S)-(+)-Carvone",
@@ -10555,7 +10669,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 187
+      "boiling_point": 187,
+      "pubchem_cid": "16899"
     },
     {
       "name": "Oct-2-Enal",
@@ -10605,7 +10720,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 164
+      "boiling_point": 164,
+      "pubchem_cid": "16900"
     },
     {
       "name": "Dtxsid6041397",
@@ -10654,7 +10770,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 221
+      "boiling_point": 221,
+      "pubchem_cid": "62775"
     },
     {
       "name": "2-Methylisoborneol (2-MIB)",
@@ -10769,7 +10886,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 223
+      "boiling_point": 223,
+      "pubchem_cid": "32052"
     },
     {
       "name": "Dtxsid1067885",
@@ -10818,7 +10936,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 223
+      "boiling_point": 223,
+      "pubchem_cid": "32052"
     },
     {
       "name": "β-Damascenone",
@@ -10934,7 +11053,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 171
+      "boiling_point": 171,
+      "pubchem_cid": "32065"
     },
     {
       "name": "9-Methyladenine",
@@ -10977,7 +11097,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 184
+      "boiling_point": 184,
+      "pubchem_cid": "69689"
     },
     {
       "name": "Methyl Thiobutyrate",
@@ -11025,7 +11146,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 156
+      "boiling_point": 156,
+      "pubchem_cid": "62444"
     },
     {
       "name": "Daucene",
@@ -11189,7 +11311,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 223
+      "boiling_point": 223,
+      "pubchem_cid": "62002"
     },
     {
       "name": "Hedione",
@@ -11210,7 +11333,7 @@
         "methyl (3-oxo-2-pentylcyclopentyl)acetate",
         "fema no. 3408"
       ],
-      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/102861",
+      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/5365133",
       "odor": {
         "description": "Soft, diffusive, transparent jasmine-citrus with mild waxy-floral signature; cornerstone of modern fragrance construction since Diorella 1972 / Eau Sauvage 1966; amplifies other materials without dominating",
         "type": "Floral / Fresh",
@@ -11241,7 +11364,7 @@
           "jasmine"
         ]
       },
-      "pubchem_cid": "31252",
+      "pubchem_cid": "5365133",
       "isomeric_smiles": "CCCCCC1C(CCC1=O)CC(=O)OC",
       "inchi_key": "WHGYBXFWUBPSRW-UHFFFAOYSA-N",
       "xlogp": "3.1",
@@ -11354,7 +11477,8 @@
       },
       "ghs_codes": [],
       "density": 1.023,
-      "boiling_point": 232
+      "boiling_point": 232,
+      "pubchem_cid": "8013"
     },
     {
       "name": "Cyclohexyl Salicylate",
@@ -11404,7 +11528,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 248
+      "boiling_point": 248,
+      "pubchem_cid": "101330"
     },
     {
       "name": "2-Isopropyl-3-Methoxypyrazine",
@@ -11452,7 +11577,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 187
+      "boiling_point": 187,
+      "pubchem_cid": "33166"
     },
     {
       "name": "Lavandulyl Acetate",
@@ -11682,7 +11808,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 158
+      "boiling_point": 158,
+      "pubchem_cid": "62453"
     },
     {
       "name": "2-Ethyl-4-Hydroxy-5-Methyl-3(2h)-Furanone",
@@ -11730,7 +11857,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 178
+      "boiling_point": 178,
+      "pubchem_cid": "33931"
     },
     {
       "name": "Dtxsid0044814",
@@ -11773,7 +11901,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 238
+      "boiling_point": 238,
+      "pubchem_cid": "119898"
     },
     {
       "name": "Isoamyl Angelate",
@@ -12013,7 +12142,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 162
+      "boiling_point": 162,
+      "pubchem_cid": "76153"
     },
     {
       "name": "Calone 1951",
@@ -12135,7 +12265,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 189
+      "boiling_point": 189,
+      "pubchem_cid": "27866"
     },
     {
       "name": "Pinocarvone",
@@ -12248,7 +12379,54 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 265
+      "boiling_point": 265,
+      "pubchem_cid": "75695"
+    },
+    {
+      "name": "Lyral",
+      "cas": "31906-04-4",
+      "fema": "3884",
+      "iupac": "4-(4-hydroxy-4-methylpentyl)cyclohex-3-ene-1-carbaldehyde",
+      "formula": "C13H22O2",
+      "weight": "210.31",
+      "smiles": "CC(C)(O)CCCC1=CCC(C=O)CC1",
+      "inchi": "InChI=1S/C13H22O2/c1-13(2,15)8-3-4-11-7-5-10(9-14)6-12-11/h7,10,14-15H,3-6,8H2,1H3",
+      "synonyms": [
+        "lyral",
+        "4-(4-hydroxy-4-methylpentyl)cyclohex-3-ene-1-carbaldehyde",
+        "kovanol",
+        "hydroxyisohexyl 3-cyclohexene carboxaldehyde",
+        "hicc"
+      ],
+      "pubchem_cid": "91497",
+      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/91497",
+      "odor": {
+        "description": "Strong floral muguet (lily-of-the-valley); sweet, watery, slightly green",
+        "type": "Floral / Muguet",
+        "strength": "Very High"
+      },
+      "note": "Middle",
+      "performance": {
+        "tenacity": "High — 8-12 hours",
+        "duration": "8-12 hours"
+      },
+      "safety": {
+        "ifra": "IFRA 51 — PROHIBITED. Banned by EU Regulation 2017/1410 (effective 23 Aug 2019); listed in Annex II of Cosmetic Regulation 1223/2009.",
+        "usage": "Must not be used. Banned aroma chemical — listed for legacy formula reference only. Substitute: Florhydral, Cyclamen Aldehyde, or other muguet aldehydes."
+      },
+      "blends_with": [],
+      "classification": {
+        "primaryFamilies": [
+          "floral"
+        ],
+        "secondaryFamilies": [],
+        "facets": [
+          "muguet",
+          "lily-of-the-valley",
+          "floral"
+        ]
+      },
+      "ghs_codes": []
     },
     {
       "name": "Methionol",
@@ -12296,7 +12474,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 146
+      "boiling_point": 146,
+      "pubchem_cid": "10448"
     },
     {
       "name": "(Z)-β-Ocimene",
@@ -12413,7 +12592,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 205
+      "boiling_point": 205,
+      "pubchem_cid": "2969"
     },
     {
       "name": "Cashmeran",
@@ -12782,7 +12962,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 268
+      "boiling_point": 268,
+      "pubchem_cid": "2682"
     },
     {
       "name": "cis-3-Hexenyl Acetate",
@@ -12958,7 +13139,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 264
+      "boiling_point": 264,
+      "pubchem_cid": "118897"
     },
     {
       "name": "Sanabolicum",
@@ -13006,7 +13188,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 421
+      "boiling_point": 421,
+      "pubchem_cid": "101905"
     },
     {
       "name": "(E)-β-Ocimene",
@@ -13127,7 +13310,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 225
+      "boiling_point": 225,
+      "pubchem_cid": "19633"
     },
     {
       "name": "Dec-2-Enal",
@@ -13177,7 +13361,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 189
+      "boiling_point": 189,
+      "pubchem_cid": "19801"
     },
     {
       "name": "WS-3 (N-Ethyl-p-menthane-3-carboxamide)",
@@ -13291,7 +13476,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 250
+      "boiling_point": 250,
+      "pubchem_cid": "8888"
     },
     {
       "name": "Farnesyl Acetate",
@@ -13339,7 +13525,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 288
+      "boiling_point": 288,
+      "pubchem_cid": "94403"
     },
     {
       "name": "Norpatchoulenol",
@@ -13639,7 +13826,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 127
+      "boiling_point": 127,
+      "pubchem_cid": "650"
     },
     {
       "name": "1-Octen-3-One",
@@ -13688,7 +13876,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 164
+      "boiling_point": 164,
+      "pubchem_cid": "61346"
     },
     {
       "name": "Beta-Cyclocitral",
@@ -13738,7 +13927,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 187
+      "boiling_point": 187,
+      "pubchem_cid": "9895"
     },
     {
       "name": "2-Ethyl-4-Methyl-1,3-Dioxolane",
@@ -13781,7 +13971,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 155
+      "boiling_point": 155,
+      "pubchem_cid": "92210"
     },
     {
       "name": "3-Phenylprop-2-En-1-Ol",
@@ -13830,7 +14021,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 171
+      "boiling_point": 171,
+      "pubchem_cid": "308"
     },
     {
       "name": "Octahydrocoumarin",
@@ -14224,7 +14416,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 234
+      "boiling_point": 234,
+      "pubchem_cid": "10099"
     },
     {
       "name": "Eucalyptol",
@@ -15220,7 +15413,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 200
+      "boiling_point": 200,
+      "pubchem_cid": "2214"
     },
     {
       "name": "Lavandulol",
@@ -15532,7 +15726,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 129
+      "boiling_point": 129,
+      "pubchem_cid": "179"
     },
     {
       "name": "Sclareol",
@@ -15648,7 +15843,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 171
+      "boiling_point": 171,
+      "pubchem_cid": "521348"
     },
     {
       "name": "Apiole",
@@ -15879,7 +16075,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 185
+      "boiling_point": 185,
+      "pubchem_cid": "325"
     },
     {
       "name": "Ethyl Pentanoate",
@@ -15927,7 +16124,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 167
+      "boiling_point": 167,
+      "pubchem_cid": "10882"
     },
     {
       "name": "Citral",
@@ -16044,7 +16242,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 123
+      "boiling_point": 123,
+      "pubchem_cid": "516871"
     },
     {
       "name": "Muscone",
@@ -16160,7 +16359,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 223
+      "boiling_point": 223,
+      "pubchem_cid": "110655"
     },
     {
       "name": "Civetone (Synthetic)",
@@ -16283,7 +16483,8 @@
       },
       "ghs_codes": [],
       "density": 0.96,
-      "boiling_point": 285
+      "boiling_point": 285,
+      "pubchem_cid": "108242"
     },
     {
       "name": "Artemisia Ketone",
@@ -16722,7 +16923,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 234
+      "boiling_point": 234,
+      "pubchem_cid": "5357002"
     },
     {
       "name": "Terpinen-4-ol",
@@ -16904,7 +17106,8 @@
       },
       "ghs_codes": [],
       "density": 1.036,
-      "boiling_point": 188
+      "boiling_point": 188,
+      "pubchem_cid": "1030"
     },
     {
       "name": "delta-Damascone",
@@ -17016,7 +17219,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 236
+      "boiling_point": 236,
+      "pubchem_cid": "93952"
     },
     {
       "name": "Khusimone",
@@ -17174,7 +17378,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 438
+      "boiling_point": 438,
+      "pubchem_cid": "14985"
     },
     {
       "name": "Alpha-Angelica Lactone",
@@ -17222,7 +17427,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 138
+      "boiling_point": 138,
+      "pubchem_cid": "11559"
     },
     {
       "name": "2,3-Dimethylpyrazine",
@@ -17270,7 +17476,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 147
+      "boiling_point": 147,
+      "pubchem_cid": "22201"
     },
     {
       "name": "Menthyl Lactate (Frescolat MGA)",
@@ -17487,7 +17694,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 189
+      "boiling_point": 189,
+      "pubchem_cid": "5368785"
     },
     {
       "name": "Patchoulol",
@@ -18082,7 +18290,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 119
+      "boiling_point": 119,
+      "pubchem_cid": "6364"
     },
     {
       "name": "Dimethyl Disulfide",
@@ -18130,7 +18339,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 135
+      "boiling_point": 135,
+      "pubchem_cid": "12232"
     },
     {
       "name": "Hexyl Salicylate",
@@ -18248,7 +18458,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 230
+      "boiling_point": 230,
+      "pubchem_cid": "22873"
     },
     {
       "name": "Ethanol",
@@ -18294,7 +18505,8 @@
         "GHS07"
       ],
       "density": 0.789,
-      "boiling_point": 78
+      "boiling_point": 78,
+      "pubchem_cid": "702"
     },
     {
       "name": "(R)-(-)-Carvone",
@@ -18410,7 +18622,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 227
+      "boiling_point": 227,
+      "pubchem_cid": "3354132"
     },
     {
       "name": "Isobutyl Quinoline",
@@ -18519,7 +18732,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 138
+      "boiling_point": 138,
+      "pubchem_cid": "10460"
     },
     {
       "name": "Floralozone",
@@ -18627,7 +18841,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 238
+      "boiling_point": 238,
+      "pubchem_cid": "106813"
     },
     {
       "name": "Ambroxide",
@@ -18742,7 +18957,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 248
+      "boiling_point": 248,
+      "pubchem_cid": "107068"
     },
     {
       "name": "Triplal",
@@ -18846,7 +19062,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 256
+      "boiling_point": 256,
+      "pubchem_cid": "101294"
     },
     {
       "name": "WS-5 (Ethyl 2-(p-menthane-3-carboxamido)acetate)",
@@ -19127,7 +19344,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 225
+      "boiling_point": 225,
+      "pubchem_cid": "1549778"
     },
     {
       "name": "Osmanthus Absolute",
@@ -19382,7 +19600,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 178
+      "boiling_point": 178,
+      "pubchem_cid": "61199"
     },
     {
       "name": "gamma-Decalactone",
@@ -19504,7 +19723,8 @@
       "ghs_codes": [
         "GHS07"
       ],
-      "boiling_point": 254
+      "boiling_point": 254,
+      "pubchem_cid": "116699"
     },
     {
       "name": "Gamma-Undecalactone",
@@ -19552,7 +19772,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 216
+      "boiling_point": 216,
+      "pubchem_cid": "7714"
     },
     {
       "name": "Delta-Dodecalactone",
@@ -19602,7 +19823,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 228
+      "boiling_point": 228,
+      "pubchem_cid": "12844"
     },
     {
       "name": "2,6-Di-Tert-Butyl-P-Benzoquinone",
@@ -19645,7 +19867,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 248
+      "boiling_point": 248,
+      "pubchem_cid": "12867"
     },
     {
       "name": "Nerolidol",
@@ -19972,7 +20195,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 223
+      "boiling_point": 223,
+      "pubchem_cid": "24117"
     },
     {
       "name": "Dimethyl Sulfide",
@@ -20020,7 +20244,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 106
+      "boiling_point": 106,
+      "pubchem_cid": "1068"
     },
     {
       "name": "Trimethylamine",
@@ -20069,7 +20294,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 103
+      "boiling_point": 103,
+      "pubchem_cid": "1146"
     },
     {
       "name": "Pivalic Acid",
@@ -20118,7 +20344,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 142
+      "boiling_point": 142,
+      "pubchem_cid": "6417"
     },
     {
       "name": "Camphor",
@@ -20431,7 +20658,8 @@
       },
       "ghs_codes": [],
       "density": 1.009,
-      "boiling_point": 285
+      "boiling_point": 285,
+      "pubchem_cid": "6482"
     },
     {
       "name": "Triethyl Citrate",
@@ -20471,7 +20699,8 @@
       },
       "ghs_codes": [],
       "density": 1.135,
-      "boiling_point": 294
+      "boiling_point": 294,
+      "pubchem_cid": "6506"
     },
     {
       "name": "Dihydrocarvone",
@@ -20584,7 +20813,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 209
+      "boiling_point": 209,
+      "pubchem_cid": "62654"
     },
     {
       "name": "Dtxsid6026240",
@@ -20633,7 +20863,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 236
+      "boiling_point": 236,
+      "pubchem_cid": "61071"
     },
     {
       "name": "1-Oxacycloheptadec-8-En-2-One",
@@ -20676,7 +20907,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 277
+      "boiling_point": 277,
+      "pubchem_cid": "31267"
     },
     {
       "name": "Isobutyl Angelate",
@@ -21162,7 +21394,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 129
+      "boiling_point": 129,
+      "pubchem_cid": "6396"
     },
     {
       "name": "Dtxsid7047229",
@@ -21211,7 +21444,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 247
+      "boiling_point": 247,
+      "pubchem_cid": "988"
     },
     {
       "name": "Camphene",
@@ -21545,17 +21779,18 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 151
+      "boiling_point": 151,
+      "pubchem_cid": "6660"
     },
     {
       "name": "Rosemary Oil",
       "cas": "8000-25-7",
       "fema": "2992",
       "iupac": "1-[4-(hydroxymethyl)phenyl]-2-methyl-3-piperidin-1-ylpropan-1-one;hydrochloride",
-      "formula": "C16H24ClNO2",
-      "weight": "297.82",
+      "formula": "",
+      "weight": "",
       "smiles": "",
-      "inchi": "InChI=1S/C16H23NO2.ClH/c1-13(11-17-9-3-2-4-10-17)16(19)15-7-5-14(12-18)6-8-15;/h5-8,13,18H,2-4,9-12H2,1H3;1H",
+      "inchi": "",
       "synonyms": [
         "hydroxymethyl tolperisone (hydrochloride)",
         "dtxsid10857729",
@@ -21604,7 +21839,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 318
+      "boiling_point": 318,
+      "pubchem_cid": "71748882"
     },
     {
       "name": "Cedarwood Oil (Virginian)",
@@ -21761,7 +21997,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 189
+      "boiling_point": 189,
+      "pubchem_cid": "7794"
     },
     {
       "name": "Clove Bud Oil",
@@ -21879,10 +22116,10 @@
       "cas": "8000-46-2",
       "fema": "2508",
       "iupac": "3,7-dimethylocta-2,6-dienyl 2-methylbut-2-enoate",
-      "formula": "C15H24O2",
-      "weight": "236.35",
+      "formula": "",
+      "weight": "",
       "smiles": "",
-      "inchi": "InChI=1S/C15H24O2/c1-6-14(5)15(16)17-11-10-13(4)9-7-8-12(2)3/h6,8,10H,7,9,11H2,1-5H3",
+      "inchi": "",
       "synonyms": [
         "2-butenoic acid, 2(or 3)-methyl-, (2e)-3,7-dimethyl-2,6-octadienyl ester",
         "dtxsid8069511",
@@ -21928,7 +22165,8 @@
       "ghs_codes": [
         "GHS07"
       ],
-      "boiling_point": 263
+      "boiling_point": 263,
+      "pubchem_cid": "24578"
     },
     {
       "name": "Eucalyptus Oil",
@@ -22456,7 +22694,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 213
+      "boiling_point": 213,
+      "pubchem_cid": "12890356"
     },
     {
       "name": "Orris Butter (Iris pallida)",
@@ -22890,10 +23129,10 @@
       "cas": "8006-90-4",
       "fema": "2848",
       "iupac": "3,7-dimethyl-1-oxaspiro[3.5]nonane;3,6-dimethyl-4,5,6,7-tetrahydro-1-benzofuran;5-methyl-2-propan-2-ylcyclohexan-1-ol;5-methyl-2-propan-2-ylcyclohexan-1-one;(5-methyl-2-propan-2-ylcyclohexyl) acetate;5-methyl-2-propan-2-ylidenecyclohexan-1-one",
-      "formula": "C62H108O7",
-      "weight": "965.5",
+      "formula": "",
+      "weight": "",
       "smiles": "",
-      "inchi": "InChI=1S/C12H22O2.C10H18O.C10H14O.C10H20O.C10H18O.C10H16O/c1-8(2)11-6-5-9(3)7-12(11)14-10(4)13;1-8-3-5-10(6-4-8)9(2)7-11-10;1-7-3-4-9-8(2)6-11-10(9)5-7;3*1-7(2)9-5-4-8(3)6-10(9)11/h8-9,11-12H,5-7H2,1-4H3;8-9H,3-7H2,1-2H3;6-7H,3-5H2,1-2H3;7-11H,4-6H2,1-3H3;7-9H,4-6H2,1-3H3;8H,4-6H2,1-3H3",
+      "inchi": "",
       "synonyms": [
         "3,7-dimethyl-1-oxaspiro[3.5]nonane;3,6-dimethyl-4,5,6,7-tetrahydro-1-benzofuran;5-methyl-2-propan-2-ylcyclohexan-1-ol;5-methyl-2-propan-2-ylcyclohexan-1-one;(5-methyl-2-propan-2-ylcyclohexyl) acetate;5-methyl-2-propan-2-ylidenecyclohexan-1-one",
         "schembl23326221",
@@ -22939,7 +23178,8 @@
       "ghs_codes": [
         "GHS07"
       ],
-      "boiling_point": 919
+      "boiling_point": 919,
+      "pubchem_cid": "6850741"
     },
     {
       "name": "Peru Balsam",
@@ -23001,10 +23241,10 @@
       "cas": "8007-01-0",
       "fema": "2988",
       "iupac": "(2E)-3,7-dimethylocta-2,6-dien-1-ol",
-      "formula": "C10H18O",
-      "weight": "154.25",
+      "formula": "",
+      "weight": "",
       "smiles": "",
-      "inchi": "InChI=1S/C10H18O/c1-9(2)5-4-6-10(3)7-8-11/h5,7,11H,4,6,8H2,1-3H3/b10-7+",
+      "inchi": "",
       "synonyms": [
         "geraniol",
         "geranyl alcohol",
@@ -23055,7 +23295,8 @@
       "ghs_codes": [
         "GHS07"
       ],
-      "boiling_point": 189
+      "boiling_point": 189,
+      "pubchem_cid": "637566"
     },
     {
       "name": "Ginger Oil",
@@ -23963,7 +24204,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 246
+      "boiling_point": 246,
+      "pubchem_cid": "62161"
     },
     {
       "name": "Spearmint Oil",
@@ -24021,7 +24263,8 @@
       "ghs_codes": [
         "GHS07"
       ],
-      "boiling_point": 66
+      "boiling_point": 66,
+      "pubchem_cid": "962"
     },
     {
       "name": "Wormwood Oil",
@@ -24077,7 +24320,8 @@
         "GHS07",
         "GHS08"
       ],
-      "boiling_point": 66
+      "boiling_point": 66,
+      "pubchem_cid": "962"
     },
     {
       "name": "Cajeput Oil",
@@ -24177,7 +24421,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 238
+      "boiling_point": 238,
+      "pubchem_cid": "170530"
     },
     {
       "name": "Beeswax Absolute",
@@ -25287,10 +25532,10 @@
       "cas": "8016-26-0",
       "fema": "2552",
       "iupac": "",
-      "formula": "C24H96B2",
-      "weight": "406.6",
+      "formula": "",
+      "weight": "",
       "smiles": "",
-      "inchi": "InChI=1S/24CH4.2B/h24*1H4;;",
+      "inchi": "",
       "synonyms": [
         "tris(acetonitrile)pentamethylcyclopentadienylcobalt(ii) hexafluoroantimonate",
         "cid 162130518",
@@ -25335,7 +25580,8 @@
       "ghs_codes": [
         "GHS07"
       ],
-      "boiling_point": 416
+      "boiling_point": 416,
+      "pubchem_cid": "162130518"
     },
     {
       "name": "Lovage Root Oil",
@@ -25393,10 +25639,10 @@
       "cas": "8016-36-2",
       "fema": "2816",
       "iupac": "azanylidynemanganese;2-bromo-6-[[2-[(3-bromo-5-tert-butyl-2-hydroxyphenyl)methylideneamino]cyclohexyl]iminomethyl]-4-tert-butylphenol",
-      "formula": "C28H36Br2MnN3O2",
-      "weight": "661.3",
+      "formula": "",
+      "weight": "",
       "smiles": "",
-      "inchi": "InChI=1S/C28H36Br2N2O2.Mn.N/c1-27(2,3)19-11-17(25(33)21(29)13-19)15-31-23-9-7-8-10-24(23)32-16-18-12-20(28(4,5)6)14-22(30)26(18)34;;/h11-16,23-24,33-34H,7-10H2,1-6H3;;",
+      "inchi": "",
       "synonyms": [
         "azanylidynemanganese;(6z)-2-bromo-6-[[[(1r,2r)-2-[[(z)-(5-bromo-3-tert-butyl-6-oxocyclohexa-2,4-dien-1-ylidene)methyl]amino]cyclohexyl]amino]methylidene]-4-tert-butylcyclohexa-2,4-dien-1-one"
       ],
@@ -25437,17 +25683,18 @@
       "ghs_codes": [
         "GHS07"
       ],
-      "boiling_point": 645
+      "boiling_point": 645,
+      "pubchem_cid": "168009828"
     },
     {
       "name": "Myrrh Oil",
       "cas": "8016-37-3",
       "fema": "2766",
       "iupac": "4-[4-[4-amino-2-(hydroxymethyl)cyclopentyl]phenyl]-7-[4-(trifluoromethyl)phenyl]naphthalene-2-carboxylic acid",
-      "formula": "C30H26F3NO3",
-      "weight": "505.5",
+      "formula": "",
+      "weight": "",
       "smiles": "",
-      "inchi": "InChI=1S/C30H26F3NO3/c31-30(32,33)24-8-5-17(6-9-24)20-7-10-26-21(11-20)12-22(29(36)37)14-28(26)19-3-1-18(2-4-19)27-15-25(34)13-23(27)16-35/h1-12,14,23,25,27,35H,13,15-16,34H2,(H,36,37)",
+      "inchi": "",
       "synonyms": [
         "4-[4-[(1s,2s,4s)-4-amino-2-(hydroxymethyl)cyclopentyl]phenyl]-7-[4-(trifluoromethyl)phenyl]naphthalene-2-carboxylic acid",
         "zgukbyaguxpwlb-uhfffaoysa-n"
@@ -25490,7 +25737,8 @@
       "ghs_codes": [
         "GHS07"
       ],
-      "boiling_point": 505
+      "boiling_point": 505,
+      "pubchem_cid": "168266237"
     },
     {
       "name": "Neroli Oil",
@@ -27439,7 +27687,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 322
+      "boiling_point": 322,
+      "pubchem_cid": "10569"
     },
     {
       "name": "Boronia Absolute",
@@ -27649,7 +27898,8 @@
       },
       "ghs_codes": [],
       "density": 1.118,
-      "boiling_point": 298
+      "boiling_point": 298,
+      "pubchem_cid": "6781"
     },
     {
       "name": "Parsley Leaf Oil",
@@ -29306,7 +29556,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 199
+      "boiling_point": 199,
+      "pubchem_cid": "6826"
     },
     {
       "name": "Cassis Buds Absolute",
@@ -29612,7 +29863,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 237
+      "boiling_point": 237,
+      "pubchem_cid": "6874"
     },
     {
       "name": "β-Caryophyllene",
@@ -29769,7 +30021,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 209
+      "boiling_point": 209,
+      "pubchem_cid": "6927060"
     },
     {
       "name": "Menthol",
@@ -29819,7 +30072,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 191
+      "boiling_point": 191,
+      "pubchem_cid": "1254"
     },
     {
       "name": "Iso-pulegol",
@@ -30995,7 +31249,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 174
+      "boiling_point": 174,
+      "pubchem_cid": "7043"
     },
     {
       "name": "Coumarin",
@@ -31838,7 +32093,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 192
+      "boiling_point": 192,
+      "pubchem_cid": "7119"
     },
     {
       "name": "2-Acetylnaphthalene",
@@ -31887,7 +32143,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 203
+      "boiling_point": 203,
+      "pubchem_cid": "7122"
     },
     {
       "name": "Methyl Eugenol",
@@ -32132,7 +32389,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 374
+      "boiling_point": 374,
+      "pubchem_cid": "7142"
     },
     {
       "name": "2-Phenylpropanal",
@@ -32179,7 +32437,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 171
+      "boiling_point": 171,
+      "pubchem_cid": "7146"
     },
     {
       "name": "Methyl Benzoate",
@@ -32295,7 +32554,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 185
+      "boiling_point": 185,
+      "pubchem_cid": "7165"
     },
     {
       "name": "Styrallyl Acetate",
@@ -32458,7 +32718,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 225
+      "boiling_point": 225,
+      "pubchem_cid": "7184"
     },
     {
       "name": "Isoamyl Benzoate",
@@ -32506,7 +32767,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 223
+      "boiling_point": 223,
+      "pubchem_cid": "7193"
     },
     {
       "name": "Piperine",
@@ -32606,7 +32868,8 @@
         "facets": []
       },
       "ghs_codes": [],
-      "boiling_point": 210
+      "boiling_point": 210,
+      "pubchem_cid": "60982"
     },
     {
       "name": "Magnolia Flower Absolute",
@@ -33001,7 +33264,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 200
+      "boiling_point": 200,
+      "pubchem_cid": "2214"
     },
     {
       "name": "α-Terpineol",
@@ -33178,7 +33442,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 158
+      "boiling_point": 158,
+      "pubchem_cid": "7410"
     },
     {
       "name": "Carveol",
@@ -33228,7 +33493,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 187
+      "boiling_point": 187,
+      "pubchem_cid": "7438"
     },
     {
       "name": "α-Phellandrene",
@@ -33556,7 +33822,8 @@
         ]
       },
       "ghs_codes": [],
-      "boiling_point": 229
+      "boiling_point": 229,
+      "pubchem_cid": "7466"
     },
     {
       "name": "Banana Accord (Synthetic)",
@@ -35192,25 +35459,16 @@
   },
   "mixture_cas": [
     "102395-30-2",
-    "111879-80-2",
-    "117-98-6",
-    "127-51-5",
     "1365-84-4",
-    "141-25-3",
     "1460-73-7",
-    "15764-04-2",
-    "17369-59-4",
     "198991-79-6",
     "24524-58-1",
     "36431-72-8",
     "3691-11-0",
-    "41429-52-1",
     "4431-01-0",
     "465-28-1",
     "484-31-1",
     "495-61-4",
-    "54464-57-2",
-    "58297-61-9",
     "5956-12-7",
     "6066-46-2",
     "61931-81-5",
@@ -35221,11 +35479,9 @@
     "68917-18-0",
     "68917-75-9",
     "68917-99-7",
-    "70788-30-6",
     "73650-42-1",
     "7392-19-0",
     "74410-10-9",
-    "77-54-3",
     "8000-25-7",
     "8000-27-9",
     "8000-28-0",
