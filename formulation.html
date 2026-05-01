@@ -1126,6 +1126,9 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      Audit-coherence Tier 2 R3 — single source of truth, replaces the
      inline copies that drifted between the two pages. -->
 <script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v294"></script>
+<!-- Canonical enriched-material builder used by every formulation.addMaterial
+     call site. Audit-coherence Tier 2 R3 fix for C3.2/C3.3. -->
+<script type="module" src="lib/material-shape.mjs?v=2026-04-29-v294"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). Same bootstrap pattern as index.html:
@@ -1215,8 +1218,9 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 // Audit-coherence Tier 2 R3 — escHtml/debounce now delegate to the shared
 // helpers so the two pages can't drift again. Hoisted to the top of the
 // inert block so every caller below sees them without TDZ.
-const escHtml  = window.appUtils.escHtml;
-const debounce = window.appUtils.debounce;
+const escHtml       = window.appUtils.escHtml;
+const debounce      = window.appUtils.debounce;
+const buildEnriched = window.appUtils.buildEnriched;
 
 // ===== Data Layer =====
 // Defensive: PERFUMERY_DATA is set by the bootstrap before this script
@@ -2500,38 +2504,7 @@ function addFromDB(cas) {
   // table — used only when the entry doesn't carry a particular field
   // (e.g. older entries without density). Read DB-first, MP-second.
   const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[cas] || {} : {};
-  const _mw     = parseFloat(entry.weight) || mp.mw     || null;
-  const _xlogp  = parseFloat(entry.xlogp)  || mp.logP   || null;
-  const enriched = {
-    cas: entry.cas,
-    name: entry.name,
-    note: entry.note,
-    odor_type: entry.odor?.type || null,
-    odor_strength: entry.odor?.strength || null,
-    odor_description: entry.odor?.description || null,
-    tenacity: entry.performance?.tenacity || null,
-    tenacity_hours: entry.performance?.duration || null,
-    blends_with: entry.blends_with || [],
-    ifra_guideline: entry.safety?.ifra || null,
-    usage_levels: entry.safety?.usage || null,
-    molecular_weight: _mw,
-    density: entry.density != null ? entry.density : (mp.density || null),
-    xlogp: _xlogp,
-    boiling_point: entry.boiling_point != null ? entry.boiling_point : (mp.bp || null),
-    smiles: entry.smiles || mp.smiles || null,
-    // Audit-coherence C3.2 — preserve curated classification when
-    // adding from the formulator's own search modal. Previously these
-    // five fields were forced to [] which made `materialToRadarWeights`
-    // fall back to odor_type parsing and produced different chip /
-    // radar output depending on whether the user added via Analyzer-
-    // handoff (which DOES populate them) vs Formulator's own modal.
-    primaryFamilies:   entry.classification?.primaryFamilies   || [],
-    secondaryFamilies: entry.classification?.secondaryFamilies || [],
-    facets:            entry.classification?.facets            || [],
-    functions:         entry.classification?.functions         || [],
-    regulatory:        entry.classification?.regulatory        || [],
-  };
-  const ok = formulation.addMaterial(cas, entry.name, 10, enriched);
+  const ok = formulation.addMaterial(cas, entry.name, 10, buildEnriched(entry, mp));
   addModal.classList.remove('open');
   return ok;
 }
@@ -5539,31 +5512,7 @@ function briefToggleMaterial(btn) {
   const pct = parseFloat(btn.dataset.pct);
   // DB-first read for engineering props (v207 — see addFromDB above)
   const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[cas] || {} : {};
-  const enriched = {
-    cas: entry.cas,
-    name: entry.name,
-    note: entry.note || '',
-    odor_type: entry.odor?.type || null,
-    odor_strength: entry.odor?.strength || null,
-    odor_description: entry.odor?.description || null,
-    tenacity: entry.performance?.tenacity || null,
-    tenacity_hours: entry.performance?.duration || null,
-    blends_with: entry.blends_with || [],
-    ifra_guideline: entry.safety?.ifra || null,
-    usage_levels: entry.safety?.usage || null,
-    molecular_weight: parseFloat(entry.weight) || mp.mw || null,
-    density: entry.density != null ? entry.density : (mp.density || null),
-    xlogp: parseFloat(entry.xlogp) || mp.logP || null,
-    boiling_point: entry.boiling_point != null ? entry.boiling_point : (mp.bp || null),
-    smiles: entry.smiles || mp.smiles || null,
-    // Audit-coherence C3.3 — same classification preservation as addFromDB.
-    primaryFamilies:   entry.classification?.primaryFamilies   || [],
-    secondaryFamilies: entry.classification?.secondaryFamilies || [],
-    facets:            entry.classification?.facets            || [],
-    functions:         entry.classification?.functions         || [],
-    regulatory:        entry.classification?.regulatory        || [],
-  };
-  const ok = formulation.addMaterial(cas, entry.name, isFinite(pct) && pct > 0 ? pct : 0, enriched);
+  const ok = formulation.addMaterial(cas, entry.name, isFinite(pct) && pct > 0 ? pct : 0, buildEnriched(entry, mp));
   if (ok) {
     btn.textContent = 'Remove';
     btn.classList.remove('btn-primary');
@@ -5618,32 +5567,11 @@ function applyBriefFormula() {
       const entry = DB[r.cas];
       if (!entry) { skipped.push({ cas: r.cas, reason: 'not-in-db' }); continue; }
       try {
-        // DB-first read for engineering props (v207 — see addFromDB above)
+        // DB-first read for engineering props (v207 — see addFromDB above).
+        // note override: brief results may carry their own note hint when
+        // the DB row's note field is empty (sparse stub).
         const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[r.cas] || {} : {};
-        const enriched = {
-          cas: entry.cas,
-          name: entry.name,
-          note: entry.note || r.note || '',
-          odor_type: entry.odor?.type || null,
-          odor_strength: entry.odor?.strength || null,
-          odor_description: entry.odor?.description || null,
-          tenacity: entry.performance?.tenacity || null,
-          tenacity_hours: entry.performance?.duration || null,
-          blends_with: entry.blends_with || [],
-          ifra_guideline: entry.safety?.ifra || null,
-          usage_levels: entry.safety?.usage || null,
-          molecular_weight: parseFloat(entry.weight) || mp.mw || null,
-          density: entry.density != null ? entry.density : (mp.density || null),
-          xlogp: parseFloat(entry.xlogp) || mp.logP || null,
-          boiling_point: entry.boiling_point != null ? entry.boiling_point : (mp.bp || null),
-          smiles: entry.smiles || mp.smiles || null,
-          // Audit-coherence C3.3 — preserve curated classification.
-          primaryFamilies:   entry.classification?.primaryFamilies   || [],
-          secondaryFamilies: entry.classification?.secondaryFamilies || [],
-          facets:            entry.classification?.facets            || [],
-          functions:         entry.classification?.functions         || [],
-          regulatory:        entry.classification?.regulatory        || [],
-        };
+        const enriched = { ...buildEnriched(entry, mp), note: entry.note || r.note || '' };
         const pct = (typeof r.suggestedPct === 'number' && isFinite(r.suggestedPct) && r.suggestedPct > 0)
           ? r.suggestedPct : 0;
         const ok = formulation.addMaterial(r.cas, entry.name, pct, enriched);
@@ -6987,16 +6915,13 @@ function renderMapInspector(points) {
       // missing fields to safe values.
       const e = DB[p.cas];
       if (e) {
+        // Fallback path — user explicitly chose this material from the
+        // inspector, so bypass the addFromDB note-text guard. Default the
+        // missing note to 'Middle' rather than '' so phase calcs still bucket it.
+        const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[p.cas] || {} : {};
         const fallbackOk = formulation.addMaterial(p.cas, e.name, 10, {
-          cas: e.cas,
-          name: e.name,
+          ...buildEnriched(e, mp),
           note: e.note || 'Middle',
-          odor_type: e.odor?.type || null,
-          odor_description: e.odor?.description || null,
-          // Audit-coherence C3.3 — preserve curated classification on fallback path too.
-          primaryFamilies:   e.classification?.primaryFamilies   || [],
-          secondaryFamilies: e.classification?.secondaryFamilies || [],
-          facets:            e.classification?.facets            || [],
         });
         if (!fallbackOk) {
           showToast({ message: 'Could not add ' + p.name + ' — already in formula or limit reached.', variant: 'warn' });
