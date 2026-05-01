@@ -1569,7 +1569,21 @@ function validateDilution(val) {
 function validateMaterialPct(val) {
   const v = parseFloat(val);
   if (isNaN(v) || v < 0) return 0;
-  if (v > 100) return 100;
+  if (v > 100) {
+    // Audit-3 #11 — surface a toast whenever a typed % exceeds 100 so
+    // the user understands why their input snapped down. Throttled by
+    // the last-warned value to avoid stacking toasts when an arrow-key
+    // run produces multiple over-100 inputs in quick succession.
+    try {
+      const seenKey = '_lastClampWarn';
+      if (typeof window !== 'undefined' && window[seenKey] !== v && typeof showToast === 'function') {
+        window[seenKey] = v;
+        showToast({ message: '% capped at 100 (you typed ' + v + ')', variant: 'warn', timeout: 2200 });
+        setTimeout(() => { if (typeof window !== 'undefined') window[seenKey] = null; }, 2500);
+      }
+    } catch (_) {}
+    return 100;
+  }
   // 4-decimal precision so 0.0001 % (1 ppm) inputs round-trip cleanly
   // and trace-quantity formulas (vanillin / ionones at 0.05–0.15 %)
   // keep their typed value instead of being rounded to the nearest
@@ -2344,8 +2358,30 @@ modalSearch.addEventListener('input', () => {
     }
     const haystack = (entry.name + ' ' + cas + ' ' + (entry.synonyms || []).join(' ')).toLowerCase();
     if (haystack.includes(q)) matches.push(entry);
-    if (matches.length >= 20) break;
+    if (matches.length >= 40) break; // collect headroom so the sort below
+                                       // has enough candidates to surface a
+                                       // genuine exact match even if it
+                                       // landed at position 30+ of the raw
+                                       // includes() pass.
   }
+  // Audit-3 #12 — exact-match boost. Without this, searching "linalool"
+  // returned a substring-order list where "Lavandin Linalool Oxide" or
+  // similar showed before the canonical "Linalool" row. Sort by:
+  //   1. Exact name match (case-insensitive) — score 1000
+  //   2. Name starts-with — score 500
+  //   3. CAS exact match — score 800
+  //   4. Synonym exact — score 400
+  //   5. Otherwise stable order from the original pass.
+  const score = (entry) => {
+    const nm = (entry.name || '').toLowerCase();
+    if (nm === q) return 1000;
+    if (entry.cas === q) return 800;
+    if (nm.startsWith(q)) return 500;
+    if ((entry.synonyms || []).some(s => String(s).toLowerCase() === q)) return 400;
+    return 0;
+  };
+  matches.sort((a, b) => score(b) - score(a));
+  matches.length = Math.min(matches.length, 20);
   const clickFn = isCarrier ? 'addCarrierFromModal' : 'addFromDB';
   modalResults.innerHTML = matches.map(e => {
     const badge = isCarrier ? '' : safetyBadgeForSearch(e, catId);
