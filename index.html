@@ -8109,26 +8109,64 @@ function toTitle(s) { return s.replace(/\b\w/g, c=>c.toUpperCase()); }
 // ===== Manual dark-mode toggle =====
 // Respects system preference on initial load (via matchMedia) and lets
 // ===== Language Toggle (TH/EN) =====
+// Audit-3 #6 \u2014 extended i18n coverage. Chip values inside FUNCTION_LABELS
+// (Heart (role) / Fixative / Blender / Modifier / Enhancer) deliberately
+// stay in English because they're industry-standard chemical-class terms
+// \u2014 translating them would obscure the Arctander vocabulary perfumers
+// across all locales rely on. Everything user-facing AROUND those chips
+// (axis labels, search hints, empty states, footer) does translate.
 const LANG_INDEX = {
   en: {
     title: 'Perfume Raw Materials Analyzer',
     subtitle: 'PubChem compound data + perfumery knowledge',
     searchPlaceholder: 'e.g. linalool, hedione, iso e super',
     searchBtn: 'Search',
+    searchHintText: 'Search by name, CAS, or trade name',
+    searchHintFocus: 'focus',
+    searchHintSubmit: 'submit',
+    searchHintClear: 'clear',
     filter: 'Filter',
     reset: 'Reset',
     clearAll: 'Clear all',
     formulate: 'Formulate \u2192',
+    csv: 'CSV',
+    emptyNoMaterials: 'No materials yet',
+    emptyNotFound: 'No material found for',
+    axisUse:        'Use',
+    axisFunction:   'Function',
+    axisType:       'Type',
+    axisSource:     'Source',
+    axisRegulatory: 'Regulatory',
+    axisNote:       'Note',
+    axisMainFamily: 'Main Family',
+    axisFamily:     'Family',
+    axisFacet:      'Facet',
   },
   th: {
     title: '\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E27\u0E34\u0E40\u0E04\u0E23\u0E32\u0E30\u0E2B\u0E4C\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E19\u0E49\u0E33\u0E2B\u0E2D\u0E21',
     subtitle: '\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25 PubChem + \u0E2D\u0E07\u0E04\u0E4C\u0E04\u0E27\u0E32\u0E21\u0E23\u0E39\u0E49\u0E14\u0E49\u0E32\u0E19\u0E19\u0E49\u0E33\u0E2B\u0E2D\u0E21',
     searchPlaceholder: '\u0E40\u0E0A\u0E48\u0E19 linalool, hedione, iso e super',
     searchBtn: '\u0E04\u0E49\u0E19\u0E2B\u0E32',
+    searchHintText: '\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E14\u0E49\u0E27\u0E22\u0E0A\u0E37\u0E48\u0E2D, CAS \u0E2B\u0E23\u0E37\u0E2D\u0E0A\u0E37\u0E48\u0E2D\u0E17\u0E32\u0E07\u0E01\u0E32\u0E23\u0E04\u0E49\u0E32',
+    searchHintFocus: '\u0E42\u0E1F\u0E01\u0E31\u0E2A',
+    searchHintSubmit: '\u0E2A\u0E48\u0E07',
+    searchHintClear: '\u0E25\u0E49\u0E32\u0E07',
     filter: '\u0E15\u0E31\u0E27\u0E01\u0E23\u0E2D\u0E07',
     reset: '\u0E25\u0E49\u0E32\u0E07',
     clearAll: '\u0E25\u0E49\u0E32\u0E07\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14',
     formulate: '\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E2A\u0E39\u0E15\u0E23 \u2192',
+    csv: 'CSV',
+    emptyNoMaterials: '\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A',
+    emptyNotFound: '\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A',
+    axisUse:        '\u0E01\u0E32\u0E23\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19',
+    axisFunction:   '\u0E2B\u0E19\u0E49\u0E32\u0E17\u0E35\u0E48',
+    axisType:       '\u0E1B\u0E23\u0E30\u0E40\u0E20\u0E17',
+    axisSource:     '\u0E17\u0E35\u0E48\u0E21\u0E32',
+    axisRegulatory: '\u0E01\u0E0E\u0E23\u0E30\u0E40\u0E1A\u0E35\u0E22\u0E1A',
+    axisNote:       '\u0E42\u0E19\u0E49\u0E15',
+    axisMainFamily: '\u0E01\u0E25\u0E38\u0E48\u0E21\u0E2B\u0E25\u0E31\u0E01',
+    axisFamily:     '\u0E01\u0E25\u0E38\u0E48\u0E21',
+    axisFacet:      '\u0E25\u0E31\u0E01\u0E29\u0E13\u0E30\u0E22\u0E48\u0E2D\u0E22',
   }
 };
 let _lang = localStorage.getItem('perfume_lang') || 'en';
@@ -8148,6 +8186,59 @@ function applyLangIndex() {
   if (clearBtn) clearBtn.textContent = t.clearAll;
   const formulateLink = document.querySelector('.formulate-link');
   if (formulateLink) formulateLink.textContent = t.formulate;
+
+  // Audit-3 #6 — search hint banner (between input and filter drawer).
+  const hint = document.querySelector('.search-hint');
+  if (hint) {
+    hint.innerHTML = '<span>' + t.searchHintText + '</span>' +
+      '<kbd>/</kbd> ' + t.searchHintFocus + ' ' +
+      '<kbd>Enter</kbd> ' + t.searchHintSubmit + ' ' +
+      '<kbd>Esc</kbd> ' + t.searchHintClear;
+  }
+
+  // Filter sub-toggle labels — replace the text node between .arrow and
+  // .sub-selected so the click handler on the parent stays bound.
+  const FILTER_AXES = [
+    ['tagSelected',         t.axisUse],
+    ['funcSelected',        t.axisFunction],
+    ['typeSelected',        t.axisType],
+    ['sourceSelected',      t.axisSource],
+    ['regSelected',         t.axisRegulatory],
+    ['noteSelected',        t.axisNote],
+    ['mainFamSelected',     t.axisMainFamily],
+    ['subFamilySelected',   t.axisFamily],
+    ['facetSelected',       t.axisFacet],
+  ];
+  for (const [selectedId, axisLabel] of FILTER_AXES) {
+    const sel = document.getElementById(selectedId);
+    if (!sel) continue;
+    const toggle = sel.parentNode;
+    const arrow = toggle.querySelector('.arrow');
+    if (!arrow) continue;
+    // Walk between arrow.nextSibling and sel — patch the first text node.
+    let node = arrow.nextSibling;
+    while (node && node !== sel) {
+      if (node.nodeType === 3) { node.nodeValue = ' ' + axisLabel + ' '; break; }
+      node = node.nextSibling;
+    }
+  }
+
+  // Footer download labels (CSV link, etc.). Each download anchor uses
+  // a known classname; just patch the label text where present.
+  document.querySelectorAll('.download-csv, .download-link[data-fmt="csv"]').forEach(a => {
+    if (a) a.textContent = t.csv;
+  });
+
+  // Empty-state strings — touched on next renderResults() pass; cached
+  // text on the current empty container is updated immediately.
+  const emptyEl = document.querySelector('.empty-state-results');
+  if (emptyEl && /no material/i.test(emptyEl.textContent || '')) {
+    // Defensive: only retranslate if the visible string starts with the
+    // known English / Thai stem so partial mid-sentence text isn't
+    // overwritten by the lang switch.
+    const m = emptyEl.textContent.match(/(?:No material found for|ไม่พบวัตถุดิบสำหรับ)\s+(.*)$/);
+    if (m) emptyEl.textContent = t.emptyNotFound + ' ' + m[1];
+  }
 }
 applyLangIndex();
 document.getElementById('themeToggle').addEventListener('click', () => {
