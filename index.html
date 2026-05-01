@@ -292,6 +292,14 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .card-arrow { font-size:0.8em; color:var(--text2); }
 .card-body { padding:0 16px 16px; display:none; }
 .card-body.open { display:block; }
+/* Audit #5 — collapse wrappers that ended up with no rendered children
+   (e.g. an entry where match_info / regulatory / taxon / pubchem-data
+   are all blank). The conditional template emits empty wrappers in
+   some edge cases; this rule hides them so the expanded card has no
+   phantom whitespace gap above the PubChem section. */
+.card-body > *:empty { display:none; }
+.card-body .row:empty,
+.card-body .col:empty { display:none; }
 .card-del { color:var(--text2); font-size:1.1em; cursor:pointer; opacity:0.5; padding:4px 8px; }
 .card-del:hover { opacity:1; }
 .card-actions { display:inline-flex; align-items:center; gap:2px; flex-shrink:0; }
