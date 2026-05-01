@@ -219,6 +219,11 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .mat-dil-btn { background:none; border:1px solid var(--border); border-radius:4px; color:var(--text2); cursor:pointer; font-size:0.7em; padding:2px 5px; font-family:'IBM Plex Mono',monospace; line-height:1; }
 .mat-dil-btn:hover { border-color:var(--accent); color:var(--text); }
 .mat-dil-btn.active { background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent); }
+/* Lock toggle — pinned next to dilution. Active = locked: row's % survives
+   Smart Allocate / Dirichlet rebalances and stays at the chemist's chosen value. */
+.mat-lock-btn { background:none; border:1px solid var(--border); border-radius:4px; color:var(--text2); cursor:pointer; font-size:0.85em; padding:1px 5px; line-height:1; }
+.mat-lock-btn:hover { border-color:var(--accent); color:var(--text); }
+.mat-lock-btn.active { background:var(--warn-bg); color:var(--warn); border-color:var(--warn); }
 .mat-dil-row { display:flex; align-items:center; gap:4px; width:100%; padding:4px 0 0 28px; font-size:0.78em; color:var(--text2); }
 .mat-dil { width:42px; padding:3px 4px; border:1px solid var(--border); border-radius:4px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:1em; background:var(--bg2); color:var(--text); }
 
@@ -230,6 +235,13 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 
 /* Use-rate warning badge */
 .mat-warn { font-size:0.7em; padding:1px 5px; border-radius:8px; background:var(--warn-bg); color:var(--warn); font-weight:600; white-space:nowrap; }
+/* Reactive-pair warning icon — shown next to material name when functional-group
+   analysis flags it as part of a reactive pair. Color tracks severity. */
+.mat-react { font-size:0.85em; line-height:1; padding:0 3px; border-radius:4px; cursor:pointer; user-select:none; flex-shrink:0; }
+.mat-react.high   { color:var(--danger); }
+.mat-react.medium { color:var(--warn); }
+.mat-react.low    { color:var(--text2); }
+.mat-react:hover  { background:var(--bg2); }
 
 /* Total bar */
 .mat-total { display:flex; justify-content:space-between; align-items:center; padding:8px; font-size:0.85em; font-weight:600; border-top:1px solid var(--border); margin-top:4px; }
@@ -237,6 +249,41 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .mat-total .pct-val.over { color:var(--danger); }
 .mat-total .pct-val.under { color:var(--warn); }
 .mat-total .pct-val.ok { color:var(--success); }
+
+/* Compare-modal diff highlighting. Row background tracks the diff status so
+   added / removed / changed materials are unmistakable at a glance. Delta
+   arrows colored by direction independently of the row highlight. */
+.diff-added   { background:rgba(34,197,94,0.12); }
+.diff-removed { background:rgba(239,68,68,0.10); }
+.diff-removed td:not(:last-child) { text-decoration:line-through; color:var(--text2); }
+.diff-changed { background:rgba(245,158,11,0.10); }
+.diff-arrow      { font-weight:600; font-family:'IBM Plex Mono',monospace; }
+.diff-arrow.up   { color:var(--success); }
+.diff-arrow.down { color:var(--danger); }
+.diff-arrow.flat { color:var(--text2); }
+
+/* Scientific Metrics comparison — side-by-side cards under the diff table. */
+.cmp-metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+.cmp-metric-card  { padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--bg2); }
+.cmp-metric-card.winner { border-color:var(--success); box-shadow:inset 0 0 0 1px var(--success); }
+.cmp-metric-label { font-size:0.72em; color:var(--text2); text-transform:uppercase; letter-spacing:0.04em; }
+.cmp-metric-value { font-size:1.15em; font-weight:600; font-family:'IBM Plex Mono',monospace; margin-top:2px; }
+.cmp-winner-pill  { display:inline-block; font-size:0.65em; padding:1px 6px; border-radius:8px; background:var(--success); color:#fff; font-weight:600; margin-left:6px; vertical-align:2px; }
+.cmp-section-h    { font-size:0.78em; color:var(--text2); text-transform:uppercase; letter-spacing:0.04em; margin:14px 0 4px; }
+
+/* Brief longevity progress — appears under Total when materials exist and the
+   brief's Longevity Target can be compared to estimateLongevity().totalHours.
+   Yellow/orange when under target, green w/ ✓ when at-or-above. */
+.brief-longev { padding:6px 8px 8px; font-size:0.78em; }
+.brief-longev__line { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; gap:8px; }
+.brief-longev__label { color:var(--text2); font-weight:500; }
+.brief-longev__text { font-family:'IBM Plex Mono',monospace; font-weight:600; }
+.brief-longev__text.under { color:var(--warn); }
+.brief-longev__text.met   { color:var(--success); }
+.brief-longev__track { width:100%; height:6px; background:var(--bg2); border-radius:3px; overflow:hidden; }
+.brief-longev__fill { height:100%; transition:width 200ms ease-out, background-color 200ms ease-out; }
+.brief-longev__fill.under { background:var(--warn); }
+.brief-longev__fill.met   { background:var(--success); }
 
 /* Action buttons */
 .sidebar-actions { display:flex; gap:6px; margin-top:12px; }
@@ -796,6 +843,17 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
       <span class="pct-val" id="matTotalPct">0%</span>
     </div>
 
+    <!-- Longevity vs Brief target — populated by renderMaterialList -->
+    <div class="brief-longev" id="briefLongevBar" style="display:none">
+      <div class="brief-longev__line">
+        <span class="brief-longev__label">Longevity</span>
+        <span id="briefLongevText" class="brief-longev__text">—</span>
+      </div>
+      <div class="brief-longev__track" aria-hidden="true">
+        <div id="briefLongevFill" class="brief-longev__fill"></div>
+      </div>
+    </div>
+
     <!-- Action Buttons — compact.
          + Add sits above the action row using the same dashed style as
          the Carrier section's add button so both list-add controls
@@ -1052,10 +1110,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v279"></script>
-<script src="perfumery_data.js?v=2026-04-29-v279"></script>
-<script src="formulation_data.js?v=2026-04-29-v279"></script>
-<script src="formulation_engine.js?v=2026-04-29-v279"></script>
+<script src="taxonomy.js?v=2026-04-29-v283"></script>
+<script src="perfumery_data.js?v=2026-04-29-v283"></script>
+<script src="formulation_data.js?v=2026-04-29-v283"></script>
+<script src="formulation_engine.js?v=2026-04-29-v283"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1362,6 +1420,14 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
+// Programmatic tab switch — used by the Workspace reactive-pair icon to jump
+// to the Stability tab without a manual click. Reuses the .tab-btn handler so
+// flush + active-class swap stay consistent.
+function goToStabilityTab() {
+  const btn = document.querySelector('.tab-btn[data-tab="tab-stability"]');
+  if (btn) btn.click();
+}
+
 // ===== Click Timing Optimization =====
 function debounce(fn, delay) {
   let timer = null;
@@ -1567,6 +1633,18 @@ const formulation = {
     const dilBtn = el.querySelector('.mat-dil-btn');
     if (dilBtn) { dilBtn.textContent = dil < 100 ? dil + '%' : 'dil'; dilBtn.classList.toggle('active', dil < 100); }
 
+    // Keep the lock toggle's icon + active class in sync. Lock state itself
+    // is owned by toggleLock() which calls renderMaterialList(); this branch
+    // covers the case where some other code path mutates the state silently.
+    const lockBtn = el.querySelector('.mat-lock-btn');
+    if (lockBtn) {
+      const isLocked = lockedMaterials.has(cas);
+      lockBtn.textContent = isLocked ? '🔒' : '🔓';
+      lockBtn.classList.toggle('active', isLocked);
+      lockBtn.setAttribute('aria-pressed', String(isLocked));
+      lockBtn.title = isLocked ? 'Unlock — Smart Allocate may rewrite this %' : 'Lock — protect this % from Smart Allocate / Dirichlet rebalance';
+    }
+
     // Update use-rate warning
     const usageRange = parseUsageRange(m.data?.usage_levels);
     const pctInProduct = m.pct * (fragPct / 100);
@@ -1639,14 +1717,19 @@ const formulation = {
 };
 // Push initial empty state
 formulationHistory.push({ materials: [], carriers: [] });
-// Initialize debounced commit for rapid percentage changes (coalesces rapid clicks)
+// Initialize debounced commit for rapid percentage changes (coalesces rapid clicks).
+// 400 ms — heavy analysis renderers (Antoine VP table, Raoult's-law evaporation
+// simulation, Potts-Guy skin penetration in renderThermoTab) can take 30–80 ms
+// on ~50 materials and would block the main thread on every keystroke / step
+// click otherwise. Cheap in-place updates (_updateMaterialDisplay,
+// _updateTotalDisplay) still fire immediately so weights track typing.
 formulation._scheduleCommit = debounce(() => {
   formulationHistory.push({
     materials: formulation.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data })),
     carriers: carrierMaterials.map(c => ({ cas: c.cas, name: c.name, pct: c.pct })),
   });
   renderActiveTab();
-}, 300);
+}, 400);
 
 // ===== Render Material List =====
 // Escape HTML to prevent XSS from material names
@@ -1709,6 +1792,27 @@ function calcWeighAmount(pureAmount, dilution, dilutionSolventCas) {
 // Cache empty state HTML before first render overwrites it
 const _emptyStateHTML = document.getElementById('matEmpty') ? document.getElementById('matEmpty').outerHTML : '<div class="empty-state"><p>No materials yet</p></div>';
 
+// Read the Creative Brief's targets straight off the form controls — they
+// keep their values when the modal is closed, so this is the source of
+// truth for "what did the user ask for". Used by:
+//   • Workspace material count (warns when count > maxIngredients)
+//   • Workspace longevity bar (compares estimateLongevity against longevityH)
+//   • Mood radar overlay (target dataset for selected moods)
+// Returns null when the brief controls aren't in the DOM (defensive).
+function getBriefTargets() {
+  const maxEl  = document.getElementById('briefMaxIngredients');
+  const longEl = document.getElementById('briefLongevity');
+  if (!maxEl || !longEl) return null;
+  const maxIngredients = parseInt(maxEl.value, 10);
+  const longevityH = parseInt(longEl.value, 10);
+  const moods = [...document.querySelectorAll('#briefMoods input:checked')].map(c => c.value);
+  return {
+    maxIngredients: isNaN(maxIngredients) ? null : maxIngredients,
+    longevityH: isNaN(longevityH) ? null : longevityH,
+    moods,
+  };
+}
+
 function renderMaterialList() {
   const list = document.getElementById('matList');
   const total = document.getElementById('matTotal');
@@ -1718,18 +1822,59 @@ function renderMaterialList() {
     list.innerHTML = _emptyStateHTML;
     total.style.display = 'none';
     count.textContent = '(0)';
+    count.style.color = '';
     const pctEl = document.getElementById('matTotalPct');
     pctEl.textContent = '0%';
     pctEl.className = 'pct-val under';
+    const longevBar = document.getElementById('briefLongevBar');
+    if (longevBar) longevBar.style.display = 'none';
     return;
   }
 
-  count.textContent = `(${formulation.materials.length})`;
+  // Material count vs Creative Brief's Max Ingredients target. Over-budget
+  // count flips red + appends a "+N over" tag and shows a one-time toast so
+  // the violation is unmissable but doesn't spam if the user keeps adding.
+  const _briefTargets = getBriefTargets();
+  const _matLen = formulation.materials.length;
+  const _maxIng = _briefTargets ? _briefTargets.maxIngredients : null;
+  if (_maxIng != null && _matLen > _maxIng) {
+    const over = _matLen - _maxIng;
+    count.innerHTML = `(<span style="color:var(--danger);font-weight:600">${_matLen}</span>) <span class="badge badge-danger" style="font-size:0.65em;padding:1px 6px;font-weight:600;vertical-align:1px" title="Brief target was ${_maxIng}; ${over} extra material${over === 1 ? '' : 's'}. Trim the formula or raise the brief's Max Ingredients.">Exceeded brief limit (+${over})</span>`;
+    count.style.color = '';
+    if (typeof showToast === 'function' && _matLen !== formulation._lastWarnedMatCount) {
+      showToast({ message: `Materials (${_matLen}) exceed brief limit (${_maxIng}). Trim ${over} or raise brief target.`, variant: 'warn', timeout: 4000 });
+      formulation._lastWarnedMatCount = _matLen;
+    }
+  } else {
+    count.textContent = `(${_matLen})`;
+    count.style.color = '';
+    formulation._lastWarnedMatCount = null;
+  }
   const batchSize = validateBatchSize(document.getElementById('batchSize').value);
   const batchUnit = document.getElementById('batchUnit').value;
   const fragPct = validateFragPct(document.getElementById('fragPct').value);
   // Fragrance grams = batchSize × fragPct/100; material grams = pct% of fragrance portion
   const fragGrams = batchSize * (fragPct / 100);
+  // Reactive-pair early warning: detect once per render, index by CAS so a
+  // material that participates in multiple pairs surfaces the highest
+  // severity in the sidebar without forcing a trip to the Stability tab.
+  const _reactiveByCas = {};
+  try {
+    const _gm = buildFunctionalGroupMatrix(formulation.materials);
+    const _pairs = detectReactivePairs(_gm);
+    const _sevRank = { high: 0, medium: 1, low: 2 };
+    for (const w of _pairs) {
+      for (const [self, other] of [[w.matA, w.matB], [w.matB, w.matA]]) {
+        const cur = _reactiveByCas[self.cas];
+        const entry = { partner: other.name, reaction: w.reaction, severity: w.severity, effect: w.effect };
+        if (!cur || _sevRank[entry.severity] < _sevRank[cur.topSeverity]) {
+          _reactiveByCas[self.cas] = { topSeverity: entry.severity, pairs: (cur ? cur.pairs : []).concat([entry]) };
+        } else {
+          cur.pairs.push(entry);
+        }
+      }
+    }
+  } catch (_) { /* engine missing or malformed material — skip silently */ }
   let html = '';
   for (const m of formulation.materials) {
     const tiers = classifyNoteTiers(m.data?.note);
@@ -1752,6 +1897,17 @@ function renderMaterialList() {
     if (usageRange.max != null && pctInProduct > usageRange.max) {
       warnHtml = `<span class="mat-warn" style="cursor:pointer" title="Max ${usageRange.max}% in product, actual ${pctInProduct.toFixed(1)}% — click to reduce" onclick="applyUsageCap('${safeCas}')">! ${usageRange.max}%</span>`;
     }
+    // Reactive-pair icon — clicking jumps to Stability tab. Tooltip lists up
+    // to 3 partners with their reaction + severity so the chemist sees the
+    // problem before opening another panel.
+    let reactHtml = '';
+    const _ri = _reactiveByCas[m.cas];
+    if (_ri) {
+      const tipLines = _ri.pairs.slice(0, 3).map(p => '• ' + p.partner + ' — ' + p.reaction + ' (' + p.severity + ')');
+      const more = _ri.pairs.length > 3 ? ' …and ' + (_ri.pairs.length - 3) + ' more' : '';
+      const tip = 'Reactive pair' + (_ri.pairs.length > 1 ? 's' : '') + ':\n' + tipLines.join('\n') + more + '\nClick for Stability tab.';
+      reactHtml = `<span class="mat-react ${_ri.topSeverity}" title="${escHtml(tip)}" onclick="goToStabilityTab()" role="button" aria-label="Reactive pair warning">⚠</span>`;
+    }
     html += `<div class="mat-item" data-cas="${safeCas}">`;
     // Show one badge per tier for multi-tier materials (e.g., "Top / Middle"
     // renders as both T and M badges side-by-side).
@@ -1759,7 +1915,8 @@ function renderMaterialList() {
       html += `<span class="mat-note ${t}">${tierLabels[t]}</span>`;
     }
     const isMatLocked = lockedMaterials.has(m.cas);
-    html += `<span class="mat-name" title="${safeName}">${safeName}${isMatLocked ? ' <span style="color:var(--warn,var(--warn));font-size:0.75em;font-weight:500">(locked)</span>' : ''}</span>`;
+    html += `<span class="mat-name" title="${safeName}">${safeName}</span>`;
+    html += reactHtml;
     html += warnHtml;
     html += `<span class="mat-grams">${amtStr}${unit}</span>`;
     // step="any" lifts the browser's spinner-step constraint, so
@@ -1772,6 +1929,7 @@ function renderMaterialList() {
       onchange="formulation.updatePct('${safeCas}',this.value)"
       onblur="if(this.value==='')this.value=0;formulation.updatePct('${safeCas}',this.value)">`;
     html += `<span style="font-size:0.75em;color:var(--text2)">%</span>`;
+    html += `<button class="mat-lock-btn${isMatLocked ? ' active' : ''}" onclick="toggleLock('${safeCas}')" title="${isMatLocked ? 'Unlock — Smart Allocate may rewrite this %' : 'Lock — protect this % from Smart Allocate / Dirichlet rebalance'}" aria-pressed="${isMatLocked}">${isMatLocked ? '🔒' : '🔓'}</button>`;
     html += `<button class="mat-dil-btn${dil < 100 ? ' active' : ''}" onclick="toggleDilution('${safeCas}')" title="Dilution">${dil < 100 ? dil + '%' : 'dil'}</button>`;
     html += `<button class="mat-del" onclick="formulation.removeMaterial('${safeCas}')" title="Remove">&times;</button>`;
     if (dil < 100) {
@@ -1817,6 +1975,38 @@ function renderMaterialList() {
   }
   pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
   total.style.display = 'flex';
+
+  // Longevity vs brief target. Engine returns totalHours = base-tier fade time
+  // (90 % evaporation), which we treat as the formula's effective wear time.
+  // Hidden when no brief target is set.
+  const longevBar = document.getElementById('briefLongevBar');
+  if (longevBar) {
+    const targetH = _briefTargets ? _briefTargets.longevityH : null;
+    if (targetH != null && typeof estimateLongevity === 'function') {
+      try {
+        const tempC = parseInt(document.getElementById('tempSlider').value, 10) || 25;
+        const lon = estimateLongevity(formulation.materials, tempC);
+        const actualH = lon.totalHours || 0;
+        const ratio = targetH > 0 ? Math.min(2, actualH / targetH) : 0;
+        const met = actualH >= targetH;
+        const fillPct = Math.min(100, ratio * 100);
+        const fillEl = document.getElementById('briefLongevFill');
+        const txtEl  = document.getElementById('briefLongevText');
+        fillEl.style.width = fillPct.toFixed(1) + '%';
+        fillEl.className = 'brief-longev__fill ' + (met ? 'met' : 'under');
+        txtEl.className  = 'brief-longev__text '  + (met ? 'met' : 'under');
+        txtEl.textContent = (met ? '✓ ' : '') + actualH.toFixed(1) + 'h / ' + targetH + 'h target';
+        longevBar.style.display = '';
+        longevBar.title = met
+          ? 'Predicted base-note fade ≥ brief target. The formula will wear at least ' + targetH + 'h.'
+          : 'Predicted base-note fade is ' + (targetH - actualH).toFixed(1) + 'h short of the brief target. Add more base-tier materials or increase their %.';
+      } catch (_) {
+        longevBar.style.display = 'none';
+      }
+    } else {
+      longevBar.style.display = 'none';
+    }
+  }
 
   // Trigger carrier list update (carrier budget depends on dilution solvent)
   renderCarrierList();
@@ -2340,8 +2530,10 @@ document.getElementById('productCategory').addEventListener('change', () => {
   if (addModal.classList.contains('open')) modalSearch.dispatchEvent(new Event('input'));
 });
 // Debounce tempSlider drag — fires ~100 events/sec otherwise, each triggering
-// a full tab render (incl. simulateEvaporation). 200ms feels responsive.
-document.getElementById('tempSlider').addEventListener('input', debounce(() => renderActiveTab(), 200));
+// a full tab render (incl. simulateEvaporation). 400 ms matches the pct-change
+// commit debounce so heavy thermo work (Antoine + Raoult's-law) stays off the
+// main thread until the user pauses.
+document.getElementById('tempSlider').addEventListener('input', debounce(() => renderActiveTab(), 400));
 
 function renderActiveTab() {
   const active = document.querySelector('.tab-panel.active');
@@ -3707,6 +3899,24 @@ function gcmsPeakSigma(rt) {
   return 0.05 + 0.005 * rt;
 }
 
+// Classify a material as 'natural' (essential oil / absolute / resinoid /
+// concrete / extract / tincture) or 'synthetic' (aroma chemical). The GC-MS
+// renderer uses this to dash + recolor natural peaks because their single
+// "bulk BP" peak is an aggregate of dozens of constituents — visually marking
+// them prevents users from mistaking the predicted single peak for a real
+// chromatogram of the natural.
+//   Detection order:
+//   1. CAS appears in NATURAL_ALLERGEN_COMPOSITION → authoritative natural
+//   2. Name contains a botanical/extract keyword
+//   3. Otherwise treat as synthetic (single-molecule aroma chemical)
+function gcmsClassifyType(mat) {
+  const cas = mat.cas;
+  const name = (mat.name || '').toLowerCase();
+  if (typeof NATURAL_ALLERGEN_COMPOSITION !== 'undefined' && NATURAL_ALLERGEN_COMPOSITION[cas]) return 'natural';
+  if (/\b(oil|absolute|extract|tincture|resinoid|concrete|infusion|oleoresin|balsam|attar|co2)\b/.test(name)) return 'natural';
+  return 'synthetic';
+}
+
 function gcmsBuildPeaks(mats) {
   const peaks = [];
   for (const m of mats) {
@@ -3721,6 +3931,7 @@ function gcmsBuildPeaks(mats) {
       name: m.name,
       pct: m.pct,
       tier: tier,
+      type: gcmsClassifyType(m),
       note: d.note || dbEntry.note || '',
       bp: bp,
       mw: mw,
@@ -3796,8 +4007,17 @@ function renderGCMSTab() {
   let html = '';
 
   // Chromatogram
+  const naturalCount = peaks.filter(p => p.type === 'natural' && p.hasData).length;
   html += '<div class="analysis-card"><h4>Predicted Chromatogram</h4>';
   html += '<p class="panel-desc" style="margin-bottom:8px">Method: DB-5 30m × 0.25mm, He carrier, 50→280°C @ 5°C/min. RT estimated from boiling point.</p>';
+  // Natural-vs-synthetic legend — only meaningful if both types are present.
+  // Naturals get a green dashed peak because their single bulk-BP peak is an
+  // approximation of the whole essential oil / absolute, not a real molecule.
+  html += '<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:0.78em;color:var(--text2);margin-bottom:8px;align-items:center">';
+  html += '<span style="display:inline-flex;align-items:center;gap:6px"><svg width="22" height="8" aria-hidden="true"><line x1="0" y1="4" x2="22" y2="4" stroke="#3b82f6" stroke-width="2"/></svg>Aroma chemical (single molecule)</span>';
+  html += '<span style="display:inline-flex;align-items:center;gap:6px" title="Naturals are mixtures — the single peak shown is at the bulk BP of the oil, not a real GC trace of the constituents."><svg width="22" height="8" aria-hidden="true"><line x1="0" y1="4" x2="22" y2="4" stroke="#16a34a" stroke-width="2" stroke-dasharray="4 3"/></svg>Natural (bulk-BP single peak — approximation)</span>';
+  if (naturalCount) html += '<span style="margin-left:auto;font-size:0.75em">' + naturalCount + ' natural' + (naturalCount === 1 ? '' : 's') + ' shown as dashed approximations</span>';
+  html += '</div>';
   html += '<div class="chart-wrap wide"><canvas id="gcmsChart"></canvas></div></div>';
 
   // Peak list
@@ -3815,13 +4035,16 @@ function renderGCMSTab() {
     idx++;
     const isSel = (p.cas === _gcmsSelectedCas);
     const tierBadge = p.tier ? '<span style="font-size:0.7em;padding:1px 5px;background:var(--bg2);border-radius:4px;color:var(--text2);text-transform:uppercase">' + p.tier + '</span>' : '';
+    const typeBadge = p.type === 'natural'
+      ? ' <span style="font-size:0.7em;padding:1px 5px;background:#16a34a22;color:#15803d;border-radius:4px" title="Natural — bulk-BP single peak is an approximation, not a real chromatogram">natural</span>'
+      : ' <span style="font-size:0.7em;padding:1px 5px;background:#3b82f622;color:#1d4ed8;border-radius:4px" title="Aroma chemical — predicted RT from molecular boiling point">chemical</span>';
     const coelChip = coel[p.cas] ? ' <span style="font-size:0.7em;padding:1px 5px;background:#f59e0b22;color:#b45309;border-radius:4px" title="Co-elutes with ' + escHtml(coel[p.cas].join(', ')) + '">co-elutes</span>' : '';
     const noDataChip = !p.hasData ? ' <span style="font-size:0.7em;padding:1px 5px;background:#ef444422;color:#b91c1c;border-radius:4px">no BP data</span>' : '';
     const rowStyle = isSel ? 'background:var(--bg2);font-weight:600' : 'cursor:pointer';
     html += '<tr data-gcms-cas="' + escHtml(p.cas) + '" style="' + rowStyle + '">';
     html += '<td>' + idx + '</td>';
     html += '<td>' + (p.hasData ? p.rt.toFixed(1) : '—') + '</td>';
-    html += '<td>' + escHtml(p.name) + coelChip + noDataChip + '</td>';
+    html += '<td>' + escHtml(p.name) + typeBadge + coelChip + noDataChip + '</td>';
     html += '<td>' + tierBadge + '</td>';
     html += '<td>' + (p.mw ? p.mw.toFixed(2) : '—') + '</td>';
     html += '<td style="font-family:monospace;font-size:0.85em">' + escHtml(p.formula || '—') + '</td>';
@@ -3875,20 +4098,28 @@ function renderGCMSTab() {
   if (_gcmsChart) _gcmsChart.destroy();
 
   const trace = gcmsBuildTrace(peaks);
+  // Tier colors retained for synthetic single-molecule peaks. Naturals get a
+  // single neutral green so the chart reads "this is an approximation" at a
+  // glance — overrides the tier color since a natural's tier is itself
+  // averaged across constituents and not as meaningful.
   const noteColors = { top: '#eab308', mid: '#3b82f6', base: '#8b5cf6' };
+  const NATURAL_COLOR = '#16a34a';
   const datasets = [];
 
-  // Per-peak filled curves (low opacity)
+  // Per-peak filled curves (low opacity). Naturals → green + dashed border to
+  // signal "bulk-BP approximation"; aroma chemicals → tier color + solid line.
   peaks.forEach((p, i) => {
     if (!p.hasData) return;
     const isSel = (p.cas === _gcmsSelectedCas);
-    const color = noteColors[p.tier] || '#94a3b8';
+    const isNatural = p.type === 'natural';
+    const color = isNatural ? NATURAL_COLOR : (noteColors[p.tier] || '#94a3b8');
     datasets.push({
-      label: p.name,
+      label: p.name + (isNatural ? ' (natural)' : ''),
       data: trace.perPeak[i],
       borderColor: color,
       backgroundColor: color + (isSel ? '66' : '22'),
       borderWidth: isSel ? 2.5 : 1,
+      borderDash: isNatural ? [5, 3] : [],
       fill: true,
       tension: 0.3,
       pointRadius: 0,
@@ -3942,6 +4173,8 @@ function renderOdorTab() {
 
   // Radar chart
   html += '<div class="analysis-card"><h4>Perfumery Radar — Odor Profile Over Time</h4>';
+  const radarTip = 'Each axis = Σ (Hill perceived intensity × family weight) across materials at the time-point. Perceived intensity follows the Stevens power law: ψ = (OV^n) / (1 + OV^n), where OV = headspace conc / ODT and n is the per-material Stevens exponent. Weight % drives headspace concentration via Antoine + Raoult — but the axis values themselves reflect what the nose perceives, not raw mass.';
+  html += '<p class="panel-desc"><span title="' + escHtml(radarTip) + '" style="cursor:help;text-decoration:underline dotted">Axes scaled by Stevens/Hill perceived intensity</span>, not by weight or concentration alone.</p>';
   html += '<div class="chart-wrap"><canvas id="odorRadar"></canvas></div></div>';
 
   // OV Table
@@ -4162,23 +4395,50 @@ function renderMoodTab() {
   const canvas = document.getElementById('moodRadar');
   if (!canvas) return;
   if (_moodChart) _moodChart.destroy();
+
+  // Build target overlay from the Creative Brief's Mood Targets checkboxes.
+  // Each selected mood becomes a 5/5 spike on its axis; unselected → 0. The
+  // resulting polygon is the "ideal shape" the formula is aiming for, drawn
+  // dashed and faintly grey so the solid current-profile reads as the
+  // primary signal but the gap to target is visible at a glance.
+  const briefMoodsTarget = (typeof getBriefTargets === 'function')
+    ? (getBriefTargets()?.moods || []) : [];
+  const targetData = mood.dimensions.map(d => briefMoodsTarget.includes(d) ? 5 : 0);
+  const hasTarget = briefMoodsTarget.length > 0;
+
+  const datasets = [{
+    label: 'Current formula',
+    data: mood.profile,
+    borderColor: 'rgba(59,130,246,0.9)',
+    backgroundColor: 'rgba(59,130,246,0.18)',
+    borderWidth: 2,
+    pointRadius: 4,
+    order: 1,
+  }];
+  if (hasTarget) {
+    datasets.push({
+      label: 'Brief target (' + briefMoodsTarget.join(', ') + ')',
+      data: targetData,
+      borderColor: 'rgba(120,120,120,0.9)',
+      backgroundColor: 'rgba(120,120,120,0.10)',
+      borderWidth: 2,
+      borderDash: [6, 4],
+      pointRadius: 3,
+      pointStyle: 'rectRot',
+      order: 2,
+    });
+  }
+
   _moodChart = new Chart(canvas, {
     type: 'radar',
     data: {
       labels: mood.dimensions.map(d => d.charAt(0).toUpperCase() + d.slice(1)),
-      datasets: [{
-        label: 'Mood Profile',
-        data: mood.profile,
-        borderColor: 'rgba(59,130,246,0.8)',
-        backgroundColor: 'rgba(59,130,246,0.15)',
-        borderWidth: 2,
-        pointRadius: 4,
-      }],
+      datasets,
     },
     options: {
       responsive: true,
       scales: { r: { beginAtZero: true, max: 5, ticks: { stepSize: 1, font: { size: 10 } } } },
-      plugins: { legend: { display: false } },
+      plugins: { legend: { display: hasTarget, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
     },
   });
 }
@@ -4298,8 +4558,8 @@ function renderSafetyTab() {
     html += '<button id="safetyToggleProblems" class="preset-chip' + (showProblemsOnly ? ' active' : '') + '" aria-pressed="' + showProblemsOnly + '" style="font-size:0.78em">' + toggleLabel + '</button>';
   }
   html += '</div>';
-  html += '<p class="panel-desc" style="margin-top:8px">Each material checked against the IFRA 51 cap for the active category. Sorted by severity.</p>';
-  html += '<table class="data-table"><thead><tr><th>Material</th><th>% in Product</th><th>IFRA Max</th><th>Headroom</th><th>Status</th></tr></thead><tbody>';
+  html += '<p class="panel-desc" style="margin-top:8px">Each material checked against the IFRA 51 cap for the active category. Sorted by severity. <span title="% in Product = (material % in concentrate) × (Fragrance in Product %). Caps apply to the finished-product concentration, not the concentrate." style="cursor:help;text-decoration:underline dotted">Caps apply to finished product</span>.</p>';
+  html += '<table class="data-table"><thead><tr><th>Material</th><th title="Material concentration in the finished product after dilution by the carrier — (material % × ' + fragPct + '%/100)">% in Product</th><th>IFRA Max</th><th>Headroom</th><th>Status</th></tr></thead><tbody>';
   for (const r of filteredCompliance) {
     const cls = r.status === 'ok' ? 'badge-ok' : r.status === 'warn' ? 'badge-warn' : 'badge-danger';
     const icon = r.status === 'ok' ? '✓' : r.status === 'warn' ? '⚠' : '✗';
@@ -4338,9 +4598,11 @@ function renderSafetyTab() {
   // Allergen panel
   if (allergens.allergens.length) {
     const thresholdTip = 'EU 1223/2009 — leave-on threshold 10 ppm, rinse-off 100 ppm. Below threshold: not required on the INCI label. Above: must be declared.';
+    const ppmFormulaTip = 'ppm in product = (material % in concentrate) × (' + fragPct + '% Fragrance in Product) × 100. Allergens hidden in naturals are added at their constituent fraction.';
     html += '<div class="analysis-card" id="safety-allergens">';
     html += '<h4>EU Allergen Declaration <span class="badge badge-outline" title="' + escHtml(thresholdTip) + '" style="cursor:help;font-weight:500">threshold ' + allergens.threshold + ' ppm · ' + (allergens.isRinseOff ? 'rinse-off' : 'leave-on') + '</span></h4>';
-    html += '<table class="data-table"><thead><tr><th>Allergen</th><th>INCI</th><th>Total ppm</th><th>Sources</th><th>Declare?</th></tr></thead><tbody>';
+    html += '<p class="panel-desc" style="margin-top:6px">Aggregated across direct allergens and constituents inside naturals. <span title="' + escHtml(ppmFormulaTip) + '" style="cursor:help;text-decoration:underline dotted">Calculated at finished-product concentration</span>.</p>';
+    html += '<table class="data-table"><thead><tr><th>Allergen</th><th>INCI</th><th title="' + escHtml(ppmFormulaTip) + '">ppm in product</th><th>Sources</th><th>Declare?</th></tr></thead><tbody>';
     for (const a of allergens.allergens) {
       const cls = a.exceedsThreshold ? 'badge-danger' : 'badge-ok';
       // Sources rendered as chips (one per material that contributes this
@@ -4574,11 +4836,13 @@ document.querySelectorAll('.preset-chip').forEach(chip => {
 
 // Custom input handler. Task 3: split the work into IMMEDIATE state
 // updates (cheap — Total and Carrier %s recompute now) and a DEBOUNCED
-// heavy render pass (expensive — 200 ms after last keystroke). The
+// heavy render pass (expensive — 400 ms after last keystroke). The
 // previous setup put renderMaterialList behind the debounce too, which
-// meant the Total line lagged 200 ms behind every fragPct keystroke
+// meant the Total line lagged behind every fragPct keystroke
 // and the user briefly saw '100% / 18g Fragrance' while typing 25.
-const _debouncedFragRender = debounce(() => { renderMaterialList(); renderActiveTab(); }, 200);
+// 400 ms aligns with _scheduleCommit + tempSlider so heavy thermo (Antoine,
+// Raoult's law, Potts-Guy) coalesces consistently across all triggers.
+const _debouncedFragRender = debounce(() => { renderMaterialList(); renderActiveTab(); }, 400);
 document.getElementById('fragPctCustom').addEventListener('input', () => {
   let val = parseFloat(document.getElementById('fragPctCustom').value);
   if (!isNaN(val) && val >= 1 && val <= 100) {
@@ -4730,45 +4994,106 @@ document.getElementById('btnSave').addEventListener('click', () => {
   showToast({ message: 'Saved "' + name + '"', variant: 'success' });
 });
 
-document.getElementById('savedFormulas').addEventListener('change', () => {
-  const idx = document.getElementById('savedFormulas').value;
-  if (idx === '') return;
+// Seamlessly switch the workspace to a saved formula. Returns true on success.
+// The dropdown's change handler and the Compare-modal "Make Current" buttons
+// both call this so every entry path performs the same state reset — analysis
+// tabs (GC-MS selection, mood targets, map inspector / filters / search) all
+// belong to the *previous* formula and must not survive into the next one,
+// otherwise users see ghost selections referencing materials that aren't even
+// in the new formula.
+function seamlessLoadFormula(savedIdx) {
+  const idxNum = parseInt(savedIdx, 10);
+  if (Number.isNaN(idxNum)) return false;
   const saved = loadSaved();
-  const formula = saved[parseInt(idx)];
-  if (!formula) return;
+  const formula = saved[idxNum];
+  if (!formula) return false;
 
   let materials, settings, carriers;
   if (formula.versions) {
     const ver = formula.versions[formula.currentVersion || 0];
     materials = ver.materials;
-    settings = ver.settings;
-    carriers = ver.carriers;
+    settings  = ver.settings;
+    carriers  = ver.carriers;
   } else {
     materials = formula.materials;
-    settings = formula.settings;
-    carriers = formula.carriers;
+    settings  = formula.settings;
+    carriers  = formula.carriers;
   }
 
+  // ── Clear per-tab module state so analysis views start fresh. Each
+  // entry below was carrying a CAS / filter / chart from the previous
+  // formula and would leak in without these resets. The chart instances
+  // themselves are destroyed by their own renderers on next paint, so we
+  // only need to drop the *selection* state that points into them.
+  _gcmsSelectedCas = null;
+  _moodTargets.length = 0;
+  _mapInspectorCas = null;
+  _mapFamilyFilter.clear();
+  _mapSearchQuery = '';
+  _mapShowLabels = true;
+  _mapLabelDefaultApplied = false;
+  formulation._lastWarnedMatCount = null;
+  _pyramidFamilyOverride = null;
+
+  // ── Replace materials + carriers + locks. Order matters: clear locks
+  // first so reapplying carriers below doesn't preserve any lock from
+  // the previous formula keyed by a CAS that happens to recur.
+  lockedMaterials.clear();
+  lockedCarriers.clear();
   formulation.materials = [];
   for (const m of materials) {
-    formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data || {} });
+    formulation.materials.push({
+      cas: m.cas, name: m.name, pct: m.pct,
+      dilution: m.dilution || 100,
+      dilutionSolvent: m.dilutionSolvent || '',
+      data: m.data || {},
+    });
   }
-  // Restore carriers
-  carrierMaterials.length = 0; lockedCarriers.clear(); lockedMaterials.clear();
+  carrierMaterials.length = 0;
   if (Array.isArray(carriers)) {
-    carriers.forEach(c => carrierMaterials.push({ cas: c.cas, name: c.name, pct: c.pct }));
+    for (const c of carriers) carrierMaterials.push({ cas: c.cas, name: c.name, pct: c.pct });
   }
+
+  // ── Restore workspace settings. Each control fires its downstream
+  // listeners as a side effect of value mutation, but we don't dispatch
+  // change events here — onChange() below performs the single full
+  // re-render so we don't double-paint.
   if (settings) {
     const s = settings;
     if (s.categoryId) document.getElementById('productCategory').value = s.categoryId;
-    if (s.fragPct) { document.getElementById('fragPct').value = s.fragPct; document.getElementById('fragPctOut').textContent = s.fragPct + '%'; updatePresetHighlight(); }
-    if (s.tempC) { document.getElementById('tempSlider').value = s.tempC; document.getElementById('tempOut').innerHTML = s.tempC + ' &deg;C'; }
-    if (s.carrier) document.getElementById('carrierSelect').value = s.carrier;
-    if (s.batchSize) document.getElementById('batchSize').value = s.batchSize;
-    if (s.batchUnit) document.getElementById('batchUnit').value = s.batchUnit;
+    if (s.fragPct) {
+      document.getElementById('fragPct').value = s.fragPct;
+      document.getElementById('fragPctOut').textContent = s.fragPct + '%';
+      try { updatePresetHighlight(); } catch (_) {}
+    }
+    if (s.tempC) {
+      document.getElementById('tempSlider').value = s.tempC;
+      const tOut = document.getElementById('tempOut');
+      if (tOut) tOut.innerHTML = s.tempC + ' &deg;C';
+    }
+    if (s.carrier)   document.getElementById('carrierSelect').value = s.carrier;
+    if (s.batchSize) document.getElementById('batchSize').value     = s.batchSize;
+    if (s.batchUnit) document.getElementById('batchUnit').value     = s.batchUnit;
   }
+
+  // ── Refresh the saved-formula dropdown so the UI marker stays in sync
+  // (Compare-modal "Make Current" doesn't go through the dropdown's own
+  // change event).
+  const dropdown = document.getElementById('savedFormulas');
+  if (dropdown) dropdown.value = String(idxNum);
+
+  // ── Trigger every render. onChange() handles renderMaterialList +
+  // renderCarrierList + renderActiveTab — the active analysis tab is
+  // recomputed against the new formula and stale chart data is dropped.
   formulation.onChange();
   storeOriginalPcts();
+  return true;
+}
+
+document.getElementById('savedFormulas').addEventListener('change', () => {
+  const idx = document.getElementById('savedFormulas').value;
+  if (idx === '') return;
+  seamlessLoadFormula(idx);
 });
 
 // ===== Manage Saved Formulas Modal =====
@@ -4951,6 +5276,23 @@ document.getElementById('btnBrief').addEventListener('click', () => {
 });
 document.getElementById('briefClose').addEventListener('click', () => briefModal.classList.remove('open'));
 briefModal.addEventListener('click', e => { if (e.target === briefModal) briefModal.classList.remove('open'); });
+
+// Brief target → Workspace bindings. When the user nudges a target while the
+// modal is open, the Workspace count warning, Longevity bar, and Mood radar
+// overlay all need to refresh so the comparison stays live.
+['briefMaxIngredients', 'briefLongevity'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => { try { renderMaterialList(); } catch (_) {} });
+});
+document.querySelectorAll('#briefMoods input').forEach(cb => {
+  cb.addEventListener('change', () => {
+    // Mood radar lives on the Mood tab; only re-render if it's the active one.
+    try {
+      const active = document.querySelector('.tab-panel.active');
+      if (active && active.id === 'tab-mood') renderMoodTab();
+    } catch (_) {}
+  });
+});
 
 // Sync Creative Brief's Product Category → main workspace Product Category
 // so downstream filters (IFRA caps, carriers, Add-modal search) stay aligned
@@ -5834,23 +6176,161 @@ document.getElementById('compareRun').addEventListener('click', () => {
     if (!f) return [];
     return f.versions ? f.versions[f.currentVersion || 0].materials : (f.materials || []);
   }
+  function getLabel(idx) {
+    if (idx === '__current__') return 'Current Formulation';
+    const f = saved[parseInt(idx)];
+    return f ? f.name : 'Formula';
+  }
 
   const matsA = getMats(idxA);
   const matsB = getMats(idxB);
+  const labelA = getLabel(idxA);
+  const labelB = getLabel(idxB);
   const diffs = compareFormulations(matsA, matsB);
 
-  let html = '<table class="data-table"><thead><tr><th>Material</th><th>A %</th><th>B %</th><th>Delta</th><th>Status</th></tr></thead><tbody>';
+  // ─── Material-level diff table ─────────────────────────────────────────
+  // Row class tracks status so added/removed/changed get distinct background
+  // colour; a per-cell arrow column communicates direction of pct change.
+  let html = '<table class="data-table"><thead><tr><th>Material</th><th>' + escHtml(labelA) + ' %</th><th>' + escHtml(labelB) + ' %</th><th>Δ</th><th>Status</th></tr></thead><tbody>';
   for (const d of diffs) {
-    const cls = d.status === 'added' ? 'badge-ok' : d.status === 'removed' ? 'badge-danger' : d.status === 'changed' ? 'badge-warn' : '';
-    const deltaStr = d.delta > 0 ? '+' + d.delta : d.delta === 0 ? '0' : String(d.delta);
-    html += '<tr><td>' + escHtml(d.name) + '</td>';
-    html += '<td>' + (d.pctA || '-') + '</td><td>' + (d.pctB || '-') + '</td>';
-    html += '<td>' + deltaStr + '%</td>';
-    html += '<td><span class="badge ' + cls + '">' + d.status + '</span></td></tr>';
+    const rowCls = d.status === 'added' ? 'diff-added'
+                 : d.status === 'removed' ? 'diff-removed'
+                 : d.status === 'changed' ? 'diff-changed' : '';
+    const badgeCls = d.status === 'added' ? 'badge-ok'
+                   : d.status === 'removed' ? 'badge-danger'
+                   : d.status === 'changed' ? 'badge-warn' : '';
+    let arrow = '';
+    if (d.status !== 'unchanged' && d.delta !== 0) {
+      const dir = d.delta > 0 ? 'up' : 'down';
+      const sym = d.delta > 0 ? '↑' : '↓';
+      arrow = '<span class="diff-arrow ' + dir + '">' + sym + ' ' + (d.delta > 0 ? '+' : '') + d.delta + '%</span>';
+    } else if (d.status === 'unchanged') {
+      arrow = '<span class="diff-arrow flat">—</span>';
+    } else {
+      arrow = '<span class="diff-arrow flat">' + (d.delta > 0 ? '+' : '') + d.delta + '%</span>';
+    }
+    html += '<tr class="' + rowCls + '"><td>' + escHtml(d.name) + '</td>';
+    html += '<td>' + (d.pctA ? d.pctA + '%' : '—') + '</td><td>' + (d.pctB ? d.pctB + '%' : '—') + '</td>';
+    html += '<td>' + arrow + '</td>';
+    html += '<td><span class="badge ' + badgeCls + '">' + d.status + '</span></td></tr>';
   }
   html += '</tbody></table>';
-  document.getElementById('compareResults').innerHTML = html;
+
+  // ─── Scientific Metrics — side-by-side ─────────────────────────────────
+  // Metrics computed against the workspace's current category / fragPct /
+  // tempC so both formulas are evaluated under the same conditions. Engine
+  // calls are wrapped in try/catch so a malformed material doesn't tank the
+  // whole comparison panel.
+  html += '<div class="cmp-section-h">Scientific metrics</div>';
+  html += renderCompareMetrics(matsA, matsB, labelA, labelB);
+
+  // ─── Make-current actions ──────────────────────────────────────────────
+  // Either formula can be promoted to the workspace; "current" gets a no-op
+  // style. Buttons defer to seamlessLoadFormula() which clears stale per-tab
+  // state (gcms selection, mood targets, map inspector, locks, etc.) so
+  // analysis tabs don't carry data from the previous formula.
+  html += '<div class="cmp-section-h">Make Current</div>';
+  html += '<div style="display:flex;gap:8px">';
+  if (idxA !== '__current__') {
+    html += '<button class="btn btn-primary" style="flex:1" data-cmp-make="A" data-idx="' + escHtml(idxA) + '">Use ' + escHtml(labelA) + '</button>';
+  } else {
+    html += '<button class="btn" style="flex:1" disabled title="Already the current formulation">Use ' + escHtml(labelA) + ' (current)</button>';
+  }
+  if (idxB !== '__current__') {
+    html += '<button class="btn btn-primary" style="flex:1" data-cmp-make="B" data-idx="' + escHtml(idxB) + '">Use ' + escHtml(labelB) + '</button>';
+  } else {
+    html += '<button class="btn" style="flex:1" disabled title="Already the current formulation">Use ' + escHtml(labelB) + ' (current)</button>';
+  }
+  html += '</div>';
+
+  const resultsEl = document.getElementById('compareResults');
+  resultsEl.innerHTML = html;
+
+  // Wire Make Current buttons. Closing the modal after switch makes the
+  // refreshed Workspace + analysis tabs immediately visible to the user.
+  resultsEl.querySelectorAll('button[data-cmp-make]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = btn.getAttribute('data-idx');
+      if (seamlessLoadFormula(idx)) {
+        compareModal.classList.remove('open');
+      }
+    });
+  });
 });
+
+// Compute the scientific-metrics block for the Compare modal. Both formulas
+// are evaluated under the workspace's current category / fragPct / tempC so
+// the comparison is apples-to-apples — using each saved formula's own
+// settings would let unrelated fragPct deltas swing the longevity number
+// independently of formula composition.
+function renderCompareMetrics(matsA, matsB, labelA, labelB) {
+  const tempC   = parseInt(document.getElementById('tempSlider').value, 10) || 25;
+  const fragPct = validateFragPct(document.getElementById('fragPct').value);
+  const catId   = document.getElementById('productCategory').value;
+
+  function compute(mats) {
+    if (!mats || !mats.length) return { longevity: 0, allergenPpm: 0, dominant: [] };
+    let longevity = 0;
+    let allergenPpm = 0;
+    let dominant = [];
+    try {
+      const lon = estimateLongevity(mats, tempC);
+      longevity = lon.totalHours || 0;
+    } catch (_) {}
+    try {
+      const allergens = aggregateAllergens(mats, fragPct, catId);
+      allergenPpm = allergens.allergens.reduce((s, a) => s + (a.totalPpm || 0), 0);
+    } catch (_) {}
+    try {
+      const ov = buildOdorValueTable(mats, tempC);
+      dominant = ov.slice().sort((a, b) => (b.perceivedIntensity || 0) - (a.perceivedIntensity || 0))
+                   .slice(0, 3)
+                   .map(r => r.name + (r.note ? ' (' + r.note.split('/')[0].trim() + ')' : ''));
+    } catch (_) {}
+    return { longevity: roundN(longevity, 1), allergenPpm: roundN(allergenPpm, 1), dominant };
+  }
+
+  const A = compute(matsA);
+  const B = compute(matsB);
+
+  // Winner rules:
+  //   • Longevity — higher is "winner" (more hours of wear).
+  //   • Allergen ppm — LOWER is "winner" (cleaner formula). Ties → no winner.
+  //   • Dominant notes — listed side-by-side, no winner concept.
+  function pill(side) { return '<span class="cmp-winner-pill" title="Winner on this metric">Winner</span>' + (side === 'A' ? '' : ''); }
+  const longevWinA = A.longevity > B.longevity + 0.05;
+  const longevWinB = B.longevity > A.longevity + 0.05;
+  const allergenWinA = A.allergenPpm < B.allergenPpm - 0.5;
+  const allergenWinB = B.allergenPpm < A.allergenPpm - 0.5;
+
+  let h = '<div class="cmp-metrics-grid">';
+  // Longevity row
+  h += '<div class="cmp-metric-card' + (longevWinA ? ' winner' : '') + '">';
+  h += '<div class="cmp-metric-label">Longevity — ' + escHtml(labelA) + '</div>';
+  h += '<div class="cmp-metric-value">' + A.longevity.toFixed(1) + 'h' + (longevWinA ? pill('A') : '') + '</div></div>';
+  h += '<div class="cmp-metric-card' + (longevWinB ? ' winner' : '') + '">';
+  h += '<div class="cmp-metric-label">Longevity — ' + escHtml(labelB) + '</div>';
+  h += '<div class="cmp-metric-value">' + B.longevity.toFixed(1) + 'h' + (longevWinB ? pill('B') : '') + '</div></div>';
+  // Allergen row
+  h += '<div class="cmp-metric-card' + (allergenWinA ? ' winner' : '') + '">';
+  h += '<div class="cmp-metric-label">Total allergens — ' + escHtml(labelA) + '</div>';
+  h += '<div class="cmp-metric-value">' + A.allergenPpm.toFixed(1) + ' ppm' + (allergenWinA ? pill('A') : '') + '</div></div>';
+  h += '<div class="cmp-metric-card' + (allergenWinB ? ' winner' : '') + '">';
+  h += '<div class="cmp-metric-label">Total allergens — ' + escHtml(labelB) + '</div>';
+  h += '<div class="cmp-metric-value">' + B.allergenPpm.toFixed(1) + ' ppm' + (allergenWinB ? pill('B') : '') + '</div></div>';
+  // Dominant notes row
+  h += '<div class="cmp-metric-card">';
+  h += '<div class="cmp-metric-label">Top notes — ' + escHtml(labelA) + '</div>';
+  h += '<div style="font-size:0.85em;line-height:1.4;margin-top:2px">' + (A.dominant.length ? A.dominant.map((n, i) => (i + 1) + '. ' + escHtml(n)).join('<br>') : '<span style="color:var(--text2)">no data</span>') + '</div></div>';
+  h += '<div class="cmp-metric-card">';
+  h += '<div class="cmp-metric-label">Top notes — ' + escHtml(labelB) + '</div>';
+  h += '<div style="font-size:0.85em;line-height:1.4;margin-top:2px">' + (B.dominant.length ? B.dominant.map((n, i) => (i + 1) + '. ' + escHtml(n)).join('<br>') : '<span style="color:var(--text2)">no data</span>') + '</div></div>';
+  h += '</div>';
+  // Context line — exposes the shared evaluation conditions so a user
+  // questioning the metrics can tie them back to their own settings.
+  h += '<p class="panel-desc" style="font-size:0.72em;margin-top:6px">Both formulas evaluated at <strong>' + tempC + '°C</strong>, <strong>' + fragPct + '%</strong> fragrance in product, <strong>' + escHtml(IFRA_CATEGORIES[catId]?.name || catId) + '</strong> category.</p>';
+  return h;
+}
 
 
 // ===== C1: Odor Map Renderer =====

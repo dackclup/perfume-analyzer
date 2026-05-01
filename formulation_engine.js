@@ -447,6 +447,12 @@ function aggregateAllergens(materials, fragPct, categoryId) {
   const allergenTable = EU_ALLERGENS_CURRENT;
 
   for (const mat of materials) {
+    // Allergen exposure is regulated at the finished-product level
+    // (EU 1223/2009 thresholds: 10 ppm leave-on, 100 ppm rinse-off),
+    // not the concentrate level. Convert material-in-concentrate (mat.pct)
+    // to material-in-finished-product by multiplying by fragPct/100.
+    //   pctInProduct = (mat.pct / 100) × (fragPct / 100) × 100
+    //   ppmInProduct = pctInProduct × 10000
     const pctInProduct = (mat.pct / 100) * (fragPct / 100) * 100;
     const ppmInProduct = pctInProduct * 10000;
 
@@ -2930,6 +2936,14 @@ function buildRadarData(materials, tempC, timePointsH, mixtureModel) {
         const info = matInfo[mi];
         const weight = info.radarWeights[axis] || 0;
         if (weight <= 0) continue;
+        // Axis length = perceived intensity × family weight, NOT mass %.
+        // The perceived-intensity chain captures what the nose actually
+        // detects: simulateEvaporation gives volatility-driven headspace
+        // concentration (so weight % matters indirectly), then OV
+        // normalises against the material's odor detection threshold,
+        // and Hill (ψ = OV^n / (1 + OV^n)) compresses the response with
+        // the material-specific Stevens exponent. Multiplying the result
+        // by the family weight routes that perception to the right axis.
         const conc = info.curve.concentrations[ti] || 0;
         const ov = calcOdorValue(conc, info.odt.ppb);
         const psi = hillPerceivedIntensity(ov, info.stevensN);
