@@ -1287,7 +1287,7 @@ const LANG_FORM = {
     costEstimate: 'Cost Estimate',
     useRateWarnings: 'Use-Rate Warnings',
     multiIfra: 'Multi-Category IFRA Compatibility',
-    inciLabel: 'INCI Label',
+    inciLabel: 'INCI Allergen Snippet',
     harmonyScore: 'Harmony Score',
     fragPyramid: 'Fragrance Pyramid',
     suggestedAlloc: 'Suggested Allocation',
@@ -1361,7 +1361,7 @@ const LANG_FORM = {
     costEstimate: '\u0E1B\u0E23\u0E30\u0E21\u0E32\u0E13\u0E15\u0E49\u0E19\u0E17\u0E38\u0E19',
     useRateWarnings: '\u0E40\u0E15\u0E37\u0E2D\u0E19\u0E2D\u0E31\u0E15\u0E23\u0E32\u0E01\u0E32\u0E23\u0E43\u0E0A\u0E49',
     multiIfra: '\u0E04\u0E27\u0E32\u0E21\u0E40\u0E02\u0E49\u0E32\u0E01\u0E31\u0E19\u0E44\u0E14\u0E49 IFRA \u0E2B\u0E25\u0E32\u0E22\u0E1B\u0E23\u0E30\u0E40\u0E20\u0E17',
-    inciLabel: '\u0E09\u0E25\u0E32\u0E01 INCI',
+    inciLabel: '\u0E15\u0E31\u0E27\u0E2D\u0E22\u0E48\u0E32\u0E07 INCI \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E2A\u0E32\u0E23\u0E01\u0E48\u0E2D\u0E20\u0E39\u0E21\u0E34\u0E41\u0E1E\u0E49',
     harmonyScore: '\u0E04\u0E30\u0E41\u0E19\u0E19\u0E04\u0E27\u0E32\u0E21\u0E01\u0E25\u0E21\u0E01\u0E25\u0E37\u0E19',
     fragPyramid: '\u0E1E\u0E35\u0E23\u0E30\u0E21\u0E34\u0E14\u0E01\u0E25\u0E34\u0E48\u0E19',
     suggestedAlloc: '\u0E2A\u0E31\u0E14\u0E2A\u0E48\u0E27\u0E19\u0E17\u0E35\u0E48\u0E41\u0E19\u0E30\u0E19\u0E33',
@@ -4803,8 +4803,9 @@ function renderSafetyTab() {
   // (Carrier Summary card moved to the Production overview section below the
   // INCI label — see the appended block after the INCI card.)
 
-  // INCI Label
-  html += '<div class="analysis-card" id="safety-inci"><h4>INCI Label</h4>';
+  // INCI Allergen Snippet (declarable allergens only — see audit #10)
+  html += '<div class="analysis-card" id="safety-inci"><h4>INCI Allergen Snippet</h4>';
+  html += '<div style="color:var(--text2);font-size:0.78em;margin:-4px 0 6px">Declarable allergens only — not the full INCI ingredient list</div>';
   html += '<div style="background:var(--bg2);padding:12px;border-radius:8px;font-size:0.85em;line-height:1.6;word-break:break-word;user-select:all">';
   html += inci;
   html += '</div>';
