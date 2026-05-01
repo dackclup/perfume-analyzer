@@ -1113,9 +1113,9 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      of these three scripts touch PERFUMERY_DATA at parse time, so they
      stay synchronous; the materials database alone has been hoisted to
      async fetch. -->
-<script src="taxonomy.js?v=2026-04-29-v290"></script>
-<script src="formulation_data.js?v=2026-04-29-v290"></script>
-<script src="formulation_engine.js?v=2026-04-29-v290"></script>
+<script src="taxonomy.js?v=2026-04-29-v291"></script>
+<script src="formulation_data.js?v=2026-04-29-v291"></script>
+<script src="formulation_engine.js?v=2026-04-29-v291"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). Same bootstrap pattern as index.html:
@@ -1137,7 +1137,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 // State computation NEVER runs before stage 4 — the inert app-init body
 // is browser-inert until we replace its <script> element.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v290';
+  const DATA_VERSION = '2026-04-29-v291';
 
   const overlay = document.createElement('div');
   overlay.id = 'app-loading';
@@ -6818,9 +6818,16 @@ function renderMapTab() {
     searchInput.addEventListener('change', () => renderMapTab());
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        // Phase 3 fix — clear value and KEEP focus on the search input
+        // so the user can immediately type a new query. renderMapTab
+        // rebuilds the SVG container which would normally orphan focus,
+        // so we re-grab the new element by id after the synchronous
+        // render completes and call .focus() on it.
         searchInput.value = '';
         _mapSearchQuery = '';
         renderMapTab();
+        const refreshed = document.getElementById('mapSearchInput');
+        if (refreshed) refreshed.focus();
       }
     });
   }
