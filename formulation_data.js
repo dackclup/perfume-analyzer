@@ -421,6 +421,29 @@ const NATURAL_ALLERGEN_COMPOSITION = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// Ester → Alcohol Hydrolysis Allergen Pathway (audit #11)
+// Conservative ester→alcohol hydrolysis pathway map for EU 1223/2009
+// declarable allergen aggregation. Yield = MW_alcohol / MW_ester
+// (mass-balance assumption, 100% conversion). Used when shelf-life
+// or aqueous-phase contact is plausible — the engine adds the
+// hydrolysed alcohol's allergen contribution alongside any direct +
+// natural-mixture sources so the INCI snippet doesn't under-declare
+// long-stored / water-phase formulas.
+// ─────────────────────────────────────────────────────────────
+const ESTER_HYDROLYSIS = {
+  '115-95-7':  { allergenCAS: '78-70-6',  name: 'Linalool',         mwEster: 196.29, mwAlcohol: 154.25 }, // Linalyl Acetate
+  '105-87-3':  { allergenCAS: '106-24-1', name: 'Geraniol',         mwEster: 196.29, mwAlcohol: 154.25 }, // Geranyl Acetate
+  '150-84-5':  { allergenCAS: '106-22-9', name: 'Citronellol',      mwEster: 198.30, mwAlcohol: 156.27 }, // Citronellyl Acetate
+  '141-12-8':  { allergenCAS: '106-25-2', name: 'Nerol',            mwEster: 196.29, mwAlcohol: 154.25 }, // Neryl Acetate
+  '140-11-4':  { allergenCAS: '100-51-6', name: 'Benzyl Alcohol',   mwEster: 150.17, mwAlcohol: 108.14 }, // Benzyl Acetate
+  '103-54-8':  { allergenCAS: '104-54-1', name: 'Cinnamyl Alcohol', mwEster: 176.21, mwAlcohol: 134.17 }, // Cinnamyl Acetate
+  '93-28-7':   { allergenCAS: '97-53-0',  name: 'Eugenol',          mwEster: 206.24, mwAlcohol: 164.20 }, // Eugenyl Acetate
+};
+// Compute mass-balance yield once at module load — saves a divide per
+// material-loop iteration in aggregateAllergens.
+Object.values(ESTER_HYDROLYSIS).forEach(e => { e.yield = e.mwAlcohol / e.mwEster; });
+
+// ─────────────────────────────────────────────────────────────
 // INCI Name Mapping (CAS → INCI)
 // For synthetic aroma chemicals and common naturals.
 // Ref: PCPC International Cosmetic Ingredient Dictionary
