@@ -1118,19 +1118,19 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      of these three scripts touch PERFUMERY_DATA at parse time, so they
      stay synchronous; the materials database alone has been hoisted to
      async fetch. -->
-<script src="taxonomy.js?v=2026-04-29-v295"></script>
-<script src="formulation_data.js?v=2026-04-29-v295"></script>
-<script src="formulation_engine.js?v=2026-04-29-v295"></script>
+<script src="taxonomy.js?v=2026-04-29-v296"></script>
+<script src="formulation_data.js?v=2026-04-29-v296"></script>
+<script src="formulation_engine.js?v=2026-04-29-v296"></script>
 
 <!-- Shared DOM helpers (escHtml / debounce / safeInit / normaliseMaterialKey).
      Audit-coherence Tier 2 R3 — single source of truth, replaces the
      inline copies that drifted between the two pages. -->
-<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v295"></script>
+<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v296"></script>
 <!-- Canonical enriched-material builder used by every formulation.addMaterial
      call site. Audit-coherence Tier 2 R3 fix for C3.2/C3.3. -->
-<script type="module" src="lib/material-shape.mjs?v=2026-04-29-v295"></script>
+<script type="module" src="lib/material-shape.mjs?v=2026-04-29-v296"></script>
 <!-- Versioned localStorage helpers. Audit-coherence Tier 2 R3. -->
-<script type="module" src="lib/storage.mjs?v=2026-04-29-v295"></script>
+<script type="module" src="lib/storage.mjs?v=2026-04-29-v296"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). Same bootstrap pattern as index.html:
@@ -1152,7 +1152,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 // State computation NEVER runs before stage 4 — the inert app-init body
 // is browser-inert until we replace its <script> element.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v295';
+  const DATA_VERSION = '2026-04-29-v296';
 
   const overlay = document.createElement('div');
   overlay.id = 'app-loading';
@@ -1248,12 +1248,23 @@ _matsRaw.forEach(e => { if (e && e.cas) DB[e.cas] = e; });
 // migrated JSON had no such rows, but the incremental updater may
 // land a sparse stub before the perfumer fills curated fields.
 const NAME_TO_CAS = {};
+// Greek-letter / Unicode-normalised parallel index. Audit-coherence
+// Tier 4 fix C2.3 — `γ-Decalactone` / `gamma-Decalactone` now resolve
+// to the same row in the add-modal search and any other resolver.
+const NORM_NAME_TO_CAS = {};
+const _normKey = window.appUtils.normaliseMaterialKey;
 for (const [cas, entry] of Object.entries(DB)) {
   if (entry && typeof entry.name === 'string' && entry.name) {
     NAME_TO_CAS[entry.name.toLowerCase()] = cas;
+    const nk = _normKey(entry.name);
+    if (nk && !NORM_NAME_TO_CAS[nk]) NORM_NAME_TO_CAS[nk] = cas;
   }
   for (const syn of entry.synonyms || []) {
-    if (typeof syn === 'string' && syn) NAME_TO_CAS[syn.toLowerCase()] = cas;
+    if (typeof syn === 'string' && syn) {
+      NAME_TO_CAS[syn.toLowerCase()] = cas;
+      const nk = _normKey(syn);
+      if (nk && !NORM_NAME_TO_CAS[nk]) NORM_NAME_TO_CAS[nk] = cas;
+    }
   }
 }
 const TRADES = (window.PERFUMERY_DATA && window.PERFUMERY_DATA.trade_names) || {};
@@ -2347,6 +2358,9 @@ addModal.addEventListener('click', e => { if (e.target === addModal) { addModal.
 modalSearch.addEventListener('input', () => {
   const q = modalSearch.value.trim().toLowerCase();
   if (q.length < 2) { modalResults.innerHTML = ''; return; }
+  // Audit-coherence Tier 4 fix C2.3 — also try the Greek-normalised form
+  // so `γ-Decalactone` and `gamma-Decalactone` match the same row.
+  const qNorm = _normKey(q);
   const isCarrier = modalSearch.dataset.mode === 'carrier';
   const catId = document.getElementById('productCategory').value;
   const matches = [];
@@ -2362,7 +2376,11 @@ modalSearch.addEventListener('input', () => {
       if (isMaterialBannedForCategory(entry, catId)) continue;
     }
     const haystack = (entry.name + ' ' + cas + ' ' + (entry.synonyms || []).join(' ')).toLowerCase();
-    if (haystack.includes(q)) matches.push(entry);
+    if (haystack.includes(q)) { matches.push(entry); }
+    else if (qNorm && qNorm !== q) {
+      const hayNorm = _normKey(entry.name + ' ' + (entry.synonyms || []).join(' '));
+      if (hayNorm && hayNorm.includes(qNorm)) matches.push(entry);
+    }
     if (matches.length >= 40) break; // collect headroom so the sort below
                                        // has enough candidates to surface a
                                        // genuine exact match even if it

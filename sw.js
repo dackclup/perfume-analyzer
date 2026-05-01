@@ -25,7 +25,7 @@
 //   shell content change rebusts the cache without a manual bump. The
 //   activate handler purges every previous version.
 
-const CACHE_VERSION = 'perfume-shell-v3-2af7974c';
+const CACHE_VERSION = 'perfume-shell-v3-909924ba';
 const SHELL_ASSETS = [
   './',
   './index.html',

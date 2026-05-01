@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "2026-04-29-v295",
+    "version": "2026-04-29-v296",
     "row_count": 624
   },
   "perfumery_db": [
@@ -12231,7 +12231,9 @@
         "primaryFamilies": [
           "aquatic"
         ],
-        "secondaryFamilies": [],
+        "secondaryFamilies": [
+          "water"
+        ],
         "facets": [
           "aquatic",
           "marine",
@@ -16513,7 +16515,8 @@
           "woody"
         ],
         "secondaryFamilies": [
-          "amber"
+          "amber",
+          "woody_amber"
         ],
         "facets": [
           "cedar",
@@ -21923,7 +21926,9 @@
         "primaryFamilies": [
           "woody"
         ],
-        "secondaryFamilies": [],
+        "secondaryFamilies": [
+          "woods"
+        ],
         "facets": [
           "cedar",
           "coniferous"
@@ -21980,7 +21985,9 @@
         "primaryFamilies": [
           "herbal"
         ],
-        "secondaryFamilies": [],
+        "secondaryFamilies": [
+          "aromatic_fougere"
+        ],
         "facets": [
           "lavender",
           "camphor"
@@ -26253,7 +26260,9 @@
         "primaryFamilies": [
           "woody"
         ],
-        "secondaryFamilies": [],
+        "secondaryFamilies": [
+          "dry_woods"
+        ],
         "facets": [
           "vetiver"
         ]
@@ -27202,7 +27211,9 @@
         "primaryFamilies": [
           "floral"
         ],
-        "secondaryFamilies": [],
+        "secondaryFamilies": [
+          "soft_floral"
+        ],
         "facets": [
           "mimosa",
           "powdery"
@@ -30652,7 +30663,9 @@
         "primaryFamilies": [
           "mossy"
         ],
-        "secondaryFamilies": [],
+        "secondaryFamilies": [
+          "mossy_woods"
+        ],
         "facets": [
           "oakmoss",
           "earthy",

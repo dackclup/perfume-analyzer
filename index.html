@@ -1214,7 +1214,7 @@ html { scroll-behavior:smooth; }
      globals — and unlike PERFUMERY_DATA, the taxonomy file is small and
      pure-data so the sync block is unobservable. Bumping its ?v= reloads
      on both pages. -->
-<script src="taxonomy.js?v=2026-04-29-v295"></script>
+<script src="taxonomy.js?v=2026-04-29-v296"></script>
 
 <!-- Shared DOM helpers (escHtml / debounce / safeInit / normaliseMaterialKey).
      Audit-coherence Tier 2 R3 — single source of truth. ES module is deferred
@@ -1222,12 +1222,12 @@ html { scroll-behavior:smooth; }
      bootstrap below waits for DOMContentLoaded before activating the inert
      <script id="app-init">, so window.appUtils is populated before any
      consumer in the inert block runs. -->
-<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v295"></script>
+<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v296"></script>
 <!-- Versioned localStorage helpers. Audit-coherence Tier 2 R3 — replaces
      the scattered try/catch + JSON.parse pattern at every persistence
      site so quota / private-mode / corrupt-payload failures all funnel
      through one place. -->
-<script type="module" src="lib/storage.mjs?v=2026-04-29-v295"></script>
+<script type="module" src="lib/storage.mjs?v=2026-04-29-v296"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). The bootstrap below fetches it async,
@@ -1252,7 +1252,7 @@ html { scroll-behavior:smooth; }
 // inline data layer (DB build, FILTER_CACHE precompute, render init)
 // is gated behind the stage-2 integrity check.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v295';
+  const DATA_VERSION = '2026-04-29-v296';
 
   // Stage 1: mount loading overlay synchronously, before any await,
   // so the user always sees feedback regardless of network latency.
@@ -1507,7 +1507,7 @@ function _clickLog(...args) {
 // Mirrors the data/materials.json cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the boot-script's DATA_VERSION at the top of this page.
-const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v295";
+const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v296";
 // Defensive: a corrupted JSON payload could land window.PERFUMERY_DATA
 // without the expected shape. Guard every access so a missing key
 // surfaces as a single clear error rather than a TDZ-style cascade.
@@ -1591,14 +1591,25 @@ const MIXTURES = new Set((window.PERFUMERY_DATA && window.PERFUMERY_DATA.mixture
 // find the match but fail to resolve the CAS, falling through to fuzzy
 // matching that suggested nearby materials at low confidence.
 const NAME_TO_CAS = {};
+// Parallel index keyed by normaliseMaterialKey (Greek-letter prefix
+// collapse, smart-quote ASCII, NFKD). Audit-coherence Tier 4 fix C2.3
+// — `γ-Decalactone` / `gamma-Decalactone` / `Gamma-Decalactone` now
+// resolve to the same row instead of silently falling through to
+// fuzzy match.
+const NORM_NAME_TO_CAS = {};
+const _normKey = window.appUtils.normaliseMaterialKey;
 for (const [cas, entry] of Object.entries(DB)) {
   if (entry.name) {
     const nl = entry.name.toLowerCase();
     if (!NAME_TO_CAS[nl]) NAME_TO_CAS[nl] = cas; // canonical name wins
+    const nk = _normKey(entry.name);
+    if (nk && !NORM_NAME_TO_CAS[nk]) NORM_NAME_TO_CAS[nk] = cas;
   }
   for (const name of entry.synonyms || []) {
     const nl = name.toLowerCase();
     if (!NAME_TO_CAS[nl]) NAME_TO_CAS[nl] = cas; // synonym fills remaining
+    const nk = _normKey(name);
+    if (nk && !NORM_NAME_TO_CAS[nk]) NORM_NAME_TO_CAS[nk] = cas;
   }
 }
 
@@ -1728,6 +1739,10 @@ function _resolveBlendLabel(raw) {
   }
   // (b) synonym index
   if (NAME_TO_CAS[lk]) { const cas = NAME_TO_CAS[lk]; if (DB[cas]) return { kind: "material", cas, name: DB[cas].name, ...meta }; }
+  // (b') Greek-letter / Unicode-normalised match — catches `γ-Decalactone`
+  // ↔ `gamma-Decalactone`, smart-quoted forms, em-dashed forms.
+  const nk = _normKey(label);
+  if (nk && NORM_NAME_TO_CAS[nk]) { const cas = NORM_NAME_TO_CAS[nk]; if (DB[cas]) return { kind: "material", cas, name: DB[cas].name, ...meta }; }
   // (c) trade name
   if (TRADES[lk]) { const cas = TRADES[lk]; if (DB[cas]) return { kind: "material", cas, name: DB[cas].name, ...meta }; }
   // (d) shorthand table

@@ -6,7 +6,7 @@
   "material.regulatory → REGULATORY_VALUES": 0,
   "material.functions → FUNCTION_VALUES": 0,
   "material.uses → USE_VALUES": 0,
-  "taxonomy.subfamily orphans (no material)": 7,
+  "taxonomy.subfamily orphans (no material)": 0,
   "taxonomy.facet orphans (no material)": 23,
   "IFRA_51_LIMITS cas → material": 0,
   "material.blends_with → material": 83,

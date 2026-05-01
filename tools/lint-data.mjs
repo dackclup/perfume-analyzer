@@ -145,9 +145,15 @@ for (const e of db) {
   for (const u of c.uses || []) if (!USE_VALUES.includes(u))             add('material_use_unknown', { cas: e.cas, value: u });
 }
 
-// SUB_FAMILY orphans
+// SUB_FAMILY orphans — counts BOTH primary + secondary claims. A
+// subfamily that's only claimed as secondary is not an orphan; the
+// taxonomy node still has a real-world anchor in the DB. Audit-
+// coherence Tier 4 fix.
 const primCounts = new Map();
-for (const e of db) for (const t of (e.classification?.primaryFamilies || [])) primCounts.set(t, (primCounts.get(t) || 0) + 1);
+for (const e of db) {
+  for (const t of (e.classification?.primaryFamilies   || [])) primCounts.set(t, (primCounts.get(t) || 0) + 1);
+  for (const t of (e.classification?.secondaryFamilies || [])) primCounts.set(t, (primCounts.get(t) || 0) + 1);
+}
 for (const sf of SUB_FAMILY_IDS) if (!primCounts.has(sf)) add('taxonomy_subfamily_orphan', { value: sf });
 for (const f of FACET_IDS) {
   if (!db.some(e => (e.classification?.facets || []).includes(f))) add('taxonomy_facet_orphan', { value: f });
