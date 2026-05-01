@@ -19,10 +19,13 @@
 //     (network-only) so the SW never serves stale chemistry data.
 //
 // Versioning
-//   Bump CACHE_VERSION whenever the shell file list changes; the
+//   CACHE_VERSION = `perfume-shell-${manualMajor}-${contentHash}`. The
+//   manual major (`v3`, `v4`, …) lives in version.json; the contentHash
+//   is auto-derived from SHELL_ASSETS by scripts/release.mjs so any
+//   shell content change rebusts the cache without a manual bump. The
 //   activate handler purges every previous version.
 
-const CACHE_VERSION = 'perfume-shell-v3';
+const CACHE_VERSION = 'perfume-shell-v3-2af7974c';
 const SHELL_ASSETS = [
   './',
   './index.html',

@@ -23,6 +23,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -70,6 +71,31 @@ if (!checkOnly) {
 const HTML_FILES = ['index.html', 'formulation.html'];
 const DATA_FILE  = 'data/materials.json';
 const SW_FILE    = 'sw.js';
+// SW shell assets — hashed into CACHE_VERSION so any shell content change
+// auto-busts the cache. Mirrors the SHELL_ASSETS array in sw.js itself.
+const SHELL_ASSETS = [
+  'index.html',
+  'formulation.html',
+  'manifest.webmanifest',
+  'data/materials.json',
+];
+
+function shellContentHash() {
+  // Tier 3 fix — derive an 8-hex-char content hash so any shell content
+  // change forces a SW cache miss without a manual shell bump. The
+  // version.json `shell` field stays as the manual major (e.g. 'v3'),
+  // and the full CACHE_VERSION becomes `perfume-shell-${shell}-${hash}`.
+  // Concatenate file contents in a stable order so the hash is
+  // deterministic across CI runs.
+  const h = crypto.createHash('sha256');
+  for (const rel of SHELL_ASSETS) {
+    const abs = path.join(REPO, rel);
+    h.update(rel + '\n');
+    h.update(fs.readFileSync(abs));
+    h.update('\n');
+  }
+  return h.digest('hex').slice(0, 8);
+}
 
 function applyReplaces(filePath, pairs) {
   if (checkOnly) return;
@@ -99,8 +125,20 @@ if (!checkOnly && newData !== oldData) {
   fs.writeFileSync(dataAbs, JSON.stringify(data, null, 2) + '\n');
 }
 
-if (!checkOnly && newShell !== oldShell) {
-  applyReplaces(SW_FILE, [literalReplace(oldShell, newShell)]);
+// SW CACHE_VERSION = `perfume-shell-${shell}-${contentHash}`. The shell
+// part is the manual major from version.json; the contentHash is auto-
+// derived so a shell-asset change rebusts the cache without a manual bump.
+// Compute the hash AFTER any HTML / materials.json writes above.
+let newShellHash = null;
+if (!checkOnly) {
+  newShellHash = shellContentHash();
+  const swAbs = path.join(REPO, SW_FILE);
+  let swSrc = fs.readFileSync(swAbs, 'utf8');
+  swSrc = swSrc.replace(
+    /const\s+CACHE_VERSION\s*=\s*'perfume-shell-[^']+';/,
+    `const CACHE_VERSION = 'perfume-shell-${newShell}-${newShellHash}';`
+  );
+  fs.writeFileSync(swAbs, swSrc);
 }
 
 if (!checkOnly && (newData !== oldData || newShell !== oldShell)) {
@@ -117,8 +155,16 @@ function uniqDataVersionsInHtml() {
   return [...seen];
 }
 function shellInSwFile() {
+  // CACHE_VERSION format: 'perfume-shell-${shell}-${hash}' or legacy
+  // 'perfume-shell-${shell}'. Tolerate both so a release that hasn't
+  // hashed yet still verifies clean.
   const src = fs.readFileSync(path.join(REPO, SW_FILE), 'utf8');
-  const m = src.match(/CACHE_VERSION\s*=\s*'perfume-shell-(v\d+)'/);
+  const m = src.match(/CACHE_VERSION\s*=\s*'perfume-shell-(v\d+)(?:-[a-f0-9]+)?'/);
+  return m ? m[1] : null;
+}
+function shellHashInSwFile() {
+  const src = fs.readFileSync(path.join(REPO, SW_FILE), 'utf8');
+  const m = src.match(/CACHE_VERSION\s*=\s*'perfume-shell-v\d+-([a-f0-9]+)'/);
   return m ? m[1] : null;
 }
 function dataMetaInMaterials() {
@@ -143,6 +189,17 @@ if (htmlVersions.length === 0) {
 if (swShell && swShell !== expectedShell) {
   errors.push(`sw.js CACHE_VERSION shell is ${swShell}, expected ${expectedShell}`);
 }
+// On --check, verify the recorded hash still matches current shell content.
+// In a write run, newShellHash was just written in lockstep so the check is tautological.
+if (checkOnly) {
+  const recordedHash = shellHashInSwFile();
+  if (recordedHash) {
+    const liveHash = shellContentHash();
+    if (recordedHash !== liveHash) {
+      errors.push(`sw.js CACHE_VERSION shell hash is ${recordedHash}, but current shell content hashes to ${liveHash} (run npm run release).`);
+    }
+  }
+}
 if (metaVer != null && metaVer !== expected) {
   errors.push(`data/materials.json meta.version is ${metaVer}, expected ${expected}`);
 }
@@ -153,4 +210,8 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.error('[release] OK — single version ' + expected + ', shell ' + expectedShell);
+const hashTag = newShellHash ? ` shell-hash ${newShellHash}` : (() => {
+  const h = shellHashInSwFile();
+  return h ? ` shell-hash ${h}` : '';
+})();
+console.error('[release] OK — single version ' + expected + ', shell ' + expectedShell + hashTag);
