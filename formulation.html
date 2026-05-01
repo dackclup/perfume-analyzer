@@ -219,6 +219,11 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .mat-dil-btn { background:none; border:1px solid var(--border); border-radius:4px; color:var(--text2); cursor:pointer; font-size:0.7em; padding:2px 5px; font-family:'IBM Plex Mono',monospace; line-height:1; }
 .mat-dil-btn:hover { border-color:var(--accent); color:var(--text); }
 .mat-dil-btn.active { background:var(--accent); color:var(--accent-text, #fff); border-color:var(--accent); }
+/* Lock toggle — pinned next to dilution. Active = locked: row's % survives
+   Smart Allocate / Dirichlet rebalances and stays at the chemist's chosen value. */
+.mat-lock-btn { background:none; border:1px solid var(--border); border-radius:4px; color:var(--text2); cursor:pointer; font-size:0.85em; padding:1px 5px; line-height:1; }
+.mat-lock-btn:hover { border-color:var(--accent); color:var(--text); }
+.mat-lock-btn.active { background:var(--warn-bg); color:var(--warn); border-color:var(--warn); }
 .mat-dil-row { display:flex; align-items:center; gap:4px; width:100%; padding:4px 0 0 28px; font-size:0.78em; color:var(--text2); }
 .mat-dil { width:42px; padding:3px 4px; border:1px solid var(--border); border-radius:4px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:1em; background:var(--bg2); color:var(--text); }
 
@@ -1059,10 +1064,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v280"></script>
-<script src="perfumery_data.js?v=2026-04-29-v280"></script>
-<script src="formulation_data.js?v=2026-04-29-v280"></script>
-<script src="formulation_engine.js?v=2026-04-29-v280"></script>
+<script src="taxonomy.js?v=2026-04-29-v281"></script>
+<script src="perfumery_data.js?v=2026-04-29-v281"></script>
+<script src="formulation_data.js?v=2026-04-29-v281"></script>
+<script src="formulation_engine.js?v=2026-04-29-v281"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1582,6 +1587,18 @@ const formulation = {
     const dilBtn = el.querySelector('.mat-dil-btn');
     if (dilBtn) { dilBtn.textContent = dil < 100 ? dil + '%' : 'dil'; dilBtn.classList.toggle('active', dil < 100); }
 
+    // Keep the lock toggle's icon + active class in sync. Lock state itself
+    // is owned by toggleLock() which calls renderMaterialList(); this branch
+    // covers the case where some other code path mutates the state silently.
+    const lockBtn = el.querySelector('.mat-lock-btn');
+    if (lockBtn) {
+      const isLocked = lockedMaterials.has(cas);
+      lockBtn.textContent = isLocked ? '🔒' : '🔓';
+      lockBtn.classList.toggle('active', isLocked);
+      lockBtn.setAttribute('aria-pressed', String(isLocked));
+      lockBtn.title = isLocked ? 'Unlock — Smart Allocate may rewrite this %' : 'Lock — protect this % from Smart Allocate / Dirichlet rebalance';
+    }
+
     // Update use-rate warning
     const usageRange = parseUsageRange(m.data?.usage_levels);
     const pctInProduct = m.pct * (fragPct / 100);
@@ -1810,7 +1827,7 @@ function renderMaterialList() {
       html += `<span class="mat-note ${t}">${tierLabels[t]}</span>`;
     }
     const isMatLocked = lockedMaterials.has(m.cas);
-    html += `<span class="mat-name" title="${safeName}">${safeName}${isMatLocked ? ' <span style="color:var(--warn,var(--warn));font-size:0.75em;font-weight:500">(locked)</span>' : ''}</span>`;
+    html += `<span class="mat-name" title="${safeName}">${safeName}</span>`;
     html += reactHtml;
     html += warnHtml;
     html += `<span class="mat-grams">${amtStr}${unit}</span>`;
@@ -1824,6 +1841,7 @@ function renderMaterialList() {
       onchange="formulation.updatePct('${safeCas}',this.value)"
       onblur="if(this.value==='')this.value=0;formulation.updatePct('${safeCas}',this.value)">`;
     html += `<span style="font-size:0.75em;color:var(--text2)">%</span>`;
+    html += `<button class="mat-lock-btn${isMatLocked ? ' active' : ''}" onclick="toggleLock('${safeCas}')" title="${isMatLocked ? 'Unlock — Smart Allocate may rewrite this %' : 'Lock — protect this % from Smart Allocate / Dirichlet rebalance'}" aria-pressed="${isMatLocked}">${isMatLocked ? '🔒' : '🔓'}</button>`;
     html += `<button class="mat-dil-btn${dil < 100 ? ' active' : ''}" onclick="toggleDilution('${safeCas}')" title="Dilution">${dil < 100 ? dil + '%' : 'dil'}</button>`;
     html += `<button class="mat-del" onclick="formulation.removeMaterial('${safeCas}')" title="Remove">&times;</button>`;
     if (dil < 100) {
@@ -3761,6 +3779,24 @@ function gcmsPeakSigma(rt) {
   return 0.05 + 0.005 * rt;
 }
 
+// Classify a material as 'natural' (essential oil / absolute / resinoid /
+// concrete / extract / tincture) or 'synthetic' (aroma chemical). The GC-MS
+// renderer uses this to dash + recolor natural peaks because their single
+// "bulk BP" peak is an aggregate of dozens of constituents — visually marking
+// them prevents users from mistaking the predicted single peak for a real
+// chromatogram of the natural.
+//   Detection order:
+//   1. CAS appears in NATURAL_ALLERGEN_COMPOSITION → authoritative natural
+//   2. Name contains a botanical/extract keyword
+//   3. Otherwise treat as synthetic (single-molecule aroma chemical)
+function gcmsClassifyType(mat) {
+  const cas = mat.cas;
+  const name = (mat.name || '').toLowerCase();
+  if (typeof NATURAL_ALLERGEN_COMPOSITION !== 'undefined' && NATURAL_ALLERGEN_COMPOSITION[cas]) return 'natural';
+  if (/\b(oil|absolute|extract|tincture|resinoid|concrete|infusion|oleoresin|balsam|attar|co2)\b/.test(name)) return 'natural';
+  return 'synthetic';
+}
+
 function gcmsBuildPeaks(mats) {
   const peaks = [];
   for (const m of mats) {
@@ -3775,6 +3811,7 @@ function gcmsBuildPeaks(mats) {
       name: m.name,
       pct: m.pct,
       tier: tier,
+      type: gcmsClassifyType(m),
       note: d.note || dbEntry.note || '',
       bp: bp,
       mw: mw,
@@ -3850,8 +3887,17 @@ function renderGCMSTab() {
   let html = '';
 
   // Chromatogram
+  const naturalCount = peaks.filter(p => p.type === 'natural' && p.hasData).length;
   html += '<div class="analysis-card"><h4>Predicted Chromatogram</h4>';
   html += '<p class="panel-desc" style="margin-bottom:8px">Method: DB-5 30m × 0.25mm, He carrier, 50→280°C @ 5°C/min. RT estimated from boiling point.</p>';
+  // Natural-vs-synthetic legend — only meaningful if both types are present.
+  // Naturals get a green dashed peak because their single bulk-BP peak is an
+  // approximation of the whole essential oil / absolute, not a real molecule.
+  html += '<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:0.78em;color:var(--text2);margin-bottom:8px;align-items:center">';
+  html += '<span style="display:inline-flex;align-items:center;gap:6px"><svg width="22" height="8" aria-hidden="true"><line x1="0" y1="4" x2="22" y2="4" stroke="#3b82f6" stroke-width="2"/></svg>Aroma chemical (single molecule)</span>';
+  html += '<span style="display:inline-flex;align-items:center;gap:6px" title="Naturals are mixtures — the single peak shown is at the bulk BP of the oil, not a real GC trace of the constituents."><svg width="22" height="8" aria-hidden="true"><line x1="0" y1="4" x2="22" y2="4" stroke="#16a34a" stroke-width="2" stroke-dasharray="4 3"/></svg>Natural (bulk-BP single peak — approximation)</span>';
+  if (naturalCount) html += '<span style="margin-left:auto;font-size:0.75em">' + naturalCount + ' natural' + (naturalCount === 1 ? '' : 's') + ' shown as dashed approximations</span>';
+  html += '</div>';
   html += '<div class="chart-wrap wide"><canvas id="gcmsChart"></canvas></div></div>';
 
   // Peak list
@@ -3869,13 +3915,16 @@ function renderGCMSTab() {
     idx++;
     const isSel = (p.cas === _gcmsSelectedCas);
     const tierBadge = p.tier ? '<span style="font-size:0.7em;padding:1px 5px;background:var(--bg2);border-radius:4px;color:var(--text2);text-transform:uppercase">' + p.tier + '</span>' : '';
+    const typeBadge = p.type === 'natural'
+      ? ' <span style="font-size:0.7em;padding:1px 5px;background:#16a34a22;color:#15803d;border-radius:4px" title="Natural — bulk-BP single peak is an approximation, not a real chromatogram">natural</span>'
+      : ' <span style="font-size:0.7em;padding:1px 5px;background:#3b82f622;color:#1d4ed8;border-radius:4px" title="Aroma chemical — predicted RT from molecular boiling point">chemical</span>';
     const coelChip = coel[p.cas] ? ' <span style="font-size:0.7em;padding:1px 5px;background:#f59e0b22;color:#b45309;border-radius:4px" title="Co-elutes with ' + escHtml(coel[p.cas].join(', ')) + '">co-elutes</span>' : '';
     const noDataChip = !p.hasData ? ' <span style="font-size:0.7em;padding:1px 5px;background:#ef444422;color:#b91c1c;border-radius:4px">no BP data</span>' : '';
     const rowStyle = isSel ? 'background:var(--bg2);font-weight:600' : 'cursor:pointer';
     html += '<tr data-gcms-cas="' + escHtml(p.cas) + '" style="' + rowStyle + '">';
     html += '<td>' + idx + '</td>';
     html += '<td>' + (p.hasData ? p.rt.toFixed(1) : '—') + '</td>';
-    html += '<td>' + escHtml(p.name) + coelChip + noDataChip + '</td>';
+    html += '<td>' + escHtml(p.name) + typeBadge + coelChip + noDataChip + '</td>';
     html += '<td>' + tierBadge + '</td>';
     html += '<td>' + (p.mw ? p.mw.toFixed(2) : '—') + '</td>';
     html += '<td style="font-family:monospace;font-size:0.85em">' + escHtml(p.formula || '—') + '</td>';
@@ -3929,20 +3978,28 @@ function renderGCMSTab() {
   if (_gcmsChart) _gcmsChart.destroy();
 
   const trace = gcmsBuildTrace(peaks);
+  // Tier colors retained for synthetic single-molecule peaks. Naturals get a
+  // single neutral green so the chart reads "this is an approximation" at a
+  // glance — overrides the tier color since a natural's tier is itself
+  // averaged across constituents and not as meaningful.
   const noteColors = { top: '#eab308', mid: '#3b82f6', base: '#8b5cf6' };
+  const NATURAL_COLOR = '#16a34a';
   const datasets = [];
 
-  // Per-peak filled curves (low opacity)
+  // Per-peak filled curves (low opacity). Naturals → green + dashed border to
+  // signal "bulk-BP approximation"; aroma chemicals → tier color + solid line.
   peaks.forEach((p, i) => {
     if (!p.hasData) return;
     const isSel = (p.cas === _gcmsSelectedCas);
-    const color = noteColors[p.tier] || '#94a3b8';
+    const isNatural = p.type === 'natural';
+    const color = isNatural ? NATURAL_COLOR : (noteColors[p.tier] || '#94a3b8');
     datasets.push({
-      label: p.name,
+      label: p.name + (isNatural ? ' (natural)' : ''),
       data: trace.perPeak[i],
       borderColor: color,
       backgroundColor: color + (isSel ? '66' : '22'),
       borderWidth: isSel ? 2.5 : 1,
+      borderDash: isNatural ? [5, 3] : [],
       fill: true,
       tension: 0.3,
       pointRadius: 0,
@@ -3996,6 +4053,8 @@ function renderOdorTab() {
 
   // Radar chart
   html += '<div class="analysis-card"><h4>Perfumery Radar — Odor Profile Over Time</h4>';
+  const radarTip = 'Each axis = Σ (Hill perceived intensity × family weight) across materials at the time-point. Perceived intensity follows the Stevens power law: ψ = (OV^n) / (1 + OV^n), where OV = headspace conc / ODT and n is the per-material Stevens exponent. Weight % drives headspace concentration via Antoine + Raoult — but the axis values themselves reflect what the nose perceives, not raw mass.';
+  html += '<p class="panel-desc"><span title="' + escHtml(radarTip) + '" style="cursor:help;text-decoration:underline dotted">Axes scaled by Stevens/Hill perceived intensity</span>, not by weight or concentration alone.</p>';
   html += '<div class="chart-wrap"><canvas id="odorRadar"></canvas></div></div>';
 
   // OV Table
