@@ -1113,9 +1113,9 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      of these three scripts touch PERFUMERY_DATA at parse time, so they
      stay synchronous; the materials database alone has been hoisted to
      async fetch. -->
-<script src="taxonomy.js?v=2026-04-29-v285"></script>
-<script src="formulation_data.js?v=2026-04-29-v285"></script>
-<script src="formulation_engine.js?v=2026-04-29-v285"></script>
+<script src="taxonomy.js?v=2026-04-29-v286"></script>
+<script src="formulation_data.js?v=2026-04-29-v286"></script>
+<script src="formulation_engine.js?v=2026-04-29-v286"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). Same bootstrap pattern as index.html:
@@ -1124,7 +1124,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      is ready. -->
 <script>
 (function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v285';
+  const DATA_VERSION = '2026-04-29-v286';
   const overlay = document.createElement('div');
   overlay.id = 'app-loading';
   overlay.setAttribute('role', 'status');
@@ -6613,7 +6613,20 @@ function renderMapTab() {
   html += 'Large circles = your formulation. <strong>Tap a dot</strong> to inspect — nothing is added to your formula until you press <em>Add</em>.';
   html += '</p>';
   html += '<p class="panel-desc" style="font-size:0.8em">';
-  html += '<strong>' + points.length + '</strong> catalogue materials';
+  // Map projection requires olfactive metadata (odor.type or note) on each
+  // row — see buildOdorMap's non-aromatic filter. The DB total can drift
+  // ahead of the mappable count whenever the incremental updater lands
+  // identifier-only stubs from PubChem before a perfumer curates their
+  // odor descriptions. Surface both numbers so the gap reads as "awaiting
+  // curation" rather than "missing materials".
+  const _dbTotal = (typeof DB === 'object' && DB) ? Object.keys(DB).length : points.length;
+  const _awaiting = Math.max(0, _dbTotal - points.length);
+  html += '<strong>' + points.length + '</strong> mapped';
+  if (_awaiting > 0) {
+    html += ' / <strong>' + _dbTotal + '</strong> in catalog · <span title="Stubs from the incremental updater that have CAS / formula / SMILES from PubChem but no olfactive description yet — projection needs odor.type or note to place a dot.">' + _awaiting + ' awaiting odor data</span>';
+  } else {
+    html += ' catalogue materials';
+  }
   if (inFormulaCount > 0) html += ' · <strong>' + inFormulaCount + '</strong> in your formula';
   if (filterActive) html += ' · ' + _mapFamilyFilter.size + ' family filter' + (_mapFamilyFilter.size === 1 ? '' : 's') + ' active';
   if (searchActive) html += ' · search “' + escHtml(searchQ) + '”';

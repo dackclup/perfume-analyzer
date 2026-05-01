@@ -1192,7 +1192,7 @@ html { scroll-behavior:smooth; }
      globals — and unlike PERFUMERY_DATA, the taxonomy file is small and
      pure-data so the sync block is unobservable. Bumping its ?v= reloads
      on both pages. -->
-<script src="taxonomy.js?v=2026-04-29-v285"></script>
+<script src="taxonomy.js?v=2026-04-29-v286"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). The bootstrap below fetches it async,
@@ -1202,7 +1202,7 @@ html { scroll-behavior:smooth; }
      <script src="perfumery_data.js"> tag has been removed. -->
 <script>
 (function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v285';
+  const DATA_VERSION = '2026-04-29-v286';
   // Loading overlay — sits above all content until init finishes. Uses
   // inline styles so it works before the page CSS has loaded; <style> in
   // a sibling element keeps the @keyframes alive.
@@ -1405,7 +1405,7 @@ function _clickLog(...args) {
 // Mirrors the data/materials.json cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the boot-script's DATA_VERSION at the top of this page.
-const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v285";
+const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v286";
 // Defensive: a corrupted JSON payload could land window.PERFUMERY_DATA
 // without the expected shape. Guard every access so a missing key
 // surfaces as a single clear error rather than a TDZ-style cascade.
