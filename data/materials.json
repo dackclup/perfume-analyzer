@@ -2199,7 +2199,7 @@
       "iupac": "3,7-dimethylocta-2,6-dien-1-ol",
       "formula": "C10H18O",
       "weight": "154.25",
-      "smiles": "",
+      "smiles": "CC(=CCC/C(=C/CO)/C)C",
       "inchi": "InChI=1S/C10H18O/c1-9(2)5-4-6-10(3)7-8-11/h5,7,11H,4,6,8H2,1-3H3",
       "synonyms": [
         "3,7-dimethyl-2,6-octadienol",
@@ -5240,7 +5240,7 @@
       "iupac": "benzyl benzoate",
       "formula": "C14H12O2",
       "weight": "212.24",
-      "smiles": "",
+      "smiles": "C1=CC=C(C=C1)COC(=O)C2=CC=CC=C2",
       "inchi": "InChI=1S/C14H12O2/c15-14(13-9-5-2-6-10-13)16-11-12-7-3-1-4-8-12/h1-10H,11H2",
       "synonyms": [
         "benzyl benzoate",
@@ -5446,7 +5446,7 @@
       "iupac": "3-(1,3-benzodioxol-5-yl)-2-methylpropanal",
       "formula": "C11H12O3",
       "weight": "192.21",
-      "smiles": "",
+      "smiles": "CC(CC1=CC2=C(C=C1)OCO2)C=O",
       "inchi": "InChI=1S/C11H12O3/c1-8(6-12)4-9-2-3-10-11(5-9)14-7-13-10/h2-3,5-6,8H,4,7H2,1H3",
       "synonyms": [
         "helional",
@@ -5495,7 +5495,7 @@
           "iodine"
         ]
       },
-      "pubchem_cid": "15606",
+      "pubchem_cid": "64805",
       "isomeric_smiles": "CC(CC1=CC2=C(C=C1)OCO2)C=O",
       "inchi_key": "OBJNZHVOCNPSCS-UHFFFAOYSA-N",
       "xlogp": "2.2",
@@ -6060,7 +6060,7 @@
       "iupac": "4,6,6,7,8,8-hexamethyl-1,3,4,7-tetrahydrocyclopenta[g]isochromene",
       "formula": "C18H26O",
       "weight": "258.4",
-      "smiles": "",
+      "smiles": "CC1COCC2=CC3=C(C=C12)C(C(C3(C)C)C)(C)C",
       "inchi": "InChI=1S/C18H26O/c1-11-9-19-10-13-7-15-16(8-14(11)13)18(5,6)12(2)17(15,3)4/h7-8,11-12H,9-10H2,1-6H3",
       "synonyms": [
         "galaxolide",
@@ -10731,7 +10731,7 @@
       "iupac": "1-(2,6,6-trimethylcyclohexa-1,3-dien-1-yl)but-2-en-1-one",
       "formula": "C13H18O",
       "weight": "190.28",
-      "smiles": "",
+      "smiles": "CC=CC(=O)C1=C(C=CCC1(C)C)C",
       "inchi": "InChI=1S/C13H18O/c1-5-7-11(14)12-10(2)8-6-9-13(12,3)4/h5-8H,9H2,1-4H3",
       "synonyms": [
         "dtxsid6041397",
@@ -12153,7 +12153,7 @@
       "iupac": "7-methyl-1,5-benzodioxepin-3-one",
       "formula": "C10H10O3",
       "weight": "178.18",
-      "smiles": "",
+      "smiles": "CC1=CC2=C(C=C1)OCC(=O)CO2",
       "inchi": "InChI=1S/C10H10O3/c1-7-2-3-9-10(4-7)13-6-8(11)5-12-9/h2-4H,5-6H2,1H3",
       "synonyms": [
         "watermelon ketone",
@@ -15130,7 +15130,7 @@
       "iupac": "2-ethyl-3-hydroxypyran-4-one",
       "formula": "C7H8O3",
       "weight": "140.14",
-      "smiles": "",
+      "smiles": "CCC1=C(C(=O)C=CO1)O",
       "inchi": "InChI=1S/C7H8O3/c1-2-6-7(9)5(8)3-4-10-6/h3-4,9H,2H2,1H3",
       "synonyms": [
         "ethyl maltol",
@@ -15177,7 +15177,7 @@
           "gourmand"
         ]
       },
-      "pubchem_cid": "19310",
+      "pubchem_cid": "21059",
       "isomeric_smiles": "CCC1=C(C(=O)C=CO1)O",
       "inchi_key": "YJPIGAIKUZMOQA-UHFFFAOYSA-N",
       "xlogp": "0.6",
@@ -16136,7 +16136,7 @@
       "iupac": "3,7-dimethylocta-2,6-dienal",
       "formula": "C10H16O",
       "weight": "152.23",
-      "smiles": "",
+      "smiles": "CC(=CCC/C(=C/C=O)/C)C",
       "inchi": "InChI=1S/C10H16O/c1-9(2)5-4-6-10(3)7-8-11/h5,7-8H,4,6H2,1-3H3",
       "synonyms": [
         "refchem:1066155",
@@ -16437,7 +16437,7 @@
       "iupac": "1-(2,3,8,8-tetramethyl-1,3,4,5,6,7-hexahydronaphthalen-2-yl)ethanone",
       "formula": "C16H26O",
       "weight": "234.38",
-      "smiles": "",
+      "smiles": "CC1CC2=C(CC1(C)C(=O)C)C(CCC2)(C)C",
       "inchi": "InChI=1S/C16H26O/c1-11-9-13-7-6-8-15(3,4)14(13)10-16(11,5)12(2)17/h11H,6-10H2,1-5H3",
       "synonyms": [
         "1-(1,2,3,4,5,6,7,8-octahydro-2,3,8,8-tetramethyl-2-naphthalenyl)ethanone",
@@ -18744,7 +18744,7 @@
       "iupac": "3-(4-ethylphenyl)-2,2-dimethylpropanal",
       "formula": "C13H18O",
       "weight": "190.28",
-      "smiles": "",
+      "smiles": "CCC1=CC=C(C=C1)CC(C)(C)C=O",
       "inchi": "InChI=1S/C13H18O/c1-4-11-5-7-12(8-6-11)9-13(2,3)10-14/h5-8,10H,4,9H2,1-3H3",
       "synonyms": [
         "3-(4-ethylphenyl)-2,2-dimethylpropanal",
@@ -18791,7 +18791,7 @@
           "dewy"
         ]
       },
-      "pubchem_cid": "62335",
+      "pubchem_cid": "105513",
       "isomeric_smiles": "CCC1=CC=C(C=C1)CC(C)(C)C=O",
       "inchi_key": "QSDLXTHBMAEHSR-UHFFFAOYSA-N",
       "xlogp": "3.8",
@@ -20827,7 +20827,7 @@
       "iupac": "1-(2,6,6-trimethylcyclohex-2-en-1-yl)pent-1-en-3-one",
       "formula": "C14H22O",
       "weight": "206.32",
-      "smiles": "",
+      "smiles": "CCC(=O)C=CC1C(=CCCC1(C)C)C",
       "inchi": "InChI=1S/C14H22O/c1-5-12(15)8-9-13-11(2)7-6-10-14(13,3)4/h7-9,13H,5-6,10H2,1-4H3",
       "synonyms": [
         "dtxsid6026240",
@@ -21164,7 +21164,7 @@
       "iupac": "3,7-dimethylocta-1,6-dien-3-ol",
       "formula": "C10H18O",
       "weight": "154.25",
-      "smiles": "",
+      "smiles": "CC(=CCCC(C)(C=C)O)C",
       "inchi": "InChI=1S/C10H18O/c1-5-10(4,11)8-6-7-9(2)3/h5,7,11H,1,6,8H2,2-4H3",
       "synonyms": [
         "linalool",
@@ -31263,7 +31263,7 @@
       "iupac": "chromen-2-one",
       "formula": "C9H6O2",
       "weight": "146.14",
-      "smiles": "",
+      "smiles": "C1=CC=C2C(=C1)C=CC(=O)O2",
       "inchi": "InChI=1S/C9H6O2/c10-9-6-5-7-3-1-2-4-8(7)11-9/h1-6H",
       "synonyms": [
         "coumarin",
@@ -32985,7 +32985,7 @@
       "iupac": "2-methoxy-4-prop-2-enylphenol",
       "formula": "C10H12O2",
       "weight": "164.20",
-      "smiles": "",
+      "smiles": "COC1=C(C=CC(=C1)CC=C)O",
       "inchi": "InChI=1S/C10H12O2/c1-3-4-8-5-6-9(11)10(7-8)12-2/h3,5-7,11H,1,4H2,2H3",
       "synonyms": [
         "eugenol",

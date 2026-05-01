@@ -1214,7 +1214,7 @@ html { scroll-behavior:smooth; }
      globals — and unlike PERFUMERY_DATA, the taxonomy file is small and
      pure-data so the sync block is unobservable. Bumping its ?v= reloads
      on both pages. -->
-<script src="taxonomy.js?v=2026-04-29-v292"></script>
+<script src="taxonomy.js?v=2026-04-29-v293"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). The bootstrap below fetches it async,
@@ -1239,7 +1239,7 @@ html { scroll-behavior:smooth; }
 // inline data layer (DB build, FILTER_CACHE precompute, render init)
 // is gated behind the stage-2 integrity check.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v292';
+  const DATA_VERSION = '2026-04-29-v293';
 
   // Stage 1: mount loading overlay synchronously, before any await,
   // so the user always sees feedback regardless of network latency.
@@ -1484,7 +1484,7 @@ function _clickLog(...args) {
 // Mirrors the data/materials.json cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the boot-script's DATA_VERSION at the top of this page.
-const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v292";
+const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v293";
 // Defensive: a corrupted JSON payload could land window.PERFUMERY_DATA
 // without the expected shape. Guard every access so a missing key
 // surfaces as a single clear error rather than a TDZ-style cascade.
