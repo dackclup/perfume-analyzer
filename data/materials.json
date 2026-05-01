@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "version": "2026-04-29-v293",
+    "row_count": 624
+  },
   "perfumery_db": [
     {
       "name": "Benzaldehyde",
