@@ -1192,7 +1192,7 @@ html { scroll-behavior:smooth; }
      globals — and unlike PERFUMERY_DATA, the taxonomy file is small and
      pure-data so the sync block is unobservable. Bumping its ?v= reloads
      on both pages. -->
-<script src="taxonomy.js?v=2026-04-29-v289"></script>
+<script src="taxonomy.js?v=2026-04-29-v290"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). The bootstrap below fetches it async,
@@ -1217,7 +1217,7 @@ html { scroll-behavior:smooth; }
 // inline data layer (DB build, FILTER_CACHE precompute, render init)
 // is gated behind the stage-2 integrity check.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v289';
+  const DATA_VERSION = '2026-04-29-v290';
 
   // Stage 1: mount loading overlay synchronously, before any await,
   // so the user always sees feedback regardless of network latency.
@@ -1341,6 +1341,16 @@ const _renderedCas = new Set();
 let _emptyStateAnimated = false;
 const _RENDER_CHUNK_FIRST = 30;
 const _RENDER_CHUNK_NEXT  = 25;
+// Phase 2 pagination — hard cap on initial card-build to keep the
+// browser responsive when results contain 1000+ entries. Building all
+// cards' HTML strings up-front is O(n) on a synchronous tick (the
+// chunked DOM insertion below is async, but the build is not). Capping
+// at 500 trims that synchronous cost to a flat ~50 ms and the user
+// gets a "Show all" CTA when the cap is hit. Setting null disables
+// the cap (used by the "Show all" handler and by the empty-state
+// path so an explicit re-render can paint everything).
+const _RENDER_HARD_CAP = 500;
+let _renderCapLifted = false; // session-scoped: persists until the user re-searches
 const _scheduleIdle = (typeof window !== 'undefined' && window.requestIdleCallback)
   ? cb => window.requestIdleCallback(cb, { timeout: 200 })
   : cb => requestAnimationFrame(() => cb(null));
@@ -1452,7 +1462,7 @@ function _clickLog(...args) {
 // Mirrors the data/materials.json cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the boot-script's DATA_VERSION at the top of this page.
-const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v289";
+const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v290";
 // Defensive: a corrupted JSON payload could land window.PERFUMERY_DATA
 // without the expected shape. Guard every access so a missing key
 // surfaces as a single clear error rather than a TDZ-style cascade.
@@ -4801,6 +4811,10 @@ function _showDidYouMean(input, candidates) {
 async function doSearch(term) {
   if (typeof _clickLog === 'function') _clickLog('doSearch entry:', term);
   clearSearchError();
+  // Phase 2 pagination — every fresh search resets the cap-lift flag so
+  // a previous "Show all" click on a different query doesn't leak into
+  // the new result set (would surface as a freeze on a 1000+ match).
+  _renderCapLifted = false;
   // Defensive trim — call sites already pass trimmed values, but this
   // function is also reachable via deep-link restore + saved-pill clicks
   // where the source string may have been written by an older code
@@ -6853,7 +6867,17 @@ function _renderResultsCore() {
   // Download bar always visible (contains Formulate link)
 
   const cards = [];
+  // Phase 2 pagination — when results overflow _RENDER_HARD_CAP, build
+  // only the first `cap` cards and surface a "Show all (N more)" CTA.
+  // Saves the synchronous card-string-build cost for the tail and lets
+  // the user opt-in when they actually need to scroll past 500. The cap
+  // is bypassed when _renderCapLifted is set (after the user clicks
+  // "Show all" — survives until the next doSearch resets it).
+  const _capActive = !_renderCapLifted && _RENDER_HARD_CAP != null && results.length > _RENDER_HARD_CAP;
+  const _cardLimit = _capActive ? _RENDER_HARD_CAP : results.length;
+  const _capRemaining = _capActive ? results.length - _RENDER_HARD_CAP : 0;
   results.forEach((mat,idx) => {
+    if (idx >= _cardLimit) return;
    try {
     const rec = mat.record, id = rec.identifiers, nm = rec.names, pr = rec.properties, pf = rec.perfumery, sf = rec.safety, cls = rec.classification, mtch = rec.match;
     // ── Card classification display (single precedence per axis) ──
@@ -7176,10 +7200,16 @@ function _renderResultsCore() {
     div.innerHTML = '<div class="empty-state"><div class="empty-state__title">Render produced no cards</div><p class="empty-state__hint">Open the console — every per-card error is logged. Reload the page if it persists.</p></div>';
     return;
   }
+  // Phase 2 pagination — stash the overflow count on the container so
+  // _appendShowAllCTA can read it after the chunked DOM insertion
+  // completes. Cleared on every render so a small follow-up search
+  // doesn't show a stale "Show all" button.
+  div.dataset.capRemaining = String(_capRemaining);
   // Small batches render synchronously — chunking only pays off when
   // there are enough cards that the parse cost is observable.
   if (cards.length <= _RENDER_CHUNK_FIRST) {
     div.innerHTML = cards.join('');
+    _appendShowAllCTA();
     return;
   }
   // First chunk paints immediately so the user sees results without
@@ -7201,9 +7231,38 @@ function _renderResultsCore() {
       if (typeof deadline.timeRemaining === 'function' && deadline.timeRemaining() < 5) break;
     }
     if (cursor < cards.length) _scheduleIdle(flush);
-    else _renderCancel = null;
+    else { _renderCancel = null; _appendShowAllCTA(); }
   };
   _scheduleIdle(flush);
+}
+
+// Phase 2 pagination — append a "Show all (N more)" button at the end of
+// the results region when the card-build hit _RENDER_HARD_CAP. Click
+// lifts the cap for the rest of the session (until the next doSearch
+// reset) and re-renders. Skipped when no overflow.
+function _appendShowAllCTA() {
+  const div = document.getElementById('results');
+  if (!div) return;
+  // Read overflow off the closure-captured _capRemaining via a data
+  // attribute set by _renderResultsCore — reading the let directly
+  // here would require hoisting the binding to module scope. Easier
+  // to mirror the count onto the container.
+  const remaining = parseInt(div.dataset.capRemaining || '0', 10);
+  if (!remaining) return;
+  const cta = document.createElement('div');
+  cta.id = 'render-cap-cta';
+  cta.style.cssText = 'padding:18px 14px;text-align:center;border-top:1px dashed var(--border);margin-top:10px';
+  cta.innerHTML =
+    '<div style="font-size:0.85em;color:var(--text2);margin-bottom:8px">Showing first <strong>' + (results.length - remaining) +
+    '</strong> of <strong>' + results.length + '</strong> matches — large lists are paginated to keep the browser responsive.</div>' +
+    '<button class="btn btn--primary" id="render-cap-show-all" type="button" style="padding:8px 18px">Show all ' + remaining + ' more</button>';
+  div.appendChild(cta);
+  const btn = document.getElementById('render-cap-show-all');
+  if (btn) btn.addEventListener('click', () => {
+    _renderCapLifted = true;
+    cta.remove();
+    renderResults();
+  });
 }
 
 // Public entry — wraps _renderResultsCore so any uncaught throw
@@ -7471,22 +7530,33 @@ function clearAll() {
 // ===== Send to Formulator =====
 function sendToFormulator() {
   const found = results.filter(r => r.found);
-  // Why localStorage and not a URL query string:
+  // Why sessionStorage and not URL query string or localStorage:
   //   A 10-material payload with full classification + perfumery +
-  //   safety axes serialises to ~25-40 KB. Browser URL limits vary
+  //   safety axes serialises to ~25-40 KB. URL has length limits
   //   (Chrome ~32 KB, Edge 2 KB practical, Safari 80 KB) and any
-  //   intermediate proxy / extension that mirrors the URL into
-  //   history can truncate or refuse it. localStorage has no path
-  //   length involved, persists across the new-tab boundary, and is
-  //   already the channel formulation.html's autoImport reads from.
+  //   intermediate proxy / extension that mirrors the URL into history
+  //   can truncate or refuse it.
   //
-  //   The handshake:
-  //     index.html → setItem('perfume_formulation_materials', JSON)
-  //                  setItem('perfume_formulation_ts', Date.now())
+  //   Phase 2 refactor switched from localStorage → sessionStorage:
+  //     • localStorage persists FOREVER until manually cleared, so a
+  //       stale handoff payload could be picked up by a much later
+  //       formulator session. The 30 s timestamp gate worked but left
+  //       garbage in storage indefinitely.
+  //     • sessionStorage is bounded to the tab/window lifetime —
+  //       auto-cleanup on close. window.open(url, '_blank') copies
+  //       the opener's sessionStorage into the new tab at open time
+  //       (per spec; same-origin only), so the cross-tab handoff
+  //       still works without persisting anything past the workflow.
+  //     • Independent after copy — formulator's removeItem doesn't
+  //       reach back to analyzer, so a second analyzer-side click
+  //       always writes a fresh payload.
+  //
+  //   Handshake:
+  //     index.html → sessionStorage.setItem('perfume_formulation_materials', JSON)
+  //                  sessionStorage.setItem('perfume_formulation_ts', Date.now())
   //     formulation.html (autoImport) → reads both, accepts only when
-  //                  ts is within 30 s, then removes ts so a second
-  //                  formulation.html tab opened later doesn't double-
-  //                  import the same payload.
+  //                  ts is within 30 s, then removes ts so a manually-
+  //                  opened second formulator tab doesn't double-import.
   let writeOk = false;
   let writeErr = null;
   if (found.length) {
@@ -7534,8 +7604,8 @@ function sendToFormulator() {
       if (json.length > 4 * 1024 * 1024) {
         try { showToast({ message: 'Payload over 4 MB — some materials may be dropped if storage is tight.', variant: 'warn', timeout: 4000 }); } catch (e) {}
       }
-      localStorage.setItem('perfume_formulation_materials', json);
-      localStorage.setItem('perfume_formulation_ts', Date.now().toString());
+      sessionStorage.setItem('perfume_formulation_materials', json);
+      sessionStorage.setItem('perfume_formulation_ts', Date.now().toString());
       writeOk = true;
     } catch (e) {
       // QuotaExceededError, SecurityError (private mode), DOMException

@@ -1113,9 +1113,9 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      of these three scripts touch PERFUMERY_DATA at parse time, so they
      stay synchronous; the materials database alone has been hoisted to
      async fetch. -->
-<script src="taxonomy.js?v=2026-04-29-v289"></script>
-<script src="formulation_data.js?v=2026-04-29-v289"></script>
-<script src="formulation_engine.js?v=2026-04-29-v289"></script>
+<script src="taxonomy.js?v=2026-04-29-v290"></script>
+<script src="formulation_data.js?v=2026-04-29-v290"></script>
+<script src="formulation_engine.js?v=2026-04-29-v290"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). Same bootstrap pattern as index.html:
@@ -1137,7 +1137,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 // State computation NEVER runs before stage 4 — the inert app-init body
 // is browser-inert until we replace its <script> element.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v289';
+  const DATA_VERSION = '2026-04-29-v290';
 
   const overlay = document.createElement('div');
   overlay.id = 'app-loading';
@@ -2506,7 +2506,14 @@ document.getElementById('btnImport').addEventListener('click', importFromAnalyze
 
 function importFromAnalyzer() {
   try {
-    const raw = localStorage.getItem('perfume_formulation_materials');
+    // Phase 2 handoff — sessionStorage replaces localStorage so the
+    // payload is bounded to the tab lifetime. window.open from the
+    // analyzer copies opener's sessionStorage into this tab at open
+    // time, so the cross-tab handoff still works. We also still check
+    // legacy localStorage as a one-time migration fallback so a user
+    // mid-workflow during the v290 deploy doesn't lose their selection.
+    let raw = sessionStorage.getItem('perfume_formulation_materials');
+    if (!raw) raw = localStorage.getItem('perfume_formulation_materials');
     if (!raw) { alert('No materials found. Search materials in the Analyzer first, then click "Formulate →".'); return; }
     const items = JSON.parse(raw);
     if (!Array.isArray(items) || !items.length) { alert('No valid materials found in storage.'); return; }
@@ -2568,8 +2575,15 @@ function importFromAnalyzer() {
     if (sessionStorage.getItem(SESSION_FLAG) === '1') return;
   } catch (_) { /* sessionStorage may be disabled — fall through to ts gate */ }
   try {
-    const raw = localStorage.getItem('perfume_formulation_materials');
-    const ts = localStorage.getItem('perfume_formulation_ts');
+    // Phase 2 handoff — read from sessionStorage primarily, with a
+    // localStorage fallback so a user upgrading mid-workflow (v289 →
+    // v290 SW transition) doesn't lose their pending payload.
+    let raw = sessionStorage.getItem('perfume_formulation_materials');
+    let ts  = sessionStorage.getItem('perfume_formulation_ts');
+    if (!raw || !ts) {
+      raw = raw || localStorage.getItem('perfume_formulation_materials');
+      ts  = ts  || localStorage.getItem('perfume_formulation_ts');
+    }
     if (!raw || !ts) return;
     // Only auto-import if timestamp is within last 30 seconds (just clicked Formulate)
     if (Date.now() - parseInt(ts) > 30000) return;
@@ -2598,10 +2612,14 @@ function importFromAnalyzer() {
         }
       });
     } finally {
-      // Always clear ts — even if batchUpdate threw before the original
-      // single-line removeItem ran. Without this guarantee a thrown
-      // batch could leave ts set and the next F5 would replay the
-      // import despite the sessionStorage flag (different tab session).
+      // Always clear ts — even if batchUpdate threw before the
+      // removeItem ran. Without this guarantee a thrown batch could
+      // leave ts set and the next F5 would replay the import despite
+      // the SESSION_FLAG. Clear from BOTH stores to handle the
+      // localStorage→sessionStorage transition cleanly: v289-and-
+      // earlier writers used localStorage, current writes use
+      // sessionStorage, fallback reader checks both.
+      try { sessionStorage.removeItem('perfume_formulation_ts'); } catch (_) {}
       try { localStorage.removeItem('perfume_formulation_ts'); } catch (_) {}
     }
     // Belt-and-suspenders: re-render so count + body cannot diverge

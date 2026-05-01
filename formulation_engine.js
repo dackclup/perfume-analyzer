@@ -2301,6 +2301,19 @@ function optimizeAllocation(materials, graph, categoryId, fragPct, iterations, l
 // SYSTEM 1: Thermodynamics & Evaporation Engine
 // ─────────────────────────────────────────────────────────────
 
+// Phase 2 defensive helper: coerce a possibly-string-or-undefined input to
+// a finite number, returning `fallback` if coercion yields NaN/Infinity.
+// Materials JSON ships `weight` as a string ("154.25") but `boiling_point`
+// as a number (198) — the inconsistency means raw arithmetic on `mw + bp`
+// silently produces strings or NaN cascades. This helper normalises both.
+// Used everywhere thermo / GC-MS reads molecular_weight, boiling_point,
+// density, logP from material data.
+function _toNum(x, fallback) {
+  if (x == null || x === '') return fallback;
+  const n = typeof x === 'number' ? x : parseFloat(x);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 /**
  * Calculate vapor pressure using the Antoine equation.
  * log10(P_mmHg) = A - B / (C + T_celsius)
@@ -2330,7 +2343,13 @@ function antoineVP(cas, tempC) {
  * @returns {number} deltaH_vap in J/mol
  */
 function kistiakowskyDeltaHvap(bpCelsius) {
-  const T_bp_K = bpCelsius + 273.15;
+  // Defensive coercion — caller paths can pass a string-shaped BP from
+  // JSON or `undefined` when no BP is known. Returning NaN here used to
+  // cascade through clausiusClapeyronVP into the thermo simulation,
+  // surfacing as flat-line evaporation curves with no hint of cause.
+  const bp = _toNum(bpCelsius, NaN);
+  if (!Number.isFinite(bp)) return NaN;
+  const T_bp_K = bp + 273.15;
   return (36.6 + R_GAS * Math.log(T_bp_K)) * T_bp_K;
 }
 
@@ -2345,20 +2364,31 @@ function kistiakowskyDeltaHvap(bpCelsius) {
  * @returns {Object} {vp_mmHg, method, confidence}
  */
 function clausiusClapeyronVP(bpCelsius, tempC, refVP, refTemp) {
-  const deltaH = kistiakowskyDeltaHvap(bpCelsius);
+  // Numeric coercion — see kistiakowskyDeltaHvap. A NaN BP would have
+  // produced NaN deltaH → NaN lnRatio → vp = NaN, then Math.max(NaN, 0)
+  // returns NaN (not 0!), poisoning downstream evaporation maths.
+  const bp = _toNum(bpCelsius, NaN);
+  const t  = _toNum(tempC, 25);
+  if (!Number.isFinite(bp)) return { vp_mmHg: null, method: 'none', confidence: 'none' };
+  const deltaH = kistiakowskyDeltaHvap(bp);
+  if (!Number.isFinite(deltaH)) return { vp_mmHg: null, method: 'none', confidence: 'none' };
 
   let T1_K, P1;
   if (refVP != null && refTemp != null) {
-    T1_K = refTemp + 273.15;
-    P1 = refVP;
+    T1_K = _toNum(refTemp, 25) + 273.15;
+    P1 = _toNum(refVP, 1);
   } else {
-    T1_K = bpCelsius + 273.15;
+    T1_K = bp + 273.15;
     P1 = 760; // mmHg at boiling point
   }
 
-  const T2_K = tempC + 273.15;
+  const T2_K = t + 273.15;
   const lnRatio = (deltaH / R_GAS) * (1 / T1_K - 1 / T2_K);
   const vp = P1 * Math.exp(lnRatio);
+  // Final NaN sieve — if any intermediate produced NaN, return null
+  // instead of a spurious 0 so the caller can flag "no data" rather
+  // than treat the material as non-volatile.
+  if (!Number.isFinite(vp)) return { vp_mmHg: null, method: 'none', confidence: 'none' };
 
   return {
     vp_mmHg: Math.max(vp, 0),
@@ -2471,14 +2501,19 @@ function simulateEvaporation(materials, tempC, timePointsH, useActivityCoeff) {
 
   const curves = [];
 
-  // A1: Helper to get enriched properties (MATERIAL_PROPERTIES fallback)
+  // A1: Helper to get enriched properties (MATERIAL_PROPERTIES fallback).
+  // Phase 2 numeric coercion — materials.json ships `weight` as a string
+  // ("154.25") while `boiling_point` / `density` are numbers. Without
+  // _toNum the simulation sees a string mw, which silently corrupts
+  // `mw + 273.15` into "154.25273.15" string concat and breaks the
+  // delta-H calc one rung below. Coerce + fall back to safe defaults.
   function getProps(cas, matData) {
     const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[cas] : null;
     return {
-      mw: matData?.molecular_weight || (mp && mp.mw) || 150,
-      density: matData?.density || (mp && mp.density) || 1.0,
-      logP: matData?.xlogp || matData?.logp || (mp && mp.logP) || null,
-      bp: matData?.boiling_point || (mp && mp.bp) || null,
+      mw: _toNum(matData?.molecular_weight, _toNum(mp?.mw, 150)),
+      density: _toNum(matData?.density, _toNum(mp?.density, 1.0)),
+      logP: _toNum(matData?.xlogp ?? matData?.logp, _toNum(mp?.logP, null)),
+      bp: _toNum(matData?.boiling_point, _toNum(mp?.bp, null)),
     };
   }
 
@@ -2589,11 +2624,15 @@ function simulateEvaporation(materials, tempC, timePointsH, useActivityCoeff) {
 function buildVPTable(materials, tempC) {
   return materials.map(mat => {
     const vpResult = getVaporPressure(mat.cas, tempC, mat.data);
-    // A1: Use MATERIAL_PROPERTIES enrichment
+    // A1: Use MATERIAL_PROPERTIES enrichment. Phase 2 numeric coercion
+    // protects every downstream math op from string-typed weight ("154.25")
+    // sneaking in from materials.json. evaporationRate uses mw inside a
+    // sqrt+division, so a string would auto-coerce per op but `mw + …`
+    // anywhere downstream would silently concat.
     const mp = (typeof MATERIAL_PROPERTIES !== 'undefined') ? MATERIAL_PROPERTIES[mat.cas] : null;
-    const mw = mat.data?.molecular_weight || (mp && mp.mw) || null;
-    const logP = mat.data?.xlogp || mat.data?.logp || (mp && mp.logP) || null;
-    const density = mat.data?.density || (mp && mp.density) || null;
+    const mw = _toNum(mat.data?.molecular_weight, _toNum(mp?.mw, null));
+    const logP = _toNum(mat.data?.xlogp ?? mat.data?.logp, _toNum(mp?.logP, null));
+    const density = _toNum(mat.data?.density, _toNum(mp?.density, null));
     const kp = pottsGuyKp(logP, mw);
     const k_evap = vpResult.vp_mmHg ? evaporationRate(vpResult.vp_mmHg, mw || 150, density || 1.0) : null;
 
@@ -2629,14 +2668,18 @@ function getODT(cas, matData) {
     return { ppb: entry.ppb, method: 'literature', source: entry.src, confidence: 'high' };
   }
 
-  // Strategy 2: QSAR estimation from molecular properties
-  const mw  = matData?.molecular_weight || null;
-  const logP = matData?.xlogp || matData?.logp || null;
-  const tpsa = matData?.tpsa || null;
-  const hbd = matData?.hbond_donor || 0;
-  const hba = matData?.hbond_acceptor || 0;
+  // Strategy 2: QSAR estimation from molecular properties.
+  // Phase 2 numeric coercion — every term feeds into `q.c1 * mw` etc.
+  // String mw would auto-coerce in multiplication but a NaN anywhere
+  // poisons the whole logODT. _toNum returns null on NaN, and the
+  // (mw != null && logP != null) gate below short-circuits.
+  const mw  = _toNum(matData?.molecular_weight, null);
+  const logP = _toNum(matData?.xlogp ?? matData?.logp, null);
+  const tpsa = _toNum(matData?.tpsa, null);
+  const hbd = _toNum(matData?.hbond_donor, 0);
+  const hba = _toNum(matData?.hbond_acceptor, 0);
 
-  if (mw != null && logP != null) {
+  if (mw != null && logP != null && Number.isFinite(mw) && Number.isFinite(logP)) {
     const q = QSAR_ODT_COEFFICIENTS;
     const logODT = q.c0 + q.c1 * mw + q.c2 * logP + q.c3 * (tpsa || 30) + q.c4 * hbd + q.c5 * hba;
     return {
