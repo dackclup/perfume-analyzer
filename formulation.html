@@ -1795,7 +1795,7 @@ const formulation = {
     if (pctDisplay > 100) {
       pctEl.textContent = pctDisplay + '% (over!) / ' + actualDisplay + ' used, ' + fragDisplay + ' target';
     } else {
-      pctEl.textContent = pctDisplay + '% / ' + fragDisplay + ' Fragrance in Product';
+      pctEl.textContent = pctDisplay + '% / ' + fragDisplay + ' fragrance dose';
     }
     pctEl.className = 'pct-val ' + (pctDisplay > 100 ? 'over' : pctDisplay < 100 ? 'under' : 'ok');
     document.getElementById('matTotal').style.display = 'flex';
@@ -2074,7 +2074,7 @@ function renderMaterialList() {
   if (pct > 100) {
     pctEl.textContent = pct + '% (over!) / ' + actualDisplay + ' used, ' + fragDisplay + ' target';
   } else {
-    pctEl.textContent = pct + '% / ' + fragDisplay + ' Fragrance in Product';
+    pctEl.textContent = pct + '% / ' + fragDisplay + ' fragrance dose';
   }
   pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
   total.style.display = 'flex';
