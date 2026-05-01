@@ -4840,24 +4840,53 @@ async function doSearch(term) {
   // two different pill labels point at the same material.
   const existingNames = new Set(results.map(r => (r.record?.names?.canonical || '').toLowerCase()));
   const existingCas   = new Set(results.map(r => r.record?.identifiers?.cas).filter(Boolean));
+  // Audit #1 — index restored-only cards so the dedup branch below can
+  // tell whether a skipped name matches something the user actively
+  // searched for THIS session vs. something the session-restore path
+  // re-hydrated silently. The latter shouldn't fire the toast; the
+  // user has no mental model that the name is already there.
+  const restoredNames = new Set(
+    results.filter(r => r._restored)
+           .map(r => (r.record?.names?.canonical || '').toLowerCase())
+  );
+  const restoredCasSet = new Set(
+    results.filter(r => r._restored)
+           .map(r => r.record?.identifiers?.cas).filter(Boolean)
+  );
   const _resolveLocalCas = (n) => {
     const nk = (n || '').toLowerCase().trim();
     if (CAS_RE_SEARCH.test(nk) && DB[nk]) return nk;
     return TRADES[nk] || NAME_TO_CAS[nk] || (SYN_IX[nk] && SYN_IX[nk].cas) || null;
   };
   const skipped = [];
+  const skippedRestoredOnly = [];
   const newNames = names.filter(n => {
     const nl = n.toLowerCase();
-    if (existingNames.has(nl)) { skipped.push(n); return false; }
+    if (existingNames.has(nl)) {
+      skipped.push(n);
+      // Restored-only when the matching result was hydrated from
+      // localStorage and the user hasn't interacted with the card yet.
+      if (restoredNames.has(nl)) skippedRestoredOnly.push(n);
+      return false;
+    }
     const localCas = _resolveLocalCas(n);
-    if (localCas && existingCas.has(localCas)) { skipped.push(n); return false; }
+    if (localCas && existingCas.has(localCas)) {
+      skipped.push(n);
+      if (restoredCasSet.has(localCas)) skippedRestoredOnly.push(n);
+      return false;
+    }
     return true;
   });
   if (!newNames.length) {
-    // User clicked a pill whose target is already in the result list —
-    // surface a toast so the click doesn't appear to do nothing.
-    try { showToast({ message: 'Already in results: ' + skipped.join(', '), variant: 'info', timeout: 2000 }); } catch (e) {}
-    if (typeof _clickLog === 'function') _clickLog('doSearch dedup skip:', skipped.join(', '));
+    // Audit #1 — only show the "Already in results" toast for items
+    // the user actively added this session. A re-search of a session-
+    // restored name is silent because the user never knowingly added
+    // it; the toast was confusing ("did I just do something?").
+    const addedThisSession = skipped.filter(n => !skippedRestoredOnly.includes(n));
+    if (addedThisSession.length) {
+      try { showToast({ message: 'Already in results: ' + addedThisSession.join(', '), variant: 'info', timeout: 2000 }); } catch (e) {}
+    }
+    if (typeof _clickLog === 'function') _clickLog('doSearch dedup skip:', skipped.join(', ') + ' (restored-only: ' + skippedRestoredOnly.join(', ') + ')');
     return;
   }
   if (typeof _clickLog === 'function') _clickLog('doSearch will scrape:', newNames.join(', '));
@@ -6105,6 +6134,13 @@ function _restoreResults() {
       try {
         if (_applyLocalMatch(mat, match)) {
           if (item.open) mat._open = true;
+          // Audit #1 — flag the result as restored from a prior session
+          // so doSearch's dedup block can suppress the "Already in
+          // results" toast when the user re-types a name they didn't
+          // realise was already in the persisted list. Cleared by
+          // toggleCard the first time the user interacts with the
+          // restored card.
+          mat._restored = true;
           results.push(mat);
         }
       } catch (e) { console.warn('[restore] _applyLocalMatch threw for ' + item.cas + ':', e); }
@@ -7448,6 +7484,10 @@ function toggleCard(idx) {
   const arrow = document.getElementById("arrow"+idx);
   const card = body.closest('.card');
   const isOpening = !body.classList.contains("open");
+  // Audit #1 — first interaction with a session-restored card: clear
+  // the _restored flag so subsequent re-searches behave normally
+  // (toast on dedup, since the user has now acknowledged the row).
+  if (results[idx] && results[idx]._restored) results[idx]._restored = false;
   // Close all other cards and their sub-sections
   if (isOpening) {
     document.querySelectorAll('.card-body.open').forEach(el => {
