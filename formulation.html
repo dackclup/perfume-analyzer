@@ -206,7 +206,12 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 /* Material List */
 .mat-list { margin-top:12px; }
 .mat-item { display:flex; align-items:center; gap:6px; padding:8px; border:1px solid var(--border); border-radius:8px; margin-bottom:6px; background:var(--card-bg); font-size:0.82em; flex-wrap:wrap; }
-.mat-item .mat-name { flex:1 1 60px; min-width:60px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* Audit #2b — flex:1 1 40px / min-width:40px keeps at least ~3 chars
+   of the material name visible so the row never collapses to "E…" on
+   narrow viewports (regression first seen after audit #8). 40px is
+   the single-row sweet spot at 320px-wide left pane: "Linal…",
+   "Benzal…", "Lin Ac…" all fit without wrapping. */
+.mat-item .mat-name { flex:1 1 40px; min-width:40px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .mat-item .mat-cas { color:var(--text2); font-size:0.85em; font-family:'IBM Plex Mono',monospace; }
 .mat-note { padding:1px 6px; border-radius:8px; font-size:0.7em; font-weight:600; }
 .mat-note.top { background:var(--badge-top-bg); color:var(--badge-top-fg); }

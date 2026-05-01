@@ -233,7 +233,12 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .sub-body.open { display:block; }
 /* On wider mobile / tablet: 2-column filter grid to halve vertical scroll */
 @media (min-width:560px) {
-  .filter-drawer { display:grid; grid-template-columns:repeat(2, 1fr); gap:0 var(--space-4); }
+  /* Audit #2 — auto-fit grid eliminates the empty cell that appeared
+     on the right when an axis list had an odd count of sub-drawers
+     (the rigid 2-column track allocated phantom space for a non-
+     existent next sub-drawer). minmax(220px, 1fr) keeps each column
+     readable while letting odd counts pack flush. */
+  .filter-drawer { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0 var(--space-4); align-content:start; }
   .filter-drawer > .sub-drawer { border-bottom:1px solid var(--border); }
   .filter-drawer > .sub-drawer:nth-last-child(-n+2) { border-bottom:none; }
 }
