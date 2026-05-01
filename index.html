@@ -348,6 +348,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
      Use      — neutral grey                    (market scope)
 */
 .badge-type,
+.badge-note,
 .badge-reg,
 .badge-use,
 .badge-primary,
@@ -368,6 +369,10 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
   border:1px solid transparent;
 }
 .badge-type { background:color-mix(in srgb, var(--text) 6%, transparent); color:var(--text2); }
+/* Audit #4: NOTE pyramid badge — distinct teal hue separates the
+   Top/Heart/Base volatility tier from the (similarly-named) Arctander
+   "Heart (role)" function on the Type chip. */
+.badge-note { background:color-mix(in srgb, #0d9488 14%, transparent); color:#0d9488; border-color:color-mix(in srgb, #0d9488 28%, transparent); margin-left:6px; }
 .badge-reg  { background:color-mix(in srgb, var(--danger) 10%, transparent); color:var(--danger); border-color:color-mix(in srgb, var(--danger) 22%, transparent); }
 .badge-use  { background:color-mix(in srgb, var(--text) 4%, transparent); color:var(--text2); }
 .badge-primary   { background:color-mix(in srgb, var(--accent) 16%, transparent); color:var(--accent); font-weight:600; }
@@ -2169,11 +2174,13 @@ const FUNCTION_LABELS = {
   // with the Aromatic Fougère family descriptor). Internal value stays
   // 'aromatic' for DB compatibility — this is a label-only rename per
   // Arctander's classification (Heart/Basic = main scent character).
-  aromatic:'Heart', fixative:'Fixative',
+  // Audit #4: '(role)' suffix disambiguates from the Top/Heart/Base
+  // note-tier pyramid that lives on a separate NOTE chip.
+  aromatic:'Heart (role)', fixative:'Fixative',
   blender:'Blender', modifier:'Modifier', enhancer:'Enhancer'
 };
 const FUNCTION_DESCRIPTIONS = {
-  aromatic: 'Heart — main scent character; defines the perfume’s identity',
+  aromatic: 'Main scent character (Arctander Heart/Basic role) — not the Heart-note tier of the fragrance pyramid',
   fixative: 'Slows evaporation, anchors aroma, extends longevity',
   blender:  'Smooths and harmonises disparate notes',
   modifier: 'Decorates / alters character (fresh, fruity, spicy nuances)',
@@ -6908,6 +6915,19 @@ function _renderResultsCore() {
       for (const f of displayFunctions) _addPart(FUNCTION_LABELS[f] || f);
     }
     const _typeFuncJoined = _typeFuncParts.join(' • ');
+    // Audit #4 — extract Top/Middle/Base note tiers from the same noteLow
+    // field FILTER_CACHE indexes for filtering. Renders as a separate
+    // NOTE chip so users don't confuse the "Heart (role)" Arctander
+    // function with the Top/Heart/Base note pyramid. Reuse the exact
+    // regexes from the filter pass (line ~3344) so chip + filter agree.
+    const _noteSrc = (_fcCard?.noteLow) || ((mat.record?.perfumery?.note || '') + '').toLowerCase();
+    const _notePyrTiers = [];
+    if (/\btop\b/.test(_noteSrc))    _notePyrTiers.push('Top');
+    if (/\bmiddle\b/.test(_noteSrc) || /\bheart\b/.test(_noteSrc)) _notePyrTiers.push('Middle');
+    if (/\bbase\b/.test(_noteSrc))   _notePyrTiers.push('Base');
+    const _noteBadge = _notePyrTiers.length
+      ? `<span class="badge-note" title="Volatility tier in the fragrance pyramid (Top / Middle / Base)">NOTE: ${_notePyrTiers.join(' / ')}</span>`
+      : '';
     // Regulatory display: normalize through _normalizeRegulatoryToken
     // so a legacy-imported record carrying 'ifra_limited' (or any
     // variant casing) renders as 'Regulated' on the badge, not as the
@@ -6997,7 +7017,7 @@ function _renderResultsCore() {
           <div style="flex:1;min-width:0">
             <h3><span class="card-arrow" id="arrow${idx}">${mat._open?'▼':'▶'}</span> ${esc(nm.canonical)}${mtch?.type?` <span class="match-tag">${mtch.type.replace('_',' ')} ${Math.round((mtch.confidence||0)*100)}%</span>`:''}${mat._notPerfumery?` <span class="badge-not-perfumery" title="Classified as outside perfumery scope by validation">Not perfumery &mdash; filtered out</span>`:''}</h3>
             ${mat.match_info?`<p class="card-match" style="margin:4px 0 0 18px">${esc(mat.match_info)}</p>`:""}
-            ${(_typeFuncJoined || displayRegulatory.length)?`<div class="card-meta-row">${_typeFuncJoined?`<div class="tag-row"><span class="tag-axis-label">Type</span><span class="tag-chips"><span class="badge-type">${_typeFuncJoined}</span></span></div>`:''}${displayRegulatory.length?`<div class="tag-row"><span class="tag-axis-label">Reg</span><span class="tag-chips">${displayRegulatory.map(r=>`<span class="badge-reg" title="${esc(REGULATORY_DESCRIPTIONS[r]||REGULATORY_LABELS[r]||r)}">${REGULATORY_LABELS[r]||r}</span>`).join('')}</span></div>`:''}</div>`:''}
+            ${(_typeFuncJoined || _noteBadge || displayRegulatory.length)?`<div class="card-meta-row">${_typeFuncJoined?`<div class="tag-row"><span class="tag-axis-label">Type</span><span class="tag-chips"><span class="badge-type">${_typeFuncJoined}</span>${_noteBadge}</span></div>`:(_noteBadge?`<div class="tag-row"><span class="tag-axis-label">Note</span><span class="tag-chips">${_noteBadge}</span></div>`:'')}${displayRegulatory.length?`<div class="tag-row"><span class="tag-axis-label">Reg</span><span class="tag-chips">${displayRegulatory.map(r=>`<span class="badge-reg" title="${esc(REGULATORY_DESCRIPTIONS[r]||REGULATORY_LABELS[r]||r)}">${REGULATORY_LABELS[r]||r}</span>`).join('')}</span></div>`:''}</div>`:''}
           </div>
           <span class="card-actions">
             ${''/* Pin/compare button removed in v196 — Compare(N) now reads
