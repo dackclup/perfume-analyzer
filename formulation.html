@@ -1113,9 +1113,9 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      of these three scripts touch PERFUMERY_DATA at parse time, so they
      stay synchronous; the materials database alone has been hoisted to
      async fetch. -->
-<script src="taxonomy.js?v=2026-04-29-v284"></script>
-<script src="formulation_data.js?v=2026-04-29-v284"></script>
-<script src="formulation_engine.js?v=2026-04-29-v284"></script>
+<script src="taxonomy.js?v=2026-04-29-v285"></script>
+<script src="formulation_data.js?v=2026-04-29-v285"></script>
+<script src="formulation_engine.js?v=2026-04-29-v285"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). Same bootstrap pattern as index.html:
@@ -1124,7 +1124,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      is ready. -->
 <script>
 (function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v284';
+  const DATA_VERSION = '2026-04-29-v285';
   const overlay = document.createElement('div');
   overlay.id = 'app-loading';
   overlay.setAttribute('role', 'status');
@@ -1144,14 +1144,26 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
     .then(data => {
       window.PERFUMERY_DATA = data;
       window.DATA_VERSION   = DATA_VERSION;
-      const inert = document.getElementById('app-init');
-      if (inert) {
-        const fresh = document.createElement('script');
-        fresh.textContent = inert.textContent;
-        inert.parentNode.replaceChild(fresh, inert);
+      // If the HTML parser is still working on the body (super-fast
+      // cache hit during a slow parse), defer to DOMContentLoaded so
+      // getElementById returns the inert script rather than null —
+      // otherwise the app-init block never executes and the page
+      // sits forever on the loading overlay.
+      const activate = () => {
+        const inert = document.getElementById('app-init');
+        if (inert) {
+          const fresh = document.createElement('script');
+          fresh.textContent = inert.textContent;
+          inert.parentNode.replaceChild(fresh, inert);
+        }
+        const ov = document.getElementById('app-loading');
+        if (ov) ov.remove();
+      };
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', activate, { once: true });
+      } else {
+        activate();
       }
-      const ov = document.getElementById('app-loading');
-      if (ov) ov.remove();
     })
     .catch(err => {
       console.error('[app-boot] failed to load materials.json:', err);
@@ -1162,16 +1174,33 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 </script>
 <script type="text/x-app-init" id="app-init">
 // ===== Data Layer =====
+// Defensive: PERFUMERY_DATA is set by the bootstrap before this script
+// runs, but the .perfumery_db / .trade_names keys could theoretically
+// be missing if a corrupted JSON is served (or if a future migration
+// changes the shape). Guard each access so a malformed payload prints
+// a clear error in the console instead of an opaque "Cannot read
+// properties of undefined" cascade that derails the whole tab.
 const DB = {};
-PERFUMERY_DATA.perfumery_db.forEach(e => { DB[e.cas] = e; });
+const _matsRaw = (window.PERFUMERY_DATA && Array.isArray(window.PERFUMERY_DATA.perfumery_db))
+  ? window.PERFUMERY_DATA.perfumery_db : [];
+if (!_matsRaw.length) {
+  console.error('[boot] PERFUMERY_DATA.perfumery_db missing or empty — aborting init.');
+}
+_matsRaw.forEach(e => { if (e && e.cas) DB[e.cas] = e; });
 
-// Build name lookup indexes
+// Build name lookup indexes. Skip rows missing a name — pre-v284 the
+// migrated JSON had no such rows, but the incremental updater may
+// land a sparse stub before the perfumer fills curated fields.
 const NAME_TO_CAS = {};
 for (const [cas, entry] of Object.entries(DB)) {
-  NAME_TO_CAS[entry.name.toLowerCase()] = cas;
-  for (const syn of entry.synonyms || []) NAME_TO_CAS[syn.toLowerCase()] = cas;
+  if (entry && typeof entry.name === 'string' && entry.name) {
+    NAME_TO_CAS[entry.name.toLowerCase()] = cas;
+  }
+  for (const syn of entry.synonyms || []) {
+    if (typeof syn === 'string' && syn) NAME_TO_CAS[syn.toLowerCase()] = cas;
+  }
 }
-const TRADES = PERFUMERY_DATA.trade_names;
+const TRADES = (window.PERFUMERY_DATA && window.PERFUMERY_DATA.trade_names) || {};
 
 // ===== Language Toggle (TH/EN) =====
 const LANG_FORM = {
