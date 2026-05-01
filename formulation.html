@@ -250,6 +250,27 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .mat-total .pct-val.under { color:var(--warn); }
 .mat-total .pct-val.ok { color:var(--success); }
 
+/* Compare-modal diff highlighting. Row background tracks the diff status so
+   added / removed / changed materials are unmistakable at a glance. Delta
+   arrows colored by direction independently of the row highlight. */
+.diff-added   { background:rgba(34,197,94,0.12); }
+.diff-removed { background:rgba(239,68,68,0.10); }
+.diff-removed td:not(:last-child) { text-decoration:line-through; color:var(--text2); }
+.diff-changed { background:rgba(245,158,11,0.10); }
+.diff-arrow      { font-weight:600; font-family:'IBM Plex Mono',monospace; }
+.diff-arrow.up   { color:var(--success); }
+.diff-arrow.down { color:var(--danger); }
+.diff-arrow.flat { color:var(--text2); }
+
+/* Scientific Metrics comparison — side-by-side cards under the diff table. */
+.cmp-metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+.cmp-metric-card  { padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--bg2); }
+.cmp-metric-card.winner { border-color:var(--success); box-shadow:inset 0 0 0 1px var(--success); }
+.cmp-metric-label { font-size:0.72em; color:var(--text2); text-transform:uppercase; letter-spacing:0.04em; }
+.cmp-metric-value { font-size:1.15em; font-weight:600; font-family:'IBM Plex Mono',monospace; margin-top:2px; }
+.cmp-winner-pill  { display:inline-block; font-size:0.65em; padding:1px 6px; border-radius:8px; background:var(--success); color:#fff; font-weight:600; margin-left:6px; vertical-align:2px; }
+.cmp-section-h    { font-size:0.78em; color:var(--text2); text-transform:uppercase; letter-spacing:0.04em; margin:14px 0 4px; }
+
 /* Brief longevity progress — appears under Total when materials exist and the
    brief's Longevity Target can be compared to estimateLongevity().totalHours.
    Yellow/orange when under target, green w/ ✓ when at-or-above. */
@@ -1089,10 +1110,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v282"></script>
-<script src="perfumery_data.js?v=2026-04-29-v282"></script>
-<script src="formulation_data.js?v=2026-04-29-v282"></script>
-<script src="formulation_engine.js?v=2026-04-29-v282"></script>
+<script src="taxonomy.js?v=2026-04-29-v283"></script>
+<script src="perfumery_data.js?v=2026-04-29-v283"></script>
+<script src="formulation_data.js?v=2026-04-29-v283"></script>
+<script src="formulation_engine.js?v=2026-04-29-v283"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -4973,45 +4994,106 @@ document.getElementById('btnSave').addEventListener('click', () => {
   showToast({ message: 'Saved "' + name + '"', variant: 'success' });
 });
 
-document.getElementById('savedFormulas').addEventListener('change', () => {
-  const idx = document.getElementById('savedFormulas').value;
-  if (idx === '') return;
+// Seamlessly switch the workspace to a saved formula. Returns true on success.
+// The dropdown's change handler and the Compare-modal "Make Current" buttons
+// both call this so every entry path performs the same state reset — analysis
+// tabs (GC-MS selection, mood targets, map inspector / filters / search) all
+// belong to the *previous* formula and must not survive into the next one,
+// otherwise users see ghost selections referencing materials that aren't even
+// in the new formula.
+function seamlessLoadFormula(savedIdx) {
+  const idxNum = parseInt(savedIdx, 10);
+  if (Number.isNaN(idxNum)) return false;
   const saved = loadSaved();
-  const formula = saved[parseInt(idx)];
-  if (!formula) return;
+  const formula = saved[idxNum];
+  if (!formula) return false;
 
   let materials, settings, carriers;
   if (formula.versions) {
     const ver = formula.versions[formula.currentVersion || 0];
     materials = ver.materials;
-    settings = ver.settings;
-    carriers = ver.carriers;
+    settings  = ver.settings;
+    carriers  = ver.carriers;
   } else {
     materials = formula.materials;
-    settings = formula.settings;
-    carriers = formula.carriers;
+    settings  = formula.settings;
+    carriers  = formula.carriers;
   }
 
+  // ── Clear per-tab module state so analysis views start fresh. Each
+  // entry below was carrying a CAS / filter / chart from the previous
+  // formula and would leak in without these resets. The chart instances
+  // themselves are destroyed by their own renderers on next paint, so we
+  // only need to drop the *selection* state that points into them.
+  _gcmsSelectedCas = null;
+  _moodTargets.length = 0;
+  _mapInspectorCas = null;
+  _mapFamilyFilter.clear();
+  _mapSearchQuery = '';
+  _mapShowLabels = true;
+  _mapLabelDefaultApplied = false;
+  formulation._lastWarnedMatCount = null;
+  _pyramidFamilyOverride = null;
+
+  // ── Replace materials + carriers + locks. Order matters: clear locks
+  // first so reapplying carriers below doesn't preserve any lock from
+  // the previous formula keyed by a CAS that happens to recur.
+  lockedMaterials.clear();
+  lockedCarriers.clear();
   formulation.materials = [];
   for (const m of materials) {
-    formulation.materials.push({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data || {} });
+    formulation.materials.push({
+      cas: m.cas, name: m.name, pct: m.pct,
+      dilution: m.dilution || 100,
+      dilutionSolvent: m.dilutionSolvent || '',
+      data: m.data || {},
+    });
   }
-  // Restore carriers
-  carrierMaterials.length = 0; lockedCarriers.clear(); lockedMaterials.clear();
+  carrierMaterials.length = 0;
   if (Array.isArray(carriers)) {
-    carriers.forEach(c => carrierMaterials.push({ cas: c.cas, name: c.name, pct: c.pct }));
+    for (const c of carriers) carrierMaterials.push({ cas: c.cas, name: c.name, pct: c.pct });
   }
+
+  // ── Restore workspace settings. Each control fires its downstream
+  // listeners as a side effect of value mutation, but we don't dispatch
+  // change events here — onChange() below performs the single full
+  // re-render so we don't double-paint.
   if (settings) {
     const s = settings;
     if (s.categoryId) document.getElementById('productCategory').value = s.categoryId;
-    if (s.fragPct) { document.getElementById('fragPct').value = s.fragPct; document.getElementById('fragPctOut').textContent = s.fragPct + '%'; updatePresetHighlight(); }
-    if (s.tempC) { document.getElementById('tempSlider').value = s.tempC; document.getElementById('tempOut').innerHTML = s.tempC + ' &deg;C'; }
-    if (s.carrier) document.getElementById('carrierSelect').value = s.carrier;
-    if (s.batchSize) document.getElementById('batchSize').value = s.batchSize;
-    if (s.batchUnit) document.getElementById('batchUnit').value = s.batchUnit;
+    if (s.fragPct) {
+      document.getElementById('fragPct').value = s.fragPct;
+      document.getElementById('fragPctOut').textContent = s.fragPct + '%';
+      try { updatePresetHighlight(); } catch (_) {}
+    }
+    if (s.tempC) {
+      document.getElementById('tempSlider').value = s.tempC;
+      const tOut = document.getElementById('tempOut');
+      if (tOut) tOut.innerHTML = s.tempC + ' &deg;C';
+    }
+    if (s.carrier)   document.getElementById('carrierSelect').value = s.carrier;
+    if (s.batchSize) document.getElementById('batchSize').value     = s.batchSize;
+    if (s.batchUnit) document.getElementById('batchUnit').value     = s.batchUnit;
   }
+
+  // ── Refresh the saved-formula dropdown so the UI marker stays in sync
+  // (Compare-modal "Make Current" doesn't go through the dropdown's own
+  // change event).
+  const dropdown = document.getElementById('savedFormulas');
+  if (dropdown) dropdown.value = String(idxNum);
+
+  // ── Trigger every render. onChange() handles renderMaterialList +
+  // renderCarrierList + renderActiveTab — the active analysis tab is
+  // recomputed against the new formula and stale chart data is dropped.
   formulation.onChange();
   storeOriginalPcts();
+  return true;
+}
+
+document.getElementById('savedFormulas').addEventListener('change', () => {
+  const idx = document.getElementById('savedFormulas').value;
+  if (idx === '') return;
+  seamlessLoadFormula(idx);
 });
 
 // ===== Manage Saved Formulas Modal =====
@@ -6094,23 +6176,161 @@ document.getElementById('compareRun').addEventListener('click', () => {
     if (!f) return [];
     return f.versions ? f.versions[f.currentVersion || 0].materials : (f.materials || []);
   }
+  function getLabel(idx) {
+    if (idx === '__current__') return 'Current Formulation';
+    const f = saved[parseInt(idx)];
+    return f ? f.name : 'Formula';
+  }
 
   const matsA = getMats(idxA);
   const matsB = getMats(idxB);
+  const labelA = getLabel(idxA);
+  const labelB = getLabel(idxB);
   const diffs = compareFormulations(matsA, matsB);
 
-  let html = '<table class="data-table"><thead><tr><th>Material</th><th>A %</th><th>B %</th><th>Delta</th><th>Status</th></tr></thead><tbody>';
+  // ─── Material-level diff table ─────────────────────────────────────────
+  // Row class tracks status so added/removed/changed get distinct background
+  // colour; a per-cell arrow column communicates direction of pct change.
+  let html = '<table class="data-table"><thead><tr><th>Material</th><th>' + escHtml(labelA) + ' %</th><th>' + escHtml(labelB) + ' %</th><th>Δ</th><th>Status</th></tr></thead><tbody>';
   for (const d of diffs) {
-    const cls = d.status === 'added' ? 'badge-ok' : d.status === 'removed' ? 'badge-danger' : d.status === 'changed' ? 'badge-warn' : '';
-    const deltaStr = d.delta > 0 ? '+' + d.delta : d.delta === 0 ? '0' : String(d.delta);
-    html += '<tr><td>' + escHtml(d.name) + '</td>';
-    html += '<td>' + (d.pctA || '-') + '</td><td>' + (d.pctB || '-') + '</td>';
-    html += '<td>' + deltaStr + '%</td>';
-    html += '<td><span class="badge ' + cls + '">' + d.status + '</span></td></tr>';
+    const rowCls = d.status === 'added' ? 'diff-added'
+                 : d.status === 'removed' ? 'diff-removed'
+                 : d.status === 'changed' ? 'diff-changed' : '';
+    const badgeCls = d.status === 'added' ? 'badge-ok'
+                   : d.status === 'removed' ? 'badge-danger'
+                   : d.status === 'changed' ? 'badge-warn' : '';
+    let arrow = '';
+    if (d.status !== 'unchanged' && d.delta !== 0) {
+      const dir = d.delta > 0 ? 'up' : 'down';
+      const sym = d.delta > 0 ? '↑' : '↓';
+      arrow = '<span class="diff-arrow ' + dir + '">' + sym + ' ' + (d.delta > 0 ? '+' : '') + d.delta + '%</span>';
+    } else if (d.status === 'unchanged') {
+      arrow = '<span class="diff-arrow flat">—</span>';
+    } else {
+      arrow = '<span class="diff-arrow flat">' + (d.delta > 0 ? '+' : '') + d.delta + '%</span>';
+    }
+    html += '<tr class="' + rowCls + '"><td>' + escHtml(d.name) + '</td>';
+    html += '<td>' + (d.pctA ? d.pctA + '%' : '—') + '</td><td>' + (d.pctB ? d.pctB + '%' : '—') + '</td>';
+    html += '<td>' + arrow + '</td>';
+    html += '<td><span class="badge ' + badgeCls + '">' + d.status + '</span></td></tr>';
   }
   html += '</tbody></table>';
-  document.getElementById('compareResults').innerHTML = html;
+
+  // ─── Scientific Metrics — side-by-side ─────────────────────────────────
+  // Metrics computed against the workspace's current category / fragPct /
+  // tempC so both formulas are evaluated under the same conditions. Engine
+  // calls are wrapped in try/catch so a malformed material doesn't tank the
+  // whole comparison panel.
+  html += '<div class="cmp-section-h">Scientific metrics</div>';
+  html += renderCompareMetrics(matsA, matsB, labelA, labelB);
+
+  // ─── Make-current actions ──────────────────────────────────────────────
+  // Either formula can be promoted to the workspace; "current" gets a no-op
+  // style. Buttons defer to seamlessLoadFormula() which clears stale per-tab
+  // state (gcms selection, mood targets, map inspector, locks, etc.) so
+  // analysis tabs don't carry data from the previous formula.
+  html += '<div class="cmp-section-h">Make Current</div>';
+  html += '<div style="display:flex;gap:8px">';
+  if (idxA !== '__current__') {
+    html += '<button class="btn btn-primary" style="flex:1" data-cmp-make="A" data-idx="' + escHtml(idxA) + '">Use ' + escHtml(labelA) + '</button>';
+  } else {
+    html += '<button class="btn" style="flex:1" disabled title="Already the current formulation">Use ' + escHtml(labelA) + ' (current)</button>';
+  }
+  if (idxB !== '__current__') {
+    html += '<button class="btn btn-primary" style="flex:1" data-cmp-make="B" data-idx="' + escHtml(idxB) + '">Use ' + escHtml(labelB) + '</button>';
+  } else {
+    html += '<button class="btn" style="flex:1" disabled title="Already the current formulation">Use ' + escHtml(labelB) + ' (current)</button>';
+  }
+  html += '</div>';
+
+  const resultsEl = document.getElementById('compareResults');
+  resultsEl.innerHTML = html;
+
+  // Wire Make Current buttons. Closing the modal after switch makes the
+  // refreshed Workspace + analysis tabs immediately visible to the user.
+  resultsEl.querySelectorAll('button[data-cmp-make]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = btn.getAttribute('data-idx');
+      if (seamlessLoadFormula(idx)) {
+        compareModal.classList.remove('open');
+      }
+    });
+  });
 });
+
+// Compute the scientific-metrics block for the Compare modal. Both formulas
+// are evaluated under the workspace's current category / fragPct / tempC so
+// the comparison is apples-to-apples — using each saved formula's own
+// settings would let unrelated fragPct deltas swing the longevity number
+// independently of formula composition.
+function renderCompareMetrics(matsA, matsB, labelA, labelB) {
+  const tempC   = parseInt(document.getElementById('tempSlider').value, 10) || 25;
+  const fragPct = validateFragPct(document.getElementById('fragPct').value);
+  const catId   = document.getElementById('productCategory').value;
+
+  function compute(mats) {
+    if (!mats || !mats.length) return { longevity: 0, allergenPpm: 0, dominant: [] };
+    let longevity = 0;
+    let allergenPpm = 0;
+    let dominant = [];
+    try {
+      const lon = estimateLongevity(mats, tempC);
+      longevity = lon.totalHours || 0;
+    } catch (_) {}
+    try {
+      const allergens = aggregateAllergens(mats, fragPct, catId);
+      allergenPpm = allergens.allergens.reduce((s, a) => s + (a.totalPpm || 0), 0);
+    } catch (_) {}
+    try {
+      const ov = buildOdorValueTable(mats, tempC);
+      dominant = ov.slice().sort((a, b) => (b.perceivedIntensity || 0) - (a.perceivedIntensity || 0))
+                   .slice(0, 3)
+                   .map(r => r.name + (r.note ? ' (' + r.note.split('/')[0].trim() + ')' : ''));
+    } catch (_) {}
+    return { longevity: roundN(longevity, 1), allergenPpm: roundN(allergenPpm, 1), dominant };
+  }
+
+  const A = compute(matsA);
+  const B = compute(matsB);
+
+  // Winner rules:
+  //   • Longevity — higher is "winner" (more hours of wear).
+  //   • Allergen ppm — LOWER is "winner" (cleaner formula). Ties → no winner.
+  //   • Dominant notes — listed side-by-side, no winner concept.
+  function pill(side) { return '<span class="cmp-winner-pill" title="Winner on this metric">Winner</span>' + (side === 'A' ? '' : ''); }
+  const longevWinA = A.longevity > B.longevity + 0.05;
+  const longevWinB = B.longevity > A.longevity + 0.05;
+  const allergenWinA = A.allergenPpm < B.allergenPpm - 0.5;
+  const allergenWinB = B.allergenPpm < A.allergenPpm - 0.5;
+
+  let h = '<div class="cmp-metrics-grid">';
+  // Longevity row
+  h += '<div class="cmp-metric-card' + (longevWinA ? ' winner' : '') + '">';
+  h += '<div class="cmp-metric-label">Longevity — ' + escHtml(labelA) + '</div>';
+  h += '<div class="cmp-metric-value">' + A.longevity.toFixed(1) + 'h' + (longevWinA ? pill('A') : '') + '</div></div>';
+  h += '<div class="cmp-metric-card' + (longevWinB ? ' winner' : '') + '">';
+  h += '<div class="cmp-metric-label">Longevity — ' + escHtml(labelB) + '</div>';
+  h += '<div class="cmp-metric-value">' + B.longevity.toFixed(1) + 'h' + (longevWinB ? pill('B') : '') + '</div></div>';
+  // Allergen row
+  h += '<div class="cmp-metric-card' + (allergenWinA ? ' winner' : '') + '">';
+  h += '<div class="cmp-metric-label">Total allergens — ' + escHtml(labelA) + '</div>';
+  h += '<div class="cmp-metric-value">' + A.allergenPpm.toFixed(1) + ' ppm' + (allergenWinA ? pill('A') : '') + '</div></div>';
+  h += '<div class="cmp-metric-card' + (allergenWinB ? ' winner' : '') + '">';
+  h += '<div class="cmp-metric-label">Total allergens — ' + escHtml(labelB) + '</div>';
+  h += '<div class="cmp-metric-value">' + B.allergenPpm.toFixed(1) + ' ppm' + (allergenWinB ? pill('B') : '') + '</div></div>';
+  // Dominant notes row
+  h += '<div class="cmp-metric-card">';
+  h += '<div class="cmp-metric-label">Top notes — ' + escHtml(labelA) + '</div>';
+  h += '<div style="font-size:0.85em;line-height:1.4;margin-top:2px">' + (A.dominant.length ? A.dominant.map((n, i) => (i + 1) + '. ' + escHtml(n)).join('<br>') : '<span style="color:var(--text2)">no data</span>') + '</div></div>';
+  h += '<div class="cmp-metric-card">';
+  h += '<div class="cmp-metric-label">Top notes — ' + escHtml(labelB) + '</div>';
+  h += '<div style="font-size:0.85em;line-height:1.4;margin-top:2px">' + (B.dominant.length ? B.dominant.map((n, i) => (i + 1) + '. ' + escHtml(n)).join('<br>') : '<span style="color:var(--text2)">no data</span>') + '</div></div>';
+  h += '</div>';
+  // Context line — exposes the shared evaluation conditions so a user
+  // questioning the metrics can tie them back to their own settings.
+  h += '<p class="panel-desc" style="font-size:0.72em;margin-top:6px">Both formulas evaluated at <strong>' + tempC + '°C</strong>, <strong>' + fragPct + '%</strong> fragrance in product, <strong>' + escHtml(IFRA_CATEGORIES[catId]?.name || catId) + '</strong> category.</p>';
+  return h;
+}
 
 
 // ===== C1: Odor Map Renderer =====
