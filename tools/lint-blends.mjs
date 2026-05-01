@@ -7,7 +7,7 @@
 //   node tools/lint-blends.mjs --json     # structured JSON
 //   node tools/lint-blends.mjs --fix-dry  # preview suggested auto-fixes
 //
-// Checks against perfumery_data.js:
+// Checks against data/materials.json:
 //   (a) Self-reference    — material listed in its own blends_with
 //   (b) Unresolved labels — not canonical / synonym / trade / shorthand
 //                           / group-known; needs curation or shorthand
@@ -22,7 +22,7 @@ import path from "node:path";
 import url from "node:url";
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
-const DB_PATH = path.resolve(__dirname, "..", "perfumery_data.js");
+const DB_PATH = path.resolve(__dirname, "..", "data", "materials.json");
 
 // ── Resolution tables (mirror of the ones inlined in index.html)
 // Keep in sync with BLEND_SHORTHAND_TO_CAS / BLEND_GROUP_TO_FILTER.
@@ -44,9 +44,11 @@ const BLEND_GROUP_TOKENS = new Set([
   "musks","woods","aldehydes","aldehydic","amber",
 ]);
 
-// ── Load DB
+// ── Load DB. Pre-v284 source was a single-line `const PERFUMERY_DATA =
+// {...};` JS file; v284 hoisted the same object to data/materials.json
+// for clean diffs. Plain JSON.parse — no regex strip needed.
 const raw = fs.readFileSync(DB_PATH, "utf8");
-const data = JSON.parse(raw.replace(/^[\s\S]*?const PERFUMERY_DATA\s*=\s*/, "").replace(/;\s*$/, ""));
+const data = JSON.parse(raw);
 const db = data.perfumery_db;
 const trades = data.trade_names || {};
 

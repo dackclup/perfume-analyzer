@@ -1192,7 +1192,7 @@ html { scroll-behavior:smooth; }
      globals — and unlike PERFUMERY_DATA, the taxonomy file is small and
      pure-data so the sync block is unobservable. Bumping its ?v= reloads
      on both pages. -->
-<script src="taxonomy.js?v=2026-04-29-v284"></script>
+<script src="taxonomy.js?v=2026-04-29-v285"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). The bootstrap below fetches it async,
@@ -1202,7 +1202,7 @@ html { scroll-behavior:smooth; }
      <script src="perfumery_data.js"> tag has been removed. -->
 <script>
 (function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v284';
+  const DATA_VERSION = '2026-04-29-v285';
   // Loading overlay — sits above all content until init finishes. Uses
   // inline styles so it works before the page CSS has loaded; <style> in
   // a sibling element keeps the @keyframes alive.
@@ -1225,19 +1225,29 @@ html { scroll-behavior:smooth; }
     .then(data => {
       window.PERFUMERY_DATA = data;
       window.DATA_VERSION   = DATA_VERSION;
-      // Activate the inert app-init block. document.currentScript is the
-      // bootstrap; the target lives later in the body and was tagged with
-      // a non-standard type so the parser left it alone. Replacing the
-      // node with a fresh <script> of the same textContent runs it as if
-      // it had been a regular inline <script> on first parse.
-      const inert = document.getElementById('app-init');
-      if (inert) {
-        const fresh = document.createElement('script');
-        fresh.textContent = inert.textContent;
-        inert.parentNode.replaceChild(fresh, inert);
+      // Activate the inert app-init block. If the HTML parser is still
+      // working on the body (super-fast cache hit during a slow parse),
+      // defer to DOMContentLoaded so getElementById returns the element
+      // rather than null. document.currentScript is the bootstrap; the
+      // target lives later in the body and was tagged with a non-standard
+      // type so the parser left it alone. Replacing the node with a fresh
+      // <script> of the same textContent runs it as if it had been a
+      // regular inline <script> on first parse.
+      const activate = () => {
+        const inert = document.getElementById('app-init');
+        if (inert) {
+          const fresh = document.createElement('script');
+          fresh.textContent = inert.textContent;
+          inert.parentNode.replaceChild(fresh, inert);
+        }
+        const ov = document.getElementById('app-loading');
+        if (ov) ov.remove();
+      };
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', activate, { once: true });
+      } else {
+        activate();
       }
-      const ov = document.getElementById('app-loading');
-      if (ov) ov.remove();
     })
     .catch(err => {
       console.error('[app-boot] failed to load materials.json:', err);
@@ -1395,9 +1405,17 @@ function _clickLog(...args) {
 // Mirrors the data/materials.json cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the boot-script's DATA_VERSION at the top of this page.
-const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v284";
+const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v285";
+// Defensive: a corrupted JSON payload could land window.PERFUMERY_DATA
+// without the expected shape. Guard every access so a missing key
+// surfaces as a single clear error rather than a TDZ-style cascade.
+if (!window.PERFUMERY_DATA || !Array.isArray(window.PERFUMERY_DATA.perfumery_db)) {
+  console.error('[boot] PERFUMERY_DATA.perfumery_db missing — analyzer will render an empty DB.');
+}
 const DB = {};
-PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
+((window.PERFUMERY_DATA && window.PERFUMERY_DATA.perfumery_db) || []).forEach(entry => {
+  if (entry && entry.cas) DB[entry.cas] = entry;
+});
 // Inject DB count + version into the subtitle so users can verify
 // what they have loaded at a glance. Helps when browser cache serves
 // stale data — a mismatch between DATA_VERSION and the DB size is
@@ -1405,7 +1423,7 @@ PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 (function _showVersion() {
   const el = document.querySelector('.subtitle');
   if (!el) return;
-  const n = PERFUMERY_DATA.perfumery_db.length;
+  const n = Object.keys(DB).length;
   el.textContent = el.textContent.trim() + ' · ' + n + ' materials · ' + DATA_VERSION;
 })();
 // Schema hygiene (Pass: Schema/Data Hygiene P0):
@@ -1421,7 +1439,7 @@ PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
   const ODOR_KEYS    = ['description','type','strength'];
   const PERF_KEYS    = ['tenacity','duration'];
   const SAFETY_KEYS  = ['ifra','usage'];
-  for (const e of PERFUMERY_DATA.perfumery_db) {
+  for (const e of Object.values(DB)) {
     for (const k of SCALAR_KEYS) if (e[k] === '') e[k] = null;
     if (e.odor)        for (const k of ODOR_KEYS)   if (e.odor[k] === '')        e.odor[k] = null;
     if (e.performance) for (const k of PERF_KEYS)   if (e.performance[k] === '') e.performance[k] = null;
@@ -1435,7 +1453,7 @@ PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // data quality before a release.
 (function _validateDBSchema() {
   const issues = { noCas: [], noName: [], noOdor: 0, noNote: 0, noSafety: 0, total: 0 };
-  for (const e of PERFUMERY_DATA.perfumery_db) {
+  for (const e of Object.values(DB)) {
     issues.total++;
     if (!e.cas)  issues.noCas.push(e.name || '?');
     if (!e.name) issues.noName.push(e.cas || '?');
@@ -1458,8 +1476,8 @@ PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
     });
   }
 })();
-const TRADES = PERFUMERY_DATA.trade_names;
-const MIXTURES = new Set(PERFUMERY_DATA.mixture_cas);
+const TRADES = (window.PERFUMERY_DATA && window.PERFUMERY_DATA.trade_names) || {};
+const MIXTURES = new Set((window.PERFUMERY_DATA && window.PERFUMERY_DATA.mixture_cas) || []);
 
 // Build lowercase name→CAS reverse lookup. Indexes both the canonical
 // entry.name AND every synonym so _applyLocalMatch can resolve any form
@@ -6514,11 +6532,11 @@ window.closeWheelModal = function () {
 // when the user opens the modal. Helps content editors spot gaps
 // (e.g. "13% of rows are missing odor descriptors") before a release.
 function _computeDataQuality() {
-  const total = PERFUMERY_DATA.perfumery_db.length;
+  const total = Object.keys(DB).length;
   let noOdor = 0, noNote = 0, noSafety = 0, noPerf = 0, noBlends = 0;
   let noPrimary = 0, noFacets = 0, noFema = 0, noGhs = 0;
   let banned = 0, restricted = 0, allergen = 0;
-  for (const e of PERFUMERY_DATA.perfumery_db) {
+  for (const e of Object.values(DB)) {
     if (!e.odor || !e.odor.description) noOdor++;
     if (!e.note) noNote++;
     if (!e.safety || (!e.safety.ifra && !e.safety.usage)) noSafety++;

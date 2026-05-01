@@ -91,9 +91,17 @@ self.addEventListener('fetch', event => {
     // Stale-while-revalidate: serve cached copy instantly (so offline +
     // first-paint stay fast), and refresh the cache in the background.
     // The next visit gets the new bytes without an extra round-trip.
+    //
+    // ignoreSearch: true matches across cache-bust queries — install
+    // pre-caches `./data/materials.json` (no query) but the bootstrap
+    // requests `?v=2026-04-29-v284`. Without ignoreSearch the lookup
+    // misses and offline first-visit fails. Storage stays versioned
+    // (cache.put uses the request URL as-is), so each version's bytes
+    // live under their own key; the activate handler purges old caches
+    // when CACHE_VERSION rotates.
     event.respondWith(
       caches.open(CACHE_VERSION).then(cache =>
-        cache.match(req).then(cached => {
+        cache.match(req, { ignoreSearch: true }).then(cached => {
           const networked = fetch(req).then(res => {
             // Only cache successful, valid JSON responses
             if (res && res.ok) {
