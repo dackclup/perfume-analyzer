@@ -7624,7 +7624,7 @@ function sendToFormulator() {
   // Always open the new tab — even on write failure the user can
   // import manually from the formulator.
   try {
-    window.open('formulation.html', '_blank');
+    window.open('formulation.html', '_self');
   } catch (e) {
     console.error('sendToFormulator: window.open failed:', e);
   }
