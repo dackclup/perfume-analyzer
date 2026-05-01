@@ -1,0 +1,22 @@
+{
+  "material.primaryFamilies → taxonomy": 0,
+  "material.secondaryFamilies → taxonomy": 0,
+  "material.material_type → TYPE_VALUES": 0,
+  "material.source → SOURCE_VALUES": 0,
+  "material.regulatory → REGULATORY_VALUES": 0,
+  "material.functions → FUNCTION_VALUES": 0,
+  "material.uses → USE_VALUES": 0,
+  "taxonomy.subfamily orphans (no material)": 7,
+  "taxonomy.facet orphans (no material)": 23,
+  "IFRA_51_LIMITS cas → material": 0,
+  "material.blends_with → material": 83,
+  "material.blends_with bidirectional": 1586,
+  "trade_names → material exists by CAS": 0,
+  "mixture_cas → material exists": 0,
+  "mixture_cas with single-molecule formula": 0,
+  "duplicate CAS in DB": 0,
+  "CAS check-digit invalid": 27,
+  "NATURAL_ALLERGEN_COMPOSITION constituent → EU list": 3,
+  "ESTER_HYDROLYSIS pair integrity": 0,
+  "AROMACHOLOGY_SCORES → DB": 4
+}

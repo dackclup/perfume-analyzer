@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/dackclup/perfume-analyzer/schema/materials.schema.json",
+  "title": "perfumery materials database",
+  "description": "Authoritative shape for data/materials.json — enforced in CI by tools/lint-data.mjs.",
+  "type": "object",
+  "required": ["perfumery_db", "trade_names", "mixture_cas"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "version":   { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}-v\\d+$" },
+        "row_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "perfumery_db": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/Material" }
+    },
+    "trade_names": {
+      "type": "object",
+      "description": "Lowercase trade-name → CAS. Values MUST be CAS numbers (3-segment hyphenated digits with check-digit).",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^\\d{1,7}-\\d{2}-\\d$"
+      }
+    },
+    "mixture_cas": {
+      "type": "array",
+      "description": "CAS numbers of natural mixtures (essential oils / absolutes / extracts).",
+      "items": { "type": "string", "pattern": "^\\d{1,7}-\\d{2}-\\d$" },
+      "uniqueItems": true
+    }
+  },
+  "definitions": {
+    "Material": {
+      "type": "object",
+      "required": ["cas", "name"],
+      "additionalProperties": true,
+      "properties": {
+        "cas":     { "type": "string", "pattern": "^\\d{1,7}-\\d{2}-\\d$" },
+        "name":    { "type": "string", "minLength": 1 },
+        "fema":    { "type": "string" },
+        "iupac":   { "type": "string" },
+        "formula": { "type": "string" },
+        "weight":  { "type": "string" },
+        "smiles":  { "type": "string" },
+        "inchi":   { "type": "string" },
+        "synonyms": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "pubchem_url": { "type": "string" },
+        "pubchem_cid": { "type": "string", "pattern": "^\\d+$" },
+        "odor": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "description": { "type": "string" },
+            "type":        { "type": "string" },
+            "strength":    { "type": "string" }
+          }
+        },
+        "note":         { "type": "string" },
+        "performance":  {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "tenacity": { "type": "string" },
+            "duration": { "type": "string" }
+          }
+        },
+        "safety": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "ifra":  { "type": "string" },
+            "usage": { "type": "string" }
+          }
+        },
+        "blends_with": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "object",
+                "required": ["label"],
+                "additionalProperties": true,
+                "properties": {
+                  "label":    { "type": "string" },
+                  "cas":      { "type": "string", "pattern": "^\\d{1,7}-\\d{2}-\\d$" },
+                  "strength": { "type": "string" },
+                  "source":   { "type": "string" }
+                }
+              }
+            ]
+          }
+        },
+        "classification": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "primaryFamilies":   { "type": "array", "items": { "type": "string" } },
+            "secondaryFamilies": { "type": "array", "items": { "type": "string" } },
+            "facets":            { "type": "array", "items": { "type": "string" } },
+            "functions":         { "type": "array", "items": { "type": "string" } },
+            "regulatory":        { "type": "array", "items": { "type": "string" } },
+            "uses":              { "type": "array", "items": { "type": "string" } },
+            "material_type":     { "type": "string" },
+            "source":            { "type": "string" }
+          }
+        },
+        "ghs_codes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "boiling_point": { "type": ["number", "string", "null"] },
+        "density":       { "type": ["number", "string", "null"] },
+        "xlogp":         { "type": ["number", "string", "null"] }
+      }
+    }
+  }
+}
