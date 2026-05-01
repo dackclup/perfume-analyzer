@@ -250,6 +250,20 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 .mat-total .pct-val.under { color:var(--warn); }
 .mat-total .pct-val.ok { color:var(--success); }
 
+/* Brief longevity progress — appears under Total when materials exist and the
+   brief's Longevity Target can be compared to estimateLongevity().totalHours.
+   Yellow/orange when under target, green w/ ✓ when at-or-above. */
+.brief-longev { padding:6px 8px 8px; font-size:0.78em; }
+.brief-longev__line { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; gap:8px; }
+.brief-longev__label { color:var(--text2); font-weight:500; }
+.brief-longev__text { font-family:'IBM Plex Mono',monospace; font-weight:600; }
+.brief-longev__text.under { color:var(--warn); }
+.brief-longev__text.met   { color:var(--success); }
+.brief-longev__track { width:100%; height:6px; background:var(--bg2); border-radius:3px; overflow:hidden; }
+.brief-longev__fill { height:100%; transition:width 200ms ease-out, background-color 200ms ease-out; }
+.brief-longev__fill.under { background:var(--warn); }
+.brief-longev__fill.met   { background:var(--success); }
+
 /* Action buttons */
 .sidebar-actions { display:flex; gap:6px; margin-top:12px; }
 .btn { padding:8px 14px; border:1px solid var(--border); border-radius:8px; background:var(--bg2); color:var(--text); font-family:inherit; font-size:0.82em; cursor:pointer; font-weight:500; transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease),color var(--dur) var(--ease),box-shadow var(--dur) var(--ease),transform var(--dur) var(--ease); }
@@ -808,6 +822,17 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
       <span class="pct-val" id="matTotalPct">0%</span>
     </div>
 
+    <!-- Longevity vs Brief target — populated by renderMaterialList -->
+    <div class="brief-longev" id="briefLongevBar" style="display:none">
+      <div class="brief-longev__line">
+        <span class="brief-longev__label">Longevity</span>
+        <span id="briefLongevText" class="brief-longev__text">—</span>
+      </div>
+      <div class="brief-longev__track" aria-hidden="true">
+        <div id="briefLongevFill" class="brief-longev__fill"></div>
+      </div>
+    </div>
+
     <!-- Action Buttons — compact.
          + Add sits above the action row using the same dashed style as
          the Carrier section's add button so both list-add controls
@@ -1064,10 +1089,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v281"></script>
-<script src="perfumery_data.js?v=2026-04-29-v281"></script>
-<script src="formulation_data.js?v=2026-04-29-v281"></script>
-<script src="formulation_engine.js?v=2026-04-29-v281"></script>
+<script src="taxonomy.js?v=2026-04-29-v282"></script>
+<script src="perfumery_data.js?v=2026-04-29-v282"></script>
+<script src="formulation_data.js?v=2026-04-29-v282"></script>
+<script src="formulation_engine.js?v=2026-04-29-v282"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1746,6 +1771,27 @@ function calcWeighAmount(pureAmount, dilution, dilutionSolventCas) {
 // Cache empty state HTML before first render overwrites it
 const _emptyStateHTML = document.getElementById('matEmpty') ? document.getElementById('matEmpty').outerHTML : '<div class="empty-state"><p>No materials yet</p></div>';
 
+// Read the Creative Brief's targets straight off the form controls — they
+// keep their values when the modal is closed, so this is the source of
+// truth for "what did the user ask for". Used by:
+//   • Workspace material count (warns when count > maxIngredients)
+//   • Workspace longevity bar (compares estimateLongevity against longevityH)
+//   • Mood radar overlay (target dataset for selected moods)
+// Returns null when the brief controls aren't in the DOM (defensive).
+function getBriefTargets() {
+  const maxEl  = document.getElementById('briefMaxIngredients');
+  const longEl = document.getElementById('briefLongevity');
+  if (!maxEl || !longEl) return null;
+  const maxIngredients = parseInt(maxEl.value, 10);
+  const longevityH = parseInt(longEl.value, 10);
+  const moods = [...document.querySelectorAll('#briefMoods input:checked')].map(c => c.value);
+  return {
+    maxIngredients: isNaN(maxIngredients) ? null : maxIngredients,
+    longevityH: isNaN(longevityH) ? null : longevityH,
+    moods,
+  };
+}
+
 function renderMaterialList() {
   const list = document.getElementById('matList');
   const total = document.getElementById('matTotal');
@@ -1755,13 +1801,34 @@ function renderMaterialList() {
     list.innerHTML = _emptyStateHTML;
     total.style.display = 'none';
     count.textContent = '(0)';
+    count.style.color = '';
     const pctEl = document.getElementById('matTotalPct');
     pctEl.textContent = '0%';
     pctEl.className = 'pct-val under';
+    const longevBar = document.getElementById('briefLongevBar');
+    if (longevBar) longevBar.style.display = 'none';
     return;
   }
 
-  count.textContent = `(${formulation.materials.length})`;
+  // Material count vs Creative Brief's Max Ingredients target. Over-budget
+  // count flips red + appends a "+N over" tag and shows a one-time toast so
+  // the violation is unmissable but doesn't spam if the user keeps adding.
+  const _briefTargets = getBriefTargets();
+  const _matLen = formulation.materials.length;
+  const _maxIng = _briefTargets ? _briefTargets.maxIngredients : null;
+  if (_maxIng != null && _matLen > _maxIng) {
+    const over = _matLen - _maxIng;
+    count.innerHTML = `(<span style="color:var(--danger);font-weight:600">${_matLen}</span>) <span class="badge badge-danger" style="font-size:0.65em;padding:1px 6px;font-weight:600;vertical-align:1px" title="Brief target was ${_maxIng}; ${over} extra material${over === 1 ? '' : 's'}. Trim the formula or raise the brief's Max Ingredients.">Exceeded brief limit (+${over})</span>`;
+    count.style.color = '';
+    if (typeof showToast === 'function' && _matLen !== formulation._lastWarnedMatCount) {
+      showToast({ message: `Materials (${_matLen}) exceed brief limit (${_maxIng}). Trim ${over} or raise brief target.`, variant: 'warn', timeout: 4000 });
+      formulation._lastWarnedMatCount = _matLen;
+    }
+  } else {
+    count.textContent = `(${_matLen})`;
+    count.style.color = '';
+    formulation._lastWarnedMatCount = null;
+  }
   const batchSize = validateBatchSize(document.getElementById('batchSize').value);
   const batchUnit = document.getElementById('batchUnit').value;
   const fragPct = validateFragPct(document.getElementById('fragPct').value);
@@ -1887,6 +1954,38 @@ function renderMaterialList() {
   }
   pctEl.className = 'pct-val ' + (pct > 100 ? 'over' : pct < 100 ? 'under' : 'ok');
   total.style.display = 'flex';
+
+  // Longevity vs brief target. Engine returns totalHours = base-tier fade time
+  // (90 % evaporation), which we treat as the formula's effective wear time.
+  // Hidden when no brief target is set.
+  const longevBar = document.getElementById('briefLongevBar');
+  if (longevBar) {
+    const targetH = _briefTargets ? _briefTargets.longevityH : null;
+    if (targetH != null && typeof estimateLongevity === 'function') {
+      try {
+        const tempC = parseInt(document.getElementById('tempSlider').value, 10) || 25;
+        const lon = estimateLongevity(formulation.materials, tempC);
+        const actualH = lon.totalHours || 0;
+        const ratio = targetH > 0 ? Math.min(2, actualH / targetH) : 0;
+        const met = actualH >= targetH;
+        const fillPct = Math.min(100, ratio * 100);
+        const fillEl = document.getElementById('briefLongevFill');
+        const txtEl  = document.getElementById('briefLongevText');
+        fillEl.style.width = fillPct.toFixed(1) + '%';
+        fillEl.className = 'brief-longev__fill ' + (met ? 'met' : 'under');
+        txtEl.className  = 'brief-longev__text '  + (met ? 'met' : 'under');
+        txtEl.textContent = (met ? '✓ ' : '') + actualH.toFixed(1) + 'h / ' + targetH + 'h target';
+        longevBar.style.display = '';
+        longevBar.title = met
+          ? 'Predicted base-note fade ≥ brief target. The formula will wear at least ' + targetH + 'h.'
+          : 'Predicted base-note fade is ' + (targetH - actualH).toFixed(1) + 'h short of the brief target. Add more base-tier materials or increase their %.';
+      } catch (_) {
+        longevBar.style.display = 'none';
+      }
+    } else {
+      longevBar.style.display = 'none';
+    }
+  }
 
   // Trigger carrier list update (carrier budget depends on dilution solvent)
   renderCarrierList();
@@ -4275,23 +4374,50 @@ function renderMoodTab() {
   const canvas = document.getElementById('moodRadar');
   if (!canvas) return;
   if (_moodChart) _moodChart.destroy();
+
+  // Build target overlay from the Creative Brief's Mood Targets checkboxes.
+  // Each selected mood becomes a 5/5 spike on its axis; unselected → 0. The
+  // resulting polygon is the "ideal shape" the formula is aiming for, drawn
+  // dashed and faintly grey so the solid current-profile reads as the
+  // primary signal but the gap to target is visible at a glance.
+  const briefMoodsTarget = (typeof getBriefTargets === 'function')
+    ? (getBriefTargets()?.moods || []) : [];
+  const targetData = mood.dimensions.map(d => briefMoodsTarget.includes(d) ? 5 : 0);
+  const hasTarget = briefMoodsTarget.length > 0;
+
+  const datasets = [{
+    label: 'Current formula',
+    data: mood.profile,
+    borderColor: 'rgba(59,130,246,0.9)',
+    backgroundColor: 'rgba(59,130,246,0.18)',
+    borderWidth: 2,
+    pointRadius: 4,
+    order: 1,
+  }];
+  if (hasTarget) {
+    datasets.push({
+      label: 'Brief target (' + briefMoodsTarget.join(', ') + ')',
+      data: targetData,
+      borderColor: 'rgba(120,120,120,0.9)',
+      backgroundColor: 'rgba(120,120,120,0.10)',
+      borderWidth: 2,
+      borderDash: [6, 4],
+      pointRadius: 3,
+      pointStyle: 'rectRot',
+      order: 2,
+    });
+  }
+
   _moodChart = new Chart(canvas, {
     type: 'radar',
     data: {
       labels: mood.dimensions.map(d => d.charAt(0).toUpperCase() + d.slice(1)),
-      datasets: [{
-        label: 'Mood Profile',
-        data: mood.profile,
-        borderColor: 'rgba(59,130,246,0.8)',
-        backgroundColor: 'rgba(59,130,246,0.15)',
-        borderWidth: 2,
-        pointRadius: 4,
-      }],
+      datasets,
     },
     options: {
       responsive: true,
       scales: { r: { beginAtZero: true, max: 5, ticks: { stepSize: 1, font: { size: 10 } } } },
-      plugins: { legend: { display: false } },
+      plugins: { legend: { display: hasTarget, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
     },
   });
 }
@@ -5068,6 +5194,23 @@ document.getElementById('btnBrief').addEventListener('click', () => {
 });
 document.getElementById('briefClose').addEventListener('click', () => briefModal.classList.remove('open'));
 briefModal.addEventListener('click', e => { if (e.target === briefModal) briefModal.classList.remove('open'); });
+
+// Brief target → Workspace bindings. When the user nudges a target while the
+// modal is open, the Workspace count warning, Longevity bar, and Mood radar
+// overlay all need to refresh so the comparison stays live.
+['briefMaxIngredients', 'briefLongevity'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => { try { renderMaterialList(); } catch (_) {} });
+});
+document.querySelectorAll('#briefMoods input').forEach(cb => {
+  cb.addEventListener('change', () => {
+    // Mood radar lives on the Mood tab; only re-render if it's the active one.
+    try {
+      const active = document.querySelector('.tab-panel.active');
+      if (active && active.id === 'tab-mood') renderMoodTab();
+    } catch (_) {}
+  });
+});
 
 // Sync Creative Brief's Product Category → main workspace Product Category
 // so downstream filters (IFRA caps, carriers, Add-modal search) stay aligned
