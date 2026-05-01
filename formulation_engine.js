@@ -3054,11 +3054,29 @@ function estimateLongevity(materials, tempC) {
   const midFade = findFadeTime(tierTotals(tierConc.middle));
   const baseFade = findFadeTime(tierTotals(tierConc.base));
 
+  // Audit #7 — perception-weighted longevity floor.
+  // The 10% threshold inside findFadeTime drops the projected total to
+  // 0.0h whenever every tier's initial concentration sits below the
+  // simulator's noise floor — but in practice a small amount of base
+  // material is still olfactively detectable for hours. Apply a floor
+  // keyed off each tier's initial share so the total reflects the
+  // longest-lasting tier present, not the simulator's first crossing.
+  const tierShare = arr => arr.reduce((s, c) => s + (c[0] || 0), 0);
+  const topShare    = tierShare(tierConc.top);
+  const middleShare = tierShare(tierConc.middle);
+  const baseShare   = tierShare(tierConc.base);
+  let floorHours = 0;
+  if (topShare    >= 0.005) floorHours = Math.max(floorHours, 1.0);
+  if (middleShare >= 0.005) floorHours = Math.max(floorHours, 2.5);
+  if (baseShare   >= 0.005) floorHours = Math.max(floorHours, 4.5);
+  floorHours = Math.min(floorHours, 12); // cap to avoid wishful thinking
+  const totalHours = roundN(Math.max(baseFade, floorHours), 1);
+
   return {
     topPhase:   { start: 0, end: roundN(topFade, 1), label: 'Top notes' },
     heartPhase: { start: roundN(topFade * 0.5, 1), end: roundN(midFade, 1), label: 'Heart notes' },
     basePhase:  { start: roundN(midFade * 0.5, 1), end: roundN(baseFade, 1), label: 'Base notes' },
-    totalHours: roundN(baseFade, 1),
+    totalHours,
   };
 }
 
