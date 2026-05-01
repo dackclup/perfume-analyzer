@@ -5232,6 +5232,36 @@ function _enrichPubchem(mat, cas) {
     ]);
     _applyPubchemProps(mat, propsRes.status==='fulfilled'?propsRes.value:null, synsRes.status==='fulfilled'?synsRes.value:null, descRes.status==='fulfilled'?descRes.value:null);
     try { _computeClassification(mat); } catch(e) { console.warn('_computeClassification (enrich):', e); }
+    // Audit #3 — index PubChem-only results into FILTER_CACHE so the
+    // chip-strip filters apply to externally-fetched cards. Without
+    // this entry the filter pass at line ~3736 misses the row entirely
+    // (FILTER_CACHE.has(cas) === false) and the card always shows
+    // through the filter regardless of axis selections.
+    try {
+      if (cas && !DB[cas]) {
+        const rec = mat.record || {};
+        const dbShape = {
+          name: rec.names?.canonical || '',
+          synonyms: rec.names?.synonyms || [],
+          fema: rec.identifiers?.fema || null,
+          note: rec.perfumery?.note || null,
+          odor: {
+            description: rec.perfumery?.odor_description || null,
+            type: rec.perfumery?.odor_type || null,
+            strength: rec.perfumery?.odor_strength || null,
+          },
+          safety: {
+            ifra: rec.safety?.ifra_guideline || null,
+            usage: rec.safety?.usage_levels || null,
+          },
+          performance: {
+            tenacity: rec.perfumery?.tenacity || null,
+          },
+        };
+        FILTER_CACHE.set(cas, _buildFilterRecord(cas, dbShape));
+        if (typeof _clickLog === 'function') _clickLog('FILTER_CACHE +=', cas, '(now', FILTER_CACHE.size + ')');
+      }
+    } catch (cacheErr) { console.warn('[audit#3] FILTER_CACHE.set failed for ' + cas + ':', cacheErr); }
     renderResults(); prefetchAll();
     fetchWithTimeout('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/'+cid+'/JSON?heading=GHS+Classification', {}, TIMEOUTS.pubchemGhs)
       .then(r=>r.json()).then(d => {
