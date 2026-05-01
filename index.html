@@ -12,10 +12,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Discourage aggressive caching of index.html so users get the
-     latest `perfumery_data.js?v=…` cache-buster URL on every visit.
+     latest `data/materials.json?v=…` cache-buster URL on every visit.
      Without these hints, GitHub Pages' default caching let stale
      index.html continue referencing old cache-busters, so new DB
-     content never reached returning users. Sub-resources (JS/CSS)
+     content never reached returning users. Sub-resources (JS / JSON)
      are still cached via their own version-query-strings, so the
      load cost stays minimal — only the small HTML revalidates. -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1187,16 +1187,66 @@ html { scroll-behavior:smooth; }
   </div>
 </div>
 
-<!-- Shared Edwards-2021 taxonomy — loaded before perfumery_data.js
-     so the inline script below can reference the MAIN_FAMILIES /
-     MAIN_FAMILY_TO_SUBS / SUB_FAMILY_TO_MAIN globals directly. The
-     formulation page loads the same file. Bumping its ?v= forces a
-     reload on both pages. -->
-<script src="taxonomy.js?v=2026-04-25-rebuild-v216"></script>
-<!-- Bump ?v= on every deploy that touches perfumery_data.js so browsers
-     re-download instead of serving stale JS. -->
-<script src="perfumery_data.js?v=2026-04-25-rebuild-v216"></script>
+<!-- Shared Edwards-2021 taxonomy. Loaded synchronously because the inline
+     init below references MAIN_FAMILIES / MAIN_FAMILY_TO_SUBS / SUB_FAMILY_TO_MAIN
+     globals — and unlike PERFUMERY_DATA, the taxonomy file is small and
+     pure-data so the sync block is unobservable. Bumping its ?v= reloads
+     on both pages. -->
+<script src="taxonomy.js?v=2026-04-29-v284"></script>
+
+<!-- Materials database now ships as data/materials.json (pretty-printed,
+     sorted, version-controlled). The bootstrap below fetches it async,
+     populates window.PERFUMERY_DATA, then activates the inline init below
+     by re-inserting the inert <script id="app-init" type="text/x-app-init">
+     block with a real type so it runs in global scope. The legacy
+     <script src="perfumery_data.js"> tag has been removed. -->
 <script>
+(function _appBoot() {
+  const DATA_VERSION = '2026-04-29-v284';
+  // Loading overlay — sits above all content until init finishes. Uses
+  // inline styles so it works before the page CSS has loaded; <style> in
+  // a sibling element keeps the @keyframes alive.
+  const overlay = document.createElement('div');
+  overlay.id = 'app-loading';
+  overlay.setAttribute('role', 'status');
+  overlay.setAttribute('aria-live', 'polite');
+  overlay.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0b0e15;color:#e6e9ee;font-family:system-ui,-apple-system,sans-serif;font-size:1em;z-index:99999';
+  overlay.innerHTML =
+    '<div style="text-align:center"><div style="width:36px;height:36px;border:3px solid #2a3340;border-top-color:#5b9cf2;border-radius:50%;animation:appBootSpin 800ms linear infinite;margin:0 auto 14px"></div>' +
+    '<div id="app-loading-msg">Loading database&hellip;</div></div>' +
+    '<style>@keyframes appBootSpin{to{transform:rotate(360deg)}}</style>';
+  document.documentElement.appendChild(overlay);
+
+  fetch('data/materials.json?v=' + encodeURIComponent(DATA_VERSION), { cache: 'default' })
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(data => {
+      window.PERFUMERY_DATA = data;
+      window.DATA_VERSION   = DATA_VERSION;
+      // Activate the inert app-init block. document.currentScript is the
+      // bootstrap; the target lives later in the body and was tagged with
+      // a non-standard type so the parser left it alone. Replacing the
+      // node with a fresh <script> of the same textContent runs it as if
+      // it had been a regular inline <script> on first parse.
+      const inert = document.getElementById('app-init');
+      if (inert) {
+        const fresh = document.createElement('script');
+        fresh.textContent = inert.textContent;
+        inert.parentNode.replaceChild(fresh, inert);
+      }
+      const ov = document.getElementById('app-loading');
+      if (ov) ov.remove();
+    })
+    .catch(err => {
+      console.error('[app-boot] failed to load materials.json:', err);
+      const msg = document.getElementById('app-loading-msg');
+      if (msg) msg.innerHTML = 'Failed to load database. <a href="javascript:location.reload()" style="color:#5b9cf2">Retry</a>';
+    });
+})();
+</script>
+<script type="text/x-app-init" id="app-init">
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 
@@ -1342,10 +1392,10 @@ function _clickLog(...args) {
     if (typeof showToast === 'function') showToast({ message: '[click] ' + msg, variant: 'info', timeout: 2200 });
   } catch (e) { /* tracer must never break the app */ }
 }
-// Mirrors the perfumery_data.js cache-buster so downloaded JSON / CSV /
+// Mirrors the data/materials.json cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
-// Bump alongside the <script src="perfumery_data.js?v=..."> tag above.
-const DATA_VERSION = "2026-04-25-rebuild-v216";
+// Bump alongside the boot-script's DATA_VERSION at the top of this page.
+const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v284";
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(entry => { DB[entry.cas] = entry; });
 // Inject DB count + version into the subtitle so users can verify
@@ -6541,7 +6591,7 @@ window.openDataQualityModal = function () {
     html += '<h3 class="quality-section">' + esc(s.heading) + '</h3>';
     for (const r of s.rows) html += _qualityBar(r.label, r.missing, q.total, r.hint);
   }
-  html += '<p class="quality-note">Read-only snapshot of the bundled <code>perfumery_data.js</code> (' + esc(DATA_VERSION) + '). To audit specific rows, open the dev console with <code>?debug=1</code> in the URL.</p>';
+  html += '<p class="quality-note">Read-only snapshot of the bundled <code>data/materials.json</code> (' + esc(DATA_VERSION) + '). To audit specific rows, open the dev console with <code>?debug=1</code> in the URL.</p>';
   body.innerHTML = html;
   modal.removeAttribute('hidden');
   document.body.classList.add('modal-open');
