@@ -1118,9 +1118,14 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      of these three scripts touch PERFUMERY_DATA at parse time, so they
      stay synchronous; the materials database alone has been hoisted to
      async fetch. -->
-<script src="taxonomy.js?v=2026-04-29-v293"></script>
-<script src="formulation_data.js?v=2026-04-29-v293"></script>
-<script src="formulation_engine.js?v=2026-04-29-v293"></script>
+<script src="taxonomy.js?v=2026-04-29-v294"></script>
+<script src="formulation_data.js?v=2026-04-29-v294"></script>
+<script src="formulation_engine.js?v=2026-04-29-v294"></script>
+
+<!-- Shared DOM helpers (escHtml / debounce / safeInit / normaliseMaterialKey).
+     Audit-coherence Tier 2 R3 — single source of truth, replaces the
+     inline copies that drifted between the two pages. -->
+<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v294"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). Same bootstrap pattern as index.html:
@@ -1142,7 +1147,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 // State computation NEVER runs before stage 4 — the inert app-init body
 // is browser-inert until we replace its <script> element.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v293';
+  const DATA_VERSION = '2026-04-29-v294';
 
   const overlay = document.createElement('div');
   overlay.id = 'app-loading';
@@ -1206,6 +1211,13 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 })();
 </script>
 <script type="text/x-app-init" id="app-init">
+// ===== Shared DOM helpers (lib/dom-utils.mjs via window.appUtils) =====
+// Audit-coherence Tier 2 R3 — escHtml/debounce now delegate to the shared
+// helpers so the two pages can't drift again. Hoisted to the top of the
+// inert block so every caller below sees them without TDZ.
+const escHtml  = window.appUtils.escHtml;
+const debounce = window.appUtils.debounce;
+
 // ===== Data Layer =====
 // Defensive: PERFUMERY_DATA is set by the bootstrap before this script
 // runs, but the .perfumery_db / .trade_names keys could theoretically
@@ -1536,18 +1548,6 @@ function goToStabilityTab() {
   if (btn) btn.click();
 }
 
-// ===== Click Timing Optimization =====
-function debounce(fn, delay) {
-  let timer = null;
-  const debounced = function(...args) {
-    clearTimeout(timer);
-    timer = setTimeout(() => { timer = null; fn.apply(this, args); }, delay);
-  };
-  debounced.cancel = () => { clearTimeout(timer); timer = null; };
-  debounced.flush = () => { if (timer !== null) { clearTimeout(timer); timer = null; fn(); } };
-  return debounced;
-}
-
 // ===== Input Validation Helpers =====
 function validateFragPct(val) {
   const v = parseFloat(val);
@@ -1854,12 +1854,6 @@ formulation._scheduleCommit = debounce(() => {
 }, 400);
 
 // ===== Render Material List =====
-// Escape HTML to prevent XSS from material names
-function escHtml(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
 // Return the list of note tiers a material belongs to. Some DB entries
 // span multiple tiers like "Top / Middle" or "Middle / Base" — those
 // materials should contribute to every tier they name, not just the first.

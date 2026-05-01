@@ -1214,7 +1214,15 @@ html { scroll-behavior:smooth; }
      globals — and unlike PERFUMERY_DATA, the taxonomy file is small and
      pure-data so the sync block is unobservable. Bumping its ?v= reloads
      on both pages. -->
-<script src="taxonomy.js?v=2026-04-29-v293"></script>
+<script src="taxonomy.js?v=2026-04-29-v294"></script>
+
+<!-- Shared DOM helpers (escHtml / debounce / safeInit / normaliseMaterialKey).
+     Audit-coherence Tier 2 R3 — single source of truth. ES module is deferred
+     by default, so it runs after parsing but before DOMContentLoaded; the
+     bootstrap below waits for DOMContentLoaded before activating the inert
+     <script id="app-init">, so window.appUtils is populated before any
+     consumer in the inert block runs. -->
+<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v294"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). The bootstrap below fetches it async,
@@ -1239,7 +1247,7 @@ html { scroll-behavior:smooth; }
 // inline data layer (DB build, FILTER_CACHE precompute, render init)
 // is gated behind the stage-2 integrity check.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v293';
+  const DATA_VERSION = '2026-04-29-v294';
 
   // Stage 1: mount loading overlay synchronously, before any await,
   // so the user always sees feedback regardless of network latency.
@@ -1326,6 +1334,13 @@ html { scroll-behavior:smooth; }
 })();
 </script>
 <script type="text/x-app-init" id="app-init">
+// ===== Shared DOM helpers (lib/dom-utils.mjs via window.appUtils) =====
+// Audit-coherence Tier 2 R3 — esc() now delegates to the shared escHtml
+// (which also escapes apostrophes, fixing a defence-in-depth gap the
+// inline version had). Hoisted to the top of the inert block so every
+// caller below — including the very first paint — sees it without TDZ.
+const esc = window.appUtils.escHtml;
+
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
 
@@ -1484,7 +1499,7 @@ function _clickLog(...args) {
 // Mirrors the data/materials.json cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the boot-script's DATA_VERSION at the top of this page.
-const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v293";
+const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v294";
 // Defensive: a corrupted JSON payload could land window.PERFUMERY_DATA
 // without the expected shape. Guard every access so a missing key
 // surfaces as a single clear error rather than a TDZ-style cascade.
@@ -8108,7 +8123,6 @@ function classifySource(mat) {
   return 'synthetic';
 }
 
-function esc(s) { return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function toTitle(s) { return s.replace(/\b\w/g, c=>c.toUpperCase()); }
 
 // ===== Manual dark-mode toggle =====
