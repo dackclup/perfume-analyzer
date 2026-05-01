@@ -1109,12 +1109,58 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      taxonomy changes. Bump this string on every deploy that touches
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
-     so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v283"></script>
-<script src="perfumery_data.js?v=2026-04-29-v283"></script>
-<script src="formulation_data.js?v=2026-04-29-v283"></script>
-<script src="formulation_engine.js?v=2026-04-29-v283"></script>
+     so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. None
+     of these three scripts touch PERFUMERY_DATA at parse time, so they
+     stay synchronous; the materials database alone has been hoisted to
+     async fetch. -->
+<script src="taxonomy.js?v=2026-04-29-v284"></script>
+<script src="formulation_data.js?v=2026-04-29-v284"></script>
+<script src="formulation_engine.js?v=2026-04-29-v284"></script>
+
+<!-- Materials database now ships as data/materials.json (pretty-printed,
+     sorted, version-controlled). Same bootstrap pattern as index.html:
+     fetch JSON → set window.PERFUMERY_DATA → re-insert the inert
+     <script id="app-init"> block so it runs in global scope after data
+     is ready. -->
 <script>
+(function _appBoot() {
+  const DATA_VERSION = '2026-04-29-v284';
+  const overlay = document.createElement('div');
+  overlay.id = 'app-loading';
+  overlay.setAttribute('role', 'status');
+  overlay.setAttribute('aria-live', 'polite');
+  overlay.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0b0e15;color:#e6e9ee;font-family:system-ui,-apple-system,sans-serif;font-size:1em;z-index:99999';
+  overlay.innerHTML =
+    '<div style="text-align:center"><div style="width:36px;height:36px;border:3px solid #2a3340;border-top-color:#5b9cf2;border-radius:50%;animation:appBootSpin 800ms linear infinite;margin:0 auto 14px"></div>' +
+    '<div id="app-loading-msg">Loading database&hellip;</div></div>' +
+    '<style>@keyframes appBootSpin{to{transform:rotate(360deg)}}</style>';
+  document.documentElement.appendChild(overlay);
+
+  fetch('data/materials.json?v=' + encodeURIComponent(DATA_VERSION), { cache: 'default' })
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(data => {
+      window.PERFUMERY_DATA = data;
+      window.DATA_VERSION   = DATA_VERSION;
+      const inert = document.getElementById('app-init');
+      if (inert) {
+        const fresh = document.createElement('script');
+        fresh.textContent = inert.textContent;
+        inert.parentNode.replaceChild(fresh, inert);
+      }
+      const ov = document.getElementById('app-loading');
+      if (ov) ov.remove();
+    })
+    .catch(err => {
+      console.error('[app-boot] failed to load materials.json:', err);
+      const msg = document.getElementById('app-loading-msg');
+      if (msg) msg.innerHTML = 'Failed to load database. <a href="javascript:location.reload()" style="color:#5b9cf2">Retry</a>';
+    });
+})();
+</script>
+<script type="text/x-app-init" id="app-init">
 // ===== Data Layer =====
 const DB = {};
 PERFUMERY_DATA.perfumery_db.forEach(e => { DB[e.cas] = e; });
