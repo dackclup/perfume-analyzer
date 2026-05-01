@@ -490,6 +490,28 @@ function aggregateAllergens(materials, fragPct, categoryId) {
         });
       }
     }
+
+    // Audit #11 — ester → alcohol hydrolysis pathway. EU 1223/2009
+    // declarable-allergen aggregation must include allergens that an
+    // ester releases on shelf-life / aqueous-phase contact, not just
+    // direct + natural-mixture sources. Conservative full-conversion
+    // assumption (yield = MW_alcohol / MW_ester) keeps the snippet
+    // safe-by-default; a curator can override per-material if needed.
+    const ester = ESTER_HYDROLYSIS[mat.cas];
+    if (ester && allergenTable[ester.allergenCAS]) {
+      const a = allergenTable[ester.allergenCAS];
+      const contribPpm = ppmInProduct * ester.yield;
+      if (!allergenMap[ester.allergenCAS]) {
+        allergenMap[ester.allergenCAS] = { name: a.name, inci: a.inci, totalPpm: 0, sources: [] };
+      }
+      allergenMap[ester.allergenCAS].totalPpm += contribPpm;
+      allergenMap[ester.allergenCAS].sources.push({
+        from: mat.name,
+        ppm: roundN(contribPpm, 2),
+        type: 'hydrolysis',
+        yieldPct: roundN(ester.yield * 100, 1),
+      });
+    }
   }
 
   // Build sorted result
