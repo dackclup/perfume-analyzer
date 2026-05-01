@@ -2902,7 +2902,7 @@ function _renderCompatTabImpl(el) {
     ? 'badge-outline'
     : (harmony.score >= 70 ? 'badge-ok' : harmony.score >= 40 ? 'badge-warn' : 'badge-danger');
   const harmBadgeText = harmony.insufficient ? '— %' : (harmony.score + '%');
-  html += '<div class="analysis-card" id="compat-harmony"><h4>Harmony Score <span class="badge ' + harmClass + '">' + harmBadgeText + '</span></h4>';
+  html += '<div class="analysis-card" id="compat-harmony"><h4>' + t('harmonyScore') + ' <span class="badge ' + harmClass + '">' + harmBadgeText + '</span></h4>';
   html += '<p class="panel-desc">Multi-factor: pairwise graph + descriptor similarity, discord penalty, triangle synergy, note-tier diversity, family balance.</p>';
   // Data-quality footnote — tells the user whether the pair weighting is
   // perception-correct (OV = pct/ODT) or pct-only, and whether tiers came
@@ -3102,7 +3102,7 @@ function _renderCompatTabImpl(el) {
       o.tier.charAt(0).toUpperCase() + o.tier.slice(1) + ' ' + (o.direction === 'high' ? 'high' : 'low')
     ).join(', ');
   }
-  html += '<div class="analysis-card" id="compat-pyramid"><h4>Fragrance Pyramid <span class="badge ' + balClass + '">' + balLabel + '</span></h4>';
+  html += '<div class="analysis-card" id="compat-pyramid"><h4>' + t('fragPyramid') + ' <span class="badge ' + balClass + '">' + balLabel + '</span></h4>';
   // Method + family subtitle. Audit #4: when perception falls back to
   // label-based (insufficient ODT or VP data), make it loud — a high
   // "Perception-weighted" implies a precision the data doesn't have.
@@ -3234,7 +3234,7 @@ function _renderCompatTabImpl(el) {
   html += '</div>';
 
   // Suggested Allocation — combined MATERIALS + SOLVENT/CARRIER/OTHER
-  html += '<div class="analysis-card" id="compat-allocation"><h4>Suggested Allocation</h4>';
+  html += '<div class="analysis-card" id="compat-allocation"><h4>' + t('suggestedAlloc') + '</h4>';
   html += '<p class="panel-desc">Materials use Dirichlet weights by note tier and inverse odor strength. Carriers rebalance by IFRA category (locked rows are preserved).</p>';
 
   // Inline action row — Smart Allocate runs the chained
@@ -3331,7 +3331,7 @@ function _renderCompatTabImpl(el) {
       ? enrichedSuggestions
       : enrichedSuggestions.filter(s => s.tiers.some(t => (t === 'mid' ? 'middle' : t) === tierFilter));
 
-    html += '<div class="analysis-card" id="compat-suggest"><h4>Compatible Materials <span style="font-size:0.78em;color:var(--text2);font-weight:400">— ' + filtered.length + ' of ' + enrichedSuggestions.length + '</span></h4>';
+    html += '<div class="analysis-card" id="compat-suggest"><h4>' + t('compatMaterials') + ' <span style="font-size:0.78em;color:var(--text2);font-weight:400">— ' + filtered.length + ' of ' + enrichedSuggestions.length + '</span></h4>';
     html += '<p class="panel-desc">Materials that blend well with your current selection, ranked by compatibility score. Filter by note tier to find what your formula needs.</p>';
 
     // Tier filter chips — All / Top / Middle / Base.
@@ -3902,7 +3902,7 @@ function renderThermoTab() {
   let html = '';
 
   // Longevity estimate
-  html += '<div class="analysis-card"><h4>Estimated Longevity</h4>';
+  html += '<div class="analysis-card"><h4>' + t('estLongevity') + '</h4>';
   html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">';
   for (const phase of [longevity.topPhase, longevity.heartPhase, longevity.basePhase]) {
     html += '<div style="flex:1;min-width:100px;padding:10px;background:var(--bg2);border-radius:8px;text-align:center">';
@@ -3913,12 +3913,12 @@ function renderThermoTab() {
   html += '</div></div>';
 
   // Evaporation chart
-  html += '<div class="analysis-card"><h4>Headspace Concentration Over Time (' + tempC + ' &deg;C)</h4>';
+  html += '<div class="analysis-card"><h4>' + t('headspaceConc') + ' (' + tempC + ' &deg;C)</h4>';
   html += '<p class="panel-desc">Two-stage model: fast solvent burst (0-30min) then steady diffusion. Dashed line = skin retention.</p>';
   html += '<div class="chart-wrap wide"><canvas id="evapChart"></canvas></div></div>';
 
   // VP Table
-  html += '<div class="analysis-card"><h4>Vapor Pressure at ' + tempC + ' &deg;C</h4>';
+  html += '<div class="analysis-card"><h4>' + t('vaporPressure') + ' @ ' + tempC + ' &deg;C</h4>';
   html += '<table class="data-table"><thead><tr><th>Material</th><th>VP (mmHg)</th><th>Method</th><th>MW</th><th>LogP</th><th>Kp (cm/s)</th></tr></thead><tbody>';
   for (let i = 0; i < vpTable.length; i++) {
     const r = vpTable[i];
@@ -4293,13 +4293,13 @@ function renderOdorTab() {
   let html = '';
 
   // Radar chart
-  html += '<div class="analysis-card"><h4>Perfumery Radar — Odor Profile Over Time</h4>';
+  html += '<div class="analysis-card"><h4>' + t('odorProfile') + '</h4>';
   const radarTip = 'Each axis = Σ (Hill perceived intensity × family weight) across materials at the time-point. Perceived intensity follows the Stevens power law: ψ = (OV^n) / (1 + OV^n), where OV = headspace conc / ODT and n is the per-material Stevens exponent. Weight % drives headspace concentration via Antoine + Raoult — but the axis values themselves reflect what the nose perceives, not raw mass.';
   html += '<p class="panel-desc"><span title="' + escHtml(radarTip) + '" style="cursor:help;text-decoration:underline dotted">Axes scaled by Stevens/Hill perceived intensity</span>, not by weight or concentration alone.</p>';
   html += '<div class="chart-wrap"><canvas id="odorRadar"></canvas></div></div>';
 
   // OV Table
-  html += '<div class="analysis-card"><h4>Odor Value & Perceived Intensity</h4>';
+  html += '<div class="analysis-card"><h4>' + t('odorValueTable') + '</h4>';
   html += '<p class="panel-desc">Sorted by perceived intensity. OV = headspace concentration / odor detection threshold.</p>';
   html += '<table class="data-table"><thead><tr><th>Material</th><th>Note</th><th>ODT (ppb)</th><th>OV</th><th>PSI</th><th>n</th><th>Data</th></tr></thead><tbody>';
   for (const r of ovTable) {
@@ -4361,14 +4361,14 @@ function renderStabilityTab() {
 
   // Summary
   const riskClass = summary.overallRisk === 'low' ? 'badge-ok' : summary.overallRisk === 'medium' ? 'badge-warn' : 'badge-danger';
-  html += '<div class="analysis-card"><h4>Stability Risk <span class="badge ' + riskClass + '">' + summary.overallRisk.toUpperCase() + '</span></h4>';
+  html += '<div class="analysis-card"><h4>' + t('stabilityRisk') + ' <span class="badge ' + riskClass + '">' + summary.overallRisk.toUpperCase() + '</span></h4>';
   html += '<div style="font-size:0.85em;color:var(--text2);margin-top:4px">';
   html += 'Reactive pairs: ' + warnings.length + ' (' + summary.highCount + ' high, ' + summary.mediumCount + ' medium, ' + summary.lowCount + ' low)';
   if (summary.materialsWithoutSmiles) html += ' &middot; ' + summary.materialsWithoutSmiles + ' materials without SMILES data';
   html += '</div></div>';
 
   // Functional Group Matrix
-  html += '<div class="analysis-card"><h4>Functional Group Matrix</h4>';
+  html += '<div class="analysis-card"><h4>' + t('funcGroups') + '</h4>';
   html += '<p class="panel-desc">Detected from SMILES (approximate). Groups used for reactive pair analysis.</p>';
   html += '<table class="data-table"><thead><tr><th>Material</th><th>Source</th><th>Functional Groups</th></tr></thead><tbody>';
   for (const m of matrix) {
@@ -4382,7 +4382,7 @@ function renderStabilityTab() {
 
   // Reactive Pair Warnings
   if (warnings.length) {
-    html += '<div class="analysis-card"><h4>Reactive Pair Warnings</h4>';
+    html += '<div class="analysis-card"><h4>' + t('reactivePairs') + '</h4>';
     for (const w of warnings) {
       const sevClass = w.severity === 'high' ? 'badge-danger' : w.severity === 'medium' ? 'badge-warn' : 'badge-ok';
       const colorSwatch = w.colorChange ? '<span style="display:inline-flex;gap:2px;vertical-align:middle"><span style="width:14px;height:14px;border-radius:var(--radius-sm);background:' + w.colorChange.from + ';border:1px solid var(--border)"></span><span style="font-size:0.8em">&rarr;</span><span style="width:14px;height:14px;border-radius:var(--radius-sm);background:' + w.colorChange.to + ';border:1px solid var(--border)"></span></span>' : '';
@@ -4426,7 +4426,7 @@ function renderStabilityTab() {
 
   // B2: Substitution suggestions for each material
   if (mats.length) {
-    html += '<div class="analysis-card"><h4>Find Substitutes</h4>';
+    html += '<div class="analysis-card"><h4>' + t('findSubstitutes') + '</h4>';
     html += '<p class="panel-desc">Multi-dimensional similarity search (odor family + note + volatility + strength + cost).</p>';
     html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">';
     for (const m of mats) {
@@ -4454,7 +4454,7 @@ function renderMoodTab() {
   let html = '';
 
   // Mood description
-  html += '<div class="analysis-card"><h4>Mood Profile</h4>';
+  html += '<div class="analysis-card"><h4>' + t('moodProfile') + '</h4>';
   html += '<p style="font-size:0.9em;margin-top:4px">' + desc.description + '</p>';
   html += '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">';
   if (desc.primary) html += '<span class="badge badge-ok">Primary: ' + desc.primary.dimension + ' (' + desc.primary.score + ')</span>';
@@ -4744,7 +4744,7 @@ function renderSafetyTab() {
 
   // Use-Rate Warnings — useRateWarnings[] precomputed above for the verdict counter
   if (useRateWarnings.length) {
-    html += '<div class="analysis-card" id="safety-usage"><h4>Use-Rate Warnings <span class="badge badge-warn">' + useRateWarnings.length + '</span></h4>';
+    html += '<div class="analysis-card" id="safety-usage"><h4>' + t('useRateWarnings') + ' <span class="badge badge-warn">' + useRateWarnings.length + '</span></h4>';
     html += '<table class="data-table"><thead><tr><th>Material</th><th>% in Product</th><th>Max %</th><th>Over By</th></tr></thead><tbody>';
     for (const w of useRateWarnings) {
       html += '<tr><td>' + escHtml(w.name) + '</td><td>' + w.pctProd + '%</td>';
@@ -4771,7 +4771,7 @@ function renderSafetyTab() {
                  : 'warn';
     multiGroups[bucket].push({ cId, ...r });
   }
-  html += '<div class="analysis-card" id="safety-multi"><h4>Multi-Category IFRA Compatibility</h4>';
+  html += '<div class="analysis-card" id="safety-multi"><h4>' + t('multiIfra') + '</h4>';
   html += '<p class="panel-desc">Categories this formula can be sold under at the current %. Hover a chip to see what is blocking it.</p>';
   const renderMultiGroup = (label, color, items) => {
     if (!items.length) return '';
@@ -4829,7 +4829,7 @@ function renderSafetyTab() {
   html += '<p class="panel-desc" style="margin-bottom:12px">Cost and carrier breakdown — informational only, not part of IFRA compliance.</p>';
 
   // Cost Estimate
-  html += '<div class="analysis-card"><h4>Cost Estimate <span class="badge badge-ok">$' + costData.totalCost + '</span></h4>';
+  html += '<div class="analysis-card"><h4>' + t('costEstimate') + ' <span class="badge badge-ok">$' + costData.totalCost + '</span></h4>';
   html += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.85em;color:var(--text2);margin-top:6px">';
   html += '<span>Fragrance: $' + costData.fragCost + '</span>';
   html += '<span>Carrier: $' + costData.carrierCost + '</span>';
