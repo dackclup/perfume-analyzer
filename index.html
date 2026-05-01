@@ -8047,12 +8047,14 @@ function classifyRegulatory(mat) {
     out.push('regulated');
   }
   // Allergen: explicit cue OR canonical name on the EU 26-allergen list.
-  // Negation guard: curated text may say "not an EU 26 allergen" or
-  // "low sensitization risk; not an allergen" to document the negative
-  // case. The bare regex used to fire on those phrases because it just
-  // looked for the substring "allergen". The guard filters out
-  // "not an/a ... allergen" before running the positive match.
-  const negAllergen = /\bnot\s+(?:an?|a)\s+(?:[a-z0-9\s]{0,20})?allergen\b/i.test(all);
+  // Negation guard: curated text may say "not an EU 26 allergen", "not on
+  // EU 26+/2023/1545 allergen list", "not part of the allergen list" to
+  // document the negative case. The bare regex used to fire on those
+  // phrases because it just looked for the substring "allergen". The
+  // guard filters out any "not (an|a|on|in|part of|listed in) … allergen"
+  // pattern before running the positive match.
+  const negAllergen =
+    /\bnot\s+(?:an?|on|in|part\s+of|listed\s+(?:on|in))\s+(?:the\s+)?(?:[a-z0-9\s/+,.\-]{0,40})?allergen\b/i.test(all);
   if (!negAllergen && (
       /\b(allergen|26 allergens|annex iii|labeling required)\b/i.test(all) ||
       /\b(linalool|limonene|citral|geraniol|eugenol|coumarin|farnesol|citronellol|cinnamal|cinnamic alcohol|cinnamyl alcohol|isoeugenol|benzyl alcohol|benzyl salicylate|benzyl benzoate|benzyl cinnamate|hydroxycitronellal|amyl cinnamal|amylcinnamyl alcohol|hexyl cinnamal|methyl heptine carbonate|alpha-isomethyl ionone|oakmoss|treemoss|evernia)\b/i.test(n))) {
