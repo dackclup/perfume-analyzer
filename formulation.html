@@ -230,6 +230,13 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 
 /* Use-rate warning badge */
 .mat-warn { font-size:0.7em; padding:1px 5px; border-radius:8px; background:var(--warn-bg); color:var(--warn); font-weight:600; white-space:nowrap; }
+/* Reactive-pair warning icon — shown next to material name when functional-group
+   analysis flags it as part of a reactive pair. Color tracks severity. */
+.mat-react { font-size:0.85em; line-height:1; padding:0 3px; border-radius:4px; cursor:pointer; user-select:none; flex-shrink:0; }
+.mat-react.high   { color:var(--danger); }
+.mat-react.medium { color:var(--warn); }
+.mat-react.low    { color:var(--text2); }
+.mat-react:hover  { background:var(--bg2); }
 
 /* Total bar */
 .mat-total { display:flex; justify-content:space-between; align-items:center; padding:8px; font-size:0.85em; font-weight:600; border-top:1px solid var(--border); margin-top:4px; }
@@ -1052,10 +1059,10 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      the three loaded scripts below. -->
 <!-- Shared Edwards-2021 taxonomy. Must load BEFORE formulation_data.js
      so FRAGRANCE_WHEEL.mainOf can derive from SUB_FAMILY_TO_MAIN. -->
-<script src="taxonomy.js?v=2026-04-29-v279"></script>
-<script src="perfumery_data.js?v=2026-04-29-v279"></script>
-<script src="formulation_data.js?v=2026-04-29-v279"></script>
-<script src="formulation_engine.js?v=2026-04-29-v279"></script>
+<script src="taxonomy.js?v=2026-04-29-v280"></script>
+<script src="perfumery_data.js?v=2026-04-29-v280"></script>
+<script src="formulation_data.js?v=2026-04-29-v280"></script>
+<script src="formulation_engine.js?v=2026-04-29-v280"></script>
 <script>
 // ===== Data Layer =====
 const DB = {};
@@ -1362,6 +1369,14 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
+// Programmatic tab switch — used by the Workspace reactive-pair icon to jump
+// to the Stability tab without a manual click. Reuses the .tab-btn handler so
+// flush + active-class swap stay consistent.
+function goToStabilityTab() {
+  const btn = document.querySelector('.tab-btn[data-tab="tab-stability"]');
+  if (btn) btn.click();
+}
+
 // ===== Click Timing Optimization =====
 function debounce(fn, delay) {
   let timer = null;
@@ -1639,14 +1654,19 @@ const formulation = {
 };
 // Push initial empty state
 formulationHistory.push({ materials: [], carriers: [] });
-// Initialize debounced commit for rapid percentage changes (coalesces rapid clicks)
+// Initialize debounced commit for rapid percentage changes (coalesces rapid clicks).
+// 400 ms — heavy analysis renderers (Antoine VP table, Raoult's-law evaporation
+// simulation, Potts-Guy skin penetration in renderThermoTab) can take 30–80 ms
+// on ~50 materials and would block the main thread on every keystroke / step
+// click otherwise. Cheap in-place updates (_updateMaterialDisplay,
+// _updateTotalDisplay) still fire immediately so weights track typing.
 formulation._scheduleCommit = debounce(() => {
   formulationHistory.push({
     materials: formulation.materials.map(m => ({ cas: m.cas, name: m.name, pct: m.pct, dilution: m.dilution || 100, dilutionSolvent: m.dilutionSolvent || '', data: m.data })),
     carriers: carrierMaterials.map(c => ({ cas: c.cas, name: c.name, pct: c.pct })),
   });
   renderActiveTab();
-}, 300);
+}, 400);
 
 // ===== Render Material List =====
 // Escape HTML to prevent XSS from material names
@@ -1730,6 +1750,26 @@ function renderMaterialList() {
   const fragPct = validateFragPct(document.getElementById('fragPct').value);
   // Fragrance grams = batchSize × fragPct/100; material grams = pct% of fragrance portion
   const fragGrams = batchSize * (fragPct / 100);
+  // Reactive-pair early warning: detect once per render, index by CAS so a
+  // material that participates in multiple pairs surfaces the highest
+  // severity in the sidebar without forcing a trip to the Stability tab.
+  const _reactiveByCas = {};
+  try {
+    const _gm = buildFunctionalGroupMatrix(formulation.materials);
+    const _pairs = detectReactivePairs(_gm);
+    const _sevRank = { high: 0, medium: 1, low: 2 };
+    for (const w of _pairs) {
+      for (const [self, other] of [[w.matA, w.matB], [w.matB, w.matA]]) {
+        const cur = _reactiveByCas[self.cas];
+        const entry = { partner: other.name, reaction: w.reaction, severity: w.severity, effect: w.effect };
+        if (!cur || _sevRank[entry.severity] < _sevRank[cur.topSeverity]) {
+          _reactiveByCas[self.cas] = { topSeverity: entry.severity, pairs: (cur ? cur.pairs : []).concat([entry]) };
+        } else {
+          cur.pairs.push(entry);
+        }
+      }
+    }
+  } catch (_) { /* engine missing or malformed material — skip silently */ }
   let html = '';
   for (const m of formulation.materials) {
     const tiers = classifyNoteTiers(m.data?.note);
@@ -1752,6 +1792,17 @@ function renderMaterialList() {
     if (usageRange.max != null && pctInProduct > usageRange.max) {
       warnHtml = `<span class="mat-warn" style="cursor:pointer" title="Max ${usageRange.max}% in product, actual ${pctInProduct.toFixed(1)}% — click to reduce" onclick="applyUsageCap('${safeCas}')">! ${usageRange.max}%</span>`;
     }
+    // Reactive-pair icon — clicking jumps to Stability tab. Tooltip lists up
+    // to 3 partners with their reaction + severity so the chemist sees the
+    // problem before opening another panel.
+    let reactHtml = '';
+    const _ri = _reactiveByCas[m.cas];
+    if (_ri) {
+      const tipLines = _ri.pairs.slice(0, 3).map(p => '• ' + p.partner + ' — ' + p.reaction + ' (' + p.severity + ')');
+      const more = _ri.pairs.length > 3 ? ' …and ' + (_ri.pairs.length - 3) + ' more' : '';
+      const tip = 'Reactive pair' + (_ri.pairs.length > 1 ? 's' : '') + ':\n' + tipLines.join('\n') + more + '\nClick for Stability tab.';
+      reactHtml = `<span class="mat-react ${_ri.topSeverity}" title="${escHtml(tip)}" onclick="goToStabilityTab()" role="button" aria-label="Reactive pair warning">⚠</span>`;
+    }
     html += `<div class="mat-item" data-cas="${safeCas}">`;
     // Show one badge per tier for multi-tier materials (e.g., "Top / Middle"
     // renders as both T and M badges side-by-side).
@@ -1760,6 +1811,7 @@ function renderMaterialList() {
     }
     const isMatLocked = lockedMaterials.has(m.cas);
     html += `<span class="mat-name" title="${safeName}">${safeName}${isMatLocked ? ' <span style="color:var(--warn,var(--warn));font-size:0.75em;font-weight:500">(locked)</span>' : ''}</span>`;
+    html += reactHtml;
     html += warnHtml;
     html += `<span class="mat-grams">${amtStr}${unit}</span>`;
     // step="any" lifts the browser's spinner-step constraint, so
@@ -2340,8 +2392,10 @@ document.getElementById('productCategory').addEventListener('change', () => {
   if (addModal.classList.contains('open')) modalSearch.dispatchEvent(new Event('input'));
 });
 // Debounce tempSlider drag — fires ~100 events/sec otherwise, each triggering
-// a full tab render (incl. simulateEvaporation). 200ms feels responsive.
-document.getElementById('tempSlider').addEventListener('input', debounce(() => renderActiveTab(), 200));
+// a full tab render (incl. simulateEvaporation). 400 ms matches the pct-change
+// commit debounce so heavy thermo work (Antoine + Raoult's-law) stays off the
+// main thread until the user pauses.
+document.getElementById('tempSlider').addEventListener('input', debounce(() => renderActiveTab(), 400));
 
 function renderActiveTab() {
   const active = document.querySelector('.tab-panel.active');
@@ -4298,8 +4352,8 @@ function renderSafetyTab() {
     html += '<button id="safetyToggleProblems" class="preset-chip' + (showProblemsOnly ? ' active' : '') + '" aria-pressed="' + showProblemsOnly + '" style="font-size:0.78em">' + toggleLabel + '</button>';
   }
   html += '</div>';
-  html += '<p class="panel-desc" style="margin-top:8px">Each material checked against the IFRA 51 cap for the active category. Sorted by severity.</p>';
-  html += '<table class="data-table"><thead><tr><th>Material</th><th>% in Product</th><th>IFRA Max</th><th>Headroom</th><th>Status</th></tr></thead><tbody>';
+  html += '<p class="panel-desc" style="margin-top:8px">Each material checked against the IFRA 51 cap for the active category. Sorted by severity. <span title="% in Product = (material % in concentrate) × (Fragrance in Product %). Caps apply to the finished-product concentration, not the concentrate." style="cursor:help;text-decoration:underline dotted">Caps apply to finished product</span>.</p>';
+  html += '<table class="data-table"><thead><tr><th>Material</th><th title="Material concentration in the finished product after dilution by the carrier — (material % × ' + fragPct + '%/100)">% in Product</th><th>IFRA Max</th><th>Headroom</th><th>Status</th></tr></thead><tbody>';
   for (const r of filteredCompliance) {
     const cls = r.status === 'ok' ? 'badge-ok' : r.status === 'warn' ? 'badge-warn' : 'badge-danger';
     const icon = r.status === 'ok' ? '✓' : r.status === 'warn' ? '⚠' : '✗';
@@ -4338,9 +4392,11 @@ function renderSafetyTab() {
   // Allergen panel
   if (allergens.allergens.length) {
     const thresholdTip = 'EU 1223/2009 — leave-on threshold 10 ppm, rinse-off 100 ppm. Below threshold: not required on the INCI label. Above: must be declared.';
+    const ppmFormulaTip = 'ppm in product = (material % in concentrate) × (' + fragPct + '% Fragrance in Product) × 100. Allergens hidden in naturals are added at their constituent fraction.';
     html += '<div class="analysis-card" id="safety-allergens">';
     html += '<h4>EU Allergen Declaration <span class="badge badge-outline" title="' + escHtml(thresholdTip) + '" style="cursor:help;font-weight:500">threshold ' + allergens.threshold + ' ppm · ' + (allergens.isRinseOff ? 'rinse-off' : 'leave-on') + '</span></h4>';
-    html += '<table class="data-table"><thead><tr><th>Allergen</th><th>INCI</th><th>Total ppm</th><th>Sources</th><th>Declare?</th></tr></thead><tbody>';
+    html += '<p class="panel-desc" style="margin-top:6px">Aggregated across direct allergens and constituents inside naturals. <span title="' + escHtml(ppmFormulaTip) + '" style="cursor:help;text-decoration:underline dotted">Calculated at finished-product concentration</span>.</p>';
+    html += '<table class="data-table"><thead><tr><th>Allergen</th><th>INCI</th><th title="' + escHtml(ppmFormulaTip) + '">ppm in product</th><th>Sources</th><th>Declare?</th></tr></thead><tbody>';
     for (const a of allergens.allergens) {
       const cls = a.exceedsThreshold ? 'badge-danger' : 'badge-ok';
       // Sources rendered as chips (one per material that contributes this
@@ -4574,11 +4630,13 @@ document.querySelectorAll('.preset-chip').forEach(chip => {
 
 // Custom input handler. Task 3: split the work into IMMEDIATE state
 // updates (cheap — Total and Carrier %s recompute now) and a DEBOUNCED
-// heavy render pass (expensive — 200 ms after last keystroke). The
+// heavy render pass (expensive — 400 ms after last keystroke). The
 // previous setup put renderMaterialList behind the debounce too, which
-// meant the Total line lagged 200 ms behind every fragPct keystroke
+// meant the Total line lagged behind every fragPct keystroke
 // and the user briefly saw '100% / 18g Fragrance' while typing 25.
-const _debouncedFragRender = debounce(() => { renderMaterialList(); renderActiveTab(); }, 200);
+// 400 ms aligns with _scheduleCommit + tempSlider so heavy thermo (Antoine,
+// Raoult's law, Potts-Guy) coalesces consistently across all triggers.
+const _debouncedFragRender = debounce(() => { renderMaterialList(); renderActiveTab(); }, 400);
 document.getElementById('fragPctCustom').addEventListener('input', () => {
   let val = parseFloat(document.getElementById('fragPctCustom').value);
   if (!isNaN(val) && val >= 1 && val <= 100) {

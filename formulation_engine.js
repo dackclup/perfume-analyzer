@@ -447,6 +447,12 @@ function aggregateAllergens(materials, fragPct, categoryId) {
   const allergenTable = EU_ALLERGENS_CURRENT;
 
   for (const mat of materials) {
+    // Allergen exposure is regulated at the finished-product level
+    // (EU 1223/2009 thresholds: 10 ppm leave-on, 100 ppm rinse-off),
+    // not the concentrate level. Convert material-in-concentrate (mat.pct)
+    // to material-in-finished-product by multiplying by fragPct/100.
+    //   pctInProduct = (mat.pct / 100) × (fragPct / 100) × 100
+    //   ppmInProduct = pctInProduct × 10000
     const pctInProduct = (mat.pct / 100) * (fragPct / 100) * 100;
     const ppmInProduct = pctInProduct * 10000;
 
