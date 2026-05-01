@@ -22,7 +22,7 @@
 //   Bump CACHE_VERSION whenever the shell file list changes; the
 //   activate handler purges every previous version.
 
-const CACHE_VERSION = 'perfume-shell-v2';
+const CACHE_VERSION = 'perfume-shell-v3';
 const SHELL_ASSETS = [
   './',
   './index.html',
@@ -88,33 +88,45 @@ self.addEventListener('fetch', event => {
   }
 
   if (isMaterialsJSON(url)) {
-    // Stale-while-revalidate: serve cached copy instantly (so offline +
-    // first-paint stay fast), and refresh the cache in the background.
-    // The next visit gets the new bytes without an extra round-trip.
+    // Three-tier strategy keyed off cache freshness:
+    //   1. EXACT version match → stale-while-revalidate (same bytes, fast).
+    //      Hit means the user has already loaded this DATA_VERSION; serving
+    //      it instantly + background-fetching keeps subsequent reloads
+    //      current without blocking first paint.
+    //   2. No exact match → NETWORK-FIRST. Different DATA_VERSION in the
+    //      URL means a fresh deploy; we want the new bytes, not a stale
+    //      sibling. Cache the response on success so the next visit hits
+    //      tier 1 instantly.
+    //   3. Network failed AND no exact match → fall back to ANY cached
+    //      copy via ignoreSearch:true. Covers offline first-visit (the
+    //      install pre-cache stored ./data/materials.json with no query)
+    //      and transient outages. User sees slightly-stale data instead
+    //      of a hard failure.
     //
-    // ignoreSearch: true matches across cache-bust queries — install
-    // pre-caches `./data/materials.json` (no query) but the bootstrap
-    // requests `?v=2026-04-29-v284`. Without ignoreSearch the lookup
-    // misses and offline first-visit fails. Storage stays versioned
-    // (cache.put uses the request URL as-is), so each version's bytes
-    // live under their own key; the activate handler purges old caches
-    // when CACHE_VERSION rotates.
+    // Storage stays versioned (cache.put uses the request URL with its
+    // ?v=… query intact), so each DATA_VERSION lives under its own key;
+    // the activate handler purges all entries when CACHE_VERSION rotates.
     event.respondWith(
       caches.open(CACHE_VERSION).then(cache =>
-        cache.match(req, { ignoreSearch: true }).then(cached => {
+        cache.match(req).then(exactCached => {
           const networked = fetch(req).then(res => {
-            // Only cache successful, valid JSON responses
-            if (res && res.ok) {
-              cache.put(req, res.clone()).catch(() => {});
-            }
+            if (res && res.ok) cache.put(req, res.clone()).catch(() => {});
             return res;
           }).catch(() => null);
-          // Cached → return immediately, refresh in background. No cache
-          // → wait on network. If both fail, surface the network error
-          // (matches default fetch behaviour).
-          return cached || networked.then(res => {
-            if (!res) throw new Error('materials.json: network and cache both unavailable');
-            return res;
+
+          if (exactCached) {
+            // Tier 1: SWR — return cached immediately, refresh silently.
+            networked.catch(() => {}); // detach: don't unhandled-reject
+            return exactCached;
+          }
+          // Tier 2: network-first.
+          return networked.then(res => {
+            if (res) return res;
+            // Tier 3: ignoreSearch fallback for offline first-visit.
+            return cache.match(req, { ignoreSearch: true }).then(any => {
+              if (any) return any;
+              throw new Error('materials.json: network and cache both unavailable');
+            });
           });
         })
       )
