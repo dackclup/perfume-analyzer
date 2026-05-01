@@ -1223,6 +1223,11 @@ html { scroll-behavior:smooth; }
      <script id="app-init">, so window.appUtils is populated before any
      consumer in the inert block runs. -->
 <script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v294"></script>
+<!-- Versioned localStorage helpers. Audit-coherence Tier 2 R3 — replaces
+     the scattered try/catch + JSON.parse pattern at every persistence
+     site so quota / private-mode / corrupt-payload failures all funnel
+     through one place. -->
+<script type="module" src="lib/storage.mjs?v=2026-04-29-v294"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). The bootstrap below fetches it async,
@@ -1334,12 +1339,17 @@ html { scroll-behavior:smooth; }
 })();
 </script>
 <script type="text/x-app-init" id="app-init">
-// ===== Shared DOM helpers (lib/dom-utils.mjs via window.appUtils) =====
+// ===== Shared helpers (lib/dom-utils.mjs + lib/storage.mjs via window.appUtils) =====
 // Audit-coherence Tier 2 R3 — esc() now delegates to the shared escHtml
 // (which also escapes apostrophes, fixing a defence-in-depth gap the
 // inline version had). Hoisted to the top of the inert block so every
 // caller below — including the very first paint — sees it without TDZ.
-const esc = window.appUtils.escHtml;
+const esc         = window.appUtils.escHtml;
+const lsRead      = window.appUtils.lsRead;
+const lsWrite     = window.appUtils.lsWrite;
+const lsRemove    = window.appUtils.lsRemove;
+const lsGetString = window.appUtils.lsGetString;
+const lsSetString = window.appUtils.lsSetString;
 
 // ===== Data Layer — DB, Indexes, Constants =====
 const PUBCHEM_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -1402,10 +1412,10 @@ const _scheduleIdle = (typeof window !== 'undefined' && window.requestIdleCallba
 const _COMPARE_LS_KEY = 'perfume_compare_cart';
 const _COMPARE_LIMIT = 8;
 let _compareCart = new Set();
-try {
-  const _compareRaw = (typeof localStorage !== 'undefined') ? localStorage.getItem(_COMPARE_LS_KEY) : null;
-  if (_compareRaw) for (const c of JSON.parse(_compareRaw)) if (typeof c === 'string') _compareCart.add(c);
-} catch (e) { /* ignore corrupt localStorage */ }
+{
+  const arr = lsRead(_COMPARE_LS_KEY, [], Array.isArray);
+  for (const c of arr) if (typeof c === 'string') _compareCart.add(c);
+}
 
 // Results-persistence keys (was in v191 results-persistence block).
 // Hoisted because _restoreResults() runs at init (~line 4295) — long
@@ -1477,10 +1487,8 @@ const DEBOUNCE = {
 // init logs that fire on every load — actual exceptions (network,
 // render) still go through plain console.warn / console.error.
 const _DEBUG = (function () {
-  try {
-    if (typeof location !== 'undefined' && location.search && location.search.includes('debug=1')) return true;
-    return localStorage.getItem('perfume_debug') === '1';
-  } catch (e) { return false; }
+  if (typeof location !== 'undefined' && location.search && location.search.includes('debug=1')) return true;
+  return lsGetString('perfume_debug') === '1';
 })();
 function _devWarn(...args) { if (_DEBUG) console.warn(...args); }
 // Click-flow tracer — visible feedback for mobile users without
@@ -6147,8 +6155,7 @@ function _cleanBlendsWith(arr) {
 // hydration also happens up there so the cart count is correct on
 // the first paint.
 function _persistCompareCart() {
-  try { localStorage.setItem(_COMPARE_LS_KEY, JSON.stringify([..._compareCart])); }
-  catch (e) { /* quota or private mode — ignore */ }
+  lsWrite(_COMPARE_LS_KEY, [..._compareCart]);
 }
 
 // ── Results persistence ──────────────────────────────────────────
@@ -6160,35 +6167,25 @@ function _persistCompareCart() {
 // from the DB on restore. Keys (_RESULTS_LS_KEY, _SORT_LS_KEY) live
 // at the top of the script — see the hoisted-state comment block.
 function _persistResults() {
-  try {
-    const minimal = [];
-    for (const r of results) {
-      const cas = r?.record?.identifiers?.cas;
-      if (!cas) continue;
-      minimal.push({
-        cas,
-        name: r.record?.names?.canonical || '',
-        open: !!r._open
-      });
-    }
-    if (minimal.length) {
-      localStorage.setItem(_RESULTS_LS_KEY, JSON.stringify(minimal));
-    } else {
-      localStorage.removeItem(_RESULTS_LS_KEY);
-    }
-    if (_sortOrder && _sortOrder !== 'search') {
-      localStorage.setItem(_SORT_LS_KEY, _sortOrder);
-    } else {
-      localStorage.removeItem(_SORT_LS_KEY);
-    }
-  } catch (e) { /* quota / private mode — ignore */ }
+  const minimal = [];
+  for (const r of results) {
+    const cas = r?.record?.identifiers?.cas;
+    if (!cas) continue;
+    minimal.push({
+      cas,
+      name: r.record?.names?.canonical || '',
+      open: !!r._open
+    });
+  }
+  if (minimal.length) lsWrite(_RESULTS_LS_KEY, minimal);
+  else                lsRemove(_RESULTS_LS_KEY);
+  if (_sortOrder && _sortOrder !== 'search') lsSetString(_SORT_LS_KEY, _sortOrder);
+  else                                       lsRemove(_SORT_LS_KEY);
 }
 function _restoreResults() {
   try {
-    const raw = localStorage.getItem(_RESULTS_LS_KEY);
-    if (!raw) return;
-    const items = JSON.parse(raw);
-    if (!Array.isArray(items) || !items.length) return;
+    const items = lsRead(_RESULTS_LS_KEY, null, Array.isArray);
+    if (!items || !items.length) return;
     for (const item of items) {
       if (!item || !item.cas || !DB[item.cas]) continue;
       const mat = createResult(item.name || DB[item.cas].name);
@@ -6210,7 +6207,7 @@ function _restoreResults() {
     // Restore the user's sort preference if one was saved. Falls back
     // to 'search' (insertion order) when the value is missing or
     // unrecognised — defensive guard against future enum changes.
-    const savedSort = localStorage.getItem(_SORT_LS_KEY);
+    const savedSort = lsGetString(_SORT_LS_KEY);
     if (savedSort && ['name', 'cas', 'family'].includes(savedSort)) {
       _sortOrder = savedSort;
       const sel = document.getElementById('sortSelect');
@@ -8188,7 +8185,7 @@ const LANG_INDEX = {
     axisFacet:      '\u0E25\u0E31\u0E01\u0E29\u0E13\u0E30\u0E22\u0E48\u0E2D\u0E22',
   }
 };
-let _lang = localStorage.getItem('perfume_lang') || 'en';
+let _lang = lsGetString('perfume_lang', 'en');
 function applyLangIndex() {
   const t = LANG_INDEX[_lang];
   const label = document.getElementById('themeToggleLabel');
@@ -8262,7 +8259,7 @@ function applyLangIndex() {
 applyLangIndex();
 document.getElementById('themeToggle').addEventListener('click', () => {
   _lang = _lang === 'en' ? 'th' : 'en';
-  localStorage.setItem('perfume_lang', _lang);
+  lsSetString('perfume_lang', _lang);
   applyLangIndex();
 });
 
@@ -8271,7 +8268,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   const root = document.documentElement;
   const btn = document.getElementById('themeSwitch');
   if (!btn) return;
-  const saved = localStorage.getItem('perfume_theme');
+  const saved = lsGetString('perfume_theme');
   const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const initial = saved || (prefersDark ? 'dark' : 'light');
   function apply(theme) {
@@ -8286,7 +8283,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   apply(initial);
   btn.addEventListener('click', () => {
     const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('perfume_theme', next);
+    lsSetString('perfume_theme', next);
     apply(next);
   });
 })();
