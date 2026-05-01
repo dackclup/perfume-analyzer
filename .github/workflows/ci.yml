@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        # Skip the prepare lifecycle (it tries to install git hooks into
+        # .git/hooks; CI doesn't need them and the hook copy can fail on
+        # shallow checkouts).
+        run: npm ci --ignore-scripts
+
+      - name: Lint (eslint)
+        run: npm run lint
+
+      - name: Format check (prettier)
+        run: npm run format:check
+
+      - name: Tests (vitest)
+        run: npm test
+
+      - name: Lint data (schema + cross-ref + ratchet)
+        run: npm run lint:data
+
+      - name: Lint version drift
+        run: npm run lint:version
+
+      - name: Codemap freshness
+        run: npm run codemap:check
