@@ -82,10 +82,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7519",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Anisic / Aromatic",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -96,9 +96,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "anise",
+          "sweet-aromatic"
+        ]
       },
       "ghs_codes": []
     },
@@ -124,10 +129,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7557",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Spicy",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -138,9 +143,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic",
+          "spicy"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic",
+          "spicy",
+          "anise"
+        ]
       },
       "ghs_codes": []
     },
@@ -166,10 +178,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7559",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -180,9 +192,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -208,10 +225,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/60995",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -222,9 +239,13 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic"
+        ]
       },
       "ghs_codes": []
     },
@@ -250,10 +271,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7585",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Cinnamic",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -264,9 +285,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral",
+          "spicy"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "floral",
+          "jasmine",
+          "spicy"
+        ]
       },
       "ghs_codes": []
     },
@@ -295,7 +323,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -334,10 +362,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7590",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -348,9 +376,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -376,10 +409,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/60998",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -390,9 +423,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -418,10 +456,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7601",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Rosy",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -432,9 +470,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "rosy",
+          "honey",
+          "floral"
+        ]
       },
       "ghs_codes": []
     },
@@ -624,10 +668,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7649",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Spicy / Cinnamic",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -638,9 +682,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "spicy",
+          "balsamic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "cinnamon",
+          "balsamic"
+        ]
       },
       "ghs_codes": []
     },
@@ -666,10 +716,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7651",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -680,9 +730,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -708,10 +763,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7652",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Spicy / Cinnamic",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -722,9 +777,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "spicy",
+          "balsamic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "cinnamon",
+          "balsamic"
+        ]
       },
       "ghs_codes": []
     },
@@ -750,10 +811,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7590",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -764,9 +825,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -792,10 +858,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7655",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Rosy",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -806,9 +872,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "rosy",
+          "honey",
+          "floral"
+        ]
       },
       "ghs_codes": []
     },
@@ -896,7 +968,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -997,10 +1069,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7695",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -1011,9 +1083,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -1039,10 +1116,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7703",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Anisic / Aromatic",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -1053,9 +1130,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "anise",
+          "sweet-aromatic"
+        ]
       },
       "ghs_codes": []
     },
@@ -1349,10 +1431,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7712",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -1363,9 +1445,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -1530,10 +1617,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7742",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Caramellic / Sweet",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -1544,9 +1631,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "caramellic",
+          "sweet"
+        ]
       },
       "ghs_codes": []
     },
@@ -1575,7 +1667,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -1614,10 +1706,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7180",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -1628,9 +1720,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -1656,10 +1753,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7765",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -1670,9 +1767,13 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic"
+        ]
       },
       "ghs_codes": []
     },
@@ -1701,7 +1802,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2012,10 +2113,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7794",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Citrus",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2026,9 +2127,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "citrus",
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "citrus",
+          "lemon",
+          "aldehydic"
+        ]
       },
       "ghs_codes": []
     },
@@ -2262,10 +2370,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7797",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2276,9 +2384,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -2304,10 +2417,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7799",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2318,9 +2431,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -2346,10 +2464,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/2879",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Phenolic / Smoky",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2360,9 +2478,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "spicy",
+          "balsamic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "phenolic",
+          "smoky",
+          "medicinal"
+        ]
       },
       "ghs_codes": []
     },
@@ -2388,10 +2513,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7824",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2402,9 +2527,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -2494,10 +2624,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7826",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2508,9 +2638,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -2603,7 +2738,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2645,7 +2780,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2684,10 +2819,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7921",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Caramellic / Sweet",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2698,9 +2833,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "caramellic",
+          "sweet"
+        ]
       },
       "ghs_codes": []
     },
@@ -2729,7 +2869,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2768,10 +2908,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7938",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Roasted / Nutty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2782,9 +2922,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "roasted",
+          "nutty"
+        ]
       },
       "ghs_codes": []
     },
@@ -2810,10 +2955,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7946",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2824,9 +2969,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -2852,10 +3002,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7899",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Sour",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2866,9 +3016,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "sour",
+          "cheesy"
+        ]
       },
       "ghs_codes": []
     },
@@ -2894,10 +3050,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7976",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Roasted / Nutty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2908,9 +3064,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "roasted",
+          "nutty"
+        ]
       },
       "ghs_codes": []
     },
@@ -2936,10 +3097,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8038",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -2950,9 +3111,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -3018,10 +3184,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8048",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -3032,9 +3198,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -3169,10 +3340,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8091",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -3183,9 +3354,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -3273,10 +3449,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8103",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Soapy",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -3287,9 +3463,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "soapy",
+          "green"
+        ]
       },
       "ghs_codes": []
     },
@@ -3315,10 +3497,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8129",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Soapy",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -3329,9 +3511,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "soapy",
+          "green"
+        ]
       },
       "ghs_codes": []
     },
@@ -3357,10 +3545,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8130",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Fatty",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -3371,9 +3559,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic",
+          "fatty",
+          "soapy"
+        ]
       },
       "ghs_codes": []
     },
@@ -3399,10 +3593,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8139",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -3413,9 +3607,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -3441,10 +3640,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/957",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Soapy",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -3455,9 +3654,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "soapy",
+          "green"
+        ]
       },
       "ghs_codes": []
     },
@@ -3534,10 +3739,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8174",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Soapy",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -3548,9 +3753,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "soapy",
+          "green"
+        ]
       },
       "ghs_codes": []
     },
@@ -3714,10 +3925,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8193",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Soapy",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -3728,9 +3939,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "soapy",
+          "green"
+        ]
       },
       "ghs_codes": []
     },
@@ -3756,10 +3973,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8194",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Fatty",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -3770,9 +3987,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic",
+          "fatty",
+          "soapy"
+        ]
       },
       "ghs_codes": []
     },
@@ -3798,10 +4021,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8209",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Waxy / Fatty",
+        "strength": "Low"
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -3812,9 +4035,17 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "musk",
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "waxy",
+          "fatty",
+          "soapy",
+          "musk"
+        ]
       },
       "ghs_codes": []
     },
@@ -3843,7 +4074,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -4252,10 +4483,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8361",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Balsamic / Salicylate",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -4266,9 +4497,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "balsamic",
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "salicylate",
+          "balsamic",
+          "sun-tan"
+        ]
       },
       "ghs_codes": []
     },
@@ -4363,10 +4601,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8315",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Sour",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -4377,9 +4615,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "sour",
+          "cheesy"
+        ]
       },
       "ghs_codes": []
     },
@@ -4474,10 +4718,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8375",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Phenolic / Smoky",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -4488,9 +4732,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "spicy",
+          "balsamic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "phenolic",
+          "smoky",
+          "medicinal"
+        ]
       },
       "ghs_codes": []
     },
@@ -4781,10 +5032,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8419",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Vanilla / Sweet",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -4795,9 +5046,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "vanilla",
+          "sweet",
+          "powdery"
+        ]
       },
       "ghs_codes": []
     },
@@ -4823,10 +5080,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/61048",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -4837,9 +5094,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -5404,7 +5666,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -5446,7 +5708,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -5485,10 +5747,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/31209",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Cinnamic",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -5499,9 +5761,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral",
+          "spicy"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "floral",
+          "jasmine",
+          "spicy"
+        ]
       },
       "ghs_codes": []
     },
@@ -5527,10 +5796,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/31224",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Spicy / Cinnamic",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -5541,9 +5810,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "spicy",
+          "balsamic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "cinnamon",
+          "balsamic"
+        ]
       },
       "ghs_codes": []
     },
@@ -5569,10 +5844,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/998",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -5583,9 +5858,13 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic"
+        ]
       },
       "ghs_codes": []
     },
@@ -5792,10 +6071,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/31249",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -5806,9 +6085,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -5834,10 +6118,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/31251",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -5848,9 +6132,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -5879,7 +6168,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -5993,10 +6282,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/31260",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Soapy",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -6007,9 +6296,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "soapy",
+          "green"
+        ]
       },
       "ghs_codes": []
     },
@@ -6034,7 +6329,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -6138,7 +6433,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -6177,10 +6472,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/31276",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -6191,9 +6486,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -6219,10 +6519,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/20083",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Soapy",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -6233,9 +6533,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "soapy",
+          "green"
+        ]
       },
       "ghs_codes": []
     },
@@ -6261,10 +6567,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/379",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Sour",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -6275,9 +6581,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "sour",
+          "cheesy"
+        ]
       },
       "ghs_codes": []
     },
@@ -6303,10 +6615,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/454",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Fatty",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -6317,9 +6629,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic",
+          "fatty",
+          "soapy"
+        ]
       },
       "ghs_codes": []
     },
@@ -6479,10 +6797,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/86209",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Muguet",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -6493,9 +6811,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "muguet",
+          "lily-of-the-valley",
+          "floral"
+        ]
       },
       "ghs_codes": []
     },
@@ -6951,10 +7275,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/536907",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -6965,9 +7289,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -6993,10 +7322,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/61071",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Violet",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -7007,9 +7336,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "violet",
+          "rosy",
+          "floral"
+        ]
       },
       "ghs_codes": []
     },
@@ -7035,10 +7370,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/25915",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Roasted / Nutty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -7049,9 +7384,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "roasted",
+          "nutty"
+        ]
       },
       "ghs_codes": []
     },
@@ -7077,10 +7417,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/3672772",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Buttery / Dairy",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -7091,9 +7431,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "buttery",
+          "dairy",
+          "popcorn"
+        ]
       },
       "ghs_codes": []
     },
@@ -7404,10 +7750,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8723",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Soapy",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -7418,9 +7764,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "soapy",
+          "green"
+        ]
       },
       "ghs_codes": []
     },
@@ -7446,10 +7798,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/93081",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Woody / Sesquiterpene",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -7460,9 +7812,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "woody",
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "woody",
+          "spicy",
+          "green"
+        ]
       },
       "ghs_codes": []
     },
@@ -7488,10 +7847,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/18756",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Citrus / Terpenic",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -7502,9 +7861,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "citrus",
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "citrus",
+          "terpenic",
+          "fresh"
+        ]
       },
       "ghs_codes": []
     },
@@ -7530,10 +7896,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/26332",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Roasted / Nutty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -7544,9 +7910,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "roasted",
+          "nutty"
+        ]
       },
       "ghs_codes": []
     },
@@ -7641,10 +8012,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8797",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Indolic / Animalic",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -7655,9 +8026,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "indolic",
+          "animalic",
+          "narcotic"
+        ]
       },
       "ghs_codes": []
     },
@@ -7816,10 +8193,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7780",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Terpenic",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -7830,9 +8207,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral",
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "floral",
+          "terpenic",
+          "rosy"
+        ]
       },
       "ghs_codes": []
     },
@@ -7988,10 +8372,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8857",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8002,9 +8386,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -8033,7 +8422,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8075,7 +8464,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8114,10 +8503,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8878",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8128,9 +8517,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -8156,10 +8550,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8892",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Sour",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8170,9 +8564,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "sour",
+          "cheesy"
+        ]
       },
       "ghs_codes": []
     },
@@ -8198,10 +8598,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8901",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Green",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8212,9 +8612,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic",
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic",
+          "green",
+          "fatty"
+        ]
       },
       "ghs_codes": []
     },
@@ -8240,10 +8647,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8907",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8254,9 +8661,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -8282,10 +8694,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8908",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8296,9 +8708,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -8324,10 +8741,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8187",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Fatty",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8338,9 +8755,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic",
+          "fatty",
+          "soapy"
+        ]
       },
       "ghs_codes": []
     },
@@ -8481,10 +8904,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/26808",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Roasted / Nutty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8495,9 +8918,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "roasted",
+          "nutty"
+        ]
       },
       "ghs_codes": []
     },
@@ -8523,10 +8951,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/1254",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Mint / Camphoraceous",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8537,9 +8965,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "camphoraceous",
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "mint",
+          "camphor",
+          "herbal"
+        ]
       },
       "ghs_codes": []
     },
@@ -8568,7 +9003,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8610,7 +9045,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8649,10 +9084,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/9017",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Terpenic",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8663,9 +9098,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral",
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "floral",
+          "terpenic",
+          "rosy"
+        ]
       },
       "ghs_codes": []
     },
@@ -8753,10 +9195,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/27457",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Roasted / Nutty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8767,9 +9209,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "roasted",
+          "nutty"
+        ]
       },
       "ghs_codes": []
     },
@@ -8795,10 +9242,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/12993",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Green / Leafy",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8809,9 +9256,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "green",
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "green",
+          "leafy",
+          "aldehydic"
+        ]
       },
       "ghs_codes": []
     },
@@ -8944,10 +9398,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/27866",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Rose",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -8958,9 +9412,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "rose",
+          "green-floral"
+        ]
       },
       "ghs_codes": []
     },
@@ -9101,7 +9560,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -9328,10 +9787,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/1213",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Earthy / Mossy",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -9342,9 +9801,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "earthy",
+          "soil",
+          "mossy"
+        ]
       },
       "ghs_codes": []
     },
@@ -9427,10 +9892,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/89440",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Musk",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -9441,9 +9906,13 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "musk"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "musk"
+        ]
       },
       "ghs_codes": []
     },
@@ -9529,10 +9998,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/121780",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Fatty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -9543,9 +10012,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic",
+          "fatty"
+        ]
       },
       "ghs_codes": []
     },
@@ -9571,10 +10045,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/30914",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Roasted / Nutty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -9585,9 +10059,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "roasted",
+          "nutty"
+        ]
       },
       "ghs_codes": []
     },
@@ -9681,10 +10160,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/1254",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Mint / Camphoraceous",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -9695,9 +10174,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "camphoraceous",
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "mint",
+          "camphor",
+          "herbal"
+        ]
       },
       "ghs_codes": []
     },
@@ -9900,10 +10386,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/16899",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Green",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -9914,9 +10400,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic",
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic",
+          "green",
+          "fatty"
+        ]
       },
       "ghs_codes": []
     },
@@ -9942,10 +10435,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/16900",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Green / Leafy",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -9956,9 +10449,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "green",
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "green",
+          "leafy",
+          "aldehydic"
+        ]
       },
       "ghs_codes": []
     },
@@ -9984,10 +10484,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/62775",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Violet",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -9998,9 +10498,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "violet",
+          "rosy",
+          "floral"
+        ]
       },
       "ghs_codes": []
     },
@@ -10091,10 +10597,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/32052",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Violet",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -10105,9 +10611,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "violet",
+          "rosy",
+          "floral"
+        ]
       },
       "ghs_codes": []
     },
@@ -10133,10 +10645,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/32052",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Violet",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -10147,9 +10659,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "violet",
+          "rosy",
+          "floral"
+        ]
       },
       "ghs_codes": []
     },
@@ -10242,10 +10760,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/32065",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Roasted / Nutty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -10256,9 +10774,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "roasted",
+          "nutty"
+        ]
       },
       "ghs_codes": []
     },
@@ -10287,7 +10810,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -10326,10 +10849,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/62444",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -10340,9 +10863,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -10482,10 +11010,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/62002",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Violet",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -10496,9 +11024,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "violet",
+          "rosy",
+          "floral"
+        ]
       },
       "ghs_codes": []
     },
@@ -10688,10 +11222,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/101330",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Balsamic / Salicylate",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -10702,9 +11236,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "balsamic",
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "salicylate",
+          "balsamic",
+          "sun-tan"
+        ]
       },
       "ghs_codes": []
     },
@@ -10730,10 +11271,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/33166",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Roasted / Nutty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -10744,9 +11285,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "roasted",
+          "nutty"
+        ]
       },
       "ghs_codes": []
     },
@@ -10949,10 +11495,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/62453",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Phenolic / Smoky",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -10963,9 +11509,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "spicy",
+          "balsamic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "phenolic",
+          "smoky",
+          "medicinal"
+        ]
       },
       "ghs_codes": []
     },
@@ -10991,10 +11544,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/33931",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Caramellic / Sweet",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -11005,9 +11558,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "caramellic",
+          "sweet"
+        ]
       },
       "ghs_codes": []
     },
@@ -11036,7 +11594,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -11264,10 +11822,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/76153",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Roasted / Nutty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -11278,9 +11836,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "roasted",
+          "nutty"
+        ]
       },
       "ghs_codes": []
     },
@@ -11380,10 +11943,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/27866",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Rose",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -11394,9 +11957,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "rose",
+          "green-floral"
+        ]
       },
       "ghs_codes": []
     },
@@ -11487,10 +12055,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/75695",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Musk",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -11501,9 +12069,13 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "musk"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "musk"
+        ]
       },
       "ghs_codes": []
     },
@@ -11529,10 +12101,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/10448",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Sulfurous / Savory",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -11543,9 +12115,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "sulfurous",
+          "savory"
+        ]
       },
       "ghs_codes": []
     },
@@ -11638,10 +12215,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/2969",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Sour",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -11652,9 +12229,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "sour",
+          "cheesy"
+        ]
       },
       "ghs_codes": []
     },
@@ -11996,10 +12579,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/2682",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Waxy / Fatty",
+        "strength": "Low"
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -12010,9 +12593,17 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "musk",
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "waxy",
+          "fatty",
+          "soapy",
+          "musk"
+        ]
       },
       "ghs_codes": []
     },
@@ -12163,10 +12754,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/118897",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Green / Fresh",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -12177,9 +12768,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "green",
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "green",
+          "fresh",
+          "clean"
+        ]
       },
       "ghs_codes": []
     },
@@ -12205,10 +12803,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/101905",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -12219,9 +12817,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -12317,10 +12920,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/19633",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Terpenic",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -12331,9 +12934,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral",
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "floral",
+          "terpenic",
+          "rosy"
+        ]
       },
       "ghs_codes": []
     },
@@ -12359,10 +12969,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/19801",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Green",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -12373,9 +12983,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic",
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic",
+          "green",
+          "fatty"
+        ]
       },
       "ghs_codes": []
     },
@@ -12464,10 +13081,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/8888",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Terpenic",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -12478,9 +13095,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral",
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "floral",
+          "terpenic",
+          "rosy"
+        ]
       },
       "ghs_codes": []
     },
@@ -12506,10 +13130,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/94403",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -12520,9 +13144,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -12796,10 +13425,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/650",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Buttery / Dairy",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -12810,9 +13439,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "buttery",
+          "dairy",
+          "popcorn"
+        ]
       },
       "ghs_codes": []
     },
@@ -12838,10 +13473,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/61346",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Earthy / Mossy",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -12852,9 +13487,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "earthy",
+          "soil",
+          "mossy"
+        ]
       },
       "ghs_codes": []
     },
@@ -12880,10 +13521,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/9895",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Citrus",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -12894,9 +13535,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "citrus",
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "citrus",
+          "lemon",
+          "aldehydic"
+        ]
       },
       "ghs_codes": []
     },
@@ -12925,7 +13573,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -12964,10 +13612,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/308",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Spicy / Cinnamic",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -12978,9 +13626,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "spicy",
+          "balsamic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "cinnamon",
+          "balsamic"
+        ]
       },
       "ghs_codes": []
     },
@@ -13358,7 +14012,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -14333,10 +14987,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/2214",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Vanilla / Sweet",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -14347,9 +15001,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "vanilla",
+          "sweet",
+          "powdery"
+        ]
       },
       "ghs_codes": []
     },
@@ -14636,10 +15296,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/179",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Buttery / Dairy",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -14650,9 +15310,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "buttery",
+          "dairy",
+          "popcorn"
+        ]
       },
       "ghs_codes": []
     },
@@ -14744,10 +15410,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/521348",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Soapy",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -14758,9 +15424,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "green"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "soapy",
+          "green"
+        ]
       },
       "ghs_codes": []
     },
@@ -14974,7 +15646,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -15013,10 +15685,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/10882",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -15027,9 +15699,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -15132,7 +15809,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -15239,10 +15916,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/110655",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -15253,9 +15930,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -15787,10 +16469,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/5357002",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Rosy",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -15801,9 +16483,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "rosy",
+          "honey",
+          "floral"
+        ]
       },
       "ghs_codes": []
     },
@@ -16073,10 +16761,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/93952",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Fatty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -16087,9 +16775,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic",
+          "fatty"
+        ]
       },
       "ghs_codes": []
     },
@@ -16271,10 +16964,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/11559",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Caramellic / Sweet",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -16285,9 +16978,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "caramellic",
+          "sweet"
+        ]
       },
       "ghs_codes": []
     },
@@ -16313,10 +17011,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/22201",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Roasted / Nutty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -16327,9 +17025,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "roasted",
+          "nutty"
+        ]
       },
       "ghs_codes": []
     },
@@ -16530,7 +17233,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -17113,10 +17816,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/6364",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Sulfurous / Savory",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -17127,9 +17830,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "sulfurous",
+          "savory"
+        ]
       },
       "ghs_codes": []
     },
@@ -17155,10 +17863,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/12232",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Sulfurous / Savory",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -17169,9 +17877,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "sulfurous",
+          "savory"
+        ]
       },
       "ghs_codes": []
     },
@@ -17267,10 +17980,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/22873",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -17281,9 +17994,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -17422,10 +18140,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/3354132",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Caramellic / Sweet",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -17436,9 +18154,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "caramellic",
+          "sweet"
+        ]
       },
       "ghs_codes": []
     },
@@ -17522,10 +18245,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/10460",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Green / Leafy",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -17536,9 +18259,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "green",
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "green",
+          "leafy",
+          "aldehydic"
+        ]
       },
       "ghs_codes": []
     },
@@ -17631,7 +18361,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -17737,10 +18467,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/107068",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -17751,9 +18481,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -17842,7 +18577,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -18110,10 +18845,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/1549778",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Terpenic",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -18124,9 +18859,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral",
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "floral",
+          "terpenic",
+          "rosy"
+        ]
       },
       "ghs_codes": []
     },
@@ -18359,10 +19101,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/61199",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Caramellic / Sweet",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -18373,9 +19115,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "caramellic",
+          "sweet"
+        ]
       },
       "ghs_codes": []
     },
@@ -18522,10 +19269,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7714",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Caramellic / Sweet",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -18536,9 +19283,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "caramellic",
+          "sweet"
+        ]
       },
       "ghs_codes": []
     },
@@ -18564,10 +19316,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/12844",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Lactonic / Fruity",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -18578,9 +19330,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity",
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "lactonic",
+          "peach",
+          "creamy"
+        ]
       },
       "ghs_codes": []
     },
@@ -18609,7 +19368,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -18925,10 +19684,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/24117",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Sour",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -18939,9 +19698,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "sour",
+          "cheesy"
+        ]
       },
       "ghs_codes": []
     },
@@ -18967,10 +19732,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/1068",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Sulfurous / Savory",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -18981,9 +19746,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "sulfurous",
+          "savory"
+        ]
       },
       "ghs_codes": []
     },
@@ -19009,10 +19779,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/1146",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Amine / Animalic",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -19023,9 +19793,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "amine",
+          "fishy",
+          "animalic"
+        ]
       },
       "ghs_codes": []
     },
@@ -19051,10 +19827,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/6417",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Sour",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -19065,9 +19841,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "sour",
+          "cheesy"
+        ]
       },
       "ghs_codes": []
     },
@@ -19507,10 +20289,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/62654",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Spicy",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -19521,9 +20303,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic",
+          "spicy"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic",
+          "spicy",
+          "anise"
+        ]
       },
       "ghs_codes": []
     },
@@ -19549,10 +20338,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/61071",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Floral / Violet",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -19563,9 +20352,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "violet",
+          "rosy",
+          "floral"
+        ]
       },
       "ghs_codes": []
     },
@@ -19594,7 +20389,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -20073,7 +20868,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -20112,10 +20907,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/988",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Sour",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -20126,9 +20921,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "sour",
+          "cheesy"
+        ]
       },
       "ghs_codes": []
     },
@@ -20438,10 +21239,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/6660",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Caramellic / Sweet",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -20452,9 +21253,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "caramellic",
+          "sweet"
+        ]
       },
       "ghs_codes": []
     },
@@ -20645,10 +21451,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7794",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Citrus",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -20659,9 +21465,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "citrus",
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "citrus",
+          "lemon",
+          "aldehydic"
+        ]
       },
       "ghs_codes": []
     },
@@ -21333,10 +22146,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/12890356",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -21347,9 +22160,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -22832,10 +23650,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/62161",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic / Fatty",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -22846,9 +23664,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic",
+          "fatty"
+        ]
       },
       "ghs_codes": []
     },
@@ -23037,10 +23860,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/170530",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Indolic / Animalic",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -23051,9 +23874,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "indolic",
+          "animalic",
+          "narcotic"
+        ]
       },
       "ghs_codes": []
     },
@@ -26289,10 +27118,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/10569",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fatty / Sour",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -26303,9 +27132,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fatty",
+          "sour",
+          "cheesy"
+        ]
       },
       "ghs_codes": []
     },
@@ -28149,10 +28984,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/6826",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Indolic / Animalic",
+        "strength": "Very High"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -28163,9 +28998,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "indolic",
+          "animalic",
+          "narcotic"
+        ]
       },
       "ghs_codes": []
     },
@@ -28447,10 +29288,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/6874",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Balsamic / Salicylate",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -28461,9 +29302,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "balsamic",
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "salicylate",
+          "balsamic",
+          "sun-tan"
+        ]
       },
       "ghs_codes": []
     },
@@ -28605,7 +29453,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -28644,10 +29492,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/1254",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Mint / Camphoraceous",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -28658,9 +29506,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "camphoraceous",
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "mint",
+          "camphor",
+          "herbal"
+        ]
       },
       "ghs_codes": []
     },
@@ -29809,10 +30664,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7043",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Phenolic / Smoky",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Middle / Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -29823,9 +30678,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "spicy",
+          "balsamic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "phenolic",
+          "smoky",
+          "medicinal"
+        ]
       },
       "ghs_codes": []
     },
@@ -30645,10 +31507,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7119",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aromatic / Ketone",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -30659,9 +31521,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "hawthorn",
+          "aromatic-ketone",
+          "sweet"
+        ]
       },
       "ghs_codes": []
     },
@@ -30687,10 +31555,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7122",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aromatic / Ketone",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -30701,9 +31569,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "hawthorn",
+          "aromatic-ketone",
+          "sweet"
+        ]
       },
       "ghs_codes": []
     },
@@ -30932,7 +31806,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -30971,10 +31845,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7146",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aldehydic",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -30985,9 +31859,13 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "aldehydic"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "aldehydic"
+        ]
       },
       "ghs_codes": []
     },
@@ -31081,10 +31959,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7165",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -31095,9 +31973,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -31245,7 +32128,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -31284,10 +32167,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7193",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Fruity / Ester",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -31298,9 +32181,14 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "fruity"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "fruity",
+          "ester"
+        ]
       },
       "ghs_codes": []
     },
@@ -31385,7 +32273,7 @@
         "type": "",
         "strength": ""
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -31770,10 +32658,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/2214",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Vanilla / Sweet",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Base",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -31784,9 +32672,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "gourmand"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "vanilla",
+          "sweet",
+          "powdery"
+        ]
       },
       "ghs_codes": []
     },
@@ -31939,10 +32833,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7410",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aromatic / Ketone",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -31953,9 +32847,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "hawthorn",
+          "aromatic-ketone",
+          "sweet"
+        ]
       },
       "ghs_codes": []
     },
@@ -31981,10 +32881,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7438",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Mint / Camphoraceous",
+        "strength": "High"
       },
-      "note": "",
+      "note": "Top / Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -31995,9 +32895,16 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "camphoraceous",
+          "herbal"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "mint",
+          "camphor",
+          "herbal"
+        ]
       },
       "ghs_codes": []
     },
@@ -32299,10 +33206,10 @@
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/7466",
       "odor": {
         "description": "",
-        "type": "",
-        "strength": ""
+        "type": "Aromatic / Ketone",
+        "strength": "Medium"
       },
-      "note": "",
+      "note": "Middle",
       "performance": {
         "tenacity": "",
         "duration": ""
@@ -32313,9 +33220,15 @@
       },
       "blends_with": [],
       "classification": {
-        "primaryFamilies": [],
+        "primaryFamilies": [
+          "floral"
+        ],
         "secondaryFamilies": [],
-        "facets": []
+        "facets": [
+          "hawthorn",
+          "aromatic-ketone",
+          "sweet"
+        ]
       },
       "ghs_codes": []
     },
