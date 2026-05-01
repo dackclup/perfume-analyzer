@@ -6095,13 +6095,14 @@
       ],
       "classification": {
         "primaryFamilies": [
-          "musk"
+          "soft_amber"
         ],
         "secondaryFamilies": [
-          "powdery"
+          "amber"
         ],
         "facets": [
-          "musk"
+          "musk",
+          "polycyclic-musk"
         ]
       },
       "pubchem_cid": "91497",
@@ -11321,7 +11322,7 @@
       "iupac": "methyl 2-(3-oxo-2-pentylcyclopentyl)acetate",
       "formula": "C13H22O3",
       "weight": "226.31",
-      "smiles": "",
+      "smiles": "CCCCCC1C(CCC1=O)CC(=O)OC",
       "inchi": "InChI=1S/C13H22O3/c1-3-4-5-6-11-10(7-8-12(11)14)9-13(15)16-2/h10-11H,3-9H2,1-2H3",
       "synonyms": [
         "methyl dihydrojasmonate",
@@ -11333,7 +11334,7 @@
         "methyl (3-oxo-2-pentylcyclopentyl)acetate",
         "fema no. 3408"
       ],
-      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/5365133",
+      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/102861",
       "odor": {
         "description": "Soft, diffusive, transparent jasmine-citrus with mild waxy-floral signature; cornerstone of modern fragrance construction since Diorella 1972 / Eau Sauvage 1966; amplifies other materials without dominating",
         "type": "Floral / Fresh",
@@ -11345,7 +11346,7 @@
         "duration": "10-14 hours"
       },
       "safety": {
-        "ifra": "IFRA 51 — no specific concentration restriction; non-sensitising; FEMA 3648 GRAS",
+        "ifra": "IFRA 51 — open use; no Cat-specific cap. Non-sensitising; FEMA 3648 GRAS. Not on EU 26+/2023/1545 allergen list.",
         "usage": "Typical 5-40% in fine fragrance — one of the highest-dose modern materials; Firmenich proprietary since 1962; (+)-cis stereoisomer (paradisone) is the most active; radiant effect in floral / citrus / woody compositions"
       },
       "blends_with": [
@@ -11364,7 +11365,7 @@
           "jasmine"
         ]
       },
-      "pubchem_cid": "5365133",
+      "pubchem_cid": "102861",
       "isomeric_smiles": "CCCCCC1C(CCC1=O)CC(=O)OC",
       "inchi_key": "WHGYBXFWUBPSRW-UHFFFAOYSA-N",
       "xlogp": "3.1",
@@ -12389,8 +12390,8 @@
       "iupac": "4-(4-hydroxy-4-methylpentyl)cyclohex-3-ene-1-carbaldehyde",
       "formula": "C13H22O2",
       "weight": "210.31",
-      "smiles": "CC(C)(O)CCCC1=CCC(C=O)CC1",
-      "inchi": "InChI=1S/C13H22O2/c1-13(2,15)8-3-4-11-7-5-10(9-14)6-12-11/h7,10,14-15H,3-6,8H2,1H3",
+      "smiles": "CC(C)(CCCC1=CCC(CC1)C=O)O",
+      "inchi": "InChI=1S/C13H22O2/c1-13(2,15)9-3-4-11-5-7-12(10-14)8-6-11/h5,10,12,15H,3-4,6-9H2,1-2H3",
       "synonyms": [
         "lyral",
         "4-(4-hydroxy-4-methylpentyl)cyclohex-3-ene-1-carbaldehyde",
@@ -12398,8 +12399,8 @@
         "hydroxyisohexyl 3-cyclohexene carboxaldehyde",
         "hicc"
       ],
-      "pubchem_cid": "91497",
-      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/91497",
+      "pubchem_cid": "91604",
+      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/91604",
       "odor": {
         "description": "Strong floral muguet (lily-of-the-valley); sweet, watery, slightly green",
         "type": "Floral / Muguet",
@@ -12602,7 +12603,7 @@
       "iupac": "1,1,2,3,3-pentamethyl-2,5,6,7-tetrahydroinden-4-one",
       "formula": "C14H22O",
       "weight": "206.32",
-      "smiles": "",
+      "smiles": "CC1C(C2=C(C1(C)C)C(=O)CCC2)(C)C",
       "inchi": "InChI=1S/C14H22O/c1-9-13(2,3)10-7-6-8-11(15)12(10)14(9,4)5/h9H,6-8H2,1-5H3",
       "synonyms": [
         "cashmeran",
@@ -12612,7 +12613,8 @@
         "(+-)-cashmeran",
         "dtxsid8047399",
         "dihydro pentamethylindanone",
-        "einecs 251-649-3"
+        "einecs 251-649-3",
+        "1,1,2,3,3-pentamethyl-2,5,6,7-tetrahydroinden-4-one"
       ],
       "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/92292",
       "odor": {
@@ -12626,7 +12628,7 @@
         "duration": "30-50 hours"
       },
       "safety": {
-        "ifra": "IFRA 51 — cashmeran: cumulative cap with synthetic woody amber; not on EU 26 allergen list; IFF proprietary captive",
+        "ifra": "IFRA 51 — open use; no Cat-specific cap. Polycyclic synthetic musk (DPMI). Not on EU 26+/2023/1545 allergen list.",
         "usage": "Typical 1-5% in fine fragrance for cashmere-wood / modern-amber / functional-woody accords"
       },
       "blends_with": [
@@ -12643,7 +12645,7 @@
           "cashmeran"
         ]
       },
-      "pubchem_cid": "116903",
+      "pubchem_cid": "92292",
       "isomeric_smiles": "CC1C2=C(CCCC2=O)C(C1(C)C)(C)C",
       "inchi_key": "FCHOWXYRNBFEAU-UHFFFAOYSA-N",
       "xlogp": "4.1",
@@ -18847,13 +18849,14 @@
     {
       "name": "Ambroxide",
       "cas": "6790-58-5",
-      "fema": "3923",
-      "iupac": "3a,6,6,9a-tetramethyl-2,4,5,5a,7,8,9,9b-octahydro-1H-benzo[e][1]benzofuran",
+      "fema": "3787",
+      "iupac": "(3aR,5aS,9aS,9bR)-3a,6,6,9a-tetramethyl-2,4,5,5a,7,8,9,9b-octahydro-1H-benzo[e][1]benzofuran",
       "formula": "C16H28O",
       "weight": "236.39",
-      "smiles": "",
-      "inchi": "InChI=1S/C16H28O/c1-14(2)8-5-9-15(3)12(14)6-10-16(4)13(15)7-11-17-16/h12-13H,5-11H2,1-4H3",
+      "smiles": "C[C@]12CCCC([C@@H]1CC[C@@]3([C@@H]2CCO3)C)(C)C",
+      "inchi": "InChI=1S/C16H28O/c1-14(2)8-5-9-15(3)12(14)6-10-16(4)13(15)7-11-17-16/h12-13H,5-11H2,1-4H3/t12-,13+,15-,16+/m0/s1",
       "synonyms": [
+        "ambroxide",
         "cetalox",
         "naphtho[2,1-b]furan, dodecahydro-3a,6,6,9a-tetramethyl-",
         "dodecahydro-3a,6,6,9a-tetramethylnaphtho[2,1-b]furan",
@@ -18861,9 +18864,10 @@
         "dodecahydro-3a,6,6,9a-tetramethylnaphtho(2,1-b)furan",
         "naphtho(2,1-b)furan, dodecahydro-3a,6,6,9a-tetramethyl-",
         "1,5,5,9-tetramethyl-13-oxatricyclo (8.3.0.0.(4.9))tridecane",
-        "refchem:417065"
+        "refchem:417065",
+        "(3ar,5as,9as,9br)-3a,6,6,9a-tetramethyl-2,4,5,5a,7,8,9,9b-octahydro-1h-benzo[e][1]benzofuran"
       ],
-      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/107166",
+      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/10857465",
       "odor": {
         "description": "Soft, warm, musky-amber with characteristic dry-woody ambergris facet and gentle marine-skin undertone; the iconic ambergris synthetic (Firmenich Ambrox) — substantive + diffusive + substantively low-threshold (0.04-0.1 ng/L)",
         "type": "Amber / Ambergris",
@@ -18875,7 +18879,7 @@
         "duration": "30-60 hours"
       },
       "safety": {
-        "ifra": "IFRA 51 — ambroxide: no specific concentration restriction; not on EU 26 allergen list; FEMA 3923 GRAS; dermatologically benign at functional levels; modern ambergris replacer following CITES limitations on natural ambergris",
+        "ifra": "IFRA 51 — open use; no Cat-specific cap. FEMA 3787 GRAS. Not on EU 26+/2023/1545 allergen list. Bicyclic naphthofuran ambergris isolate / synthetic.",
         "usage": "Typical 0.5-10% in fine fragrance (niche pushes to 20%+ as signature); cornerstone post-2000 amber + modern musky-woody accord; synthesised from sclareol or via Claisen-Schmidt from labdanoxide"
       },
       "blends_with": [
@@ -18897,7 +18901,7 @@
           "ambroxan"
         ]
       },
-      "pubchem_cid": "443061",
+      "pubchem_cid": "10857465",
       "isomeric_smiles": "CC1(C)CCC[C@]2(C)C1CC[C@]1(C)OCC[C@H]12",
       "inchi_key": "YPZUZOLGGMJZJO-ZMLGBVNGSA-N",
       "xlogp": "4.4",
