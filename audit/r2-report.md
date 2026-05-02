@@ -1682,3 +1682,255 @@ Consolidated Tier-2 / Tier-3 levers worth lifting in Round-3:
 6. **CONTRIBUTING-drift gate** (Tier 3) — `tools/check-contributing.mjs` asserts row-count, `lib/` filename list, and HTML line counts in CONTRIBUTING.md match reality. Closes F7.
 7. **Duplicate-function detector** (Tier 3) — pre-commit `grep -h "^function " *.html | sort | uniq -d` fails the commit if the same top-level function name appears in both pages. Catches future setStatus/showError-style clones. Closes F1's regression vector.
 8. **package.json `setup` / `prepare` clarity** (Tier 0) — rename `setup` → `setup:hooks` and document the dual-entry rationale in CONTRIBUTING.md. Closes F6.
+
+---
+
+## Phase C — Accessibility (WCAG 2.1 AA)
+
+Scope: `index.html` (Analyzer, ~8.4k lines) + `formulation.html` (Formulator, ~7.0k lines).
+The pages already do much right: skip links, `:focus-visible` outlines, `prefers-reduced-motion`,
+`prefers-color-scheme`, `aria-live` on toast region + boot overlay, `<main role="main">`,
+ARIA on dialog wrappers in the Analyzer, and reasonable focus management on some modal opens.
+The findings below catalogue the gaps that remain.
+
+### [C1] — Heading hierarchy skips h2 in Analyzer
+
+**Tier**: 0
+**Auto-fixable**: yes
+**Severity**: low
+**Locus**: `index.html:1053` (h1) → next heading is `index.html:7128` h3 (card title).
+**Evidence**: `grep -nE '^<h[1-6]|<h[1-6]>' index.html` returns exactly one `<h1>` and then jumps straight to inline `<h3>` inside cards (`index.html:7128`, `index.html:7313`). There is no `<h2>` in the document — neither for the search/filter region nor for the results list.
+**Why it matters**: SC 1.3.1 / 2.4.6 — screen-reader users navigating by heading jump from the page title straight into individual material cards, with no intermediate "Search" or "Results" anchor. `formulation.html` follows the correct h1 → h2 → h3 pattern (`Workspace`, `Materials`, then panel h3s).
+**Fix(point)**: Add `<h2 class="visually-hidden">Results</h2>` above the `#results` container and `<h2 class="visually-hidden">Filters</h2>` above the filter drawer.
+**Fix(systemic)**: Lint rule that asserts each top-level landmark contains at least one heading and that heading levels never skip downward by more than one (axe-core's `heading-order`).
+
+### [C2] — `<div>` / `<span>` with `onclick` instead of `<button>` (analyzer-side filter chrome and result cards)
+
+**Tier**: 2
+**Auto-fixable**: partial
+**Severity**: high
+**Locus**:
+- `index.html:1083` `<span class="filter-toggle" onclick="toggleMainFilter()">…Filter…</span>`
+- `index.html:1084` `<span class="filter-reset" onclick="resetAllFilters()">Reset</span>`
+- `index.html:1093,1097,1101,1105,1109,1113,1117,1126,1135` — nine `<div class="sub-toggle" onclick="toggleSubDrawer(this)">…</div>` (every drawer header)
+- `index.html:1120,1129` `<span class="odor-tag active" onclick="clearMainFamilyFiltersUI(this)">All</span>` (and Sub-Family equivalent)
+- `index.html:6035` `<div class="pc-group-header" onclick="togglePcGroup(${gid})">`
+- `index.html:7126` `<div class="card-header" onclick="toggleCard(${idx})">` (every result card opens via div-click)
+- `index.html:7300` `<div class="pubchem-toggle" id="pcToggle${idx}" onclick="loadPubchemData(${idx})">`
+- `index.html:4770` `<span class="pill" onclick="doSearch('…')">…</span>` (did-you-mean suggestions)
+- Filter chips built in `_buildPillFilter` (`index.html:4316,4333`) are `<span class="odor-tag">` with `onclick`, no `tabindex`, no `role="button"`, no `aria-pressed`.
+- `formulation.html:4512` `<span class="odor-tag" onclick="toggleMoodTarget(...)">` (mood chips)
+- `formulation.html:2036` `<span class="mat-warn" … onclick="applyUsageCap(...)">`
+
+**Evidence**: Counts — `grep -cE '<div[^>]*onclick='` → index 6 / formulation 3; `grep -cE '<span[^>]*onclick='` → index 6 / formulation 3. None of the chip-builders emit `tabindex` or `role="button"`.
+**Why it matters**: SC 2.1.1 (Keyboard) and SC 4.1.2 (Name, Role, Value). Keyboard-only users cannot expand a result card, open a filter drawer, click an "All" reset chip, toggle a chip filter, or accept a "did you mean" suggestion. They are also invisible to assistive tech that filters for actionable elements.
+**Fix(point)**: Replace each with `<button type="button" class="…">…</button>`. For the chip builder add `role="button" tabindex="0"` plus `aria-pressed` reflecting `ax.set.has(value)`, and a `keydown` handler mapping Space/Enter to `_togglePillFilter()`.
+**Fix(systemic)**: ESLint plugin (or pre-commit grep) that bans `<div onclick=` / `<span onclick=` in HTML and template literals. Add a single shared `makeChipButton({label, count, pressed, onActivate})` helper in `lib/dom-utils.mjs`.
+
+### [C3] — Wheel SVG slices in Analyzer have role="button" but no keyboard handler
+
+**Tier**: 1
+**Auto-fixable**: yes
+**Severity**: high
+**Locus**: `index.html:6556` (sub-family slice path), `index.html:6601` (main-family band path).
+**Evidence**:
+```
+'<path class="' + cls + '" data-seg="' + s.id + '" … '
++ 'onclick="_wheelClickSub(\'' + s.id + '\')" role="button" tabindex="0">'
+```
+A `grep -nE 'wheel-seg|wheel-band' index.html` shows no companion `addEventListener('keydown'…)` anywhere. Compare `formulation.html:6024` which explicitly attaches Enter/Space → click on `.wheel-seg, .wheel-main`. The analyzer wheel paths also lack `aria-label` and `aria-pressed`, while the formulation copy at `formulation.html:5816,5889` includes both.
+**Why it matters**: SC 2.1.1. The user can Tab onto the slice (focus ring shows) but Enter/Space does nothing. The tooltip (`<title>`) is only rendered on hover, not announced as the accessible name on focus, so SR users get the path-element default role only.
+**Fix(point)**: After `_buildWheelSvg` injects markup, run a pass identical to `formulation.html:6023-6029`. Add `aria-label="${_WHEEL_LABELS[s.id]} — ${count} materials"` and `aria-pressed="${isActive}"` on each path during string assembly.
+**Fix(systemic)**: Move wheel rendering into `lib/wheel.mjs` (Round 1 partially started this) so both pages share one keyboard-attach routine; eliminate the index/form drift permanently.
+
+### [C4] — Filter chips never reflect state through `aria-pressed`
+
+**Tier**: 1
+**Auto-fixable**: yes
+**Severity**: medium
+**Locus**: `index.html:4316-4341` (`_buildPillFilter`), `index.html:3595-3625` (`_togglePillFilter` / `_clearAxisFilter`).
+**Evidence**: The chip builder sets only a class (`btn.className = 'odor-tag' + …`) and the toggle handler updates `el.classList.add('active')` / `.remove('active')` without ever calling `setAttribute('aria-pressed', …)`. The CSS at `index.html:976` already keys off both `.chip.is-active` AND `[aria-pressed="true"]`, so the original intent was to set both — but the JS only flips the class.
+**Why it matters**: SC 4.1.2. SR announces the chip name but not its on/off state, so users have no audible confirmation the filter applied.
+**Fix(point)**: In `_togglePillFilter`, after each `classList` mutation also call `el.setAttribute('aria-pressed', el.classList.contains('active') ? 'true' : 'false')`. Same for `_clearAxisFilter`. Set the initial value during chip construction.
+**Fix(systemic)**: Centralise via the `makeChipButton` helper from C2.
+
+### [C5] — Result count + status updates are not announced
+
+**Tier**: 1
+**Auto-fixable**: yes
+**Severity**: medium
+**Locus**: `index.html:1148` (`#searchError`), `index.html:1151` (`#progressText`), `index.html:1154-1155` (`#statusBar` + `#statusText`).
+**Evidence**: None of these elements carry `aria-live`, `role="status"`, or `role="alert"`. `_renderResultsCore` writes the result count into `#statusText` (`index.html:6972`) but no live region wraps it. The `#searchError` element starts at `display:none` so even if `aria-live` were added it would be detached on first paint. The Compare CTA (`index.html:1167`, `id="compareLink"`) toggles `display:none → block` when the cart count changes — silent for SR users.
+**Why it matters**: SC 4.1.3 (Status Messages). Sighted users see "12 results — 3 ambiguous" appear after each search; SR users hear nothing.
+**Fix(point)**: Add `role="status" aria-live="polite" aria-atomic="true"` to `#statusBar` (the parent so the entire phrase is re-announced). Add `role="alert" aria-live="assertive"` to `#searchError`. Add `aria-live="polite"` to the `#compareLink`/`#compareCount` wrapper so cart changes get announced.
+**Fix(systemic)**: A single `setAppStatus(text, {polite|assertive})` helper in `lib/dom-utils.mjs` that writes to a permanent visually-hidden live-region; replace direct `.textContent =` writes on the various status nodes.
+
+### [C6] — Result-count change after filter toggle is not announced
+
+**Tier**: 1
+**Auto-fixable**: yes
+**Severity**: medium
+**Locus**: `index.html:3614` (`_refreshPills` call from `_togglePillFilter`); `index.html:4687`/`renderPills` (`index.html:4762`) — visibility-only update path.
+**Evidence**: When a chip is toggled, `_updateFilterVisibility` flips `display:none` on cards but does not write the new visible-count anywhere with `aria-live`. The user has no way to hear "12 of 38 visible" after each chip click.
+**Why it matters**: SC 4.1.3. Closely related to [C5] but specifically about filter feedback (separate user flow). Compounds with [C2]/[C4]: the filter chip itself isn't announced as toggled either.
+**Fix(point)**: After `_updateFilterVisibility` finishes, write the new visible count into the live region introduced in [C5].
+**Fix(systemic)**: Same as [C5].
+
+### [C7] — Modal dialogs lack focus trap + focus return on close
+
+**Tier**: 2
+**Auto-fixable**: partial
+**Severity**: high
+**Locus**:
+- `index.html:6695-6706` (`openWheelModal` / `closeWheelModal`), `index.html:6310,6375` (compare modal), `index.html:6795` (data-quality modal). All do `removeAttribute('hidden')` / `setAttribute('hidden','')` only.
+- `formulation.html:2349-2356` (addModal), `5419-5424` (briefModal), `6273-6277` (compareModal). All toggle `.classList.add('open')` only.
+
+**Evidence**: No code calls `.focus()` on the first focusable child of the dialog after opening (analyzer side; formulation focuses the search input but nothing else). No code stores/returns focus to the trigger button on close. No code traps Tab — pressing Tab from inside the dialog walks straight into the page behind. The `formulation.html` Esc handler (`formulation.html:1523-1526`) closes any `.modal-overlay.open` but does not return focus.
+**Why it matters**: SC 2.4.3 (Focus Order), SC 2.1.2 (No Keyboard Trap — inverse here: the modal *should* trap), SC 3.2.1 (focus visible/managed). A keyboard user opening the wheel dialog and pressing Tab ends up in the underlying filter drawer behind a backdrop they can't see has captured pointer events.
+**Fix(point)**: On open: store `document.activeElement`, query `dialog.querySelectorAll(focusableSelector)`, focus first. Add a Tab/Shift+Tab handler that wraps focus inside the dialog. On close: call `.focus()` on the stored trigger.
+**Fix(systemic)**: Extract `lib/dialog.mjs` `mountDialog(el, {labelledBy})` that handles open/close + focus trap + return + Esc. Migrate all five dialogs (3 in index, 3 in formulation) to it.
+
+### [C8] — Formulation modals missing dialog ARIA scaffolding
+
+**Tier**: 1
+**Auto-fixable**: yes
+**Severity**: medium
+**Locus**: `formulation.html:993` (addModal), `1007` (compareModal), `1027` (briefModal).
+**Evidence**: All three are `<div class="modal-overlay" id="…">` with no `role`, `aria-modal`, or `aria-labelledby`. The H3 inside (`formulation.html:996,1010,1030`) has no `id` for `aria-labelledby` to point at. Compare with `index.html:1171,1187,1199` which all carry `role="dialog" aria-modal="true" aria-labelledby="…ModalTitle"`.
+**Why it matters**: SC 4.1.2. SR announces "dialog" only when role+aria-modal are present; without it, the user just hears headings tumble in from somewhere.
+**Fix(point)**: Add `role="dialog" aria-modal="true"` to each overlay, give each `<h3>` an id, and `aria-labelledby` it.
+**Fix(systemic)**: Same `lib/dialog.mjs` from [C7] — the helper owns the aria attributes.
+
+### [C9] — Form inputs in Formulator have no programmatic label
+
+**Tier**: 1
+**Auto-fixable**: yes
+**Severity**: high
+**Locus**: `formulation.html:777` (`#batchSize`), `801` (`#fragPctCustom`), `830` (`#tempSlider`), `1000` (`#modalSearch`), `formulation.html:6615` (`#mapSearchInput`), `formulation.html:1100,1104` (brief sliders). Every `<input type="number" class="mat-pct">` rendered by `renderMaterialList` (`formulation.html:2066`) and `renderCarrierList` (`formulation.html:2304`).
+**Evidence**: `grep -nE 'for=' formulation.html` returns exactly one match (`formulation.html:3169`). Visible labels live in sibling `<div class="control-label"><span>Batch Size</span></div>` constructs that are not bound via `for`/`id` or `aria-labelledby`. The eight checkbox-in-label moods at `formulation.html:1088-1095` are correctly wrapped — those are fine.
+**Why it matters**: SC 1.3.1 / 3.3.2 / 4.1.2. SR reads each input as "edit, blank" with no name. The mat-pct edit cells in the materials table have no name at all — a SR user editing percentages cannot tell which row they're on.
+**Fix(point)**: Add `aria-label` (or `aria-labelledby` pointing at the existing visible label span) to every input. For mat-pct cells, build the label from the material name: `aria-label="Percentage for ${esc(name)}"`.
+**Fix(systemic)**: A render-helper that always emits the label binding when rendering a material row. Add an axe-core test that fails on unlabeled inputs.
+
+### [C10] — Card header keyboard inaccessibility (analyzer)
+
+**Tier**: 1
+**Auto-fixable**: yes
+**Severity**: high
+**Locus**: `index.html:7126` `<div class="card-header" onclick="toggleCard(${idx})">`.
+**Evidence**: The entire result card is opened by clicking the header div. The header has no `role`, `tabindex`, `aria-expanded`, or keyboard handler. The descendant `<span class="card-del" role="button" tabindex="0">` at `index.html:7138` is keyboard-accessible, but the card-open primary action is not.
+**Why it matters**: SC 2.1.1. Keyboard users can never expand a card to see the full PubChem detail.
+**Fix(point)**: Convert `<div class="card-header">` to `<button type="button" class="card-header" aria-expanded="${mat._open}" aria-controls="body${idx}">`. Update CSS to neutralise default button styling.
+**Fix(systemic)**: Same disclosure pattern repeats for `.sub-toggle` (filter drawers) and `.pubchem-toggle` (PubChem-detail expander). Extract a `makeDisclosureButton(label, controlsId, expanded)` helper.
+
+### [C11] — Suspicious low-contrast text via opacity stacking
+
+**Tier**: 0
+**Auto-fixable**: yes
+**Severity**: medium
+**Locus**:
+- `index.html:412` `.tag-axis-label { font-size:0.62em; color:var(--text-subtle); … opacity:.65; }`. Light theme: `#71717a` (≈4.6:1 on white) × 0.65 effective ≈ 2.7:1 on white. Fails AA (4.5:1) at the very small 0.62em size.
+- `index.html:487` `.odor-tag .pill-count { opacity:.5; }` on `--text-subtle` → ≈2.0:1. Fails AA.
+- `index.html:267` `.odor-tag.empty { opacity:0.35; }` — entire empty chip drops to <2:1. Intent is "available but unused", but the cue is solely color — fails 1.4.1 too.
+
+**Evidence**: Stacked CSS opacity reduces effective contrast multiplicatively, and the design-token comment at `index.html:36-38` only verifies the base accent vs. background, not opacity-modified text.
+**Why it matters**: SC 1.4.3 (Contrast Minimum 4.5:1 for normal text) and SC 1.4.1 (Use of Color — relying on opacity alone for the empty-chip state).
+**Fix(point)**: Drop `opacity:.65` from `.tag-axis-label` (the lighter `--text-subtle` already creates the visual hierarchy). Drop `opacity:.5` from `.pill-count` and rely on a slightly muted `--text-muted`. For empty chips, lift opacity to 0.55 and add a strikethrough/dotted-border cue so the "empty" state is conveyed without sub-AA color.
+**Fix(systemic)**: Add an automated contrast pass (`pa11y-ci` or `axe-core` colour-contrast rule) to CI. Encode "no `opacity:` on text colour" as a Stylelint rule.
+
+### [C12] — `#searchError` is hidden until populated; cannot host a live region reliably
+
+**Tier**: 0
+**Auto-fixable**: yes
+**Severity**: low
+**Locus**: `index.html:1148` `<p id="searchError" style="display:none;…">`.
+**Evidence**: `display:none` makes the node inert and removes it from the accessibility tree, so even if `aria-live` were attached, browsers (esp. NVDA + Firefox) inconsistently announce the first injection.
+**Why it matters**: SC 4.1.3. Errors like "Already in results" / "Did you mean…" go silent for SR users.
+**Fix(point)**: Replace `display:none` with the `hidden` attribute, or keep the element rendered (`visibility:hidden; height:0`) and toggle `aria-hidden`. Add `role="alert"`.
+**Fix(systemic)**: Bundled into [C5]'s shared status helper.
+
+### [C13] — Tab buttons in Formulator missing tablist/tab/tabpanel ARIA
+
+**Tier**: 1
+**Auto-fixable**: yes
+**Severity**: medium
+**Locus**: `formulation.html:893-901` (the 9 `.tab-btn` buttons), `formulation.html:905,914,923,932,941,950,959,968,977` (tab panels).
+**Evidence**: Buttons use `class="tab-btn active"` only — no `role="tab"`, no `aria-selected`, no `aria-controls`. Panels are `<div class="tab-panel">` — no `role="tabpanel"`, no `aria-labelledby`. Compare with `index.html:1141` `<div … id="facetGroupTabs" role="tablist" aria-label="Facet groups"></div>` which sets up tablist correctly elsewhere.
+**Why it matters**: SC 4.1.2. SR users hear "button, Wheel" rather than "tab, Wheel, 1 of 9, selected." Arrow-key navigation between tabs is also expected behaviour for `role="tab"` and is currently absent.
+**Fix(point)**: Add `role="tab"`, `aria-selected`, `aria-controls` to each `.tab-btn`; wrap the row in `role="tablist" aria-label="Analysis tabs"`; add `role="tabpanel" aria-labelledby="…"` to each panel; add Left/Right/Home/End key handling.
+**Fix(systemic)**: Extract `lib/tablist.mjs` so any future tabset on either page picks up correct ARIA + key handling.
+
+### [C14] — Decorative SVG used as content image lacks role/alt parity (formulation wheel)
+
+**Tier**: 0
+**Auto-fixable**: yes
+**Severity**: low
+**Locus**: `formulation.html` wheel SVG (rendered around `formulation.html:5749` defs, `5786`+ slices) vs analyzer wheel `index.html:6504`.
+**Evidence**: Analyzer's outer `<svg>` declares `role="img" aria-label="Edwards Fragrance Wheel"` (`index.html:6504-6505`); formulation's outer `<svg>` has no `role` / `aria-label`. Slice-level labels at `formulation.html:5816,5889` exist, so the loss is small but the two pages drift.
+**Why it matters**: SC 1.1.1. Container-level label aids orientation. Low severity because slice-level labels exist.
+**Fix(point)**: Add `role="img" aria-label="Edwards Fragrance Wheel"` to the outer `<svg>` in formulation, mirroring the analyzer.
+**Fix(systemic)**: One shared wheel helper (see [C3]).
+
+### [C15] — Card "Remove", "Related", "Try" controls are `<span role=button>` / `<a role=button>` without keydown
+
+**Tier**: 0
+**Auto-fixable**: yes
+**Severity**: low
+**Locus**: `index.html:7138` (card-del), `index.html:7181` (badge-related), `index.html:7194` (badge-substitute).
+**Evidence**: `<span class="card-del" role="button" tabindex="0" aria-label="Remove from results" … onclick="…">✕</span>`. There is no keydown handler — Enter/Space won't fire `delResult`. Same for the two badge anchors.
+**Why it matters**: SC 2.1.1. Same pattern as [C2] but with a `role` shim — still no keyboard activation.
+**Fix(point)**: Replace with `<button type="button" class="card-del" aria-label="Remove from results">✕</button>`. Same change for badge-related / badge-substitute anchors.
+**Fix(systemic)**: Lint rule from [C2].
+
+### [C16] — Compare/CSV "links" are anchors without `href`
+
+**Tier**: 0
+**Auto-fixable**: yes
+**Severity**: low
+**Locus**: `index.html:1167,1168` (`<a class="compare-link" id="compareLink" onclick="…" role="button" tabindex="0">`).
+**Evidence**: Anchors without `href` are not focusable by default; `tabindex="0"` recovers focus and `role="button"` recovers semantics — but they remain a code smell that double-broadcasts "link" + "button" in some SR setups.
+**Why it matters**: SC 4.1.2. Inconsistent role announcement.
+**Fix(point)**: Convert to `<button type="button" class="compare-link icon-btn--text">…</button>`.
+**Fix(systemic)**: Lint rule that bans `<a … role="button">` without `href`.
+
+### [C17] — Screen-reader narration trace gaps (composite)
+
+**Tier**: 2
+**Auto-fixable**: no
+**Severity**: medium
+**Locus**: full-page flow, summarised below.
+**Evidence** (mental walk-through with NVDA assumed):
+
+1. **Page load (index.html)**: SR hears "Skip to content link" (good), then "Perfume Raw Materials Analyzer, heading 1". Boot overlay (`role="status"` + `aria-live="polite"`, `index.html:1261-1262`) announces "Loading database…" (good). After load there is no h2 → SR users skip directly into card-level h3 if results were restored from localStorage; else into the empty-state paragraph.
+2. **Search input typed → result count**: input has `aria-label="Search materials by name, CAS, or trade name"` (good). After Enter, batch-rendering writes counts into `#statusText` (no live region — silent — see [C5]). `#progressText` updates per-batch but is also silent. Toast pop-ups *do* get announced (toastRegion has `aria-live="polite"`). Net: SR users hear toast text only, never the canonical "12 results" status.
+3. **Filter toggled → list rebuilt**: The chip click fires `_togglePillFilter` → `_refreshPills` → `_updateFilterVisibility`. Cards are hidden via inline `display:none`. SR hears nothing — chip aria-pressed missing (see [C4]) and visible-count not announced (see [C6]).
+4. **Material card opened**: The card-header div is not focusable (see [C10]); a keyboard user can't open it in the first place. Even if opened by mouse, `aria-expanded` is never set, and the body region appears with no programmatic association to the toggle. Inside the body, "Try" / "Related" / GHS-icons / Show-all CTAs are mixed `<a>`, `<span>`, `<button>` with inconsistent roles.
+5. **Modal opened (Wheel/Compare/DataQuality)**: dialog ARIA is in place on analyzer (good) but no focus trap + return (see [C7]). The Esc handler at `index.html:8319-8334` correctly prioritises modal close, which is well-thought.
+
+**Why it matters**: SC 4.1.3 plus SC 2.4.3 in aggregate. The site is technically usable by SR users for the primary search-then-read flow only because the toast region picks up most error/info events; the *positive* events (results found, filters applied) are silent.
+**Fix(point)**: Items 1, 2, 3 are addressed by [C1], [C5], [C6], [C4]. Item 4 by [C10]. Item 5 by [C7].
+**Fix(systemic)**: An axe-core + scripted Playwright trace that scrubs `aria-live` announcements during the canonical search → filter → open-card flow and asserts ≥1 announcement at each step.
+
+### [C18] — Skip link present but no second skip target after filter drawer
+
+**Tier**: 0
+**Auto-fixable**: yes
+**Severity**: low
+**Locus**: `index.html:1026` skip-link points to `#main-content` (`index.html:1074`) which sits *before* the search input + filter drawer, so the skip-link saves only a small number of header buttons. The result list itself has no skip target.
+**Evidence**: The filter drawer (`index.html:1081-1147`) contains 9 sub-drawers + dozens of chips; tabbing past it is tedious. There is no `#results` or "skip to results" anchor.
+**Why it matters**: SC 2.4.1 (Bypass Blocks). The drawer is the longest tab-stop region on the page.
+**Fix(point)**: Add a second skip-link `<a class="skip-link" href="#results">Skip to results</a>` that becomes visible on focus.
+**Fix(systemic)**: Generic helper that auto-emits skip-targets for landmarks.
+
+### Systemic fix candidates (C)
+
+Cross-cutting investments that prevent recurrence rather than patch one finding at a time:
+
+- **[CS-1] axe-core in CI** — Tier 3. Run `axe-core` (via `@axe-core/cli` or `pa11y-ci`) against `index.html` and `formulation.html` headlessly; fail PRs introducing new violations. Catches all of [C1], [C8], [C9], [C13], [C14] automatically and large parts of [C2]/[C11].
+- **[CS-2] ESLint/Stylelint + grep guard "no-div-onclick"** — Tier 3. Pre-commit grep that rejects `<div[^>]*onclick=` and `<span[^>]*onclick=` (or the equivalent `eslint-plugin-jsx-a11y` rules ported to template-literal HTML). Catches [C2], [C15], [C16] regressions.
+- **[CS-3] `lib/dom-utils.mjs` shared a11y helpers** — Tier 2. `setAppStatus(text, level)`, `makeChipButton(opts)`, `makeDisclosureButton(opts)`, `mountDialog(el, opts)`. Single source of truth for the patterns currently re-implemented inline 5+ times each. Resolves [C2]/[C4]/[C5]/[C6]/[C7]/[C8]/[C10]/[C12] structurally.
+- **[CS-4] Color-contrast rule, no opacity on text** — Tier 3. Stylelint rule `declaration-property-value-disallowed-list: { opacity: ["/^0\\.[0-7]/"] }` on selectors that paint text. Plus `axe-core color-contrast` rule. Closes [C11].
+- **[CS-5] Move wheel + tablist + dialog to `lib/`** — Tier 2. Consolidates the divergent analyzer/formulation implementations of the same widget so a single fix lands in both pages. Resolves [C3], [C7], [C13], [C14] drift.
+- **[CS-6] Heading-hierarchy lint** — Tier 3. axe-core's `heading-order` rule. Closes [C1].
+- **[CS-7] Manual SR walkthrough script in tests/** — Tier 4 (domain review). Scripted Playwright + axe trace that scrubs `aria-live` announcements during the canonical search → filter → open-card flow, asserts each step yields ≥1 announcement. Closes [C17] structurally.
+
