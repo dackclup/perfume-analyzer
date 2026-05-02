@@ -8,3 +8,11 @@ pnpm-lock.yaml
 .env.local
 coverage/
 .cache/
+
+# audit/cache/ holds gitignored PubChem fetch responses (Round 3 P1.3).
+# The .gitkeep + README.md inside the directory ARE tracked so the
+# directory exists and the policy is documented.
+audit/cache/*
+!audit/cache/.gitkeep
+!audit/cache/README.md
+audit/molecular-patches.json
