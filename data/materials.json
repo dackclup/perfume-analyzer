@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "2026-04-29-v297",
+    "version": "2026-04-29-v298",
     "row_count": 624
   },
   "perfumery_db": [
@@ -1995,7 +1995,7 @@
           "musk"
         ]
       },
-      "pubchem_cid": "15600",
+      "pubchem_cid": "61014",
       "isomeric_smiles": "C1CCCCCCC(=O)OCCOC(=O)CCCC1",
       "inchi_key": "RMIXHJPMNBXMBU-UHFFFAOYSA-N",
       "xlogp": "4.6",
@@ -19018,7 +19018,7 @@
         "2,4-dimethyl-3-cyclohexene-1-carboxaldehyde",
         "floralozone (variant)"
       ],
-      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/87577",
+      "pubchem_url": "https://pubchem.ncbi.nlm.nih.gov/compound/93375",
       "odor": {
         "description": "Powerful, metallic-green, violet-leafy with characteristic crushed-leaf-stem signature; IFF captive for ultra-diffusive green accords; 100x potency vs. cis-3-hexenol",
         "type": "Green / Metallic",
@@ -19049,7 +19049,7 @@
           "violet_leaf"
         ]
       },
-      "pubchem_cid": "87577",
+      "pubchem_cid": "93375",
       "isomeric_smiles": "CC1CC(CC(=C1)C)C=O",
       "inchi_key": "WPPBZJRMRVBMAX-UHFFFAOYSA-N",
       "xlogp": "2.4",
@@ -20860,7 +20860,7 @@
       "pubchem_cid": "62654"
     },
     {
-      "name": "Dtxsid6026240",
+      "name": "Methyl alpha-Ionone",
       "cas": "7779-30-8",
       "fema": "",
       "iupac": "1-(2,6,6-trimethylcyclohex-2-en-1-yl)pent-1-en-3-one",
