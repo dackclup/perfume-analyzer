@@ -1143,19 +1143,19 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      of these three scripts touch PERFUMERY_DATA at parse time, so they
      stay synchronous; the materials database alone has been hoisted to
      async fetch. -->
-<script src="taxonomy.js?v=2026-04-29-v300"></script>
-<script src="formulation_data.js?v=2026-04-29-v300"></script>
-<script src="formulation_engine.js?v=2026-04-29-v300"></script>
+<script src="taxonomy.js?v=2026-04-29-v301"></script>
+<script src="formulation_data.js?v=2026-04-29-v301"></script>
+<script src="formulation_engine.js?v=2026-04-29-v301"></script>
 
 <!-- Shared DOM helpers (escHtml / debounce / safeInit / normaliseMaterialKey).
      Audit-coherence Tier 2 R3 — single source of truth, replaces the
      inline copies that drifted between the two pages. -->
-<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v300"></script>
+<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v301"></script>
 <!-- Canonical enriched-material builder used by every formulation.addMaterial
      call site. Audit-coherence Tier 2 R3 fix for C3.2/C3.3. -->
-<script type="module" src="lib/material-shape.mjs?v=2026-04-29-v300"></script>
+<script type="module" src="lib/material-shape.mjs?v=2026-04-29-v301"></script>
 <!-- Versioned localStorage helpers. Audit-coherence Tier 2 R3. -->
-<script type="module" src="lib/storage.mjs?v=2026-04-29-v300"></script>
+<script type="module" src="lib/storage.mjs?v=2026-04-29-v301"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). Same bootstrap pattern as index.html:
@@ -1177,7 +1177,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 // State computation NEVER runs before stage 4 — the inert app-init body
 // is browser-inert until we replace its <script> element.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v300';
+  const DATA_VERSION = '2026-04-29-v301';
 
   const overlay = document.createElement('div');
   overlay.id = 'app-loading';
@@ -5763,7 +5763,12 @@ function renderWheelTab() {
   }
   const hasAnyMats = mats.length > 0;
 
+  // Audit-r2 Tier 0 (C14): role="img" + aria-label so SR users hear
+  // a single "Edwards Fragrance Wheel" announcement on focus, mirroring
+  // the analyzer's outer wheel SVG. Slice-level labels still narrate
+  // when the user steps in.
   let svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
+    + 'role="img" aria-label="Edwards Fragrance Wheel" '
     + 'viewBox="0 0 ' + size + ' ' + size + '" style="max-width:560px;width:100%;margin:0 auto;display:block">';
 
   // Cream/ivory backdrop disc — matches the warm base of Edwards' printed
