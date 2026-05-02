@@ -1934,3 +1934,127 @@ Cross-cutting investments that prevent recurrence rather than patch one finding 
 - **[CS-6] Heading-hierarchy lint** — Tier 3. axe-core's `heading-order` rule. Closes [C1].
 - **[CS-7] Manual SR walkthrough script in tests/** — Tier 4 (domain review). Scripted Playwright + axe trace that scrubs `aria-live` announcements during the canonical search → filter → open-card flow, asserts each step yields ≥1 announcement. Closes [C17] structurally.
 
+
+---
+
+## Phase G — Synthesis
+
+### G1 — Findings inventory (71 total)
+
+| Phase | Count | Tier-(-1) | Tier 0 | Tier 1 | Tier 2 | Tier 3 | Tier 4 | info |
+|---|---|---|---|---|---|---|---|---|
+| A — Round-1 regression | 8  | 1 | 2 | 0 | 0 | 1 | 0 | 4 |
+| B — Performance / PWA  | 21 | 3 | 9 | 0 | 9 | 0 | 0 | 0 |
+| C — Accessibility      | 18 | 0 | 8 | 8 | 2 | 0 | 0 | 0 |
+| D — Domain correctness | 9  | 0 | 2 | 1 | 0 | 0 | 6 | 0 |
+| E — Security           | 7  | 0 | 1 | 1 | 2 | 1 | 0 | 2 |
+| F — Code quality       | 7  | 0 | 4 | 0 | 2 | 1 | 0 | 0 |
+| **Total**              | **70** | **4** | **26** | **10** | **15** | **3** | **6** | **6** |
+
+(One marker line "[Phase][Sequence]" in the format header is not a real finding; net = 70.)
+
+### G2 — Heat map (file × dimension, count of findings)
+
+| File / target | Perf | A11y | Domain | Security | Quality | Round-1 reg |
+|---|---|---|---|---|---|---|
+| `sw.js`                      | 6 | 0 | 0 | 1 (positive E7) | 0 | 3 |
+| `index.html`                 | 8 | 12 | 1 (Iralia) | 4 | 4 | 0 |
+| `formulation.html`           | 7 | 8 | 0 | 4 | 3 | 0 |
+| `data/materials.json`        | 1 | 0 | 6 | 0 | 0 | 0 |
+| `formulation_data.js`        | 0 | 0 | 3 | 0 | 0 | 0 |
+| `taxonomy.js`                | 0 | 0 | 1 | 0 | 0 | 0 |
+| `manifest.webmanifest`       | 2 | 0 | 0 | 0 | 0 | 0 |
+| `lib/*.mjs`                  | 0 | 0 | 0 | 0 | 1 (F2 gaps) | 1 (B2.2 cause) |
+| `CHANGELOG.md`               | 0 | 0 | 0 | 0 | 0 | 1 (D2 over-stated) |
+| `CONTRIBUTING.md`            | 0 | 0 | 0 | 0 | 1 (F7) | 0 |
+| `eslint.config.mjs`          | 0 | 0 | 0 | 0 | 1 | 0 |
+| `package.json`               | 0 | 0 | 0 | 1 (E3 SRI) | 1 | 0 |
+| `.prettierignore`            | 0 | 0 | 0 | 0 | 0 | 1 (A3) |
+
+### G3 — Root-cause grouping
+
+Most findings collapse into 8 root causes:
+
+- **R1 — SW & cache contract drift**: SHELL_ASSETS list, `.js` vs `.mjs` regex, single-page registration. Three Tier-(-1) items + four Tier-2 items. *Single fix*: re-derive SHELL_ASSETS from a manifest file, broaden script-route regex, register SW from both pages.
+- **R2 — Inline-only HTML**: index/formulation pages own all UI; round-1 lib extraction did not stop growth (F1: +628 lines on index.html). Drives most a11y and code-quality findings (C2, C7, C13, F1, F5).
+- **R3 — Domain provenance unsourced**: IFRA Amendment, EU allergen revision, Edwards version, regulatory tags — none link to a canonical source URL or carry a `last_verified_at` date. Drives D1.1, D2.1, D3.1, D6.1.
+- **R4 — Missing security headers**: no CSP, no SRI, no referrer policy, no `X-Content-Type-Options`. Drives E3, E4, B/E partial overlaps.
+- **R5 — Mobile design tokens absent**: touch-target sizes, font-size floors, viewport-fit, breakpoints all hand-tuned per element. Drives B5.1-6 and partly C11.
+- **R6 — A11y boilerplate hand-rolled per widget**: every chip, modal, tab system reimplements its own state-vs-attribute glue. Drives C2, C3, C4, C7, C8, C13, C15.
+- **R7 — Doc drift after Round 1**: CONTRIBUTING.md, CHANGELOG numbers, `.prettierignore`. Drives A3, F7, D2.1's CHANGELOG line.
+- **R8 — Format/lint coverage incomplete**: prettier wasn't enforced on Round-1 outputs; eslint doesn't cover scripts/tests/lib or inline scripts. Drives A2, F5.
+
+### G4 — Action plan (Round-2 scope vs Round-3 backlog)
+
+**This round (claude/audit-r2-2026-05-02):**
+
+Tier -1 (regressions — first commit):
+- A2 — `prettier --write` on Round-1 outputs.
+- B2.1 — Add `taxonomy.js`, `formulation_data.js`, `formulation_engine.js`, `lib/*.mjs` to `SHELL_ASSETS`. Make `release.mjs` re-derive `SHELL_ASSETS` so it can never drift again.
+- B2.2 — Broaden `isLocalScript()` to match `.mjs` as well as `.js`.
+- B2.3 — Register SW from `formulation.html`.
+- A8 systemic — bake `format:check` into `scripts/pre-commit.sh`.
+
+Tier 0 (quick wins, one or two commits):
+- A3 — drop dead `.prettierignore` line.
+- B3.1 — coalesce mobile paste handler.
+- B4.1, B4.2 — manifest `id` + start_url.
+- B5.1, B5.6 — viewport-fit + theme-color meta tag.
+- B5.2 — minimum touch-target sizes via design tokens.
+- C1, C11, C12, C14, C15, C16, C18 — small a11y fixes.
+- D5.1 — fix Triplal CID `87577 → 93375`, Ethylene Brassylate CID `15600 → 61014`.
+- D5.2 — rename `Dtxsid6026240` placeholder (verify supplier listing first → `[NEEDS EXPERT REVIEW]` if unclear).
+- E3 — SRI on chart.js@4 + Google Fonts CSS.
+- F3, F4, F6 — info / cosmetic.
+- F7 — refresh CONTRIBUTING.md (10 drift items).
+
+Tier 1 (single-source-of-truth additions):
+- D1.1 — add `meta.ifra_amendment` + `meta.ifra_verified_at` to materials.json; rename `IFRA_51_LIMITS → IFRA_LIMITS` in formulation_data.js (with backward-compat alias).
+- E4 — CSP + referrer + X-Content-Type-Options meta tags via `release.mjs`.
+- C3, C4, C5, C6, C8, C9, C10, C13 — defer the bigger pieces (modal/tablist refactor) to Tier 2; this round wires `aria-pressed`, `aria-live`, the wheel keydown handler.
+
+Tier 2 (code structure — small subset only):
+- B2.4-6 — SW update flow + listeners (skipWaiting + controllerchange).
+- F5 — extend eslint.config.mjs to lint `scripts/`, `tests/`, `lib/`.
+- E1, E2 — fix the two `innerHTML` escape sites flagged.
+
+Tier 3 (automation):
+- A7 systemic — Dependabot config.
+- F2 — add tests for `lib/material-shape.mjs` + `lib/storage.mjs`.
+- Add `tools/check-pubchem.mjs` as a manual-run CLI (NOT in CI yet — rate-limit risk).
+
+Tier 4 (NEEDS EXPERT REVIEW — flag only, do NOT change):
+- D1.2 — 5 EU-banned/strict-cap materials missing from IFRA_LIMITS.
+- D1.3 — IFRA Amendment version vs current.
+- D2.1 — ~42 missing EU 2023/1545 allergens.
+- D3.1 — Edwards taxonomy `Fruity` placement, `aromatic_fougere` naming, gourmand sub-band.
+- D4.1 — Isopropyl Palmitate, Pivalic Acid, 2-Propanethiol classifications.
+- D6.1 — Ambroxan supplier disambiguation, Iralia → Firmenich attribution.
+
+**Round-3 backlog (NOT this round):**
+- B1 — split materials.json into name-index + detail-pages (lazy load).
+- B3.2-6 — bigger perf rewrites (inverted index, wheel componentisation, listener cleanup).
+- C2, C7, C13, C15, C16 — convert `<div onclick>` to `<button>` repo-wide; modal/tablist library.
+- F1 — extract more shared helpers (`lib/format.mjs`, `lib/i18n.mjs`).
+- E1, E2 — `eslint-plugin-no-unsanitized` baseline + ratchet.
+- D-tier-3 — IFRA/EUR-Lex RSS monitor.
+- B2 SW — content-aware routes, telemetry.
+- F-coverage threshold — `vitest --coverage` in CI.
+
+### G5 — Top risks (executive summary)
+
+1. **First-time offline boot is broken on Formulator.** Composition of B2.1 + B2.2 + B2.3 means a user who installs the PWA from the analyzer page and later goes offline cannot use the formulator. **Severity: HIGH.** Tier-(-1) one-commit fix.
+2. **CHANGELOG over-stated EU allergen coverage.** Round-1 said "extended 25→50" — actual table is 14 of ~56. Mark in CHANGELOG; the regulatory caps still need expert backfill. **Severity: HIGH (compliance).**
+3. **CIDs wrong on 2 of 10 sampled rows (20 %).** Linked PubChem material data is incorrect for Triplal and Ethylene Brassylate. Tier-0 fix (mechanical) + Tier-3 verification CLI. **Severity: MEDIUM.**
+4. **No CSP / SRI on third-party CDN scripts.** Chart.js@4 from jsdelivr without SRI is a supply-chain hole. **Severity: MEDIUM.**
+5. **Filter drawer / card-header keyboard inaccessibility.** Several controls are `<div onclick>`; users on keyboard or screen reader are blocked. **Severity: MEDIUM.**
+
+### G6 — Top wins (no-fix-needed, confirmed working)
+
+- **Service-worker cross-origin bypass** (E7) — robust.
+- **Storage migration** (A5) — graceful in 6 cases.
+- **Pre-commit hook** (A6) — successfully blocks broken data.
+- **Release/cache-bust toolchain** (A4) — round-trips cleanly with no orphan writes.
+- **Schema validation + ratchet** still passes (no regression on data-integrity tests).
+- **Skip link, `:focus-visible`, `prefers-reduced-motion`, `prefers-color-scheme`, toast aria-live, boot overlay role=status** all already present in the analyzer.
+
