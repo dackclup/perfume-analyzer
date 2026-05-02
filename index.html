@@ -10,7 +10,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <!-- Discourage aggressive caching of index.html so users get the
      latest `data/materials.json?v=…` cache-buster URL on every visit.
      Without these hints, GitHub Pages' default caching let stale
@@ -182,7 +182,7 @@
 /* Legacy #themeToggle — now aliased to .icon-btn */
 #themeToggle, #themeSwitch { font-family:inherit; }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); padding:var(--space-4); padding-bottom:calc(84px + env(safe-area-inset-bottom)); max-width:900px; margin:0 auto; line-height:var(--lh); }
+body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); padding:var(--space-4); padding-bottom:calc(84px + env(safe-area-inset-bottom)); padding-left:calc(var(--space-4) + env(safe-area-inset-left)); padding-right:calc(var(--space-4) + env(safe-area-inset-right)); max-width:900px; margin:0 auto; line-height:var(--lh); }
 h1, h2, h3, h4, h5, h6 { line-height:var(--lh-tight); letter-spacing:-0.01em; }
 h1 { font-size:var(--fs-2xl); font-weight:var(--fw-semibold); margin-bottom:4px; letter-spacing:-0.02em; }
 h2 { font-size:var(--fs-xl); font-weight:var(--fw-semibold); }
@@ -409,7 +409,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .tag-row { display:grid; grid-template-columns:36px 1fr; column-gap:var(--space-2); align-items:baseline; margin:0; line-height:1.5; }
 .tag-row > .tag-axis-label { padding:2px 0 0; margin:0; text-align:right; align-self:start; }
 .tag-row > .tag-chips { display:flex; flex-wrap:wrap; gap:var(--space-1) 6px; min-width:0; }
-.tag-axis-label { font-size:0.62em; color:var(--text-subtle); text-transform:uppercase; letter-spacing:0.08em; font-weight:var(--fw-semibold); opacity:.65; vertical-align:middle; }
+.tag-axis-label { font-size:0.72em; color:var(--text-subtle); text-transform:uppercase; letter-spacing:0.08em; font-weight:var(--fw-semibold); opacity:.85; vertical-align:middle; }
 @media (max-width:480px) {
   /* On narrow phones: drop the label column entirely. The chip colors
      (.badge-type vs .badge-reg vs .badge-use vs .badge-primary etc.)
@@ -426,14 +426,14 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
    header label so the chip cloud is scannable on mobile instead of one
    massive unstructured wrap. */
 .facet-group { margin:6px 0; }
-.facet-group-label { font-size:0.6em; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; opacity:0.7; font-weight:600; margin:2px 2px 3px; }
+.facet-group-label { font-size:0.72em; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; opacity:0.85; font-weight:600; margin:2px 2px 3px; }
 .facet-group-chips { display:flex; flex-wrap:wrap; gap:4px; }
 /* Type filter chip grouping — splits TYPE_VALUES into "Materials" vs
    "Solvent / Carrier / Other" clusters. Same typography as
    .facet-group-label so the two grouped chip sections feel of a piece. */
 .pill-filter-group { display:flex; flex-direction:column; gap:4px; margin-bottom:8px; width:100%; }
 .pill-filter-group:last-child { margin-bottom:0; }
-.pill-filter-group-label { font-size:0.6em; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; opacity:0.7; font-weight:600; margin:2px 2px 3px; }
+.pill-filter-group-label { font-size:0.72em; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; opacity:0.85; font-weight:600; margin:2px 2px 3px; }
 .pill-filter-group-chips { display:flex; flex-wrap:wrap; gap:4px; }
 /* Facet groups picker — collapsible checkbox list that hides/shows
    entire Edwards sub-family groups from the Facet drawer. */
@@ -531,7 +531,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .blend-chip-auto .blend-chip-strength { color:var(--accent); border-color:var(--accent); font-weight:500; }
 .sec-subtitle { font-size:0.75em; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text2); margin:10px 0 4px; }
 .blends-dropped { margin:6px 0 0; font-size:0.7em; font-style:italic; color:var(--text2); opacity:0.75; }
-.match-tag { font-size:0.6em; padding:1px 6px; border-radius:var(--radius-sm); font-weight:400; background:var(--accent); color:var(--accent-text, #fff); vertical-align:middle; opacity:0.8; white-space:nowrap; display:inline-block; }
+.match-tag { font-size:0.72em; padding:1px 6px; border-radius:var(--radius-sm); font-weight:400; background:var(--accent); color:var(--accent-text, #fff); vertical-align:middle; opacity:0.9; white-space:nowrap; display:inline-block; }
 
 /* PubChem data */
 .pubchem-toggle { cursor:pointer; color:var(--accent); font-size:0.9em; margin-top:8px; }
@@ -550,7 +550,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; color:var(--acce
 .pc-sub-content p { margin:2px 0; overflow-wrap:anywhere; }
 
 /* Download bar (sticky) */
-.downloads { position:fixed; bottom:0; left:0; right:0; z-index:100; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(8px); border-top:1px solid var(--border); padding:var(--space-3) var(--space-4); padding-bottom:calc(var(--space-3) + env(safe-area-inset-bottom)); display:flex; gap:var(--space-3); align-items:center; box-shadow:var(--shadow-up); flex-wrap:wrap; }
+.downloads { position:fixed; bottom:0; left:0; right:0; z-index:100; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(8px); border-top:1px solid var(--border); padding:var(--space-3) var(--space-4); padding-bottom:calc(var(--space-3) + env(safe-area-inset-bottom)); padding-left:calc(var(--space-4) + env(safe-area-inset-left)); padding-right:calc(var(--space-4) + env(safe-area-inset-right)); display:flex; gap:var(--space-3); align-items:center; box-shadow:var(--shadow-up); flex-wrap:wrap; }
 .downloads a { color:var(--text); text-decoration:none; font-size:0.85em; cursor:pointer; display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:var(--radius-sm); white-space:nowrap; }
 .downloads a:hover { color:var(--accent); background:var(--accent-soft); }
 .downloads .compare-link { color:var(--accent); font-weight:var(--fw-medium); border:1px solid var(--accent); }
@@ -1214,7 +1214,7 @@ html { scroll-behavior:smooth; }
      globals — and unlike PERFUMERY_DATA, the taxonomy file is small and
      pure-data so the sync block is unobservable. Bumping its ?v= reloads
      on both pages. -->
-<script src="taxonomy.js?v=2026-04-29-v298"></script>
+<script src="taxonomy.js?v=2026-04-29-v299"></script>
 
 <!-- Shared DOM helpers (escHtml / debounce / safeInit / normaliseMaterialKey).
      Audit-coherence Tier 2 R3 — single source of truth. ES module is deferred
@@ -1222,12 +1222,12 @@ html { scroll-behavior:smooth; }
      bootstrap below waits for DOMContentLoaded before activating the inert
      <script id="app-init">, so window.appUtils is populated before any
      consumer in the inert block runs. -->
-<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v298"></script>
+<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v299"></script>
 <!-- Versioned localStorage helpers. Audit-coherence Tier 2 R3 — replaces
      the scattered try/catch + JSON.parse pattern at every persistence
      site so quota / private-mode / corrupt-payload failures all funnel
      through one place. -->
-<script type="module" src="lib/storage.mjs?v=2026-04-29-v298"></script>
+<script type="module" src="lib/storage.mjs?v=2026-04-29-v299"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). The bootstrap below fetches it async,
@@ -1252,7 +1252,7 @@ html { scroll-behavior:smooth; }
 // inline data layer (DB build, FILTER_CACHE precompute, render init)
 // is gated behind the stage-2 integrity check.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v298';
+  const DATA_VERSION = '2026-04-29-v299';
 
   // Stage 1: mount loading overlay synchronously, before any await,
   // so the user always sees feedback regardless of network latency.
@@ -1507,7 +1507,7 @@ function _clickLog(...args) {
 // Mirrors the data/materials.json cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the boot-script's DATA_VERSION at the top of this page.
-const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v298";
+const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v299";
 // Defensive: a corrupted JSON payload could land window.PERFUMERY_DATA
 // without the expected shape. Guard every access so a missing key
 // surfaces as a single clear error rather than a TDZ-style cascade.
