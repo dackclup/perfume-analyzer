@@ -74,14 +74,32 @@ if (!checkOnly) {
 const HTML_FILES = ['index.html', 'formulation.html'];
 const DATA_FILE = 'data/materials.json';
 const SW_FILE = 'sw.js';
-// SW shell assets — hashed into CACHE_VERSION so any shell content change
-// auto-busts the cache. Mirrors the SHELL_ASSETS array in sw.js itself.
-const SHELL_ASSETS = [
+// SW shell assets — every routable, same-origin file the page needs to
+// render or boot offline. release.mjs (a) hashes these into
+// CACHE_VERSION so any content change rotates the cache, and
+// (b) writes them into sw.js between the SHELL_ASSETS_BEGIN/END
+// markers so the precache list can never drift from the hash.
+//
+// Audit-r2 Tier -1 fix (B2.1) — Round 1 left taxonomy.js,
+// formulation_data.js, formulation_engine.js and the new lib/*.mjs
+// modules off the precache list, breaking first-time offline boot on
+// the formulator.
+const SHELL_FILES = [
   'index.html',
   'formulation.html',
   'manifest.webmanifest',
   'data/materials.json',
+  'taxonomy.js',
+  'formulation_data.js',
+  'formulation_engine.js',
+  'lib/dom-utils.mjs',
+  'lib/material-shape.mjs',
+  'lib/storage.mjs',
 ];
+// Precache URL forms (what cache.addAll() receives in sw.js). The
+// leading './' alias for the root URL is added so a request for `/`
+// hits the cache; otherwise identical to SHELL_FILES.
+const SHELL_PRECACHE_URLS = ['./', ...SHELL_FILES.map(f => './' + f)];
 
 function shellContentHash() {
   // Tier 3 fix — derive an 8-hex-char content hash so any shell content
@@ -91,13 +109,25 @@ function shellContentHash() {
   // Concatenate file contents in a stable order so the hash is
   // deterministic across CI runs.
   const h = crypto.createHash('sha256');
-  for (const rel of SHELL_ASSETS) {
+  for (const rel of SHELL_FILES) {
     const abs = path.join(REPO, rel);
     h.update(rel + '\n');
     h.update(fs.readFileSync(abs));
     h.update('\n');
   }
   return h.digest('hex').slice(0, 8);
+}
+
+function rewriteSwShellAssets(swSrc) {
+  // Replace the marker-bracketed array literal in sw.js. Indentation
+  // matches the surrounding two-space style. Preserves the leading
+  // comment block (above the BEGIN marker) and the closing END marker.
+  const arrayLiteral =
+    'const SHELL_ASSETS = [\n' + SHELL_PRECACHE_URLS.map(u => `  '${u}',`).join('\n') + '\n];';
+  return swSrc.replace(
+    /\/\/ >>> SHELL_ASSETS_BEGIN[\s\S]*?\/\/ <<< SHELL_ASSETS_END/,
+    `// >>> SHELL_ASSETS_BEGIN\n${arrayLiteral}\n// <<< SHELL_ASSETS_END`
+  );
 }
 
 function applyReplaces(filePath, pairs) {
@@ -128,10 +158,12 @@ if (!checkOnly && newData !== oldData) {
   fs.writeFileSync(dataAbs, JSON.stringify(data, null, 2) + '\n');
 }
 
-// SW CACHE_VERSION = `perfume-shell-${shell}-${contentHash}`. The shell
-// part is the manual major from version.json; the contentHash is auto-
-// derived so a shell-asset change rebusts the cache without a manual bump.
-// Compute the hash AFTER any HTML / materials.json writes above.
+// SW CACHE_VERSION = `perfume-shell-${shell}-${contentHash}`. Plus the
+// SHELL_ASSETS array literal in sw.js is regenerated from SHELL_FILES
+// above, so the precache list can never drift from the content hash.
+// The shell part is the manual major from version.json; the contentHash
+// is auto-derived so a shell-asset change rebusts the cache without a
+// manual bump. Compute the hash AFTER any HTML / materials.json writes.
 let newShellHash = null;
 if (!checkOnly) {
   newShellHash = shellContentHash();
@@ -141,6 +173,7 @@ if (!checkOnly) {
     /const\s+CACHE_VERSION\s*=\s*'perfume-shell-[^']+';/,
     `const CACHE_VERSION = 'perfume-shell-${newShell}-${newShellHash}';`
   );
+  swSrc = rewriteSwShellAssets(swSrc);
   fs.writeFileSync(swAbs, swSrc);
 }
 
@@ -204,6 +237,26 @@ if (checkOnly) {
     if (recordedHash !== liveHash) {
       errors.push(
         `sw.js CACHE_VERSION shell hash is ${recordedHash}, but current shell content hashes to ${liveHash} (run npm run release).`
+      );
+    }
+  }
+  // Also verify the SHELL_ASSETS array in sw.js matches SHELL_PRECACHE_URLS.
+  // Round-1 had a list-only-in-sw.js that drifted; release.mjs now owns it,
+  // and --check enforces the round-trip.
+  const swSrcCheck = fs.readFileSync(path.join(REPO, SW_FILE), 'utf8');
+  const m = swSrcCheck.match(
+    /\/\/ >>> SHELL_ASSETS_BEGIN[\s\S]*?const\s+SHELL_ASSETS\s*=\s*\[([\s\S]*?)\];[\s\S]*?\/\/ <<< SHELL_ASSETS_END/
+  );
+  if (!m) {
+    errors.push(
+      'sw.js: SHELL_ASSETS_BEGIN/END markers missing — release.mjs cannot regenerate the list.'
+    );
+  } else {
+    const listed = [...m[1].matchAll(/'([^']+)'/g)].map(x => x[1]);
+    const expectedUrls = SHELL_PRECACHE_URLS;
+    if (listed.length !== expectedUrls.length || listed.some((u, i) => u !== expectedUrls[i])) {
+      errors.push(
+        `sw.js SHELL_ASSETS drift: listed=${JSON.stringify(listed)} expected=${JSON.stringify(expectedUrls)} (run npm run release).`
       );
     }
   }
