@@ -1,0 +1,42 @@
+# Audit-r2 Tier 3 (E6 / A7) — Dependabot config.
+#
+# Static-site project: only npm devDeps + GitHub Actions are
+# scanned. Production deps are zero (the site loads chart.js via CDN
+# with SRI). Goal: regular drips of patch/minor updates so the moderate
+# vitest/vite-node CVEs caught by `npm audit` stay current without
+# blocking.
+
+version: 2
+updates:
+  # JavaScript devDeps (vitest, eslint, prettier, ajv, …).
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    open-pull-requests-limit: 5
+    groups:
+      # Group all eslint-related deps so a single PR ratchets them
+      # together (avoids conflict between plugin major bumps and the
+      # core eslint flat-config schema).
+      eslint:
+        patterns:
+          - 'eslint*'
+          - '@html-eslint/*'
+      # Group vitest + vite + esbuild — they share an upstream version
+      # graph and must move in lockstep.
+      vitest:
+        patterns:
+          - 'vitest'
+          - 'vite*'
+      # Group prettier on its own (rare breaking changes; reviewable).
+      prettier:
+        patterns:
+          - 'prettier'
+
+  # Pin GitHub Actions versions inside .github/workflows/.
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+    open-pull-requests-limit: 3
