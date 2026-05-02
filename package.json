@@ -5,8 +5,8 @@
   "description": "Static-site perfumery raw materials analyzer + formulation engine. PubChem compound data, IFRA 51 caps, Edwards Fragrance Wheel taxonomy.",
   "type": "module",
   "scripts": {
-    "lint": "eslint --max-warnings=0 \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\"",
-    "lint:fix": "eslint --fix \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\"",
+    "lint": "eslint --max-warnings=0 \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"scripts/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\" \"tests/**/*.{js,mjs}\"",
+    "lint:fix": "eslint --fix \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"scripts/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\" \"tests/**/*.{js,mjs}\"",
     "format": "prettier --write \"tools/**/*.{js,mjs}\" \"scripts/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\" \"tests/**/*.{js,mjs}\" \"*.{json,md}\"",
     "format:check": "prettier --check \"tools/**/*.{js,mjs}\" \"scripts/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\" \"tests/**/*.{js,mjs}\" \"*.{json,md}\"",
     "lint:blends": "node tools/lint-blends.mjs",

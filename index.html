@@ -1270,7 +1270,7 @@ html { scroll-behavior:smooth; }
      globals — and unlike PERFUMERY_DATA, the taxonomy file is small and
      pure-data so the sync block is unobservable. Bumping its ?v= reloads
      on both pages. -->
-<script src="taxonomy.js?v=2026-04-29-v302"></script>
+<script src="taxonomy.js?v=2026-04-29-v303"></script>
 
 <!-- Shared DOM helpers (escHtml / debounce / safeInit / normaliseMaterialKey).
      Audit-coherence Tier 2 R3 — single source of truth. ES module is deferred
@@ -1278,12 +1278,12 @@ html { scroll-behavior:smooth; }
      bootstrap below waits for DOMContentLoaded before activating the inert
      <script id="app-init">, so window.appUtils is populated before any
      consumer in the inert block runs. -->
-<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v302"></script>
+<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v303"></script>
 <!-- Versioned localStorage helpers. Audit-coherence Tier 2 R3 — replaces
      the scattered try/catch + JSON.parse pattern at every persistence
      site so quota / private-mode / corrupt-payload failures all funnel
      through one place. -->
-<script type="module" src="lib/storage.mjs?v=2026-04-29-v302"></script>
+<script type="module" src="lib/storage.mjs?v=2026-04-29-v303"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). The bootstrap below fetches it async,
@@ -1308,7 +1308,7 @@ html { scroll-behavior:smooth; }
 // inline data layer (DB build, FILTER_CACHE precompute, render init)
 // is gated behind the stage-2 integrity check.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v302';
+  const DATA_VERSION = '2026-04-29-v303';
 
   // Stage 1: mount loading overlay synchronously, before any await,
   // so the user always sees feedback regardless of network latency.
@@ -1563,7 +1563,7 @@ function _clickLog(...args) {
 // Mirrors the data/materials.json cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the boot-script's DATA_VERSION at the top of this page.
-const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v302";
+const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v303";
 // Defensive: a corrupted JSON payload could land window.PERFUMERY_DATA
 // without the expected shape. Guard every access so a missing key
 // surfaces as a single clear error rather than a TDZ-style cascade.
@@ -4884,8 +4884,14 @@ function handleStructureImgError(img) {
     img.onerror = null;
     const parent = img.parentNode;
     if (!parent) return;
-    parent.innerHTML = '<div style="padding:16px;border:1px dashed var(--border);border-radius:8px;color:var(--text2);font-size:0.85em;text-align:center">Structure image unavailable (network)<br><a href="' + (img.src.split('?')[0].replace('/rest/pug/compound/cid/','/compound/').replace('/PNG','')) + '" target="_blank" style="color:var(--accent)">Open on PubChem ↗</a></div>';
-  } catch(e) { /* defensive — never let the handler itself throw */ }
+    // Audit-r2 Tier 2 (E1): img.src is built from a numeric PubChem CID
+    // upstream, so realistic XSS chance is zero — but the previous
+    // template-string concat violated the project's "always escape at
+    // the boundary" invariant. Now esc()-bridged through window.appUtils
+    // before landing in the href attribute.
+    const compoundUrl = esc(img.src.split('?')[0].replace('/rest/pug/compound/cid/', '/compound/').replace('/PNG', ''));
+    parent.innerHTML = '<div style="padding:16px;border:1px dashed var(--border);border-radius:8px;color:var(--text2);font-size:0.85em;text-align:center">Structure image unavailable (network)<br><a href="' + compoundUrl + '" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Open on PubChem ↗</a></div>';
+  } catch(_e) { /* defensive — never let the handler itself throw */ }
 }
 
 
@@ -8483,7 +8489,7 @@ window.showToast = function({ message, variant='info', retry=null, timeout=6000 
                  variant === 'success' ? '#i-check' : '#i-info';
   el.innerHTML =
     '<svg class="icon" aria-hidden="true"><use href="' + iconId + '"/></svg>' +
-    '<div class="toast__body"><div>' + String(message).replace(/</g,'&lt;') + '</div>' +
+    '<div class="toast__body"><div>' + esc(message) + '</div>' +
     (retry ? '<button class="toast__retry" type="button">Retry</button>' : '') +
     '</div>' +
     '<button class="toast__close" type="button" aria-label="Dismiss"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-close"/></svg></button>';

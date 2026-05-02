@@ -1149,19 +1149,19 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      of these three scripts touch PERFUMERY_DATA at parse time, so they
      stay synchronous; the materials database alone has been hoisted to
      async fetch. -->
-<script src="taxonomy.js?v=2026-04-29-v302"></script>
-<script src="formulation_data.js?v=2026-04-29-v302"></script>
-<script src="formulation_engine.js?v=2026-04-29-v302"></script>
+<script src="taxonomy.js?v=2026-04-29-v303"></script>
+<script src="formulation_data.js?v=2026-04-29-v303"></script>
+<script src="formulation_engine.js?v=2026-04-29-v303"></script>
 
 <!-- Shared DOM helpers (escHtml / debounce / safeInit / normaliseMaterialKey).
      Audit-coherence Tier 2 R3 — single source of truth, replaces the
      inline copies that drifted between the two pages. -->
-<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v302"></script>
+<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v303"></script>
 <!-- Canonical enriched-material builder used by every formulation.addMaterial
      call site. Audit-coherence Tier 2 R3 fix for C3.2/C3.3. -->
-<script type="module" src="lib/material-shape.mjs?v=2026-04-29-v302"></script>
+<script type="module" src="lib/material-shape.mjs?v=2026-04-29-v303"></script>
 <!-- Versioned localStorage helpers. Audit-coherence Tier 2 R3. -->
-<script type="module" src="lib/storage.mjs?v=2026-04-29-v302"></script>
+<script type="module" src="lib/storage.mjs?v=2026-04-29-v303"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). Same bootstrap pattern as index.html:
@@ -1183,7 +1183,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 // State computation NEVER runs before stage 4 — the inert app-init body
 // is browser-inert until we replace its <script> element.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v302';
+  const DATA_VERSION = '2026-04-29-v303';
 
   const overlay = document.createElement('div');
   overlay.id = 'app-loading';
@@ -1568,7 +1568,7 @@ window.showToast = function({ message, variant='info', retry=null, timeout=6000 
                  variant === 'success' ? '#i-check' : '#i-info';
   el.innerHTML =
     '<svg class="icon" aria-hidden="true"><use href="' + iconId + '"/></svg>' +
-    '<div class="toast__body"><div>' + String(message).replace(/</g,'&lt;') + '</div>' +
+    '<div class="toast__body"><div>' + escHtml(message) + '</div>' +
     (retry ? '<button class="toast__retry" type="button">Retry</button>' : '') +
     '</div>' +
     '<button class="toast__close" type="button" aria-label="Dismiss"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-close"/></svg></button>';

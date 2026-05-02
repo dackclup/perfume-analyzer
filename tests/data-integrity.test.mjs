@@ -153,7 +153,6 @@ describe('data/materials.json — 20 popular materials regression spec', () => {
         // a second-channel identity: parsing it gives the same heavy-
         // atom count as the formula iff it's the right molecule.
         expect(e.smiles, `${ref.name} SMILES should not be empty`).toBeTruthy();
-        const haInSmiles = (e.smiles.match(/[A-Z][a-z]?/g) || []).filter(t => t !== 'H').length;
         const haInFormula = heavyAtomsFromFormula(ref.formula);
         // SMILES atom-token count includes the canonical-aromatic uppercase
         // letters (C, N, O) plus the lowercase aromatic forms (c, n, o).
