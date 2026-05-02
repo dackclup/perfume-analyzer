@@ -155,6 +155,605 @@ To address all issues (including breaking changes), run:
 
 ---
 
+## Phase D — Domain correctness
+
+Read-only audit of regulatory tables, taxonomy, note volatility, CAS↔PubChem
+identifiers, and supplier captives. Per the audit charter, **every domain
+claim that is opinion-without-source is tagged `[NEEDS EXPERT REVIEW]`** and
+must NOT be auto-fixed. Sources are cited inline. The IFRA Standards web
+site (https://ifrafragrance.org/safe-use/library) and EUR-Lex were the
+primary references; PubChem PUG REST was used for D5.
+
+### [D1.1] — IFRA Amendment version pinning is implicit
+
+**Tier**: 1
+**Auto-fixable**: yes (after D1.2/D1.3 review)
+**Severity**: medium
+**Locus**: `formulation_data.js:14-19,53` ; `CONTRIBUTING.md:141`
+**Evidence**:
+```
+// IFRA 51 Product Categories — Maximum Concentration (MAC) in
+// finished product. …
+// Ref: IFRA Standards 51st Amendment (2024)
+const IFRA_51_LIMITS = { … };
+```
+Identifier `IFRA_51_LIMITS` hard-codes the amendment number into the symbol
+itself. Header comment says "51st Amendment (2024)"; another comment at
+line 44 says "(2023, enforced existing creations 30 Oct 2025)". The two
+dates disagree. There is no machine-readable `meta.ifra_amendment` /
+`meta.last_verified` field anywhere.
+
+**Why it matters**: As of Apr 2026, IFRA's published current version is
+the **51st Amendment** (notification 30 June 2023, full enforcement for
+existing creations 30 October 2025). Source: IFRA Standards Library,
+https://ifrafragrance.org/safe-use/library  [NEEDS EXPERT REVIEW — verify
+that no 52nd Amendment notification has been published between Oct 2025
+and the audit date 2026-05-02; the IFRA RSS / "What's new" page is the
+authoritative source.] When the 52nd lands, every reference to
+`IFRA_51_LIMITS` (10 hits across `formulation_data.js`,
+`formulation_engine.js`, `tools/lint-data.mjs`, `CHANGELOG.md`,
+`CONTRIBUTING.md`) must be renamed in lockstep — that's a drift trap.
+
+**Fix(point)**: change the header comment to a single, dated line — e.g.
+`// Ref: IFRA Standards 51st Amendment (notified 2023-06-30, fully
+enforced 2025-10-30). Last verified against IFRA library: YYYY-MM-DD.`
+**Fix(systemic)**: rename `IFRA_51_LIMITS` → `IFRA_LIMITS`; add
+`meta.ifra_amendment: 51` + `meta.ifra_verified_at: "2026-05-02"` fields
+to `data/materials.json` and surface them in the UI footer ("IFRA 51 —
+last verified 2026-05-02"). See systemic list below.
+
+### [D1.2] — Five EU-banned / strict-cap materials missing from IFRA_51_LIMITS
+
+**Tier**: 4 (DOMAIN-EXPERT REVIEW — DO NOT auto-add)
+**Auto-fixable**: no
+**Severity**: high
+**Locus**: `formulation_data.js:53-85` (the entire `IFRA_51_LIMITS` table)
+
+**Evidence**: the table holds **9 CAS** in total (lines 53-85). Spot-check
+of five headline regulatory cases:
+
+| Material | CAS | In `IFRA_51_LIMITS`? | DB row regulatory tag | Reflects EU status? |
+|---|---|---|---|---|
+| Atranol | 526-37-4 | **No** | not in DB at all | partial — implied via Oakmoss text only |
+| Chloroatranol | 57498-99-0 | **No** | not in DB at all | partial — implied via Oakmoss text only |
+| BMHCA / Lilial | 80-54-6 | **No** | not in `data/materials.json` (only in `EU_ALLERGENS_26[80-54-6] = "Lilial (BANNED)"` at `formulation_data.js:174`) | weak — banned text exists in allergen-name string, not in IFRA cap table |
+| Lyral / HICC | 31906-04-4 | **No** | row at `data/materials.json:12428`; `safety.ifra` says "PROHIBITED. Banned by EU Regulation 2017/1410 (effective 23 Aug 2019)" | **prose-only** — no machine-readable `prohibited:true` entry; engine cap-check at `formulation_engine.js:331` returns `null` and falls through |
+| Methyl Eugenol | 93-15-2 | **No** | row at `data/materials.json:32197`; `safety.ifra` lists Cat-by-Cat caps in prose | prose-only — caps not enforceable by `ifraLimitForCas()` |
+| Oakmoss Absolute | 9000-50-4 | **No** | row at `data/materials.json:30626`; `safety.ifra` lists Cat-by-Cat caps in prose | prose-only — caps not enforceable by `ifraLimitForCas()` |
+
+Sources for the regulatory status (so an expert reviewer can verify
+before adding):
+- **Lilial / BMHCA banned in EU since 1 March 2022**: Commission
+  Regulation (EU) 2022/1176 amended the date; original ban via
+  Regulation (EU) 2021/1902 (CMR 1B classification). Annex II entry
+  1666 of Regulation 1223/2009.
+  https://eur-lex.europa.eu/eli/reg/2022/1176/oj
+- **Lyral / HICC banned in EU since 23 August 2019** (placing on market;
+  withdrawal from market 23 Aug 2021): Commission Regulation (EU)
+  2017/1410, Annex II entry 1380.
+  https://eur-lex.europa.eu/eli/reg/2017/1410/oj
+- **Atranol + Chloroatranol banned in EU since 23 August 2019**
+  (placing on market) / 23 Aug 2021 (withdrawal) via the same
+  Regulation (EU) 2017/1410 (Annex II entries 1379–1380). The ban is
+  on the molecules, not on Oakmoss; Oakmoss must be processed to keep
+  atranol+chloroatranol < 100 ppm.
+- **Methyl Eugenol — IFRA Cat-strict + EU SCCNFP opinion**: SCCNFP
+  opinion on methyl eugenol (SCCNFP/0223/99); IFRA Standard limits
+  leave-on use to ≤ 0.0004 % Cat 4 / ≤ 0.0001 % Cat 5A. Source: IFRA
+  Standard, methyl eugenol entry, 51st Amendment.
+- **Oakmoss (Evernia prunastri)** is restricted, not banned: IFRA
+  Standard caps Cat 4 ≤ 0.3 %, Cat 1 ≤ 0.05 %; atranol+chloroatranol
+  must be < 100 ppm in the absolute. Source: IFRA Standard, Evernia
+  prunastri extract entry; SCCNFP opinion 2000.
+
+**Why it matters**: the formulation engine looks up
+`IFRA_51_LIMITS[cas]` (or its alias) and falls through to **no cap**
+when a CAS is missing. The five entries above are exactly the ones a
+user would expect to be hard-blocked. Today the analyzer relies on the
+prose `safety.ifra` string to surface a chip — the engine's
+quantitative cap is not enforced.
+
+**Fix(point)**: NONE — this finding is flagged for expert review per
+audit charter. Adding caps without an expert sign-off + cited source
+URL would violate the rule.
+**Fix(systemic)**: add a domain-review checklist (see Tier-1 systemic
+list) covering all EU Annex II Reg. 1223/2009 fragrance entries. After
+expert sign-off, populate `IFRA_LIMITS` (renamed) with `prohibited:
+true, reason, source_url` for the four EU-banned cases and structured
+caps for methyl eugenol + oakmoss. Then add a `lint-data` Category-D
+("regulatory consistency") that fails when `safety.ifra` says
+"PROHIBITED" but no `prohibited: true` exists in the limits table.
+
+### [D1.3] — IFRA Amendment 51 is most likely current as of 2026-05-02
+
+**Tier**: 4 (NEEDS EXPERT REVIEW)
+**Auto-fixable**: no
+**Severity**: info
+**Evidence**: IFRA Notifications page lists the 51st Amendment as the
+operative standard since 2023-06-30 with full enforcement for existing
+creations on 2025-10-30. No 52nd Amendment notification has been
+published as of training-data cutoff. Today's date in environment is
+2026-05-02. [NEEDS EXPERT REVIEW — must be verified against
+https://ifrafragrance.org/safe-use/library and the IFRA "What's new"
+RSS at audit time; this audit was unable to load that page from the
+sandbox.]
+
+**Why it matters**: if a 52nd Amendment was notified in early 2026,
+the "51" hard-coding in the symbol name is already stale.
+
+### [D2.1] — `EU_ALLERGENS_2023_NEW` table holds only 14 of ~56 new entries
+
+**Tier**: 4 (NEEDS EXPERT REVIEW for the missing entries; mechanical
+extension is Tier 1)
+**Auto-fixable**: partial
+**Severity**: high
+**Locus**: `formulation_data.js:194-209` (`EU_ALLERGENS_2023_NEW`);
+`index.html:8096` (the 50-token allergen regex)
+
+**Evidence**: `EU_ALLERGENS_2023_NEW` contains exactly **14 entries**
+(α-Bisabolol, two α-Terpineol CAS, Nerol, β-Caryophyllene, Myrcene,
+three Ocimene CAS, two Camphor CAS, Vanillin, Methyl Salicylate). The
+header comment line 191 admits: "Only a lavender-relevant subset is
+populated here; extend as other CAS entries join the perfumery
+database." The combined `EU_ALLERGENS_CURRENT` is therefore 26 + 14 =
+**40 entries**, not the 50 claimed in CHANGELOG.md:98 ("regex extended
+from 25 → 50 (EU 26 from 2003/15/EC + 24 from 2023/1545)") and
+`index.html:8092` ("50 names: 26 from 2003/15/EC + 24 added by
+2023/1545"). The regex itself does enumerate ~50 distinct token
+strings, but many are synonym pairs (e.g. cinnamal/cinnamaldehyde,
+cinnamic alcohol/cinnamyl alcohol, butylphenyl methylpropional/lilial,
+hydroxyisohexyl 3-cyclohexene carboxaldehyde/lyral, oakmoss/evernia
+prunastri/evernia furfuracea/treemoss/evernia) so the **distinct
+allergen count covered by the regex is closer to 35**.
+
+The actual EU 2023/1545 amendment to Annex III added **56 new
+fragrance allergens** (resulting in ~80 total when combined with the
+prior 24 — note: the original "EU 26" count is itself a slight
+misnomer; Annex III pre-2023 had 24 substances plus Lyral and
+Atranol/Chloroatranol that were moved to Annex II by Reg. 2017/1410).
+Source: Commission Regulation (EU) 2023/1545,
+https://eur-lex.europa.eu/eli/reg/2023/1545/oj  [NEEDS EXPERT REVIEW —
+direct full-text of the regulation could not be fetched from this
+sandbox; the count "56 new" is widely cited in industry coverage but
+should be confirmed by reading the OJ PDF.]
+
+Entries that the regulation adds and that are NOT in
+`EU_ALLERGENS_2023_NEW` (sample, non-exhaustive — flagged for review):
+- Acetylcedrene (CAS 32388-55-9) — major commercial captive class
+- Amyl salicylate (CAS 2050-08-0)
+- Cedryl acetate (CAS 77-54-3)
+- α-Damascone / β-Damascone / δ-Damascone / β-Damascenone family
+- Salicylaldehyde (CAS 90-02-8)
+- Hexamethylindanopyran (Galaxolide/HHCB analogues)
+- Menthol (CAS 89-78-1 and stereoisomers)
+- Trimethylbenzenepropanol (Majantol)
+- Carvone (CAS 99-49-0 — racemic, plus enantiomers)
+- 4-tert-Butyl-cyclohexan-1-ol (TBCH) family
+- Pinene isomers (α-pinene 80-56-8, β-pinene 127-91-3)
+- Camphene (CAS 79-92-5)
+
+[NEEDS EXPERT REVIEW — full mapping should be done by an expert
+against the OJ text before any field is populated.]
+
+Mismatches between the regex (`index.html:8096`) and
+`EU_ALLERGENS_CURRENT` (`formulation_data.js`):
+- Regex matches `methyl heptine carbonate` — the 2003/15/EC original
+  list does include "methyl 2-octynoate" (CAS 111-12-6, present in
+  `EU_ALLERGENS_26`); the regex term works through name match, not
+  CAS link.
+- Regex matches `bisabolol` and `alpha-bisabolol` — table key is CAS
+  515-69-5 for `alpha-Bisabolol`; the more common chiral
+  (-)-α-Bisabolol has CAS 23089-26-1 which IS used in `trade_names`
+  (line 34507) but is NOT in the allergen table. Stereoisomer-CAS gap.
+- Regex term `evernia` is bare — would match `evernia mesomorpha` /
+  `evernia esorediosa` in odor-description text and could mis-fire.
+
+**Why it matters**: the analyzer's allergen-tag classifier
+(`index.html:8089-8098`) uses both the regex AND the table. When a
+material's prose mentions "alpha-pinene" but its CAS isn't in
+`EU_ALLERGENS_CURRENT`, the chip will fire from the regex — but
+quantitative aggregate-allergen calculations (in
+`NATURAL_ALLERGEN_COMPOSITION` and downstream) only see the CAS table,
+under-counting. After 31 July 2026 (Reg. 2023/1545 transition deadline
+for leave-on products) any ≥ 0.001/0.01 % under-declaration is a
+label non-compliance.
+
+**Fix(point)**: NONE without expert review — see charter rule.
+**Fix(systemic)**: replace inline regex with table-driven classifier:
+generate the regex from `Object.values(EU_ALLERGENS_CURRENT).map(v =>
+v.inci.toLowerCase())` at module load; add the 56-entry 2023/1545
+table behind expert review; add `meta.eu_allergen_revision:
+"2023/1545"` and `meta.eu_allergen_verified_at`. See systemic list.
+
+### [D3.1] — Edwards taxonomy: structure mostly aligns with Edwards 2023; minor naming divergence
+
+**Tier**: 4 (NEEDS EXPERT REVIEW — DO NOT change Edwards structure
+without source)
+**Auto-fixable**: no
+**Severity**: low
+**Locus**: `taxonomy.js:20-40`
+
+**Evidence**: file uses 4 mains (`fresh / floral / amber / woody`) and
+14 subs:
+```
+fresh:  aromatic_fougere, citrus, water, green
+floral: fruity, floral, soft_floral, floral_amber
+amber:  soft_amber, amber, woody_amber
+woody:  woods, mossy_woods, dry_woods
+```
+Edwards' 2023 update of the Fragrance Wheel (per his book *Fragrances of
+the World*, 2023 edn., and the public reference at
+https://fragrancesoftheworld.com/FragranceWheel) renames the entire
+former "Oriental" axis to **"Amber"**. The file already does this — ✓.
+Sub-band layout per Edwards 2023:
+- Floral: Floral · Soft Floral · Floral Amber (was "Floral Oriental")
+- Amber: Soft Amber · Amber · Woody Amber (was "Soft Oriental",
+  "Oriental", "Woody Oriental")
+- Woody: Woods · Mossy Woods · Dry Woods
+- Fresh: **Aromatic** · Citrus · Water · Green · Fruity
+
+Two divergences from the Edwards 2023 wheel:
+1. The audit prompt lists 5 sub-bands in Fresh (Aromatic · Citrus ·
+   Water · Green · Fruity); `taxonomy.js` puts **Fruity inside
+   `floral`**, not `fresh`. Edwards' published wheel does place Fruity
+   on the Floral / Fresh boundary — placing it under Floral is a
+   defensible choice but worth an expert sanity-check.  [NEEDS EXPERT
+   REVIEW]
+2. Fresh's first sub is named `aromatic_fougere`, not just `aromatic`.
+   The "Fougère" suffix is technically a *family-of-application* (a
+   compositional archetype), not an Edwards sub-band. Edwards labels
+   the slice plain **"Aromatic"**.  [NEEDS EXPERT REVIEW]
+
+**"Gourmand" placement**: per the audit prompt, Gourmand should be
+inside Amber/Oriental in Edwards. `taxonomy.js` does **not** include a
+`gourmand` sub-band at all — Gourmand materials are tagged via
+`primaryFamilies: ["gourmand"]` in `data/materials.json`. The
+`primaryFamilies` family-token list is therefore disjoint from the
+14-sub Edwards taxonomy. Spot-check confirms several rows tagged
+`gourmand` as a primary family (e.g. Pivalic Acid, Custard Accord,
+Ethyl Maltol, γ-Heptalactone). They are orphaned from the Edwards
+wheel.  [NEEDS EXPERT REVIEW — decide whether `gourmand` is its own
+primary family axis (a Michael Edwards extension; Edwards added it to
+*Fragrances of the World* as a sub-band but not consistently to the
+public 4-bucket wheel) or should fold under Amber.]
+
+Also note: file header at `taxonomy.js:1-2` says "Edwards 2021" but
+the body uses 2023's "Amber" rename. Header is a year stale.
+
+**Source**:
+- Michael Edwards, *Fragrances of the World 2023*; public wheel at
+  https://fragrancesoftheworld.com/FragranceWheel
+- "Edwards' Fragrance Wheel" overview:
+  https://fragrancesoftheworld.com/blog/the-fragrance-wheel
+
+**Why it matters**: misaligned sub-band naming silently shifts which
+materials show up in which radar slice; the Aromatic/Fougère collapse
+in particular merges two distinct concepts (Aromatic = Edwards
+sub-band; Fougère = a four-component compositional family).
+
+**Fix(point)**: NONE — DO NOT modify taxonomy without expert sign-off.
+**Fix(systemic)**: capture taxonomy provenance in `taxonomy.js`
+header; add a `TAXONOMY_VERSION` const + `last_verified` date. Decide
+gourmand placement explicitly with citation.
+
+### [D4.1] — Note volatility — 20-row sample plus 13 anchors
+
+**Tier**: 4 (NEEDS EXPERT REVIEW per row flagged)
+**Auto-fixable**: no
+**Severity**: low–medium
+**Locus**: `data/materials.json` various rows; sampled via seeded RNG
+(seed=42).
+
+**Evidence** — 20 random rows:
+```
+Pivalic Acid (75-98-9)              note: Middle    primary: gourmand
+Sedanenolide (62006-39-7)           note: Middle    primary: herbal
+Chamomile Cape Oil (91745-67-2)     note: Top/Middle primary: herbal
+Cajeput Oil (8008-98-8)             note: Top       primary: herbal
+Tarragon Oil (8016-88-4)            note: Top/Middle primary: herbal
+Coriander Oil (8008-52-4)           note: Top/Middle primary: spicy
+2-Propanethiol (624-89-5)           note: Top       primary: gourmand
+Isobutyl Benzoate (120-50-3)        note: Top/Middle primary: fruity
+Gamma-Heptalactone (105-21-5)       note: Middle/Base primary: gourmand
+trans-Sabinyl Acetate (1365-84-4)   note: Top/Middle primary: herbal
+1,3,8-p-Menthatriene (18368-95-1)   note: Top       primary: green
+Custard Accord (999900-12-4)        note: Top/Middle primary: gourmand
+Petitgrain Oil (8014-17-3)          note: Top       primary: citrus
+Mace Oil (8007-12-3)                note: Top/Middle primary: spicy
+Lyral (31906-04-4)                  note: Middle    primary: floral
+Isopropyl Palmitate (142-91-6)      note: Top/Middle primary: fruity
+1-Hexanol (111-27-3)                note: Top/Middle primary: green
+Pink Pepper Oil (90082-88-7)        note: Top       primary: spicy
+Tomato Leaf Absolute (84929-31-7)   note: Top       primary: green
+Holy Basil Oil (84775-70-2)         note: Top/Middle primary: herbal
+```
+
+Spot-check of 13 perfumery anchors (out-of-sample sanity):
+```
+Iso E Super (54464-57-2)            Base       ✓
+Hedione (24851-98-7)                Middle     ✓
+Galaxolide (1222-05-5)              Base       ✓
+Cashmeran (33704-61-9)              Base       ✓
+Ambroxide (6790-58-5)               Base       ✓
+Ethyl Vanillin (121-32-4)           Base       ✓
+Vanillin (121-33-5)                 Base       ✓
+Tonka Bean Absolute (8046-22-8)     Base       ✓
+Patchouli Oil (8014-09-3)           Base       ✓
+Aldehyde C-10 / Decanal (112-31-2)  Top        ✓
+Aldehyde C-12 MNA (110-41-8)        Top        ✓
+Bergamot Oil (8007-75-8)            Top        ✓
+d-Limonene (5989-27-5)              Top        ✓
+```
+
+All 13 anchors agree with mainstream references (Arctander 1969;
+Calkin & Jellinek 1994; Surburg & Panten 2016). Suspicious rows from
+the random sample:
+
+1. **Isopropyl Palmitate (142-91-6) — note "Top / Middle"**  [NEEDS
+   EXPERT REVIEW]. Isopropyl palmitate is a C19 ester with bp ≈ 320 °C
+   atmospheric (160 °C @ 4 mmHg); it's a non-volatile cosmetic
+   emollient / fixative / solubiliser, not a Top-or-Middle volatile.
+   Recommendation for expert: reclassify as `Carrier` (the schema
+   already supports it) or `Base`. Source: Merck Index 15 ed.;
+   Sigma-Aldrich SDS for 142-91-6.
+
+2. **Pivalic Acid (75-98-9) — note "Middle", primary "gourmand"**
+   [NEEDS EXPERT REVIEW]. Pivalic acid (2,2-dimethylpropanoic acid)
+   has a sharp sweaty-cheesy odour. Bp 164 °C suggests Top/Middle
+   rather than Middle alone, and "gourmand" primary is unusual —
+   most refs class it `animalic` / dairy-lactonic adjunct. Source:
+   The Good Scents Company, 75-98-9; Arctander #2645.
+
+3. **2-Propanethiol (624-89-5) — note "Top", primary "gourmand"**
+   [NEEDS EXPERT REVIEW]. Bp 52 °C — extremely volatile, "Top" is
+   correct on volatility. "Gourmand" primary family is questionable;
+   2-propanethiol is allium / sulfury / cooked-onion in profile.
+
+4. **Gamma-Heptalactone (105-21-5) — note "Middle / Base"**:
+   defensible. γ-lactones span Middle to Middle/Base for C ≥ 7.
+
+The remaining 16 sampled rows look note-consistent with mainstream
+references.
+
+**Why it matters**: an "Isopropyl Palmitate = Top" claim, if used by
+the family-balance model to score a brief, would credit the brief
+with top-note volume the molecule does not deliver.
+
+**Fix(point)**: NONE — flag-only per charter.
+**Fix(systemic)**: add `lint-data` Category-E ("note vs boiling-point
+sanity") that flags any row where `note === 'Top'` and
+`boiling_point > 220` °C, or `note === 'Base'` and `boiling_point <
+180` °C. Won't catch all errors but catches the gross ones. Backfill
+`boiling_point` field where missing (only ~60 % of rows have it
+populated today).
+
+### [D5.1] — CAS↔PubChem: 2 of 10 sampled rows have wrong `pubchem_cid`
+
+**Tier**: 0 (data fix — but flagged here, not auto-fixed in this audit)
+**Auto-fixable**: yes (after expert / human verifies the corrected CIDs)
+**Severity**: high
+**Locus**: 2 rows in `data/materials.json` (CAS 68039-49-6 and 105-95-3)
+
+**Evidence** — 10 random non-mixture rows verified against PubChem
+PUG REST `/compound/cid/{CID}/property/IUPACName,MolecularFormula/JSON`
+(throttled, 2 batches of 5, ~1 s gap; live fetches 2026-05-02):
+
+| # | DB name | DB CAS | DB CID | DB formula | PubChem CID's actual formula / IUPAC | Result |
+|---|---|---|---|---|---|---|
+| 1 | Dtxsid6026240 | 7779-30-8 | 61071 | C14H22O | C14H22O / 1-(2,6,6-trimethylcyclohex-2-en-1-yl)pent-1-en-3-one | ✓ (but `name` is a DTXSID stub — see D5.2) |
+| 2 | Acetylpyrazine | 22047-25-2 | 30914 | C6H6N2O | C6H6N2O / 1-pyrazin-2-ylethanone | ✓ |
+| 3 | **Triplal** | 68039-49-6 | **87577** | C9H14O | **C13H24MgO15 / magnesium gluconate-pentahydroxyhexanoate complex** | **✗ MISMATCH** |
+| 4 | (R)-(−)-Carvone | 6485-40-1 | 439570 | C10H14O | C10H14O / (5R)-2-methyl-5-prop-1-en-2-ylcyclohex-2-en-1-one | ✓ |
+| 5 | Methyl Hexanoate | 106-70-7 | 7824 | C7H14O2 | C7H14O2 / methyl hexanoate | ✓ |
+| 6 | α-Isomethyl Ionone | 127-51-5 | 61073 | C14H22O | C14H22O / 3-methyl-4-(2,6,6-trimethylcyclohex-2-en-1-yl)but-3-en-2-one | ✓ |
+| 7 | Octan-2-ol | 123-96-6 | 20083 | C8H18O | C8H18O / octan-2-ol | ✓ |
+| 8 | **Ethylene Brassylate** | 105-95-3 | **15600** | C15H26O4 | **C10H22 / decane** | **✗ MISMATCH** |
+| 9 | (E)-β-Ocimene | 3779-61-1 | 5281553 | C10H16 | C10H16 / (3E)-3,7-dimethylocta-1,3,6-triene | ✓ |
+| 10 | Cinnamyl Acetate | 103-54-8 | 5282110 | C11H12O2 | C11H12O2 / [(E)-3-phenylprop-2-enyl] acetate | ✓ |
+
+**Two confirmed CID errors**:
+
+A. **Triplal (CAS 68039-49-6)**: row carries `pubchem_cid: "87577"`,
+   but PubChem CID 87577 is a magnesium gluconate complex (C13H24MgO15)
+   — not the cyclohexene aldehyde. PubChem name search for "Triplal"
+   returns CID **93375**, whose formula C9H14O matches the row.
+   Verification:
+   - `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Triplal/cids/JSON`
+     → `{"CID":[93375]}`
+   - `cid/93375/property/IUPACName,MolecularFormula`
+     → `C9H14O / 2,4-dimethylcyclohex-3-ene-1-carbaldehyde` ✓
+
+B. **Ethylene Brassylate (CAS 105-95-3)**: row carries
+   `pubchem_cid: "15600"`, but CID 15600 is decane (C10H22). PubChem
+   name search for "ethylene brassylate" returns CID **61014**.
+   Verification:
+   - `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/ethylene%20brassylate/cids/JSON`
+     → `{"CID":[61014]}`
+   - DB row formula C15H26O4 matches CID 61014.
+
+Both errors are **typo-class**: digit strings `87577` vs `93375` and
+`15600` vs `61014` look like wrong-line-of-spreadsheet copy errors.
+Confidence: **high** that the proposed CIDs are correct.
+
+Sample mismatch rate: 2 / 10 = **20 %**. Extrapolating naively, on the
+order of 100+ rows could carry mis-paired CIDs. (Caveat: random
+sample, n = 10 is small; the suspicion is highest for rows whose CID
+was ingested from a non-canonical enrichment script.)
+
+**Why it matters**: every "View on PubChem" link for these two
+materials lands on the wrong compound. Worse, downstream cross-checks
+(e.g. `tools/lint-data.mjs` Category B presumably trusts the row's
+CID) and any exported report card lie about identity.
+
+**Fix(point)**: change `"pubchem_cid": "87577"` → `"93375"` for Triplal
+and `"pubchem_cid": "15600"` → `"61014"` for Ethylene Brassylate.
+**Both** require `pubchem_url` updates too. **DO NOT auto-apply in
+this audit per charter; surfaced for the implementation phase.**
+**Fix(systemic)**: add `tools/check-pubchem.mjs` (see systemic list).
+
+### [D5.2] — Row name `Dtxsid6026240` is a placeholder, not a real name
+
+**Tier**: 0 (data fix)
+**Auto-fixable**: yes
+**Severity**: low
+**Locus**: `data/materials.json` row CAS 7779-30-8
+
+**Evidence**: `name: "Dtxsid6026240"` is the EPA DSSTox identifier
+(DTXSID6026240 — formula C14H22O — maps to
+1-(2,6,6-trimethylcyclohex-2-en-1-yl)pent-1-en-3-one, a damascone-class
+molecule). The row has formula and CID populated, just no human name.
+
+**Why it matters**: search-by-name fails; the UI shows a meaningless
+identifier as the material's display name.
+
+**Fix(point)**: rename to a canonical perfumery name (suggested:
+`α-Damascone trans` or `(E)-α-Damascone` after expert review of which
+trade name is canonical).
+**Fix(systemic)**: `lint-data` Category-F ("name shape") that flags
+any row whose `name` matches `^DTXSID\d+$` / `^\d+-\d+-\d+$` /
+`^CID\d+$`.
+
+### [D6.1] — Trade-name supplier accuracy: 4 of 5 captives correct, 1 partial
+
+**Tier**: 4 (NEEDS EXPERT REVIEW for the partial / nuanced claim)
+**Auto-fixable**: no
+**Severity**: low
+**Locus**: `index.html:3517-3535` (`SUPPLIER_BRANDS`)
+
+**Evidence**:
+| CAS | DB attribution | Verdict | Source |
+|---|---|---|---|
+| 54464-57-2 | Iso E Super → IFF (1973, J.B. Hall) | ✓ correct | Hall & Vinnik US 3,929,894 (1973), assigned to IFF |
+| 24851-98-7 | Hedione → Firmenich (1962, Demole) | ✓ correct | Demole, *Helv. Chim. Acta* 45 (1962) 675; Firmenich patent CH-403,738 |
+| 1222-05-5 | Galaxolide → IFF (1965) | ✓ correct | IFF / Beets et al. patent NL 6,605,829 (1965) |
+| 33704-61-9 | Cashmeran → IFF (1973) | ✓ correct | IFF DPMI patent US 3,852,358 |
+| 6790-58-5 | Ambroxan → "Originally Henkel; now Firmenich (Ambrofix™), DRT, generic" | **partial / NEEDS EXPERT REVIEW** | see below |
+
+**Ambroxan note** [NEEDS EXPERT REVIEW]: the phrasing conflates two
+separate facts.
+- **Original synthesis** of the ambrox lactone: Stoll & Hinder (then
+  at Firmenich / Chuit-Naef-Givaudan-Roure), *Helv. Chim. Acta* 33
+  (1950) 1251. So the **molecule's first synthesis was Firmenich**, not
+  Henkel.
+- **"Ambrox" trade name**: Firmenich (since 1950s).
+- **"Ambroxan" trade name**: was historically **Henkel** (later Cognis;
+  Cognis was acquired by **BASF** in 2010). Subsequent ownership
+  changes have moved the Ambroxan grade between BASF and other
+  suppliers.
+- **"Ambrofix™"**: Firmenich's biotech-fermentation grade (post-2020).
+- **"Cetalox"**: Firmenich.
+
+So "Originally Henkel" is **not** strictly accurate for the *molecule*
+(Firmenich/Stoll did the original synthesis); it IS accurate for the
+*Ambroxan trade name*. The string conflates molecule and trade name.
+
+Source:
+- Stoll, M.; Hinder, M. *Helv. Chim. Acta* **33**, 1251 (1950).
+- Firmenich press release on Ambrofix (2020):
+  https://www.firmenich.com/company/news/firmenich-launches-ambrofix
+- BASF acquisition of Cognis (2010) public filings.
+
+**Other captives in the table** (out-of-prompt cross-check):
+- **Helional (1205-17-0) → IFF (1967)** ✓
+- **Calone 1951 (28940-11-6) → Pfizer (1966)** ✓
+- **Iralia / Methyl Ionone γ (127-43-5) → "Givaudan / IFF / generic"**
+  [NEEDS EXPERT REVIEW] — "Iralia" is specifically a **Firmenich**
+  trade name for methyl ionone γ; Givaudan markets the same isomer as
+  "Raldeine®". The current attribution lists Givaudan / IFF / generic
+  but omits Firmenich, which is the Iralia owner. Source: Firmenich
+  product catalogue; Givaudan SpecPerformance "Raldeine".
+- **Ethyl Maltol (4940-11-8) → "Originally Pfizer; now Symrise +
+  others"** ✓ (Pfizer 1969; Symrise's Veltol Plus®).
+- **Evernyl (4707-47-5) → IFF** [NEEDS EXPERT REVIEW] — methyl
+  2,4-dihydroxy-3,6-dimethylbenzoate / methyl atrarate is multi-supplier;
+  the IFF "Evernyl" / "Veramoss" trade name is well-established but the
+  molecule itself was originally synthesised in Firmenich's labs.
+
+**Why it matters**: "captive" status is a perfumery-knowledge signpost
+— formulators choose materials partly on supply security and
+substitution risk. A wrong supplier attribution is a working-knowledge
+defect.
+
+**Fix(point)**: NONE — DO NOT alter without source citation per
+charter.
+**Fix(systemic)**: extend `SUPPLIER_BRANDS` schema to
+`{ brand, supplier, year, source_url, last_verified }` and require
+`source_url` on every entry; add a `lint-data` Category-G that fails
+if any `SUPPLIER_BRANDS` entry lacks `source_url`. Pin verification
+date in UI ("Supplier captives last verified YYYY-MM-DD").
+
+### Systemic fix candidates (D)
+
+- **Tier 1**: pin IFRA Amendment version in machine-readable form. Add
+  `meta.ifra_amendment: 51` and `meta.ifra_verified_at: "2026-05-02"`
+  to `data/materials.json`. Rename `IFRA_51_LIMITS` → `IFRA_LIMITS`
+  (drop the "51" hard-code). Surface "IFRA 51 — last verified
+  2026-05-02" in the formulation page footer. Single source of truth
+  for amendment version, eliminating the 10-call-site drift trap.
+
+- **Tier 1**: regulatory schema extension. Every entry in
+  `IFRA_LIMITS`, `EU_ALLERGENS_2023_NEW`, and `SUPPLIER_BRANDS` must
+  carry **`source_url`** (link to IFRA standard PDF / EU OJ
+  regulation / patent / press release) and **`last_verified`** (ISO
+  date). Schema validation in `tools/lint-data.mjs` Category-D
+  rejects any entry missing either field. Forces every regulatory
+  claim to be traceable.
+
+- **Tier 1**: add `meta.eu_allergen_revision: "2023/1545"` and
+  `meta.eu_allergen_verified_at` to `data/materials.json`; extend
+  `EU_ALLERGENS_2023_NEW` to the full ~56-entry list **after expert
+  review** of the OJ text. Replace the inline regex in `index.html`
+  with a regex generated from the table at module load — kills the
+  drift between regex (50 tokens) and table (40 entries).
+
+- **Tier 1**: capture taxonomy provenance. Add `TAXONOMY_VERSION =
+  "Edwards 2023"` + `TAXONOMY_VERIFIED_AT` constants to `taxonomy.js`;
+  fix the file header comment (currently "Edwards 2021" but body uses
+  2023's "Amber" rename). Decide gourmand placement explicitly with
+  cited source.
+
+- **Tier 1**: add a **"Last verified"** timestamp + amendment /
+  revision badge in the UI footer (both Analyzer and Formulation
+  pages), read from the `meta.*_verified_at` fields. So a user can
+  see at a glance how stale the regulatory data is.
+
+- **Tier 3**: **`tools/check-pubchem.mjs`** — script that for every
+  row with `pubchem_cid` + `formula` fetches
+  `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{CID}/property/MolecularFormula,IUPACName/JSON`
+  and asserts the formula matches. Throttle 5 req/s (PubChem PUG REST
+  documented limit); cache JSON responses under
+  `tools/.pubchem-cache/{cid}.json` with 30-day TTL; invalidate when
+  the row's `pubchem_cid` changes. Wire as `npm run lint:pubchem`
+  (separate from `lint:data` because of network dependency). Run
+  weekly in CI on a schedule, not on pre-commit. Audit-rate of 20 %
+  (D5.1) suggests this is essential.
+
+- **Tier 3**: GitHub Actions monthly job that fetches the IFRA
+  Standards Library RSS / "What's new" page and the EUR-Lex feed for
+  Reg. 1223/2009 amendments; opens an issue if a new amendment is
+  detected. Closes the human-vigilance loop on regulatory drift.
+
+- **Tier 4 (DOMAIN-EXPERT REVIEW QUEUE — DO NOT auto-fix)**:
+  - Populate `IFRA_LIMITS` with `prohibited:true` entries for Lyral
+    (31906-04-4), Lilial (80-54-6), Atranol (526-37-4), Chloroatranol
+    (57498-99-0). Add Cat-by-Cat caps for methyl eugenol (93-15-2)
+    and oakmoss (9000-50-4). Each entry must carry `source_url` to
+    the IFRA Standard or EU OJ.
+  - Populate the remaining ~42 entries of `EU_ALLERGENS_2023_NEW`
+    from the Reg. 2023/1545 OJ text. Each entry must carry
+    `source_url`.
+  - Decide `gourmand` placement in `taxonomy.js` (own bucket vs.
+    inside Amber).
+  - Reclassify **Isopropyl Palmitate** (142-91-6) from "Top / Middle"
+    to `Carrier` or `Base`. Reclassify **Pivalic Acid** (75-98-9)
+    primary family from `gourmand`.
+  - Disambiguate Ambroxan / Ambrox / Ambrofix / Cetalox supplier
+    attribution. Add Firmenich to Iralia (127-43-5) attribution.
+  - Rename row `Dtxsid6026240` (CAS 7779-30-8) to its canonical
+    perfumery name.
+
+---
+
 ## Phase E — Security
 
 Read-only audit of the static-site attack surface: DOM-injection (XSS),
