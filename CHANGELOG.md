@@ -4,6 +4,212 @@ All notable changes to this project. Format follows [Keep a Changelog]
 (https://keepachangelog.com/en/1.1.0/); versions track `version.json`'s
 `data` field (yyyy-mm-dd-vNNN).
 
+## [2026-04-29-v306] — Round 3 molecular foundation
+
+Tier P0 closure of Round-2 Tier-4 leftovers and Phase 1 molecular
+property layer (`audit/r3-report.md`). Nine commits across the round
+(`da3d2a4` through this commit). PubChem-sourced `mol_*` and `chem_*`
+fields plus `data_provenance` now live alongside the legacy flat
+fields on **290 of 624 materials** (46.5% raw, 70.9% of the 409
+eligible after mixture exclusion). 119 mismatched rows held back to a
+gitignored flagged-file for Round 4 manual triage. **Zero known-wrong
+rows in the applied set.** Cache bumped twice over the round
+(`v304 → v305 → v306`).
+
+### Breaking / behaviour-shift
+
+- **Service worker shell content hash rotates twice** (`b8305ef0` →
+  `8d29e4e1` → `67edc026`). Existing PWA installs auto-rotate. Shell
+  major `v3` unchanged.
+- **`tools/verify-molecular.mjs` return shape changed:** `verify(...)`
+  now returns an object with keys `stats / errors / allowlisted / stale`
+  (previously `stats / findings`). Callers read `errors` for the
+  exit-driving set; `allowlisted` and `stale` are info-level. Internal
+  API only.
+
+### Added — Phase 1 molecular foundation
+
+Implementation breakdown lives in `audit/r3-report.md` Phase 1.
+
+Data:
+
+- 290 materials in `data/materials.json` gain 14 `mol_*` fields
+  (formula, molecular_weight, xlogp3, complexity, h_bond_donor_count,
+  h_bond_acceptor_count, rotatable_bond_count, heavy_atom_count,
+  iupac_name, canonical_smiles, isomeric_smiles, inchi, inchi_key,
+  exact_mass) plus a nested `data_provenance` object with
+  `computed_source`, `last_fetched`, `manual_overrides[]`. Additive
+  merge — legacy flat fields untouched.
+
+New tooling under `tools/`:
+
+- `tools/lib/pubchem.mjs` — reusable PUG-REST client (throttler,
+  retry, CAS→CID resolver, batch property, experimental view, cache
+  I/O). Coverage S/B/F/L = `100% / 96.96% / 100% / 100%`.
+- `tools/enrich-molecular.mjs` — main enrichment script with flags
+  `--first-layer-only`, `--experimental`, `--apply`, `--cid <CID>`,
+  `--missing-only`, `--help/-h`. Idempotent via cache. Coverage
+  `99.22% / 90.90% / 93.75% / 99.22%`.
+- `tools/verify-molecular.mjs` — cache-only sanity checks (range,
+  provenance, vapor-pressure positivity, cache InChIKey integrity)
+  with allowlist support. Wired into `npm run lint:molecular`.
+  Coverage `100% / 96.87% / 100% / 100%`.
+- `tools/molecular-coverage-report.mjs` — three coverage rates (raw,
+  eligible, ship) plus a per-family table. Wired into
+  `npm run report:molecular-coverage`. Coverage
+  `100% / 91.30% / 100% / 100%`.
+- `tools/cache-cleanup.mjs` — manual hygiene (`--report`,
+  `--prune-older-than <days>`).
+
+Audit infrastructure:
+
+- `audit/cache/` directory (gitignored) with tracked `.gitkeep` and
+  `README.md` documenting TTL (6 months), size warning (100 MB),
+  licence rationale, and CI behaviour.
+- `audit/molecular-patches.json` (gitignored) — clean patches that
+  landed in v305.
+- `audit/molecular-patches-flagged.json` (gitignored) — 119-entry
+  Round-4 triage input. Distribution: 61 `wrong_cid`, 56
+  `stereo_variant`, 2 `corrupted_legacy`. Each entry carries
+  side-by-side legacy / fetched identifiers and
+  `mismatch_signals.suspected_cause`.
+- `audit/molecular-verify.json` (gitignored) — verify-molecular full
+  report.
+- `audit/molecular-coverage.json` (gitignored) — coverage-report
+  machine output.
+- `audit/molecular-verify-baseline.json` (TRACKED) — three
+  known-acceptable anomalies (Glyceryl Trioleate XLogP=22.4,
+  alpha-Tocopherol XLogP=10.7, Ethanol MW=46.07). Chemistry-
+  legitimate edge cases that would otherwise fail the heuristic
+  ranges.
+
+Schema and lint:
+
+- Schema gains a `mol_*` / `chem_*` namespace with 24 new optional
+  properties on `Material` plus a nested `data_provenance`. Schema
+  `$comment` documents the flat-with-prefix decision and the
+  future-migration path.
+- New lint rule on the `mol_*` / `chem_*` namespace: every row that
+  carries one of those fields must also carry
+  `data_provenance.last_fetched`. Tracked in the lint-data ratchet
+  (currently `0 / 290 broken`). Legacy flat fields grandfathered;
+  enforcement starts on the new namespace only.
+
+UI:
+
+- `index.html` analyzer card now renders a "Molecular Properties"
+  subsection in the col-info area: MW, Formula, logP, Vapor
+  Pressure, Boiling Point, plus a "View on PubChem ↗" link. Prefers
+  `mol_*` / `chem_*` with graceful legacy fallback. Skips
+  null/undefined rows.
+- `formulation.html` GC-MS material detail panel splits into two
+  table sections: a "Molecular Properties" header (preferred values
+  plus the PubChem link) and an "Other" header (CAS, density,
+  SMILES, RT, area, odor).
+
+CI:
+
+- New step "Lint molecular" — gating.
+- New step "Molecular coverage report" — informational
+  (`continue-on-error: true`).
+- PubChem auto-fetch intentionally NOT wired into CI (rate-limit
+  plus non-determinism per project rules).
+
+Other:
+
+- `CONTRIBUTING.md` gains a "Future: nested molecular migration"
+  section (~24 lines) documenting the `mol_*` / `chem_*` prefix
+  rule, the grandfathering rule, and the planned migration target.
+- `devDependencies` gains `@vitest/coverage-v8@^2.1.9` (needed for
+  the `≥95% line / ≥85% branch` acceptance gate on the new tools).
+- Tests: **+120 across the round** (162 → 282). Three new test files
+  (`tests/pubchem-client.test.mjs`,
+  `tests/enrich-molecular.test.mjs`,
+  `tests/verify-molecular.test.mjs`) plus extensions to
+  `tests/material-shape.test.mjs`.
+
+### Changed
+
+- CHANGELOG `[2026-04-29-v296]` allergen-coverage line corrected.
+  The v296 entry previously claimed that the
+  `EU_ALLERGENS_CURRENT` regex was extended from 25 to 50 entries.
+  Actual count: 14 of approximately 56 new entries from EU 2023/1545
+  are present in `EU_ALLERGENS_2023_NEW`;
+  the combined `EU_ALLERGENS_CURRENT` covers 40 entries (26 from
+  2003/15/EC plus 14 from 2023/1545). The audit-trail truth lives in
+  `data/materials.json` `meta.eu_allergen_coverage_status`. The v296
+  line below is updated to point at the Round-2 Tier-4 backlog and
+  the Round-3 P0.5 deferral.
+- `sw.js CACHE_VERSION` rotated twice over Round 3:
+  v304 `b8305ef0` → v305 `8d29e4e1` → v306 `67edc026`.
+- `tools/check-pubchem.mjs` refactored (P1.2) to import the shared
+  client from `tools/lib/pubchem.mjs`. Behaviour identical;
+  approximately 30 LOC removed at the throttle / retry section.
+- `scripts/release.mjs` — v306 cycle wrote new HTML cache-bust
+  strings into `index.html` and `formulation.html` and bumped the
+  shell content hash automatically.
+
+### Fixed
+
+- **Mixture-data corruption averted.** Without the P1.3.1 mixture
+  filter, 214 essential-oil / absolute / extract entries would have
+  been enriched with single-molecule data (Spearmint Oil → CID 962
+  = water; Tomato Leaf Absolute → 3,526 g/mol multi-substance
+  record). The `pickMaterials(db, opts, mixtureCas)` filter now
+  drops these before any fetch.
+- **Wrong-CID corruption averted.** The InChIKey + formula guards
+  in `partitionPatches` (P1.3.1 + P1.3.2) caught 119 rows where the
+  stored `pubchem_cid` resolves to a different molecule than the
+  legacy fields describe (or where the legacy DB carries data from
+  another molecule entirely — e.g. Bornyl Acetate's legacy
+  iupac="methane"). All 119 diverted to the flagged file; `--apply`
+  ignores them.
+- **PubChem SMILES API rename detected mid-round.** P1.4b dry-run
+  surfaced 0 / 290 populated SMILES; root cause: PubChem deprecated
+  `CanonicalSMILES` + `IsomericSMILES` in favour of `SMILES` +
+  `ConnectivitySMILES`. Parser updated in P1.3.1; coverage now 100%.
+
+### Tier P0 — Round-2 Tier-4 closure
+
+- **P0.1** `perfumery_data.backup.js` — verified absent (Round 2
+  cleared); no work needed.
+- **P0.2** `CONTRIBUTING.md` — already aligned (Round 2 rewrite);
+  added "Future: nested molecular migration" section.
+- **P0.3** CHANGELOG v296 allergen count — corrected (this entry
+  above).
+- **P0.4** EU-banned 5 materials (Lyral / Lilial / Atranol /
+  Chloroatranol / Methyl Eugenol) — all NOT IN `data/materials.json`
+  perfumery_db; flagged in `audit/r3-report.md` per "ถ้า NOT IN DB
+  → flag, ไม่ต้องเพิ่ม" rule. `formulation_data.js EU_ALLERGENS_26`
+  carries Lilial + Lyral with `(BANNED)` suffix for INCI lookups.
+- **P0.5** EU 2023/1545 allergens 50→80+ — **deferred to Round 4**
+  as `Tier P0.5-incomplete`. Hand-curating ~42 missing entries
+  needs domain review of EUR-Lex Annex III (source URLs in
+  `audit/r3-report.md` Tier P0).
+
+### Deferred / Round 4 backlog
+
+See `audit/r3-report.md` "Round 4 Backlog (handoff input)" for the
+full punch list. Headlines:
+
+- **119 flagged molecular patches** — manual triage, choose correct
+  CID for `wrong_cid`, rewrite legacy text for `corrupted_legacy`.
+- **42 EU 2023/1545 allergens** — hand-curate from EUR-Lex.
+- **Mixture legacy-data corruption (Group B pattern)** — surfaced
+  via P1.6 UI fallback (Spearmint Oil row points to water). Likely
+  more across the 214 mixtures; needs deeper audit. Decide policy:
+  should mixtures carry a `pubchem_cid` at all?
+- **CAS-CID mismatch follow-up** — P1.2 sample surfaced 142-08-5
+  3-Hydroxypyridine (DB 7971 vs PubChem 8871).
+- **`corrupted_legacy` heuristic gaps** — Patchoulol + Terpinyl
+  Acetate currently mis-classified as `wrong_cid`.
+- **Round 1+2 baseline data-lint failures (6 categories)** — still
+  at ratchet baseline; separate cleanup round.
+
+### Audit metadata (per `data/materials.json` `meta`)
+
+Unchanged from v304 (no domain-data versioning event in this round).
+
 ## [2026-04-29-v304] — Round 2 audit sweep
 
 Full-system audit (`audit/r2-report.md`) — 70 findings across 6 phases
@@ -304,8 +510,17 @@ setup`. No husky devDep.
 - `tools/lint-data.mjs` orphan check counts BOTH
   `primaryFamilies` and `secondaryFamilies` (a subfamily with a
   secondary-only claim is no longer reported as dead).
-- `index.html` `EU_ALLERGENS_CURRENT` regex extended from 25 → 50
-  (EU 26 from 2003/15/EC + 24 from 2023/1545).
+- `index.html` `EU_ALLERGENS_CURRENT` regex extended (originally
+  reported as "25 → 50"). **Corrected in v306:** actual count is
+  **14 of ~56** new entries from EU 2023/1545 added to
+  `EU_ALLERGENS_2023_NEW`; combined `EU_ALLERGENS_CURRENT` covers
+  **40** entries (26 from 2003/15/EC + 14 from 2023/1545). The
+  index.html regex carries 52 tokens (with aliases / alternate
+  spellings). Authoritative status lives in `data/materials.json`
+  `meta.eu_allergen_coverage_status`. **EU 2023/1545 transition is
+  incomplete** — see Round-2 Tier-4 backlog (`audit/r2-report.md`)
+  and Round-3 P0.5 deferral (`audit/r3-report.md`); ~42 entries
+  await Round 4 hand-curation from EUR-Lex.
 
 ### Fixed
 
