@@ -11,6 +11,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Audit-r2 Tier 1 (E4): CSP / Referrer-Policy / X-Content-Type-Options.
+     GitHub Pages can't inject HTTP response headers, so meta-tag CSP is
+     the only enforcement available. 'unsafe-inline' on script-src and
+     style-src is required because both pages embed all JS + CSS inline
+     (intentional for single-file deployability); a future Tier-5
+     refactor moving JS to external modules can drop it. SRI on the
+     pinned chart.js (E3) means a compromised jsDelivr edge still
+     can't ship malicious code to the page. frame-ancestors is omitted
+     — meta CSP doesn't support it; X-Frame-Options would, but that
+     also requires HTTP headers. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://pubchem.ncbi.nlm.nih.gov; connect-src 'self' https://pubchem.ncbi.nlm.nih.gov; manifest-src 'self'; base-uri 'self'; form-action 'self';">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
 <!-- Discourage aggressive caching of index.html so users get the
      latest `data/materials.json?v=…` cache-buster URL on every visit.
      Without these hints, GitHub Pages' default caching let stale
@@ -1179,10 +1192,19 @@ html { scroll-behavior:smooth; }
      navigation has a "Results" stop between page title and card h3s. -->
 <h2 class="visually-hidden">Results</h2>
 <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
-<p class="progress-text" id="progressText"></p>
+<!-- Audit-r2 Tier 1 (C5/C6): progressText is a live region. Result-count
+     updates are written via textContent — SR users now hear "Loading
+     N of M" / "M results" / "K of M after filter" announcements instead
+     of nothing. aria-atomic="false" so successive batches don't re-read
+     the entire string each chunk. -->
+<p class="progress-text" id="progressText" aria-live="polite" aria-atomic="false"></p>
 <hr>
 
-<div id="statusBar" style="display:none">
+<!-- Audit-r2 Tier 1 (C5): statusBar gets aria-live so the "Loading
+     database… / Initialising…" boot sequence narrates. role="status"
+     would imply implicit aria-live but the attribute is explicit
+     here so downstream behaviour is reviewable. -->
+<div id="statusBar" style="display:none" role="status" aria-live="polite">
   <span class="status" id="statusText"></span>
   <select id="sortSelect" class="sort-select" onchange="setSortOrder(this.value)" aria-label="Sort results">
     <option value="search">Search order</option>
@@ -1248,7 +1270,7 @@ html { scroll-behavior:smooth; }
      globals — and unlike PERFUMERY_DATA, the taxonomy file is small and
      pure-data so the sync block is unobservable. Bumping its ?v= reloads
      on both pages. -->
-<script src="taxonomy.js?v=2026-04-29-v301"></script>
+<script src="taxonomy.js?v=2026-04-29-v302"></script>
 
 <!-- Shared DOM helpers (escHtml / debounce / safeInit / normaliseMaterialKey).
      Audit-coherence Tier 2 R3 — single source of truth. ES module is deferred
@@ -1256,12 +1278,12 @@ html { scroll-behavior:smooth; }
      bootstrap below waits for DOMContentLoaded before activating the inert
      <script id="app-init">, so window.appUtils is populated before any
      consumer in the inert block runs. -->
-<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v301"></script>
+<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v302"></script>
 <!-- Versioned localStorage helpers. Audit-coherence Tier 2 R3 — replaces
      the scattered try/catch + JSON.parse pattern at every persistence
      site so quota / private-mode / corrupt-payload failures all funnel
      through one place. -->
-<script type="module" src="lib/storage.mjs?v=2026-04-29-v301"></script>
+<script type="module" src="lib/storage.mjs?v=2026-04-29-v302"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). The bootstrap below fetches it async,
@@ -1286,7 +1308,7 @@ html { scroll-behavior:smooth; }
 // inline data layer (DB build, FILTER_CACHE precompute, render init)
 // is gated behind the stage-2 integrity check.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v301';
+  const DATA_VERSION = '2026-04-29-v302';
 
   // Stage 1: mount loading overlay synchronously, before any await,
   // so the user always sees feedback regardless of network latency.
@@ -1541,7 +1563,7 @@ function _clickLog(...args) {
 // Mirrors the data/materials.json cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the boot-script's DATA_VERSION at the top of this page.
-const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v301";
+const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v302";
 // Defensive: a corrupted JSON payload could land window.PERFUMERY_DATA
 // without the expected shape. Guard every access so a missing key
 // surfaces as a single clear error rather than a TDZ-style cascade.
@@ -4371,7 +4393,20 @@ function _buildPillFilter(axisName) {
     const desc = descriptions[v];
     if (desc) btn.title = desc;
     btn.innerHTML = '<span>' + (ax.labels[v] || v) + '</span> <span class="pill-count">' + cnt + '</span>';
-    btn.onclick = function() { _togglePillFilter(axisName, v, this); };
+    // Audit-r2 Tier 1 (C2/C4): role + tabindex make the span focusable;
+    // aria-pressed reflects current filter state for SR users so they
+    // hear "pressed/not pressed" instead of a silent toggle. Activation
+    // bridge for Enter/Space comes from the delegated keydown listener
+    // wired in the keyboard-shortcuts block (C15 fix).
+    btn.setAttribute('role', 'button');
+    btn.setAttribute('tabindex', '0');
+    btn.setAttribute('aria-pressed', (ax.set && ax.set.has(v)) ? 'true' : 'false');
+    btn.onclick = function() {
+      _togglePillFilter(axisName, v, this);
+      // Re-read state after the toggle so aria-pressed always reflects
+      // the post-click value. _togglePillFilter mutates ax.set in place.
+      this.setAttribute('aria-pressed', ax.set.has(v) ? 'true' : 'false');
+    };
     return btn;
   };
   if (axisName === 'type' && typeof TYPE_GROUPS !== 'undefined') {

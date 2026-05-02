@@ -1,7 +1,15 @@
 {
   "meta": {
-    "version": "2026-04-29-v301",
-    "row_count": 624
+    "version": "2026-04-29-v302",
+    "row_count": 624,
+    "ifra_amendment": "51",
+    "ifra_verified_at": "2026-05-02",
+    "ifra_source_url": "https://ifrafragrance.org/safe-use/library/standards",
+    "eu_allergen_revision": "2023/1545",
+    "eu_allergen_verified_at": "2026-05-02",
+    "eu_allergen_source_url": "https://eur-lex.europa.eu/eli/reg/2023/1545/oj",
+    "eu_allergen_coverage_status": "partial — Round-2 audit (Phase D2) flagged ~42 of the ~56 new 2023/1545 entries as missing from EU_ALLERGENS_2023_NEW; populate via scripts/add-allergen.mjs as expert-review confirms each addition.",
+    "taxonomy_source": "Edwards Fragrance Wheel 2023 (post-Amber rename); see audit/r2-report.md §D3 for the two divergence points."
   },
   "perfumery_db": [
     {
