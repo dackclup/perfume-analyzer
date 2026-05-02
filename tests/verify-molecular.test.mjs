@@ -1,0 +1,257 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+// Round 3 P1.5 — verify-molecular + molecular-coverage-report.
+
+import { checkMaterial, verify } from '../tools/verify-molecular.mjs';
+import { buildCoverage } from '../tools/molecular-coverage-report.mjs';
+import { cacheWrite } from '../tools/lib/pubchem.mjs';
+
+// ── Fixture helpers ─────────────────────────────────────────────────
+function clean() {
+  return {
+    cas: '78-70-6',
+    name: 'Linalool',
+    pubchem_cid: '6549',
+    mol_molecular_weight: 154.25,
+    mol_xlogp3: 2.7,
+    mol_inchi_key: 'CDOSHBSSFJOMGT-UHFFFAOYSA-N',
+    data_provenance: {
+      computed_source: 'PubChem PUG-REST',
+      last_fetched: '2026-05-02',
+      manual_overrides: [],
+    },
+  };
+}
+
+// ── verify-molecular: per-material checks ────────────────────────────
+describe('verify-molecular — checkMaterial', () => {
+  let tmp;
+  beforeEach(() => {
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'verify-mol-'));
+  });
+  afterEach(() => {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it('clean fixture → 0 findings', () => {
+    expect(checkMaterial(clean(), tmp)).toEqual([]);
+  });
+
+  it('skips materials with no mol_* fields entirely', () => {
+    const m = { cas: 'x', name: 'legacy-only', smiles: 'CCO', xlogp: '2.7' };
+    expect(checkMaterial(m, tmp)).toEqual([]);
+  });
+
+  it('mol_molecular_weight missing → flagged', () => {
+    const m = { ...clean() };
+    delete m.mol_molecular_weight;
+    const findings = checkMaterial(m, tmp);
+    expect(findings.map(f => f.check)).toContain('mol_molecular_weight_missing');
+  });
+
+  it('mol_molecular_weight = 49 (below range) → flagged', () => {
+    const m = { ...clean(), mol_molecular_weight: 49 };
+    const findings = checkMaterial(m, tmp);
+    expect(findings).toContainEqual(
+      expect.objectContaining({
+        check: 'mol_molecular_weight_range',
+        value: 49,
+      })
+    );
+  });
+
+  it('mol_molecular_weight = 1001 (above range) → flagged', () => {
+    const m = { ...clean(), mol_molecular_weight: 1001 };
+    const findings = checkMaterial(m, tmp);
+    expect(findings.map(f => f.check)).toContain('mol_molecular_weight_range');
+  });
+
+  it('mol_xlogp3 = -6 → flagged', () => {
+    const m = { ...clean(), mol_xlogp3: -6 };
+    const findings = checkMaterial(m, tmp);
+    expect(findings.map(f => f.check)).toContain('mol_xlogp3_range');
+  });
+
+  it('mol_xlogp3 = 11 → flagged', () => {
+    const m = { ...clean(), mol_xlogp3: 11 };
+    const findings = checkMaterial(m, tmp);
+    expect(findings.map(f => f.check)).toContain('mol_xlogp3_range');
+  });
+
+  it('mol_xlogp3 absent (allowed — non-organics) → no flag for xlogp', () => {
+    const m = { ...clean() };
+    delete m.mol_xlogp3;
+    const findings = checkMaterial(m, tmp);
+    expect(findings.map(f => f.check)).not.toContain('mol_xlogp3_range');
+  });
+
+  it('data_provenance entirely missing → flagged', () => {
+    const m = { ...clean() };
+    delete m.data_provenance;
+    const findings = checkMaterial(m, tmp);
+    expect(findings.map(f => f.check)).toContain('provenance_last_fetched_missing');
+  });
+
+  it('data_provenance.last_fetched missing → flagged', () => {
+    const m = { ...clean() };
+    delete m.data_provenance.last_fetched;
+    const findings = checkMaterial(m, tmp);
+    expect(findings.map(f => f.check)).toContain('provenance_last_fetched_missing');
+  });
+
+  it('data_provenance.last_fetched non-ISO format → flagged', () => {
+    const m = {
+      ...clean(),
+      data_provenance: { ...clean().data_provenance, last_fetched: '02/05/2026' },
+    };
+    const findings = checkMaterial(m, tmp);
+    expect(findings.map(f => f.check)).toContain('provenance_last_fetched_bad_format');
+  });
+
+  it('chem_vapor_pressure_mmhg_25c <= 0 → flagged', () => {
+    const m = { ...clean(), chem_vapor_pressure_mmhg_25c: 0 };
+    const findings = checkMaterial(m, tmp);
+    expect(findings.map(f => f.check)).toContain('vapor_pressure_nonpositive');
+  });
+
+  it('chem_vapor_pressure_mmhg_25c > 0 → clean', () => {
+    const m = { ...clean(), chem_vapor_pressure_mmhg_25c: 0.16 };
+    expect(checkMaterial(m, tmp).map(f => f.check)).not.toContain('vapor_pressure_nonpositive');
+  });
+
+  it('cache InChIKey matches mol_inchi_key → clean', () => {
+    cacheWrite('6549', 'first-layer', { CID: 6549, InChIKey: 'CDOSHBSSFJOMGT-UHFFFAOYSA-N' }, tmp);
+    expect(checkMaterial(clean(), tmp)).toEqual([]);
+  });
+
+  it('cache InChIKey differs from mol_inchi_key → flagged', () => {
+    cacheWrite('6549', 'first-layer', { CID: 6549, InChIKey: 'WRONG-MOLECULE-XYZ' }, tmp);
+    const findings = checkMaterial(clean(), tmp);
+    expect(findings.map(f => f.check)).toContain('cache_inchi_key_mismatch');
+    const f = findings.find(x => x.check === 'cache_inchi_key_mismatch');
+    expect(f.cached).toBe('WRONG-MOLECULE-XYZ');
+    expect(f.stored).toBe('CDOSHBSSFJOMGT-UHFFFAOYSA-N');
+  });
+
+  it('cache miss → silently skipped (no anomaly emitted)', () => {
+    // tmp is empty → no cache file → checkMaterial must not flag.
+    expect(checkMaterial(clean(), tmp)).toEqual([]);
+  });
+});
+
+describe('verify-molecular — verify(db, cacheDir)', () => {
+  let tmp;
+  beforeEach(() => {
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'verify-mol-batch-'));
+  });
+  afterEach(() => {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it('counts checked / with_mol / anomalies correctly', () => {
+    const db = [
+      clean(), // ok
+      { cas: 'x', name: 'legacy-only' }, // no mol_*
+      { ...clean(), cas: 'y', name: 'OOR', mol_xlogp3: 99 }, // anomaly
+    ];
+    const result = verify(db, tmp);
+    expect(result.stats).toEqual({ checked: 3, with_mol: 2, anomalies: 1 });
+    expect(result.findings).toHaveLength(1);
+    expect(result.findings[0].cas).toBe('y');
+  });
+
+  it('clean DB → 0 anomalies, exit-equivalent ok', () => {
+    const db = [clean()];
+    const result = verify(db, tmp);
+    expect(result.stats.anomalies).toBe(0);
+    expect(result.findings).toEqual([]);
+  });
+});
+
+// ── molecular-coverage-report ────────────────────────────────────────
+describe('molecular-coverage-report — buildCoverage', () => {
+  function fixture(opts = {}) {
+    const materials = opts.materials || [
+      // patched
+      {
+        cas: '78-70-6',
+        name: 'Linalool',
+        mol_xlogp3: 2.7,
+        classification: { primaryFamilies: ['herbal'] },
+      },
+      {
+        cas: '142-19-8',
+        name: 'Allyl Heptanoate',
+        mol_xlogp3: 4,
+        classification: { primaryFamilies: ['fruity'] },
+      },
+      // mixture
+      { cas: '8008-79-5', name: 'Spearmint Oil', classification: { primaryFamilies: ['herbal'] } },
+      // unenriched
+      { cas: 'x', name: 'Stub', classification: { primaryFamilies: ['woody'] } },
+    ];
+    return {
+      meta: { version: '2026-04-29-v305', row_count: materials.length },
+      perfumery_db: materials,
+      trade_names: {},
+      mixture_cas: opts.mixture_cas || ['8008-79-5'],
+    };
+  }
+
+  it('counts total / mixtures / patched correctly', () => {
+    const { summary } = buildCoverage(fixture(), null);
+    expect(summary.total).toBe(4);
+    expect(summary.mixtures).toBe(1);
+    expect(summary.patched).toBe(2);
+    expect(summary.flagged).toBe(0);
+  });
+
+  it('rates: raw, eligible, ship', () => {
+    const flagged = { flagged: [{ cas: 'x' }] };
+    const { summary } = buildCoverage(fixture(), flagged);
+    // total=4, mixtures=1, patched=2, flagged=1
+    // raw       = 2/4 = 50
+    // eligible  = patched / (patched + flagged) = 2/3 ≈ 66.67
+    // ship      = 2/2 = 100
+    expect(summary.rates.raw).toBe(50);
+    expect(summary.rates.eligible).toBeCloseTo(66.67, 1);
+    expect(summary.rates.ship).toBe(100);
+  });
+
+  it('per-family breakdown counts flag + mixture per family', () => {
+    const flagged = { flagged: [{ cas: 'x' }] };
+    const { families } = buildCoverage(fixture(), flagged);
+    expect(families.herbal).toEqual({ total: 2, mixtures: 1, patched: 1, flagged: 0 });
+    expect(families.fruity).toEqual({ total: 1, mixtures: 0, patched: 1, flagged: 0 });
+    expect(families.woody).toEqual({ total: 1, mixtures: 0, patched: 0, flagged: 1 });
+  });
+
+  it('handles missing flagged file (flagged=0; rates still meaningful)', () => {
+    const { summary } = buildCoverage(fixture(), null);
+    expect(summary.flagged).toBe(0);
+    expect(summary.rates.raw).toBe(50);
+    expect(summary.rates.eligible).toBe(100); // 2/(2+0) = 100
+    expect(summary.rates.ship).toBe(100);
+  });
+
+  it('handles empty DB (no division-by-zero)', () => {
+    const data = { perfumery_db: [], trade_names: {}, mixture_cas: [] };
+    const { summary } = buildCoverage(data, null);
+    expect(summary.total).toBe(0);
+    expect(summary.rates.raw).toBe(0);
+    expect(summary.rates.eligible).toBe(0);
+    expect(summary.rates.ship).toBe(0);
+  });
+
+  it('classifies materials with no primaryFamilies as (unclassified)', () => {
+    const data = {
+      perfumery_db: [{ cas: 'x', name: 'orphan', mol_xlogp3: 1 }],
+      mixture_cas: [],
+    };
+    const { families } = buildCoverage(data, null);
+    expect(families['(unclassified)']).toEqual({ total: 1, mixtures: 0, patched: 1, flagged: 0 });
+  });
+});

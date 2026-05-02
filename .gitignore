@@ -17,3 +17,5 @@ audit/cache/*
 !audit/cache/README.md
 audit/molecular-patches.json
 audit/molecular-patches-flagged.json
+audit/molecular-verify.json
+audit/molecular-coverage.json

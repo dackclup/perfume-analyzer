@@ -11,6 +11,8 @@
     "format:check": "prettier --check \"tools/**/*.{js,mjs}\" \"scripts/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\" \"tests/**/*.{js,mjs}\" \"*.{json,md}\"",
     "lint:blends": "node tools/lint-blends.mjs",
     "lint:data": "node tools/lint-data.mjs",
+    "lint:molecular": "node tools/verify-molecular.mjs",
+    "report:molecular-coverage": "node tools/molecular-coverage-report.mjs",
     "lint:version": "node scripts/check-version-drift.mjs",
     "codemap": "node tools/codemap.mjs",
     "codemap:check": "node tools/codemap.mjs --check",
