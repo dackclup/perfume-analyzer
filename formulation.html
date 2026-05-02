@@ -23,8 +23,24 @@
 <meta name="apple-mobile-web-app-title" content="Perfume Formulator">
 <title>Perfume Formulation Lab</title>
 <link rel="manifest" href="manifest.webmanifest">
+<!-- Audit-r2 Tier 0 (E3): preconnect lets the browser TLS-handshake
+     to the font CDN in parallel with the HTML parse. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<!-- Audit-r2 Tier 0 (E3): pinned chart.js 4.5.1 + SRI. The previous
+     floating `@4` tag could ship arbitrary new minor/patch versions
+     into the page; a compromised CDN edge would inject malicious
+     JS with the same trust as the page. SRI + explicit version closes
+     that hole. To upgrade: refetch the dist file, recompute the
+     sha384 base64 digest, and bump both the URL and the integrity
+     attribute together. Google Fonts CSS is intentionally NOT under
+     SRI — Google rotates the underlying font URLs, so a hash on the
+     CSS would break on every refresh. CSP (Tier 1) restricts which
+     origins a compromised font CSS could redirect to. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"
+        integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ"
+        crossorigin="anonymous"></script>
 <style>
 /* ===== Design Tokens (mirrored with index.html) ===== */
 :root {
@@ -1127,19 +1143,19 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      of these three scripts touch PERFUMERY_DATA at parse time, so they
      stay synchronous; the materials database alone has been hoisted to
      async fetch. -->
-<script src="taxonomy.js?v=2026-04-29-v299"></script>
-<script src="formulation_data.js?v=2026-04-29-v299"></script>
-<script src="formulation_engine.js?v=2026-04-29-v299"></script>
+<script src="taxonomy.js?v=2026-04-29-v300"></script>
+<script src="formulation_data.js?v=2026-04-29-v300"></script>
+<script src="formulation_engine.js?v=2026-04-29-v300"></script>
 
 <!-- Shared DOM helpers (escHtml / debounce / safeInit / normaliseMaterialKey).
      Audit-coherence Tier 2 R3 — single source of truth, replaces the
      inline copies that drifted between the two pages. -->
-<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v299"></script>
+<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v300"></script>
 <!-- Canonical enriched-material builder used by every formulation.addMaterial
      call site. Audit-coherence Tier 2 R3 fix for C3.2/C3.3. -->
-<script type="module" src="lib/material-shape.mjs?v=2026-04-29-v299"></script>
+<script type="module" src="lib/material-shape.mjs?v=2026-04-29-v300"></script>
 <!-- Versioned localStorage helpers. Audit-coherence Tier 2 R3. -->
-<script type="module" src="lib/storage.mjs?v=2026-04-29-v299"></script>
+<script type="module" src="lib/storage.mjs?v=2026-04-29-v300"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). Same bootstrap pattern as index.html:
@@ -1161,7 +1177,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 // State computation NEVER runs before stage 4 — the inert app-init body
 // is browser-inert until we replace its <script> element.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v299';
+  const DATA_VERSION = '2026-04-29-v300';
 
   const overlay = document.createElement('div');
   overlay.id = 'app-loading';
