@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "comment": "Domain-legitimate molecular anomalies that pass chemistry sanity but fail heuristic ranges in tools/verify-molecular.mjs. Maintain via manual review only — do NOT add an entry without verifying the value against PubChem and recording the chemistry justification.",
+  "allowlist": [
+    {
+      "cas": "122-32-7",
+      "name": "Glyceryl Trioleate",
+      "field": "mol_xlogp3",
+      "value": 22.4,
+      "reason": "Triglyceride (C57H104O6); high logP correct for triester of oleic acid"
+    },
+    {
+      "cas": "59-02-9",
+      "name": "alpha-Tocopherol",
+      "field": "mol_xlogp3",
+      "value": 10.7,
+      "reason": "Vitamin E; chromanol + C16 phytyl tail; just above heuristic ceiling"
+    },
+    {
+      "cas": "64-17-5",
+      "name": "Ethanol",
+      "field": "mol_molecular_weight",
+      "value": 46.07,
+      "reason": "Common solvent; below 50 g/mol heuristic floor"
+    }
+  ]
+}

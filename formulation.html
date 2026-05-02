@@ -1149,19 +1149,19 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
      of these three scripts touch PERFUMERY_DATA at parse time, so they
      stay synchronous; the materials database alone has been hoisted to
      async fetch. -->
-<script src="taxonomy.js?v=2026-04-29-v305"></script>
-<script src="formulation_data.js?v=2026-04-29-v305"></script>
-<script src="formulation_engine.js?v=2026-04-29-v305"></script>
+<script src="taxonomy.js?v=2026-04-29-v306"></script>
+<script src="formulation_data.js?v=2026-04-29-v306"></script>
+<script src="formulation_engine.js?v=2026-04-29-v306"></script>
 
 <!-- Shared DOM helpers (escHtml / debounce / safeInit / normaliseMaterialKey).
      Audit-coherence Tier 2 R3 — single source of truth, replaces the
      inline copies that drifted between the two pages. -->
-<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v305"></script>
+<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v306"></script>
 <!-- Canonical enriched-material builder used by every formulation.addMaterial
      call site. Audit-coherence Tier 2 R3 fix for C3.2/C3.3. -->
-<script type="module" src="lib/material-shape.mjs?v=2026-04-29-v305"></script>
+<script type="module" src="lib/material-shape.mjs?v=2026-04-29-v306"></script>
 <!-- Versioned localStorage helpers. Audit-coherence Tier 2 R3. -->
-<script type="module" src="lib/storage.mjs?v=2026-04-29-v305"></script>
+<script type="module" src="lib/storage.mjs?v=2026-04-29-v306"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). Same bootstrap pattern as index.html:
@@ -1183,7 +1183,7 @@ input[type="range"]::-moz-range-thumb { width:16px; height:16px; border-radius:5
 // State computation NEVER runs before stage 4 — the inert app-init body
 // is browser-inert until we replace its <script> element.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v305';
+  const DATA_VERSION = '2026-04-29-v306';
 
   const overlay = document.createElement('div');
   overlay.id = 'app-loading';
@@ -4135,6 +4135,17 @@ function gcmsBuildPeaks(mats) {
       // Area proxy: pct × MW (rough FID response). Solvents w/o MW use pct.
       area: rt != null ? (m.pct * (mw || 50)) : 0,
       hasData: rt != null,
+      // Round 3 P1.6 — new mol_*/chem_* layer (PubChem-fetched, provenance-stamped).
+      // Surfaced in the MS detail panel side-by-side with the legacy fields so
+      // a chemist comparing legacy vs PubChem sees both at a glance.
+      mol_molecular_weight: dbEntry.mol_molecular_weight || null,
+      mol_formula: dbEntry.mol_formula || '',
+      mol_xlogp3: dbEntry.mol_xlogp3 != null ? dbEntry.mol_xlogp3 : null,
+      mol_iupac_name: dbEntry.mol_iupac_name || '',
+      chem_boiling_point_c: dbEntry.chem_boiling_point_c != null ? dbEntry.chem_boiling_point_c : null,
+      chem_vapor_pressure_mmhg_25c:
+        dbEntry.chem_vapor_pressure_mmhg_25c != null ? dbEntry.chem_vapor_pressure_mmhg_25c : null,
+      pubchem_url: dbEntry.pubchem_url || (dbEntry.pubchem_cid ? 'https://pubchem.ncbi.nlm.nih.gov/compound/' + dbEntry.pubchem_cid : ''),
     });
   }
   // Normalize area to %
@@ -4251,13 +4262,36 @@ function renderGCMSTab() {
     if (sel) {
       html += '<div class="analysis-card"><h4>MS &mdash; ' + escHtml(sel.name) + '</h4>';
       html += '<table class="data-table" style="font-size:0.85em"><tbody>';
+      // Round 3 P1.6 — Molecular Properties block. Prefer the new mol_*/chem_*
+      // layer (PubChem-fetched + provenance-stamped) over legacy fields.
+      // Skip rows where the value is null/undefined/empty — never render '—'
+      // placeholders for the molecular layer; the legacy block below still
+      // shows '—' for back-compat.
+      const _mwResolved = sel.mol_molecular_weight != null ? sel.mol_molecular_weight : sel.mw;
+      const _formulaResolved = sel.mol_formula || sel.formula;
+      const _logpResolved = sel.mol_xlogp3 != null ? sel.mol_xlogp3 : sel.xlogp;
+      const _bpResolved = sel.chem_boiling_point_c != null ? sel.chem_boiling_point_c : sel.bp;
+      const molRows = [];
+      if (_mwResolved != null && _mwResolved !== '')
+        molRows.push(['MW (g/mol)', typeof _mwResolved === 'number' ? _mwResolved.toFixed(2) : _mwResolved]);
+      if (_formulaResolved) molRows.push(['Formula', _formulaResolved]);
+      if (_logpResolved != null && _logpResolved !== '') molRows.push(['logP', _logpResolved]);
+      if (sel.chem_vapor_pressure_mmhg_25c != null)
+        molRows.push(['Vapor Pressure (mmHg @ 25°C)', sel.chem_vapor_pressure_mmhg_25c]);
+      if (_bpResolved != null && _bpResolved !== '') molRows.push(['Boiling point (°C)', _bpResolved]);
+      if (molRows.length > 0) {
+        html += '<tr><td colspan="2" style="background:var(--bg2);padding:4px 8px;font-size:0.75em;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">Molecular Properties</td></tr>';
+        for (const [k, v] of molRows) {
+          html += '<tr><td style="color:var(--text2);width:30%">' + escHtml(k) + '</td><td style="font-family:monospace;font-size:0.95em">' + escHtml(String(v)) + '</td></tr>';
+        }
+        if (sel.pubchem_url) {
+          html += '<tr><td colspan="2" style="text-align:right;padding-top:2px"><a href="' + escHtml(sel.pubchem_url) + '" target="_blank" rel="noopener noreferrer" style="color:var(--accent);font-size:0.85em">View on PubChem ↗</a></td></tr>';
+        }
+        html += '<tr><td colspan="2" style="background:var(--bg2);padding:4px 8px;font-size:0.75em;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">Other</td></tr>';
+      }
       const rows = [
         ['CAS', sel.cas],
-        ['Formula', sel.formula || '—'],
-        ['MW (g/mol)', sel.mw ? sel.mw.toFixed(2) : '—'],
-        ['Boiling point (°C)', sel.bp != null ? sel.bp : '—'],
         ['Density (g/cm³)', sel.density != null ? sel.density : '—'],
-        ['logP', sel.xlogp != null ? sel.xlogp : '—'],
         ['SMILES', sel.smiles || '—'],
         ['Note', sel.note || '—'],
         ['Predicted RT (min)', sel.hasData ? sel.rt.toFixed(2) : '—'],

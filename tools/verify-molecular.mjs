@@ -13,14 +13,22 @@
 //      stored mol_inchi_key. Cache miss → silently skipped (we never
 //      hit the network from this script).
 //
+// Round 3 P1.6 — allowlist:
+//   audit/molecular-verify-baseline.json holds domain-legitimate
+//   anomalies (e.g. Glyceryl Trioleate XLogP=22.4, Ethanol MW=46.07).
+//   Findings matching an entry by (cas, field-prefix) within ±5%
+//   value tolerance are partitioned out as `allowlisted` (info, not
+//   error). Allowlist entries with no matching finding are reported
+//   as `stale` (info). Only un-allowlisted findings drive exit 1.
+//
 // Output:
 //   - human-readable summary on stdout
-//   - audit/molecular-verify.json (full anomaly list, gitignored
-//     alongside the other audit/molecular-*.json artifacts).
+//   - audit/molecular-verify.json (full report incl. errors,
+//     allowlisted, and stale entries; gitignored).
 //
 // Exit codes:
-//   0 — clean
-//   1 — at least one anomaly
+//   0 — clean (no errors; allowlisted + stale OK)
+//   1 — at least one un-allowlisted anomaly
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -132,20 +140,67 @@ export function checkMaterial(material, cacheDir) {
   return findings;
 }
 
-export function verify(db, cacheDir) {
-  const stats = { checked: 0, with_mol: 0, anomalies: 0 };
-  const findings = [];
+// P1.6 — allowlist matcher.
+// An allowlist entry { cas, field, value } matches a finding when:
+//   - finding.cas === entry.cas
+//   - finding.check starts with entry.field (e.g. entry.field='mol_xlogp3'
+//     matches check='mol_xlogp3_range' AND check='mol_xlogp3_missing')
+//   - if entry.value is set AND finding.value is set: |fv - ev| / |ev|
+//     <= 5% (or absolute 0.05 when entry.value is 0).
+export function matchesAllowlist(finding, entry) {
+  if (!entry || finding.cas !== entry.cas) return false;
+  if (typeof entry.field !== 'string' || !finding.check) return false;
+  if (!finding.check.startsWith(entry.field)) return false;
+  if (entry.value != null && finding.value != null) {
+    const fv = Number(finding.value);
+    const ev = Number(entry.value);
+    if (!Number.isFinite(fv) || !Number.isFinite(ev)) return false;
+    const tol = Math.max(Math.abs(ev * 0.05), 0.05);
+    if (Math.abs(fv - ev) > tol) return false;
+  }
+  return true;
+}
+
+export function verify(db, cacheDir, allowlistPayload) {
+  const allowlist = (allowlistPayload && allowlistPayload.allowlist) || [];
+  const stats = {
+    checked: 0,
+    with_mol: 0,
+    errors: 0,
+    allowlisted: 0,
+    stale: 0,
+  };
+  const errors = [];
+  const allowlisted = [];
+  const matchedIndexes = new Set();
   for (const m of db) {
     stats.checked++;
     if (!hasMolFields(m)) continue;
     stats.with_mol++;
     const fs = checkMaterial(m, cacheDir);
-    if (fs.length > 0) {
-      stats.anomalies += fs.length;
-      findings.push(...fs);
+    for (const f of fs) {
+      let allowIdx = -1;
+      for (let i = 0; i < allowlist.length; i++) {
+        if (matchesAllowlist(f, allowlist[i])) {
+          allowIdx = i;
+          break;
+        }
+      }
+      if (allowIdx >= 0) {
+        matchedIndexes.add(allowIdx);
+        allowlisted.push({ ...f, allowlist_reason: allowlist[allowIdx].reason });
+      } else {
+        errors.push(f);
+      }
     }
   }
-  return { stats, findings };
+  const stale = allowlist
+    .map((entry, i) => (matchedIndexes.has(i) ? null : { ...entry, status: 'stale' }))
+    .filter(Boolean);
+  stats.errors = errors.length;
+  stats.allowlisted = allowlisted.length;
+  stats.stale = stale.length;
+  return { stats, errors, allowlisted, stale };
 }
 
 // ── CLI entry ─────────────────────────────────────────────────────────
@@ -153,34 +208,53 @@ export function verify(db, cacheDir) {
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 if (isMain) {
   const dataPath = path.join(REPO, 'data', 'materials.json');
+  const allowlistPath = path.join(REPO, 'audit', 'molecular-verify-baseline.json');
   const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-  const result = verify(data.perfumery_db, DEFAULT_CACHE_DIR);
+  const allowlistPayload = fs.existsSync(allowlistPath)
+    ? JSON.parse(fs.readFileSync(allowlistPath, 'utf8'))
+    : null;
+  const result = verify(data.perfumery_db, DEFAULT_CACHE_DIR, allowlistPayload);
 
   console.log('═══ Molecular verification (offline; cache-only) ═══');
   console.log(`  materials in DB:       ${result.stats.checked}`);
   console.log(`  with mol_* fields:     ${result.stats.with_mol}`);
-  console.log(`  anomalies:             ${result.stats.anomalies}`);
+  console.log(`  errors:                ${result.stats.errors}`);
+  console.log(`  allowlisted:           ${result.stats.allowlisted}`);
+  console.log(`  stale baseline:        ${result.stats.stale}`);
 
-  if (result.findings.length > 0) {
-    // Group by check category for readability
+  if (result.errors.length > 0) {
     const byCheck = {};
-    for (const f of result.findings) {
+    for (const f of result.errors) {
       (byCheck[f.check] = byCheck[f.check] || []).push(f);
     }
-    console.log('\n  By check category:');
+    console.log('\n  Errors by check:');
     for (const [check, list] of Object.entries(byCheck)) {
       console.log(`    ${check.padEnd(40)} ${list.length}`);
     }
-    console.log('\n  First 20 anomalies:');
-    for (const f of result.findings.slice(0, 20)) {
+    console.log('\n  First 20 errors:');
+    for (const f of result.errors.slice(0, 20)) {
       const detail =
         f.value !== undefined
           ? `value=${JSON.stringify(f.value)} expected=${f.expected || ''}`
           : f.message || '';
       console.log(`    [${f.check}] ${f.cas} ${f.name}: ${detail}`);
     }
-    if (result.findings.length > 20) {
-      console.log(`    … +${result.findings.length - 20} more`);
+    if (result.errors.length > 20) {
+      console.log(`    … +${result.errors.length - 20} more`);
+    }
+  }
+
+  if (result.allowlisted.length > 0) {
+    console.log('\n  Allowlisted (domain-legitimate, NOT errors):');
+    for (const f of result.allowlisted) {
+      console.log(`    [${f.check}] ${f.cas} ${f.name}: ${f.allowlist_reason}`);
+    }
+  }
+
+  if (result.stale.length > 0) {
+    console.log('\n  Stale baseline entries (allowlist row no longer triggers):');
+    for (const e of result.stale) {
+      console.log(`    ${e.cas} ${e.name} ${e.field}=${e.value}`);
     }
   }
 
@@ -189,6 +263,6 @@ if (isMain) {
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2) + '\n');
   console.log(`\n  full report → ${path.relative(REPO, outPath)}`);
 
-  process.exit(result.findings.length > 0 ? 1 : 0);
+  process.exit(result.errors.length > 0 ? 1 : 0);
 }
 /* c8 ignore stop */

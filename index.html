@@ -1270,7 +1270,7 @@ html { scroll-behavior:smooth; }
      globals — and unlike PERFUMERY_DATA, the taxonomy file is small and
      pure-data so the sync block is unobservable. Bumping its ?v= reloads
      on both pages. -->
-<script src="taxonomy.js?v=2026-04-29-v305"></script>
+<script src="taxonomy.js?v=2026-04-29-v306"></script>
 
 <!-- Shared DOM helpers (escHtml / debounce / safeInit / normaliseMaterialKey).
      Audit-coherence Tier 2 R3 — single source of truth. ES module is deferred
@@ -1278,12 +1278,12 @@ html { scroll-behavior:smooth; }
      bootstrap below waits for DOMContentLoaded before activating the inert
      <script id="app-init">, so window.appUtils is populated before any
      consumer in the inert block runs. -->
-<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v305"></script>
+<script type="module" src="lib/dom-utils.mjs?v=2026-04-29-v306"></script>
 <!-- Versioned localStorage helpers. Audit-coherence Tier 2 R3 — replaces
      the scattered try/catch + JSON.parse pattern at every persistence
      site so quota / private-mode / corrupt-payload failures all funnel
      through one place. -->
-<script type="module" src="lib/storage.mjs?v=2026-04-29-v305"></script>
+<script type="module" src="lib/storage.mjs?v=2026-04-29-v306"></script>
 
 <!-- Materials database now ships as data/materials.json (pretty-printed,
      sorted, version-controlled). The bootstrap below fetches it async,
@@ -1308,7 +1308,7 @@ html { scroll-behavior:smooth; }
 // inline data layer (DB build, FILTER_CACHE precompute, render init)
 // is gated behind the stage-2 integrity check.
 (async function _appBoot() {
-  const DATA_VERSION = '2026-04-29-v305';
+  const DATA_VERSION = '2026-04-29-v306';
 
   // Stage 1: mount loading overlay synchronously, before any await,
   // so the user always sees feedback regardless of network latency.
@@ -1563,7 +1563,7 @@ function _clickLog(...args) {
 // Mirrors the data/materials.json cache-buster so downloaded JSON / CSV /
 // Obsidian artefacts can self-identify the DB snapshot they came from.
 // Bump alongside the boot-script's DATA_VERSION at the top of this page.
-const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v305";
+const DATA_VERSION = window.DATA_VERSION || "2026-04-29-v306";
 // Defensive: a corrupted JSON payload could land window.PERFUMERY_DATA
 // without the expected shape. Guard every access so a missing key
 // surfaces as a single clear error rather than a TDZ-style cascade.
@@ -6031,6 +6031,17 @@ function applyPerfumery(mat, cas) {
   _numFill('hbond_acceptor',  'hbond_acceptor');
   _numFill('rotatable_bonds', 'rotatable_bonds');
   _numFill('heavy_atoms',     'heavy_atoms');
+  // Round 3 P1.6 — mirror the new mol_*/chem_* layer onto rec.properties
+  // so the "Molecular Properties" card subsection can render them. The
+  // legacy flat fields above stay populated for back-compat with the
+  // existing props-grid; the new block prefers mol_*/chem_* when set.
+  _numFill('mol_molecular_weight', 'mol_molecular_weight');
+  _numFill('mol_xlogp3',           'mol_xlogp3');
+  _numFill('mol_formula',          'mol_formula');
+  _numFill('mol_iupac_name',       'mol_iupac_name');
+  _numFill('chem_boiling_point_c',         'chem_boiling_point_c');
+  _numFill('chem_vapor_pressure_mmhg_25c', 'chem_vapor_pressure_mmhg_25c');
+  _numFill('boiling_point',        'boiling_point');
   if (Array.isArray(pdb.ghs_codes) && pdb.ghs_codes.length && !mat._ghsCodes) {
     // Tag with pubchem_cid so the CID-consistency check in
     // getGHSPictograms accepts it once _enrichPubchem runs.
@@ -7181,6 +7192,28 @@ function _renderResultsCore() {
       id.inchi?`<p><code>InChI</code> ${esc(id.inchi)}</p>`:"",
     ].join('');
 
+    // Round 3 P1.6 — Molecular Properties subsection.
+    // Prefer the Round-3 mol_*/chem_* layer (PubChem-fetched, provenance-stamped)
+    // over the legacy flat fields. Skip rows whose value is null/undefined/''
+    // — never render placeholders. Block hides itself entirely when nothing
+    // resolves (no mol_*/chem_* and no legacy fallback to surface).
+    const _molMW = pr.mol_molecular_weight != null ? pr.mol_molecular_weight : pr.molecular_weight;
+    const _molFormula = pr.mol_formula || id.molecular_formula;
+    const _molLogP = pr.mol_xlogp3 != null ? pr.mol_xlogp3 : pr.xlogp;
+    const _molVP = pr.chem_vapor_pressure_mmhg_25c;
+    const _molBP = pr.chem_boiling_point_c != null ? pr.chem_boiling_point_c : pr.boiling_point;
+    const _molRows = [
+      _molMW != null && _molMW !== '' ? `<p><code>MW</code> ${esc(_molMW)} g/mol</p>` : '',
+      _molFormula ? `<p><code>Formula</code> ${esc(_molFormula)}</p>` : '',
+      _molLogP != null && _molLogP !== '' ? `<p><code>logP</code> ${esc(_molLogP)}</p>` : '',
+      _molVP != null ? `<p><code>Vapor Pressure</code> ${esc(_molVP)} mmHg @ 25°C</p>` : '',
+      _molBP != null && _molBP !== '' ? `<p><code>BP</code> ${esc(_molBP)} °C</p>` : '',
+      mat.page_url ? `<p><a href="${esc(mat.page_url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);font-size:0.85em">View on PubChem ↗</a></p>` : '',
+    ].filter(Boolean).join('');
+    const molProps = _molRows
+      ? `<div class="mol-props" style="margin-top:8px;padding-top:6px;border-top:1px dashed var(--border);font-size:0.85em"><p style="font-size:0.75em;color:var(--text2);margin:0 0 4px 0;text-transform:uppercase;letter-spacing:0.5px">Molecular Properties</p>${_molRows}</div>`
+      : '';
+
     const syns = (nm.synonyms||[]).length?`<p style="color:var(--text2);font-size:0.8em;margin-top:6px">${esc((nm.synonyms||[]).slice(0,8).join(', '))}</p>`:"";
 
     const blendsArr = _blendsWithClean;
@@ -7289,7 +7322,7 @@ function _renderResultsCore() {
             ${mat.page_url?`<p class="pubchem-link"><a href="${mat.page_url}" target="_blank" style="color:var(--accent);font-size:0.85em">PubChem ↗</a></p>`:""}
             ${ids}
             ${shortProps?`<div class="props-grid">${shortProps}</div>`:""}
-            ${longProps}${syns}
+            ${longProps}${molProps}${syns}
           </div>
           <hr>
           <div class="row">

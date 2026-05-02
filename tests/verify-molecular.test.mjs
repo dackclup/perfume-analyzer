@@ -5,7 +5,7 @@ import path from 'node:path';
 
 // Round 3 P1.5 — verify-molecular + molecular-coverage-report.
 
-import { checkMaterial, verify } from '../tools/verify-molecular.mjs';
+import { checkMaterial, verify, matchesAllowlist } from '../tools/verify-molecular.mjs';
 import { buildCoverage } from '../tools/molecular-coverage-report.mjs';
 import { cacheWrite } from '../tools/lib/pubchem.mjs';
 
@@ -151,23 +151,134 @@ describe('verify-molecular — verify(db, cacheDir)', () => {
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 
-  it('counts checked / with_mol / anomalies correctly', () => {
+  it('counts checked / with_mol / errors correctly (no allowlist)', () => {
     const db = [
       clean(), // ok
       { cas: 'x', name: 'legacy-only' }, // no mol_*
       { ...clean(), cas: 'y', name: 'OOR', mol_xlogp3: 99 }, // anomaly
     ];
     const result = verify(db, tmp);
-    expect(result.stats).toEqual({ checked: 3, with_mol: 2, anomalies: 1 });
-    expect(result.findings).toHaveLength(1);
-    expect(result.findings[0].cas).toBe('y');
+    expect(result.stats).toEqual({
+      checked: 3,
+      with_mol: 2,
+      errors: 1,
+      allowlisted: 0,
+      stale: 0,
+    });
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].cas).toBe('y');
   });
 
-  it('clean DB → 0 anomalies, exit-equivalent ok', () => {
+  it('clean DB → 0 errors, exit-equivalent ok', () => {
     const db = [clean()];
     const result = verify(db, tmp);
-    expect(result.stats.anomalies).toBe(0);
-    expect(result.findings).toEqual([]);
+    expect(result.stats.errors).toBe(0);
+    expect(result.errors).toEqual([]);
+  });
+});
+
+// ── P1.6: allowlist matching ─────────────────────────────────────────
+describe('verify-molecular — matchesAllowlist', () => {
+  const entry = {
+    cas: '122-32-7',
+    name: 'Glyceryl Trioleate',
+    field: 'mol_xlogp3',
+    value: 22.4,
+    reason: 'triglyceride',
+  };
+
+  it('matches when cas + field-prefix + value within ±5%', () => {
+    expect(
+      matchesAllowlist({ cas: '122-32-7', check: 'mol_xlogp3_range', value: 22.4 }, entry)
+    ).toBe(true);
+    // Within tolerance
+    expect(
+      matchesAllowlist({ cas: '122-32-7', check: 'mol_xlogp3_range', value: 23.0 }, entry)
+    ).toBe(true);
+  });
+
+  it('rejects when cas differs', () => {
+    expect(matchesAllowlist({ cas: 'other', check: 'mol_xlogp3_range', value: 22.4 }, entry)).toBe(
+      false
+    );
+  });
+
+  it('rejects when finding.check does NOT start with entry.field', () => {
+    expect(
+      matchesAllowlist({ cas: '122-32-7', check: 'mol_other_range', value: 22.4 }, entry)
+    ).toBe(false);
+  });
+
+  it('rejects when value drifts beyond ±5% tolerance', () => {
+    expect(matchesAllowlist({ cas: '122-32-7', check: 'mol_xlogp3_range', value: 30 }, entry)).toBe(
+      false
+    );
+  });
+
+  it('matches when entry has no value (any value passes)', () => {
+    const noValEntry = { cas: '122-32-7', field: 'mol_xlogp3' };
+    expect(
+      matchesAllowlist({ cas: '122-32-7', check: 'mol_xlogp3_range', value: 999 }, noValEntry)
+    ).toBe(true);
+  });
+});
+
+describe('verify-molecular — verify() with allowlist', () => {
+  let tmp;
+  beforeEach(() => {
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'verify-mol-allow-'));
+  });
+  afterEach(() => {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it('anomaly in allowlist → goes to allowlisted, not errors; exit-equivalent 0', () => {
+    const db = [{ ...clean(), cas: '122-32-7', name: 'Glyceryl Trioleate', mol_xlogp3: 22.4 }];
+    const allowlist = {
+      allowlist: [
+        {
+          cas: '122-32-7',
+          field: 'mol_xlogp3',
+          value: 22.4,
+          reason: 'triglyceride; high logP correct',
+        },
+      ],
+    };
+    const result = verify(db, tmp, allowlist);
+    expect(result.stats.errors).toBe(0);
+    expect(result.stats.allowlisted).toBe(1);
+    expect(result.allowlisted[0].allowlist_reason).toMatch(/triglyceride/);
+    expect(result.errors).toEqual([]);
+  });
+
+  it('anomaly NOT in allowlist → goes to errors; exit-equivalent 1', () => {
+    const db = [{ ...clean(), cas: 'z', name: 'unknown-OOR', mol_xlogp3: 50 }];
+    const allowlist = {
+      allowlist: [{ cas: '122-32-7', field: 'mol_xlogp3', value: 22.4, reason: 'unrelated' }],
+    };
+    const result = verify(db, tmp, allowlist);
+    expect(result.stats.errors).toBe(1);
+    expect(result.stats.allowlisted).toBe(0);
+    expect(result.errors[0].cas).toBe('z');
+  });
+
+  it('allowlist entry with no matching finding → reported as stale (info, not error)', () => {
+    const db = [clean()]; // no anomalies
+    const allowlist = {
+      allowlist: [
+        {
+          cas: '122-32-7',
+          field: 'mol_xlogp3',
+          value: 22.4,
+          reason: 'tri (orphan in this run)',
+        },
+      ],
+    };
+    const result = verify(db, tmp, allowlist);
+    expect(result.stats.errors).toBe(0);
+    expect(result.stats.stale).toBe(1);
+    expect(result.stale[0].status).toBe('stale');
+    expect(result.stale[0].cas).toBe('122-32-7');
   });
 });
 
