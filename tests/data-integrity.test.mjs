@@ -19,7 +19,9 @@ import path from 'node:path';
 import url from 'node:url';
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
-const data = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'data', 'materials.json'), 'utf8'));
+const data = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '..', 'data', 'materials.json'), 'utf8')
+);
 const byCas = new Map(data.perfumery_db.map(e => [e.cas, e]));
 
 // PubChem-canonical reference data for 20 popular materials. MW ±1 Da
@@ -33,26 +35,68 @@ const byCas = new Map(data.perfumery_db.map(e => [e.cas, e]));
 // pubchem_cid values pinned to authoritative records verified via live
 // PubChem REST name lookups during the audit-3 round.
 const REFERENCE = [
-  { name: 'Linalool',           cas: '78-70-6',    formula: 'C10H18O',  mw: 154.25, heavyAtoms: 11 },
-  { name: 'Hedione',            cas: '24851-98-7', formula: 'C13H22O3', mw: 226.31, heavyAtoms: 16, pubchem_cid: '102861' },
-  { name: 'Iso E Super',        cas: '54464-57-2', formula: 'C16H26O',  mw: 234.38, heavyAtoms: 17 },
-  { name: 'Vanillin',           cas: '121-33-5',   formula: 'C8H8O3',   mw: 152.15, heavyAtoms: 11, pubchem_cid: '1183' },
-  { name: 'Ambroxan',           cas: '6790-58-5',  formula: 'C16H28O',  mw: 236.39, heavyAtoms: 17, pubchem_cid: '10857465' },
-  { name: 'Cashmeran',          cas: '33704-61-9', formula: 'C14H22O',  mw: 206.32, heavyAtoms: 15, pubchem_cid: '92292' },
-  { name: 'Calone 1951',        cas: '28940-11-6', formula: 'C10H10O3', mw: 178.18, heavyAtoms: 13 },
-  { name: 'Galaxolide',         cas: '1222-05-5',  formula: 'C18H26O',  mw: 258.40, heavyAtoms: 19, pubchem_cid: '91497' },
-  { name: 'Dihydromyrcenol',    cas: '18479-58-8', formula: 'C10H20O',  mw: 156.27, heavyAtoms: 11 },
-  { name: 'Geraniol',           cas: '106-24-1',   formula: 'C10H18O',  mw: 154.25, heavyAtoms: 11 },
-  { name: 'Citral',             cas: '5392-40-5',  formula: 'C10H16O',  mw: 152.23, heavyAtoms: 11 },
-  { name: 'Eugenol',            cas: '97-53-0',    formula: 'C10H12O2', mw: 164.20, heavyAtoms: 12 },
-  { name: 'Benzyl Benzoate',    cas: '120-51-4',   formula: 'C14H12O2', mw: 212.24, heavyAtoms: 16 },
-  { name: 'Coumarin',           cas: '91-64-5',    formula: 'C9H6O2',   mw: 146.14, heavyAtoms: 11 },
-  { name: 'alpha-Methyl Ionone',cas: '7779-30-8',  formula: 'C14H22O',  mw: 206.32, heavyAtoms: 15 },
-  { name: 'Helional',           cas: '1205-17-0',  formula: 'C11H12O3', mw: 192.21, heavyAtoms: 14 },
-  { name: 'beta-Damascenone',   cas: '23696-85-7', formula: 'C13H18O',  mw: 190.28, heavyAtoms: 14 },
-  { name: 'Floralozone',        cas: '67634-15-5', formula: 'C13H18O',  mw: 190.28, heavyAtoms: 14 },
-  { name: 'Lyral',              cas: '31906-04-4', formula: 'C13H22O2', mw: 210.31, heavyAtoms: 15, pubchem_cid: '91604' },
-  { name: 'Ethyl Maltol',       cas: '4940-11-8',  formula: 'C7H8O3',   mw: 140.13, heavyAtoms: 10 },
+  { name: 'Linalool', cas: '78-70-6', formula: 'C10H18O', mw: 154.25, heavyAtoms: 11 },
+  {
+    name: 'Hedione',
+    cas: '24851-98-7',
+    formula: 'C13H22O3',
+    mw: 226.31,
+    heavyAtoms: 16,
+    pubchem_cid: '102861',
+  },
+  { name: 'Iso E Super', cas: '54464-57-2', formula: 'C16H26O', mw: 234.38, heavyAtoms: 17 },
+  {
+    name: 'Vanillin',
+    cas: '121-33-5',
+    formula: 'C8H8O3',
+    mw: 152.15,
+    heavyAtoms: 11,
+    pubchem_cid: '1183',
+  },
+  {
+    name: 'Ambroxan',
+    cas: '6790-58-5',
+    formula: 'C16H28O',
+    mw: 236.39,
+    heavyAtoms: 17,
+    pubchem_cid: '10857465',
+  },
+  {
+    name: 'Cashmeran',
+    cas: '33704-61-9',
+    formula: 'C14H22O',
+    mw: 206.32,
+    heavyAtoms: 15,
+    pubchem_cid: '92292',
+  },
+  { name: 'Calone 1951', cas: '28940-11-6', formula: 'C10H10O3', mw: 178.18, heavyAtoms: 13 },
+  {
+    name: 'Galaxolide',
+    cas: '1222-05-5',
+    formula: 'C18H26O',
+    mw: 258.4,
+    heavyAtoms: 19,
+    pubchem_cid: '91497',
+  },
+  { name: 'Dihydromyrcenol', cas: '18479-58-8', formula: 'C10H20O', mw: 156.27, heavyAtoms: 11 },
+  { name: 'Geraniol', cas: '106-24-1', formula: 'C10H18O', mw: 154.25, heavyAtoms: 11 },
+  { name: 'Citral', cas: '5392-40-5', formula: 'C10H16O', mw: 152.23, heavyAtoms: 11 },
+  { name: 'Eugenol', cas: '97-53-0', formula: 'C10H12O2', mw: 164.2, heavyAtoms: 12 },
+  { name: 'Benzyl Benzoate', cas: '120-51-4', formula: 'C14H12O2', mw: 212.24, heavyAtoms: 16 },
+  { name: 'Coumarin', cas: '91-64-5', formula: 'C9H6O2', mw: 146.14, heavyAtoms: 11 },
+  { name: 'alpha-Methyl Ionone', cas: '7779-30-8', formula: 'C14H22O', mw: 206.32, heavyAtoms: 15 },
+  { name: 'Helional', cas: '1205-17-0', formula: 'C11H12O3', mw: 192.21, heavyAtoms: 14 },
+  { name: 'beta-Damascenone', cas: '23696-85-7', formula: 'C13H18O', mw: 190.28, heavyAtoms: 14 },
+  { name: 'Floralozone', cas: '67634-15-5', formula: 'C13H18O', mw: 190.28, heavyAtoms: 14 },
+  {
+    name: 'Lyral',
+    cas: '31906-04-4',
+    formula: 'C13H22O2',
+    mw: 210.31,
+    heavyAtoms: 15,
+    pubchem_cid: '91604',
+  },
+  { name: 'Ethyl Maltol', cas: '4940-11-8', formula: 'C7H8O3', mw: 140.13, heavyAtoms: 10 },
 ];
 
 // Heavy-atom count (= non-hydrogen atoms) parsed from the molecular
@@ -83,7 +127,9 @@ describe('data/materials.json — 20 popular materials regression spec', () => {
 
       it('has correct molecular weight (±1 Da)', () => {
         const mw = parseFloat(e.weight);
-        expect(Number.isFinite(mw), `${ref.name} weight should parse as a finite number`).toBe(true);
+        expect(Number.isFinite(mw), `${ref.name} weight should parse as a finite number`).toBe(
+          true
+        );
         expect(Math.abs(mw - ref.mw)).toBeLessThanOrEqual(1.0);
       });
 
@@ -112,8 +158,9 @@ describe('data/materials.json — 20 popular materials regression spec', () => {
         // SMILES atom-token count includes the canonical-aromatic uppercase
         // letters (C, N, O) plus the lowercase aromatic forms (c, n, o).
         // Re-count case-insensitively but exclude H.
-        const haInSmilesCaseInsensitive = (e.smiles.replace(/[H]\d*/g, '').match(/[A-Za-z]/g) || [])
-          .filter(c => c.toUpperCase() !== 'H').length;
+        const haInSmilesCaseInsensitive = (
+          e.smiles.replace(/[H]\d*/g, '').match(/[A-Za-z]/g) || []
+        ).filter(c => c.toUpperCase() !== 'H').length;
         expect(haInSmilesCaseInsensitive).toBeGreaterThanOrEqual(haInFormula - 1);
         expect(haInSmilesCaseInsensitive).toBeLessThanOrEqual(haInFormula + 1);
       });
@@ -137,20 +184,28 @@ describe('engine — longevity floor consistency between tabs', () => {
     const url = await import('node:url');
     const __dirname2 = path.dirname(url.fileURLToPath(import.meta.url));
     const root = path.resolve(__dirname2, '..');
-    const tax    = await fs.readFile(path.join(root, 'taxonomy.js'), 'utf8');
-    const dataS  = await fs.readFile(path.join(root, 'formulation_data.js'), 'utf8');
+    const tax = await fs.readFile(path.join(root, 'taxonomy.js'), 'utf8');
+    const dataS = await fs.readFile(path.join(root, 'formulation_data.js'), 'utf8');
     const engine = await fs.readFile(path.join(root, 'formulation_engine.js'), 'utf8');
     const ctx = {};
-    new Function('ctx', tax + '\n' + dataS + '\n' + engine + '\nObject.assign(ctx,{estimateLongevity});')(ctx);
+    new Function(
+      'ctx',
+      tax + '\n' + dataS + '\n' + engine + '\nObject.assign(ctx,{estimateLongevity});'
+    )(ctx);
 
     const hedione = data.perfumery_db.find(x => x.cas === '24851-98-7');
     expect(hedione).toBeDefined();
-    const lon = ctx.estimateLongevity([{ cas: hedione.cas, name: hedione.name, pct: 100, data: hedione }], 25);
+    const lon = ctx.estimateLongevity(
+      [{ cas: hedione.cas, name: hedione.name, pct: 100, data: hedione }],
+      25
+    );
     const maxEnd = Math.max(lon.topPhase.end, lon.heartPhase.end, lon.basePhase.end);
     expect(lon.totalHours, 'totalHours must equal max phase.end').toBeCloseTo(maxEnd, 1);
     // Hedione is a high-tenacity mid-tier material at 100% — the floor
     // ensures the user sees ≥4 h, not the simulator's 0.3 h artifact.
-    expect(lon.totalHours, '100% Hedione should report ≥ 4 h longevity').toBeGreaterThanOrEqual(4.0);
+    expect(lon.totalHours, '100% Hedione should report ≥ 4 h longevity').toBeGreaterThanOrEqual(
+      4.0
+    );
   });
 });
 
@@ -160,22 +215,25 @@ describe('mixture_cas integrity — single aroma chemicals must NOT be classifie
   // "Essential Oil / Natural mixture". Same root cause for 10 other
   // synthetics. This regression spec pins them out of mixture_cas.
   const SYNTHETICS_NOT_IN_MIXTURES = [
-    '54464-57-2',  // Iso E Super
+    '54464-57-2', // Iso E Super
     '111879-80-2', // Habanolide
-    '117-98-6',    // Vetiveryl Acetate
-    '127-51-5',    // alpha-Isomethyl Ionone
-    '141-25-3',    // Rhodinol
-    '15764-04-2',  // alpha-Vetivone
-    '17369-59-4',  // (Z)-3-Butylidene Phthalide
-    '41429-52-1',  // Norpatchoulenol
-    '58297-61-9',  // Khusimone
-    '70788-30-6',  // Norlimbanol
-    '77-54-3',     // Cedryl Acetate
+    '117-98-6', // Vetiveryl Acetate
+    '127-51-5', // alpha-Isomethyl Ionone
+    '141-25-3', // Rhodinol
+    '15764-04-2', // alpha-Vetivone
+    '17369-59-4', // (Z)-3-Butylidene Phthalide
+    '41429-52-1', // Norpatchoulenol
+    '58297-61-9', // Khusimone
+    '70788-30-6', // Norlimbanol
+    '77-54-3', // Cedryl Acetate
   ];
   const mixSet = new Set(data.mixture_cas);
   for (const cas of SYNTHETICS_NOT_IN_MIXTURES) {
     it(`${cas} (synthetic aroma chemical) is NOT in mixture_cas`, () => {
-      expect(mixSet.has(cas), `${cas} should be classified as a single aroma chemical, not a natural mixture`).toBe(false);
+      expect(
+        mixSet.has(cas),
+        `${cas} should be classified as a single aroma chemical, not a natural mixture`
+      ).toBe(false);
     });
   }
 });

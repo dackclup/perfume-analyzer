@@ -19,6 +19,9 @@ export PATH="$(pwd)/node_modules/.bin:$PATH"
 echo "[pre-commit] lint…"
 npm run --silent lint
 
+echo "[pre-commit] format:check…"
+npm run --silent format:check
+
 echo "[pre-commit] test…"
 npm run --silent test
 

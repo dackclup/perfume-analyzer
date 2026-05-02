@@ -22,22 +22,24 @@ const REPO = path.resolve(__dirname, '..');
 
 const GIT_DIR = path.join(REPO, '.git');
 if (!fs.existsSync(GIT_DIR)) {
-  console.error('[install-hooks] no .git directory — skipping (probably a zip download or worktree)');
+  console.error(
+    '[install-hooks] no .git directory — skipping (probably a zip download or worktree)'
+  );
   process.exit(0);
 }
 
 const HOOKS_DIR = path.join(GIT_DIR, 'hooks');
 try {
   fs.mkdirSync(HOOKS_DIR, { recursive: true });
-} catch (_) { /* already exists */ }
+} catch (_) {
+  /* already exists */
+}
 
-const HOOKS = [
-  { src: 'scripts/pre-commit.sh', dest: 'pre-commit' },
-];
+const HOOKS = [{ src: 'scripts/pre-commit.sh', dest: 'pre-commit' }];
 
 let copied = 0;
 for (const { src, dest } of HOOKS) {
-  const srcAbs  = path.join(REPO, src);
+  const srcAbs = path.join(REPO, src);
   const destAbs = path.join(HOOKS_DIR, dest);
   if (!fs.existsSync(srcAbs)) {
     console.error(`[install-hooks] WARN missing source ${src}`);

@@ -55,7 +55,9 @@ if (names.some(n => n.toLowerCase() === lower || n.toLowerCase().replace(/\\/g, 
 
 // Regex-escape spaces, dashes, parens etc. The existing entries use
 // backslash-escapes for non-alphanumerics so we follow the same style.
-function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function esc(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 names.push(esc(name));
 names.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
@@ -68,5 +70,9 @@ if (replaced === src) {
 }
 fs.writeFileSync(INDEX_FILE, replaced);
 
-console.error(`[add-allergen] inserted "${name}" into EU_ALLERGENS_CURRENT (now ${names.length} entries).`);
-console.error('[add-allergen] reminder — also extend NATURAL_ALLERGEN_COMPOSITION in formulation_data.js if this allergen appears in a natural mixture.');
+console.error(
+  `[add-allergen] inserted "${name}" into EU_ALLERGENS_CURRENT (now ${names.length} entries).`
+);
+console.error(
+  '[add-allergen] reminder — also extend NATURAL_ALLERGEN_COMPOSITION in formulation_data.js if this allergen appears in a natural mixture.'
+);

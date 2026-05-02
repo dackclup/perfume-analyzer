@@ -72,7 +72,7 @@ npm run release    # bumps version.json + every cache-bust string + DATA_VERSION
 `scripts/release.mjs` asserts the repo settles on one distinct version
 string afterwards; any drift fails the release.
 
-`sw.js`'s `CACHE_VERSION` is independent — it tracks the *shell*
+`sw.js`'s `CACHE_VERSION` is independent — it tracks the _shell_
 (HTML + manifest) and is derived from a content hash of `SHELL_ASSETS`
 by the same release script. You should never edit `CACHE_VERSION`
 by hand.
@@ -83,7 +83,7 @@ by hand.
   (defined inline in each HTML). When you build a new template
   literal, escape every `${user-controlled}` substitution.
 - **Defensive init** — every init call (renderResults,
-  _updateCompareCta, _restoreUrlState, _restoreResults) is wrapped
+  \_updateCompareCta, \_restoreUrlState, \_restoreResults) is wrapped
   in `try/catch` so a single throw can't poison the rest of the
   script. Preserve this — see v189 commit.
 - **Animation — first mount only** — cards animate via
@@ -130,17 +130,17 @@ algorithm inline.
 
 ## Where things live (cheat sheet)
 
-| You want to … | Look in |
-|---|---|
-| Change the search algorithm | `index.html` Search Matchers section |
-| Tweak a filter axis | `index.html` `_filterAxes` + `_AXIS_CHECKERS` |
-| Edit the fragrance wheel SVG | `index.html` `_buildWheelSvg` |
-| Change card render | `index.html` `_renderResultsCore` (fn `renderResults` wraps it) |
-| Add a regulatory token | `index.html` `REGULATORY_VALUES` + `REGULATORY_LABELS` |
-| Add a captive supplier | `index.html` `SUPPLIER_BRANDS` |
-| Edit IFRA caps | `formulation_data.js` `IFRA_51_LIMITS` |
-| Patch material data | `perfumery_data.js` (single JSON line — use a Node script) |
-| Audit DB mismatches | Run `tools/lint-blends.mjs` or write an ad-hoc node script |
+| You want to …                | Look in                                                         |
+| ---------------------------- | --------------------------------------------------------------- |
+| Change the search algorithm  | `index.html` Search Matchers section                            |
+| Tweak a filter axis          | `index.html` `_filterAxes` + `_AXIS_CHECKERS`                   |
+| Edit the fragrance wheel SVG | `index.html` `_buildWheelSvg`                                   |
+| Change card render           | `index.html` `_renderResultsCore` (fn `renderResults` wraps it) |
+| Add a regulatory token       | `index.html` `REGULATORY_VALUES` + `REGULATORY_LABELS`          |
+| Add a captive supplier       | `index.html` `SUPPLIER_BRANDS`                                  |
+| Edit IFRA caps               | `formulation_data.js` `IFRA_51_LIMITS`                          |
+| Patch material data          | `perfumery_data.js` (single JSON line — use a Node script)      |
+| Audit DB mismatches          | Run `tools/lint-blends.mjs` or write an ad-hoc node script      |
 
 When in doubt: `grep -n "thingyou'relookingfor"` or open
 `.codemap.md` and Ctrl-F.

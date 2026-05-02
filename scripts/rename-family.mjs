@@ -32,10 +32,12 @@ function flag(name) {
 
 const kind = flag('--kind');
 const from = flag('--from');
-const to   = flag('--to');
+const to = flag('--to');
 
 if (!kind || !from || !to) {
-  console.error('Usage: node scripts/rename-family.mjs --kind subfamily|facet --from <old> --to <new>');
+  console.error(
+    'Usage: node scripts/rename-family.mjs --kind subfamily|facet --from <old> --to <new>'
+  );
   process.exit(1);
 }
 if (!['subfamily', 'facet'].includes(kind)) {
@@ -51,9 +53,7 @@ if (from === to) {
 const DATA_FILE = path.join(REPO, 'data/materials.json');
 const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
 
-const ARRAY_KEYS = kind === 'subfamily'
-  ? ['primaryFamilies', 'secondaryFamilies']
-  : ['facets'];
+const ARRAY_KEYS = kind === 'subfamily' ? ['primaryFamilies', 'secondaryFamilies'] : ['facets'];
 
 let dataHits = 0;
 for (const m of data.perfumery_db) {

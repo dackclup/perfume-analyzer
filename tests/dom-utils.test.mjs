@@ -1,4 +1,3 @@
-
 import { describe, it, expect } from 'vitest';
 import { escHtml, debounce, normaliseMaterialKey } from '../lib/dom-utils.mjs';
 
@@ -47,11 +46,14 @@ describe('debounce', () => {
   });
   it('coalesces multiple calls within the delay window', async () => {
     let calls = 0;
-    const fn = debounce(() => { calls++; }, 30);
-    fn(); fn(); fn();
+    const fn = debounce(() => {
+      calls++;
+    }, 30);
+    fn();
+    fn();
+    fn();
     expect(calls).toBe(0);
     await new Promise(r => setTimeout(r, 60));
     expect(calls).toBe(1);
   });
 });
-

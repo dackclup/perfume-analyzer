@@ -32,14 +32,14 @@ const REPO = path.resolve(__dirname, '..');
 const args = process.argv.slice(2);
 const checkOnly = args.includes('--check');
 const bumpShell = args.includes('--shell');
-const bumpData  = !args.includes('--no-data');
-const setData   = args.find(a => a.startsWith('--data='))?.split('=')[1];
-const setShell  = args.find(a => a.startsWith('--shell='))?.split('=')[1];
+const bumpData = !args.includes('--no-data');
+const setData = args.find(a => a.startsWith('--data='))?.split('=')[1];
+const setShell = args.find(a => a.startsWith('--shell='))?.split('=')[1];
 
 // ── Load version.json ─────────────────────────────────────────────────
 const VERSION_FILE = path.join(REPO, 'version.json');
 const version = JSON.parse(fs.readFileSync(VERSION_FILE, 'utf8'));
-const oldData  = version.data;
+const oldData = version.data;
 const oldShell = version.shell;
 
 function bumpDataString(v) {
@@ -54,23 +54,26 @@ function bumpShellString(v) {
   return 'v' + (parseInt(m[1], 10) + 1);
 }
 
-let newData = oldData, newShell = oldShell;
+let newData = oldData,
+  newShell = oldShell;
 if (!checkOnly) {
-  if (setData)        newData = setData;
-  else if (bumpData)  newData = bumpDataString(oldData);
-  if (setShell)        newShell = setShell;
-  else if (bumpShell)  newShell = bumpShellString(oldShell);
+  if (setData) newData = setData;
+  else if (bumpData) newData = bumpDataString(oldData);
+  if (setShell) newShell = setShell;
+  else if (bumpShell) newShell = bumpShellString(oldShell);
 }
 
 if (!checkOnly) {
   console.error(`[release] data:  ${oldData} → ${newData}`);
-  console.error(`[release] shell: ${oldShell} → ${newShell}` + (oldShell === newShell ? ' (unchanged)' : ''));
+  console.error(
+    `[release] shell: ${oldShell} → ${newShell}` + (oldShell === newShell ? ' (unchanged)' : '')
+  );
 }
 
 // ── Surface inventory: every file/pattern that holds a version string ──
 const HTML_FILES = ['index.html', 'formulation.html'];
-const DATA_FILE  = 'data/materials.json';
-const SW_FILE    = 'sw.js';
+const DATA_FILE = 'data/materials.json';
+const SW_FILE = 'sw.js';
 // SW shell assets — hashed into CACHE_VERSION so any shell content change
 // auto-busts the cache. Mirrors the SHELL_ASSETS array in sw.js itself.
 const SHELL_ASSETS = [
@@ -142,7 +145,10 @@ if (!checkOnly) {
 }
 
 if (!checkOnly && (newData !== oldData || newShell !== oldShell)) {
-  fs.writeFileSync(VERSION_FILE, JSON.stringify({ data: newData, shell: newShell }, null, 2) + '\n');
+  fs.writeFileSync(
+    VERSION_FILE,
+    JSON.stringify({ data: newData, shell: newShell }, null, 2) + '\n'
+  );
 }
 
 // ── Verification pass ─────────────────────────────────────────────────
@@ -196,7 +202,9 @@ if (checkOnly) {
   if (recordedHash) {
     const liveHash = shellContentHash();
     if (recordedHash !== liveHash) {
-      errors.push(`sw.js CACHE_VERSION shell hash is ${recordedHash}, but current shell content hashes to ${liveHash} (run npm run release).`);
+      errors.push(
+        `sw.js CACHE_VERSION shell hash is ${recordedHash}, but current shell content hashes to ${liveHash} (run npm run release).`
+      );
     }
   }
 }
@@ -210,8 +218,10 @@ if (errors.length) {
   process.exit(1);
 }
 
-const hashTag = newShellHash ? ` shell-hash ${newShellHash}` : (() => {
-  const h = shellHashInSwFile();
-  return h ? ` shell-hash ${h}` : '';
-})();
+const hashTag = newShellHash
+  ? ` shell-hash ${newShellHash}`
+  : (() => {
+      const h = shellHashInSwFile();
+      return h ? ` shell-hash ${h}` : '';
+    })();
 console.error('[release] OK — single version ' + expected + ', shell ' + expectedShell + hashTag);

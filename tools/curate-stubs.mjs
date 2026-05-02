@@ -30,7 +30,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { classifyEntry, applyClassification, applyDefaults, noteFromMw } from './lib/material-classifier.mjs';
+import {
+  classifyEntry,
+  applyClassification,
+  applyDefaults,
+  noteFromMw,
+} from './lib/material-classifier.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
@@ -46,9 +51,7 @@ const JSON_PATH = path.join(REPO_ROOT, 'data', 'materials.json');
 // by a future updater path that bypassed the inline classifier).
 
 function isStub(entry) {
-  return !entry.classification?.primaryFamilies?.length
-      && !entry.odor?.type
-      && !entry.note;
+  return !entry.classification?.primaryFamilies?.length && !entry.odor?.type && !entry.note;
 }
 
 async function main() {
@@ -68,7 +71,13 @@ async function main() {
       // Phase 1: also fill IFRA / BP defaults so the engine doesn't
       // treat the row as unrestricted. applyDefaults is idempotent.
       applyDefaults(entry);
-      matched.push({ cas: entry.cas, name: entry.name, families: m.families, type: m.type, note: m.note });
+      matched.push({
+        cas: entry.cas,
+        name: entry.name,
+        families: m.families,
+        type: m.type,
+        note: m.note,
+      });
     } else {
       // Fall back to MW-derived note + safety defaults so even
       // unmatched rows get at least a tier classification + the
@@ -78,7 +87,12 @@ async function main() {
       applyDefaults(entry);
       const mwNote = noteFromMw(entry.weight);
       if (mwNote && !entry.note) entry.note = mwNote;
-      missed.push({ cas: entry.cas, name: entry.name, weight: entry.weight, note: entry.note || '' });
+      missed.push({
+        cas: entry.cas,
+        name: entry.name,
+        weight: entry.weight,
+        note: entry.note || '',
+      });
     }
   }
 
@@ -90,9 +104,19 @@ async function main() {
   // assumes "no restriction" and the row passes compliance silently.
   let safetyBackfilled = 0;
   for (const entry of data.perfumery_db) {
-    const before = (entry.safety?.ifra || '') + '|' + (entry.safety?.usage || '') + '|' + (entry.boiling_point ?? '');
+    const before =
+      (entry.safety?.ifra || '') +
+      '|' +
+      (entry.safety?.usage || '') +
+      '|' +
+      (entry.boiling_point ?? '');
     applyDefaults(entry);
-    const after = (entry.safety?.ifra || '') + '|' + (entry.safety?.usage || '') + '|' + (entry.boiling_point ?? '');
+    const after =
+      (entry.safety?.ifra || '') +
+      '|' +
+      (entry.safety?.usage || '') +
+      '|' +
+      (entry.boiling_point ?? '');
     if (before !== after) safetyBackfilled++;
   }
 
@@ -103,9 +127,15 @@ async function main() {
 
   if (report) {
     process.stdout.write('\n=== MATCHED ===\n');
-    for (const m of matched) process.stdout.write(`  ${m.cas.padEnd(12)} ${m.name.padEnd(40)} → ${m.families.join(',')} | ${m.type} | ${m.note}\n`);
+    for (const m of matched)
+      process.stdout.write(
+        `  ${m.cas.padEnd(12)} ${m.name.padEnd(40)} → ${m.families.join(',')} | ${m.type} | ${m.note}\n`
+      );
     process.stdout.write('\n=== MISSED (still need curation) ===\n');
-    for (const m of missed) process.stdout.write(`  ${m.cas.padEnd(12)} ${m.name.padEnd(40)} (MW=${m.weight}, note=${m.note})\n`);
+    for (const m of missed)
+      process.stdout.write(
+        `  ${m.cas.padEnd(12)} ${m.name.padEnd(40)} (MW=${m.weight}, note=${m.note})\n`
+      );
   }
 
   if (!dryRun) {
@@ -119,4 +149,7 @@ async function main() {
   }
 }
 
-main().catch(err => { console.error('Fatal:', err); process.exit(2); });
+main().catch(err => {
+  console.error('Fatal:', err);
+  process.exit(2);
+});

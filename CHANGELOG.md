@@ -49,7 +49,7 @@ helpers, R4 unautomated rules) collapsed into a 4-tier sprint plan.
 - `schema/materials.schema.json` — JSON Schema (draft-07) for
   `data/materials.json`. Enforces CAS pattern on `cas`, `trade_names`
   values, `mixture_cas`, `pubchem_cid`, and the `blends_with` `string |
-  {label, cas, strength, source}` union.
+{label, cas, strength, source}` union.
 - `tools/lint-data.mjs` — three-pass linter:
   - **A. Schema** — Ajv validates against `materials.schema.json`.
   - **B. Cross-reference** — 20 categories: family tokens →
@@ -59,9 +59,9 @@ helpers, R4 unautomated rules) collapsed into a 4-tier sprint plan.
     `NATURAL_ALLERGEN_COMPOSITION` constituent ↔ EU list,
     `ESTER_HYDROLYSIS` integrity, `AROMACHOLOGY_SCORES` ↔ DB.
   - **C. Ratchet** — fails CI only when a category's broken count
-    *increases* vs `audit/lint-data-baseline.json`. Lets us inherit
+    _increases_ vs `audit/lint-data-baseline.json`. Lets us inherit
     backlog without freezing development.
-  Flags: `--json`, `--strict`, `--update-baseline`.
+    Flags: `--json`, `--strict`, `--update-baseline`.
 - `lib/dom-utils.mjs` — shared `escHtml` (correct null/undefined
   handling, escapes apostrophes), `debounce` (with `.cancel`/`.flush`),
   `safeInit` (try/catch wrapper), `normaliseMaterialKey` (Greek-letter
@@ -73,7 +73,7 @@ helpers, R4 unautomated rules) collapsed into a 4-tier sprint plan.
 - `scripts/pre-commit.sh` + `scripts/install-hooks.mjs` — vendored git
   pre-commit gate (lint + test + lint:data + lint:version +
   codemap:check); installed by `npm install` (prepare hook) or `npm run
-  setup`. No husky devDep.
+setup`. No husky devDep.
 - `scripts/add-material.mjs` — append a row with CAS check-digit
   validation, sorted insertion, `meta.row_count` refresh, then
   re-runs `lint-data`.

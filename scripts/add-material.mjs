@@ -34,14 +34,16 @@ function flag(name) {
   return args[i + 1] || null;
 }
 
-const cas    = flag('--cas');
-const name   = flag('--name');
-const note   = flag('--note');
+const cas = flag('--cas');
+const name = flag('--name');
+const note = flag('--note');
 const smiles = flag('--smiles');
-const type   = flag('--type');
+const type = flag('--type');
 
 if (!cas || !name) {
-  console.error('Usage: node scripts/add-material.mjs --cas <cas> --name <name> [--note Top|Middle|Base] [--smiles <smiles>] [--type natural|synthetic|nature_identical|semi_synthetic]');
+  console.error(
+    'Usage: node scripts/add-material.mjs --cas <cas> --name <name> [--note Top|Middle|Base] [--smiles <smiles>] [--type natural|synthetic|nature_identical|semi_synthetic]'
+  );
   process.exit(1);
 }
 
@@ -51,7 +53,7 @@ function casCheckOk(c) {
   const m = /^(\d{1,7})-(\d{2})-(\d)$/.exec(c);
   if (!m) return false;
   const digits = (m[1] + m[2]).split('').map(Number);
-  const check  = parseInt(m[3], 10);
+  const check = parseInt(m[3], 10);
   let sum = 0;
   for (let i = 0; i < digits.length; i++) {
     sum += digits[digits.length - 1 - i] * (i + 1);
@@ -59,7 +61,9 @@ function casCheckOk(c) {
   return sum % 10 === check;
 }
 if (!casCheckOk(cas)) {
-  console.error(`[add-material] CAS ${cas} fails check-digit validation. Verify the number on PubChem before retrying.`);
+  console.error(
+    `[add-material] CAS ${cas} fails check-digit validation. Verify the number on PubChem before retrying.`
+  );
   process.exit(2);
 }
 
@@ -72,15 +76,17 @@ if (!Array.isArray(data.perfumery_db)) {
   process.exit(3);
 }
 if (data.perfumery_db.some(e => e && e.cas === cas)) {
-  console.error(`[add-material] CAS ${cas} is already in the DB (${data.perfumery_db.find(e => e.cas === cas).name}).`);
+  console.error(
+    `[add-material] CAS ${cas} is already in the DB (${data.perfumery_db.find(e => e.cas === cas).name}).`
+  );
   process.exit(4);
 }
 
 // ── Build skeleton row ──────────────────────────────────────────────
 const row = { cas, name };
-if (note)   row.note = note;
+if (note) row.note = note;
 if (smiles) row.smiles = smiles;
-if (type)   row.classification = { material_type: type };
+if (type) row.classification = { material_type: type };
 
 data.perfumery_db.push(row);
 

@@ -7,7 +7,7 @@ import {
   resolveIFRAParent,
   cleanOdorDescription,
   normalizeRegulatoryToken,
-  REGULATORY_LEGACY_ALIASES
+  REGULATORY_LEGACY_ALIASES,
 } from '../lib/utils.mjs';
 
 describe('csvEscape', () => {
@@ -59,7 +59,7 @@ describe('arcPath', () => {
     expect(big).toMatch(/0 1 0 /); // largeArc=1, sweep=0 on inner
   });
 
-  it('treats 0 degrees as 12 o\'clock, increasing clockwise', () => {
+  it("treats 0 degrees as 12 o'clock, increasing clockwise", () => {
     // At 0°, x = cx, y = cy - rOut.
     const path = arcPath(50, 50, 10, 30, 0, 90);
     // First M token x1 should equal cx (50), y1 should equal cy - rOut (50 - 30 = 20).
