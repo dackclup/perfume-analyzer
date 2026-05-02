@@ -17,6 +17,7 @@ import {
   pugViewToChemPatch,
   buildPatch,
   applyPatches,
+  partitionPatches,
   main,
   HELP_TEXT,
   FIRST_LAYER_PROPERTIES,
@@ -31,6 +32,10 @@ function fakeResponse({ status = 200, json = {}, throwOnJson = false }) {
   };
 }
 
+// Modern PUG-REST shape (Round 3 P1.3.1): live API now returns
+// "SMILES" + "ConnectivitySMILES" instead of the legacy
+// "IsomericSMILES" + "CanonicalSMILES". The fixture mirrors a real
+// CID 6549 (Linalool) response captured during the P1.4b dry-run.
 function makePugRestProperty(cid, overrides = {}) {
   return {
     CID: cid,
@@ -43,8 +48,8 @@ function makePugRestProperty(cid, overrides = {}) {
     RotatableBondCount: 4,
     HeavyAtomCount: 11,
     IUPACName: '3,7-dimethylocta-1,6-dien-3-ol',
-    CanonicalSMILES: 'CC(C)=CCCC(C)(O)C=C',
-    IsomericSMILES: 'CC(C)=CCCC(C)(O)C=C',
+    SMILES: 'CC(=CCCC(C)(C=C)O)C',
+    ConnectivitySMILES: 'CC(=CCCC(C)(C=C)O)C',
     InChI: 'InChI=1S/C10H18O/c1-5-10(4,11)8-6-7-9(2)3/h5,7,11H,1,6,8H2,2-4H3',
     InChIKey: 'CDOSHBSSFJOMGT-UHFFFAOYSA-N',
     ExactMass: '154.135765193',
@@ -75,12 +80,12 @@ function makePugViewExperimental(values) {
   };
 }
 
-function makeFixtureDb(materials) {
+function makeFixtureDb(materials, mixtureCasList = []) {
   return {
     meta: { version: '2026-04-29-v304', row_count: materials.length },
     perfumery_db: materials,
     trade_names: {},
-    mixture_cas: [],
+    mixture_cas: mixtureCasList,
   };
 }
 
@@ -167,6 +172,26 @@ describe('pickMaterials', () => {
     const dbZero = [{ cas: 'x', name: 'y', mol_xlogp3: 0 }];
     expect(pickMaterials(dbZero, { missingOnly: true })).toEqual([]);
   });
+
+  // P1.3.1 FIX 2 — mixture filter
+  it('mixtureCas excludes essential oils / absolutes from default selection', () => {
+    const dbMix = [
+      { cas: '78-70-6', name: 'Linalool', pubchem_cid: '6549' },
+      { cas: '8008-79-5', name: 'Spearmint Oil', pubchem_cid: '962' },
+      { cas: '8008-93-3', name: 'Wormwood Oil', pubchem_cid: '962' },
+    ];
+    const mixtures = new Set(['8008-79-5', '8008-93-3']);
+    const picked = pickMaterials(dbMix, {}, mixtures);
+    expect(picked.map(m => m.cas)).toEqual(['78-70-6']);
+  });
+
+  it('--cid bypasses the mixture filter (debug case)', () => {
+    const dbMix = [{ cas: '8008-79-5', name: 'Spearmint Oil', pubchem_cid: '962' }];
+    const mixtures = new Set(['8008-79-5']);
+    const picked = pickMaterials(dbMix, { cid: '962' }, mixtures);
+    expect(picked).toHaveLength(1);
+    expect(picked[0].cas).toBe('8008-79-5');
+  });
 });
 
 // ── resolveCid ───────────────────────────────────────────────────────
@@ -218,6 +243,32 @@ describe('pugRestToMolPatch', () => {
     expect(patch.mol_iupac_name).toContain('octa-1,6-dien-3-ol');
     expect(patch.mol_inchi_key).toBe('CDOSHBSSFJOMGT-UHFFFAOYSA-N');
     expect(patch.mol_exact_mass).toBeCloseTo(154.135, 2);
+  });
+
+  // P1.3.1 FIX 1 — SMILES rename: live PubChem now sends SMILES /
+  // ConnectivitySMILES. Lock that those names map to mol_isomeric_smiles
+  // / mol_canonical_smiles respectively.
+  it('maps new PubChem SMILES + ConnectivitySMILES → mol_isomeric / mol_canonical', () => {
+    const patch = pugRestToMolPatch({
+      CID: 6549,
+      SMILES: 'CC(=CCCC(C)(C=C)O)C',
+      ConnectivitySMILES: 'CC(=CCCC(C)(C=C)O)C',
+    });
+    expect(patch.mol_isomeric_smiles).toBe('CC(=CCCC(C)(C=C)O)C');
+    expect(patch.mol_canonical_smiles).toBe('CC(=CCCC(C)(C=C)O)C');
+  });
+
+  it('regression guard: legacy CanonicalSMILES / IsomericSMILES are NOT picked up', () => {
+    // PubChem deprecated these field names. If the API ever resurrected them
+    // they would still be ignored by the parser — the FIRST_LAYER_PROPERTIES
+    // map only requests the new names. This test documents that intent.
+    const patch = pugRestToMolPatch({
+      CID: 6549,
+      CanonicalSMILES: 'should-not-appear',
+      IsomericSMILES: 'should-not-appear',
+    });
+    expect(patch.mol_canonical_smiles).toBeUndefined();
+    expect(patch.mol_isomeric_smiles).toBeUndefined();
   });
 
   it('skips fields that are null / empty string', () => {
@@ -379,6 +430,67 @@ describe('applyPatches', () => {
   });
 });
 
+// ── partitionPatches (P1.3.1 FIX 3) ──────────────────────────────────
+describe('partitionPatches', () => {
+  it('flags rows where legacy InChIKey ≠ fetched mol_inchi_key', () => {
+    const db = [
+      {
+        cas: '104-50-7',
+        name: 'γ-Octalactone',
+        pubchem_cid: '7714',
+        formula: 'C8H14O2',
+        iupac: '5-butyloxolan-2-one',
+        inchi_key: 'FYJYZHOPSDJXMM-UHFFFAOYSA-N', // octalactone
+      },
+    ];
+    const patches = {
+      '104-50-7': {
+        mol_formula: 'C11H20O2', // PubChem returned undecalactone for CID 7714
+        mol_iupac_name: '5-heptyloxolan-2-one',
+        mol_inchi_key: 'PHXATPHONSXBIL-UHFFFAOYSA-N', // undecalactone
+      },
+    };
+    const { clean, flagged } = partitionPatches(db, patches);
+    expect(clean).toEqual({});
+    expect(flagged).toHaveLength(1);
+    const f = flagged[0];
+    expect(f.cas).toBe('104-50-7');
+    expect(f.name).toBe('γ-Octalactone');
+    expect(f.pubchem_cid).toBe('7714');
+    expect(f.legacy.inchi_key).toBe('FYJYZHOPSDJXMM-UHFFFAOYSA-N');
+    expect(f.fetched.inchi_key).toBe('PHXATPHONSXBIL-UHFFFAOYSA-N');
+    expect(f.legacy.formula).toBe('C8H14O2');
+    expect(f.fetched.formula).toBe('C11H20O2');
+    expect(f.legacy.iupac_name).toBe('5-butyloxolan-2-one');
+    expect(f.fetched.iupac_name).toBe('5-heptyloxolan-2-one');
+    expect(f.patch).toBe(patches['104-50-7']);
+  });
+
+  it('passes through cleanly when InChIKeys match', () => {
+    const db = [
+      {
+        cas: '78-70-6',
+        name: 'Linalool',
+        inchi_key: 'CDOSHBSSFJOMGT-UHFFFAOYSA-N',
+      },
+    ];
+    const patches = {
+      '78-70-6': { mol_inchi_key: 'CDOSHBSSFJOMGT-UHFFFAOYSA-N', mol_xlogp3: 2.7 },
+    };
+    const { clean, flagged } = partitionPatches(db, patches);
+    expect(flagged).toEqual([]);
+    expect(clean['78-70-6']).toBe(patches['78-70-6']);
+  });
+
+  it('passes through cleanly when legacy row has no InChIKey (no signal to compare)', () => {
+    const db = [{ cas: 'x', name: 'no-inchi-key-yet' }];
+    const patches = { x: { mol_inchi_key: 'NEW-KEY', mol_xlogp3: 1 } };
+    const { clean, flagged } = partitionPatches(db, patches);
+    expect(flagged).toEqual([]);
+    expect(clean.x).toBe(patches.x);
+  });
+});
+
 // ── main() integration with mocked fetch ─────────────────────────────
 describe('main() — integration', () => {
   let tmp;
@@ -409,6 +521,7 @@ describe('main() — integration', () => {
       dataPath,
       cacheDir: path.join(tmp, 'cache'),
       patchPath: path.join(tmp, 'molecular-patches.json'),
+      flaggedPath: path.join(tmp, 'molecular-patches-flagged.json'),
       now: () => '2026-05-02',
       fetchOpts: FAST_OPTS,
       ...extras,
@@ -582,6 +695,76 @@ describe('main() — integration', () => {
     expect(r.skipped[0].reason).toBe('pubchem-no-cid');
   });
 
+  // P1.3.1 FIX 2 — mixture filter end-to-end through main()
+  it('mixture_cas entries are dropped before any fetch', async () => {
+    const fetchMock = vi.fn(async () =>
+      fakeResponse({ json: makeBatchResponse([makePugRestProperty(6549)]) })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const rt = runtime({
+      dataPath: writeFixture(
+        tmp,
+        makeFixtureDb(
+          [
+            { cas: '78-70-6', name: 'Linalool', pubchem_cid: '6549' },
+            { cas: '8008-79-5', name: 'Spearmint Oil', pubchem_cid: '962' },
+            { cas: '84929-31-7', name: 'Tomato Leaf Absolute', pubchem_cid: '99999' },
+          ],
+          ['8008-79-5', '84929-31-7']
+        )
+      ),
+    });
+    const r = await main({ firstLayerOnly: true }, rt);
+    expect(r.exitCode).toBe(0);
+    expect(r.summary.total_materials).toBe(1); // mixtures excluded
+    expect(r.summary.mixtures_skipped).toBe(2);
+    expect(Object.keys(r.patches)).toEqual(['78-70-6']);
+    // Only Linalool should have triggered the property fetch.
+    expect(fetchMock.mock.calls[0][0]).toContain('/cid/6549/');
+  });
+
+  // P1.3.1 FIX 3 — flagged file end-to-end through main()
+  it('CID-mismatch rows go to the flagged file, NOT to the clean patches', async () => {
+    // Linalool's stored CID resolves to a "different molecule" — we mock
+    // PubChem returning an InChIKey that differs from the legacy row's.
+    const fetchMock = vi.fn(async () =>
+      fakeResponse({
+        json: makeBatchResponse([
+          makePugRestProperty(6549, { InChIKey: 'WRONG-MOLECULE-INCHIKEY-XYZ' }),
+        ]),
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const rt = runtime({
+      dataPath: writeFixture(
+        tmp,
+        makeFixtureDb([
+          {
+            cas: '78-70-6',
+            name: 'Linalool',
+            pubchem_cid: '6549',
+            inchi_key: 'CDOSHBSSFJOMGT-UHFFFAOYSA-N', // legacy (correct linalool)
+          },
+        ])
+      ),
+    });
+    const r = await main({ firstLayerOnly: true, apply: true }, rt);
+    expect(r.exitCode).toBe(0);
+    expect(r.summary.patched).toBe(0); // clean set is empty
+    expect(r.summary.flagged).toBe(1);
+    expect(Object.keys(r.patches)).toEqual([]);
+    expect(r.flagged).toHaveLength(1);
+    expect(r.flagged[0].fetched.inchi_key).toBe('WRONG-MOLECULE-INCHIKEY-XYZ');
+    // Flagged file written
+    expect(fs.existsSync(rt.flaggedPath)).toBe(true);
+    const flaggedFile = JSON.parse(fs.readFileSync(rt.flaggedPath, 'utf8'));
+    expect(flaggedFile.flagged).toHaveLength(1);
+    // --apply ignored the flagged row → DB row unchanged for mol_*
+    const data = JSON.parse(fs.readFileSync(rt.dataPath, 'utf8'));
+    expect(data.perfumery_db[0].mol_inchi_key).toBeUndefined();
+    expect(data.perfumery_db[0].mol_xlogp3).toBeUndefined();
+  });
+
   it('idempotency: re-run with cache populated → identical patches, zero network', async () => {
     let calls = 0;
     vi.stubGlobal(
@@ -631,6 +814,7 @@ describe('network behaviour through main()', () => {
       ),
       cacheDir: path.join(tmp, 'cache'),
       patchPath: path.join(tmp, 'patches.json'),
+      flaggedPath: path.join(tmp, 'patches-flagged.json'),
       now: () => '2026-05-02',
       fetchOpts: FAST_OPTS,
     };

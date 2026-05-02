@@ -16,3 +16,4 @@ audit/cache/*
 !audit/cache/.gitkeep
 !audit/cache/README.md
 audit/molecular-patches.json
+audit/molecular-patches-flagged.json

@@ -52,6 +52,18 @@ const REPO = path.resolve(__dirname, '..');
 // ── Property maps ────────────────────────────────────────────────────
 // PUG-REST property name → schema mol_* key. Order matters for URL
 // construction (PubChem returns properties in the requested order).
+//
+// SMILES rename note (Round 3 P1.3.1, observed against the live API
+// during P1.4b): PubChem deprecated "CanonicalSMILES" + "IsomericSMILES"
+// in favour of "SMILES" + "ConnectivitySMILES". The schema-target keys
+// are unchanged; only the upstream field names move. Semantically:
+//   new "SMILES"             == old "IsomericSMILES" (carries stereo if defined)
+//                                                    → mol_isomeric_smiles
+//   new "ConnectivitySMILES" == old "CanonicalSMILES" (connectivity-only,
+//                              stereo stripped)        → mol_canonical_smiles
+// The previous parser asked for the old names and silently got 0/435
+// populated SMILES across the dry-run; do not revert without checking
+// a live PUG-REST response first.
 export const FIRST_LAYER_PROPERTIES = [
   ['MolecularFormula', 'mol_formula'],
   ['MolecularWeight', 'mol_molecular_weight'],
@@ -63,8 +75,8 @@ export const FIRST_LAYER_PROPERTIES = [
   ['RotatableBondCount', 'mol_rotatable_bond_count'],
   ['HeavyAtomCount', 'mol_heavy_atom_count'],
   ['IUPACName', 'mol_iupac_name'],
-  ['CanonicalSMILES', 'mol_canonical_smiles'],
-  ['IsomericSMILES', 'mol_isomeric_smiles'],
+  ['SMILES', 'mol_isomeric_smiles'],
+  ['ConnectivitySMILES', 'mol_canonical_smiles'],
   ['InChI', 'mol_inchi'],
   ['InChIKey', 'mol_inchi_key'],
   ['ExactMass', 'mol_exact_mass'],
@@ -124,6 +136,14 @@ Notes:
   - --apply is additive: legacy flat fields (smiles, xlogp, weight,
     pubchem_cid, ...) are never touched. Only mol_*/chem_* and
     data_provenance are written.
+  - Mixtures (essential oils / absolutes / extracts listed in
+    data.mixture_cas) are skipped — their CAS resolves to water or
+    one constituent in PubChem and a single-molecule patch would
+    corrupt the row. --cid bypasses this filter for debug.
+  - CID-mismatch guard: rows where the legacy InChIKey differs from
+    the PubChem-fetched mol_inchi_key are diverted to
+    audit/molecular-patches-flagged.json (gitignored) for manual
+    triage. --apply ignores them.
 `;
 
 export function parseArgs(argv) {
@@ -149,7 +169,13 @@ export function parseArgs(argv) {
 }
 
 // ── Material picking ──────────────────────────────────────────────────
-export function pickMaterials(db, opts) {
+// `mixtureCas` (Set<string>) excludes essential oils / absolutes / extracts —
+// their CAS resolves to either water or one constituent in PubChem (e.g.
+// Spearmint Oil 8008-79-5 → CID 962 = water), and a single-molecule
+// patch would corrupt the row. The --cid debug path bypasses the
+// mixture filter on purpose: an operator targeting a specific CID
+// presumably knows what they're looking at.
+export function pickMaterials(db, opts, mixtureCas = new Set()) {
   if (opts.cid != null) {
     const target = String(opts.cid);
     const m = db.find(x => x.pubchem_cid != null && String(x.pubchem_cid) === target);
@@ -157,6 +183,7 @@ export function pickMaterials(db, opts) {
     return [m];
   }
   let mats = db.filter(x => x && x.cas);
+  mats = mats.filter(x => !mixtureCas.has(x.cas));
   if (opts.missingOnly) {
     mats = mats.filter(x => x.mol_xlogp3 == null);
   }
@@ -254,6 +281,52 @@ export function buildPatch(material, cid, firstLayer, experimental, opts, runtim
   return patch;
 }
 
+// Round 3 P1.3.1 — CID-mismatch guard.
+// When the legacy row carries an InChIKey AND the PubChem-fetched
+// mol_inchi_key differs, the stored pubchem_cid points to a DIFFERENT
+// molecule than the row's legacy fields describe. Applying the patch
+// would silently overwrite the row with data for the wrong molecule.
+// We separate those into a flagged file for manual triage in Round 4
+// (cf. Round 2's tools/check-pubchem.mjs which flagged 2 rows in a
+// 10-row sample; the full sweep surfaces ~111 such rows).
+//
+// Returns { clean, flagged }:
+//   clean   — { [cas]: patch }  safe to --apply
+//   flagged — array of triage-friendly entries with side-by-side
+//             legacy vs fetched identifiers + the would-be patch
+export function partitionPatches(db, patches) {
+  const dbByCas = new Map(db.map(m => [m.cas, m]));
+  const clean = {};
+  const flagged = [];
+  for (const [cas, patch] of Object.entries(patches)) {
+    const m = dbByCas.get(cas);
+    const legacyKey = m && m.inchi_key;
+    const fetchedKey = patch.mol_inchi_key;
+    const mismatch = legacyKey && fetchedKey && legacyKey !== fetchedKey;
+    if (mismatch) {
+      flagged.push({
+        cas,
+        name: m.name,
+        pubchem_cid: m.pubchem_cid,
+        legacy: {
+          inchi_key: legacyKey,
+          formula: m.formula,
+          iupac_name: m.iupac,
+        },
+        fetched: {
+          inchi_key: fetchedKey,
+          formula: patch.mol_formula,
+          iupac_name: patch.mol_iupac_name,
+        },
+        patch,
+      });
+    } else {
+      clean[cas] = patch;
+    }
+  }
+  return { clean, flagged };
+}
+
 // Additive merge: writes mol_*/chem_*/data_provenance. Never touches
 // any other field. Returns a NEW db array; does not mutate input.
 export function applyPatches(db, patches) {
@@ -335,14 +408,22 @@ export async function main(opts, runtime = {}) {
   const dataPath = runtime.dataPath || path.join(REPO, 'data', 'materials.json');
   const cacheDir = runtime.cacheDir || DEFAULT_CACHE_DIR;
   const patchPath = runtime.patchPath || path.join(REPO, 'audit', 'molecular-patches.json');
+  const flaggedPath =
+    runtime.flaggedPath || path.join(REPO, 'audit', 'molecular-patches-flagged.json');
   const fetchOpts = runtime.fetchOpts;
 
   const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
   const db = data.perfumery_db;
+  const mixtureCas = new Set(data.mixture_cas || []);
 
   let mats;
+  let mixturesSkipped = 0;
   try {
-    mats = pickMaterials(db, opts);
+    mats = pickMaterials(db, opts, mixtureCas);
+    if (opts.cid == null) {
+      // Count for the summary log; --cid mode bypasses the filter.
+      mixturesSkipped = db.filter(m => m && m.cas && mixtureCas.has(m.cas)).length;
+    }
   } catch (e) {
     return { exitCode: 1, error: e.message };
   }
@@ -373,16 +454,23 @@ export async function main(opts, runtime = {}) {
     ? await fetchExperimentalAll(cids, cacheDir, fetchOpts, metrics)
     : {};
 
-  const patches = {};
+  const allPatches = {};
   for (const { material, cid } of resolved) {
     const p = buildPatch(material, cid, firstLayer, experimental, opts, runtime);
-    if (p) patches[material.cas] = p;
+    if (p) allPatches[material.cas] = p;
   }
+
+  // Round 3 P1.3.1: split clean vs flagged BEFORE writing or applying.
+  // --apply consumes only the clean set; flagged rows go to a separate
+  // gitignored file for Round 4 manual triage.
+  const { clean: patches, flagged } = partitionPatches(db, allPatches);
 
   const summary = {
     total_materials: mats.length,
+    mixtures_skipped: mixturesSkipped,
     resolved: resolved.length,
     patched: Object.keys(patches).length,
+    flagged: flagged.length,
     skipped: skipped.length,
     cache_hits: metrics.cacheHits,
     network_calls: metrics.networkCalls,
@@ -390,6 +478,7 @@ export async function main(opts, runtime = {}) {
 
   fs.mkdirSync(path.dirname(patchPath), { recursive: true });
   fs.writeFileSync(patchPath, JSON.stringify({ summary, patches, skipped }, null, 2) + '\n');
+  fs.writeFileSync(flaggedPath, JSON.stringify({ summary, flagged }, null, 2) + '\n');
 
   if (opts.apply) {
     const newDb = applyPatches(db, patches);
@@ -397,7 +486,7 @@ export async function main(opts, runtime = {}) {
     fs.writeFileSync(dataPath, JSON.stringify(newData, null, 2) + '\n');
   }
 
-  return { exitCode: 0, summary, patches, skipped, patchPath };
+  return { exitCode: 0, summary, patches, skipped, flagged, patchPath, flaggedPath };
 }
 
 // ── CLI entry ─────────────────────────────────────────────────────────
@@ -419,12 +508,19 @@ if (isMain) {
         const s = r.summary;
         console.log(
           `enrich-molecular: ${s.patched}/${s.total_materials} materials patched ` +
-            `(${s.resolved} resolved, ${s.skipped} skipped)`
+            `(${s.resolved} resolved, ${s.skipped} CAS-unknown, ` +
+            `${s.flagged} CID-mismatch flagged, ${s.mixtures_skipped} mixtures skipped)`
         );
         console.log(`cache hits: ${s.cache_hits}; network calls: ${s.network_calls}`);
         console.log(`patches → ${path.relative(REPO, r.patchPath)}`);
+        if (s.flagged > 0) {
+          console.log(`flagged → ${path.relative(REPO, r.flaggedPath)}  (Round 4 manual triage)`);
+        }
         if (opts.apply) {
-          console.log(`✓ applied to data/materials.json`);
+          console.log(`✓ applied ${s.patched} clean patches to data/materials.json`);
+          if (s.flagged > 0) {
+            console.log(`  (${s.flagged} flagged patches NOT applied — see flagged file)`);
+          }
         } else {
           console.log(`(dry-run — pass --apply to write to data/materials.json)`);
         }
