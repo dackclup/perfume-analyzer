@@ -282,49 +282,115 @@ export function buildPatch(material, cid, firstLayer, experimental, opts, runtim
 }
 
 // Round 3 P1.3.1 — CID-mismatch guard.
-// When the legacy row carries an InChIKey AND the PubChem-fetched
-// mol_inchi_key differs, the stored pubchem_cid points to a DIFFERENT
-// molecule than the row's legacy fields describe. Applying the patch
-// would silently overwrite the row with data for the wrong molecule.
-// We separate those into a flagged file for manual triage in Round 4
-// (cf. Round 2's tools/check-pubchem.mjs which flagged 2 rows in a
-// 10-row sample; the full sweep surfaces ~111 such rows).
+// Round 3 P1.3.2 — extended with secondary formula-mismatch signal +
+// suspected_cause heuristic.
+//
+// Primary signal (InChIKey):
+//   When the legacy row carries an InChIKey AND the PubChem-fetched
+//   mol_inchi_key differs, the stored pubchem_cid points to a DIFFERENT
+//   molecule than the row's legacy fields describe (or one side is
+//   wrong about the molecule entirely).
+//
+// Secondary signal (formula, P1.3.2):
+//   InChIKey alone misses rows that lack a stored inchi_key. P1.4b
+//   surfaced 8 such rows (Squalane, Camphene, Bornyl Acetate, …) where
+//   legacy.formula and fetched mol_formula disagreed despite no
+//   InChIKey to compare. The secondary check flags those too. Together
+//   they catch every wrong-CID and corrupted-legacy case the dry-run
+//   has surfaced.
+//
+// suspected_cause heuristic (simple, not authoritative — Round 4 manual
+// triage decides for real):
+//   stereo_variant   — same formula, only InChIKey differs (different
+//                      stereo centers; e.g. (E)- vs (Z)-, racemate vs
+//                      specific enantiomer).
+//   corrupted_legacy — legacy.iupac_name contains a marker that's
+//                      obviously NOT a perfumery raw material
+//                      (e.g. "methane", drug-class suffixes from the
+//                      P1.4b investigation: pyrazol-, azocin-, etc.).
+//   wrong_cid        — formula differs and legacy looks plausible for
+//                      a perfumery compound; assume the stored
+//                      pubchem_cid is wrong.
+//   unknown          — fallback (rare path).
 //
 // Returns { clean, flagged }:
 //   clean   — { [cas]: patch }  safe to --apply
 //   flagged — array of triage-friendly entries with side-by-side
-//             legacy vs fetched identifiers + the would-be patch
+//             legacy vs fetched identifiers, mismatch_signals, and
+//             the would-be patch.
 export function partitionPatches(db, patches) {
   const dbByCas = new Map(db.map(m => [m.cas, m]));
   const clean = {};
   const flagged = [];
   for (const [cas, patch] of Object.entries(patches)) {
     const m = dbByCas.get(cas);
-    const legacyKey = m && m.inchi_key;
-    const fetchedKey = patch.mol_inchi_key;
-    const mismatch = legacyKey && fetchedKey && legacyKey !== fetchedKey;
-    if (mismatch) {
-      flagged.push({
-        cas,
-        name: m.name,
-        pubchem_cid: m.pubchem_cid,
-        legacy: {
-          inchi_key: legacyKey,
-          formula: m.formula,
-          iupac_name: m.iupac,
-        },
-        fetched: {
-          inchi_key: fetchedKey,
-          formula: patch.mol_formula,
-          iupac_name: patch.mol_iupac_name,
-        },
-        patch,
-      });
-    } else {
+    if (!m) {
+      // Patch's CAS isn't in the DB — pass through (no signals to compare).
       clean[cas] = patch;
+      continue;
     }
+    const legacy = {
+      inchi_key: m.inchi_key,
+      formula: m.formula,
+      iupac_name: m.iupac,
+    };
+    const fetched = {
+      inchi_key: patch.mol_inchi_key,
+      formula: patch.mol_formula,
+      iupac_name: patch.mol_iupac_name,
+    };
+    const inchiKeyDiff = !!(
+      legacy.inchi_key &&
+      fetched.inchi_key &&
+      legacy.inchi_key !== fetched.inchi_key
+    );
+    const formulaDiff = !!(legacy.formula && fetched.formula && legacy.formula !== fetched.formula);
+    if (!inchiKeyDiff && !formulaDiff) {
+      clean[cas] = patch;
+      continue;
+    }
+    flagged.push({
+      cas,
+      name: m.name,
+      pubchem_cid: m.pubchem_cid,
+      legacy,
+      fetched,
+      mismatch_signals: {
+        inchi_key_diff: inchiKeyDiff,
+        formula_diff: formulaDiff,
+        suspected_cause: suspectedCause(legacy, fetched, inchiKeyDiff, formulaDiff),
+      },
+      patch,
+    });
   }
   return { clean, flagged };
+}
+
+// P1.3.2 — heuristic for triage-sorting flagged entries. Simple rules.
+// Round 4 manual review decides; this just speeds up the sort.
+function suspectedCause(legacy, fetched, inchiKeyDiff, formulaDiff) {
+  // Same formula, only InChIKey differs → stereo / racemate / salt
+  if (legacy.formula && fetched.formula && legacy.formula === fetched.formula && inchiKeyDiff) {
+    return 'stereo_variant';
+  }
+  if (formulaDiff) {
+    // Markers from the P1.4b investigation: rows whose legacy iupac is
+    // obviously NOT a perfumery raw material (drug-class suffixes,
+    // 'methane' in a Bornyl Acetate row, …).
+    const iupac = (legacy.iupac_name || '').toLowerCase();
+    const corruptionMarkers = [
+      'methane',
+      'pyrazol',
+      'azocin',
+      'piperidin',
+      'morphin',
+      'phenazon',
+      'caffein',
+    ];
+    if (corruptionMarkers.some(mk => iupac.includes(mk))) return 'corrupted_legacy';
+    return 'wrong_cid';
+  }
+  return 'unknown';
 }
 
 // Additive merge: writes mol_*/chem_*/data_provenance. Never touches

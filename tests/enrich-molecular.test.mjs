@@ -489,6 +489,86 @@ describe('partitionPatches', () => {
     expect(flagged).toEqual([]);
     expect(clean.x).toBe(patches.x);
   });
+
+  // P1.3.2 — formula-mismatch as secondary signal
+  it('flags rows that lack legacy InChIKey but have formula that differs', () => {
+    const db = [
+      {
+        cas: '111-01-3',
+        name: 'Squalane',
+        pubchem_cid: '15858',
+        formula: 'C30H62',
+        iupac: '2,6,10,15,19,23-hexamethyltetracosane',
+        // no inchi_key in legacy DB row → InChIKey guard is silent
+      },
+    ];
+    const patches = {
+      '111-01-3': {
+        mol_formula: 'C12H19NO3',
+        mol_iupac_name: '2-aminoethanol;2-phenylbutanoic acid',
+        mol_inchi_key: 'OBBCMAHJFIJQIK-UHFFFAOYSA-N',
+      },
+    };
+    const { clean, flagged } = partitionPatches(db, patches);
+    expect(clean).toEqual({});
+    expect(flagged).toHaveLength(1);
+    expect(flagged[0].mismatch_signals).toEqual({
+      inchi_key_diff: false,
+      formula_diff: true,
+      suspected_cause: 'wrong_cid',
+    });
+  });
+
+  it('classifies obviously-not-a-perfumery-row legacy as corrupted_legacy', () => {
+    // P1.4b investigation surfaced rows like Bornyl Acetate with legacy
+    // iupac="methane" — the legacy row has data from a different molecule.
+    const db = [
+      {
+        cas: '76-49-3',
+        name: 'Bornyl Acetate',
+        pubchem_cid: '93009',
+        formula: 'CH4',
+        iupac: 'methane',
+      },
+    ];
+    const patches = {
+      '76-49-3': {
+        mol_formula: 'C12H20O2',
+        mol_iupac_name: '[(1S,2R,4S)-1,7,7-trimethyl-2-bicyclo[2.2.1]heptanyl] acetate',
+        mol_inchi_key: 'KGEKLUUHTZCSIP-HOSYDEDBSA-N',
+      },
+    };
+    const { flagged } = partitionPatches(db, patches);
+    expect(flagged).toHaveLength(1);
+    expect(flagged[0].mismatch_signals.suspected_cause).toBe('corrupted_legacy');
+  });
+
+  it('classifies same-formula + InChIKey-only diff as stereo_variant', () => {
+    // P1.4b: 56 of 111 flagged rows have identical formula but different
+    // InChIKey — typically (E)/(Z) or racemate-vs-enantiomer mismatches.
+    const db = [
+      {
+        cas: '104-54-1',
+        name: 'Cinnamyl Alcohol',
+        pubchem_cid: '5315892',
+        formula: 'C9H10O',
+        inchi_key: 'ZEYHEAKUIGZSGI-QPJJXVBHSA-N',
+      },
+    ];
+    const patches = {
+      '104-54-1': {
+        mol_formula: 'C9H10O',
+        mol_inchi_key: 'OOCCDEMITAIZTP-QPJJXVBHSA-N',
+      },
+    };
+    const { flagged } = partitionPatches(db, patches);
+    expect(flagged).toHaveLength(1);
+    expect(flagged[0].mismatch_signals).toEqual({
+      inchi_key_diff: true,
+      formula_diff: false,
+      suspected_cause: 'stereo_variant',
+    });
+  });
 });
 
 // ── main() integration with mocked fetch ─────────────────────────────
