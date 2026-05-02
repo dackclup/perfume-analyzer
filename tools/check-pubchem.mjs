@@ -30,6 +30,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { sleep, pubchemCidsForCas, RATE_LIMIT_MS } from './lib/pubchem.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(__dirname, '..');
@@ -80,30 +81,11 @@ function hashCas(cas) {
 }
 
 // ── PubChem fetch with throttle + retry ───────────────────────────────
-const RATE_LIMIT_MS = 220; // ≤5 req/s with safety margin
-async function pubchemCidsForCas(cas) {
-  const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(cas)}/cids/JSON`;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const r = await fetch(url, { headers: { Accept: 'application/json' } });
-      if (r.status === 404) return []; // CAS unknown to PubChem
-      if (r.status === 429) {
-        await sleep(2000 * (attempt + 1));
-        continue;
-      }
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const j = await r.json();
-      return j?.IdentifierList?.CID || [];
-    } catch (e) {
-      if (attempt === 2) throw e;
-      await sleep(1000);
-    }
-  }
-  return [];
-}
-function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms));
-}
+// Round 3 P1.2: extracted to tools/lib/pubchem.mjs so enrich-molecular
+// + future tooling reuse the same throttler / retry / parser. This
+// CLI keeps its same behaviour: RATE_LIMIT_MS spacing between calls,
+// 3 attempts, 2s exponential backoff on 429, 1s backoff on transient
+// errors, 404 → empty array.
 
 // ── Run ──────────────────────────────────────────────────────────────
 const rows = pickRows();
