@@ -164,6 +164,7 @@ describe('verify-molecular — verify(db, cacheDir)', () => {
       errors: 1,
       allowlisted: 0,
       stale: 0,
+      cache_skipped: 2, // clean() and OOR both have pubchem_cid + mol_inchi_key (inherited), no cache files in tmp
     });
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].cas).toBe('y');
@@ -174,6 +175,24 @@ describe('verify-molecular — verify(db, cacheDir)', () => {
     const result = verify(db, tmp);
     expect(result.stats.errors).toBe(0);
     expect(result.errors).toEqual([]);
+  });
+
+  // P1.7 — CI-friendly cache-skip telemetry.
+  it('counts cache_skipped when pubchem_cid + mol_inchi_key set but cache absent', () => {
+    // tmp is empty → cache miss for every row that has both pubchem_cid + mol_inchi_key.
+    const db = [
+      clean(), // has both → counts as cache_skipped
+      { ...clean(), cas: 'no-key', mol_inchi_key: undefined }, // missing inchi_key → not skipped (not checkable)
+      { ...clean(), cas: 'no-cid', pubchem_cid: undefined }, // missing cid → not skipped (not checkable)
+      { cas: 'legacy', name: 'no-mol', smiles: 'CCO' }, // no mol_* at all → not even with_mol
+    ];
+    const result = verify(db, tmp);
+    expect(result.stats.checked).toBe(4);
+    expect(result.stats.with_mol).toBe(3);
+    // Only the first row had both pubchem_cid + mol_inchi_key with no cache file.
+    expect(result.stats.cache_skipped).toBe(1);
+    // Cache-skip must NOT produce errors (silent skip preserved from P1.5).
+    expect(result.stats.errors).toBe(0);
   });
 });
 

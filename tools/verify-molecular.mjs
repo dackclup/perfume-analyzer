@@ -169,6 +169,13 @@ export function verify(db, cacheDir, allowlistPayload) {
     errors: 0,
     allowlisted: 0,
     stale: 0,
+    // P1.7 — count of rows where the cache-integrity check WOULD have
+    // run (pubchem_cid + mol_inchi_key both set) but the local cache
+    // file for that CID was missing. CI runs see this == with_mol
+    // because audit/cache/ is gitignored; local devs see ~0 once a
+    // sweep has populated the cache. Informational only — never drives
+    // exit code.
+    cache_skipped: 0,
   };
   const errors = [];
   const allowlisted = [];
@@ -177,6 +184,10 @@ export function verify(db, cacheDir, allowlistPayload) {
     stats.checked++;
     if (!hasMolFields(m)) continue;
     stats.with_mol++;
+    if (m.pubchem_cid && m.mol_inchi_key) {
+      const cached = cacheRead(m.pubchem_cid, 'first-layer', cacheDir);
+      if (!cached) stats.cache_skipped++;
+    }
     const fs = checkMaterial(m, cacheDir);
     for (const f of fs) {
       let allowIdx = -1;
@@ -221,6 +232,21 @@ if (isMain) {
   console.log(`  errors:                ${result.stats.errors}`);
   console.log(`  allowlisted:           ${result.stats.allowlisted}`);
   console.log(`  stale baseline:        ${result.stats.stale}`);
+  // P1.7 — surface CI-friendly note when local audit/cache/ is missing.
+  // The cache-integrity check still runs row-by-row when entries DO
+  // exist (e.g. on a dev box mid-round). In a fresh CI clone the
+  // gitignored cache is absent, so every row counts as skipped — log
+  // it once, clearly, so a reviewer doesn't read "0 errors" and assume
+  // the integrity check ran (it didn't, by design).
+  if (result.stats.cache_skipped > 0) {
+    const ci = !!process.env.CI;
+    const noun = ci ? 'CI run' : 'local run';
+    console.log(
+      `  cache integrity:       skipped ${result.stats.cache_skipped} row(s) ` +
+        `(${noun}; no local audit/cache/ entry — populate via ` +
+        `'node tools/enrich-molecular.mjs --first-layer-only')`
+    );
+  }
 
   if (result.errors.length > 0) {
     const byCheck = {};

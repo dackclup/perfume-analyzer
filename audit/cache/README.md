@@ -45,3 +45,24 @@ prune would silently re-fetch, breaking determinism).
 Each cached file is the exact JSON returned by the PubChem REST or PUG-View
 endpoint. Do not edit by hand — the parsers in `tools/enrich-molecular.mjs`
 expect the original PubChem-shaped payload.
+
+## CI behaviour
+
+`tools/verify-molecular.mjs` runs in CI (Round 3 P1.7). Because this
+directory is gitignored, a fresh GitHub Actions clone has no cache
+files. The verify tool handles that gracefully:
+
+- The InChIKey **cache-integrity** check (compare stored
+  `mol_inchi_key` against the cached PubChem response) is silently
+  skipped per row when no cache file exists for that CID. CI runs
+  see all 290 patched rows skipped and report
+  `cache integrity: skipped 290 row(s)` in the log.
+- The other four checks (`mol_molecular_weight` range,
+  `mol_xlogp3` range, `data_provenance.last_fetched` ISO format,
+  `chem_vapor_pressure_mmhg_25c` positivity) **always run** and
+  drive exit 1 on any un-allowlisted anomaly.
+- Local devs who have populated the cache (`npm run enrich-molecular
+  -- --first-layer-only`) get the full integrity check too.
+
+Result: CI catches schema / range / provenance bugs without needing
+PubChem network access.

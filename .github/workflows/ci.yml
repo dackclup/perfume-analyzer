@@ -44,6 +44,25 @@ jobs:
       - name: Lint data (schema + cross-ref + ratchet)
         run: npm run lint:data
 
+      # Round 3 P1.7 — molecular layer gates.
+      # verify-molecular runs offline against audit/cache/ + the
+      # baseline allowlist. The cache directory is gitignored, so a
+      # fresh CI clone can't run the row-level InChIKey integrity
+      # check; verify-molecular silently skips that one check on
+      # cache-miss (logs the skip count) and still validates ranges +
+      # provenance + vapor-pressure positivity. Range / provenance
+      # errors fail the build; allowlisted rows + cache skips do not.
+      #
+      # PubChem auto-fetch is intentionally NOT wired here — the rate
+      # limit + non-determinism would make CI flaky. Operators run
+      # `npm run enrich-molecular` on a dev box and commit the patches.
+      - name: Lint molecular (range + provenance + cache integrity)
+        run: npm run lint:molecular
+
+      - name: Molecular coverage report (informational)
+        run: npm run report:molecular-coverage
+        continue-on-error: true
+
       - name: Lint version drift
         run: npm run lint:version
 
