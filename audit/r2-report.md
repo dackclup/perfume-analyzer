@@ -904,3 +904,182 @@ At a 16 px base, 0.6 em = 9.6 px, 0.62 em = 9.92 px, 0.65 em = 10.4 px.
 | 3 | **Listener-leak lint** — `tools/lint-listeners.mjs` flags `addEventListener` calls inside any function whose name matches `/^render/`. | [B3.6] |
 | 5 | **DOM-diff render path** — replace the 76 total `innerHTML =` sites with a `morph(node, html)` helper or migrate to a tiny templating library; first-touch surface is large. | [B3.5] |
 
+---
+
+## Phase F — Code quality
+
+### [F1] — Inline JS still growing despite Round-1 lib extraction
+
+**Tier**: 2
+**Auto-fixable**: partial
+**Severity**: medium
+**Locus**: `index.html` (8428 lines), `formulation.html` (6970 lines); `lib/*.mjs` totals 387 lines across 4 modules.
+**Evidence**: `wc -l` output:
+```
+8428 index.html        (Round 1 reported ≈7800 → +628 lines)
+6970 formulation.html  (Round 1 reported ≈7000 → -30 lines)
+ 115 lib/dom-utils.mjs
+  79 lib/material-shape.mjs
+  82 lib/storage.mjs
+ 111 lib/utils.mjs
+```
+Top-level `^function ` counts: index.html = **136**, formulation.html = **80**.
+
+Sample of duplicated/extractable helpers between the two pages (verified by `grep`):
+
+| Helper | index.html | formulation.html | Verdict |
+|---|---|---|---|
+| `setStatus()` | L1270 | L1168 | duplicated verbatim |
+| `showError()` | L1274 | L1172 | duplicated verbatim |
+| `window.showToast = function(...)` | L8389 | L1530 | duplicated verbatim (15 + 11 call sites) |
+| `applyLangIndex()` / `applyLangForm()` | L8204 | L1425 | shared `LANG_INDEX` walk pattern, drift-prone |
+| `_csvEscape()` | L6815 | — | re-implements `csvEscape` already in `lib/utils.mjs:10` |
+| `toTitle()` | L8138 | — | one-liner that belongs in lib/ |
+| `normalizeKey()` | L5157 | — | overlaps `normaliseMaterialKey` in lib/dom-utils.mjs but ignores Greek/smart-quote folding |
+| `fmtA` / `fmtAmt` / `fmtG` | — | L1763, L1828, L2028, L2103 | **defined four times inside formulation.html alone**, near-identical bodies |
+
+**Why it matters**: Round 1's lib extraction has not arrested inline-JS growth — the analyzer is heading toward 9k lines and the formulator above 7k, with provably-duplicate code that is exactly what Round 1's stated R3 goal was meant to consolidate. Each clone is a future drift hazard (esc-vs-escHtml was the same pattern that R3 fixed).
+**Fix(point)**: extract `setStatus` / `showError` / `showToast` / `fmt*` / `toTitle` / `_csvEscape` (use existing `csvEscape`) into `lib/dom-utils.mjs` (or a new `lib/format.mjs`).
+**Fix(systemic)**: add a CI line-count guard (`wc -l index.html formulation.html` against a baseline; fails on increase without `--bump` opt-in), plus a duplicate-function detector (`grep -h "^function " *.html | sort | uniq -d`) wired into pre-commit.
+
+### [F2] — Test coverage uneven across lib/ — material-shape and storage have zero tests
+
+**Tier**: 3
+**Auto-fixable**: yes
+**Severity**: medium
+**Locus**: `tests/` (3 files, 135 tests); `lib/material-shape.mjs`, `lib/storage.mjs` (untested).
+**Evidence**: `ls tests/`:
+```
+data-integrity.test.mjs
+dom-utils.test.mjs
+utils.test.mjs
+```
+- `tests/dom-utils.test.mjs` — 10 tests covering `escHtml`, `debounce`, `normaliseMaterialKey`.
+- `tests/utils.test.mjs` — 24 tests covering `lib/utils.mjs` exports (`csvEscape`, etc.).
+- `tests/data-integrity.test.mjs` — 101 tests, DB regression (not lib-targeted).
+- **No `tests/material-shape.test.mjs`** — `buildEnriched` and `buildFamilyAxes` ship untested despite being a Round-1 breaking change (CHANGELOG: "`enriched` material shape canonicalised … all paths route through `buildEnriched`"). Pure-input-output unit any test suite should pin.
+- **No `tests/storage.test.mjs`** — `lsRead`/`lsWrite`/`lsRemove`/`lsGetString`/`lsSetString` ship untested. CHANGELOG flags this module as the gate for ten persistence keys ("corrupted JSON now falls back to the documented default instead of bubbling a deep render crash") — exactly the contract that needs a test.
+- `npm test` reports 3 files / 135 tests passing; the suite is healthy but narrow.
+
+**Why it matters**: Two of the three R3 lib modules added by Round 1 have zero unit tests. The shape canonicalisation (`buildEnriched`) is the kind of function whose silent breakage manifests as missing chips/radar bars far downstream; the storage fallbacks are the only guard against a localStorage corruption killing the whole inline script. Phase A5 manually verified storage on the CLI but that's not a CI gate.
+**Fix(point)**: add `tests/material-shape.test.mjs` (≥6 cases: minimal entry → 19 fields, missing `mp` table, regulatory mapping, family-axis building) and `tests/storage.test.mjs` (≥6 cases: round-trip, corrupt-JSON fallback, validator rejection, prefix tag warn behaviour, missing key, throwing localStorage).
+**Fix(systemic)**: add a coverage threshold to `vitest.config.mjs` (`--coverage` with per-file 70% line-coverage minimum on `lib/`), and gate the pre-commit hook on it.
+
+### [F3] — Underscore-prefixed (private) helpers — sample call counts
+
+**Tier**: 0
+**Auto-fixable**: yes
+**Severity**: info (no genuine dead code in the sample)
+**Locus**: `index.html`, `formulation.html`.
+**Evidence**: 10-symbol sample from `grep -nE '^function _[a-zA-Z]'` with `grep -c <name>\b`:
+
+| Symbol | Locus | Reference count | Verdict |
+|---|---|---|---|
+| `_compareForSort` | `index.html:1436` | 3 | live |
+| `_stampResultSeq` | `index.html:1435` | 4 | live |
+| `_devWarn` | `index.html:1493` | 11 | live |
+| `_clickLog` | `index.html:1499` | 7 | live |
+| `_appendShowAllCTA` | `index.html:7373` | 5 | live |
+| `_resolveBlendLabel` | `index.html:1717` | 6 | live |
+| `_collapseAllSubs` | `index.html:4181` | 3 | live |
+| `_redrawWheel` | `index.html:6691` | 5 | live |
+| `_extractFemaNumber` | `index.html:5820` | 4 | live |
+| `_addPrefix` | `index.html:2099` | 3 | live |
+
+(Counts include the definition line, so 3 = "definition + ≥2 callers".) **No 0-caller dead code in the sample.** The `_` prefix discipline is honoured.
+
+**Why it matters**: The `_` convention is being followed — this is good. The only minor finding is the absence of *enforcement* — a dev could add a `function _foo` and never call it without lint catching it (the inline-script lint surface has no `no-unused-vars`; see F5).
+**Fix(point)**: none required; sample is clean.
+**Fix(systemic)**: when F5 lands, add `no-unused-vars` for the inline-script ESLint config so unused `_`-prefixed helpers are flagged automatically.
+
+### [F4] — TODO/FIXME census — exactly one marker, still relevant
+
+**Tier**: 0
+**Auto-fixable**: no
+**Severity**: info
+**Locus**: `index.html:2257`.
+**Evidence**: full census output:
+```
+/home/user/perfume-analyzer/index.html:2257:// TODO(stereoisomer-alias-map): when a 2nd stereoisomer family lands
+```
+Categorised: **still relevant / data-curation note** — defers a stereoisomer alias table until a second stereoisomer family is added. Not actionable without a domain-data trigger. **No FIXME / XXX / HACK markers anywhere** in tracked source (`.js` / `.html` / `.mjs` / `.md`).
+
+**Why it matters**: The codebase is unusually clean of debt markers. The single TODO is well-formed (named cohort `stereoisomer-alias-map`, explicit trigger condition).
+**Fix(point)**: leave as-is.
+**Fix(systemic)**: optionally add a TODO-format lint rule (`/^\s*\/\/\s*TODO\(([a-z-]+)\):/`) to gate that future TODOs include a named cohort like the existing one — preserves current quality.
+
+### [F5] — ESLint config does not lint scripts/, tests/, or lib/; inline-script JS rules absent
+
+**Tier**: 2
+**Auto-fixable**: yes
+**Severity**: medium
+**Locus**: `eslint.config.mjs:10-48`, `package.json:8-9`.
+**Evidence**: `eslint.config.mjs` declares only two configured globs:
+- `**/*.html` — html-eslint *structural* rules only (`require-doctype`, `require-lang`, `no-duplicate-id`, `no-multiple-h1`, `require-img-alt`). **No JS rules** apply to the 8428 + 6970 lines of inline `<script>`.
+- `tools/**/*.{js,mjs}` — `no-unused-vars`, `no-console: off`, `eqeqeq: smart`.
+
+The `package.json` `lint` script extends the glob to `lib/**/*.{js,mjs}` but **no matching config block exists**, so files there match no config and inherit only ESLint defaults. Round 1 added six CLIs under `scripts/` (`add-allergen.mjs`, `add-material.mjs`, `check-version-drift.mjs`, `install-hooks.mjs`, `release.mjs`, `rename-family.mjs`) — **not in the lint config or the package.json glob**. The `tests/` directory is also unconfigured/unlinted.
+
+**Why it matters**: The largest JS surface (inline scripts in two HTML files = ~15k lines) gets zero JS-level linting (no `no-unused-vars`, no `eqeqeq`, no `no-undef`); six Round-1 Node CLIs that mutate `data/materials.json` and `version.json` get zero linting; the test suite gets zero linting. Round 1's effort to harden the toolchain stops short of its own outputs.
+**Fix(point)**: add three more flat-config blocks for `scripts/**/*.{js,mjs}`, `tests/**/*.{js,mjs}` (with vitest globals), and `lib/**/*.{js,mjs}`. Extend the `package.json` `lint`/`lint:fix` globs to include `scripts/` and `tests/`.
+**Fix(systemic)**: add a script-rules approach to the html-eslint block (`@html-eslint/eslint-plugin` script-content rules, or migrate inline scripts into `lib/inline-init-*.mjs` modules referenced via `<script type="module">`) so the inline JS inherits `no-unused-vars`/`eqeqeq`/`no-undef`. Otherwise inline-JS quality keeps drifting relative to the Node tools.
+
+### [F6] — package.json: `setup` and `prepare` are duplicates
+
+**Tier**: 0
+**Auto-fixable**: yes
+**Severity**: low
+**Locus**: `package.json:18-19`.
+**Evidence**:
+```json
+"release": "node scripts/release.mjs",
+"setup": "node scripts/install-hooks.mjs",
+"prepare": "node scripts/install-hooks.mjs",
+```
+Both `setup` and `prepare` invoke the **same script** with no flag difference. CHANGELOG.md L75-76 confirms intentional dual-entry ("installed by `npm install` (prepare hook) or `npm run setup`") — `prepare` is the npm-lifecycle hook, `setup` is the manual escape hatch.
+
+All other scripts are useful and non-overlapping (`lint`, `lint:fix`, `format`, `format:check`, `lint:blends`, `lint:data`, `lint:version`, `codemap`, `codemap:check`, `release`, `test`, `test:watch`).
+
+**Why it matters**: The duplication is intentional but undocumented in `package.json` itself. A future contributor will likely consolidate them or delete `setup` for "cleanliness". The signal lives only in CHANGELOG.
+**Fix(point)**: rename `setup` → `setup:hooks` and add a one-line CONTRIBUTING.md note explaining why both exist.
+**Fix(systemic)**: in CONTRIBUTING.md's "Tests" block, document the `npm install` → `prepare` → hook-install chain so the alias is discoverable.
+
+### [F7] — CONTRIBUTING.md drift after Round 1
+
+**Tier**: 0
+**Auto-fixable**: yes
+**Severity**: medium
+**Locus**: `/home/user/perfume-analyzer/CONTRIBUTING.md`.
+**Evidence**: cross-reference of CONTRIBUTING.md vs current state of repo (CHANGELOG, package.json, lib/, data/materials.json):
+
+1. **Wrong material count.** L11: `perfumery_data.js  # 417-material DB + trade_names index. Single JSON.` — `data/materials.json` `meta.row_count` is **624**. CHANGELOG v296 documents the migration but CONTRIBUTING still references the old filename and old row count.
+2. **Wrong source-of-truth filename.** L11 names `perfumery_data.js`; the live data file is `data/materials.json`. The cheat-sheet table at L142 (`Patch material data | perfumery_data.js`) has the same drift.
+3. **`lib/` undercount.** L14: `lib/utils.mjs           # Pure helpers shared with tests.` — `ls lib/` lists four modules (`dom-utils.mjs`, `material-shape.mjs`, `storage.mjs`, `utils.mjs`), all added/expanded by Round 1. CONTRIBUTING omits three of them.
+4. **`tools/` undercount.** L16-18 lists `codemap.mjs` and `lint-blends.mjs`; the directory now also has `add-materials.mjs`, `curate-stubs.mjs`, `lint-data.mjs`. The whole `scripts/` directory (6 Round-1 CLIs incl. `release.mjs`, `install-hooks.mjs`, `check-version-drift.mjs`) is missing from the repo-shape section.
+5. **Manual cache-bust phrasing borderline.** L66-70 correctly tells contributors to use `npm run release` — but L116 still says "Bump the cache-buster in the same commit" without re-pointing to `npm run release`. A reader landing on L116 first might bump by hand. CHANGELOG explicitly forbids manual bumps.
+6. **"Don't introduce a build step" is now ambiguous.** L127-129: "Don't introduce a build step without an explicit ask. The whole site runs from raw files." But Round 1 added ES-module imports (`<script type="module" src="lib/dom-utils.mjs">`); browsers fetch those at runtime — still no bundler/transpile step, but the line should be reworded so a reader doesn't misread "build step" as "any modularisation". Suggest: "Don't introduce a bundler or transpile step — ES modules served directly are fine."
+7. **`tests/` description.** L19 is current ("Vitest unit tests for lib/."), but L107-112 ("Tests live under `tests/` and exercise `lib/utils.mjs`") implies single-module coverage and is now stale (also exercises `lib/dom-utils.mjs` and `data/materials.json`).
+8. **Wrong size for formulation.html.** L26: `formulation.html is ~4.2k.` Actual = 6970 lines. Likely a typo for 7.2k.
+9. **No mention of `audit/`** — directory is in the repo root and unmentioned in the repo-shape diagram.
+10. **No mention of `version.json`** — CHANGELOG calls this "single source of truth for both data version and SW shell version" but CONTRIBUTING never names the file.
+
+**Why it matters**: CONTRIBUTING.md is the document new contributors (and per its opening line, LLM editors) read first. After Round 1 it understates the lib/ surface by 75% (1 of 4 modules), points at a renamed/relocated data file, and miscounts the DB by ~50%. The drift contradicts CHANGELOG — precisely the failure mode contributing-doc guidance is meant to prevent.
+**Fix(point)**: rewrite the repo-shape diagram to list current `lib/`, `tools/`, `scripts/` contents; update L11 to `data/materials.json # 624-material DB`; reword L127-129 to permit ES modules; cross-link L116 to `npm run release`; fix L26 line count.
+**Fix(systemic)**: add a CONTRIBUTING-drift gate — `tools/check-contributing.mjs` asserts row-count number, `lib/` filename list, and HTML line ranges in CONTRIBUTING match reality. Wire into pre-commit alongside `lint:version` and `codemap:check`.
+
+### Systemic fix candidates (F)
+
+Consolidated Tier-2 / Tier-3 levers worth lifting in Round-3:
+
+1. **Coverage threshold in CI** (Tier 3) — vitest `--coverage` with a per-file 70% line-coverage gate on `lib/`, plus the matching tests for `material-shape.mjs` and `storage.mjs` that the threshold would force. Closes the F2 gap.
+2. **Lint scripts/, tests/, lib/** (Tier 2) — three new flat-config blocks in `eslint.config.mjs` so the 6 Round-1 CLIs in `scripts/`, the 3 vitest specs in `tests/`, and the 4 modules in `lib/` get the same `no-unused-vars` + `eqeqeq` floor as `tools/`. Closes F5.
+3. **JS-level linting for inline scripts** (Tier 2) — extend html-eslint with a script-rules plugin or migrate inline scripts to `<script type="module" src="lib/inline-init-*.mjs">` so the 15k+ lines of inline JS get `no-unused-vars` / `eqeqeq` / `no-undef`. Closes F5 and the F3 enforcement gap.
+4. **Extract more helpers to lib/** (Tier 2) — phased plan:
+   - **F-2.A** `lib/dom-utils.mjs` ← `setStatus`, `showError`, `showToast` (currently duplicated verbatim across both pages).
+   - **F-2.B** new `lib/format.mjs` ← `fmtA`, `fmtAmt`, `fmtG`, `_formatPctDisplay`, `toTitle`, `_csvEscape` (delete in favour of `csvEscape` already in `lib/utils.mjs`).
+   - **F-2.C** new `lib/i18n.mjs` ← `applyLangIndex` + `applyLangForm` + the shared `LANG_INDEX` walk pattern.
+   Each phase shaves 100-300 lines off index.html / formulation.html and replaces drift-prone clones with one tested module. Closes F1.
+5. **Inline-JS line-count budget** (Tier 3) — pre-commit gate `wc -l index.html formulation.html` against a baseline in `audit/inline-js-budget.json`, fails on increase without a `--bump` opt-in. Forces every PR that grows inline JS to declare it. Closes F1's drift vector.
+6. **CONTRIBUTING-drift gate** (Tier 3) — `tools/check-contributing.mjs` asserts row-count, `lib/` filename list, and HTML line counts in CONTRIBUTING.md match reality. Closes F7.
+7. **Duplicate-function detector** (Tier 3) — pre-commit `grep -h "^function " *.html | sort | uniq -d` fails the commit if the same top-level function name appears in both pages. Catches future setStatus/showError-style clones. Closes F1's regression vector.
+8. **package.json `setup` / `prepare` clarity** (Tier 0) — rename `setup` → `setup:hooks` and document the dual-entry rationale in CONTRIBUTING.md. Closes F6.
