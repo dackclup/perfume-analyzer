@@ -128,6 +128,54 @@ describe('buildEnriched', () => {
     const mp = { density: 999 };
     expect(buildEnriched(entry, mp).density).toBe(0);
   });
+
+  it('accepts Round-3 mol_*/chem_*/data_provenance without disturbing the canonical 21-key shape', () => {
+    // Lock-in: buildEnriched must remain shape-stable when entries
+    // carry the new molecular namespace. The enriched projection
+    // ignores them today (they're consumed elsewhere — UI card +
+    // verify-molecular tool); this test catches an accidental
+    // additive leak into the canonical axis projection.
+    const entry = {
+      cas: '78-70-6',
+      name: 'Linalool',
+      mol_xlogp3: 2.97,
+      mol_molecular_weight: 154.25,
+      mol_formula: 'C10H18O',
+      chem_boiling_point_c: 198,
+      chem_vapor_pressure_mmhg_25c: 0.16,
+      data_provenance: {
+        computed_source: 'PubChem PUG-REST',
+        last_fetched: '2026-05-02',
+        manual_overrides: [],
+      },
+    };
+    const enriched = buildEnriched(entry);
+    expect(Object.keys(enriched).sort()).toEqual(
+      [
+        'blends_with',
+        'boiling_point',
+        'cas',
+        'density',
+        'facets',
+        'functions',
+        'ifra_guideline',
+        'molecular_weight',
+        'name',
+        'note',
+        'odor_description',
+        'odor_strength',
+        'odor_type',
+        'primaryFamilies',
+        'regulatory',
+        'secondaryFamilies',
+        'smiles',
+        'tenacity',
+        'tenacity_hours',
+        'usage_levels',
+        'xlogp',
+      ].sort()
+    );
+  });
 });
 
 describe('buildFamilyAxes', () => {

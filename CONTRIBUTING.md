@@ -203,6 +203,32 @@ else).
   wheel). Audits flag unsourced changes as `[NEEDS EXPERT REVIEW]`
   and refuse to auto-fix.
 
+## Future: nested molecular migration
+
+Round 3 introduced computed (`mol_*`) and experimental (`chem_*`)
+molecular fields at the **flat top level** of each material, plus a
+nested `data_provenance: { computed_source, experimental_source,
+last_fetched, manual_overrides[] }` object. This shape was chosen
+because the legacy flat fields (`smiles`, `xlogp`, `weight`,
+`pubchem_cid`, `inchi`, `inchi_key`, `isomeric_smiles`, `exact_mass`,
+`tpsa`, `hbond_donor`, `hbond_acceptor`, `rotatable_bonds`,
+`heavy_atoms`, `density`, `boiling_point`) are already referenced
+across 1,836 occurrences in `data/materials.json` and the search-card
+renderer at `index.html:7160-7350`.
+
+A future round will migrate every `mol_*`/`chem_*` plus the
+grandfathered legacy fields into a single nested
+`molecular: { … }` object. **Until that migration lands:**
+
+- Add new molecular fields with the `mol_` (computed) or `chem_`
+  (experimental) prefix at the top level — never under
+  `molecular: {}` and never without a prefix.
+- Every material that gains a `mol_*`/`chem_*` field MUST also gain
+  `data_provenance.last_fetched` (enforced by `tools/lint-data.mjs`).
+- Do not rename or remove the legacy flat fields — readers + UI
+  still depend on them. The migration round will retire them in one
+  coordinated change.
+
 ## Where things live (cheat sheet)
 
 | You want to …                | Look in                                                                             |

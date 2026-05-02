@@ -306,6 +306,21 @@ const aromOrphans = [];
 for (const cas of Object.keys(AROMACHOLOGY_SCORES || {}))
   if (!dbByCas.has(cas)) aromOrphans.push({ cas });
 
+// Provenance rule (Round 3 P1.1): any material that carries a
+// mol_*/chem_* field (Round-3 enrichment namespace) MUST also carry
+// data_provenance.last_fetched. Legacy flat fields (smiles, xlogp,
+// weight, pubchem_cid, etc.) are grandfathered — not affected.
+let molChemTotal = 0;
+const provenanceMissing = [];
+for (const e of db) {
+  const hasMolChem = Object.keys(e).some(k => k.startsWith('mol_') || k.startsWith('chem_'));
+  if (!hasMolChem) continue;
+  molChemTotal++;
+  if (!e.data_provenance || !e.data_provenance.last_fetched) {
+    provenanceMissing.push({ cas: e.cas, name: e.name });
+  }
+}
+
 // Summary table
 const summary = [
   [
@@ -372,6 +387,7 @@ const summary = [
   ],
   ['ESTER_HYDROLYSIS pair integrity', Object.keys(ESTER_HYDROLYSIS || {}).length, ehMissing.length],
   ['AROMACHOLOGY_SCORES → DB', Object.keys(AROMACHOLOGY_SCORES || {}).length, aromOrphans.length],
+  ['molecular fields require provenance', molChemTotal, provenanceMissing.length],
 ];
 
 // ── Pass C: Ratchet baseline ──────────────────────────────────────────

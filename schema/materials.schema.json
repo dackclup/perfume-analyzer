@@ -3,6 +3,7 @@
   "$id": "https://github.com/dackclup/perfume-analyzer/schema/materials.schema.json",
   "title": "perfumery materials database",
   "description": "Authoritative shape for data/materials.json — enforced in CI by tools/lint-data.mjs.",
+  "$comment": "Molecular fields use flat top-level with mol_/chem_ prefix (not nested molecular:{}) due to 1,836 existing flat occurrences + UI dependency at index.html:7160-7350. Future nested migration tracked in CONTRIBUTING.md section 'Future: nested molecular migration'.",
   "type": "object",
   "required": ["perfumery_db", "trade_names", "mixture_cas"],
   "additionalProperties": false,
@@ -119,7 +120,44 @@
         },
         "boiling_point": { "type": ["number", "string", "null"] },
         "density":       { "type": ["number", "string", "null"] },
-        "xlogp":         { "type": ["number", "string", "null"] }
+        "xlogp":         { "type": ["number", "string", "null"] },
+
+        "mol_xlogp3":               { "type": "number" },
+        "mol_complexity":           { "type": "number" },
+        "mol_h_bond_donor_count":   { "type": "integer", "minimum": 0 },
+        "mol_h_bond_acceptor_count":{ "type": "integer", "minimum": 0 },
+        "mol_rotatable_bond_count": { "type": "integer", "minimum": 0 },
+        "mol_heavy_atom_count":     { "type": "integer", "minimum": 0 },
+        "mol_iupac_name":           { "type": "string" },
+        "mol_canonical_smiles":     { "type": "string" },
+        "mol_isomeric_smiles":      { "type": "string" },
+        "mol_inchi":                { "type": "string" },
+        "mol_inchi_key":            { "type": "string" },
+        "mol_exact_mass":           { "type": "number" },
+        "mol_formula":              { "type": "string" },
+        "mol_molecular_weight":     { "type": "number" },
+
+        "chem_boiling_point_c":          { "type": "number" },
+        "chem_melting_point_c":          { "type": "number" },
+        "chem_flash_point_c":            { "type": "number" },
+        "chem_density_g_ml":             { "type": "number" },
+        "chem_vapor_pressure_mmhg_25c":  { "type": "number" },
+        "chem_vapor_density_air":        { "type": "number" },
+        "chem_refractive_index":         { "type": "number" },
+        "chem_solubility_water_mg_l":    { "type": "number" },
+        "chem_log_kow":                  { "type": "number" },
+        "chem_henry_law_constant":       { "type": "number" },
+
+        "data_provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "computed_source":      { "type": "string" },
+            "experimental_source":  { "type": "string" },
+            "last_fetched":         { "type": "string", "format": "date" },
+            "manual_overrides":     { "type": "array", "items": { "type": "string" } }
+          }
+        }
       }
     }
   }
