@@ -210,6 +210,44 @@ full punch list. Headlines:
 
 Unchanged from v304 (no domain-data versioning event in this round).
 
+## [2026-05-03 — Round 3.5 + 3.6 — CI infrastructure restoration]
+
+### Fixed
+
+- CI on main was failing silently since Round 2's `ci.yml` init (`e324ecf`)
+  — `actions/setup-node@v4` `cache:"npm"` required a lockfile but
+  `.gitignore` was blocking it. Removed the gitignore entry, committed the
+  existing valid lockfile (PR #471, commit `6b9728d`).
+- Round 2 + Round 3 deploy reports incorrectly claimed CI green by
+  conflating the Pages-deploy workflow with the CI workflow.
+
+### Updated (Dependabot, all CI-verified)
+
+- `actions/configure-pages 5 → 6` (#465).
+- `actions/upload-pages-artifact 3 → 5` (#467).
+- `actions/checkout 4 → 6` (#466) — clears one Node-20 deprecation warning.
+- `globals 15.15 → 17.6` (#470).
+- `eslint 9 → 10`, `@html-eslint/eslint-plugin 0.27 → 0.60`,
+  `@html-eslint/parser 0.27 → 0.60` (#468) — pre-merge local verify on the
+  full toolchain (8 commands) before merge.
+
+### Internal
+
+- Preserved `audit/coherence-2026-05-01.md` (PR #472) — historical document
+  that drove the Round 1-3 systemic rebuild.
+- 7 stale `claude/*` remote branches flagged for manual UI delete (sandbox
+  403 on `git push --delete`).
+
+### Deferred to Round 3.7
+
+- `vitest 2.1.9 → 4.1.5` (#469) — needs `@vitest/coverage-v8` co-bump.
+- `actions/setup-node@v4 → @v5` — no Dependabot PR open.
+
+### Deferred to Round 4
+
+- 6 novel findings from the 2026-05-01 coherence audit (see
+  `audit/r3.5-investigation.md`).
+
 ## [2026-04-29-v304] — Round 2 audit sweep
 
 Full-system audit (`audit/r2-report.md`) — 70 findings across 6 phases
