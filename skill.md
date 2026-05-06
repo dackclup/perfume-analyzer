@@ -2,7 +2,7 @@
 
 > Operations manual for any LLM (or human) working on this repo.
 > Read this BEFORE touching code. Update this AFTER solving anything novel.
-> Last verified against repo: 2026-05-06 (HEAD = post-PR-#477 CONTRIBUTING sync, version `2026-04-29-v306`).
+> Last verified against repo: 2026-05-06 (HEAD = post-PR-#479 setup-node v5, version `2026-04-29-v306`).
 
 ## 1. What this project is
 
@@ -308,7 +308,7 @@ The CI workflow:
 
 ```
 1.  Checkout                   (actions/checkout@v6, post-#466)
-2.  Setup Node                 (actions/setup-node@v4 — STILL on Node 20, Round 3.7 backlog)
+2.  Setup Node                 (actions/setup-node@v5 — Node 24 runtime, post-PR-#479; build job still installs Node 20 via with: node-version)
 3.  Install                    (npm ci --ignore-scripts; needs package-lock.json, see r3.5 lesson)
 4.  Lint (eslint)
 5.  Format check (prettier)
@@ -407,6 +407,12 @@ with explicit rationale. Existing audit artefacts:
   same setting as Dependabot branches). Stale `claude/*` branches still in
   `list_branches` were created OUTSIDE the PR flow (experimental branches that never
   had a PR opened); auto-delete only fires on PR-merge, not on standalone push.
+- **2026-05-06 stale-branch cleanup landed manually.** The 7 stale `claude/*` branches
+  flagged in Round-3.6 Phase-3 (Option-C handoff: sandbox HTTP 403 on
+  `git push --delete`) were deleted via the GitHub UI by the user concurrent with
+  PR #479's merge. If a future investigation asks "where did the stale `claude/*`
+  branches go?" — they were UI-deleted on this date, not auto-removed by Dependabot
+  or any tool. No data lost: every branch tip was a verified ancestor of `main`.
 
 ## 12. Manager-mode prompts (when asking an LLM to work on this repo)
 
@@ -451,18 +457,22 @@ with explicit rationale. Existing audit artefacts:
 
 ## 13. Latest known state (update on every round close)
 
-- Main HEAD: `cc754b7` (2026-05-06, post-PR-#477 CONTRIBUTING sync)
+- Main HEAD: `34e8a14` (2026-05-06, post-PR-#479 setup-node v5)
 - Live data version: `2026-04-29-v306`
 - `version.json`: `{ data: "2026-04-29-v306", shell: "v3" }`
 - Live shell cache key: `perfume-shell-v3-67edc026` (manual major + content hash)
 - Tests: 282 passing across 8 spec files
-- Round 3.5 + 3.6 closed: 11 PRs merged (#471 r3.5 lockfile; #465, #467, #466, #470,
+- Round 3.5 + 3.6 closed: 12 PRs merged (#471 r3.5 lockfile; #465, #467, #466, #470,
   #468 Dependabot; #472 audit preserve; #473 Phase 4 docs; #475 skill.md v1;
-  #476 skill.md v2; #477 CONTRIBUTING sync); 0 reverts; 0 source code modifications
-  by the LLM (every code change came through Dependabot)
+  #476 skill.md v2; #477 CONTRIBUTING sync; #478 skill.md state refresh)
+- Round 3.7.1 closed: 1 PR merged (#479 setup-node v4 → v5; cleared the Node-20
+  deprecation warning previously surfaced on every CI run); 7 stale `claude/*`
+  branches manually UI-deleted by user concurrent with #479
+- Across both rounds: 0 reverts; 0 source code modifications by the LLM (every
+  code change came through Dependabot or workflow-config bumps)
 - Open backlog: `audit/r3.5-investigation.md`
-  - Round 3.7: vitest 4.x + @vitest/coverage-v8 4.x (PRs #469 + co-bump auto-opened
-    during Phase 4), `actions/setup-node@v4 → @v5` (no Dependabot PR yet),
-    `audit_facet.py` `perfumery_data.js` reference cleanup (see §11 quirk)
+  - Round 3.7.2: vitest 4.x + @vitest/coverage-v8 4.x co-merge (PRs #469 + #474 —
+    must land together; coverage-v8 is pinned to vitest's API surface)
+  - Round 3.8 cleanup: `audit_facet.py` `perfumery_data.js` reference is dead code
+    (see §11 quirk; commit `2566711` deleted the file)
   - Round 4: 6 novel findings from 2026-05-01 coherence audit (C3.5, C5.2-4, C7.1, C7.3)
-  - User-action: 7 stale `claude/*` branches need UI delete (sandbox 403)
