@@ -2,7 +2,7 @@
 
 > Operations manual for any LLM (or human) working on this repo.
 > Read this BEFORE touching code. Update this AFTER solving anything novel.
-> Last verified against repo: 2026-05-06 (HEAD = post-r3.6 + skill.md v1, version `2026-04-29-v306`).
+> Last verified against repo: 2026-05-06 (HEAD = post-PR-#477 CONTRIBUTING sync, version `2026-04-29-v306`).
 
 ## 1. What this project is
 
@@ -389,8 +389,12 @@ with explicit rationale. Existing audit artefacts:
   one wastes time on the wrong UX.
 - **Material classifier path** is `tools/lib/material-classifier.mjs` (NOT `lib/`).
   skill.md v1 had this wrong; fixed in v2.
-- **`audit_facet.py` legacy path** — script still references `perfumery_data.js` (legacy
-  empty stub). Verify it resolves `data/materials.json` for current runs; flagged for R4.
+- **`audit_facet.py` references a deleted file** — the script still has hard-coded
+  paths pointing to `perfumery_data.js`, but that file was deleted in commit `2566711`
+  (PR #454, "Materials DB → JSON + async boot", 2026-05-01). The reference is **dead
+  code**, not a stub redirect — the script needs to be updated to read
+  `data/materials.json` directly. Flagged for Round 3.7 / Round 4 cleanup; surfaced
+  during PR #477 CONTRIBUTING sync investigation.
 - **Sandbox `/tmp/claude-0/` is shared across Claude Code sessions.** A task output file
   appearing under `/tmp/claude-0/-home-user-perfume-analyzer/<other-session-id>/tasks/`
   may be from a parallel session, not yours. Always confirm via `ps -ef | grep node`
@@ -447,17 +451,18 @@ with explicit rationale. Existing audit artefacts:
 
 ## 13. Latest known state (update on every round close)
 
-- Main HEAD: `51d2385` (2026-05-06, post-Round-3.6 + skill.md v1 via PR #475)
+- Main HEAD: `cc754b7` (2026-05-06, post-PR-#477 CONTRIBUTING sync)
 - Live data version: `2026-04-29-v306`
 - `version.json`: `{ data: "2026-04-29-v306", shell: "v3" }`
 - Live shell cache key: `perfume-shell-v3-67edc026` (manual major + content hash)
 - Tests: 282 passing across 8 spec files
-- Round 3.5 + 3.6 closed: 9 PRs merged (#471, #465, #467, #466, #470, #468,
-  #472, #473, #475); 0 reverts; 0 source code modifications by the LLM
-  (every code change came through Dependabot)
+- Round 3.5 + 3.6 closed: 11 PRs merged (#471 r3.5 lockfile; #465, #467, #466, #470,
+  #468 Dependabot; #472 audit preserve; #473 Phase 4 docs; #475 skill.md v1;
+  #476 skill.md v2; #477 CONTRIBUTING sync); 0 reverts; 0 source code modifications
+  by the LLM (every code change came through Dependabot)
 - Open backlog: `audit/r3.5-investigation.md`
   - Round 3.7: vitest 4.x + @vitest/coverage-v8 4.x (PRs #469 + co-bump auto-opened
-    during Phase 4), `actions/setup-node@v4 → @v5` (no Dependabot PR yet)
-  - Round 4: 6 novel findings from 2026-05-01 coherence audit (C3.5, C5.2-4, C7.1, C7.3),
-    plus `audit_facet.py` legacy path verification
+    during Phase 4), `actions/setup-node@v4 → @v5` (no Dependabot PR yet),
+    `audit_facet.py` `perfumery_data.js` reference cleanup (see §11 quirk)
+  - Round 4: 6 novel findings from 2026-05-01 coherence audit (C3.5, C5.2-4, C7.1, C7.3)
   - User-action: 7 stale `claude/*` branches need UI delete (sandbox 403)
