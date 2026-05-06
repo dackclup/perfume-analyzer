@@ -32,30 +32,41 @@
                     ┌─────────────────┐
                     │   TECH LEAD     │  (one chat, persistent)
                     │  skill.md ch.   │
+                    └────────┬────────┘
+                             │ Phase 1/2/3 prompt
+                             ▼
+                     ┌───────────────┐
+                     │  JUNIOR DEV   │
+                     │ (Claude Code) │
+                     └───────┬───────┘
+                             │ PR opened, CI green → notify TL
+                             ▼
+                    ┌─────────────────┐
+                    │   TECH LEAD     │  (routes to reviewers)
                     └────┬───────┬────┘
                          │       │
-              prompts +  │       │  + diff to review
-              scope      │       │
+              review     │       │  review
+              request    │       │  request (data PRs only)
                          ▼       ▼
-            ┌───────────────┐ ┌──────────────────┐ ┌──────────────────┐
-            │  JUNIOR DEV   │ │  SENIOR DEV      │ │  DOMAIN EXPERT   │
-            │ (Claude Code) │ │ (Code Reviewer)  │ │   (Perfumer)     │
-            └───────┬───────┘ └────────┬─────────┘ └────────┬─────────┘
-                    │                  │                    │
-                    │ PR opened        │ code verdict       │ data verdict
-                    ▼                  ▼                    ▼
-            ┌──────────────────────────────────────────────────────┐
-            │  TECH LEAD merges → main (after BOTH verdicts)       │
-            └──────────────┬───────────────────────────────────────┘
-                           │ deploy → Pages
-                           ▼
-                  ┌──────────────────┐
-                  │   QA / TESTER    │
-                  │ (live app user)  │
-                  └────────┬─────────┘
-                           │ bug reports / UX feedback
-                           ▼
-                  TECH LEAD → triage → backlog
+                ┌──────────────────┐ ┌──────────────────┐
+                │  SENIOR DEV      │ │  DOMAIN EXPERT   │
+                │ (Code Reviewer)  │ │   (Perfumer)     │
+                └────────┬─────────┘ └────────┬─────────┘
+                         │ code verdict       │ data verdict
+                         ▼                    ▼
+                    ┌──────────────────────────────────────┐
+                    │  TECH LEAD                            │
+                    │  consolidates → User → merge → main   │
+                    └──────────────┬───────────────────────┘
+                                   │ deploy → Pages
+                                   ▼
+                          ┌──────────────────┐
+                          │   QA / TESTER    │
+                          │ (live app user)  │
+                          └────────┬─────────┘
+                                   │ bug reports / UX feedback
+                                   ▼
+                          TECH LEAD → triage → backlog
 ```
 
 **Key rule:** PRs that touch data or regulatory rules → must pass BOTH
@@ -94,19 +105,20 @@ Senior Dev AND Domain Expert (parallel, not sequential) before merge.
 
 ## 3. Hand-off matrix
 
-| From                      | To               | Trigger                   | Payload                                      |
-| ------------------------- | ---------------- | ------------------------- | -------------------------------------------- |
-| User → Tech Lead          | new initiative   | "เริ่ม Round X"           | scope + priority                             |
-| Tech Lead → Junior Dev    | task ready       | scope decided             | Phase 1/2/3 prompt (template 4.1)            |
-| Junior Dev → Senior Dev   | PR opened        | CI green on PR            | review request (template 4.2)                |
-| Tech Lead → Domain Expert | data PR opened   | data-touching diff        | review request (template 4.5)                |
-| Senior Dev → Tech Lead    | code review done | verdict reached           | verdict (template 4.3)                       |
-| Domain Expert → Tech Lead | data review done | verdict reached           | verdict (template 4.6)                       |
-| Tech Lead → User          | merge ready      | all reviews pass          | approval request (template 4.4)              |
-| User → Tech Lead          | go-ahead         | user replies              | "merge approved"                             |
-| Tech Lead → QA            | new feature live | post-merge + Pages deploy | test request (template 4.7)                  |
-| QA → Tech Lead            | testing done     | session complete          | bug report (template 4.8)                    |
-| Domain Expert → Tech Lead | proactive flag   | found data issue          | bug report (template 4.6 marked "Proactive") |
+| From                      | To                 | Trigger                   | Payload                                           |
+| ------------------------- | ------------------ | ------------------------- | ------------------------------------------------- |
+| User → Tech Lead          | new initiative     | "เริ่ม Round X"           | scope + priority                                  |
+| Tech Lead → Junior Dev    | task ready         | scope decided             | Phase 1/2/3 prompt (template 4.1)                 |
+| Junior Dev → Tech Lead    | PR ready           | CI green on PR            | status notify (no template; PR #N + diff summary) |
+| Tech Lead → Senior Dev    | code review needed | PR opened, CI green       | review request (template 4.2)                     |
+| Tech Lead → Domain Expert | data PR opened     | data-touching diff        | review request (template 4.5)                     |
+| Senior Dev → Tech Lead    | code review done   | verdict reached           | verdict (template 4.3)                            |
+| Domain Expert → Tech Lead | data review done   | verdict reached           | verdict (template 4.6)                            |
+| Tech Lead → User          | merge ready        | all reviews pass          | approval request (template 4.4)                   |
+| User → Tech Lead          | go-ahead           | user replies              | "merge approved"                                  |
+| Tech Lead → QA            | new feature live   | post-merge + Pages deploy | test request (template 4.7)                       |
+| QA → Tech Lead            | testing done       | session complete          | bug report (template 4.8)                         |
+| Domain Expert → Tech Lead | proactive flag     | found data issue          | bug report (template 4.6 marked "Proactive")      |
 
 ---
 
