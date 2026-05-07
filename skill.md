@@ -2,7 +2,7 @@
 
 > Operations manual for any LLM (or human) working on this repo.
 > Read this BEFORE touching code. Update this AFTER solving anything novel.
-> Last verified against repo: 2026-05-07 (HEAD = post-PR-#483 Round 3.7.2-docs follow-up consolidation, version `2026-04-29-v306`).
+> Last verified against repo: 2026-05-07 (HEAD = post-PR-#484 — state-refresh closing 8 items from PR #483 follow-up, version `2026-04-29-v306`).
 
 ## 1. What this project is
 
