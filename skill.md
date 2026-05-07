@@ -415,10 +415,11 @@ with explicit rationale. Existing audit artefacts:
   or any tool. No data lost: every branch tip was a verified ancestor of `main`.
 - **Geraniol (CAS 106-24-1) and Nerol (CAS 106-25-2) are intentionally
   separate IFRA + EU allergen entries** — they are geometric isomers (E/Z)
-  regulated separately under EU 2023/1545. Do NOT unify them via
-  `IFRA_51_CAS_ALIAS` or treat as one entry. The asymmetry is correct by
-  design, confirmed by Domain Expert during onboarding (Layer 4 positive
-  reinforcement finding #3, 2026-05-07).
+  regulated as separate entries by IFRA (separate RIFM dossiers, separate
+  per-category caps) and, since EU 2023/1545, by EU Annex III. Do NOT
+  unify them via `IFRA_51_CAS_ALIAS` or treat as one entry. The asymmetry
+  is correct by design, confirmed by Domain Expert during onboarding
+  (Layer 4 positive reinforcement finding #3, 2026-05-07).
 - **`perfumery_data*` files have a 2-stage deletion history.** (a) Commit
   `73a20c6` (audit-fixes-2026-05-01 branch, Round 1) deleted
   `perfumery_data.backup.js` per `audit/coherence-2026-05-01.md` C4.1
@@ -471,7 +472,7 @@ with explicit rationale. Existing audit artefacts:
 
 ## 13. Latest known state (update on every round close)
 
-- Main HEAD: `<MERGE_SHA>` (2026-05-07, post-PR-#483 Round 3.7.2-docs follow-up consolidation)
+- Main HEAD: `c8469b1` (2026-05-07, post-PR-#483 — Round 3.7.2-docs follow-up consolidation)
 - Live data version: `2026-04-29-v306`
 - `version.json`: `{ data: "2026-04-29-v306", shell: "v3" }`
 - Live shell cache key: `perfume-shell-v3-67edc026` (manual major + content hash)

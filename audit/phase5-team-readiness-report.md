@@ -294,6 +294,23 @@ statement reads:
     on any disputed certification item.
     ═══════════════════════════════════════════════════════════
 
+## Closing state snapshot — 2026-05-07 (post-PR-#483)
+
+State at certification + session close:
+
+| Metric              | Value                                                   |
+| ------------------- | ------------------------------------------------------- |
+| Main HEAD           | c8469b1 (post-PR-#483 squash)                           |
+| Live data version   | 2026-04-29-v306 (unchanged)                             |
+| Tests passing       | 282 across 8 spec files                                 |
+| CI runtime          | setup-node@v5 / Node 24 runtime / Node 20 build         |
+| Open Dependabot PRs | #469 (vitest), #474 (coverage-v8) — Round 3.7.2 backlog |
+| Stale branches      | 0                                                       |
+| skill.md §13 lag    | 1 self-bootstrap miss (PR #483 SHA pending; queued)     |
+| team-protocol.md    | v1.3 content; header bumped to v1.3 in PR #483          |
+
+This snapshot is a forensic anchor — values were measured at PR #483 squash moment and will diverge from skill.md §13's running state in subsequent sessions. Diff detection between this snapshot and a future audit's snapshot provides a project-state delta useful for retrospectives.
+
 ## Future Phase 6 candidates (recorded, not scheduled)
 
 Tests not run in Phase 5 worth queuing for future audit cycles:
