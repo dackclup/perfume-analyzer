@@ -975,9 +975,14 @@ Past examples that should have been caught proactively:
 
 1. **IFRA amendment confusion** — repo targets 51st (2024). Don't assume any
    cap is "wrong" without checking which amendment it cites.
-2. **Edwards transitional subfamilies** — `floral_amber`, `woody_amber`,
-   `soft_floral`, `floral_fresh` are first-class tokens (added in 2021 wheel
-   revision); don't classify them as composite.
+2. **Edwards transitional subfamilies** — the 3 transitional slices per the
+   comment above `taxonomy.js` `MAIN_FAMILY_TO_SUBS` are `aromatic_fougere`,
+   `fruity`, and `woody_amber`. They live inside their anchor band but
+   render with a blended colour gradient at cardinal boundaries. They are
+   first-class tokens, not composite — don't classify them as a blend of
+   their neighbours. Note that `soft_floral` and `floral_amber` are NOT
+   transitionals; they are regular sub-families inside the `floral` band.
+   `floral_fresh` does not exist in the canonical taxonomy.
 3. **Mixture vs single molecule** — naturals have NATURAL_ALLERGEN_COMPOSITION
    breakdown; molecules don't. ~290 of 624 materials have molecular fields;
    the rest are mixtures intentionally excluded.
