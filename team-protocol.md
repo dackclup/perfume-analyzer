@@ -663,6 +663,47 @@ These are real, documented failures from my own work — read carefully:
     caught the gap during PR review. Lesson: Tech Lead Phase 1 spec
     must enumerate scope-audit obligation, not just the named target.
 
+12. **Post-verdict fixup commits require Senior Dev notification heads-up** —
+    when applying Tech Lead self-reviewed scope-limited fixup commits to a PR,
+    the timing of the fixup matters. Pre-Senior-Dev-verdict fixups (PR #481
+    v1.2 commit history during squash) are Junior Dev iteration and need no
+    notification. Post-Senior-Dev-verdict fixups (PR #483 §7.2 zombie list
+    fix, applied after Senior Dev's approve verdict) amend reviewed state and
+    need a heads-up — even if scope-limited self-review is justified per the
+    "trivial PR self-handling" rule, the reviewer should know their verdict
+    was applied to a different final state. Senior Dev caught this discrepancy
+    during PR #484 review by noticing §7.2 fix already in baseline and
+    suspecting unrouted amendment. Lesson: post-verdict fixups need "FYI:
+    applied X for finding Y, scope-limited per same convention as PR Z"
+    notification before merge.
+
+13. **Review-request hand-offs must include HEAD raw URLs, not just baseline
+    URLs** — Common Mistake #6 about raw URLs landed in PR #483, but PR #484's
+    hand-off to Senior Dev still violated it (provided baseline URLs at the
+    PR base SHA but missed HEAD URLs at the PR branch SHA). Senior Dev
+    recovered via the PR /files page URL but the recovery was suboptimal,
+    requiring 3-4 attempts to find a usable URL pattern. This is the second
+    occurrence of CM #6 violation after the rule landed — internalization gap
+    where Tech Lead knows the rule but applies inconsistently across template
+    instances. Lesson: review-request template (§4.2) must include explicit
+    fields for both BASELINE_RAW_URL (at PR.base SHA) AND HEAD_RAW_URL (at
+    PR.head SHA) for every changed file. Treat missing HEAD URLs as template
+    incomplete, not minor omission.
+
+14. **Template 4.4 (merge approval to User) must not duplicate template 4.2
+    (review request to Senior Dev) wording** — PR #484 session: Tech Lead's
+    merge approval request (template 4.4 to User) included Senior Dev verdict
+    recap that overlapped structurally with template 4.2's review request
+    format. User forwarded the text to Senior Dev chat believing it was a
+    re-route, when it was actually meant as User-only context for the merge
+    decision. Senior Dev correctly STOPped per role discipline ("verdict
+    already delivered, refer to existing"), but the routing waste cost a
+    cycle. Lesson: template 4.4 must have distinct recipient framing —
+    explicit "For User decision only — do not forward to Senior Dev" header,
+    and structurally different format (decision-question-first, not
+    verdict-recap-first). Template 4.2 stays as-is with Senior Dev as
+    recipient.
+
 ## STOP points
 
 You STOP after:

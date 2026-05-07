@@ -2,7 +2,7 @@
 
 > Operations manual for any LLM (or human) working on this repo.
 > Read this BEFORE touching code. Update this AFTER solving anything novel.
-> Last verified against repo: 2026-05-07 (HEAD = post-PR-#483 Round 3.7.2-docs follow-up consolidation, version `2026-04-29-v306`).
+> Last verified against repo: 2026-05-07 (HEAD = post-PR-#484 — state-refresh closing 8 items from PR #483 follow-up, version `2026-04-29-v306`).
 
 ## 1. What this project is
 
@@ -472,7 +472,7 @@ with explicit rationale. Existing audit artefacts:
 
 ## 13. Latest known state (update on every round close)
 
-- Main HEAD: `c8469b1` (2026-05-07, post-PR-#483 — Round 3.7.2-docs follow-up consolidation)
+- Main HEAD: `141827b` (2026-05-07, post-PR-#484 — state-refresh closing 8 items from PR #483 follow-up)
 - Live data version: `2026-04-29-v306`
 - `version.json`: `{ data: "2026-04-29-v306", shell: "v3" }`
 - Live shell cache key: `perfume-shell-v3-67edc026` (manual major + content hash)
@@ -495,6 +495,15 @@ with explicit rationale. Existing audit artefacts:
     deletion history), + Phase 5 team-readiness audit forensic record at
     `audit/phase5-team-readiness-report.md`); next state-refresh PR will
     close this PR's bootstrap loop
+- Round 3.7.2-docs follow-up² closed: 1 PR merged (#484 — state-refresh
+  closing 8 items from PR #483 follow-up: §13 `<MERGE_SHA>` fill for
+  #483, CHANGELOG `13`→`15` count + PR #481 commit-iteration attribution
+  per git ground truth, §7.0 #9 anchor-rewrite (meta-irony fix), §7.0
+  NEW Common Mistake #11 (scope-audit obligation), §11 Geraniol/Nerol
+  IFRA + EU Annex III dual regulatory precision, §7.2 step 4
+  `MAIN_FAMILY_LABELS` display-string pointer, +
+  `audit/phase5-team-readiness-report.md` "Closing state snapshot" H2);
+  next state-refresh PR will close this PR's bootstrap loop
 - Across both rounds: 0 reverts; 0 source code modifications by the LLM (every
   code change came through Dependabot or workflow-config bumps)
 - Open backlog: `audit/r3.5-investigation.md`
