@@ -2,7 +2,7 @@
 
 > Operations manual for any LLM (or human) working on this repo.
 > Read this BEFORE touching code. Update this AFTER solving anything novel.
-> Last verified against repo: 2026-05-06 (HEAD = post-PR-#479 setup-node v5, version `2026-04-29-v306`).
+> Last verified against repo: 2026-05-06 (HEAD = post-PR-#481 team-protocol.md introduced, version `2026-04-29-v306`).
 
 ## 1. What this project is
 
@@ -457,7 +457,7 @@ with explicit rationale. Existing audit artefacts:
 
 ## 13. Latest known state (update on every round close)
 
-- Main HEAD: `34e8a14` (2026-05-06, post-PR-#479 setup-node v5)
+- Main HEAD: `63cbcc1` (2026-05-06, post-PR-#481 team-protocol.md introduced)
 - Live data version: `2026-04-29-v306`
 - `version.json`: `{ data: "2026-04-29-v306", shell: "v3" }`
 - Live shell cache key: `perfume-shell-v3-67edc026` (manual major + content hash)
@@ -468,6 +468,10 @@ with explicit rationale. Existing audit artefacts:
 - Round 3.7.1 closed: 1 PR merged (#479 setup-node v4 → v5; cleared the Node-20
   deprecation warning previously surfaced on every CI run); 7 stale `claude/*`
   branches manually UI-deleted by user concurrent with #479
+- Round 3.7.2-docs closed: 2 PRs merged (#480 skill.md §13 refresh after #479;
+  #481 team-protocol.md introduced — multi-agent team workflow foundation;
+  v1.0→v1.1→v1.2 commit history squash-collapsed on main); follow-up state
+  refresh PR pending (this PR — closes the Round 3.7.2-docs bootstrap loop)
 - Across both rounds: 0 reverts; 0 source code modifications by the LLM (every
   code change came through Dependabot or workflow-config bumps)
 - Open backlog: `audit/r3.5-investigation.md`
