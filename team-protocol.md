@@ -2,7 +2,7 @@
 
 > Living document. Defines roles, hand-offs, and prompts for the multi-agent
 > team working on this repo. Read this BEFORE acting in any team role.
-> Last updated: 2026-05-06 (v1.1 — added §7.0 Tech Lead system prompt).
+> Last updated: 2026-05-07 (v1.3 — Edwards taxonomy alignment with code, Round-3.7.1 pitfall refresh, Tech Lead onboarding hardening, Phase 5 stress-test lessons + Senior Dev anti-pattern).
 
 ## Table of contents
 
@@ -426,7 +426,7 @@ No agent "carries on to be helpful" past their STOP point.
 
 ## 6. Common pitfalls
 
-From Round 3.5+3.6 lessons (canonical list lives in `skill.md` §11):
+From Round 3.5 + 3.6 + 3.7.1 + 3.7.2-docs lessons (canonical list lives in `skill.md` §11):
 
 1. **CI confusion** — `ci.yml` (verify, 11 steps) ≠ `static.yml` (Pages deploy).
    "CI green" is ambiguous; always cite workflow name.
@@ -441,6 +441,17 @@ From Round 3.5+3.6 lessons (canonical list lives in `skill.md` §11):
 7. **IFRA amendment lag** — caps are versioned by amendment (currently 51st);
    check effective date before flagging.
 8. **PWA stale shell** — always hard-reload before QA testing.
+9. **`audit_facet.py` dead-code reference** — script hard-codes `perfumery_data.js`
+   path, but that file was deleted in commit `2566711` (PR #454). The reference is
+   dead code, not a stub redirect. Round 3.8 cleanup item.
+10. **`setup-node` runtime ≠ build Node version** — `actions/setup-node@v5` runs
+    its own `index.js` on Node 24 (clearing the deprecation warning); the Node
+    installed for the build job stays at whatever `with: node-version` says
+    (currently `"20"`). Two separate Node versions; do not conflate.
+11. **Self-bootstrap miss is now a 3-occurrence pattern** — PRs #476, #478, #482
+    all merged without listing themselves in `skill.md` §13. The next state-refresh
+    PR closes the loop. Tech Lead must verify §13 covers the prior state-refresh
+    PR before approving Phase 3.
 
 ---
 
@@ -598,6 +609,49 @@ These are real, documented failures from my own work — read carefully:
    and Round 3 both made this mistake. Always cite workflow file by name,
    never just "CI green".
 
+6. **Forgetting to include raw GitHub URLs in routing messages** — when
+   dispatching review requests to Senior Dev or Domain Expert, include raw
+   GitHub URLs (`https://raw.githubusercontent.com/...`) for every changed
+   file. The `web_fetch` tool only accepts URLs explicitly provided in the
+   conversation; reviewers cannot fetch arbitrary paths. Failure to include
+   raw URLs blocks reviewers from reading file bodies, forcing low-confidence
+   verdicts (root cause of PR #481 first-round Senior Dev review).
+
+7. **Phase 1 prompts missing Domain Expert signal, round number, or scope
+   pre-resolution** — when dispatching Phase 1 prompts that touch
+   §2-mandatory files (`data/materials.json`, `formulation_data.js`,
+   `taxonomy.js`, `tools/lib/material-classifier.mjs`, `mol_*`/`chem_*`,
+   `audit_facet.py` config), explicitly signal parallel Domain Expert
+   engagement. Also: every Phase 1 prompt must include a round number and
+   pre-resolved scope (algorithm vs refactor; API breaking?; trigger input;
+   taxonomy depth). Junior Dev will catch the gap if missed (verified by
+   Phase 5 T1 — 5 findings vs 2 expected), but Tech Lead should not rely on
+   Junior Dev as the safety net.
+
+8. **Raising alarms from web-fetched data without filesystem cross-check** —
+   before raising critical findings to User from any web fetch result, verify
+   via Junior Dev filesystem ground truth first. GitHub web view is
+   JS-rendered + cached; static HTML may show stale snapshots (real example:
+   a stale snapshot showed `perfumery_data.backup.js` still present at root
+   and `skill.md` / `team-protocol.md` missing — Junior Dev's `git ls-files`
+   confirmed actual state was clean).
+
+9. **Citing repo files by line number instead of anchor** — line numbers
+   drift across edits and become wrong without warning. Senior Dev caught
+   `taxonomy.js` line drift in Layer 2 verification (Section 2.B audit said
+   lines 25-30, spec said 34-39, actual was 35-40 with the comment block at
+   29-34). Structural content matched but line citations were stale across
+   two reads. Prefer anchor-based references (function name, identifier,
+   section header) when citing repo files in prompts and audit reports.
+
+10. **Under-binding expected outcomes in stress-tests** — when designing
+    stress-tests or audit prompts, under-bound expected outcomes. Phase 5 T1
+    expected 2 findings (path drift + wrong rule source); Junior Dev returned 5. The 3 unanticipated catches (Domain Expert lane violation, missing
+    round number, scope underspecification) surfaced Tech Lead weaknesses I
+    didn't know I had. Treat agent over-performance as signal, not noise —
+    the extra findings reveal blind spots in the dispatcher, not noise from
+    the executor.
+
 ## STOP points
 
 You STOP after:
@@ -746,6 +800,17 @@ Use template 4.3 from team-protocol.md.
 6. **Self-referential bootstrap miss** — skill.md self-update may skip its
    own PR in §13.
 
+7. **Anti-pattern: confident specific claim + same-paragraph "out-of-lane"
+   tag.** Making a specific factual claim that touches another lane's
+   authority (e.g. domain-fact claim about a material) and tagging it
+   "deferring to Domain Expert" in the same paragraph puts Tech Lead in the
+   position of arbitrating an unsourced assertion. Replacement rule: when
+   raising a finding partly on domain facts, either (a) cite a fetched
+   source for the specific claim, or (b) raise the structural ambiguity
+   without specifics. Don't make a confident specific claim and tag it
+   out-of-lane in the same breath. (Pattern documented from Phase 5 T7
+   self-correction.)
+
 ## STOP points
 
 You STOP after delivering the verdict. Do NOT:
@@ -842,13 +907,23 @@ A review request per template 4.5.
 3. For each new/modified IFRA cap:
    - Cite exact IFRA section (e.g. "IFRA 51 §C24 for Cat 4")
    - Verify rinse-off vs leave-on category
-4. For taxonomy edits:
-   - Edwards 14 subfamilies: Citrus, Fruity, Green, Aromatic, Floral, Soft
-     Floral, Floral Amber, Amber, Soft Amber, Woody Amber, Woody, Mossy
-     Woods, Dry Woods, Aquatic
-   - Plus transitional: Woody Amber, Soft Floral, Floral Fresh
-   - Reject if a material is misclassified (e.g. Iso E Super as "Woody" — it's
-     "Woody Amber")
+4. For taxonomy edits — `taxonomy.js` is the canonical Edwards 2021 wheel
+   reference per Domain Expert Layer 3 ruling; this section mirrors code
+   verbatim. Use the snake_case tokens, not the display labels.
+   - **4 main families** (`MAIN_FAMILIES` in `taxonomy.js`):
+     `fresh`, `floral`, `amber`, `woody`
+   - **14 sub-families** (`MAIN_FAMILY_TO_SUBS` in `taxonomy.js`):
+     - `fresh` → `aromatic_fougere`, `citrus`, `water`, `green`
+     - `floral` → `fruity`, `floral`, `soft_floral`, `floral_amber`
+     - `amber` → `soft_amber`, `amber`, `woody_amber`
+     - `woody` → `woods`, `mossy_woods`, `dry_woods`
+   - **3 transitional slices** (per the comment above `MAIN_FAMILY_TO_SUBS`):
+     `aromatic_fougere`, `fruity`, `woody_amber`. They live inside their
+     anchor band but render with a blended colour gradient at cardinal
+     boundaries.
+   - Reject if a material is misclassified (e.g. Iso E Super as `woody` —
+     it's `woody_amber`).
+
 5. Spot-check at least 3-5 specific entries by CAS — don't approve a 50-row PR
    by reading 5 rows.
 
@@ -1102,3 +1177,9 @@ This file is a living document. Update it when:
 
 Updates flow through Tech Lead → docs-only PR (no version bump per
 skill.md §9).
+
+When this file is updated and `skill.md` cross-links it (e.g. via §13
+lifecycle entries), the same self-bootstrap rule applies — list the
+updating PR in `skill.md` §13's lifecycle list. The PR cannot list itself
+pre-merge; the next state-refresh PR closes the loop. This is the
+canonical pattern (verified across PR #480 → #482, PR #482 → this PR).
