@@ -2,7 +2,7 @@
 
 > Operations manual for any LLM (or human) working on this repo.
 > Read this BEFORE touching code. Update this AFTER solving anything novel.
-> Last verified against repo: 2026-05-06 (HEAD = post-PR-#481 team-protocol.md introduced, version `2026-04-29-v306`).
+> Last verified against repo: 2026-05-07 (HEAD = post-PR-#483 Round 3.7.2-docs follow-up consolidation, version `2026-04-29-v306`).
 
 ## 1. What this project is
 
@@ -413,6 +413,20 @@ with explicit rationale. Existing audit artefacts:
   PR #479's merge. If a future investigation asks "where did the stale `claude/*`
   branches go?" — they were UI-deleted on this date, not auto-removed by Dependabot
   or any tool. No data lost: every branch tip was a verified ancestor of `main`.
+- **Geraniol (CAS 106-24-1) and Nerol (CAS 106-25-2) are intentionally
+  separate IFRA + EU allergen entries** — they are geometric isomers (E/Z)
+  regulated separately under EU 2023/1545. Do NOT unify them via
+  `IFRA_51_CAS_ALIAS` or treat as one entry. The asymmetry is correct by
+  design, confirmed by Domain Expert during onboarding (Layer 4 positive
+  reinforcement finding #3, 2026-05-07).
+- **`perfumery_data*` files have a 2-stage deletion history.** (a) Commit
+  `73a20c6` (audit-fixes-2026-05-01 branch, Round 1) deleted
+  `perfumery_data.backup.js` per `audit/coherence-2026-05-01.md` C4.1
+  recommendation; (b) commit `2566711` (PR #454) deleted the canonical
+  `perfumery_data.js` when migrating to `data/materials.json`. The
+  `audit_facet.py` legacy reference quirk (also in this section) refers to
+  (b). If a stale GitHub web view shows `perfumery_data.backup.js` at root,
+  that's a CDN cache artifact — verify via `git ls-files`.
 
 ## 12. Manager-mode prompts (when asking an LLM to work on this repo)
 
@@ -457,7 +471,7 @@ with explicit rationale. Existing audit artefacts:
 
 ## 13. Latest known state (update on every round close)
 
-- Main HEAD: `63cbcc1` (2026-05-06, post-PR-#481 team-protocol.md introduced)
+- Main HEAD: `<MERGE_SHA>` (2026-05-07, post-PR-#483 Round 3.7.2-docs follow-up consolidation)
 - Live data version: `2026-04-29-v306`
 - `version.json`: `{ data: "2026-04-29-v306", shell: "v3" }`
 - Live shell cache key: `perfume-shell-v3-67edc026` (manual major + content hash)
@@ -468,10 +482,18 @@ with explicit rationale. Existing audit artefacts:
 - Round 3.7.1 closed: 1 PR merged (#479 setup-node v4 → v5; cleared the Node-20
   deprecation warning previously surfaced on every CI run); 7 stale `claude/*`
   branches manually UI-deleted by user concurrent with #479
-- Round 3.7.2-docs closed: 2 PRs merged (#480 skill.md §13 refresh after #479;
-  #481 team-protocol.md introduced — multi-agent team workflow foundation;
-  v1.0→v1.1→v1.2 commit history squash-collapsed on main); follow-up state
-  refresh PR pending (this PR — closes the Round 3.7.2-docs bootstrap loop)
+- Round 3.7.2-docs closed: 3 PRs merged (#480 skill.md §13 refresh after #479;
+  #481 team-protocol.md introduced — multi-agent team workflow foundation,
+  v1.0→v1.1→v1.2 commit history squash-collapsed on main; #482 skill.md §13
+  refresh after #480 + #481 — closed bootstrap loop for both)
+- Round 3.7.2-docs follow-up closed: 1 PR merged (#483 — 15-item
+  consolidation: §7.2 Edwards rewrite from `taxonomy.js` canonical, §6
+  pitfall window refresh through Round 3.7.1, §8 self-reference rule,
+  §7.0 mistakes #6-#10, §7.1 Senior Dev anti-pattern, header v1.1→v1.3,
+  - 2 new §11 quirks (Geraniol/Nerol asymmetry, perfumery_data dual-
+    deletion history), + Phase 5 team-readiness audit forensic record at
+    `audit/phase5-team-readiness-report.md`); next state-refresh PR will
+    close this PR's bootstrap loop
 - Across both rounds: 0 reverts; 0 source code modifications by the LLM (every
   code change came through Dependabot or workflow-config bumps)
 - Open backlog: `audit/r3.5-investigation.md`

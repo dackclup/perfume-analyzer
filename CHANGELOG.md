@@ -210,6 +210,44 @@ full punch list. Headlines:
 
 Unchanged from v304 (no domain-data versioning event in this round).
 
+## [2026-05-07 — Round 3.7.2-docs closed]
+
+Doc-only round: introduced the multi-agent team protocol + 4-layer
+team-readiness audit + 8-test stress-test, and consolidated all lessons
+into 13 doc-quality items in a follow-up PR. No version bump
+(`skill.md` §9 — doc-only). No source code changed.
+
+### Added
+
+- `team-protocol.md` (PR #481) — 1104-line operations manual for the
+  multi-agent team (Tech Lead, Junior Dev, Senior Dev, Domain Expert,
+  QA): org chart, hand-off matrix, 8 payload templates, 4 system
+  prompts (§7.0–§7.3) ready to paste into new Claude.ai chats.
+- `audit/phase5-team-readiness-report.md` (PR #483) — forensic record
+  of Phases 1-5: filesystem ground truth, code-level state, domain
+  reference, scope-discipline stress-test, certification.
+
+### Updated
+
+- `skill.md` §13 refreshed twice (PR #480 after Round 3.7.1; PR #482
+  after PR #480 + #481). Self-bootstrap-miss pattern now documented
+  across 3 occurrences (PR #476, #478, #482).
+- `team-protocol.md` v1.1 → v1.3 (PR #483) — §7.2 Edwards subfamilies
+  rewritten verbatim from `taxonomy.js` canonical (4 documented drifts
+  fixed); §6 pitfall window extended through Round 3.7.1 + 3.7.2-docs;
+  §7.0 "Common mistakes" expanded #6-#10; §7.1 Senior Dev gained
+  confident-specific-claim anti-pattern.
+- `skill.md` §11 (PR #483) — Geraniol/Nerol intentional-asymmetry quirk
+  - `perfumery_data*` dual-deletion-history quirk added.
+
+### Deferred
+
+- Round 3.7.2 vitest 4.x co-bump (#469 + #474) — atomic manual PR
+  strategy locked in Phase 1.5 audit; pending trigger.
+- Round 3.8 cleanup: `audit_facet.py` dead-code `perfumery_data.js`
+  reference.
+- Round 4: 6 novel findings from `audit/coherence-2026-05-01.md`.
+
 ## [2026-05-03 — Round 3.5 + 3.6 — CI infrastructure restoration]
 
 ### Fixed
