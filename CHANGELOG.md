@@ -214,7 +214,7 @@ Unchanged from v304 (no domain-data versioning event in this round).
 
 Doc-only round: introduced the multi-agent team protocol + 4-layer
 team-readiness audit + 8-test stress-test, and consolidated all lessons
-into 13 doc-quality items in a follow-up PR. No version bump
+into 15 doc-quality items in a follow-up PR. No version bump
 (`skill.md` §9 — doc-only). No source code changed.
 
 ### Added
@@ -223,6 +223,9 @@ into 13 doc-quality items in a follow-up PR. No version bump
   multi-agent team (Tech Lead, Junior Dev, Senior Dev, Domain Expert,
   QA): org chart, hand-off matrix, 8 payload templates, 4 system
   prompts (§7.0–§7.3) ready to paste into new Claude.ai chats.
+  Three commit iterations (v1.0 initial → v1.1 added §7.0 Tech Lead
+  prompt → v1.2 fixed §1 + §3 routing-channel contradiction with
+  §7.1) squash-merged into a single PR.
 - `audit/phase5-team-readiness-report.md` (PR #483) — forensic record
   of Phases 1-5: filesystem ground truth, code-level state, domain
   reference, scope-discipline stress-test, certification.

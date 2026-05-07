@@ -638,11 +638,11 @@ These are real, documented failures from my own work — read carefully:
 
 9. **Citing repo files by line number instead of anchor** — line numbers
    drift across edits and become wrong without warning. Senior Dev caught
-   `taxonomy.js` line drift in Layer 2 verification (Section 2.B audit said
-   lines 25-30, spec said 34-39, actual was 35-40 with the comment block at
-   29-34). Structural content matched but line citations were stale across
-   two reads. Prefer anchor-based references (function name, identifier,
-   section header) when citing repo files in prompts and audit reports.
+   `taxonomy.js` line drift between audit prompt's expectation and the
+   `MAIN_FAMILY_TO_SUBS` block's actual position; structural content
+   matched but line citations were stale across two reads. Prefer
+   anchor-based references (function name, identifier, section header)
+   when citing repo files in prompts and audit reports.
 
 10. **Under-binding expected outcomes in stress-tests** — when designing
     stress-tests or audit prompts, under-bound expected outcomes. Phase 5 T1
@@ -651,6 +651,17 @@ These are real, documented failures from my own work — read carefully:
     didn't know I had. Treat agent over-performance as signal, not noise —
     the extra findings reveal blind spots in the dispatcher, not noise from
     the executor.
+
+11. **Underspeccing rewrite-from-code prompts on scope-audit** — when
+    dispatching prompts that rewrite a section based on canonical code
+    (e.g. PR #483 A1: §7.2 Edwards rewrite from taxonomy.js), the spec
+    must include "audit ALL references to <topic> in the same
+    section/prompt, not just the named anchor." PR #483 A1 corrected
+    step 4's transitional list but missed the same prompt's pitfall #2
+    zombie list — same contradiction the rewrite was supposed to
+    eliminate. Junior Dev follows Phase 1 spec exactly; Senior Dev
+    caught the gap during PR review. Lesson: Tech Lead Phase 1 spec
+    must enumerate scope-audit obligation, not just the named target.
 
 ## STOP points
 
@@ -923,6 +934,8 @@ A review request per template 4.5.
      boundaries.
    - Reject if a material is misclassified (e.g. Iso E Super as `woody` —
      it's `woody_amber`).
+   - (see `MAIN_FAMILY_LABELS` in taxonomy.js for display strings if UI
+     text is needed)
 
 5. Spot-check at least 3-5 specific entries by CAS — don't approve a 50-row PR
    by reading 5 rows.
