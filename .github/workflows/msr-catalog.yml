@@ -1,7 +1,9 @@
 name: MSR catalog scrape
 
-# Reads MySkinRecipes' public sitemaps, opens the perfumery product pages in
-# headless Chromium and saves name / price / stock / CAS as CSV.
+# Reads MySkinRecipes' public sitemaps and saves the perfumery product list
+# (id / name / category / url) plus bottles, pipettes and scales as CSV.
+# Price scraping (stage "all") is opt-in: the shop currently answers automated
+# browsers with HTTP 403, and the script stops at the first refusal.
 # Results are pushed to the `msr-data` branch (kept out of main) and also
 # attached to the run as an artifact.
 
@@ -12,8 +14,8 @@ on:
         description: "Max product pages to open"
         default: "4000"
       stage:
-        description: "sitemap = product list only, all = list + prices"
-        default: "all"
+        description: "sitemap = product list only, all = list + prices (shop currently refuses)"
+        default: "sitemap"
   push:
     branches: ["claude/msr-catalog-*"]
     paths:
@@ -41,6 +43,7 @@ jobs:
           node-version: "20"
 
       - name: Install Playwright (not saved to package.json)
+        if: ${{ github.event.inputs.stage == 'all' }}
         run: |
           npm install --no-save --no-package-lock --ignore-scripts playwright@1.64.0
           npx playwright install --with-deps chromium
@@ -48,7 +51,7 @@ jobs:
       - name: Scrape
         env:
           MSR_MAX_PAGES: ${{ github.event.inputs.max_pages || '4000' }}
-          MSR_STAGE: ${{ github.event.inputs.stage || 'all' }}
+          MSR_STAGE: ${{ github.event.inputs.stage || 'sitemap' }}
         run: node tools/msr-catalog/scrape.mjs
 
       - name: Push results to msr-data branch

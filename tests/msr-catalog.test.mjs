@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   decodeEntities,
   isPerfumeryProduct,
+  isToolProduct,
   parsePriceTHB,
   parseProductUrl,
   parseSitemapIndex,
@@ -102,6 +103,14 @@ describe('msr-catalog classification', () => {
     expect(isPerfumeryProduct({ id: 79, category: 'moisturizer', name: 'Hyaluronic Acid' })).toBe(
       false
     );
+  });
+
+  it('keeps compare-to benchmarks and drops synthesis building blocks', () => {
+    expect(isPerfumeryProduct({ id: 1, category: 'benchmark-dior', name: 'Sauvage' })).toBe(true);
+    expect(isPerfumeryProduct({ id: 2, category: 'aldehyde-derivatives', name: 'x' })).toBe(false);
+    expect(isToolProduct({ category: '30ml-bottle' })).toBe(true);
+    expect(isToolProduct({ category: 'christ-cap-perfume-bottle' })).toBe(true);
+    expect(isToolProduct({ category: 'musk-aroma-chemicals' })).toBe(false);
   });
 
   it('keeps known perfumery items filed under odd categories', () => {

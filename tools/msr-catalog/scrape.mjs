@@ -4,15 +4,17 @@
  *
  * Stage 1 — read the shop's public sitemaps and list every product (id, name, category, url),
  *           then keep the perfumery-relevant ones.
- * Stage 2 — open those product pages in headless Chromium (the shop renders prices with
- *           JavaScript) and record price / stock / CAS text.
+ * Stage 2 — (opt-in) open those product pages in headless Chromium (the shop renders prices
+ *           with JavaScript) and record price / stock / CAS text. As of 2026-10-13 the shop answers
+ *           automated browsers with HTTP 403, so this stage stops at the first refusal and is off by
+ *           default. Do not try to get around that refusal.
  *
  * Polite by design: a small number of workers, a delay between page loads, images/fonts/media
  * blocked, only /shop/en/ product paths (allowed by the shop's robots.txt), and a stop after
  * repeated failures.
  *
  * Env:
- *   MSR_STAGE      "sitemap" (list only) | "all" (list + prices)   default "all"
+ *   MSR_STAGE      "sitemap" (list only) | "all" (list + prices)   default "sitemap"
  *   MSR_MAX_PAGES  max product pages to open                        default 4000
  *   MSR_WORKERS    parallel pages                                   default 2
  *   MSR_DELAY_MS   pause after each page per worker                 default 1500
@@ -29,25 +31,49 @@ const SITEMAP_INDEX = `${BASE}/shop/sitemap.xml`;
 
 /** Category slugs that hold perfumery raw materials or compare-to fragrance oils. */
 export const PERFUMERY_CATEGORY_PATTERNS = [
-  /aroma-chemicals$/, // musk-, wood-, vanilla-, jasmine-, rose-, citrus-, fruit-, green-, aldehyde-, spice- …
-  /fragrance/, // dior-fragrance, chanel-fragrance, flavor-fragrance, fragrance-fixative, herb-al-fragrances
+  /aroma-chemicals/, // musk-, wood-, vanilla-, jasmine-, rose-, citrus-, fruit-, green-, aldehyde-, spice- …
+  /fragranc/, // rose-fragrances, other-floral-fragrancess, fragrance-ingredients, fragrance-fixative …
+  /^benchmark-/, // "compare to <brand>" fragrance oils: benchmark-dior, benchmark-chanel …
   /essential-oil/,
   /^bergamot-orange-lemon$/,
   /^herbs-lavender/,
   /^sweets-ylang/,
   /^woods-cedar/,
-  /^lily-of-the-valley$/,
+  /^spices-clove/,
+  /^rose-geranium/,
+  /^coniferan-balsam/,
+  /^absolute-solvent-extract$/,
+  /^floral-and-scent-extracts$/,
+  /^lily-of-the-valley/,
   /^mimi-sar$/,
   /^solvents-polyols$/,
 ];
 
-/** Lab-reagent / analytical-standard categories: not perfumery grade. */
+/** Perfume bottles, pipettes, beakers and scales. */
+export const TOOL_CATEGORY_PATTERNS = [
+  /perfume-bottle/,
+  /^\d+ml-bottle$/,
+  /^glass-?bottle$/,
+  /^glassamber$/,
+  /^pipette$/,
+  /^beaker$/,
+  /weight-scale/,
+  /^scale$/,
+];
+
+/** Lab-reagent / analytical-standard / synthesis categories: not perfumery grade. */
 export const REAGENT_CATEGORY_PATTERNS = [
   /reagent/,
   /standards?$/,
   /^analytical-/,
   /^certified-reference/,
   /^ungroupable$/,
+  /derivatives?$/,
+  /intermediates?$/,
+  /building-blocks?$/,
+  /linkers?$/,
+  /dyes?$/,
+  /labeled/,
 ];
 
 /** Perfumery items the shop files under unrelated categories. */
@@ -63,8 +89,7 @@ export const EXTRA_IDS = new Set([
   293, // Glass beaker 100 ml
 ]);
 
-const NAME_KEYWORDS =
-  /\bFEMA\b|compare to|essential oil|fragrance oil|\bmusk\b|aldehyde|ionone|damascone|sandal|ambr|vetiver|patchouli|cedar|lavender|bergamot|neroli|petitgrain|jasmin|tuberose|ylang|vanill|coumarin|maltol|perfume|น้ำหอม/i;
+const NAME_KEYWORDS = /compare to|essential oil|fragrance oil|perfume|น้ำหอม/i;
 
 export function isReagentCategory(category) {
   return REAGENT_CATEGORY_PATTERNS.some(re => re.test(category));
@@ -77,12 +102,21 @@ export function isPerfumeryProduct({ id, category, name }) {
   return NAME_KEYWORDS.test(name || '');
 }
 
-/** Lower number = scraped earlier. */
+export function isToolProduct({ category }) {
+  return TOOL_CATEGORY_PATTERNS.some(re => re.test(category));
+}
+
+/** Lower number = listed / scraped earlier. */
 export function categoryPriority(category) {
-  if (/aroma-chemicals$/.test(category)) return 0;
-  if (/essential-oil|bergamot|herbs-|sweets-|woods-/.test(category)) return 1;
+  if (/aroma-chemicals/.test(category)) return 0;
+  if (
+    /essential-oil|bergamot|herbs-|sweets-|woods-|spices-|rose-geranium|coniferan|absolute|floral-and/.test(
+      category
+    )
+  )
+    return 1;
   if (/solvents|fixative/.test(category)) return 2;
-  if (/-fragrance$/.test(category)) return 3;
+  if (/^benchmark-|fragranc/.test(category)) return 3;
   return 4;
 }
 
@@ -329,6 +363,10 @@ async function scrapeProductPages(products, opts, log) {
       } catch (err) {
         row.status = `error: ${String(err.message || err).slice(0, 100)}`;
         consecutiveFailures += 1;
+        if (/HTTP (403|429)/.test(row.status) && !stopped) {
+          log('stopping: the shop refused the automated browser (HTTP 403/429); not retrying');
+          stopped = true;
+        }
       }
       results.push(row);
       if (results.length % 50 === 0) {
@@ -352,7 +390,7 @@ async function scrapeProductPages(products, opts, log) {
 // ---------------------------------------------------------------- main
 
 async function main() {
-  const stage = process.env.MSR_STAGE || 'all';
+  const stage = process.env.MSR_STAGE || 'sitemap';
   const maxPages = Number(process.env.MSR_MAX_PAGES || 4000);
   const workers = Math.max(1, Math.min(4, Number(process.env.MSR_WORKERS || 2)));
   const delayMs = Math.max(500, Number(process.env.MSR_DELAY_MS || 1500));
@@ -392,6 +430,14 @@ async function main() {
   await writeFile(
     path.join(outDir, 'perfumery_products.csv'),
     toCsv(perfumery, ['id', 'category', 'name', 'url'])
+  );
+  const tools = all
+    .filter(isToolProduct)
+    .sort((a, b) => a.category.localeCompare(b.category) || a.id - b.id);
+  log(`bottles / pipettes / beakers / scales: ${tools.length}`);
+  await writeFile(
+    path.join(outDir, 'tools_packaging.csv'),
+    toCsv(tools, ['id', 'category', 'name', 'url'])
   );
   await flushLog();
 
