@@ -1,0 +1,66 @@
+name: MSR verify
+
+# Re-checks the perfume research notes against MySkinRecipes (public sitemap, MY Expert pages,
+# a small plain-HTTP probe of product pages) and checks every external link the notes cite.
+# Personal research helper; not part of the app build. Stops at the first HTTP 403/429 from the
+# shop and does not retry or work around it. Every request is checked against robots.txt.
+# Results are pushed to the `msr-verify-data` branch (kept out of main) and attached as an artifact.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/msr-verify-*"]
+    paths:
+      - "tools/msr-verify/**"
+      - ".github/workflows/msr-verify.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: msr-verify
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Parser tests (offline)
+        run: python -m unittest tools/msr-verify/test_verify.py -v
+
+      - name: Verify
+        env:
+          OUT_DIR: out
+        run: python tools/msr-verify/verify.py
+
+      - name: Push results to msr-verify-data branch
+        if: always()
+        run: |
+          if [ ! -d out ]; then echo "no output"; exit 0; fi
+          cp -r out /tmp/msr-verify-out
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan msr-verify-tmp
+          git rm -r --cached --quiet .
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -r /tmp/msr-verify-out/. .
+          git add -A
+          git commit -m "data(msr-verify): run $(date -u +%Y-%m-%dT%H:%MZ) from ${GITHUB_SHA::7}"
+          git push --force origin HEAD:refs/heads/msr-verify-data
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: msr-verify
+          path: /tmp/msr-verify-out
+          if-no-files-found: ignore
