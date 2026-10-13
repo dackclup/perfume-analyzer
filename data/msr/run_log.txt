@@ -1,0 +1,17 @@
+[2026-10-13T04:38:34.235Z] sitemap index: 13 English sitemaps
+[2026-10-13T04:38:35.981Z]   1_en_0_sitemap.xml: 25000 product URLs
+[2026-10-13T04:38:37.173Z]   1_en_1_sitemap.xml: 25000 product URLs
+[2026-10-13T04:38:38.193Z]   1_en_2_sitemap.xml: 25000 product URLs
+[2026-10-13T04:38:39.337Z]   1_en_3_sitemap.xml: 25000 product URLs
+[2026-10-13T04:38:40.486Z]   1_en_4_sitemap.xml: 25000 product URLs
+[2026-10-13T04:38:41.498Z]   1_en_5_sitemap.xml: 25000 product URLs
+[2026-10-13T04:38:42.513Z]   1_en_6_sitemap.xml: 25000 product URLs
+[2026-10-13T04:38:43.596Z]   1_en_7_sitemap.xml: 25000 product URLs
+[2026-10-13T04:38:44.745Z]   1_en_8_sitemap.xml: 25000 product URLs
+[2026-10-13T04:38:45.903Z]   1_en_9_sitemap.xml: 25000 product URLs
+[2026-10-13T04:38:46.914Z]   1_en_10_sitemap.xml: 25000 product URLs
+[2026-10-13T04:38:48.075Z]   1_en_11_sitemap.xml: 25000 product URLs
+[2026-10-13T04:38:48.987Z]   1_en_12_sitemap.xml: 1308 product URLs
+[2026-10-13T04:38:49.489Z] products in sitemaps: 301308
+[2026-10-13T04:38:49.724Z] perfumery-relevant products: 1360
+[2026-10-13T04:38:49.786Z] bottles / pipettes / beakers / scales: 186
