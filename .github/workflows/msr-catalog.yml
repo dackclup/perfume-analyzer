@@ -1,0 +1,86 @@
+name: MSR catalog scrape
+
+# Reads MySkinRecipes' public sitemaps and saves the perfumery product list
+# (id / name / category / url) plus bottles, pipettes and scales as CSV.
+# Price scraping (stage "all") is opt-in: the shop currently answers automated
+# browsers with HTTP 403, and the script stops at the first refusal.
+# Results are pushed to the `msr-data` branch and attached to the run as an
+# artifact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_pages:
+        description: "Max product pages to open"
+        default: "4000"
+      stage:
+        description: "sitemap = product list only, all = list + prices (shop currently refuses)"
+        default: "sitemap"
+  push:
+    branches: [main]
+    paths:
+      - "tools/msr-catalog/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/msr-catalog.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: msr-catalog
+  cancel-in-progress: true
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install and test
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+
+      - name: Install Playwright (not saved to package.json)
+        if: ${{ github.event.inputs.stage == 'all' }}
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts playwright@1.64.0
+          npx playwright install --with-deps chromium
+
+      - name: Scrape
+        env:
+          MSR_MAX_PAGES: ${{ github.event.inputs.max_pages || '4000' }}
+          MSR_STAGE: ${{ github.event.inputs.stage || 'sitemap' }}
+        run: npm run scrape
+
+      - name: Push results to msr-data branch
+        if: always()
+        run: |
+          if [ ! -d data/msr ]; then echo "no output"; exit 0; fi
+          cp -r data/msr /tmp/msr-out
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan msr-data-tmp
+          git rm -r --cached --quiet .
+          rm -rf data && mkdir -p data && cp -r /tmp/msr-out data/msr
+          git add -f data/msr
+          git commit -m "data(msr): catalog scrape $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push --force origin HEAD:refs/heads/msr-data
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: msr-catalog
+          path: /tmp/msr-out
+          if-no-files-found: ignore

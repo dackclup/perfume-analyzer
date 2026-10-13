@@ -1,40 +1,17 @@
 {
   "name": "perfume-analyzer",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Static-site perfumery raw materials analyzer + formulation engine. PubChem compound data, IFRA 51 caps, Edwards Fragrance Wheel taxonomy.",
+  "description": "MySkinRecipes perfumery catalog: lists perfume raw materials, Benchmark oils and tools from the shop's public sitemap.",
   "type": "module",
   "scripts": {
-    "lint": "eslint --max-warnings=0 \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"scripts/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\" \"tests/**/*.{js,mjs}\"",
-    "lint:fix": "eslint --fix \"index.html\" \"formulation.html\" \"tools/**/*.{js,mjs}\" \"scripts/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\" \"tests/**/*.{js,mjs}\"",
-    "format": "prettier --write \"tools/**/*.{js,mjs}\" \"scripts/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\" \"tests/**/*.{js,mjs}\" \"*.{json,md}\"",
-    "format:check": "prettier --check \"tools/**/*.{js,mjs}\" \"scripts/**/*.{js,mjs}\" \"lib/**/*.{js,mjs}\" \"tests/**/*.{js,mjs}\" \"*.{json,md}\"",
-    "lint:blends": "node tools/lint-blends.mjs",
-    "lint:data": "node tools/lint-data.mjs",
-    "lint:molecular": "node tools/verify-molecular.mjs",
-    "report:molecular-coverage": "node tools/molecular-coverage-report.mjs",
-    "lint:version": "node scripts/check-version-drift.mjs",
-    "codemap": "node tools/codemap.mjs",
-    "codemap:check": "node tools/codemap.mjs --check",
-    "release": "node scripts/release.mjs",
-    "enrich-molecular": "node tools/enrich-molecular.mjs",
-    "setup": "node scripts/install-hooks.mjs",
-    "prepare": "node scripts/install-hooks.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "scrape": "node tools/msr-catalog/scrape.mjs"
   },
   "devDependencies": {
-    "@html-eslint/eslint-plugin": "^0.60.0",
-    "@html-eslint/parser": "^0.60.0",
-    "@vitest/coverage-v8": "^2.1.9",
-    "ajv": "^8.20.0",
-    "ajv-formats": "^3.0.1",
-    "eslint": "^10.3.0",
-    "globals": "^17.6.0",
-    "prettier": "^3.3.3",
-    "vitest": "^2.1.4"
+    "vitest": "^2.1.9"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }
