@@ -4,8 +4,8 @@ name: MSR catalog scrape
 # (id / name / category / url) plus bottles, pipettes and scales as CSV.
 # Price scraping (stage "all") is opt-in: the shop currently answers automated
 # browsers with HTTP 403, and the script stops at the first refusal.
-# Results are pushed to the `msr-data` branch (kept out of main) and also
-# attached to the run as an artifact.
+# Results are pushed to the `msr-data` branch and attached to the run as an
+# artifact.
 
 on:
   workflow_dispatch:
@@ -17,9 +17,12 @@ on:
         description: "sitemap = product list only, all = list + prices (shop currently refuses)"
         default: "sitemap"
   push:
-    branches: ["claude/msr-catalog-*"]
+    branches: [main]
     paths:
       - "tools/msr-catalog/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/msr-catalog.yml"
 
 permissions:
@@ -41,6 +44,12 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: "20"
+          cache: npm
+
+      - name: Install and test
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
 
       - name: Install Playwright (not saved to package.json)
         if: ${{ github.event.inputs.stage == 'all' }}
@@ -52,7 +61,7 @@ jobs:
         env:
           MSR_MAX_PAGES: ${{ github.event.inputs.max_pages || '4000' }}
           MSR_STAGE: ${{ github.event.inputs.stage || 'sitemap' }}
-        run: node tools/msr-catalog/scrape.mjs
+        run: npm run scrape
 
       - name: Push results to msr-data branch
         if: always()

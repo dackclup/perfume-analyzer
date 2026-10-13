@@ -1,20 +1,9 @@
 node_modules/
-yarn.lock
-pnpm-lock.yaml
-.DS_Store
+coverage/
 *.log
 .env
 .env.local
-coverage/
-.cache/
+.DS_Store
 
-# audit/cache/ holds gitignored PubChem fetch responses (Round 3 P1.3).
-# The .gitkeep + README.md inside the directory ARE tracked so the
-# directory exists and the policy is documented.
-audit/cache/*
-!audit/cache/.gitkeep
-!audit/cache/README.md
-audit/molecular-patches.json
-audit/molecular-patches-flagged.json
-audit/molecular-verify.json
-audit/molecular-coverage.json
+# Scraper output goes to the msr-data branch, not main.
+data/

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * MySkinRecipes perfumery catalog scraper (personal shopping list, not part of the app build).
+ * MySkinRecipes perfumery catalog scraper (personal shopping list).
  *
  * Stage 1 — read the shop's public sitemaps and list every product (id, name, category, url),
  *           then keep the perfumery-relevant ones.
