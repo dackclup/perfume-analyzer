@@ -8,6 +8,7 @@ project-docs/<path>, so `git diff` shows what changed and CI can check it.
 
     python3 tools/msr-verify/pull_docs.py                 # newest transcript of this repo's sessions
     python3 tools/msr-verify/pull_docs.py --transcript ~/.claude/projects/<dir>/<session>.jsonl
+    python3 tools/msr-verify/pull_docs.py --out /tmp/fresh     # e.g. to diff a fresh read against your edits
 """
 from __future__ import annotations
 
@@ -63,7 +64,9 @@ def results(path: Path):
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--transcript", type=Path)
+    ap.add_argument("--out", type=Path, default=OUT, help="folder to write into (default: project-docs/)")
     a = ap.parse_args()
+    out = a.out.resolve()
     main_file = a.transcript or newest_transcript()
     files = [main_file] + sorted(main_file.with_suffix("").glob("subagents/*.jsonl"))
     newest: dict[str, tuple[str, str]] = {}
@@ -74,9 +77,9 @@ def main() -> None:
     if not newest:
         raise SystemExit("this session has not read any Project doc yet (use project_read first)")
     for doc, (ts, text) in sorted(newest.items()):
-        target = (OUT / doc).resolve()
-        if OUT.resolve() not in target.parents:
-            raise SystemExit(f"refusing to write outside project-docs/: {doc}")
+        target = (out / doc).resolve()
+        if out not in target.parents:
+            raise SystemExit(f"refusing to write outside {out}: {doc}")
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text, encoding="utf-8")
         print(f"{ts}  {doc}  {len(text):,} chars")

@@ -211,7 +211,7 @@
 | ● [Jasmine Grandiflorum Abs (3218)](https://www.myskinrecipes.com/shop/en/absolute-solvent-extract/3218-jasminum-grandiflorum-flower-extract.html) ⚠ 0.60% · Sambac Abs (3217) ⚠ 3.8% | มะลิธรรมชาติ · J'adore, Good Girl | — |
 | ○ [Rose Absolute Bulgaria (3249)](https://www.myskinrecipes.com/shop/en/absolute-solvent-extract/3249-rose-absolute-rosa-damascena-bulgaria.html) ⚠ | กุหลาบธรรมชาติ | — |
 | ● ⚠ [Ylang Ylang (3259)](https://www.myskinrecipes.com/shop/en/sweets-ylang-champaca-tagetes/3259-ylang-ylang-oil-flower.html) · [Champaca (3267)](https://www.myskinrecipes.com/shop/en/sweets-ylang-champaca-tagetes/3267-michelia-champaca-flower-oil.html) | ดอกไม้ขาวครีมมี่ · J'adore · Ylang อยู่ในรายชื่อสารก่อภูมิแพ้ EU ใหม่ | 53 · — |
-| ○ ⚠ Oakmoss Absolute (3260) · Treemoss Absolute (3277 ⓧ) | มอส · IFRA ≤0.1% ใช้ Evernyl แทนได้ · sitemap มี Oakmoss China (33884) และ Treemoss Resinoid (3837) แทน 3277 | — |
+| ○ ⚠ Oakmoss Absolute (3260) · Treemoss Absolute (3277 ⓧ) | มอส · IFRA: Oakmoss + Treemoss รวมกันไม่เกิน 0.1% เฉพาะเกรด low-atranol (EU ห้าม atranol/chloroatranol) ใช้ Evernyl แทนได้ · sitemap มี Oakmoss China (33884) และ Treemoss Resinoid (3837) แทน 3277 | — |
 | ○ Orris Root Concrete (3261) · Violet Leaf Absolute (3258) · Guaiacwood (3268) · [Davana (3285)](https://www.myskinrecipes.com/shop/en/herbs-lavender-rosemary-tea-tree-mint-tansy-chamomile/3285-davana-oil.html) · [Galbanum Resinoid (2618)](https://www.myskinrecipes.com/shop/en/green-aroma-chemicals/2618-galbanum-resinoid.html) | วัตถุดิบธรรมชาติเฉพาะทาง | — |
 | ○ [Lavender Fragrance Oil (2985)](https://www.myskinrecipes.com/shop/en/calming-sleeping-fragrances/2985-lavender-fragrance-oil.html) · Neroli Fragrance Oil (2945) · Sandalwood Fragrance Oil (2986) | หัวน้ำหอมสังเคราะห์ ไม่ใช่น้ำมันแท้ | — |
 
@@ -401,12 +401,12 @@ Benzyl Salicylate 143806 · Dihydromyrcenol 56963 (1 kg ฿6,700 ≈ ฿6.7/g) �
 | ⛔ Musk Ambrette (2886) | ทำให้ผิวแพ้แสง IFRA ห้าม |
 | ⛔ Musk Xylol / Musk Xylene (2885) | EU จัดเป็นสารที่ต้องขออนุญาตก่อนใช้ (REACH) ไม่ควรใช้ |
 | ⛔ Methyl Eugenol (2788) | เพดานต่ำระดับหนึ่งในร้อยของเปอร์เซ็นต์ ใช้เป็นวัตถุดิบไม่ได้จริง |
-| ⛔ Musk Ketone (2883) | จำกัดตามกฎ EU และ IFRA |
+| ⛔ Musk Ketone (2883) | จำกัดตามกฎ EU (Annex III) · IFRA 51 มีเฉพาะข้อกำหนดความบริสุทธิ์ · เอกสารแนะนำไม่ใช้ (nitro musk) |
 | ⛔ Dihydrocoumarin (2830) | EU และอาเซียนห้ามใช้เป็นสารให้กลิ่น (Annex II 427 มาจากรายการ SCCNFP) แม้ IFRA 51 จำกัดไว้ 0.21% (พบรอบ 12) |
 | ⛔ Peru Balsam Resin (3180) | IFRA ห้าม Peru balsam ดิบ ใช้ได้เฉพาะแบบสกัด/กลั่นในปริมาณจำกัด เช่น Peru Balsam Oil (3179) |
 | ⛔ Lemon Verbena Oil (3284) | IFRA ห้ามน้ำมันเวอร์บีน่า |
 | ⚠ Bergamot ธรรมดา (3168) | ไม่ใช่ FCF แพ้แสง ใช้ 127688 หรือ Italy FCF (33121) แทน |
-| ⚠ Oakmoss (3260, 33884) · Treemoss Resinoid (3837) | เพดานราว 0.1% ในขวด ใช้ Evernyl (2905) แทน |
+| ⚠ Oakmoss (3260, 33884) · Treemoss Resinoid (3837) | Oakmoss + Treemoss รวมกันไม่เกิน 0.1% ในขวด (IFRA STD 067/080) · เฉพาะเกรด low-atranol (atranol/chloroatranol แต่ละตัวต่ำกว่า 100 ppm) · EU ห้าม atranol/chloroatranol (Annex II 1381/1382) · ใช้ Evernyl (2905) แทนได้ |
 | ⛔ 2,4-Decadienal (2433, 33755, 33763), 2,4-Heptadienal (33756), 2,4-Nonadienal (3467), Geranyl Nitrile (2488), Massoia Lactone (33686) | IFRA ฉบับ 51 ห้าม (พบรอบ 5 จากดัชนี IFRA 51) |
 | ⛔ Verdantiol (3991) | Schiff base ของ Lilial มาตรฐาน IFRA นับเป็น Lilial 60.6% · EU ห้าม Lilial (พบรอบ 5) |
 | ⚠ Methyl Octine Carbonate (2627) · Tagetes Oil (3254) | IFRA 51 เพดาน 0.01% ในขวด (Tagetes erecta ห้ามทั้งสายพันธุ์ ใช้ได้เฉพาะ T. minuta / T. patula) · กฎ EU: Methyl Octine Carbonate 0.002% (พบรอบ 5) |
