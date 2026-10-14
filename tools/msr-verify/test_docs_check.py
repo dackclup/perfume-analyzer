@@ -129,6 +129,13 @@ class Banned(unittest.TestCase):
         self.assertEqual((names, sorted(ids)), (["Acetaldehyde", "HICC", "Leerall", "Lilial", "Lyral"], [2709, 2710, 3874]))
 
 
+class Index(unittest.TestCase):
+    def test_every_numbered_doc_needs_a_row_in_file_0(self):
+        index = "| ไฟล์ | เนื้อหา |\n|---|---|\n| **3 · วัตถุดิบ** | x |\n"
+        failing, _ = run({"0-index.md": index, "3-a.md": "x\n", "10-ai.md": "x\n"})
+        self.assertEqual(failing, ["index_missing:10", "index_missing:4"])
+
+
 class Names(unittest.TestCase):
     def test_names_in_splits_lists_and_keeps_chemical_commas(self):
         self.assertEqual(d.names_in("2,4-Decadienal (2433), Geranyl Nitrile · Norlimbanol / Timberol (ชื่อนี้) · แถบดมกลิ่น"),

@@ -11,13 +11,14 @@ Each failing check matches a mistake the project already made once (doc 10, sect
                           contains X and the same line does not cite that product.
   banned_unmarked  row 4  A banned material (file 4 section O, rows marked ⛔) is mentioned in files 0-6
                           without ⛔ or a warning word on the same item, row or paragraph.
+  index_missing    row 7  A numbered doc has no row in file 0's table of contents (a session that wrote
+                          file 0 from a stale copy drops rows other sessions added).
 
 Known, reviewed exceptions live in allow.json (one key per exception, with the reason).
 
 Offline and standard library only. The sitemap table comes from verify.py (sitemap_products.csv.gz on
-the msr-verify-data branch). Run locally:
+the msr-verify-data branch, fetched automatically). Run locally:
 
-    git fetch origin msr-verify-data
     python3 tools/msr-verify/docs_check.py            # exit 1 when a check fails
 """
 from __future__ import annotations
@@ -269,9 +270,12 @@ def load_sitemap(path: str | None) -> dict[int, Product]:
     if path:
         raw = Path(path).read_bytes()
     else:
+        # the clone may track main only, so fetch the results branch into its remote ref explicitly
+        subprocess.run(["git", "fetch", "-q", "origin", "+refs/heads/msr-verify-data:refs/remotes/origin/msr-verify-data"],
+                       cwd=REPO, capture_output=True)
         r = subprocess.run(["git", "show", SITEMAP_REF], cwd=REPO, capture_output=True)
         if r.returncode:
-            sys.exit(f"no sitemap table: run `git fetch origin msr-verify-data` first ({r.stderr.decode().strip()})")
+            sys.exit(f"no sitemap table on the msr-verify-data branch ({r.stderr.decode().strip()})")
         raw = r.stdout
     if raw[:2] == b"\x1f\x8b":
         raw = gzip.decompress(raw)
@@ -372,7 +376,8 @@ def absence_claims(lines: list[Line]) -> list[Claim]:
                 continue
             for i, h in enumerate(ln.header[: len(cells)]):
                 if "ไม่มีในร้าน" in h:
-                    claims += [Claim(ln.doc, ln.no, n, bench_section, t) for n, has_id in names_in(cells[i]) if not has_id]
+                    bench = bench_section or "benchmark" in cells[i].lower()
+                    claims += [Claim(ln.doc, ln.no, n, bench, t) for n, has_id in names_in(cells[i]) if not has_id]
                 elif re.search(r"MSR|MySkinRecipes|ร้าน", h) and cells[i].startswith("❌"):
                     claims += [Claim(ln.doc, ln.no, n, False, t) for n, has_id in names_in(cells[0]) if not has_id]
         if re.match(r"^[-*]\s*\*\*MSR:\*\*\s*❌", t) and title:
@@ -444,12 +449,22 @@ def check_banned(lines: list[Line]) -> list[Problem]:
     return out
 
 
+def check_index(docs_dir: Path) -> list[Problem]:
+    numbered = sorted({int(doc_key(p)) for p in docs_dir.iterdir() if doc_key(p)} - {0})
+    index = next(iter(sorted(docs_dir.glob("0-*.md"))), None)
+    if not index:
+        return []
+    text = index.read_text(encoding="utf-8")
+    return [Problem("index_missing", "0", 0, f"index_missing:{n}", f"สารบัญไฟล์ 0 ไม่มีแถวของไฟล์ {n}")
+            for n in numbered if not re.search(rf"^\|\s*\*\*{n}\s*·", text, re.M)]
+
+
 # --------------------------------------------------------------------------- run
 
 
 def run(docs_dir: Path, sitemap: dict[int, Product] | None, allow: dict[str, str]) -> tuple[list[Problem], list[Problem], dict]:
     lines = read_docs(docs_dir)
-    problems = check_banned(lines)
+    problems = check_banned(lines) + check_index(docs_dir)
     stats = {"lines": len(lines), "citations": len(citations(lines)), "claims": len(absence_claims(lines)),
              "banned_names": len(banned_list(lines)[0]), "banned_ids": len(banned_list(lines)[1])}
     if sitemap:

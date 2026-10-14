@@ -1,6 +1,6 @@
 # 4 · แคตตาล็อกวัตถุดิบที่ MySkinRecipes
 
-> ชุดวิจัยน้ำหอมดีไซน์เนอร์ · ฉบับรวม 13 ต.ค. 2026 · ไฟล์ 4 (สารบัญที่ไฟล์ 0) · **อัปเดตรอบ 4:** ตรวจซ้ำทุกรหัสกับ sitemap ทั้งร้าน 13 ต.ค. 2026 · **รอบ 5:** เพิ่มสารต้องห้ามและเพดานในส่วน O
+> ชุดวิจัยน้ำหอมดีไซน์เนอร์ · ฉบับรวม 13 ต.ค. 2026 · ไฟล์ 4 (สารบัญที่ไฟล์ 0) · **อัปเดตรอบ 4:** ตรวจซ้ำทุกรหัสกับ sitemap ทั้งร้าน 13 ต.ค. 2026 · **รอบ 5:** เพิ่มสารต้องห้ามและเพดานในส่วน O · **รอบ 7 (14 ต.ค.):** ระบบตรวจอัตโนมัติพบว่าร้านมี PEG-40 Hydrogenated Castor Oil (738) และ Irone แบบรีเอเจนต์ (201096) จึงย้ายออกจากส่วน K
 > ร้าน: [MySkinRecipes Thailand](https://www.myskinrecipes.com/shop/th/) · ถ้ายังไม่รู้จะซื้ออะไรก่อน ให้อ่านไฟล์ 3
 
 ## วิธีใช้แคตตาล็อกนี้
@@ -275,7 +275,7 @@
 | The Body Shop | [White Musk (8248)](https://www.myskinrecipes.com/shop/en/benchmark-the-body-shop/8248-white-musk-benchmark-body-shop.html) |
 
 **ไม่อยู่ใน sitemap แล้ว (ฉบับก่อนเคยพบหน้าสินค้า):** 1 Million (8260) · Pure XS (8262) · Black Code (3080) · Acqua di Men (3140, แนว Acqua di Giò) · Trésor (3091) · English Pear & Freesia (7430) — อาจปิดการขาย ลองเปิดลิงก์เดิมเช็ก
-**ไม่มีในร้าน:** Eros, YSL Y / Libre / Black Opium, Good Girl, Acqua di Giò, Terre d'Hermès (มีแค่ Terre d Eau Tres Fraiche), Aventus, Santal 33 — ทำเองตามชุดวัตถุดิบในไฟล์ 3 และสูตรในไฟล์ 6
+**ไม่มีในร้าน:** Eros, YSL Y / Libre / Black Opium, Good Girl, Acqua di Giò, Terre d'Hermès (มีแค่ Terre d Eau Tres Fraiche รหัส 253602 ซึ่งเป็นคนละกลิ่น), Aventus, Santal 33 — ทำเองตามชุดวัตถุดิบในไฟล์ 3 และสูตรในไฟล์ 6
 
 ## J. ตัวทำละลาย สารยึดกลิ่น และ listing แบบรีเอเจนต์
 
@@ -291,6 +291,7 @@
 | [BHT (3402)](https://www.myskinrecipes.com/shop/en/antioxidants-uv-absorbent/3402-butylated-hydroxytoluene-bht.html) | กันเสื่อม 0.01–0.1% | 35 |
 | Protec™ UV (1333) · [Benzophenone-4 (1480)](https://www.myskinrecipes.com/shop/en/antioxidants-uv-absorbent/1480-benzophenone-4.html) | กันแสง UV ลดการเปลี่ยนสี (Protec UV เทียบเท่า Tinogard TL) | — |
 | [12H Fix™ (7835)](https://www.myskinrecipes.com/shop/en/fragrance-fixative/7835-12h-fix™-smell-lasts-12-hours.html) · Sugar Fix™ (3346) · Musk Fix™ (7502) · Flora Fix™ (3344) · Last Fix™ (3345 ⓧ) | fixative สำเร็จของร้าน ไม่เปิดเผยส่วนผสม ขอ SDS ก่อน · 12H Fix ใช้ ≤5% | — |
+| [PEG-40 Hydrogenated Castor Oil (738)](https://www.myskinrecipes.com/shop/en/fatty-acids-oil-ethoxylated-peg/738-peg-40-hydrogenated-castor-oil-cremophor-rh-40.html) · Eco Solve™ (35403, ผสม Coceth-10) | สารช่วยละลายน้ำหอมในสูตรน้ำ (สเปรย์ไม่มีแอลกอฮอล์) · ไม่จำเป็นสำหรับสเปรย์แอลกอฮอล์ · ฉบับก่อนบันทึกผิดว่าร้านไม่มี (พบรอบ 7) | — |
 | [8 Hours Fragrance Spray Base, Musk-Free (125325)](https://www.myskinrecipes.com/shop/en/fragrance-fixative/125325-8-hours-fragrance-spray-base-musk-free.html) | เบสสเปรย์สำเร็จ | — |
 | [หมวด Fragrance Fixative (328)](https://www.myskinrecipes.com/shop/en/328-fragrance-fixative) · บีกเกอร์แก้ว 100 ml (293) | | — |
 
@@ -312,7 +313,7 @@ Benzyl Salicylate 143806 · Dihydromyrcenol 56963 (1 kg ฿6,700 ≈ ฿6.7/g) �
 | Orange Flower Ether | Aurantiol (2723) ⚠, Nerolin Bromelia, Orange Blossom Absolute (3240) · (Verdantiol 3991 ใช้ไม่ได้ เพราะมี Lilial — ส่วน O) |
 | Paradisone | Hedione High Cis |
 | Sylkolide, Serenolide | Velvione, Helvetolide, Romandolide |
-| Irone เพียว | Orris Root Concrete (3261), Orivone (2860) ⚠ IFRA 51 เพดาน 0.15%, Methyl Ionone Gamma |
+| Irone เพียว (มีแค่ listing แบบรีเอเจนต์ รหัส 201096 ไม่ได้คัดเกรดกลิ่น) | Orris Root Concrete (3261), Orivone (2860) ⚠ IFRA 51 เพดาน 0.15%, Methyl Ionone Gamma |
 | Piperonal / Heliotropin เพียว | Heliotropin Replacer (2840 = Heliotropin 50% ใน DPG) |
 | Civet, Castoreum | Indole/Skatole ร่องรอย, Isobutyl Quinoline, Leather Cyclohexanol (3432) |
 | น้ำมันพริกไทยชมพู | Black Pepper (3243) + Elemi (3206) ⚠ |
@@ -321,14 +322,13 @@ Benzyl Salicylate 143806 · Dihydromyrcenol 56963 (1 kg ฿6,700 ≈ ฿6.7/g) �
 | Vanilla absolute แท้ | Vanilla reconstituted (3279) + Vanillin + Ethyl Vanillin + Tonka 10% (8017) ⚠ + Benzoin (3263) |
 | ไม้จันทน์อินเดียแท้ | Sandalore, Ebanol, Javanol + Sandalwood Australian (32775) ⚠ |
 | Rose otto (น้ำมันกลั่น) | Rose Absolute (3249) ⚠, Rose De Mai Absolute (10542) ⚠ หรือ PEA + Citronellol + Geraniol + Beta Damascone |
-| PEG-40 Hydrogenated Castor Oil | ไม่จำเป็นสำหรับสเปรย์แอลกอฮอล์ |
 | แถบดมกลิ่น | ตัดกระดาษกรองเป็นแถบ (ร้านมีหมวด filter-paper) หรือซื้อร้านอุปกรณ์น้ำหอม |
 | Benchmark: 1 Million (8260 ⓧ), Eros, YSL, Good Girl, Acqua di Giò | ทำเองตามชุดวัตถุดิบในไฟล์ 3 และสูตรในไฟล์ 6 |
 
 ## L. ยังต้องตรวจเพิ่ม
 
 - **ราคา:** sitemap ไม่มีราคา · หน้าร้านส่งมาแค่โครงแอปที่โหลดราคาด้วย JavaScript (HTML ไม่มีราคา) · เบราว์เซอร์อัตโนมัติถูกปฏิเสธ (HTTP 403) · หน้าทดสอบ stage0 ใช้งานไม่ได้แล้ว → ราคาทุกตัวต้องเปิดดูในแอป/ตะกร้าเอง
-- **รายการ ⓧ:** Aldehyde 1% (2456, 2459, 2461) · Triplal 10% (2622) · Lilial (2709) · Ambergris Fleuressence (2815) · Cashmeran 10% (2879) · Isoambrettolide (2880) · Musk Decenone (2889) · Amber Xtreme (2890) · Cyclohexadecanone (2896) · Ambrettolide 10% (2903) · Neroli (3235) · Patchouli China (3242) · Benzoin Siam (3264) · Treemoss Absolute (3277) · Tonka (3290, 3291) · Last Fix (3345) · Cedrenyl Acetate (3454) · Mugetanol (3781) · Indole 1% (35260) · Ethyl Alcohol 99.5% (1220) · Benchmark 3080, 3091, 3140, 7430, 8260, 8262 — รอบ 4 ยืนยันว่ายังไม่อยู่ใน sitemap แต่ทุกตัวยังมีหน้า MY Expert จึงน่าจะปิดการขายหรือซ่อนไว้ เปิดในแอปเช็กก่อน
+- **รายการ ⓧ:** Aldehyde 1% (2456, 2459, 2461) · Triplal 10% (2622) · Lilial (2709 ⛔) · Ambergris Fleuressence (2815) · Cashmeran 10% (2879) · Isoambrettolide (2880) · Musk Decenone (2889) · Amber Xtreme (2890) · Cyclohexadecanone (2896) · Ambrettolide 10% (2903) · Neroli (3235) · Patchouli China (3242) · Benzoin Siam (3264) · Treemoss Absolute (3277) · Tonka (3290, 3291) · Last Fix (3345) · Cedrenyl Acetate (3454) · Mugetanol (3781) · Indole 1% (35260) · Ethyl Alcohol 99.5% (1220) · Benchmark 3080, 3091, 3140, 7430, 8260, 8262 — รอบ 4 ยืนยันว่ายังไม่อยู่ใน sitemap แต่ทุกตัวยังมีหน้า MY Expert จึงน่าจะปิดการขายหรือซ่อนไว้ เปิดในแอปเช็กก่อน
 - **สต็อกและความเข้มข้น:** sitemap บอกแค่ว่ามีหน้าสินค้าเปิดอยู่ ไม่บอกสต็อก · บางตัวขายเป็นสารละลาย เช่น Tonka 8017 (10% ใน DPG), Heliotropin Replacer 2840 (50% ใน DPG), Cyclohexadecanone 2897 (50% ใน IPM)
 - **หมวดที่ตัวกรองรอบ 3 ไม่ได้ดึง:** รอบ 4 ยืนยันแล้วว่า BHT (3402), Protec UV (1333), IPM (3448), TEC (1115) อยู่ใน sitemap · หมวด filter-paper, glass-funnel, measuring-cylinder ยังไม่ได้ดึงรายการ
 - **ใบ COA/IFRA** ของน้ำมันธรรมชาติและ absolute แต่ละ lot
