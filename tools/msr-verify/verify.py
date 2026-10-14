@@ -37,7 +37,7 @@ import urllib.robotparser
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import docs_check  # noqa: E402
@@ -92,8 +92,6 @@ def parse_product_url(loc: str):
     m = PRODUCT_PATH.match(parts.path)
     if not m:
         return None
-    from urllib.parse import unquote
-
     return {"lang": m.group(1), "category": unquote(m.group(2)), "id": int(m.group(3)), "slug": unquote(m.group(4))}
 
 
@@ -239,9 +237,19 @@ def robots_for(url: str):
     return ROBOTS[host]
 
 
+SHOP_REFUSED = ""  # set on the first 403/429 from any myskinrecipes.com page; every later shop request is skipped
+
+
+def is_shop(url: str) -> bool:
+    return urlsplit(url).netloc.endswith("myskinrecipes.com")
+
+
 def get(url: str, area: Area, max_bytes: int = MAX_BYTES) -> Resp:
+    global SHOP_REFUSED
     if area.stopped:
         return Resp(url, 0, error=f"skipped: {area.name} stopped ({area.stopped})")
+    if SHOP_REFUSED and is_shop(url):
+        return Resp(url, 0, error=f"skipped: the shop refused earlier ({SHOP_REFUSED})")
     if not robots_for(url).can_fetch(UA, url):
         return Resp(url, 0, error="skipped: disallowed by robots.txt")
     wait = area.delay - (time.monotonic() - area.last)
@@ -270,9 +278,9 @@ def get(url: str, area: Area, max_bytes: int = MAX_BYTES) -> Resp:
     except Exception as e:
         resp = Resp(url, 0, error=f"{type(e).__name__}: {e}"[:200])
     area.codes[resp.status] += 1
-    if resp.status in (403, 429) and area.name.startswith("shop"):
-        area.stopped = f"HTTP {resp.status} on {url}"
-        log(f"{area.name}: stopping after HTTP {resp.status} (the site refused; not retrying)")
+    if resp.status in (403, 429) and is_shop(url):
+        SHOP_REFUSED = area.stopped = f"HTTP {resp.status} on {url}"
+        log(f"{area.name}: the shop refused (HTTP {resp.status}); no more requests to the shop in this run")
     return resp
 
 
@@ -287,18 +295,26 @@ def write_csv(path: Path, rows: list[dict], cols: list[str]) -> None:
 # --------------------------------------------------------------------------- steps
 
 
-def step_sitemap(area: Area) -> dict[int, dict]:
+MIN_PRODUCTS = 200_000  # 301,300 products on 2026-10-14; far fewer means a partial read, not a smaller shop
+
+
+def step_sitemap(area: Area) -> tuple[dict[int, dict], str]:
+    """All English product URLs, plus a reason when the read is incomplete ("" when complete)."""
     r = get(SITEMAP_INDEX, area)
     if r.status != 200:
         log(f"sitemap index failed: {r.status} {r.error}")
-        return {}
+        return {}, f"sitemap index: {r.status} {r.error}".strip()
     children = [u for u in parse_sitemap_index(r.body) if re.search(r"_en_\d+_sitemap\.xml$", u)]
     log(f"sitemap index: {len(children)} English sitemaps")
+    if not children:
+        return {}, "no English sitemaps in the index"
     by_id: dict[int, dict] = {}
+    failed = []
     for child in children:
         cr = get(child, area, max_bytes=80_000_000)
         if cr.status != 200:
             log(f"  {child}: {cr.status} {cr.error}")
+            failed.append(child)
             continue
         n = 0
         for loc, title in parse_sitemap_urls(cr.body):
@@ -310,7 +326,11 @@ def step_sitemap(area: Area) -> dict[int, dict]:
                                        "name": title or p["slug"].replace("-", " "), "url": loc})
         log(f"  {child.rsplit('/', 1)[-1]}: {n} product URLs")
     log(f"products in sitemaps: {len(by_id)}")
-    return by_id
+    if failed:
+        return by_id, f"{len(failed)} of {len(children)} sitemaps could not be read"
+    if len(by_id) < MIN_PRODUCTS:
+        return by_id, f"only {len(by_id):,} products (expected at least {MIN_PRODUCTS:,})"
+    return by_id, ""
 
 
 def step_expert(ids: list[int], area: Area) -> list[dict]:
@@ -350,11 +370,14 @@ IFRA_PATTERNS = [r"IFRA", r"Cat(?:egory)?\.?\s*4", r"average use", r"% in (?:a )
                  r"typical usage", r"\b\d+(?:\.\d+)?\s*%"]
 
 
-def step_links(links: dict[str, dict], areas: dict[str, Area]) -> list[dict]:
+def step_links(links: dict[str, dict], areas: dict[str, Area], shop_ok: bool = True) -> list[dict]:
     rows = []
     for url, meta in links.items():
         host = urlsplit(url).netloc
         shop = "myskinrecipes.com" in host
+        if shop and not shop_ok:
+            rows.append({"url": url, "docs": meta["docs"], "status": 0, "error": "skipped: sitemap step incomplete"})
+            continue
         area = areas.setdefault(host, Area(f"shop-links:{host}" if shop else f"link:{host}", SHOP_DELAY if shop else LINK_DELAY))
         r = get(url, area)
         text = strip_tags(r.body) if r.body and "html" in (r.ctype or "html") else ""
@@ -374,16 +397,20 @@ def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     docs_dir = Path(os.environ.get("DOCS_DIR", str(docs_check.DOCS_DIR)))
     lines = docs_check.read_docs(docs_dir)
-    doc_ids = docs_check.cited_ids(lines)
     doc_links = docs_check.external_links(lines)
     snapshot = {int(r["id"]): r for r in docs_check.read_catalog(docs_dir)}
-    log(f"docs: {len(lines)} lines · {len(doc_ids)} cited IDs · {len(doc_links)} links · file 7 rows {len(snapshot)}")
+    log(f"docs: {len(lines)} lines · {len(doc_links)} links · file 7 rows {len(snapshot)}")
     price_ids_file = HERE / "price_ids.json"
     price_ids = json.loads(price_ids_file.read_text()) if price_ids_file.exists() else []
 
     shop_area = Area("shop-sitemap", 0.5)
-    sitemap = step_sitemap(shop_area)
+    sitemap, sitemap_problem = step_sitemap(shop_area)
     summary: dict = {"generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "sitemap_products": len(sitemap)}
+    if sitemap_problem:  # a partial table would turn every unread product into a false "missing" and be reused later
+        log(f"sitemap incomplete ({sitemap_problem}): ID, link and 'ร้านไม่มี' checks skipped, table not written")
+        summary["sitemap_problem"] = sitemap_problem
+        sitemap = {}
+    doc_ids = docs_check.cited_ids(lines, set(sitemap) or None)
 
     # 2. cited IDs vs fresh sitemap
     cited_rows = []
@@ -395,7 +422,7 @@ def main() -> int:
             "id": i, "in_sitemap": bool(s), "in_snapshot": bool(snap),
             "sitemap_name": s["name"] if s else "", "sitemap_category": s["category"] if s else "",
             "sitemap_url": s["url"] if s else "", "doc_names": meta.get("names", []), "doc_urls": meta.get("urls", []),
-            "doc_url_matches": (not meta.get("urls")) or (bool(s) and s["url"] in meta["urls"]),
+            "doc_url_matches": (not meta.get("urls")) or (bool(s) and unquote(s["url"]) in {unquote(u) for u in meta["urls"]}),
             "docs": meta.get("docs", []), "marked_x": meta.get("marked", False),
         })
     write_csv(OUT / "cited_ids.csv", cited_rows, ["id", "in_sitemap", "marked_x", "in_snapshot", "doc_url_matches", "sitemap_name",
@@ -437,10 +464,9 @@ def main() -> int:
         write_csv(OUT / "category_counts.csv", [{"category": c, "products": n} for c, n in cats.most_common()],
                   ["category", "products"])
 
-    # 3. expert pages for missing IDs (+ 5 controls that are in the sitemap)
-    if not sitemap:  # sitemap unavailable: only check cited IDs that file 7 does not list either
-        missing = [i for i in missing if i not in snapshot]
-    missing = missing[:150]
+    # 3. expert pages for missing IDs (+ 5 controls that are in the sitemap); skipped without a full sitemap,
+    #    because then "missing" would mean "not in file 7" and the shop would get dozens of needless requests
+    missing = missing[:150] if sitemap else []
     controls = [i for i in (2845, 2810, 2665, 7789, 3222) if i in sitemap]
     expert_area = Area("shop-expert", SHOP_DELAY)
     expert = step_expert(missing + controls, expert_area)
@@ -460,7 +486,7 @@ def main() -> int:
         if u:
             probe_urls.append(u)
     probe_urls.append(f"{BASE}/shop/en/wood-aroma-chemicals/99999999-does-not-exist.html")
-    probe, has_price = step_shop_probe(probe_urls, probe_area)
+    probe, has_price = step_shop_probe(probe_urls if sitemap else [], probe_area)
     write_csv(OUT / "shop_probe.csv", probe, ["url", "status", "bytes", "title", "signals", "final_url", "error", "head"])
     summary["shop_probe_codes"] = dict(probe_area.codes)
     summary["shop_probe_has_price_in_html"] = has_price
@@ -481,7 +507,7 @@ def main() -> int:
 
     # 5. external links
     link_areas: dict[str, Area] = {}
-    links = step_links(doc_links, link_areas)
+    links = step_links(doc_links, link_areas, shop_ok=bool(sitemap))
     write_csv(OUT / "links.csv", links, ["url", "status", "final_url", "ctype", "title", "chars", "error", "docs",
                                          "doc_text", "excerpts"])
     summary["links_checked"] = len(links)
@@ -490,7 +516,8 @@ def main() -> int:
     (OUT / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     md = ["# MSR verify run", "", f"- generated: {summary['generated']}",
           f"- products in sitemap: {summary['sitemap_products']}",
-          f"- cited IDs: {summary['cited_ids']} · missing from sitemap: {len(missing)}",
+          (f"- cited IDs: {summary['cited_ids']} · missing from sitemap: {len(summary['cited_missing_from_sitemap'])}" if sitemap
+           else f"- cited IDs: {summary['cited_ids']} · sitemap incomplete: {summary.get('sitemap_problem', 'not read')}"),
           f"- expert pages checked: {summary['expert_checked']} · codes {summary['expert_codes']} · stopped: {summary['expert_stopped'] or 'no'}",
           f"- shop probe codes {summary['shop_probe_codes']} · price in raw HTML: {has_price} · stopped: {summary['shop_probe_stopped'] or 'no'}",
           f"- links checked: {summary['links_checked']} · codes {summary['link_codes']}"]

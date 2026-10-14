@@ -65,5 +65,63 @@ class ParserTests(unittest.TestCase):
         self.assertTrue(any("IFRA 51" in e for e in ex))
 
 
+class ShopRefusalTests(unittest.TestCase):
+    def setUp(self):
+        v.SHOP_REFUSED = ""
+        for host in ("https://www.myskinrecipes.com", "https://example.org"):
+            rp = v.urllib.robotparser.RobotFileParser()
+            rp.parse([])
+            v.ROBOTS[host] = rp
+        self.calls = []
+        self.real_urlopen = v.urllib.request.urlopen
+
+        def fake_urlopen(req, timeout=30):
+            self.calls.append(req.full_url)
+            raise v.urllib.error.HTTPError(req.full_url, 403, "Forbidden", {}, None)
+
+        v.urllib.request.urlopen = fake_urlopen
+
+    def tearDown(self):
+        v.urllib.request.urlopen = self.real_urlopen
+        v.SHOP_REFUSED = ""
+
+    def test_one_refusal_stops_every_later_shop_request(self):
+        r1 = v.get(v.SITEMAP_INDEX, v.Area("shop-sitemap", 0))
+        r2 = v.get("https://www.myskinrecipes.com/expert/product/2845?lang=en", v.Area("shop-expert", 0))
+        self.assertEqual((r1.status, r2.status), (403, 0))
+        self.assertIn("refused earlier", r2.error)
+        self.assertEqual(self.calls, [v.SITEMAP_INDEX])
+
+    def test_refused_sitemap_is_reported_incomplete(self):
+        products, problem = v.step_sitemap(v.Area("shop-sitemap", 0))
+        self.assertEqual(products, {})
+        self.assertEqual(problem, "sitemap index: 403 HTTP 403")
+
+
+class PartialSitemapTests(unittest.TestCase):
+    def setUp(self):
+        self.real_get = v.get
+
+    def tearDown(self):
+        v.get = self.real_get
+
+    def test_a_failed_child_sitemap_makes_the_read_incomplete(self):
+        def fake_get(url, area, max_bytes=0):
+            if url == v.SITEMAP_INDEX:
+                return v.Resp(url, 200, body=SITEMAP_INDEX.replace("1_th_0", "1_en_1"))
+            if url.endswith("1_en_0_sitemap.xml"):
+                return v.Resp(url, 200, body=SITEMAP)
+            return v.Resp(url, 0, error="timeout")
+
+        v.get = fake_get
+        products, problem = v.step_sitemap(v.Area("shop-sitemap", 0))
+        self.assertEqual((sorted(products), problem), ([2845, 7789], "1 of 2 sitemaps could not be read"))
+
+    def test_a_small_but_complete_read_is_still_suspicious(self):
+        v.get = lambda url, area, max_bytes=0: v.Resp(url, 200, body=SITEMAP_INDEX if url == v.SITEMAP_INDEX else SITEMAP)
+        products, problem = v.step_sitemap(v.Area("shop-sitemap", 0))
+        self.assertEqual(problem, "only 2 products (expected at least 200,000)")
+
+
 if __name__ == "__main__":
     unittest.main()
