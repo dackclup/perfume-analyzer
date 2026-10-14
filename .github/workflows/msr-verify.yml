@@ -1,0 +1,81 @@
+name: MSR verify
+
+# Checks the perfume research notes (mirror of the Project docs in project-docs/) against
+# MySkinRecipes: public sitemap, MY Expert pages, a small plain-HTTP probe of product pages, and every
+# external link the notes cite. Fails when a doc check fails (see tools/msr-verify/docs_check.py) or the
+# sitemap cannot be read completely. Stops all requests to the shop at the first HTTP 403/429 and does not
+# retry or work around it; every request is checked against robots.txt. Results of runs on main go to the
+# `msr-verify-data` branch (other branches: `msr-verify-data-test`) and an artifact.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * 1" # Mondays 09:17 Bangkok time: catch shop changes even when no doc changed
+  push:
+    branches: ["main", "claude/msr-verify-**"]
+    paths:
+      - "project-docs/**"
+      - "tools/msr-verify/**"
+      - ".github/workflows/msr-verify.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: msr-verify
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Tests (offline)
+        run: python -m unittest discover -s tools/msr-verify -p 'test_*.py' -v
+
+      - name: Verify docs against the shop
+        env:
+          OUT_DIR: out
+        run: python tools/msr-verify/verify.py
+
+      - name: Push results to the data branch
+        if: success() || failure() # not when a newer run cancelled this one
+        env:
+          # runs from other branches must not replace the table that local checks read
+          DATA_BRANCH: ${{ github.ref == 'refs/heads/main' && 'msr-verify-data' || 'msr-verify-data-test' }}
+        run: |
+          if [ ! -d out ]; then echo "no output"; exit 0; fi
+          # keep the last good sitemap table when this run could not read the whole sitemap
+          if [ ! -f out/sitemap_products.csv.gz ] && git fetch -q origin "$DATA_BRANCH" 2>/dev/null; then
+            if git show FETCH_HEAD:sitemap_products.csv.gz > out/sitemap_products.csv.gz 2>/dev/null; then
+              echo "sitemap_products.csv.gz comes from an earlier run: $(git log -1 --format=%s FETCH_HEAD)" > out/sitemap_products_from_earlier_run.txt
+            else
+              rm -f out/sitemap_products.csv.gz
+            fi
+          fi
+          cp -r out /tmp/msr-verify-out
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan msr-verify-tmp
+          git rm -r --cached --quiet .
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -r /tmp/msr-verify-out/. .
+          git add -A
+          git commit -m "data(msr-verify): run $(date -u +%Y-%m-%dT%H:%MZ) from ${GITHUB_SHA::7} (${GITHUB_REF_NAME})"
+          git push --force origin "HEAD:refs/heads/$DATA_BRANCH"
+
+      - name: Upload artifact
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: msr-verify
+          path: /tmp/msr-verify-out
+          if-no-files-found: ignore
