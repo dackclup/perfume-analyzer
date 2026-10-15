@@ -40,6 +40,15 @@ class T(unittest.TestCase):
         code, text, _ = run([read("2026-10-15T01:00:00Z", "v1\n"), write("2026-10-15T02:00:00Z"), read("2026-10-15T03:00:00Z", "v2\n")])
         self.assertEqual((code, text), (0, "v2\n"))
 
+    # round 30: timestamps are compared as times, not strings; a write with no timestamp counts as newest
+    def test_mixed_timestamp_precision(self):
+        code, text, _ = run([write("2026-10-15T02:00:00Z"), read("2026-10-15T02:00:00.500Z", "v2\n")])
+        self.assertEqual((code, text), (0, "v2\n"))
+
+    def test_write_without_timestamp_is_treated_as_newest(self):
+        code, text, s = run([read("2026-10-15T01:00:00Z", "v1\n"), write("")])
+        self.assertEqual(code, 1); self.assertIsNone(text)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,17 +11,18 @@ older local copy. A whole-file upload keeps only one side; a 3-way merge keeps b
 
 For each doc in mine:  theirs == base -> mine · mine == base -> theirs · both changed -> `git merge-file`.
 Only docs that need uploading (mine, merged both, new) are written to --out; "same" and "theirs" docs are already
-right in the Project and are only listed. A fresh read that is clearly shorter than base (a truncated read?) of a
-doc that both sides changed is a conflict unless --allow-shrink NAME is passed. What no tool here can see: a fresh
-read that is itself stale (pull_docs refuses docs written after their last read) or a base that is not the text
-the edits started from — take the base right after each verified read or write.
+right in the Project and are only listed. A fresh read that looks truncated (much shorter than base, or missing
+base's last lines) of a doc that both sides changed is a conflict unless --allow-shrink NAME is passed. What no tool
+here can see: a fresh read that is itself stale (pull_docs skips docs this session wrote after their last read, but
+cannot see other sessions' writes) or a base that is not the text the edits started from — take the base right after
+each verified read or write.
 Stops (exit 1) and writes NOTHING at all when any doc conflicts, when a doc is missing from the fresh read
 (deleted or renamed in the Project, or simply not read — read it first, or pass --new NAME for a doc that is
 really new), or when both sides changed and there is no base. Exit 2 = wrong usage, before anything is written:
 --theirs holds none of mine's docs (wrong folder?), any two of --base, --mine, --theirs are the same folder, --mine holds
 sub-folders or links, every doc in --mine equals --base (nothing edited — base taken after editing?), --out is not
-an empty folder, or git is not installed. Exit 3 = writing --out failed (nothing is left in it). Docs only in the
-Project are listed.
+an empty folder, or git is not installed. Exit 3 = writing --out failed; every file this run created is removed
+(the message says if anything is left). Docs only in the Project are listed.
 
     python3 tools/msr-verify/safe_merge.py --base B --mine M --theirs T/วิจัยน้ำหอมดีไซน์เนอร์ --out O [--new 12-x.md] [--allow-shrink 4-x.md]
 """
@@ -41,11 +42,16 @@ def files(d: Path) -> dict[str, Path]:
 
 
 def shrunk(b: bytes, t: bytes) -> bool:
-    """theirs looks cut off: much shorter than base, or shorter and missing base's last line."""
-    if len(t) >= len(b):
-        return False
-    last = b.rstrip().splitlines()[-1] if b.strip() else b""
-    return len(t) < 0.9 * len(b) or last not in t
+    """theirs looks cut off: much shorter than base, or base's last 3 lines are not in it (in order) — whatever its length."""
+    if len(t) < 0.9 * len(b):
+        return True
+    pos = 0
+    for line in [x for x in b.splitlines() if x.strip()][-3:]:
+        pos = t.find(line, pos)
+        if pos < 0:
+            return True
+        pos += len(line)
+    return False
 
 
 def merge_one(b: bytes | None, m: bytes, t: bytes, allow_shrink: bool = False) -> tuple[str, bytes | None]:
@@ -58,7 +64,7 @@ def merge_one(b: bytes | None, m: bytes, t: bytes, allow_shrink: bool = False) -
     if m == b:
         return "theirs", t
     if shrunk(b, t) and not allow_shrink:
-        return "CONFLICT: fresh read is shorter than base (truncated read?) — check it, or pass --allow-shrink", None
+        return "CONFLICT: fresh read looks truncated (much shorter than base, or base's last lines are missing) — check it, or pass --allow-shrink", None
     with tempfile.TemporaryDirectory() as d:
         dm, db, dt = (Path(d) / x for x in ("mine", "base", "theirs"))
         dm.write_bytes(m); db.write_bytes(b); dt.write_bytes(t)
@@ -131,15 +137,27 @@ def main(argv: list[str] | None = None) -> int:
     if any(data is None for _, _, data in rows):
         print("stopped: nothing written"); return 1
     upload = [(name, data) for status, name, data in rows if status not in ("same", "theirs")]
+    created_out = not out.exists()
     written: list[Path] = []
     try:
         out.mkdir(parents=True, exist_ok=True)
         for name, data in upload:
-            (out / name).write_bytes(data); written.append(out / name)
+            written.append(out / name)   # listed before writing, so a half-written file is removed too
+            (out / name).write_bytes(data)
     except OSError as e:
         for p in written:
-            p.unlink(missing_ok=True)
-        print(f"error writing --out: {e} — nothing was left in {out}; fix it and run again"); return 3
+            try:
+                p.unlink(missing_ok=True)
+            except OSError:
+                pass
+        if created_out:
+            try:
+                out.rmdir()
+            except OSError:
+                pass
+        left = sorted(p.name for p in out.iterdir()) if out.is_dir() else []
+        print(f"error writing --out: {e} — " + (f"could not remove: {', '.join(left)} — delete {out} before retrying" if left
+                                                  else f"nothing was left in {out}; fix it and run again")); return 3
     skipped = [name for status, name, _ in rows if status in ("same", "theirs")]
     if skipped:
         print(f"no upload needed (the Project already has this text): {', '.join(skipped)}")
