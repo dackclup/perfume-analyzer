@@ -10,10 +10,12 @@ older local copy. A whole-file upload keeps only one side; a 3-way merge keeps b
              after `pull_docs.py --out DIR` (pull_docs writes one sub-folder per Project folder)
 
 For each doc in mine:  theirs == base -> mine · mine == base -> theirs · both changed -> `git merge-file`.
+Only docs that need uploading (mine, merged both, new) are written to --out; "same" and "theirs" docs are already
+right in the Project and are only listed, so a bad fresh read is never uploaded back.
 Stops (exit 1) and writes NOTHING at all when any doc conflicts, when a doc is missing from the fresh read
 (deleted or renamed in the Project, or simply not read — read it first, or pass --new NAME for a doc that is
 really new), or when both sides changed and there is no base. Exit 2 = wrong usage, before anything is written:
---theirs holds none of mine's docs (wrong folder?), --base or --mine is the same folder as --theirs, --mine holds
+--theirs holds none of mine's docs (wrong folder?), any two of --base, --mine, --theirs are the same folder, --mine holds
 sub-folders or links, --out is not an empty folder, or git is not installed. Docs only in the Project are listed.
 
     python3 tools/msr-verify/safe_merge.py --base B --mine M --theirs T/วิจัยน้ำหอมดีไซน์เนอร์ --out O [--new 12-x.md]
@@ -79,10 +81,11 @@ def main(argv: list[str] | None = None) -> int:
     base, mine, theirs, out = (Path(getattr(a, k)) for k in ("base", "mine", "theirs", "out"))
     if shutil.which("git") is None:
         print("error: git is not installed (needed for git merge-file)"); return 2
-    same = [f"--{k}" for k, p in (("base", base), ("mine", mine)) if p.resolve() == theirs.resolve()]
+    named = (("base", base), ("mine", mine), ("theirs", theirs))
+    same = [f"--{a} and --{b}" for i, (a, p) in enumerate(named) for b, q in named[i + 1:] if p.resolve() == q.resolve()]
     if same:
-        print(f"error: {' and '.join(same)} is the same folder as --theirs; the base must be the snapshot taken "
-              "before editing and mine the edited copies, or the merge cannot see the other side"); return 2
+        print(f"error: {', '.join(same)} are the same folder; the base must be the snapshot taken before editing, "
+              "mine the edited copies and theirs the fresh read, or the merge cannot see each side"); return 2
     odd = sorted(p.name for p in mine.iterdir() if p.is_symlink() or not p.is_file()) if mine.is_dir() else []
     if odd:
         print(f"error: --mine holds sub-folders, links or other non-files: {', '.join(odd)} — put only the docs to write there"); return 2
@@ -103,8 +106,13 @@ def main(argv: list[str] | None = None) -> int:
     if any(data is None for _, _, data in rows):
         print("stopped: nothing written"); return 1
     out.mkdir(parents=True, exist_ok=True)
-    for _, name, data in rows:
+    upload = [(name, data) for status, name, data in rows if status not in ("same", "theirs")]
+    for name, data in upload:
         (out / name).write_bytes(data)
+    skipped = [name for status, name, _ in rows if status in ("same", "theirs")]
+    if skipped:
+        print(f"no upload needed (the Project already has this text): {', '.join(skipped)}")
+    print(f"to upload: {', '.join(n for n, _ in upload) or 'nothing'}")
     return 0
 
 

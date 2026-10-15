@@ -1,6 +1,6 @@
 # 4 · แคตตาล็อกวัตถุดิบที่ MySkinRecipes
 
-> ชุดวิจัยน้ำหอมดีไซน์เนอร์ · ฉบับรวม 13 ต.ค. 2026 · ไฟล์ 4 (สารบัญที่ไฟล์ 0) · **อัปเดตรอบ 4:** ตรวจซ้ำทุกรหัสกับ sitemap ทั้งร้าน 13 ต.ค. 2026 · **รอบ 5:** เพิ่มสารต้องห้ามและเพดานในส่วน O · **รอบ 7 (14 ต.ค.):** ระบบตรวจอัตโนมัติพบว่าร้านมี PEG-40 Hydrogenated Castor Oil (738) จึงย้ายจากส่วน K ไปส่วน J และพบ Irone ที่น่าจะเป็นแบบรีเอเจนต์ (201096) ระบุไว้ในส่วน K · รหัสที่ไม่อยู่ใน sitemap เขียน ⓧ หลังรหัสทุกตัว · **รอบ 8 (15 ต.ค.):** ใส่คำเตือนตัวตนสินค้าให้ Laurel Berry Oil (34159) และ DGME (9174) และวงเล็บกับ ⓧ ให้รหัสที่เขียนลอย
+> ชุดวิจัยน้ำหอมดีไซน์เนอร์ · ฉบับรวม 13 ต.ค. 2026 · ไฟล์ 4 (สารบัญที่ไฟล์ 0) · **อัปเดตรอบ 4:** ตรวจซ้ำทุกรหัสกับ sitemap ทั้งร้าน 13 ต.ค. 2026 · **รอบ 5:** เพิ่มสารต้องห้ามและเพดานในส่วน O · **รอบ 7 (14 ต.ค.):** ระบบตรวจอัตโนมัติพบว่าร้านมี PEG-40 Hydrogenated Castor Oil (738) จึงย้ายจากส่วน K ไปส่วน J และพบ Irone ที่น่าจะเป็นแบบรีเอเจนต์ (201096) ระบุไว้ในส่วน K · รหัสที่ไม่อยู่ใน sitemap เขียน ⓧ หลังรหัสทุกตัว · **รอบ 8 (15 ต.ค.):** ใส่คำเตือนตัวตนสินค้าให้ Laurel Berry Oil (34159) และ DGME (9174) และวงเล็บกับ ⓧ ให้รหัสที่เขียนลอย · ติดป้ายอนุมานให้ Peru Balsam Resin (3180) ว่าเป็นแบบดิบ และ Bergamot (3168) ว่าไม่ใช่ FCF · เอา Amber Xtreme (2890 ⓧ) ออกจากสรุปย่อ
 > ร้าน: [MySkinRecipes Thailand](https://www.myskinrecipes.com/shop/th/) · ถ้ายังไม่รู้จะซื้ออะไรก่อน ให้อ่านไฟล์ 3
 
 ## วิธีใช้แคตตาล็อกนี้
@@ -190,7 +190,7 @@
 | วัตถุดิบ (รหัส) | บทบาท / แนว | ~฿/g |
 |---|---|---|
 | ⭐ [Bergamot FCF (127688)](https://www.myskinrecipes.com/shop/en/bergamot-orange-lemon/127688-bergamot-essential-oil-fcf-bergapten-free.html) ⚠ | เปิดกลิ่นแทบทุกตัว · ต้องเป็น FCF | 65 |
-| ⚠ [Bergamot ธรรมดา (3168)](https://www.myskinrecipes.com/shop/en/bergamot-orange-lemon/3168-bergamot-essential-oil-italy.html) | ไม่ใช่ FCF · ใช้ได้เพียงราว 0.4% ในขวด | — |
+| ⚠ [Bergamot ธรรมดา (3168)](https://www.myskinrecipes.com/shop/en/bergamot-orange-lemon/3168-bergamot-essential-oil-italy.html) | ร้านไม่บอกว่าเป็น FCF จึงถือว่าไม่ใช่ [อนุมาน: ชื่อไม่มีคำว่า FCF ต่างจาก 127688 และ 33121] · ชื่อในร้านเขียน Fruit, India แต่ URL เขียน italy · ใช้ได้เพียงราว 0.4% ในขวด | — |
 | ● [Lemon Italy (33091)](https://www.myskinrecipes.com/shop/en/bergamot-orange-lemon/33091-lemon-oil-peel-italy.html) ⚠ 2.0% · [Lemon India (3224)](https://www.myskinrecipes.com/shop/en/bergamot-orange-lemon/3224-lemon-oil-peel.html) ⚠ 2.0% · Lemon 5x (33390) ⚠ 0.4% | เลมอน · Bleu, Eros · แบบบีบเย็นทำให้ผิวแพ้แสง ใช้งบรวมกับน้ำมันส้มบีบตัวอื่น (ไฟล์ 1) · มี Citral ด้วย | — |
 | ● [Grapefruit Italy (33085)](https://www.myskinrecipes.com/shop/en/bergamot-orange-lemon/33085-grapefruit-oil-italy.html) ⚠ 4.0% · [Grapefruit India (3216)](https://www.myskinrecipes.com/shop/en/bergamot-orange-lemon/3216-grapefruit-oil.html) ⚠ 4.0% | เกรปฟรุต · Bleu, Terre, 1 Million · แบบบีบทำให้ผิวแพ้แสง ใช้งบรวมกับน้ำมันส้มบีบตัวอื่น (ไฟล์ 1) | — |
 | ● [Sweet Orange (3173)](https://www.myskinrecipes.com/shop/en/bergamot-orange-lemon/3173-sweet-orange-peel-oil.html) · [Bitter Orange (3239)](https://www.myskinrecipes.com/shop/en/bergamot-orange-lemon/3239-bitter-orange-oil-peel.html) ⚠ 1.25% · [Lime (3226)](https://www.myskinrecipes.com/shop/en/bergamot-orange-lemon/3226-lime-citrus-aurantifolia-oil.html) ⚠ 0.70% · Mandarin (3229) ⚠ | ส้ม · Coco Mademoiselle, 1 Million · ลิงก์ Mandarin ในผลค้นหาไม่ตรง ค้นด้วยรหัส | — |
@@ -405,7 +405,7 @@ Benzyl Salicylate 143806 · Dihydromyrcenol 56963 (1 kg ฿6,700 ≈ ฿6.7/g) �
 | ⛔ Dihydrocoumarin (2830) | EU และอาเซียนห้ามใช้เป็นสารให้กลิ่น (Annex II 427 มาจากรายการ SCCNFP) แม้ IFRA 51 จำกัดไว้ 0.21% (พบรอบ 12) |
 | ⛔ Peru Balsam Resin (3180) | IFRA ห้าม Peru balsam ดิบ ใช้ได้เฉพาะแบบสกัด/กลั่นในปริมาณจำกัด เช่น Peru Balsam Oil (3179) · ร้านไม่บอกว่า 3180 เป็นแบบดิบหรือสกัด (อยู่หมวด absolute-solvent-extract) แต่ชื่อ Resin น่าจะเป็นแบบดิบ [อนุมาน] จึงถือว่าห้ามไว้ก่อนจนกว่าร้านยืนยัน |
 | ⛔ Lemon Verbena Oil (3284) | IFRA ห้ามน้ำมันเวอร์บีน่า |
-| ⚠ Bergamot ธรรมดา (3168) | ไม่ใช่ FCF แพ้แสง ใช้ 127688 หรือ Italy FCF (33121) แทน |
+| ⚠ Bergamot ธรรมดา (3168) | ร้านไม่บอกว่าเป็น FCF จึงถือว่าไม่ใช่ [อนุมาน] แพ้แสง ใช้ 127688 หรือ Italy FCF (33121) แทน |
 | ⚠ Oakmoss (3260, 33884) · Treemoss Resinoid (3837) | Oakmoss + Treemoss รวมกันไม่เกิน 0.1% ในขวด (IFRA STD 067/080) · เฉพาะเกรด low-atranol (atranol/chloroatranol แต่ละตัวต่ำกว่า 100 ppm) · EU ห้าม atranol/chloroatranol (Annex II 1381/1382) · ใช้ Evernyl (2905) แทนได้ |
 | ⛔ 2,4-Decadienal (2433, 33755, 33763), 2,4-Heptadienal (33756), 2,4-Nonadienal (3467), Geranyl Nitrile (2488), Massoia Lactone (33686) | IFRA ฉบับ 51 ห้าม (พบรอบ 5 จากดัชนี IFRA 51) |
 | ⛔ Verdantiol (3991) | Schiff base ของ Lilial มาตรฐาน IFRA นับเป็น Lilial 60.6% · EU ห้าม Lilial (พบรอบ 5) |
@@ -420,7 +420,7 @@ Benzyl Salicylate 143806 · Dihydromyrcenol 56963 (1 kg ฿6,700 ≈ ฿6.7/g) �
 | ⚠ Dimethyl Anthranilate (2722) | EU จำกัด ≤0.1% ในผลิตภัณฑ์ทิ้งไว้บนผิว ห้ามในกันแดดหรือผลิตภัณฑ์ที่ตั้งใจให้โดน UV (พบรอบ 5) |
 | ⚠ Methyl Salicylate (2477) | EU จำกัด ≤0.6% ในน้ำหอมแอลกอฮอล์ · Birch Sweet Oil (3185) มีสารนี้สูง (พบรอบ 5) |
 | ⚠ Furfural (2530) | EU จำกัด ≤0.001% (พบรอบ 5) |
-| ⚠ Ethoxydiglycol (137) · DGME (9174) | EU จำกัด Diethylene glycol monoethyl ether ≤2.6% ในน้ำหอมสเปรย์ และต้องมี ethylene glycol ปนไม่เกิน 0.1% (พบรอบ 5) · 9174 ชื่อเต็มเป็น monoethyl ether แต่ตัวย่อ DGME มักหมายถึง monomethyl ether (DEGME, CAS 111-77-3) ที่ EU ห้าม (Annex II 1000) [อนุมาน: ชื่อกับตัวย่อขัดกัน] ถามเลข CAS ก่อน หรือใช้ Ethoxydiglycol (137) แทน (พบรอบ 8) |
+| ⚠ Ethoxydiglycol (137) · DGME (9174) | EU จำกัด Diethylene glycol monoethyl ether ≤2.6% ในน้ำหอมสเปรย์ และต้องมี ethylene glycol ปนไม่เกิน 0.1% (พบรอบ 5) · 9174 ชื่อเต็มและ URL เป็น monoethyl ether จึงน่าจะเป็นตัวเดียวกับ 137 [อนุมาน] แต่ตัวย่อของ glycol ether ใช้ไม่ตรงกันในแต่ละแหล่ง และ monomethyl ether (DEGME, CAS 111-77-3) EU ห้าม (Annex II 1000) จึงควรถามเลข CAS ก่อน (monoethyl = 111-90-0) หรือใช้ Ethoxydiglycol (137) แทน (พบรอบ 8) |
 | ⚠ Melissa Oil (3174) | IFRA 51 จำกัด Melissa oil แท้ (Melissa officinalis) เพดาน 0.60% · น้ำมันในตลาดมักปลอมปน ขอใบ COA (พบรอบ 5) |
 
 > ตัวเลขเพดานเปลี่ยนตามฉบับแก้ไขของ IFRA ก่อนผลิตจริงให้เปิดมาตรฐานรายตัวที่ ifrafragrance.org

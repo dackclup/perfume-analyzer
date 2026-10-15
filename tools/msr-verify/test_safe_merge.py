@@ -5,7 +5,7 @@ TOOL = Path(os.environ.get("SAFE_MERGE", Path(__file__).resolve().parent / "safe
 BASE = "a\nb\nc\nd\ne\nf\n"
 
 
-def run(base, mine, theirs, extra=(), out_files=None, env=None, theirs_dir=None, base_is_theirs=False, mine_extra=None, out_is_file=False):
+def run(base, mine, theirs, extra=(), out_files=None, env=None, theirs_dir=None, base_is=None, mine_is=None, mine_extra=None, out_is_file=False):
     """base/mine/theirs: dict name -> text (a plain str means {'0-x.md': text}; None = folder empty)."""
     def norm(x):
         return {} if x is None else ({"0-x.md": x} if isinstance(x, str) else x)
@@ -24,8 +24,9 @@ def run(base, mine, theirs, extra=(), out_files=None, env=None, theirs_dir=None,
             for name, txt in out_files.items():
                 (dirs["o"] / name).write_text(txt, encoding="utf-8")
         t = d / theirs_dir if theirs_dir else dirs["t"]
-        b = t if base_is_theirs else dirs["b"]
-        r = subprocess.run([sys.executable, "-I", str(TOOL), "--base", str(b), "--mine", str(dirs["m"]),
+        pick = {"t": t, "m": dirs["m"], None: None}
+        b = pick[base_is] or dirs["b"]; m = pick[mine_is] or dirs["m"]   # base_is / mine_is: pass the same folder twice
+        r = subprocess.run([sys.executable, "-I", str(TOOL), "--base", str(b), "--mine", str(m),
                             "--theirs", str(t), "--out", str(dirs["o"]), *extra], capture_output=True, text=True, env=env)
         out = {p.name: p.read_text(encoding="utf-8") for p in dirs["o"].iterdir()} if dirs["o"].is_dir() else {}
         return r.returncode, out, r.stdout + r.stderr
@@ -45,8 +46,8 @@ class T(unittest.TestCase):
     def test_only_mine_changed(self):
         code, out, _ = run(BASE, BASE + "g\n", BASE); self.assertEqual((code, out), (0, {"0-x.md": BASE + "g\n"}))
 
-    def test_only_theirs_changed(self):  # local copy is stale: keep the Project version
-        code, out, _ = run(BASE, BASE, BASE + "h\n"); self.assertEqual((code, out), (0, {"0-x.md": BASE + "h\n"}))
+    def test_only_theirs_changed(self):  # local copy is stale: the Project already has the right text, nothing to upload
+        code, out, s = run(BASE, BASE, BASE + "h\n"); self.assertEqual((code, out), (0, {})); self.assertIn("no upload", s)
 
     def test_no_base_both_differ_stops(self):
         code, out, _ = run(None, "x\n", "y\n"); self.assertEqual(code, 1); self.assertEqual(out, {})
@@ -106,7 +107,7 @@ class T(unittest.TestCase):
             self.assertEqual(r.returncode, 0); self.assertIn("e theirs", (d / "o" / "0-x.md").read_text(encoding="utf-8"))
 
     def test_base_same_as_theirs_refused(self):  # a base taken from the same fresh read hides the other side
-        code, out, s = run(BASE, BASE + "g\n", BASE.replace("e\n", "e theirs\n"), base_is_theirs=True)
+        code, out, s = run(BASE, BASE + "g\n", BASE.replace("e\n", "e theirs\n"), base_is="t")
         self.assertEqual(code, 2); self.assertEqual(out, {}); self.assertIn("same folder", s)
 
     def test_subfolder_or_link_in_mine_refused(self):
@@ -118,6 +119,22 @@ class T(unittest.TestCase):
     def test_out_is_a_file_refused(self):
         code, out, s = run(BASE, BASE + "g\n", BASE, out_is_file=True)
         self.assertEqual(code, 2); self.assertIn("not a folder", s)
+
+
+    # --- round 28 (F3) ---
+    def test_base_same_as_mine_refused(self):  # snapshot edited in place: every doc looks unchanged, edits silently dropped
+        code, out, s = run(BASE, BASE + "g\n", BASE.replace("e\n", "e theirs\n"), base_is="m")
+        self.assertEqual(code, 2); self.assertEqual(out, {}); self.assertIn("same folder", s)
+
+    def test_mine_same_as_theirs_refused(self):
+        code, out, s = run(BASE, BASE + "g\n", BASE, mine_is="t")
+        self.assertEqual(code, 2); self.assertEqual(out, {}); self.assertIn("same folder", s)
+
+    def test_unchanged_docs_not_written(self):  # a truncated fresh read must not be uploaded back
+        bad = BASE[:3]
+        code, out, s = run({"0-x.md": BASE, "1-x.md": BASE}, {"0-x.md": BASE, "1-x.md": BASE + "g\n"}, {"0-x.md": bad, "1-x.md": BASE})
+        self.assertEqual(code, 0); self.assertEqual(out, {"1-x.md": BASE + "g\n"}); self.assertIn("0-x.md", s)
+        code, out, _ = run(BASE, BASE + "g\n", BASE + "g\n"); self.assertEqual((code, out), (0, {}))   # same: already in the Project
 
 
 if __name__ == "__main__":
