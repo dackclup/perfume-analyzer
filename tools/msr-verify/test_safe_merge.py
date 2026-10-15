@@ -150,6 +150,38 @@ class T(unittest.TestCase):
         code, out, s = run({"0-x.md": BASE + "g\n", "1-x.md": BASE}, {"0-x.md": BASE + "g\n", "1-x.md": BASE}, {"0-x.md": BASE, "1-x.md": BASE})
         self.assertEqual(code, 2); self.assertEqual(out, {}); self.assertIn("nothing edited", s)
 
+    # --- round 30 (F3, F4) ---
+    def test_cut_off_read_longer_than_base_stops(self):  # other side inserted lines, but the read lost base's ending
+        big = "".join(f"line {i}\n" for i in range(400))
+        mine = big.replace("line 10\n", "line 10 mine\n")
+        lines = big.splitlines(True)
+        theirs = "".join(lines[:200] + [f"new {i}\n" for i in range(60)] + lines[200:360])
+        self.assertGreater(len(theirs), len(big))
+        code, out, s = run(big, mine, theirs); self.assertEqual(code, 1); self.assertEqual(out, {}); self.assertIn("truncated", s)
+
+    def test_failed_write_leaves_out_empty(self):  # exit 3 must not leave a partial doc behind
+        import resource
+        big = "".join(f"line {i} " + "x" * 80 + "\n" for i in range(400))
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            for k, txt in (("b", big), ("m", big + "g\n"), ("t", big)):
+                (d / k).mkdir(); (d / k / "0-x.md").write_text(txt, encoding="utf-8")
+            r = subprocess.run([sys.executable, "-I", str(TOOL), "--base", str(d / "b"), "--mine", str(d / "m"), "--theirs", str(d / "t"),
+                                "--out", str(d / "o")], capture_output=True, text=True,
+                               preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_FSIZE, (8192, 8192)))
+            self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
+            self.assertFalse((d / "o").exists() and any((d / "o").iterdir()), "partial file left in --out")
+
+    def test_base_linked_to_theirs_refused(self):  # same folder reached through a link
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            for k, txt in (("m", BASE + "g\n"), ("t", BASE)):
+                (d / k).mkdir(); (d / k / "0-x.md").write_text(txt, encoding="utf-8")
+            os.symlink(d / "t", d / "b")
+            r = subprocess.run([sys.executable, "-I", str(TOOL), "--base", str(d / "b"), "--mine", str(d / "m"), "--theirs", str(d / "t"),
+                                "--out", str(d / "o")], capture_output=True, text=True)
+            self.assertEqual(r.returncode, 2); self.assertIn("same folder", r.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
