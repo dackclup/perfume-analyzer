@@ -52,7 +52,8 @@ python3 tools/msr-verify/pull_docs.py --transcript $T --out FRESH --since <เ�
 python3 tools/msr-verify/safe_merge.py --base BASE/วิจัยน้ำหอมดีไซน์เนอร์ --mine MINE \
         --theirs FRESH/วิจัยน้ำหอมดีไซน์เนอร์ --out OUT   # exit 1 = ชนกัน ไม่เขียนอะไร · 2 = ใช้ผิด · 3 = เขียน OUT ไม่สำเร็จ
 # 4. อัปโหลดเฉพาะไฟล์ที่บรรทัด "to upload" บอก ด้วย project_write (local_path) · project_read อีกครั้ง
-#    แล้วเทียบทุกไบต์กับ OUT · ใช้ฉบับที่อ่านนี้เป็น base รอบถัดไป · คัดลอกลง project-docs/ แล้ว push
+#    แล้วเทียบทุกไบต์กับ OUT (ยืนยันแค่ว่าอัปโหลดตรงกับ OUT ไม่ได้พิสูจน์ว่าฉบับที่อ่านในข้อ 3 ครบ)
+#    · ใช้ฉบับที่อ่านนี้เป็น base รอบถัดไป · คัดลอกลง project-docs/ แล้ว push
 #    (เช็กก่อนว่า PR ยังเปิดอยู่ ถ้าถูก merge แล้วให้เปิด branch ใหม่จาก main)
 ```
 

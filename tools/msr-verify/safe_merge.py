@@ -47,7 +47,8 @@ def shrunk(b: bytes, t: bytes) -> bool:
     """A heuristic for "this fresh read looks cut off": it is much shorter than base, or one of two anchor lines of base
     is not matched in place when base and the read are aligned line by line (difflib) — base's last non-blank line,
     and base's last non-blank line that occurs only once in base (so a copied footer elsewhere cannot stand in for
-    it). It cannot prove a read is complete; the read-back byte comparison after writing is the real check."""
+    it, unless the copy includes that line too). It cannot prove a read is complete, and no other step does: the
+    read-back after writing only confirms that the upload equals --out, which was built from this same read."""
     if len(t) < 0.9 * len(b):
         return True
     bl, tl = b.splitlines(), t.splitlines()
