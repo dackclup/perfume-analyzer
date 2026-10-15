@@ -5,7 +5,7 @@
 
 ## วิธีใช้แคตตาล็อกนี้
 
-- รวมจากการค้นคว้า 4 รอบ — ชื่อ รหัส และลิงก์ตรวจกับ sitemap ของร้าน ส่วนราคามาจากหน้าทดสอบของร้าน (stage0) และผลค้นหาเว็บในรอบแรก ซึ่งตรวจซ้ำไม่ได้แล้ว
+- รวมจากการค้นคว้า 4 รอบ — ชื่อ รหัส และลิงก์ตรวจกับ sitemap ของร้าน ส่วนราคา (สำรวจรอบแรก ราว 12–13 ต.ค. 2026) มาจากหน้าทดสอบของร้าน (stage0) และผลค้นหาเว็บในรอบแรก ซึ่งตรวจซ้ำไม่ได้แล้ว
 - **~฿/g** = ราคาต่อกรัมที่ปริมาณน้อยสุด (ซื้อมากถูกลง) · "—" = ยังไม่เห็นราคา · เช็กราคาและสต็อกในตะกร้าก่อนสั่งเสมอ
 - รายการที่ไม่มีลิงก์ ให้ค้นในร้านด้วยรหัสสินค้า · ลิงก์ส่วนใหญ่เปิดหน้าภาษาอังกฤษ
 - **รอบ 3 (13 ต.ค.):** ให้ GitHub Actions อ่าน sitemap สาธารณะของร้าน (สินค้าทั้งร้าน 301,308 รายการ) คัดที่เกี่ยวกับน้ำหอมได้ **1,533 รายการ** รายชื่อครบพร้อมลิงก์อยู่ใน **ไฟล์ 7 (ภาคผนวก CSV)** · sitemap ไม่มีราคา และหน้าร้านปฏิเสธเบราว์เซอร์อัตโนมัติ (HTTP 403) จึงไม่มีราคาใหม่ในรอบนี้
@@ -431,7 +431,7 @@ Benzyl Salicylate 143806 · Dihydromyrcenol 56963 (1 kg ฿6,700 ≈ ฿6.7/g) �
 - [SCCNFP/0320/00 — 36 สารที่ไม่ควรใช้เป็นสารให้กลิ่น พร้อมสถานะ IFRA](https://ec.europa.eu/health/archive/ph_risk/committees/sccp/documents/out116_en.pdf) (6-Methylcoumarin, Ethyl acrylate: Prohibited · Allyl isothiocyanate: should not be used · Dihydrocoumarin: IFRA ฉบับ 51 "จำกัด" แต่ EU และอาเซียนห้ามตาม Annex II 427)
 - [IFRA Standards ฉบับ 51 — ดัชนีมาตรฐานทั้งหมด](https://ifrafragrance.org/docs/default-source/51st-amendment/ifra-standards---51st-amendment.pdf) · [มาตรฐาน Lilial ที่ระบุ Verdantiol (สำเนาที่ PerfumersWorld)](https://www.perfumersworld.com/documents/Project-Templates/IFRA-Standards/Lilial%20-%20p-tert-Butyl-alpha-methylhydrocinnamic%20aldehyde%20(p-BMHCA).pdf)
 - [PerfumersWorld — รายการมาตรฐาน IFRA ที่ห้ามใช้](https://perfumersworld.com/ifra-international-fragrance-association.php) · [IFRA Standard 6-Methylcoumarin (สำเนา)](https://www.perfumersworld.com/documents/Project-Templates/IFRA-Standards/6-MethylCoumarin.pdf) · [IFRA Standard Cade oil (สำเนา)](https://www.perfumersworld.com/documents/Project-Templates/IFRA-Standards/Cade%20oil.pdf)
-- [Sitemap สาธารณะของร้าน](https://www.myskinrecipes.com/shop/sitemap.xml) — อ่านผ่าน GitHub Actions รอบ 3 (12 ต.ค.) และรอบ 4 (13 ต.ค. 2026) · โค้ด: repo dackclup/perfume-analyzer branch `claude/msr-catalog-2026-10-13` (รอบ 3) และ `claude/msr-verify-2026-10-13` (รอบ 4) · ผล: branch `msr-data` และ `msr-verify-data`
+- [Sitemap สาธารณะของร้าน](https://www.myskinrecipes.com/shop/sitemap.xml) — อ่านผ่าน GitHub Actions รอบ 3 (13 ต.ค. 00:38 น.) และรอบ 4 (13 ต.ค. 2026) · โค้ด: repo dackclup/perfume-analyzer branch `claude/msr-catalog-2026-10-13` (รอบ 3) และ `claude/msr-verify-2026-10-13` (รอบ 4) · ผล: branch `msr-data` และ `msr-verify-data`
 - [MySkinRecipes Thailand](https://www.myskinrecipes.com/shop/th/) · หน้า MY Expert เช่น [Lavender 3222](https://www.myskinrecipes.com/expert/product/3222?lang=en), [Black Pepper 3243](https://www.myskinrecipes.com/expert/product/3243?lang=en), [Sauvage Benchmark 7789](https://www.myskinrecipes.com/expert/product/7789?lang=en), [Acqua di Men 3140 ⓧ](https://www.myskinrecipes.com/expert/product/3140?lang=en)
 - หน้าทดสอบของร้าน (stage0.myskinrecipes.com) — แหล่งราคารอบแรก · ใช้งานไม่ได้แล้วเมื่อตรวจ 13 ต.ค. 2026 (ใบรับรอง HTTPS ไม่ตรงโดเมน)
 - [MySkinRecipes Expert — Fixatives in perfume/body spray](https://www.myskinrecipes.com/expert/qa/using-fragrance-fixatives-in-perfume-body-spray)
