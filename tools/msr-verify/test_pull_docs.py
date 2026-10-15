@@ -49,6 +49,15 @@ class T(unittest.TestCase):
         code, text, s = run([read("2026-10-15T01:00:00Z", "v1\n"), write("")])
         self.assertEqual(code, 1); self.assertIsNone(text)
 
+    # round 31 (F7): any entry of a doc without a usable time -> refuse that doc instead of guessing either way
+    def test_read_without_timestamp_is_refused(self):
+        code, text, s = run([read("2026-10-15T01:00:00Z", "v1\n"), read("", "v2\n")])
+        self.assertEqual(code, 1); self.assertIsNone(text); self.assertIn("without a time", s)
+
+    def test_untimed_write_message_says_check_by_hand(self):
+        code, _, s = run([write(""), read("2026-10-15T03:00:00Z", "v2\n")])
+        self.assertEqual(code, 1); self.assertIn("check by hand", s)
+
 
 if __name__ == "__main__":
     unittest.main()
