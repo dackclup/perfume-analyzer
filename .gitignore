@@ -7,3 +7,7 @@ coverage/
 
 # Scraper output goes to the msr-data branch, not main.
 data/
+
+# Python bytecode from running the tools/tests locally
+__pycache__/
+*.pyc

@@ -36,13 +36,13 @@ SITEMAP = {
 }
 
 
-def run(docs: dict[str, str], sitemap=SITEMAP, allow=None):
+def run(docs: dict[str, str], sitemap=SITEMAP, allow=None, titles=None):
     with tempfile.TemporaryDirectory() as tmp:
         for name, text in docs.items():
             Path(tmp, name).write_text(text, encoding="utf-8")
         if not any(n.startswith("4-") for n in docs):
             Path(tmp, "4-cat.md").write_text(SECTION_O, encoding="utf-8")
-        failing, allowed, _ = d.run(Path(tmp), sitemap, allow or {})
+        failing, allowed, _ = d.run(Path(tmp), sitemap, allow or {}, titles or {})
     plain_key = lambda k: re.sub(r":[0-9a-f]{8}$", "", k)  # banned keys end with a hash of the row
     return sorted(plain_key(p.key) for p in failing), sorted(plain_key(p.key) for p in allowed)
 
@@ -90,6 +90,12 @@ class MissingIds(unittest.TestCase):
 
 
 class Links(unittest.TestCase):
+    def test_link_with_parentheses_is_read_whole(self):  # round 27: the Lilial PDF link was cut at "(" and reported 404
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "4-a.md").write_text("- [Lilial](https://ex.org/Lilial%20(p-BMHCA).pdf) · [b](https://ex.org/b.pdf)\n", encoding="utf-8")
+            links = d.external_links(d.read_docs(Path(tmp)))
+        self.assertEqual(sorted(links), ["https://ex.org/Lilial%20(p-BMHCA).pdf", "https://ex.org/b.pdf"])
+
     def test_link_text_id_must_match_the_url(self):
         docs = {"3-a.md": f"- [Methyl Cedryl Ketone (2843)]({SHOP}/wood-aroma-chemicals/2845-iso-e-super.html)\n"}
         self.assertEqual(run(docs)[0], ["link_label:2845", "missing_id:2843"])
@@ -127,6 +133,20 @@ class AbsenceClaims(unittest.TestCase):
     def test_other_phrasings(self):
         docs = {"3-a.md": "- ร้านไม่มี Hedione\n- Orbitone ไม่มีในร้าน\n- ไม่มีในร้าน: Eros — ทำเอง\n- Hedione ที่ร้านไม่มีสต็อก\n"}
         self.assertEqual(run(docs)[0], ["absent_but_sold:eros:9002", "absent_but_sold:hedione:2665", "absent_but_sold:orbitone:9001"])
+
+    def test_cannot_buy_phrasing(self):  # round 29: "Glycolierral (หาซื้อไม่ได้)" was not read as a claim
+        docs = {"2-a.md": "- โน้ตไม้มาจาก Orbitone (หาซื้อไม่ได้) [48]\n- Hedione หาซื้อไม่ได้\n"}
+        self.assertEqual(run(docs)[0], ["absent_but_sold:hedione:2665", "absent_but_sold:orbitone:9001"])
+
+    def test_shop_title_trade_name_is_matched(self):  # round 29: file 7 / sitemap name "ivy dioxolane" lacks Glycolierral
+        sm = dict(SITEMAP); sm[3827] = d.Product(3827, "green-aroma-chemicals", "ivy dioxolane", f"{SHOP}/green-aroma-chemicals/3827-ivy-dioxolane.html")
+        docs = {"2-a.md": "- โน้ตไอวี่มาจาก Glycolierral (หาซื้อไม่ได้)\n"}
+        self.assertEqual(run(docs, sitemap=sm)[0], [])   # the sitemap name alone cannot see it
+        self.assertEqual(run(docs, sitemap=sm, titles={3827: "Ivy Dioxolane, Glycolierral"})[0], ["absent_but_sold:glycolierral:3827"])
+
+    def test_titles_file_is_valid(self):
+        t = d.load_titles()
+        self.assertEqual(t.get(3827), "Ivy Dioxolane, Glycolierral")
 
     def test_benchmark_names_only_match_benchmarks(self):
         docs = {"4-a.md": SECTION_O + "\n## K. x\n\n| ไม่มีในร้าน | ใช้แทนด้วย |\n|---|---|\n| Benchmark: Eros, YSL | ทำเอง |\n"}
