@@ -1,6 +1,6 @@
 # 4 · แคตตาล็อกวัตถุดิบที่ MySkinRecipes
 
-> ชุดวิจัยน้ำหอมดีไซน์เนอร์ · ฉบับรวม 13 ต.ค. 2026 · ไฟล์ 4 (สารบัญที่ไฟล์ 0) · **อัปเดตรอบ 4:** ตรวจซ้ำทุกรหัสกับ sitemap ทั้งร้าน 13 ต.ค. 2026 · **รอบ 5:** เพิ่มสารต้องห้ามและเพดานในส่วน O · **รอบ 7 (14 ต.ค.):** ระบบตรวจอัตโนมัติพบว่าร้านมี PEG-40 Hydrogenated Castor Oil (738) จึงย้ายจากส่วน K ไปส่วน J และพบ Irone ที่น่าจะเป็นแบบรีเอเจนต์ (201096) ระบุไว้ในส่วน K · รหัสที่ไม่อยู่ใน sitemap เขียน ⓧ หลังรหัสทุกตัว · **รอบ 8 (15 ต.ค.):** ใส่คำเตือนตัวตนสินค้าให้ Laurel Berry Oil (34159) และ DGME (9174) และวงเล็บกับ ⓧ ให้รหัสที่เขียนลอย · ติดป้ายอนุมานให้ Peru Balsam Resin (3180) ว่าเป็นแบบดิบ และ Bergamot (3168) ว่าไม่ใช่ FCF · เอา Amber Xtreme (2890 ⓧ) ออกจากสรุปย่อ
+> ชุดวิจัยน้ำหอมดีไซน์เนอร์ · ฉบับรวม 13 ต.ค. 2026 · ไฟล์ 4 (สารบัญที่ไฟล์ 0) · **อัปเดตรอบ 4:** ตรวจซ้ำทุกรหัสกับ sitemap ทั้งร้าน 13 ต.ค. 2026 · **รอบ 5:** เพิ่มสารต้องห้ามและเพดานในส่วน O · **รอบ 7 (14 ต.ค.):** ระบบตรวจอัตโนมัติพบว่าร้านมี PEG-40 Hydrogenated Castor Oil (738) จึงย้ายจากส่วน K ไปส่วน J และพบ Irone ที่น่าจะเป็นแบบรีเอเจนต์ (201096) ระบุไว้ในส่วน K · รหัสที่ไม่อยู่ใน sitemap เขียน ⓧ หลังรหัสทุกตัว · **รอบ 8 (15 ต.ค.):** ใส่คำเตือนตัวตนสินค้าให้ Laurel Berry Oil (34159) และ DGME (9174) และวงเล็บกับ ⓧ ให้รหัสที่เขียนลอย · ติดป้ายอนุมานให้ Peru Balsam Resin (3180) ว่าเป็นแบบดิบ และ Bergamot (3168) ว่าไม่ใช่ FCF · เอา Amber Xtreme (2890 ⓧ) ออกจากสรุปย่อ · ใส่ Ivy Dioxolane, Glycolierral (3827) ในส่วน M และคำเตือนชื่อจาก URL ในส่วน K · ระบุโมเลกุลเดียวกันของ Timberol, Ambrofix, Orbitone และป้ายของ Rose otto กับ 2717
 > ร้าน: [MySkinRecipes Thailand](https://www.myskinrecipes.com/shop/th/) · ถ้ายังไม่รู้จะซื้ออะไรก่อน ให้อ่านไฟล์ 3
 
 ## วิธีใช้แคตตาล็อกนี้
@@ -79,7 +79,7 @@
 | ● [Sandalrome (2842)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2842-sandalrome.html) | จันทน์ราคาประหยัด (แบบ Bacdanol) | — |
 | ○ [Polysantol (2854)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2854-santol-pentenol.html) ⚠ 1.1% · [Santaliff (2873)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2873-santaliff-sandaxol-sandalmysore.html) · [Osyrol (3438)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/3438-sandal-octanol.html) · [Sandal Hexanol (3674)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/3674-sandal-hexanol-ibch.html) · Sandenol 803 (2876) · Firsantol (2874) | จันทน์อื่นๆ | Polysantol 153 |
 | ○ ⚠ [Santalol (2855)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2855-santalol-fema-3006.html) | จันทน์ · อยู่ในรายชื่อสารก่อภูมิแพ้ EU ใหม่ | — |
-| ○ [Karmawood / Timber Propanol (2848)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2848-timber-propanol-karmawood.html) ⚠ 1.3% | ไม้แห้ง · โมเลกุลเดียวกับ Timberol/Norlimbanol (CAS 70788-30-6 [อนุมาน: หน้าร้านไม่แสดง CAS]) | 106 |
+| ○ [Karmawood / Timber Propanol (2848)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2848-timber-propanol-karmawood.html) ⚠ 1.3% | ไม้แห้ง · โมเลกุลเดียวกับ Timberol/Norlimbanol (IFRA STD 221 ระบุทั้งสามชื่อเป็น CAS 70788-30-6 · หน้าร้านไม่แสดง CAS) | 106 |
 | ○ [Okoumal (2857)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2857-woody-dioxolane-okoumal.html) · [Kephalis (2844)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2844-woody-cyclohexanone-kephalis.html) · Cedramber (2853) | ไม้–อำพันอุ่น · Kephalis มีด้านยาสูบ | Kephalis 102 |
 | ○ [Cedrol (2849)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2849-cedrol.html) · [Cedryl Acetate 50% (2850)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2850-cedryl-acetate.html) · [Cedrenyl Acetate (3454 ⓧ)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/3454-cedrenyl-acetate.html) | ซีดาร์ ช่วยยึดกลิ่น | — |
 | ○ [Patchone (2856)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2856-patchouli-hexanol-patchone.html) | ไม้–พาชูลีสังเคราะห์ | — |
@@ -308,9 +308,9 @@ Benzyl Salicylate 143806 · Dihydromyrcenol 56963 (1 kg ฿6,700 ≈ ฿6.7/g) �
 
 | ไม่มีในร้าน | ใช้แทนด้วย |
 |---|---|
-| Ambrofix (โมเลกุลเดียวกับ Ambroxan (2810) [อนุมาน]), Ambermax, Ambrocenide, Ambrinol, Moxalone, Karanal · Amber Xtreme (2890 ⓧ) | Ambroxan, Cetalox + Iso E Super, L-Ambregrisox (252973), Bois Ambrene Forte (2811) ⚠ 1.5%, Ambercore (3560) ⚠ 1.3%, Grisalva (2812) |
-| Norlimbanol / Timberol (ชื่อนี้) | Karmawood (2848) ⚠ 1.3% เป็นโมเลกุลเดียวกัน (CAS 70788-30-6 [อนุมาน]), Koavone (2865) ⚠ 1.9%, Okoumal, Kephalis |
-| Iso E Super Plus / Orbitone, Georgywood | Iso E Super + Methyl Cedryl Ketone + Koavone (2865) ⚠ 1.9% |
+| Ambrofix (โมเลกุลเดียวกับ Ambroxan (2810) [อนุมาน]), Ambermax, Ambrocenide, Ambrinol, Moxalone, Karanal · Amber Xtreme (2890 ⓧ) | Ambroxan (2810), Cetalox + Iso E Super, L-Ambregrisox (252973), Bois Ambrene Forte (2811) ⚠ 1.5%, Ambercore (3560) ⚠ 1.3%, Grisalva (2812) |
+| Norlimbanol / Timberol (ชื่อนี้) | Karmawood (2848) ⚠ 1.3% เป็นโมเลกุลเดียวกัน (CAS 70788-30-6 ตาม IFRA STD 221), Koavone (2865) ⚠ 1.9%, Okoumal, Kephalis |
+| Iso E Super Plus, Georgywood | Iso E Super (2845) + Methyl Cedryl Ketone + Koavone (2865) ⚠ 1.9% · Orbitone (Takasago) ไม่ต้องหาแทน เพราะเป็น OTNE CAS เดียวกับ Iso E Super (IFRA STD 068) ต่างผู้ผลิตและสัดส่วนไอโซเมอร์ |
 | Lilyflore, Nympheal, Mahonial | Hydroxycitronellal, Florhydral, Bourgeonal, Majantol (33720) ⚠ 1.7%, Mayol (3749) ⚠ 4.7% |
 | Orange Flower Ether | Aurantiol (2723) ⚠, Nerolin Bromelia, Orange Blossom Absolute (3240) · (Verdantiol 3991 ใช้ไม่ได้ เพราะมี Lilial — ส่วน O) |
 | Paradisone | Hedione High Cis |

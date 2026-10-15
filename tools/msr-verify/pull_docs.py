@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime, timezone
 import os
 import re
 from pathlib import Path
@@ -30,6 +31,19 @@ def newest_transcript() -> Path:
     if not files:
         raise SystemExit(f"no session transcript under {base}")
     return files[-1]
+
+
+def when(ts: str, missing: datetime) -> datetime:
+    """Transcript timestamps as times (not strings: "…:00Z" vs "…:00.500Z"); a missing one gets the conservative value."""
+    try:
+        t = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
+    except (ValueError, AttributeError):
+        return missing
+
+
+OLDEST = datetime.min.replace(tzinfo=timezone.utc)
+NEWEST = datetime.max.replace(tzinfo=timezone.utc)
 
 
 def results(path: Path):
@@ -75,21 +89,25 @@ def main() -> None:
     out = a.out.resolve()
     main_file = a.transcript or newest_transcript()
     files = [main_file] + sorted(main_file.with_suffix("").glob("subagents/*.jsonl"))
-    newest: dict[str, tuple[str, str]] = {}
-    wrote: dict[str, str] = {}
+    newest: dict[str, tuple[datetime, str, str]] = {}
+    wrote: dict[str, tuple[datetime, str]] = {}
     for f in files:
         for ts, doc, text in results(f):
-            if text is None:
-                wrote[doc] = max(ts, wrote.get(doc, ""))
-            elif doc not in newest or ts >= newest[doc][0]:
-                newest[doc] = (ts, text)
+            if text is None:   # a write with no usable time counts as the newest event (refuse rather than guess)
+                t = when(ts, NEWEST)
+                if doc not in wrote or t > wrote[doc][0]:
+                    wrote[doc] = (t, ts or "no timestamp")
+            else:
+                t = when(ts, OLDEST)
+                if doc not in newest or t >= newest[doc][0]:
+                    newest[doc] = (t, ts, text)
     if not newest:
         raise SystemExit("this session has not read any Project doc yet (use project_read first)")
-    stale = sorted(d for d in newest if wrote.get(d, "") > newest[d][0])
+    stale = sorted(d for d in newest if d in wrote and wrote[d][0] > newest[d][0])
     for doc in stale:
-        print(f"STALE, not written: {doc} — written after the last read ({wrote[doc]} > {newest[doc][0]}); read it again")
+        print(f"STALE, not written: {doc} — written after the last read ({wrote[doc][1]} > {newest[doc][1]}); read it again")
         del newest[doc]
-    for doc, (ts, text) in sorted(newest.items()):
+    for doc, (_, ts, text) in sorted(newest.items()):
         target = (out / doc).resolve()
         if out not in target.parents:
             raise SystemExit(f"refusing to write outside {out}: {doc}")
