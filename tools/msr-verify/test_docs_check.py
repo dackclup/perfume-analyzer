@@ -90,6 +90,12 @@ class MissingIds(unittest.TestCase):
 
 
 class Links(unittest.TestCase):
+    def test_link_with_parentheses_is_read_whole(self):  # round 27: the Lilial PDF link was cut at "(" and reported 404
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "4-a.md").write_text("- [Lilial](https://ex.org/Lilial%20(p-BMHCA).pdf) · [b](https://ex.org/b.pdf)\n", encoding="utf-8")
+            links = d.external_links(d.read_docs(Path(tmp)))
+        self.assertEqual(sorted(links), ["https://ex.org/Lilial%20(p-BMHCA).pdf", "https://ex.org/b.pdf"])
+
     def test_link_text_id_must_match_the_url(self):
         docs = {"3-a.md": f"- [Methyl Cedryl Ketone (2843)]({SHOP}/wood-aroma-chemicals/2845-iso-e-super.html)\n"}
         self.assertEqual(run(docs)[0], ["link_label:2845", "missing_id:2843"])

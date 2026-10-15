@@ -57,7 +57,7 @@ THAI = r"\u0E00-\u0E7F"
 SHOP_PRODUCT = re.compile(r"https?://(?:www\.)?myskinrecipes\.com/shop/(en|th)/([^/\s)]+)/(\d+)-([^/\s)]*?)\.html")
 SHOP_CATEGORY = re.compile(r"https?://(?:www\.)?myskinrecipes\.com/shop/(?:en|th)/(\d+)-[^/\s).]+(?=[)\s]|$)")
 EXPERT = re.compile(r"https?://(?:www\.)?myskinrecipes\.com/expert/product/(\d+)")
-MD_LINK = re.compile(r"\[([^\]]*)\]\((https?://[^)\s]+)\)")
+MD_LINK = re.compile(r"\[([^\]]*)\]\((https?://(?:[^()\s]|\([^()\s]*\))+)\)")  # one level of (...) inside a URL, as CommonMark allows
 BARE_URL = re.compile(r"(?<![(\[])https?://[^\s)\]|>]+")
 
 _ID = r"#?\d{3,6}"
