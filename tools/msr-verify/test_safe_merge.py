@@ -147,10 +147,12 @@ class T(unittest.TestCase):
         theirs = big.replace("line 90\n", "line 90 theirs\n")   # a normal edit by the other side still merges
         code, out, _ = run(big, mine, theirs); self.assertEqual(code, 0); self.assertIn("line 90 theirs", out["0-x.md"])
 
-    def test_other_side_editing_the_last_lines_needs_allow_shrink(self):  # fail-closed: can't tell an edit from a cut
-        code, out, s = run(BASE, BASE.replace("a\n", "a mine\n"), BASE.replace("e\n", "e theirs\n"))
+    def test_other_side_editing_the_last_line_needs_allow_shrink(self):  # fail-closed: can't tell an edit from a cut
+        code, out, s = run(BASE, BASE.replace("a\n", "a mine\n"), BASE.replace("f\n", "f theirs\n"))
         self.assertEqual(code, 1); self.assertIn("truncated", s)
-        code, out, _ = run(BASE, BASE.replace("a\n", "a mine\n"), BASE.replace("e\n", "e theirs\n"), extra=("--allow-shrink", "0-x.md"))
+        code, out, _ = run(BASE, BASE.replace("a\n", "a mine\n"), BASE.replace("f\n", "f theirs\n"), extra=("--allow-shrink", "0-x.md"))
+        self.assertEqual(code, 0); self.assertIn("f theirs", out["0-x.md"])
+        code, out, _ = run(BASE, BASE.replace("a\n", "a mine\n"), BASE.replace("e\n", "e theirs\n"))   # an earlier line: merges
         self.assertEqual(code, 0); self.assertIn("e theirs", out["0-x.md"])
 
     def test_nothing_edited_refused(self):  # base taken after editing (or a copy of mine): every doc looks unchanged
@@ -206,6 +208,36 @@ class T(unittest.TestCase):
         mine = base.replace("line 7 ", "line 7 mine ")
         theirs = items + body + "- ใหม่ 1\n- ใหม่ 2\n- ใหม่ 3\n"
         code, out, s = run(base, mine, theirs); self.assertEqual(code, 1); self.assertEqual(out, {})
+
+    # --- round 32 (F3) ---
+    def _footer_doc(self):
+        rows = [f"| row {i} | " + "x" * 50 + " |\n" for i in range(300)]
+        foot = ["---\n", "*จบส่วน*\n", "---\n"]
+        return "".join(["# t\n"] + rows[:100] + foot + rows[100:] + foot), foot
+
+    def test_cut_off_read_with_an_added_copy_of_the_footer_stops(self):  # the other side adds a section with the same footer
+        base, foot = self._footer_doc(); bl = base.splitlines(True)
+        mine = base.replace("| row 5 |", "| row 5 mine |")
+        theirs = "".join(bl[:30] + ["## new\n", "x\n"] + foot + bl[30:-20])
+        code, out, s = run(base, mine, theirs); self.assertEqual(code, 1); self.assertEqual(out, {}); self.assertIn("truncated", s)
+
+    def test_much_shorter_read_with_ending_intact_stops(self):  # the length rule on its own
+        base, _ = self._footer_doc(); bl = base.splitlines(True)
+        mine = base.replace("| row 5 |", "| row 5 mine |")
+        theirs = "".join(bl[:20] + bl[200:])   # the middle is gone, the ending is there
+        code, out, s = run(base, mine, theirs); self.assertEqual(code, 1); self.assertIn("shorter", s)
+
+    def test_last_line_moved_away_stops(self):
+        base, _ = self._footer_doc(); bl = base.splitlines(True)
+        mine = base.replace("| row 5 |", "| row 5 mine |")
+        theirs = "".join([bl[-1]] + bl[:-1])
+        code, out, _ = run(base, mine, theirs); self.assertEqual(code, 1)
+
+    def test_removing_an_earlier_copy_of_a_footer_line_still_merges(self):  # no false "truncated" conflict
+        base, _ = self._footer_doc(); bl = base.splitlines(True)
+        mine = base.replace("| row 250 |", "| row 250 mine |")
+        theirs = "".join(bl[:101] + bl[102:])
+        code, out, _ = run(base, mine, theirs); self.assertEqual(code, 0); self.assertIn("row 250 mine", out["0-x.md"])
 
 
 if __name__ == "__main__":

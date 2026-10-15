@@ -14,6 +14,10 @@ def read(ts, text, path=DOC):
     return entry(ts, {"method": "project_read", "path": path, "content": text})
 
 
+def read_saved(ts, local, path=DOC):  # large docs: the result names a saved file instead of carrying the text
+    return entry(ts, {"method": "project_read", "path": path, "local_file": str(local)})
+
+
 def write(ts, path=DOC):
     return entry(ts, {"method": "project_write", "path": path, "doc_uuid": "u", "replaced": True})
 
@@ -57,6 +61,29 @@ class T(unittest.TestCase):
     def test_untimed_write_message_says_check_by_hand(self):
         code, _, s = run([write(""), read("2026-10-15T03:00:00Z", "v2\n")])
         self.assertEqual(code, 1); self.assertIn("check by hand", s)
+
+    # round 32 (F4): a saved copy must be the text as read
+    def _saved(self, d, text, ts):
+        f = Path(d) / "saved.txt"; f.write_text(text, encoding="utf-8")
+        t = __import__("datetime").datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+        os.utime(f, (t, t)); return f
+
+    def test_saved_copy_as_read_is_used(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = self._saved(d, "big v1\n", "2026-10-15T01:00:00Z")
+            code, text, _ = run([read_saved("2026-10-15T01:00:00.500Z", f)])
+            self.assertEqual((code, text), (0, "big v1\n"))
+
+    def test_saved_copy_changed_after_the_read_is_refused(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = self._saved(d, "big v1\n", "2026-10-15T01:00:00Z")
+            f.write_text("edited by hand\n", encoding="utf-8")   # mtime is now, long after the read
+            code, text, s = run([read_saved("2026-10-15T01:00:00.500Z", f)])
+            self.assertEqual(code, 1); self.assertIsNone(text); self.assertIn("saved copy", s)
+
+    def test_missing_saved_copy_does_not_fall_back_to_an_older_read(self):
+        code, text, s = run([read("2026-10-15T01:00:00Z", "v1\n"), read_saved("2026-10-15T02:00:00Z", "/nonexistent/saved.txt")])
+        self.assertEqual(code, 1); self.assertIsNone(text); self.assertIn("saved copy", s)
 
 
 if __name__ == "__main__":

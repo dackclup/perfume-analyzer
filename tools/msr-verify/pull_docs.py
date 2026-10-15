@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Copy the Project docs a Claude Code session has read into project-docs/, byte for byte.
 
+Large docs come back as a saved file rather than inline text; such a doc is refused (exit 1) when the newest read's
+saved file is gone or was changed after the read.
+
 The Project docs live on claude.ai, not in git. A session reads them with the Projects tool
 (project_read); the exact text lands in the session transcript. This script takes the newest
 project_read result per doc path from the transcript (and its subagents) and writes it under
@@ -43,6 +46,22 @@ def when(ts: str) -> datetime | None:
         return None
 
 
+class Unusable(str):
+    """A read whose text cannot be trusted (its saved copy is gone or was changed after the read)."""
+
+
+SLACK = 60  # seconds between the tool saving a large read and the transcript entry
+
+
+def saved_copy(local: Path, ts: str) -> str:
+    if not local.exists():
+        return Unusable("saved copy is gone")
+    t = when(ts)
+    if t is not None and local.stat().st_mtime > t.timestamp() + SLACK:
+        return Unusable("saved copy changed after the read")   # e.g. edited in place, or overwritten by a later read
+    return local.read_text(encoding="utf-8")
+
+
 def results(path: Path):
     """Yield (timestamp, path, text) per project_read, and (timestamp, path, None) per successful project_write."""
     for line in path.open(encoding="utf-8"):
@@ -73,9 +92,9 @@ def results(path: Path):
                 if "content" in data:
                     yield entry.get("timestamp", ""), data["path"], data["content"]
                 else:  # large docs are saved to a local file; the result names it
-                    local = next((v for v in data.values() if isinstance(v, str) and v.startswith("/") and os.path.exists(v)), None)
+                    local = next((v for v in data.values() if isinstance(v, str) and v.startswith("/")), None)
                     if local:
-                        yield entry.get("timestamp", ""), data["path"], Path(local).read_text(encoding="utf-8")
+                        yield entry.get("timestamp", ""), data["path"], saved_copy(Path(local), entry.get("timestamp", ""))
 
 
 def main() -> None:
@@ -102,6 +121,10 @@ def main() -> None:
     if not newest and not untimed:
         raise SystemExit("this session has not read any Project doc yet (use project_read first)")
     stale = sorted(d for d in newest if d in wrote and wrote[d][0] > newest[d][0])
+    bad = sorted(d for d in newest if isinstance(newest[d][2], Unusable))
+    for doc in bad:
+        print(f"SAVED COPY PROBLEM, not written: {doc} — {newest[doc][2]} ({newest[doc][1]}); read it again")
+        del newest[doc]
     for doc in sorted(untimed):
         print(f"UNKNOWN ORDER, not written: {doc} — a transcript entry without a time; check by hand which text is newest")
         newest.pop(doc, None)
@@ -116,7 +139,7 @@ def main() -> None:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text, encoding="utf-8")
         print(f"{ts}  {doc}  {len(text):,} chars")
-    if stale or untimed:
+    if stale or untimed or bad:
         raise SystemExit(1)
 
 

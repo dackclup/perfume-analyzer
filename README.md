@@ -42,11 +42,17 @@ workflow **MSR verify** จะอ่าน sitemap ทั้งร้านแ�
 ขั้นตอนเมื่อ AI แก้เอกสารใน Project (session ของ Claude Code):
 
 ```sh
-# 1. อ่านเอกสารด้วย project_read แล้วคัดลอกข้อความจริงลงสำเนา
-python3 tools/msr-verify/pull_docs.py
-# 2. ตรวจในเครื่องก่อน (ดึง sitemap จากการรันล่าสุดใน branch msr-verify-data ให้เอง)
-python3 tools/msr-verify/docs_check.py
-# 3. แก้ไฟล์ใน project-docs/ จนผ่าน แล้วอัปโหลดกลับด้วย project_write (local_path) และ push
+# 1. อ่านเอกสารด้วย project_read แล้วคัดลอกข้อความจริงลงสำเนา และเก็บไว้เป็น base (ฉบับก่อนแก้)
+python3 tools/msr-verify/pull_docs.py --out BASE        # exit 1 (STALE / UNKNOWN ORDER / SAVED COPY) = อ่านใหม่ก่อน
+# 2. แก้สำเนาในโฟลเดอร์อื่น (MINE ใส่เฉพาะไฟล์ที่แก้) แล้วตรวจก่อน (ดึง sitemap จากการรันล่าสุดใน branch msr-verify-data ให้เอง)
+python3 tools/msr-verify/docs_check.py --docs MINE_FULL  # สำเนาเต็มที่แก้แล้ว ต้อง "ไม่ผ่าน 0 จุด"
+# 3. ก่อนเขียนกลับ: project_read ทุกไฟล์อีกครั้ง แล้วรวม 3 ทางกับฉบับที่อ่านใหม่ — ห้ามอัปโหลดทั้งไฟล์จากสำเนาเก่า
+python3 tools/msr-verify/pull_docs.py --out FRESH
+python3 tools/msr-verify/safe_merge.py --base BASE/วิจัยน้ำหอมดีไซน์เนอร์ --mine MINE \
+        --theirs FRESH/วิจัยน้ำหอมดีไซน์เนอร์ --out OUT   # exit 1 = ชนกัน ไม่เขียนอะไร · exit 2 = ใช้ผิด
+# 4. อัปโหลดเฉพาะไฟล์ที่บรรทัด "to upload" บอก ด้วย project_write (local_path) · project_read อีกครั้ง
+#    แล้วเทียบทุกไบต์กับ OUT · ใช้ฉบับที่อ่านนี้เป็น base รอบถัดไป · คัดลอกลง project-docs/ แล้ว push
+#    (เช็กก่อนว่า PR ยังเปิดอยู่ ถ้าถูก merge แล้วให้เปิด branch ใหม่จาก main)
 ```
 
 ## ราคา
