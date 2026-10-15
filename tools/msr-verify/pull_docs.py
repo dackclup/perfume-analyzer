@@ -6,7 +6,8 @@ The Project docs live on claude.ai, not in git. A session reads them with the Pr
 project_read result per doc path from the transcript (and its subagents) and writes it under
 project-docs/<path>, so `git diff` shows what changed and CI can check it. A doc this session wrote
 (project_write) after its newest read is skipped with exit 1: that read is older than the Project's text,
-and merging from it would undo the upload — read the doc again first.
+and merging from it would undo the upload — read the doc again first. A doc with any transcript entry that has
+no usable time is skipped too (exit 1), since its order cannot be known.
 
     python3 tools/msr-verify/pull_docs.py                 # newest transcript of this repo's sessions
     python3 tools/msr-verify/pull_docs.py --transcript ~/.claude/projects/<dir>/<session>.jsonl
@@ -33,17 +34,13 @@ def newest_transcript() -> Path:
     return files[-1]
 
 
-def when(ts: str, missing: datetime) -> datetime:
-    """Transcript timestamps as times (not strings: "…:00Z" vs "…:00.500Z"); a missing one gets the conservative value."""
+def when(ts: str) -> datetime | None:
+    """Transcript timestamps as times (not strings: "…:00Z" vs "…:00.500Z"); None when missing or unreadable."""
     try:
         t = datetime.fromisoformat(ts.replace("Z", "+00:00"))
         return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
     except (ValueError, AttributeError):
-        return missing
-
-
-OLDEST = datetime.min.replace(tzinfo=timezone.utc)
-NEWEST = datetime.max.replace(tzinfo=timezone.utc)
+        return None
 
 
 def results(path: Path):
@@ -91,22 +88,27 @@ def main() -> None:
     files = [main_file] + sorted(main_file.with_suffix("").glob("subagents/*.jsonl"))
     newest: dict[str, tuple[datetime, str, str]] = {}
     wrote: dict[str, tuple[datetime, str]] = {}
+    untimed: set[str] = set()   # any read or write of the doc without a usable time: its order is unknown
     for f in files:
         for ts, doc, text in results(f):
-            if text is None:   # a write with no usable time counts as the newest event (refuse rather than guess)
-                t = when(ts, NEWEST)
+            t = when(ts)
+            if t is None:
+                untimed.add(doc)
+            elif text is None:
                 if doc not in wrote or t > wrote[doc][0]:
-                    wrote[doc] = (t, ts or "no timestamp")
-            else:
-                t = when(ts, OLDEST)
-                if doc not in newest or t >= newest[doc][0]:
-                    newest[doc] = (t, ts, text)
-    if not newest:
+                    wrote[doc] = (t, ts)
+            elif doc not in newest or t >= newest[doc][0]:
+                newest[doc] = (t, ts, text)
+    if not newest and not untimed:
         raise SystemExit("this session has not read any Project doc yet (use project_read first)")
     stale = sorted(d for d in newest if d in wrote and wrote[d][0] > newest[d][0])
+    for doc in sorted(untimed):
+        print(f"UNKNOWN ORDER, not written: {doc} — a transcript entry without a time; check by hand which text is newest")
+        newest.pop(doc, None)
     for doc in stale:
-        print(f"STALE, not written: {doc} — written after the last read ({wrote[doc][1]} > {newest[doc][1]}); read it again")
-        del newest[doc]
+        if doc in newest:
+            print(f"STALE, not written: {doc} — written after the last read ({wrote[doc][1]} > {newest[doc][1]}); read it again")
+            del newest[doc]
     for doc, (_, ts, text) in sorted(newest.items()):
         target = (out / doc).resolve()
         if out not in target.parents:
@@ -114,7 +116,7 @@ def main() -> None:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text, encoding="utf-8")
         print(f"{ts}  {doc}  {len(text):,} chars")
-    if stale:
+    if stale or untimed:
         raise SystemExit(1)
 
 

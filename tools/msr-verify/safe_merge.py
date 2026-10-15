@@ -11,8 +11,9 @@ older local copy. A whole-file upload keeps only one side; a 3-way merge keeps b
 
 For each doc in mine:  theirs == base -> mine · mine == base -> theirs · both changed -> `git merge-file`.
 Only docs that need uploading (mine, merged both, new) are written to --out; "same" and "theirs" docs are already
-right in the Project and are only listed. A fresh read that looks truncated (much shorter than base, or missing
-base's last lines) of a doc that both sides changed is a conflict unless --allow-shrink NAME is passed. What no tool
+right in the Project and are only listed. A fresh read that looks truncated (much shorter than base, or missing one
+of base's last 3 lines as a whole line, counted as often as in base) of a doc that both sides changed is a conflict
+unless --allow-shrink NAME is passed. What no tool
 here can see: a fresh read that is itself stale (pull_docs skips docs this session wrote after their last read, but
 cannot see other sessions' writes) or a base that is not the text the edits started from — take the base right after
 each verified read or write.
@@ -42,15 +43,21 @@ def files(d: Path) -> dict[str, Path]:
 
 
 def shrunk(b: bytes, t: bytes) -> bool:
-    """theirs looks cut off: much shorter than base, or base's last 3 lines are not in it (in order) — whatever its length."""
+    """theirs looks cut off: much shorter than base, or base's last 3 non-blank lines are not all in it as whole lines,
+    in order and at least as many times as in base (a short ending such as "---" also found earlier does not count)."""
     if len(t) < 0.9 * len(b):
         return True
+    bl = [x for x in b.splitlines() if x.strip()]
+    tl = [x for x in t.splitlines() if x.strip()]
+    tail = bl[-3:]
+    if any(tl.count(x) < bl.count(x) for x in set(tail)):
+        return True
     pos = 0
-    for line in [x for x in b.splitlines() if x.strip()][-3:]:
-        pos = t.find(line, pos)
-        if pos < 0:
+    for line in tail:
+        try:
+            pos = tl.index(line, pos) + 1
+        except ValueError:
             return True
-        pos += len(line)
     return False
 
 

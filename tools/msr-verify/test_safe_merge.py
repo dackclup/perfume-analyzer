@@ -34,8 +34,9 @@ def run(base, mine, theirs, extra=(), out_files=None, env=None, theirs_dir=None,
 
 class T(unittest.TestCase):
     def test_keeps_both_sides(self):  # the 14-15 Oct failure: a whole-file upload dropped the other chat's line
-        mine = BASE.replace("b\n", "b mine\n"); theirs = BASE.replace("e\n", "e theirs\n")
-        code, out, _ = run(BASE, mine, theirs)
+        base = BASE + "g\nh\ni\nj\n"   # long enough that the other side's edit is not in base's last 3 lines
+        mine = base.replace("b\n", "b mine\n"); theirs = base.replace("e\n", "e theirs\n")
+        code, out, _ = run(base, mine, theirs)
         self.assertEqual(code, 0); self.assertIn("b mine", out["0-x.md"]); self.assertIn("e theirs", out["0-x.md"])
         self.assertNotIn("e theirs", mine)  # what a naive upload of `mine` would have lost
 
@@ -97,7 +98,7 @@ class T(unittest.TestCase):
     def test_pull_docs_layout_refused(self):  # --theirs = the DIR given to pull_docs --out, docs one level down
         with tempfile.TemporaryDirectory() as d:
             d = Path(d); sub = d / "theirs" / "วิจัยน้ำหอมดีไซน์เนอร์"; sub.mkdir(parents=True)
-            (sub / "0-x.md").write_text(BASE.replace("e\n", "e theirs\n"), encoding="utf-8")
+            (sub / "0-x.md").write_text(BASE.replace("b\n", "b theirs\n"), encoding="utf-8")
             (d / "b").mkdir(); (d / "b" / "0-x.md").write_text(BASE, encoding="utf-8")
             (d / "m").mkdir(); (d / "m" / "0-x.md").write_text(BASE + "g\n", encoding="utf-8")
             r = subprocess.run([sys.executable, "-I", str(TOOL), "--base", str(d / "b"), "--mine", str(d / "m"),
@@ -105,7 +106,7 @@ class T(unittest.TestCase):
             self.assertEqual(r.returncode, 2); self.assertFalse((d / "o").exists()); self.assertIn("wrong folder", r.stdout)
             r = subprocess.run([sys.executable, "-I", str(TOOL), "--base", str(d / "b"), "--mine", str(d / "m"),
                                 "--theirs", str(sub), "--out", str(d / "o")], capture_output=True, text=True)
-            self.assertEqual(r.returncode, 0); self.assertIn("e theirs", (d / "o" / "0-x.md").read_text(encoding="utf-8"))
+            self.assertEqual(r.returncode, 0); self.assertIn("b theirs", (d / "o" / "0-x.md").read_text(encoding="utf-8"))
 
     def test_base_same_as_theirs_refused(self):  # a base taken from the same fresh read hides the other side
         code, out, s = run(BASE, BASE + "g\n", BASE.replace("e\n", "e theirs\n"), base_is="t")
@@ -146,6 +147,12 @@ class T(unittest.TestCase):
         theirs = big.replace("line 90\n", "line 90 theirs\n")   # a normal edit by the other side still merges
         code, out, _ = run(big, mine, theirs); self.assertEqual(code, 0); self.assertIn("line 90 theirs", out["0-x.md"])
 
+    def test_other_side_editing_the_last_lines_needs_allow_shrink(self):  # fail-closed: can't tell an edit from a cut
+        code, out, s = run(BASE, BASE.replace("a\n", "a mine\n"), BASE.replace("e\n", "e theirs\n"))
+        self.assertEqual(code, 1); self.assertIn("truncated", s)
+        code, out, _ = run(BASE, BASE.replace("a\n", "a mine\n"), BASE.replace("e\n", "e theirs\n"), extra=("--allow-shrink", "0-x.md"))
+        self.assertEqual(code, 0); self.assertIn("e theirs", out["0-x.md"])
+
     def test_nothing_edited_refused(self):  # base taken after editing (or a copy of mine): every doc looks unchanged
         code, out, s = run({"0-x.md": BASE + "g\n", "1-x.md": BASE}, {"0-x.md": BASE + "g\n", "1-x.md": BASE}, {"0-x.md": BASE, "1-x.md": BASE})
         self.assertEqual(code, 2); self.assertEqual(out, {}); self.assertIn("nothing edited", s)
@@ -181,6 +188,24 @@ class T(unittest.TestCase):
             r = subprocess.run([sys.executable, "-I", str(TOOL), "--base", str(d / "b"), "--mine", str(d / "m"), "--theirs", str(d / "t"),
                                 "--out", str(d / "o")], capture_output=True, text=True)
             self.assertEqual(r.returncode, 2); self.assertIn("same folder", r.stdout)
+
+    # --- round 31 (F6): short last lines that also occur earlier must not satisfy the check ---
+    def test_cut_off_read_with_repeated_short_ending_stops(self):
+        end = "---\n*จบ*\n---\n"
+        rows = "".join(f"| row {i} | " + "x" * 50 + " |\n" for i in range(300))
+        base = "# t\n" + end + rows + end
+        mine = base.replace("| row 5 |", "| row 5 mine |")
+        lines = base.splitlines(True)
+        theirs = "".join(lines[:150] + [f"| new {i} |\n" for i in range(40)] + lines[150:-38])
+        code, out, s = run(base, mine, theirs); self.assertEqual(code, 1); self.assertEqual(out, {}); self.assertIn("truncated", s)
+
+    def test_cut_off_read_with_repeated_list_ending_stops(self):
+        items = "- ข้อ 1\n- ข้อ 2\n- ข้อ 3\n"
+        body = "".join(f"line {i} " + "y" * 40 + "\n" for i in range(100))
+        base = items + body + items
+        mine = base.replace("line 7 ", "line 7 mine ")
+        theirs = items + body + "- ใหม่ 1\n- ใหม่ 2\n- ใหม่ 3\n"
+        code, out, s = run(base, mine, theirs); self.assertEqual(code, 1); self.assertEqual(out, {})
 
 
 if __name__ == "__main__":
