@@ -14,16 +14,20 @@ def read(ts, text, path=DOC):
     return entry(ts, {"method": "project_read", "path": path, "content": text})
 
 
+def read_saved(ts, local, path=DOC):  # large docs: the result names a saved file instead of carrying the text
+    return entry(ts, {"method": "project_read", "path": path, "local_file": str(local)})
+
+
 def write(ts, path=DOC):
     return entry(ts, {"method": "project_write", "path": path, "doc_uuid": "u", "replaced": True})
 
 
-def run(lines):
+def run(lines, extra=()):
     with tempfile.TemporaryDirectory() as d:
         d = Path(d); t = d / "s.jsonl"; t.write_text("\n".join(lines) + "\n", encoding="utf-8")
-        r = subprocess.run([sys.executable, "-I", str(TOOL), "--transcript", str(t), "--out", str(d / "o")], capture_output=True, text=True)
+        r = subprocess.run([sys.executable, "-I", str(TOOL), "--transcript", str(t), "--out", str(d / "o"), *extra], capture_output=True, text=True)
         f = d / "o" / DOC
-        return r.returncode, (f.read_text(encoding="utf-8") if f.exists() else None), r.stdout + r.stderr
+        return r.returncode, (f.read_bytes().decode("utf-8") if f.exists() else None), r.stdout + r.stderr
 
 
 class T(unittest.TestCase):
@@ -57,6 +61,67 @@ class T(unittest.TestCase):
     def test_untimed_write_message_says_check_by_hand(self):
         code, _, s = run([write(""), read("2026-10-15T03:00:00Z", "v2\n")])
         self.assertEqual(code, 1); self.assertIn("check by hand", s)
+
+    # round 32 (F4): a saved copy must be the text as read
+    def _saved(self, d, text, ts):
+        f = Path(d) / "saved.txt"; f.write_text(text, encoding="utf-8")
+        t = __import__("datetime").datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+        os.utime(f, (t, t)); return f
+
+    def test_saved_copy_as_read_is_used(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = self._saved(d, "big v1\n", "2026-10-15T01:00:00Z")
+            code, text, _ = run([read_saved("2026-10-15T01:00:00.500Z", f)])
+            self.assertEqual((code, text), (0, "big v1\n"))
+
+    def test_saved_copy_changed_after_the_read_is_refused(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = self._saved(d, "big v1\n", "2026-10-15T01:00:00Z")
+            f.write_text("edited by hand\n", encoding="utf-8")   # mtime is now, long after the read
+            code, text, s = run([read_saved("2026-10-15T01:00:00.500Z", f)])
+            self.assertEqual(code, 1); self.assertIsNone(text); self.assertIn("saved copy", s)
+
+    def test_missing_saved_copy_does_not_fall_back_to_an_older_read(self):
+        code, text, s = run([read("2026-10-15T01:00:00Z", "v1\n"), read_saved("2026-10-15T02:00:00Z", "/nonexistent/saved.txt")])
+        self.assertEqual(code, 1); self.assertIsNone(text); self.assertIn("saved copy", s)
+
+    # round 33 (F2, F3)
+    def test_saved_copy_edited_soon_after_the_read_is_refused(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = self._saved(d, "big v1\n", "2026-10-15T01:00:30Z")   # mtime 30 s after the read
+            code, text, s = run([read_saved("2026-10-15T01:00:00Z", f)])
+            self.assertEqual(code, 1); self.assertIsNone(text); self.assertIn("saved copy", s)
+
+    def test_saved_copy_not_refreshed_by_the_newest_read_is_refused(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = self._saved(d, "big v1\n", "2026-10-15T01:00:00Z")
+            code, text, s = run([read_saved("2026-10-15T02:00:00Z", f)])   # file is an hour older than the read
+            self.assertEqual(code, 1); self.assertIsNone(text); self.assertIn("saved copy", s)
+
+    def test_saved_copy_keeps_crlf(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "saved.txt"; f.write_bytes(b"a,b\r\nc,d\r\n")
+            t = __import__("datetime").datetime.fromisoformat("2026-10-15T01:00:00+00:00").timestamp(); os.utime(f, (t, t))
+            code, text, _ = run([read_saved("2026-10-15T01:00:00.200Z", f)])
+            self.assertEqual((code, text), (0, "a,b\r\nc,d\r\n"))
+
+    def test_since_refuses_docs_not_read_again(self):
+        code, text, s = run([read("2026-10-15T01:00:00Z", "v1\n")], extra=("--since", "2026-10-15T02:00:00Z"))
+        self.assertEqual(code, 1); self.assertIsNone(text); self.assertIn("NOT READ AGAIN", s)
+        code, text, _ = run([read("2026-10-15T03:00:00Z", "v2\n")], extra=("--since", "2026-10-15T02:00:00Z"))
+        self.assertEqual((code, text), (0, "v2\n"))
+
+    def test_only_limits_the_docs_checked(self):  # docs outside the folder being edited are not refused by --since
+        lines = [read("2026-10-15T03:00:00Z", "v2\n"), read("2026-10-15T01:00:00Z", "x\n", path="แอป")]
+        code, _, s = run(lines, extra=("--since", "2026-10-15T02:00:00Z"))
+        self.assertEqual(code, 1); self.assertIn("แอป", s)
+        code, text, s = run(lines, extra=("--since", "2026-10-15T02:00:00Z", "--only", "วิจัยน้ำหอมดีไซน์เนอร์/"))
+        self.assertEqual((code, text), (0, "v2\n")); self.assertNotIn("แอป", s)
+
+    def test_missing_transcript_is_a_usage_error(self):
+        r = subprocess.run([sys.executable, "-I", str(TOOL), "--transcript", "/nonexistent/s.jsonl", "--out", "/tmp/x-unused"],
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 2); self.assertIn("--transcript", r.stdout + r.stderr)
 
 
 if __name__ == "__main__":
