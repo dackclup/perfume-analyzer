@@ -11,9 +11,9 @@ older local copy. A whole-file upload keeps only one side; a 3-way merge keeps b
 
 For each doc in mine:  theirs == base -> mine · mine == base -> theirs · both changed -> `git merge-file`.
 Only docs that need uploading (mine, merged both, new) are written to --out; "same" and "theirs" docs are already
-right in the Project and are only listed. A fresh read that looks truncated (much shorter than base, or base's last
-non-blank line not matched in place when base and the fresh read are aligned line by line) of a doc that both sides
-changed is a conflict unless --allow-shrink NAME is passed; an edit by the other side to that last line also stops here. What no tool
+right in the Project and are only listed. A fresh read that looks truncated (see shrunk(): a heuristic, not a proof)
+of a doc that both sides changed is a conflict unless --allow-shrink NAME is passed; an edit by the other side to
+base's last line, or to its last line that occurs only once, also stops here. What no tool
 here can see: a fresh read that is itself stale (pull_docs skips docs this session wrote after their last read, but
 cannot see other sessions' writes) or a base that is not the text the edits started from — take the base right after
 each verified read or write.
@@ -44,19 +44,22 @@ def files(d: Path) -> dict[str, Path]:
 
 
 def shrunk(b: bytes, t: bytes) -> bool:
-    """theirs looks cut off: much shorter than base, or base's last non-blank line is not matched in place when the
-    two texts are aligned line by line (difflib) — so a copy of the same ending elsewhere does not count."""
+    """A heuristic for "this fresh read looks cut off": it is much shorter than base, or one of two anchor lines of base
+    is not matched in place when base and the read are aligned line by line (difflib) — base's last non-blank line,
+    and base's last non-blank line that occurs only once in base (so a copied footer elsewhere cannot stand in for
+    it). It cannot prove a read is complete; the read-back byte comparison after writing is the real check."""
     if len(t) < 0.9 * len(b):
         return True
     bl, tl = b.splitlines(), t.splitlines()
     idx = [i for i, x in enumerate(bl) if x.strip()]
     if not idx:
         return False
-    last = idx[-1]
-    for tag, i1, i2, _, _ in difflib.SequenceMatcher(None, bl, tl, autojunk=False).get_opcodes():
-        if tag == "equal" and i1 <= last < i2:
-            return False
-    return True
+    anchors = {idx[-1]}
+    uniq = [i for i in idx if bl.count(bl[i]) == 1]
+    if uniq:
+        anchors.add(uniq[-1])
+    blocks = [(i1, i2) for tag, i1, i2, _, _ in difflib.SequenceMatcher(None, bl, tl, autojunk=False).get_opcodes() if tag == "equal"]
+    return not all(any(i1 <= a < i2 for i1, i2 in blocks) for a in anchors)
 
 
 def merge_one(b: bytes | None, m: bytes, t: bytes, allow_shrink: bool = False) -> tuple[str, bytes | None]:

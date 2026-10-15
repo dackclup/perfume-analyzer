@@ -239,6 +239,19 @@ class T(unittest.TestCase):
         theirs = "".join(bl[:101] + bl[102:])
         code, out, _ = run(base, mine, theirs); self.assertEqual(code, 0); self.assertIn("row 250 mine", out["0-x.md"])
 
+    # --- round 33 (F1): a read cut right after an added copy of the footer ---
+    def test_cut_right_after_an_added_footer_copy_stops(self):
+        base, foot = self._footer_doc(); bl = base.splitlines(True)
+        mine = base.replace("| row 5 |", "| row 5 mine |")
+        cut = bl.index("| row 279 | " + "x" * 50 + " |\n") + 1
+        theirs = "".join(bl[:cut] + ["## new\n"] + [f"| n {i} |\n" for i in range(27)] + foot)   # ends with the copied footer
+        code, out, s = run(base, mine, theirs); self.assertEqual(code, 1); self.assertEqual(out, {}); self.assertIn("truncated", s)
+
+    def test_appending_after_the_end_still_merges(self):
+        base, _ = self._footer_doc()
+        code, out, _ = run(base, base.replace("| row 5 |", "| row 5 mine |"), base + "## later\nmore\n")
+        self.assertEqual(code, 0); self.assertIn("more", out["0-x.md"]); self.assertIn("row 5 mine", out["0-x.md"])
+
 
 if __name__ == "__main__":
     unittest.main()
