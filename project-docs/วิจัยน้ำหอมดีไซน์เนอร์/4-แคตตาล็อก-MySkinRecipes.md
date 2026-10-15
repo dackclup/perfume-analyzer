@@ -281,7 +281,7 @@
 
 | รายการ (รหัส) | ใช้ทำอะไร | ~฿/g |
 |---|---|---|
-| ⭐ [Ethyl Alcohol 99.9% Perfumer Grade (706)](https://www.myskinrecipes.com/shop/en/solvents-polyols/706-alcohol-alcohol-ethyl-alcohol-200-proof-perfumer-grade.html) | ฐานน้ำหอมสเปรย์ · denatured ด้วยสารระเหย ไม่มีสารขม | ฿219 (ไม่ระบุหน่วย) |
+| ⭐ [Ethyl Alcohol 99.9% Perfumer Grade (706)](https://www.myskinrecipes.com/shop/en/solvents-polyols/706-alcohol-alcohol-ethyl-alcohol-200-proof-perfumer-grade.html) | ฐานน้ำหอมสเปรย์ · ร้านไม่ระบุว่าแปลงสภาพหรือมีสารเติม (เอกสารฉบับแรกเขียนว่า denatured ด้วยสารระเหย ไม่มีสารขม · ยังไม่ยืนยัน) · ขอ SDS/COA ก่อนใช้ | ฿219 (ไม่ระบุหน่วย) |
 | [Ethyl Alcohol 96% Low-Odor (35354)](https://www.myskinrecipes.com/shop/en/solvents-polyols/35354-ethyl-alcohol-96--perfumer-grade-low-odor.html) · 99.5% (1220 ⓧ) | ฐานน้ำหอม ราคาถูกกว่า | — |
 | [DPG (488)](https://www.myskinrecipes.com/shop/en/solvents-polyols/488-dipropylene-glycol-dipropylene-glycol.html) | ละลายผลึก เจือสารแรง · อีก listing (85735) อยู่หมวดรีเอเจนต์ | — |
 | [TEC: LipidSoft™ Deo (1115)](https://www.myskinrecipes.com/shop/en/dissolve-water-and-oil-esters/1115-triethyl-citrate.html) · [TEC (128313)](https://www.myskinrecipes.com/shop/en/acids/128313-triethyl-citrate-tec.html) | ตัวทำละลายไร้กลิ่น ละลายผลึก | 68 · — |
