@@ -4,7 +4,9 @@
 The Project docs live on claude.ai, not in git. A session reads them with the Projects tool
 (project_read); the exact text lands in the session transcript. This script takes the newest
 project_read result per doc path from the transcript (and its subagents) and writes it under
-project-docs/<path>, so `git diff` shows what changed and CI can check it.
+project-docs/<path>, so `git diff` shows what changed and CI can check it. A doc this session wrote
+(project_write) after its newest read is skipped with exit 1: that read is older than the Project's text,
+and merging from it would undo the upload — read the doc again first.
 
     python3 tools/msr-verify/pull_docs.py                 # newest transcript of this repo's sessions
     python3 tools/msr-verify/pull_docs.py --transcript ~/.claude/projects/<dir>/<session>.jsonl
@@ -31,8 +33,9 @@ def newest_transcript() -> Path:
 
 
 def results(path: Path):
+    """Yield (timestamp, path, text) per project_read, and (timestamp, path, None) per successful project_write."""
     for line in path.open(encoding="utf-8"):
-        if "project_read" not in line:
+        if "project_read" not in line and "project_write" not in line:
             continue
         try:
             entry = json.loads(line)
@@ -50,6 +53,9 @@ def results(path: Path):
                 try:
                     data = json.loads(text)
                 except ValueError:
+                    continue
+                if data.get("method") == "project_write" and "path" in data and "error" not in data:
+                    yield entry.get("timestamp", ""), data["path"], None
                     continue
                 if data.get("method") != "project_read" or "path" not in data:
                     continue
@@ -70,12 +76,19 @@ def main() -> None:
     main_file = a.transcript or newest_transcript()
     files = [main_file] + sorted(main_file.with_suffix("").glob("subagents/*.jsonl"))
     newest: dict[str, tuple[str, str]] = {}
+    wrote: dict[str, str] = {}
     for f in files:
         for ts, doc, text in results(f):
-            if doc not in newest or ts >= newest[doc][0]:
+            if text is None:
+                wrote[doc] = max(ts, wrote.get(doc, ""))
+            elif doc not in newest or ts >= newest[doc][0]:
                 newest[doc] = (ts, text)
     if not newest:
         raise SystemExit("this session has not read any Project doc yet (use project_read first)")
+    stale = sorted(d for d in newest if wrote.get(d, "") > newest[d][0])
+    for doc in stale:
+        print(f"STALE, not written: {doc} — written after the last read ({wrote[doc]} > {newest[doc][0]}); read it again")
+        del newest[doc]
     for doc, (ts, text) in sorted(newest.items()):
         target = (out / doc).resolve()
         if out not in target.parents:
@@ -83,6 +96,8 @@ def main() -> None:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text, encoding="utf-8")
         print(f"{ts}  {doc}  {len(text):,} chars")
+    if stale:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

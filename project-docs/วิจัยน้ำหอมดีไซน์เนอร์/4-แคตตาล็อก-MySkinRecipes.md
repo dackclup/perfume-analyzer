@@ -79,7 +79,7 @@
 | ● [Sandalrome (2842)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2842-sandalrome.html) | จันทน์ราคาประหยัด (แบบ Bacdanol) | — |
 | ○ [Polysantol (2854)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2854-santol-pentenol.html) ⚠ 1.1% · [Santaliff (2873)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2873-santaliff-sandaxol-sandalmysore.html) · [Osyrol (3438)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/3438-sandal-octanol.html) · [Sandal Hexanol (3674)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/3674-sandal-hexanol-ibch.html) · Sandenol 803 (2876) · Firsantol (2874) | จันทน์อื่นๆ | Polysantol 153 |
 | ○ ⚠ [Santalol (2855)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2855-santalol-fema-3006.html) | จันทน์ · อยู่ในรายชื่อสารก่อภูมิแพ้ EU ใหม่ | — |
-| ○ [Karmawood / Timber Propanol (2848)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2848-timber-propanol-karmawood.html) ⚠ 1.3% | ไม้แห้งแบบ Timberol/Norlimbanol | 106 |
+| ○ [Karmawood / Timber Propanol (2848)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2848-timber-propanol-karmawood.html) ⚠ 1.3% | ไม้แห้ง · โมเลกุลเดียวกับ Timberol/Norlimbanol (CAS 70788-30-6 [อนุมาน: หน้าร้านไม่แสดง CAS]) | 106 |
 | ○ [Okoumal (2857)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2857-woody-dioxolane-okoumal.html) · [Kephalis (2844)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2844-woody-cyclohexanone-kephalis.html) · Cedramber (2853) | ไม้–อำพันอุ่น · Kephalis มีด้านยาสูบ | Kephalis 102 |
 | ○ [Cedrol (2849)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2849-cedrol.html) · [Cedryl Acetate 50% (2850)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2850-cedryl-acetate.html) · [Cedrenyl Acetate (3454 ⓧ)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/3454-cedrenyl-acetate.html) | ซีดาร์ ช่วยยึดกลิ่น | — |
 | ○ [Patchone (2856)](https://www.myskinrecipes.com/shop/en/wood-aroma-chemicals/2856-patchouli-hexanol-patchone.html) | ไม้–พาชูลีสังเคราะห์ | — |
@@ -131,7 +131,7 @@
 | ● ⚠ [Hydroxycitronellal (2707)](https://www.myskinrecipes.com/shop/en/lily-of-the-valley-aroma-chemicals/2707-hydroxycitronellal-fema-2583.html) | Muguet คลาสสิก แทน Lilial · IFRA ≤2.1% · EU ≤1.0% | 48 |
 | ● [Florhydral (2636)](https://www.myskinrecipes.com/shop/en/green-aroma-chemicals/2636-floral-butanal.html) · [Bourgeonal (2708)](https://www.myskinrecipes.com/shop/en/lily-of-the-valley-aroma-chemicals/2708-cyclamen-propanal-bourgeonal.html) ⚠ 0.47% | Muguet สด แทน Lilial | 150 · 114 |
 | ● ⚠ [Cyclamen Aldehyde (2706)](https://www.myskinrecipes.com/shop/en/lily-of-the-valley-aroma-chemicals/2706-cyclamen-aldehyde-fema-2743.html) | Muguet–ไซคลาเมน · มีเพดาน IFRA | — |
-| ○ Silvial (2716) ⚠ 0.99% · Muguesia/Dupical (2717) · Floral Pyranol (2705) · Mugetanol (3781 ⓧ) | Muguet อื่นๆ | — |
+| ○ Silvial (2716) ⚠ 0.99% · Muguesia/Dupical (2717) · Floral Pyranol (2705) · Mugetanol (3781 ⓧ) | Muguet อื่นๆ · ชื่อร้านของ Muguesia/Dupical รวม Muguesia (แอลกอฮอล์) กับ Dupical (อัลดีไฮด์) ซึ่งเป็นคนละโมเลกุล ถามร้านว่าเป็นตัวไหน · Dupical ตามชื่อเคมีน่าจะเป็น (33832) [อนุมาน] | — |
 | ○ ⚠ [Alpha-terpineol (2681)](https://www.myskinrecipes.com/shop/en/konifer-aroma-chemicals/2681-alpha-terpineol-fema-3045-.html) | ไลแลค–สน · สารก่อภูมิแพ้ EU ใหม่ | — |
 | ⛔ Lilial (2709 ⓧ) · Lyral (2710) | ห้ามในเครื่องสำอาง EU | — |
 
@@ -304,10 +304,12 @@ Benzyl Salicylate 143806 · Dihydromyrcenol 56963 (1 kg ฿6,700 ≈ ฿6.7/g) �
 
 ## K. ไม่มีในร้าน (ตรวจกับ sitemap ทั้งร้านแล้ว) และตัวแทน
 
+> 418 แถวในไฟล์ 7 มีแต่ชื่อจาก URL (ตัวพิมพ์เล็ก) ซึ่งอาจไม่มีชื่อการค้า เช่น 3827 ในไฟล์ 7 ชื่อ ivy dioxolane แต่หน้า MY Expert ชื่อ Ivy Dioxolane, Glycolierral · ชื่อในตารางนี้ตรวจซ้ำด้วยชื่อเคมีและการค้นเว็บแล้ว 15 ต.ค. 2026 (ไฟล์ 8 ส่วน 10)
+
 | ไม่มีในร้าน | ใช้แทนด้วย |
 |---|---|
-| Ambrofix, Ambermax, Ambrocenide, Ambrinol, Moxalone, Karanal · Amber Xtreme (2890 ⓧ) | Ambroxan, Cetalox + Iso E Super, L-Ambregrisox (252973), Bois Ambrene Forte (2811) ⚠ 1.5%, Ambercore (3560) ⚠ 1.3%, Grisalva (2812) |
-| Norlimbanol / Timberol (ชื่อนี้) | Karmawood (2848) ⚠ 1.3%, Koavone (2865) ⚠ 1.9%, Okoumal, Kephalis |
+| Ambrofix (โมเลกุลเดียวกับ Ambroxan (2810) [อนุมาน]), Ambermax, Ambrocenide, Ambrinol, Moxalone, Karanal · Amber Xtreme (2890 ⓧ) | Ambroxan, Cetalox + Iso E Super, L-Ambregrisox (252973), Bois Ambrene Forte (2811) ⚠ 1.5%, Ambercore (3560) ⚠ 1.3%, Grisalva (2812) |
+| Norlimbanol / Timberol (ชื่อนี้) | Karmawood (2848) ⚠ 1.3% เป็นโมเลกุลเดียวกัน (CAS 70788-30-6 [อนุมาน]), Koavone (2865) ⚠ 1.9%, Okoumal, Kephalis |
 | Iso E Super Plus / Orbitone, Georgywood | Iso E Super + Methyl Cedryl Ketone + Koavone (2865) ⚠ 1.9% |
 | Lilyflore, Nympheal, Mahonial | Hydroxycitronellal, Florhydral, Bourgeonal, Majantol (33720) ⚠ 1.7%, Mayol (3749) ⚠ 4.7% |
 | Orange Flower Ether | Aurantiol (2723) ⚠, Nerolin Bromelia, Orange Blossom Absolute (3240) · (Verdantiol 3991 ใช้ไม่ได้ เพราะมี Lilial — ส่วน O) |
@@ -321,7 +323,7 @@ Benzyl Salicylate 143806 · Dihydromyrcenol 56963 (1 kg ฿6,700 ≈ ฿6.7/g) �
 | Indole 1% สำเร็จ (35260 ⓧ) | Indole (2807) แล้วเจือเอง |
 | Vanilla absolute แท้ | Vanilla reconstituted (3279) + Vanillin + Ethyl Vanillin + Tonka 10% (8017) ⚠ + Benzoin (3263) |
 | ไม้จันทน์อินเดียแท้ | Sandalore, Ebanol, Javanol + Sandalwood Australian (32775) ⚠ |
-| Rose otto (น้ำมันกลั่น) | Rose Absolute (3249) ⚠, Rose De Mai Absolute (10542) ⚠ หรือ PEA + Citronellol + Geraniol + Beta Damascone |
+| Rose otto (น้ำมันกลั่น) — มีแค่ rose oil (111199) แบบรีเอเจนต์ที่ไม่บอกวิธีสกัดหรือแหล่ง จึงยังไม่นับเป็น otto [อนุมาน] ถามร้านก่อน | Rose Absolute (3249) ⚠, Rose De Mai Absolute (10542) ⚠ หรือ PEA + Citronellol + Geraniol + Beta Damascone |
 | แถบดมกลิ่น | ตัดกระดาษกรองเป็นแถบ (ร้านมีหมวด filter-paper) หรือซื้อร้านอุปกรณ์น้ำหอม |
 | Benchmark: 1 Million (8260 ⓧ), Eros, YSL, Good Girl, Acqua di Giò | ทำเองตามชุดวัตถุดิบในไฟล์ 3 และสูตรในไฟล์ 6 |
 
@@ -338,7 +340,7 @@ Benzyl Salicylate 143806 · Dihydromyrcenol 56963 (1 kg ฿6,700 ≈ ฿6.7/g) �
 ยังไม่มีราคา ลิงก์อยู่ในไฟล์ 7 · ค้นในร้านด้วยรหัสได้
 
 **ตัวเด่นสำหรับแนวดีไซน์เนอร์:**
-- **ฐานอำพัน–ไม้:** Ambercore (3560) ⚠ 1.3%, Koavone (2865) ⚠ 1.9%, Trimofix O (3565) ⚠ 2.4%, Trisamber (3671) ⚠ 0.94% — ใช้แทน Ambermax/Timberol/Karanal ที่หาไม่ได้
+- **ฐานอำพัน–ไม้:** Ambercore (3560) ⚠ 1.3%, Koavone (2865) ⚠ 1.9%, Trimofix O (3565) ⚠ 2.4%, Trisamber (3671) ⚠ 0.94% — ใช้แทน Ambermax/Karanal ที่หาไม่ได้ (Timberol ร้านมีในชื่อ Karmawood (2848))
 - **Muguet ครบชุด:** Majantol (33720) ⚠ 1.7%, Mayol (3749) ⚠ 4.7%, Magnolan (2712), Silvial และตัวในส่วน F
 - **กุหลาบสมัยใหม่:** Phenoxanol (2781), Rhodinol (2760) ⚠, Damascenone Total (2763) ⚠ 0.0414% (EU 0.02% รวม)
 - **ดอกส้มสำเร็จ:** Aurantiol (2723) ⚠ — Schiff base ไม่ต้องผสมเอง (มี Hydroxycitronellal ต้องนับรวมกับเพดาน)
@@ -348,13 +350,13 @@ Benzyl Salicylate 143806 · Dihydromyrcenol 56963 (1 kg ฿6,700 ≈ ฿6.7/g) �
 
 **สารให้กลิ่นสังเคราะห์:**
 - **มัสก์:** Zenolide (2901)
-- **อำพัน-ไม้ (ตัวแทน Ambermax / Timberol):** Amber Butanol, Ambercore (3560) ⚠ 1.3% · Amber Decatriene (Trimofix O, Fixamber) (3565) ⚠ 2.4% · Woody Furan (Trisamber) (3671) ⚠ 0.94% · Kohinool, Amber Carbinol (2866) · Amber Formate, Oxyoctaline Formate (2867) · Woody Amylene, Koavone (2865) ⚠ 1.9% · Sandela 803 (Givaudan) (Synthetic Sandalwood) (8106) · Orris Hexanone, Orivone (2860) ⚠ IFRA 51 เพดาน 0.15% · Isolongifolene Ketone (2852) · Woody epoxide, Cedroxyde (8013) · Beta-caryophyllene (FEMA-2252) (2851) · Guaiyl Acetate (2863)
+- **อำพัน-ไม้ (ตัวแทน Ambermax):** Amber Butanol, Ambercore (3560) ⚠ 1.3% · Amber Decatriene (Trimofix O, Fixamber) (3565) ⚠ 2.4% · Woody Furan (Trisamber) (3671) ⚠ 0.94% · Kohinool, Amber Carbinol (2866) · Amber Formate, Oxyoctaline Formate (2867) · Woody Amylene, Koavone (2865) ⚠ 1.9% · Sandela 803 (Givaudan) (Synthetic Sandalwood) (8106) · Orris Hexanone, Orivone (2860) ⚠ IFRA 51 เพดาน 0.15% · Isolongifolene Ketone (2852) · Woody epoxide, Cedroxyde (8013) · Beta-caryophyllene (FEMA-2252) (2851) · Guaiyl Acetate (2863)
 - **หนัง / ยาสูบ / รัม:** Leather Cyclohexanol, Apo Patchone Coeur, Folrosia (3432) · Virginia Tobacco Absolute (5846) · Tobacco Absolute (10538) · eeez tobacco cyclohexenone fema 4663 (33771) · Rum Ether (pyroligneous acids ethyl esters) (2805)
 - **ลิลลี่ออฟเดอะแวลลีย์ (muguet):** lily propanol majantol (33720) ⚠ 1.7% · Magnolia Indene, Magnolan (2712) · muguet shiseol mayol p enamel 7 ol (3749) ⚠ 4.7% · Cuminyl Acetaldehyde (Cyclemax) (3885) · Citronellyl Oxyacetaldehyde, Muguet Aldehyde 50% (2714) · Muguet Carboxaldehyde, Cyclomugual, Cyclomyral, Melafleur (3845) ⚠ 2.1% · Carbinol Muguet, Dimethyl Phenylethyl Carbinol (2711)
 - **กุหลาบ:** Phenoxanol, Mefrosol, Rose Absolute Pentalol (2781) · Rhodinol (2760) ⚠ · Damascenone Total (Damascenone 93%) (FEMA-3420) (2763) ⚠ 0.0414% (EU 0.02% รวม) · 9-decen-1-ol, rosalva (2758) · Geranium Cyclohexane, Geranodyle (3706) · Floral Pyran, Rosyrane Super (2780) · Peony Acetonitrile, Peonile (2773) ⚠ 0.52% · rose pyran doremox 4 methyl 2 phenyloxane (33830) · Rose Acetate (2778)
 - **ไอริส / ไวโอเล็ต:** Delta-damascone (FEMA-3622) (2658) ⚠ 0.0414% (EU 0.02% รวม) · Violet Methyl Carbonate, Violiff (2662) · violet nitrile vionil (33733) · Methyl Octine Carbonate (FEMA-2726) (2627) ⚠ 0.01% (EU 0.002%) · Tropical Ionone, Allyl alpha-ionone, Cetone V (2574)
 - **มะลิ / ดอกไม้ขาว / ส้มดอก:** Aurantiol Schiffs Base Ma Hydroxy (2723) ⚠ · Verdantiol, Lilyall / Methyl Anthranilate Schiffs Base (3991) ⛔ มี Lilial · Oranger Crystal (Beta-naphthyl Methyl Ketone) (FEMA-2723) (2724) ⚠ 0.20% · Gardenia Acetal, Floropal (2721) · 2-pentyl Cyclopentanone, Delphone (3717) · Jessemal, Jasmonyl (FEMA-2783) (32885) · Benzyl Isobutyrate (FEMA-2141) (2672) · Freesia Acetate, Myraldyl Acetate (2674) ⚠ 0.43% · Herbal Pyran (2667) · Petal Pyranone, Jasmalactone (3665) · Tuberose Acetate, Cyclopidene (3331) · Indoflor, Indolarome (2814) · Phenethyl Salicylate (2740)
-- **เขียว:** Galbascone (Dynascone) (2602) ⚠ 1.1% · Leafy Oxime, Stemone (2637) · Violet Decenol, Undecavertol (2619) · Green Acetate, Verdox, Argumex (2572) · Manzanate (2639) · Rhubafuran (2646) · Rhubarb Oxirane, Rhubofix (3703) · Hyacinth Butanal, Trifernal (3579) ⚠ 0.44% · Cucumber Aldehyde, trans-2-nonenal (FEMA-3213) (2645) · Hexenyl Salicylate Cis-3 (2610) · Styralyl Acetate (FEMA-2684) (2613) · Cis-3-hexenyl Benzoate (FEMA-3688) (2623)
+- **เขียว:** Galbascone (Dynascone) (2602) ⚠ 1.1% · Leafy Oxime, Stemone (2637) · Violet Decenol, Undecavertol (2619) · Green Acetate, Verdox, Argumex (2572) · Manzanate (2639) · Rhubafuran (2646) · Rhubarb Oxirane, Rhubofix (3703) · Ivy Dioxolane, Glycolierral (3827) · Hyacinth Butanal, Trifernal (3579) ⚠ 0.44% · Cucumber Aldehyde, trans-2-nonenal (FEMA-3213) (2645) · Hexenyl Salicylate Cis-3 (2610) · Styralyl Acetate (FEMA-2684) (2613) · Cis-3-hexenyl Benzoate (FEMA-3688) (2623)
 - **ซิตรัส / aldehyde:** Mandarine Undecenal, Aldehyde Supra (2463) · 2-methyl Decanal (aldehyde C-11 Moa) (2492) · Mandarine Aldehyde 10% (2500) · Lime Oxide, Limetol (2498) · Citrathal (2502) · Homogeranyl Nitrile, Lemonile (2497) · Citronellyl Nitrile (3732) · Grapefruit Nitrile (Khusinil) (3876) · Lime Pyran (2485)
 - **ผลไม้:** Fruity Ketal, Fructone B, Fraistone (FEMA-4294) (2584) · Fruity Butanate, Nectarate (3337) · Pear Valerate, Peranat (3984) · Pineapple Heptadienone, Pharaone 10% (3335) · Fleuramone (3336) · Berry Hexanoate, Berryflor (3329) · Cassiffix (3330) · Fig Crotonate, Datilat (3332) · Aldehyde C-16 Strawberry (FEMA- 2444) (2576) · Gamma-dodecalactone (FEMA-2400) (3307) · Melon Heptenal (2,6-dimethyl-5-heptenal) (FEMA-2389) (3308) · Allyl Cyclohexyl Propionate (FEMA-2026) (2558) ⚠ 0.47% · Allyl Phenoxyacetate (Pineapple Ether) (FEMA-2038) (3873) ⚠ 0.30% · Peach Cyclopentanone, Peach Ketone (2571) · Raspberry Dicarboxylate (Fructalate) (3862)
 - **ลาเวนเดอร์-อะโรมาติก / เย็น:** Tetrahydro Linalool, Tetrahydro Muguol, Citrus Ocimenol (2686) · Linalyl Propionate (2703) · Freesia Heptanol, Dimetol (2,6-Dimethyl-2-heptanol) (2696) · Woody Acetate, Vertenex (2691) · Verdyl Acetate, Tricyclodecenyl Acetate, Cyclacet (2688) · Clary propionate, Sclareolate (8014) · Tricyclodecenyl Isobutyrate, Cyclabute (2651) · Conifer Acetate, Coniferan (3435) · Pine Hexanol (Verdol) (3551) · Eucalyptol (FEMA 2465) (2474) · UltraCool™ Menthol Crystal (Low-Bitter, Super-Cool) (125625) · Alpha-terpinyl Acetate (FEMA-3047) (2694)

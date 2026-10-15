@@ -20,7 +20,7 @@ What the checks read (so writers know what is enforced):
     "(2710 ชื่อในร้าน …)", "รหัส 8017", and bare 5-6 digit numbers in paragraphs about รีเอเจนต์ listings.
     Bare 3-4 digit numbers ("Tonka 8017") are not read: write shop IDs in brackets.
   - "Not at the shop": tables with a "ไม่มีในร้าน" column, ❌ in a MSR/ร้าน column, "**MSR:** ❌" under a
-    perfume title, "ไม่มีในร้าน: X", "ร้าน/MSR ไม่มี X", "X ไม่มีในร้าน", "X ที่ร้านไม่มี", "X ที่หาไม่ได้".
+    perfume title, "ไม่มีในร้าน: X", "ร้าน/MSR ไม่มี X", "X ไม่มีในร้าน", "X ที่ร้านไม่มี", "X ที่หาไม่ได้", "X (หาซื้อไม่ได้)".
     Names written only in Thai are not checked.
 
 Known, reviewed exceptions live in allow.json ({"key": ..., "why": ...}; keys come from doc_problems.csv).
@@ -50,6 +50,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 DOCS_DIR = REPO / "project-docs" / "วิจัยน้ำหอมดีไซน์เนอร์"
 ALLOW_FILE = HERE / "allow.json"
+TITLES_FILE = HERE / "expert_titles.json"  # shop titles (MY Expert) for rows whose sitemap name lacks the trade name
 DATA_BRANCH = "msr-verify-data"
 SITEMAP_REF = f"origin/{DATA_BRANCH}:sitemap_products.csv.gz"
 
@@ -90,7 +91,8 @@ NOT_AT_SHOP = [
     # "ร้านไม่มี Hedione", "MSR ไม่ขาย Hedione", "MySkinRecipes ยังไม่มี Hedione"
     re.compile(rf"(?:ร้าน|MSR|MySkinRecipes)\s*(?:ยัง)?(?:ไม่มี|ไม่ขาย|ไม่พบ)(?:ขาย)?\s*({LATIN_NAMES})(?=\s*(?:$|[|(—.;]|[{THAI}]))"),
     # "Hedione ไม่มีในร้าน", "Orbitone ที่ร้านไม่มี", "Karanal ที่หาไม่ได้", "Hedione ไม่พบที่ MSR"
-    re.compile(rf"({LATIN_NAMES})\s*(?:ที่)?(?:ร้านไม่มี|ร้านไม่ขาย|ไม่มีในร้าน|ไม่มีขายที่ร้าน|ไม่มีที่ MSR|ไม่พบที่ MSR|หาไม่ได้)(?!\s*(?:สต็อก|ของ|ชั่วคราว))"),
+    # "Glycolierral (หาซื้อไม่ได้)" (round 29)
+    re.compile(rf"({LATIN_NAMES})\s*\(?(?:ที่)?(?:ร้านไม่มี|ร้านไม่ขาย|ไม่มีในร้าน|ไม่มีขายที่ร้าน|ไม่มีที่ MSR|ไม่พบที่ MSR|หาซื้อไม่ได้|หาไม่ได้)(?!\s*(?:สต็อก|ของ|ชั่วคราว))"),
     # "ไม่มีในร้าน: Eros, Good Girl — …" (bold or not)
     re.compile(r"\*{0,2}ไม่มีในร้าน\s*:\*{0,2}\s*(.*?)(?:\s—\s|$)"),
 ]
@@ -337,12 +339,16 @@ def load_sitemap(path: str | None) -> dict[int, Product]:
 
 
 class NameIndex:
-    def __init__(self, products: dict[int, Product]):
+    def __init__(self, products: dict[int, Product], titles: dict[int, str] | None = None):
         self.products = products
         self.by_token: dict[str, set[int]] = {}
         for p in products.values():
             for x in set(tokens(p.name)) | set(tokens(p.url.rsplit("/", 1)[-1].replace(".html", ""))):
                 self.by_token.setdefault(x, set()).add(p.id)
+        for i, title in (titles or {}).items():   # e.g. 3827 "ivy dioxolane" in the sitemap, "Ivy Dioxolane, Glycolierral" on MY Expert
+            if i in products:
+                for x in tokens(title):
+                    self.by_token.setdefault(x, set()).add(i)
 
     def find(self, name: str, benchmark_only: bool = False) -> list[Product]:
         want = [t for t in tokens(name) if t not in DROP_TOKENS]
@@ -539,8 +545,10 @@ def check_index(docs_dir: Path) -> list[Problem]:
 # --------------------------------------------------------------------------- run
 
 
-def run(docs_dir: Path, sitemap: dict[int, Product] | None, allow: dict[str, str]) -> tuple[list[Problem], list[Problem], dict]:
+def run(docs_dir: Path, sitemap: dict[int, Product] | None, allow: dict[str, str],
+        titles: dict[int, str] | None = None) -> tuple[list[Problem], list[Problem], dict]:
     lines = read_docs(docs_dir)
+    titles = load_titles() if titles is None else titles
     known = set(sitemap) if sitemap else None
     names, ids = banned_list(lines)
     problems = check_banned(lines) + check_index(docs_dir)
@@ -549,7 +557,7 @@ def run(docs_dir: Path, sitemap: dict[int, Product] | None, allow: dict[str, str
     if sitemap:
         problems += check_ids(lines, sitemap)
         problems += check_catalog(read_catalog(docs_dir), sitemap)
-        problems += check_absence(lines, NameIndex(sitemap))
+        problems += check_absence(lines, NameIndex(sitemap, titles))
         stats["sitemap_products"] = len(sitemap)
     allowed = [p for p in problems if p.key in allow]
     failing = [p for p in problems if p.key not in allow]
@@ -579,6 +587,12 @@ def write_outputs(out_dir: Path, failing: list[Problem], allowed: list[Problem],
             for p in group:
                 w.writerow([status, p.check, p.doc, p.line, p.key, p.detail, p.text[:300]])
     (out_dir / "doc_check.md").write_text(report_md(failing, allowed, stats), encoding="utf-8")
+
+
+def load_titles(path: Path = TITLES_FILE) -> dict[int, str]:
+    if not path.exists():
+        return {}
+    return {int(e["id"]): e["title"] for e in json.loads(path.read_text(encoding="utf-8"))}
 
 
 def load_allow(path: Path = ALLOW_FILE) -> dict[str, str]:

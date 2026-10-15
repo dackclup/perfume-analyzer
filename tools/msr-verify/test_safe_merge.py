@@ -47,7 +47,8 @@ class T(unittest.TestCase):
         code, out, _ = run(BASE, BASE + "g\n", BASE); self.assertEqual((code, out), (0, {"0-x.md": BASE + "g\n"}))
 
     def test_only_theirs_changed(self):  # local copy is stale: the Project already has the right text, nothing to upload
-        code, out, s = run(BASE, BASE, BASE + "h\n"); self.assertEqual((code, out), (0, {})); self.assertIn("no upload", s)
+        code, out, s = run({"0-x.md": BASE, "1-x.md": BASE}, {"0-x.md": BASE, "1-x.md": BASE + "g\n"}, {"0-x.md": BASE + "h\n", "1-x.md": BASE})
+        self.assertEqual((code, out), (0, {"1-x.md": BASE + "g\n"})); self.assertIn("no upload", s)
 
     def test_no_base_both_differ_stops(self):
         code, out, _ = run(None, "x\n", "y\n"); self.assertEqual(code, 1); self.assertEqual(out, {})
@@ -58,7 +59,7 @@ class T(unittest.TestCase):
         self.assertEqual(code, 2); self.assertEqual(out, {}); self.assertIn("wrong folder", s)
 
     def test_doc_missing_from_fresh_read_stops(self):  # deleted/renamed in the Project, or never read
-        code, out, s = run({"0-x.md": BASE, "10-old.md": "old\n"}, {"0-x.md": BASE, "10-old.md": "old\n"},
+        code, out, s = run({"0-x.md": BASE, "10-old.md": "old\n"}, {"0-x.md": BASE + "g\n", "10-old.md": "old\n"},
                            {"0-x.md": BASE, "10-new.md": "new\n"})
         self.assertEqual(code, 1); self.assertEqual(out, {}); self.assertIn("deleted or renamed", s)
         code, out, s = run({"0-x.md": BASE}, {"0-x.md": BASE, "7-x.csv": "csv\n"}, {"0-x.md": BASE})
@@ -135,6 +136,19 @@ class T(unittest.TestCase):
         code, out, s = run({"0-x.md": BASE, "1-x.md": BASE}, {"0-x.md": BASE, "1-x.md": BASE + "g\n"}, {"0-x.md": bad, "1-x.md": BASE})
         self.assertEqual(code, 0); self.assertEqual(out, {"1-x.md": BASE + "g\n"}); self.assertIn("0-x.md", s)
         code, out, _ = run(BASE, BASE + "g\n", BASE + "g\n"); self.assertEqual((code, out), (0, {}))   # same: already in the Project
+
+    # --- round 29 (F4) ---
+    def test_truncated_fresh_read_of_edited_doc_stops(self):  # a bad read must not be merged and uploaded
+        big = "".join(f"line {i}\n" for i in range(100))
+        mine = big.replace("line 10\n", "line 10 mine\n"); bad = "".join(big.splitlines(True)[:50])
+        code, out, s = run(big, mine, bad); self.assertEqual(code, 1); self.assertEqual(out, {}); self.assertIn("shorter", s)
+        code, out, _ = run(big, mine, bad, extra=("--allow-shrink", "0-x.md")); self.assertEqual(code, 0); self.assertIn("line 10 mine", out["0-x.md"])
+        theirs = big.replace("line 90\n", "line 90 theirs\n")   # a normal edit by the other side still merges
+        code, out, _ = run(big, mine, theirs); self.assertEqual(code, 0); self.assertIn("line 90 theirs", out["0-x.md"])
+
+    def test_nothing_edited_refused(self):  # base taken after editing (or a copy of mine): every doc looks unchanged
+        code, out, s = run({"0-x.md": BASE + "g\n", "1-x.md": BASE}, {"0-x.md": BASE + "g\n", "1-x.md": BASE}, {"0-x.md": BASE, "1-x.md": BASE})
+        self.assertEqual(code, 2); self.assertEqual(out, {}); self.assertIn("nothing edited", s)
 
 
 if __name__ == "__main__":
