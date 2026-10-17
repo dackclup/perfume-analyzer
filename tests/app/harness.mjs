@@ -78,5 +78,5 @@ export function loadApp({ runtime = 'db', docs = {}, uid = 'u1', storage = {}, f
   const change = (el) => { if (typeof el === 'string') el = $(el); el.dispatchEvent(new win.Event('change', { bubbles: true })); return el; };
   const remote = (id, v) => { if (v === null) store.delete(id); else store.set(id, clone(v)); started = true; fire(); };
   const data = JSON.parse(doc.getElementById('catalog-data').textContent);
-  return { dom, win, doc, $, $$, click, type, change, writes, store, remote, data, land: () => held.shift()(), echo: () => fire(), view: (d) => send(new Map(Object.entries(d)), false), held, close: () => { closed = true; } };   // the app's own timers may still run: keep the window alive
+  return { dom, win, doc, $, $$, click, type, change, writes, store, remote, data, land: () => held.shift()(), echo: () => fire(), view: (d, fromCache = false) => send(new Map(Object.entries(d)), fromCache), held, close: () => { closed = true; } };   // the app's own timers may still run: keep the window alive
 }

@@ -59,6 +59,10 @@ describe('saving', () => {
     app.land(); await sleep(0);   // save 2 (Ambroxan + Iso E Super) done
     app.view({ fdraft: app.writes[0].v }); await sleep(0);   // the view of save 1 turns up late
     expect(app.$('#form-badge').textContent).toBe('2');
+    // round 40: if the server really kept the older save, the page saves the newest again (once)
+    expect(app.held.length).toBe(1);
+    expect(app.writes[2].v.items.map((i) => i.pid)).toEqual([2810, 2845]);
+    app.land(); await sleep(0);
     app.click('[data-fadd="2821"]');
     await sleep(700);
     app.land(); await sleep(0);
@@ -124,7 +128,7 @@ describe('saving', () => {
     app.remote('fdraft', doc([line(2665, 5), line(2845, 5)]));   // arrives before this page's save
     await sleep(800);
     expect(app.store.get('fdraft').items.length).toBe(1);
-    expect(txt('#toast')).toContain('สูตรถูกแก้จากอีกเครื่อง');
+    expect(txt('#toast')).toContain('สูตรถูกแก้จากหน้าอื่นหรือเครื่องอื่น');   // round 40 wording: it may be this device's earlier page
   });
   it('blocks the concentration chips while the saved formula is loading · guard', async () => {
     app = loadApp({ docs: { fdraft: doc([line(2845, 20)]) }, firstDelay: 400 });
