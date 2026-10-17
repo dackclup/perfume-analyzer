@@ -11,7 +11,8 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // cached = docs of a cached first view sent at once (fromCache) · writeDelay = ms before a write lands and
 // is acknowledged · echoDelay = ms after the acknowledgement before the new view arrives (default: view first) ·
 // fail(id, v) = true makes that write reject (code 'unavailable') · hold = writes wait until the test calls
-// land() (oldest first: store it, acknowledge it) and echo() (send the current view), so the order is exact.
+// land() (oldest first: store it, acknowledge it) and echo() (send the current view), so the order is exact ·
+// view(docs) sends any view, e.g. a late copy of an older state, without changing the store.
 export function loadApp({ runtime = 'db', docs = {}, uid = 'u1', storage = {}, firstDelay = 0, cached = null, writeDelay = 0, echoDelay = -1, fail = null, hold = false } = {}) {
   const src = fs.readFileSync(process.env.APP_FILE || APP_PATH, 'utf8');   // APP_FILE: run the same tests on another build (mutation checks)
   const writes = [];
@@ -77,5 +78,5 @@ export function loadApp({ runtime = 'db', docs = {}, uid = 'u1', storage = {}, f
   const change = (el) => { if (typeof el === 'string') el = $(el); el.dispatchEvent(new win.Event('change', { bubbles: true })); return el; };
   const remote = (id, v) => { if (v === null) store.delete(id); else store.set(id, clone(v)); started = true; fire(); };
   const data = JSON.parse(doc.getElementById('catalog-data').textContent);
-  return { dom, win, doc, $, $$, click, type, change, writes, store, remote, data, land: () => held.shift()(), echo: () => fire(), held, close: () => { closed = true; } };   // the app's own timers may still run: keep the window alive
+  return { dom, win, doc, $, $$, click, type, change, writes, store, remote, data, land: () => held.shift()(), echo: () => fire(), view: (d) => send(new Map(Object.entries(d)), false), held, close: () => { closed = true; } };   // the app's own timers may still run: keep the window alive
 }

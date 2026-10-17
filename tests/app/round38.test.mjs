@@ -60,7 +60,8 @@ describe('shared IFRA caps (HIGH-1)', () => {
     const shared = [...g.values()].filter((v) => v.length > 1).map((v) => v.sort((a, b) => a - b).join(',')).sort();
     expect(shared).toEqual([
       '2428,2660,2661', '2559,2658,2763,2779,9236,33801', '2602,33794', '2621,3801', '2627,2629', '2846,33721',
-      '2907,33762', '3178,3265', '3259,253413', '3260,3837,33884', '3466,33784'].sort());
+      '2907,33762', '3178,3265', '3259,253413', '3260,3837,33884', '3466,33784',
+      '3579,33759'].sort());   // round 39: Trifernal 3579 = 3-Phenylbutanal 33759 (STD 074), labelled differently in the index
     for (const v of g.values()) { const caps = v.map((i) => kind(app.data.items.find((x) => x.i === i)).cap); if (v.length > 1 && !v.includes(2627)) expect(new Set(caps).size).toBe(1); }
   });
 });
@@ -165,6 +166,7 @@ describe('saving (MEDIUM-3 to 5)', () => {
     app.click('[data-fadd="2810"]');
     Object.defineProperty(app.doc, 'visibilityState', { value: 'hidden', configurable: true });
     app.doc.dispatchEvent(new app.win.Event('visibilitychange'));
+    await sleep(0);   // the save starts in the same task (saves go one at a time since round 39)
     expect(app.writes.filter((w) => w.id === 'fdraft').length).toBe(1);
   });
   it('does not lose a quick second edit when saves are slow', async () => {
@@ -174,11 +176,12 @@ describe('saving (MEDIUM-3 to 5)', () => {
     app.click('[data-fadd="2810"]');
     await sleep(700);   // save 1 (Ambroxan) is on its way
     app.click('[data-fadd="2845"]');
-    await sleep(700);   // save 2 (Ambroxan + Iso E Super) is on its way too
-    expect(app.held.length).toBe(2);
+    await sleep(700);   // save 2 waits for save 1 (round 39: one save at a time)
+    expect(app.held.length).toBe(1);
     app.land(); await sleep(0);   // save 1 is acknowledged …
-    app.echo(); await sleep(0);   // … and its view (Ambroxan only) arrives while save 2 is still out
+    app.echo(); await sleep(0);   // … and its view (Ambroxan only) arrives while save 2 is still to go
     expect(app.$('#form-badge').textContent).toBe('2');
+    expect(app.held.length).toBe(1);   // save 2 now sent, with the newest content
     app.land(); app.echo(); await sleep(0);
     expect(app.$('#form-badge').textContent).toBe('2');
     expect(app.store.get('fdraft').items.map((i) => i.pid)).toEqual([2810, 2845]);

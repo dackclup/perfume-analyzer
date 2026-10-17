@@ -343,7 +343,7 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
       <p class="count" id="f-bottle" style="margin:10px 0 0"></p>
       <section class="group"><h3><span id="f-items-h">วัตถุดิบ</span><span class="num" id="f-total"></span></h3><p class="hint" style="margin:-4px 0 8px">แตะแถวเพื่อแก้กรัมและระดับเจือจาง</p><div class="list" id="f-rows"></div></section>
       <div class="actions"><button class="btn" type="button" data-fview="pick">＋ เพิ่มวัตถุดิบ</button></div>
-      <div class="notes"><p>เพดานจากไฟล์ 1 (IFRA ฉบับ 51 · Cat. 4) ชุดเดียวกับหน้ารายละเอียด · คิดจากสารเพียว · % ในหัวน้ำหอมคิดจากกรัมรวมที่ชั่ง · % ในขวดปัดขึ้น เพดานที่ใส่ได้ปัดลง</p><p>นับแล้ว: เพดานของแต่ละตัว · ตัวที่ใช้มาตรฐาน IFRA เดียวกัน (เช่น Rose ketones หลายตัว, Oakmoss + Treemoss) รวมกันในเพดานเดียว · งบผิวแพ้แสงรวม · เตือนเมื่อเกินกฎหมาย EU 19 ตัวที่ต่ำกว่า IFRA (ไม่ใช่ส่วนของผล IFRA)</p><p>ยังไม่นับ: สารที่อยู่ในวัตถุดิบตัวอื่น (เช่น Coumarin ใน Tonka, Citral ในน้ำมันเลมอน, Hydroxycitronellal ใน Aurantiol) · สารในน้ำมันธรรมชาติตามล็อต · Benzyl Benzoate/Benzyl Alcohol ที่ติดมากับสารเจือจาง · สารก่อภูมิแพ้บนฉลาก — ใช้ใบ IFRA/COA ของล็อตจริงก่อนผสม</p><p>ราคาเป็นค่าประมาณรอบแรก ไม่รวมแอลกอฮอล์ ต้องเช็กในตะกร้า</p></div>
+      <div class="notes"><p>เพดานจากไฟล์ 1 (IFRA ฉบับ 51 · Cat. 4) ชุดเดียวกับหน้ารายละเอียด · คิดจากสารเพียว · % ในหัวน้ำหอมคิดจากกรัมรวมที่ชั่ง · % ในขวดปัดขึ้น เพดานที่ใส่ได้ปัดลง</p><p>นับแล้ว: เพดานของแต่ละตัว · ตัวที่แอปจับคู่ได้ว่าใช้มาตรฐาน IFRA เดียวกัน (เช่น Rose ketones หลายตัว, Oakmoss + Treemoss) รวมกันในเพดานเดียว · งบผิวแพ้แสงรวม · เตือนเมื่อเกินกฎหมาย EU ของ 19 ตัวที่มีเพดาน IFRA เป็นตัวเลขและ EU ต่ำกว่า (ไม่ใช่ส่วนของผล IFRA · ตัวอื่นดูในหน้าของแต่ละตัว)</p><p>ยังไม่นับ: สารที่อยู่ในวัตถุดิบตัวอื่น (เช่น Coumarin ใน Tonka, Citral ในน้ำมันเลมอน, Hydroxycitronellal ใน Aurantiol) · สารในน้ำมันธรรมชาติตามล็อต · Benzyl Benzoate/Benzyl Alcohol ที่ติดมากับสารเจือจาง · สารก่อภูมิแพ้บนฉลาก — ใช้ใบ IFRA/COA ของล็อตจริงก่อนผสม</p><p>ราคาเป็นค่าประมาณรอบแรก ไม่รวมแอลกอฮอล์ ต้องเช็กในตะกร้า</p></div>
     </div>
   </section>
 </div>
@@ -823,7 +823,8 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
   // Triplal + Ivy carbaldehyde, Sandalore ×2 …) add up against one cap. Oakmoss + Treemoss share 0.1%, and
   // MHC + MOC together stay under 0.047% with MOC alone under 0.01% (file 1, the products' IFRA notes).
   // Photo oils are left out here: they are already in the photo budget (round 38).
-  var GROUP_ALIAS = { 'Treemoss extracts': 'Oakmoss extracts', 'Methyl octine carbonate': 'Methyl heptine carbonate' };
+  var GROUP_ALIAS = { 'Treemoss extracts': 'Oakmoss extracts', 'Methyl octine carbonate': 'Methyl heptine carbonate',
+    '3-Phenylbutanal': '3-Phenylbutanal (Trifernal)' };   // 33759 and Trifernal 3579: one substance, STD 074 (round 39)
   var GROUP_CAP = { 'Methyl heptine carbonate': 0.047 };
   function capGroup(x) { var g = x.i5 ? x.i5[0] : null; return g ? (GROUP_ALIAS[g] || g) : null; }
   // EU cosmetics law (Annex III) where it is lower than the IFRA cap, from each product's EU line (file 1).
@@ -835,6 +836,7 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
   function fCond(x, k) {   // the cap holds only for one form or grade, or there is a quality rule: never a plain pass
     var code = x.i5 ? x.i5[1] : '';
     if (k.k === 'spec') return 'ข้อกำหนดคุณภาพ';
+    if (k.k === 'free' && x.ifra && x.ifra !== 'ไม่จำกัด') return 'ร่าง IFRA ฉบับ 52 อาจจำกัด';   // Calone
     if (k.k !== 'cap') return null;
     if (/P/.test(code)) return 'บางรูปแบบ IFRA ห้าม';
     if (/S/.test(code)) return 'มีข้อกำหนดคุณภาพ';
@@ -860,14 +862,14 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
     if (v <= 0) return '0%';
     if (v >= 0.1) return (Math.ceil(v * 100 - 1e-9) / 100).toFixed(2) + '%';
     var d = Math.max(2, Math.ceil(-Math.log10(v)) + 1), f = Math.pow(10, d);
-    return String(Math.ceil(v * f - 1e-9) / f) + '%';
+    return (Math.ceil(v * f - 1e-9) / f).toFixed(d).replace(/0+$/, '') + '%';   // toFixed: never "8e-8%"
   }
   function headPct(v) { return v >= 1 ? String(Math.ceil(v * 10 - 1e-9) / 10) + '%' : upPct(v); }   // % in the concentrate, rounded up (never shows 0% for a real line)
   function downPct(v) {   // a limit shown rounded DOWN
     if (v >= 100) return '100%';
     if (v >= 1) return String(Math.floor(v * 10 + 1e-9) / 10) + '%';
     var d = Math.max(2, Math.ceil(-Math.log10(v)) + 1), f = Math.pow(10, d);
-    return String(Math.floor(v * f + 1e-9) / f) + '%';
+    return (Math.floor(v * f + 1e-9) / f).toFixed(d).replace(/0+$/, '').replace(/\.$/, '') + '%';
   }
   function plainKind(x) {
     var k = fKind(x);
@@ -883,7 +885,12 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
   var CONCS = [8, 10, 15, 20, 25], DILS = [100, 10, 1];
   var formula = { items: [], conc: 8, certs: {} };   // items: {pid, g (number|null), dil, filt}
   var fTimer = null, fDirty = false;
-  var fInflight = 0, fLastAt = 0, fLastSnap = null, fSaveErr = false, fRetryT = null, fRetryN = 0;   // writes on their way · the newest snapshot that arrived meanwhile
+  // Saves go one at a time (fChain), each with this page's id and a number (sid, n): a late view of an older save
+  // from this page is recognised and skipped whatever the clocks say. A view that arrived before a save was sent is
+  // older than that save on the server, so the save replaces it (round 39).
+  var FSID = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  var fSeq = 0, fLastN = 0, fChain = Promise.resolve(), fInflight = 0, fLastSnap = null, fOverwrote = false;
+  var fSaveErr = false, fRetryT = null, fRetryN = 0, fNoteKey = '';
   function fGuard() {   // the saved formula must be known before any edit, or the first save would replace it (round 38)
     if (listKnown()) return true;
     toast(store.revoked || store.lost ? 'ยังโหลดสูตรที่บันทึกไว้ไม่ได้ โหลดหน้าใหม่ก่อนแก้สูตร' : 'กำลังโหลดสูตรที่บันทึกไว้ รอสักครู่แล้วแก้อีกครั้ง');
@@ -893,7 +900,7 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
   function filtCodes() { return formula.items.filter(function (it) { return it.filt; }).map(function (it) { return it.pid; }); }
   function formulaBody() {
     return { v: 1, items: formula.items.map(function (it) { return { pid: it.pid, g: it.g, dil: it.dil, filt: !!it.filt }; }),
-      conc: formula.conc, certs: Object.assign({}, formula.certs), at: Date.now() };
+      conc: formula.conc, certs: Object.assign({}, formula.certs), at: Date.now(), sid: FSID, n: ++fSeq };
   }
   function readFormula(v, notes) {   // a stored doc -> a clean formula (unknown products and bad values dropped; each fix noted)
     var f = { items: [], conc: 8, certs: {} };
@@ -913,40 +920,54 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
     if (v.certs && typeof v.certs === 'object') Object.keys(v.certs).forEach(function (k) { var n = +v.certs[k]; if (CERT.has(+k) && isFinite(n) && n > 0 && n <= 100) f.certs[+k] = n; else note('ตัดเพดานใบรับรองที่ไม่ถูกต้อง'); });
     return f;
   }
+  function isRemote(v) { return !!v && typeof v === 'object' && v.sid !== FSID; }
+  function ownOlder(v) { return !!v && v.sid === FSID && +v.n < fLastN; }   // a view of an older save from this page
   function applyFormulaDoc(v) {
     var notes = [];
     formula = readFormula(v, notes);
-    if (notes.length) toast('สูตรที่บันทึกไว้มีส่วนที่แอปอ่านไม่ได้: ' + notes.join(' · ') + ' (บันทึกเมื่อแก้สูตรครั้งถัดไป)');
+    var key = notes.join(' · ');
+    if (key && key !== fNoteKey) toast('สูตรที่บันทึกไว้มีส่วนที่แอปอ่านไม่ได้: ' + key + ' (บันทึกเมื่อแก้สูตรครั้งถัดไป)');
+    fNoteKey = key;
   }
   function persistFormula() {
     fTimer = null; clearTimeout(fRetryT); fRetryT = null;
     if (store.mode !== 'db' || !store.ready) return;   // memory/readonly: kept on this page only · pending: edits wait for the saved formula (fGuard)
-    var b = formulaBody();
-    fLastAt = b.at; fInflight++;
-    withRetry(function () { return store.col.doc('fdraft').set(b); }).then(function () {
-      fInflight--; fRetryN = 0;
-      if (fTimer || fInflight) return;   // more is on its way
-      fDirty = false;
-      var hadErr = fSaveErr, s = fLastSnap; fSaveErr = false; fLastSnap = null;
-      if (s && s.v && +s.v.at > fLastAt) applyFormulaDoc(s.v);   // changed on another device after this save: show it (an echo of an older save is skipped)
-      if (hadErr || s) renderForm();
-    }, function (e) {
-      fInflight--;
-      var code = e && e.code;
-      if (code === 'revoked' || code === 'not_granted' || code === 'invalid_argument') { if (code === 'revoked') store.revoked = true; setMode('readonly'); }
-      else if (!fTimer && fRetryN < 3) { fRetryN++; fRetryT = setTimeout(persistFormula, 3000 * fRetryN); }   // try again by itself after 3, 6, 9 s
-      fSaveErr = true;
-      toast('บันทึกสูตรไม่สำเร็จ สูตรยังอยู่ในหน้านี้ แต่ยังไม่ได้บันทึก');
-      renderFormBanner();
+    fInflight++;
+    fChain = fChain.then(function () {
+      if (store.mode !== 'db') { fInflight--; return; }
+      var s = fLastSnap;
+      if (s) { if (isRemote(s.v) && JSON.stringify(readFormula(s.v)) !== JSON.stringify(formula)) fOverwrote = true; fLastSnap = null; }   // seen before this save: older on the server
+      var b = formulaBody(); fLastN = b.n;   // the newest content when this save actually starts
+      return withRetry(function () { return store.col.doc('fdraft').set(b); }).then(formulaSaved, formulaSaveFailed);
     });
   }
+  function formulaSaved() {
+    fInflight--; fRetryN = 0;
+    if (fTimer || fInflight) return;   // more is on its way
+    fDirty = false;
+    var hadErr = fSaveErr, s = fLastSnap, over = fOverwrote; fSaveErr = false; fLastSnap = null; fOverwrote = false;
+    if (s && isRemote(s.v)) { applyFormulaDoc(s.v); toast('สูตรถูกแก้จากอีกเครื่อง · แสดงสูตรล่าสุดที่บันทึกไว้'); }   // arrived while this save was out: may be newer
+    else if (over) toast('สูตรถูกแก้จากอีกเครื่องระหว่างที่เครื่องนี้ยังไม่ได้บันทึก · บันทึกสูตรของเครื่องนี้ทับแล้ว (ตัวที่บันทึกทีหลังชนะ)');
+    if (hadErr || s) renderForm();
+  }
+  function formulaSaveFailed(e) {
+    fInflight--;
+    var code = e && e.code;
+    if (code === 'revoked' || code === 'not_granted' || code === 'invalid_argument') { if (code === 'revoked') store.revoked = true; setMode('readonly'); }
+    else if (!fTimer && !fInflight && fRetryN < 3) { fRetryN++; fRetryT = setTimeout(persistFormula, 3000 * fRetryN); }   // try again by itself after 3, 6, 9 s
+    fSaveErr = true;
+    toast('บันทึกสูตรไม่สำเร็จ สูตรยังอยู่ในหน้านี้ แต่ยังไม่ได้บันทึก');
+    renderFormBanner();
+  }
   function formulaChanged() {
-    fDirty = true; clearTimeout(fTimer); fTimer = setTimeout(persistFormula, 650);
+    fDirty = true; fRetryN = 0; clearTimeout(fTimer); fTimer = setTimeout(persistFormula, 650);
     renderForm();
   }
-  function flushFormula() { if (fTimer) { clearTimeout(fTimer); persistFormula(); } }   // the page is going away: save now, not after the pause
+  function flushFormula() { if (fTimer || (fDirty && !fInflight)) { clearTimeout(fTimer); persistFormula(); } }   // the page is going away: save now (also a failed save waiting for its retry)
   function onFormulaSnapshot(v, definitive, firstDefinitive) {
+    if (!definitive && store.ready) return;   // once the server has answered, a cached view is not news
     if (fDirty || fTimer || fInflight) { fLastSnap = { v: v }; if (firstDefinitive) renderForm(); return; }   // a local change is on its way
+    if (ownOlder(v)) return;
     if (v !== undefined) applyFormulaDoc(v);
     if (v !== undefined || firstDefinitive) renderForm();
   }
@@ -997,7 +1018,7 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
         eus.forEach(function (w) { eb += w.inB; });
         if (eb > ec * (1 + 1e-9)) {
           eus.forEach(function (w) { w.euBad = true; });
-          r.eu = r.eu.filter(function (e) { return eus.indexOf(e.rows[0]) < 0; });   // one line for the group, not one per product
+          r.eu = r.eu.filter(function (e) { return eus.indexOf(e.rows[0]) < 0 || e.cap < ec; });   // one line for the group; a lower own limit (MOC 0.002%) stays
           r.eu.push({ rows: eus, use: eb, cap: ec });
         }
       }
@@ -1023,7 +1044,7 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
   function renderFormBanner() {
     var ban = '';
     if (store.lost && store.mode === 'db') ban = '<div class="banner warn">การเชื่อมต่อขาดหาย สูตรที่แก้อาจยังไม่ได้บันทึก โหลดหน้าใหม่เพื่อซิงก์</div>';
-    else if (fSaveErr && store.mode === 'db') ban = '<div class="banner warn">บันทึกสูตรไม่สำเร็จ สูตรในหน้านี้ยังไม่ได้บันทึก · แอปลองใหม่เองและบันทึกเมื่อแก้ครั้งถัดไป อย่าเพิ่งปิดหน้า</div>';
+    else if (fSaveErr && store.mode === 'db') ban = '<div class="banner warn">บันทึกสูตรไม่สำเร็จ สูตรในหน้านี้ยังไม่ได้บันทึก · ' + (fRetryN < 3 ? 'แอปจะลองใหม่เอง อย่าเพิ่งปิดหน้า' : 'ลองใหม่ครบ 3 ครั้งแล้ว จะลองอีกเมื่อแก้สูตร · ถ้าโหลดหน้าใหม่ การแก้ที่ยังไม่บันทึกจะหาย') + '</div>';
     else if (store.mode === 'pending' || (store.mode === 'db' && !store.ready)) ban = '<div class="banner">กำลังโหลดสูตรของคุณ… แก้สูตรได้เมื่อโหลดเสร็จ</div>';
     else if (store.mode === 'memory') ban = '<div class="banner warn">หน้านี้ยังบันทึกสูตรไม่ได้ (เปิดแบบไม่ได้เข้าสู่ระบบ หรือดูตัวอย่าง) สูตรจะหายเมื่อปิดหน้า</div>';
     else if (store.mode === 'readonly') ban = '<div class="banner warn">' + (store.revoked ? 'หน้านี้บันทึกสูตรไม่ได้แล้ว โหลดหน้าใหม่' : 'บัญชีนี้มีสิทธิ์ดูอย่างเดียว สูตรที่แก้จะไม่ถูกบันทึก') + '</div>';
@@ -1103,6 +1124,7 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
     $('f-go').hidden = !items.length;
     $('f-go').textContent = 'คำนวณสูตร (' + items.length + ' ตัว) →';
   }
+  function nm(w, ws) { var s = shortName(w.it.pid); return ws.some(function (o) { return o !== w && shortName(o.it.pid) === s; }) ? s + ' ' + w.it.pid : s; }   // "Lemon Oil 3224" when two lines share a name
   function grpNames(g, except) { return g.rows.filter(function (w) { return w !== except; }).map(function (w) { return shortName(w.it.pid); }).join(' + '); }
   function renderCalc() {
     var r = fCalc(), conc = r.conc;
@@ -1122,12 +1144,12 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
     r.groups.forEach(function (g) {
       if (g.fail) reasons.push(grpNames(g) + ' ใช้เพดานเดียวกัน รวม ' + (g.cap ? upPct(g.sumB) + ' เกินเพดานร่วม ' + capTxt(g.cap) + '%' : (Math.ceil(g.use * 10 - 1e-9) / 10) + '% ของเพดาน เกิน 100%'));
     });
-    if (r.unchecked.length) reasons.push('ยังตรวจไม่ได้: ' + r.unchecked.map(function (w) { return shortName(w.it.pid); }).join(', ') + ' · ผลนี้ยังไม่นับตัวเหล่านี้');
-    if (r.zero.length) reasons.push('ยังไม่ใส่กรัม: ' + r.zero.map(function (w) { return shortName(w.it.pid); }).join(', ') + (r.pass ? ' · พอใส่กรัมแล้ว % ของทุกตัวจะเปลี่ยน' : ''));
-    if (r.conds.length) reasons.push('ต้องเช็กเอง: ' + r.conds.map(function (w) { return shortName(w.it.pid) + ' (' + w.cond + ')'; }).join(', ') + ' · แตะแถวเพื่ออ่าน');
+    if (r.unchecked.length) reasons.push('ยังตรวจไม่ได้: ' + r.unchecked.map(function (w) { return nm(w, r.rows); }).join(', ') + ' · ผลนี้ยังไม่นับตัวเหล่านี้');
+    if (r.zero.length) reasons.push('ยังไม่ใส่กรัม: ' + r.zero.map(function (w) { return nm(w, r.rows); }).join(', ') + (r.pass ? ' · พอใส่กรัมแล้ว % ของทุกตัวจะเปลี่ยน' : ''));
+    if (r.conds.length) reasons.push('ต้องเช็กเอง: ' + r.conds.map(function (w) { return nm(w, r.rows) + ' (' + w.cond + ')'; }).join(', ') + ' · แตะแถวเพื่ออ่าน');
     if (r.eu.length) reasons.push('เกินกฎหมายเครื่องสำอาง EU: ' + r.eu.map(function (e) {
       var n = e.rows[0].it.pid;
-      return e.rows.map(function (w) { return shortName(w.it.pid); }).join(' + ') + ' ' + upPct(e.use) + ' (EU ' + capTxt(e.cap) + '%' + (EU[n][1] && e.rows.length === 1 ? ' ' + EU[n][1] : '') + ')';
+      return e.rows.map(function (w) { return nm(w, r.rows); }).join(' + ') + ' ' + upPct(e.use) + ' (EU ' + capTxt(e.cap) + '%' + (EU[n][1] && e.rows.length === 1 ? ' ' + EU[n][1] : '') + ')';
     }).join(', ') + ' · ไม่ใช่เพดาน IFRA แต่ถ้าจะขาย ใช้ค่าที่ต่ำกว่า');
     $('f-verdict').innerHTML = '<div class="verdict ' + cls + '" role="status"><p class="t">' + esc(title) + '</p>' + reasons.map(function (t) { return '<p>· ' + esc(t) + '</p>'; }).join('') + '</div>';
     var bottleG = 24 * conc / 100, has = r.total > 0;
@@ -1135,6 +1157,7 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
     var maxSub = r.maxBy === 'photo' ? 'จำกัดโดยงบผิวแพ้แสง' : r.maxBy && r.maxC >= 100 ? 'เพดานยังไม่จำกัดความเข้มข้น'
       : r.maxBy && r.maxBy.rows ? 'จำกัดโดยเพดานร่วม ' + esc(grpNames(r.maxBy)) : r.maxBy ? 'จำกัดโดย ' + esc(shortName(r.maxBy.it.pid)) : 'ยังไม่มีตัวที่มีเพดาน';
     if (r.maxBy && r.unchecked.length) maxSub += ' · ไม่นับตัวที่ตรวจไม่ได้';
+    if (r.maxBy && r.eu.length) maxSub += ' · ไม่นับกฎ EU';
     $('f-sum').innerHTML =
       '<div><div class="k">สารหอมจริงในขวด</div><div class="v">' + (has ? (Math.floor(r.aroma / r.total * conc * 10 + 1e-9) / 10) + '%' : '—') + '</div><div class="s">ไม่นับตัวทำละลาย</div></div>' +
       '<div><div class="k">ใส่หัวน้ำหอมได้สูงสุด</div><div class="v' + (maxBad ? ' bad' : '') + '">' + maxTxt + '</div><div class="s">' + maxSub + '</div></div>' +
