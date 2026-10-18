@@ -117,10 +117,10 @@ describe('review round 44', () => {
   it('leaves out finished fragrance oils and the solvent, fixative-base and unsorted families (M1)', () => {
     app = loadApp();
     const W = app.win.__layers, by = new Map(app.data.items.map((x) => [x.i, x]));
-    const out = [2986, 3360, 3401, 33783, 3440, 3455, 253058, 33638, 33654, 3492];
+    const out = [2986, 3360, 3401, 33783, 3440, 3455, 253058, 33638, 33654, 3492, 33194, 33157, 33200, 4037, 3300, 5847];   // + "Synthetic" oils and "For Flavoring" extracts (round 45)
     for (const L of [0, 1, 2]) for (const r of W.rank(L)) {
       expect(out).not.toContain(r.pid);
-      expect(['solvent', 'base', 'other']).not.toContain(by.get(r.pid).f);
+      if (![32518, 33833, 33795].includes(r.pid)) expect(['solvent', 'base', 'other']).not.toContain(by.get(r.pid).f);
       expect(by.get(r.pid).n).not.toMatch(/fragrance oil/i);
     }
   });
@@ -129,7 +129,33 @@ describe('review round 44', () => {
     const W = app.win.__layers, by = new Map(app.data.items.map((x) => [x.i, x]));
     for (const style of [null, ...W.styles().map((s) => s.id)]) for (const L of [0, 1, 2]) for (const r of W.suggest(L, { style })) expect(by.get(r.pid).wo, r.pid).toBeFalsy();
     const oak = W.rank(2, { style: 'aquatic' }).find((r) => r.pid === 3260);
-    expect(oak.warn.join(' ')).toMatch(/มีข้อควรระวังในเอกสาร/);
+    expect(oak.warn.join(' ')).toMatch(/รายการข้อควรระวังของไฟล์ 4 ส่วน O/);
+  });
+  it('keeps three real perfumery materials from the unsorted family (round 45)', () => {
+    app = loadApp();
+    const all = [0, 1, 2].flatMap((L) => app.win.__layers.rank(L).map((r) => r.pid));
+    for (const p of [32518, 33833, 33795]) expect(all).toContain(p);
+  });
+  it('says "stands in for" when a shop code only stands in for a generic note (round 45)', () => {
+    app = loadApp();
+    const W = app.win.__layers;
+    const ma = W.rank(1, { style: 'floral-gourmand' }).find((r) => r.pid === 3310);
+    expect(ma.tier).toBe(1);
+    expect(ma.why[0]).toBe('ใช้แทนโน้ต "ดอกส้ม" ของ La Vie Est Belle / Good Girl / Lady Million ตามไฟล์ 2 [อนุมาน]');
+    const maLibre = W.rank(1, { style: 'floral-lavender' }).find((r) => r.pid === 3310);   // Libre's label names Methyl Anthranilate
+    expect(maLibre.tier).toBe(0);
+    const cin = W.rank(2, { style: 'woody-spicy' }).find((r) => r.pid === 2797);   // label for 1 Million, a stand-in for Sauvage Elixir
+    expect(cin.why[0]).toBe('ลายเซ็นของ 1 Million · โน้ตของ 1 Million ตามไฟล์ 2 · ใช้แทนโน้ต "อบเชย" ของ Sauvage Elixir [อนุมาน]');
+    expect(W.rank(2, { style: 'floral-lavender' }).find((r) => r.pid === 2810).tier).toBe(1);   // Libre: "Ambergris" in the pyramid, Ambroxan only "expected"
+    expect(W.rank(1, { style: 'floral-fruity' }).find((r) => r.pid === 3259).tier).toBe(1);    // J'adore: Ylang only from an unconfirmed official line
+  });
+  it("names the perfume when it says a material can lead the base, and only the style's own signatures (round 45)", () => {
+    app = loadApp();
+    const W = app.win.__layers;
+    const em = W.rank(2).find((r) => r.pid === 2819);
+    expect(em.why).toContain('ใช้เป็นตัวหลักได้ · ลายเซ็นของ La Vie Est Belle ตามไฟล์ 2');
+    const emS = W.rank(2, { style: 'fresh-amber' }).find((r) => r.pid === 2819);
+    expect(emS.why.join(' ')).not.toMatch(/ลายเซ็น|ตัวหลัก/);
   });
   it('colour warning only for Methyl Anthranilate with a free aldehyde (L5)', () => {
     app = loadApp();
@@ -233,7 +259,7 @@ describe('step-by-step view', () => {
     await sleep(30);
     expect(txt('#l-body')).toMatch(/ชั้นหัว ?1 ตัว ?Linalool/);
   });
-  it('adds from the detail sheet into the current step, and never reopens in the calc view', async () => {
+  it('adds from the detail sheet into the current step, and remembers the picking view, not calc', async () => {
     await layerView({ storage: { 'pf.lstep': '2' } });
     app.click('#l-body [data-open]');
     const pid = +app.$('#sheet [data-fadd]').getAttribute('data-fadd');
@@ -245,6 +271,37 @@ describe('step-by-step view', () => {
     expect(app.$('#form-layer').hidden).toBe(false);   // "＋ เพิ่มวัตถุดิบ" goes back to the step-by-step view
     app.click('[data-fview="calc"]');
     expect(app.win.localStorage.getItem('pf.fview')).toBe('"layer"');
+  });
+  it('opens on the picking view even when the calc view was stored', async () => {
+    app = loadApp({ storage: { 'pf.fview': '"calc"' } });
+    await sleep(30);
+    app.click('#tab-form');
+    expect(app.$('#form-calc').hidden).toBe(true);
+    expect(app.$('#form-pick').hidden).toBe(false);
+  });
+  it('forgets stored layers of lines that are no longer in the saved formula', async () => {
+    const doc = { v: 1, conc: 8, certs: {}, at: 1, items: [{ pid: 2845, g: null, dil: 100, filt: false }] };
+    await layerView({ docs: { fdraft: doc }, storage: { 'pf.ly': '{"2845":2,"9999":1}' } });
+    await sleep(30);
+    app.click('[data-lstep="1"]');
+    expect(JSON.parse(app.win.localStorage.getItem('pf.ly'))).toEqual({ 2845: 2 });
+  });
+  it('puts a line in its own layer when the step is outside its range', async () => {
+    await layerView();
+    app.win.__formulaUI.add(2810, { layer: 0 });   // Ambroxan: base only
+    expect(JSON.parse(app.win.localStorage.getItem('pf.ly'))[2810]).toBe(2);
+    expect(txt('#toast')).toMatch(/ในชั้นฐานแล้ว$/);
+  });
+  it('moves focus to the count line after × and to the first new row after "แสดงเพิ่ม"', async () => {
+    await layerView();
+    app.click('[data-lstep="1"]');
+    app.click('#l-body [data-ladd]');
+    app.click('#l-body .fchip [data-fdel]');
+    expect(app.doc.activeElement).toBe(app.$('#l-count'));
+    app.click('[data-lall]');
+    const before = app.$$('#l-body [data-ladd]').length;
+    app.click('[data-lmore]');
+    expect(app.doc.activeElement).toBe(app.$$('#l-body [data-ladd]')[before]);
   });
   it('keeps one live region for the count line', async () => {
     await layerView();

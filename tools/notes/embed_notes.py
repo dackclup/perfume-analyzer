@@ -53,6 +53,10 @@ def build(html):
             raise SystemExit('duplicate style ' + s['id'])
         ids.add(s['id'])
         notes, exp, sig = ({int(c): r for c, r in s[k].items()} for k in ('notes', 'expected', 'sig'))
+        for c, per in notes.items():   # {perfume: null (the named material itself) | "note as written" (a stand-in)}
+            if not isinstance(per, dict) or not all(v is None or (isinstance(v, str) and v.strip()) for v in per.values()):
+                raise SystemExit(f"style {s['id']}: note {c} must map each perfume to null or the note it stands in for")
+        notes = {c: list(per) for c, per in notes.items()}
         bad = [c for c in list(notes) + list(exp) + list(sig) + s['sets'] if c not in sel]
         if bad:
             raise SystemExit(f"style {s['id']}: codes not in the selectable catalog {bad}")

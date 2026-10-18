@@ -175,8 +175,11 @@ class Embedded(unittest.TestCase):
                 self.assertIn(str(c), data['items'], (s['id'], c))
             self.assertTrue(set(s['sig']) <= set(s['notes']) | set(s['expected']), s['id'])
             self.assertFalse(set(s['notes']) & set(s['expected']), s['id'])
-            for refs in list(s['notes'].values()) + list(s['expected'].values()) + list(s['sig'].values()):
+            for refs in [list(v) for v in s['notes'].values()] + list(s['expected'].values()) + list(s['sig'].values()):
                 self.assertTrue(refs and set(refs) <= set(s['refs']), s['id'])
+            for per in s['notes'].values():
+                for v in per.values():
+                    self.assertTrue(v is None or (isinstance(v, str) and v.strip()), s['id'])
 
     def test_build_refuses_a_reason_naming_another_perfume(self):
         import embed_notes as E
@@ -185,7 +188,7 @@ class Embedded(unittest.TestCase):
         tmp = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_styles_test2.json')
         try:
             json.dump({'styles': [{'id': 'x', 'n': 'x', 'refs': ['Eros'], 'prof': 'fresh', 'set_row': 'x',
-                                   'sig': {'2810': ['Le Male']}, 'notes': {'2810': ['Eros']}, 'expected': {}, 'sets': []}]}, open(tmp, 'w'))
+                                   'sig': {'2810': ['Le Male']}, 'notes': {'2810': {'Eros': None}}, 'expected': {}, 'sets': []}]}, open(tmp, 'w'))
             E.STYLES = tmp
             with self.assertRaises(SystemExit):
                 E.build(html)
@@ -199,7 +202,7 @@ class Embedded(unittest.TestCase):
         real = E.STYLES
         tmp = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_styles_test.json')
         try:
-            json.dump({'styles': [{'id': 'x', 'n': 'x', 'refs': ['X'], 'prof': 'fresh', 'set_row': 'x', 'sig': {}, 'notes': {'706': ['X']}, 'expected': {}, 'sets': []}]}, open(tmp, 'w'))
+            json.dump({'styles': [{'id': 'x', 'n': 'x', 'refs': ['X'], 'prof': 'fresh', 'set_row': 'x', 'sig': {}, 'notes': {'706': {'X': None}}, 'expected': {}, 'sets': []}]}, open(tmp, 'w'))
             E.STYLES = tmp   # 706 = perfumer's alcohol, a solvent: not a selectable material
             with self.assertRaises(SystemExit):
                 E.build(html)
