@@ -52,17 +52,21 @@ def build(html):
         if s['id'] in ids:
             raise SystemExit('duplicate style ' + s['id'])
         ids.add(s['id'])
-        bad = [c for c in s['notes'] + s['sets'] + s['sig'] if c not in sel]
+        notes, exp, sig = ({int(c): r for c, r in s[k].items()} for k in ('notes', 'expected', 'sig'))
+        bad = [c for c in list(notes) + list(exp) + list(sig) + s['sets'] if c not in sel]
         if bad:
-            raise SystemExit(f"style {s['id']}: codes not in the catalog {bad}")
-        if not set(s['sig']) <= set(s['notes']):
-            raise SystemExit(f"style {s['id']}: every signature must also be a note")
-        if set(s['notes']) & set(s['sets']):
-            raise SystemExit(f"style {s['id']}: a code is in both notes and sets")
-        if s['prof'] not in ('fresh', 'fougere', 'sweet'):
-            raise SystemExit(f"style {s['id']}: unknown profile {s['prof']}")
+            raise SystemExit(f"style {s['id']}: codes not in the selectable catalog {bad}")
+        if set(notes) & set(exp) or (set(notes) | set(exp)) & set(s['sets']) or len(set(s['sets'])) != len(s['sets']):
+            raise SystemExit(f"style {s['id']}: a code is listed twice (notes, expected, sets)")
+        if not set(sig) <= set(notes) | set(exp):
+            raise SystemExit(f"style {s['id']}: every signature must also be a note or an expected material")
+        for c, refs in list(notes.items()) + list(exp.items()) + list(sig.items()):
+            if not refs or not set(refs) <= set(s['refs']):
+                raise SystemExit(f"style {s['id']}: code {c} names a perfume that is not one of the style's references {refs}")
+        if s['prof'] not in ('fresh', 'fougere', 'sweet') or not s.get('set_row'):
+            raise SystemExit(f"style {s['id']}: unknown profile or no file 3 row name")
     out = {'fx': fx, 'ro': ro, 'src': src, 'items': items,
-           'styles': [{k: s[k] for k in ('id', 'n', 'refs', 'prof', 'sig', 'notes', 'sets')} for s in styles]}
+           'styles': [{k: s[k] for k in ('id', 'n', 'refs', 'prof', 'set_row', 'sig', 'notes', 'expected', 'sets')} for s in styles]}
     return json.dumps(out, ensure_ascii=False, separators=(',', ':'))
 
 

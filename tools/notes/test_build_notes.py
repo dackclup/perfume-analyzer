@@ -171,10 +171,27 @@ class Embedded(unittest.TestCase):
         data = json.loads(E.build(html))
         self.assertEqual(len(data['styles']), 10)
         for s in data['styles']:
-            for c in s['notes'] + s['sets']:
+            for c in list(s['notes']) + list(s['expected']) + [str(c) for c in s['sets']]:
                 self.assertIn(str(c), data['items'], (s['id'], c))
-            self.assertTrue(set(s['sig']) <= set(s['notes']), s['id'])
-            self.assertFalse(set(s['notes']) & set(s['sets']), s['id'])
+            self.assertTrue(set(s['sig']) <= set(s['notes']) | set(s['expected']), s['id'])
+            self.assertFalse(set(s['notes']) & set(s['expected']), s['id'])
+            for refs in list(s['notes'].values()) + list(s['expected'].values()) + list(s['sig'].values()):
+                self.assertTrue(refs and set(refs) <= set(s['refs']), s['id'])
+
+    def test_build_refuses_a_reason_naming_another_perfume(self):
+        import embed_notes as E
+        html = open(E.APP, encoding='utf-8').read()
+        real = E.STYLES
+        tmp = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_styles_test2.json')
+        try:
+            json.dump({'styles': [{'id': 'x', 'n': 'x', 'refs': ['Eros'], 'prof': 'fresh', 'set_row': 'x',
+                                   'sig': {'2810': ['Le Male']}, 'notes': {'2810': ['Eros']}, 'expected': {}, 'sets': []}]}, open(tmp, 'w'))
+            E.STYLES = tmp
+            with self.assertRaises(SystemExit):
+                E.build(html)
+        finally:
+            E.STYLES = real
+            os.remove(tmp)
 
     def test_build_refuses_a_style_code_outside_the_catalog(self):
         import embed_notes as E
@@ -182,7 +199,7 @@ class Embedded(unittest.TestCase):
         real = E.STYLES
         tmp = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_styles_test.json')
         try:
-            json.dump({'styles': [{'id': 'x', 'n': 'x', 'refs': [], 'prof': 'fresh', 'sig': [], 'notes': [706], 'sets': []}]}, open(tmp, 'w'))
+            json.dump({'styles': [{'id': 'x', 'n': 'x', 'refs': ['X'], 'prof': 'fresh', 'set_row': 'x', 'sig': {}, 'notes': {'706': ['X']}, 'expected': {}, 'sets': []}]}, open(tmp, 'w'))
             E.STYLES = tmp   # 706 = perfumer's alcohol, a solvent: not a selectable material
             with self.assertRaises(SystemExit):
                 E.build(html)

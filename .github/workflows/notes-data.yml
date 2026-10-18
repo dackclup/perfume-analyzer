@@ -2,8 +2,8 @@ name: Notes data
 
 # Offline check for the per-material note data used by the step-by-step picker (project file 12):
 # unit tests, and notes/notes.json + coverage.md must match a fresh build from app/index.html and
-# notes/sources/; the app's embedded copy must be up to date; the picker tests and the back-test
-# (notes/backtest.md) run in Node. No network access.
+# notes/sources/; the app's embedded copy must be up to date; every app test (tests/), the picker tests
+# and the back-test (notes/backtest.md) run in Node. No network access.
 
 on:
   workflow_dispatch:
@@ -12,8 +12,9 @@ on:
       - "notes/**"
       - "tools/notes/**"
       - "app/index.html"
-      - "tests/app/layers.test.mjs"
-      - "tests/app/harness.mjs"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/notes-data.yml"
   push:
     branches: ["main"]
@@ -21,8 +22,9 @@ on:
       - "notes/**"
       - "tools/notes/**"
       - "app/index.html"
-      - "tests/app/layers.test.mjs"
-      - "tests/app/harness.mjs"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/notes-data.yml"
 
 permissions:
@@ -50,7 +52,7 @@ jobs:
           node-version: "20"
           cache: npm
 
-      - name: Picker tests and back-test
+      - name: App tests (all), picker tests and back-test
         run: |
           npm ci --no-audit --no-fund
-          npx vitest run tests/app/layers.test.mjs
+          npx vitest run

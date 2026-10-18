@@ -74,10 +74,10 @@ describe('suggestions', () => {
     const base = W.rank(2, { style: 'fresh-amber' });
     const amb = base.find((r) => r.pid === 2810);
     expect(amb.tier).toBe(0);
-    expect(amb.why[0]).toBe('ลายเซ็นของ Sauvage ตามไฟล์ 2');
+    expect(amb.why[0]).toBe('ลายเซ็นของ Sauvage · โน้ตของ Sauvage ตามไฟล์ 2');
     const hedS = W.rank(1, { style: 'fresh-amber' }).find((r) => r.pid === 2665);   // Hedione: file 3's set for this style, not a Sauvage note
     expect(hedS.tier).toBe(1);
-    expect(hedS.why[0]).toBe('อยู่ในชุดวัตถุดิบแนว Fresh amber–woody ของไฟล์ 3 [อนุมาน]');
+    expect(hedS.why[0]).toBe('อยู่ในชุดวัตถุดิบแนว Fresh "blue" ambery ของไฟล์ 3 [อนุมาน]');
     expect(W.suggest(2, { style: 'aquatic' }).map((r) => r.pid)).toContain(2557);   // Calone: a base that shows early (file 5)
     const none = base.find((r) => r.tier === 2);
     expect(none.why.join(' ')).toMatch(/\[เดา\]/);
@@ -89,6 +89,53 @@ describe('suggestions', () => {
     expect(van.warn.join(' ')).toMatch(/อาจเปลี่ยนสีกับ Methyl Anthranilate/);
     const dma = W.rank(2, { picks: [{ pid: 2722, L: 1 }] }).find((r) => r.pid === 2828);   // Dimethyl Anthranilate: no free amine
     expect(dma.warn.join(' ')).not.toMatch(/เปลี่ยนสี/);
+  });
+});
+
+describe('review round 44', () => {
+  it('names only what file 2 confirms as a note, and says "expected" for analysis and hypotheses (H1)', () => {
+    app = loadApp();
+    const W = app.win.__layers;
+    const cash = W.rank(1, { style: 'aromatic-fougere' }).find((r) => r.pid === 2878);   // Cashmeran in Y: a community hypothesis
+    expect(cash.tier).toBe(1);
+    expect(cash.why[0]).toBe('คาดว่าเป็นวัตถุดิบของ YSL Y ตามไฟล์ 2 (ยังไม่ยืนยัน) [อนุมาน]');
+    const iso = W.rank(2, { style: 'fresh-amber' }).find((r) => r.pid === 2845);   // Iso E Super for Sauvage: section 5 "expected" only
+    expect(iso.tier).toBe(1);
+    const pyr = W.rank(1, { style: 'floral-gourmand' }).find((r) => r.pid === 2533);   // 2-Acetyl Pyrazine: file 3's stand-in
+    expect(pyr.why[0]).toMatch(/ชุดวัตถุดิบแนว Floral gourmand ของไฟล์ 3/);
+  });
+  it('credits the right reference perfume of a style with several (M3)', () => {
+    app = loadApp();
+    const W = app.win.__layers;
+    const amb = W.rank(2, { style: 'sweet-fougere' }).find((r) => r.pid === 2810);
+    expect(amb.why[0]).toBe('ลายเซ็นของ Versace Eros · โน้ตของ Versace Eros ตามไฟล์ 2');
+    const cin = W.rank(1, { style: 'sweet-fougere' }).find((r) => r.pid === 3195);
+    expect(cin.why[0]).toBe('โน้ตของ Le Male ตามไฟล์ 2');
+    const em = W.rank(2, { style: 'floral-gourmand' }).find((r) => r.pid === 2819);
+    expect(em.why[0]).toMatch(/^ลายเซ็นของ La Vie Est Belle · คาดว่าเป็นวัตถุดิบของ La Vie Est Belle/);
+  });
+  it('leaves out finished fragrance oils and the solvent, fixative-base and unsorted families (M1)', () => {
+    app = loadApp();
+    const W = app.win.__layers, by = new Map(app.data.items.map((x) => [x.i, x]));
+    const out = [2986, 3360, 3401, 33783, 3440, 3455, 253058, 33638, 33654, 3492];
+    for (const L of [0, 1, 2]) for (const r of W.rank(L)) {
+      expect(out).not.toContain(r.pid);
+      expect(['solvent', 'base', 'other']).not.toContain(by.get(r.pid).f);
+      expect(by.get(r.pid).n).not.toMatch(/fragrance oil/i);
+    }
+  });
+  it('keeps materials with a written caution out of the 8 and says why in the full list (M2)', () => {
+    app = loadApp();
+    const W = app.win.__layers, by = new Map(app.data.items.map((x) => [x.i, x]));
+    for (const style of [null, ...W.styles().map((s) => s.id)]) for (const L of [0, 1, 2]) for (const r of W.suggest(L, { style })) expect(by.get(r.pid).wo, r.pid).toBeFalsy();
+    const oak = W.rank(2, { style: 'aquatic' }).find((r) => r.pid === 3260);
+    expect(oak.warn.join(' ')).toMatch(/มีข้อควรระวังในเอกสาร/);
+  });
+  it('colour warning only for Methyl Anthranilate with a free aldehyde (L5)', () => {
+    app = loadApp();
+    const W = app.win.__layers;
+    expect(W.rank(2, { picks: [{ pid: 3971, L: 1 }] }).find((r) => r.pid === 2828).warn.join(' ')).not.toMatch(/เปลี่ยนสี/);   // Ethyl Anthranilate: file 5 names Methyl
+    expect(W.rank(2, { picks: [{ pid: 3310, L: 1 }] }).find((r) => r.pid === 8174).warn.join(' ')).not.toMatch(/เปลี่ยนสี/);   // an acetal
   });
 });
 
@@ -114,7 +161,12 @@ describe('step-by-step view', () => {
     expect(txt('#l-count')).toMatch(/^ชั้นกลาง · แนะนำ/);
     const mid = +app.$('#l-body [data-ladd]').getAttribute('data-ladd');
     app.click('#l-body [data-ladd]');
+    expect(app.doc.activeElement.getAttribute('data-ladd')).not.toBeNull();   // keyboard stays on the list after +
+    app.click('[data-lstep="3"]');
+    expect(txt('#l-count')).toMatch(/^ชั้นหัว · แนะนำ/);
+    expect(txt('#form-layer')).not.toMatch(/เพดาน|ผ่าน/);   // no IFRA verdict in this view
     app.click('[data-lstep="4"]');
+    expect(app.$$('#l-body .hint [data-lstep]').map((b) => b.getAttribute('data-lstep'))).toEqual(['3']);   // only the top layer is empty: "ไปเลือกชั้นหัว" goes to step 3
     expect(txt('#l-body')).toMatch(/ชั้นฐาน ?1 ตัว/);
     expect(txt('#l-body')).toMatch(/ชั้นกลาง ?1 ตัว/);
     expect(txt('#l-body')).toMatch(/ชั้นหัว ?0 ตัว/);
@@ -165,6 +217,42 @@ describe('step-by-step view', () => {
     await layerView({ storage: { 'pf.fview': '"layer"', 'pf.lstep': '2', 'pf.style': '"modern-chypre"' } });
     expect(app.$('#form-layer').hidden).toBe(false);
     expect(txt('#l-count')).toMatch(/^ชั้นกลาง · .* สไตล์ Modern chypre$/);
+  });
+  it('keeps a line in the layer it was added to when that is not its own layer, after a reload too', async () => {
+    await layerView();
+    app.click('[data-lstep="3"]');
+    expect(app.win.__layers.note(2685)).toMatchObject({ l: 1, lo: 0, hi: 1 });   // Linalool: mid, can sit at the top
+    app.win.__formulaUI.add(2685, { layer: 0 });
+    app.click('[data-lstep="4"]');
+    expect(txt('#l-body')).toMatch(/ชั้นหัว ?1 ตัว ?Linalool/);
+    const ly = app.win.localStorage.getItem('pf.ly');
+    await sleep(800);
+    const saved = app.store.get('fdraft');
+    app.close();
+    await layerView({ docs: { fdraft: saved }, storage: { 'pf.ly': ly, 'pf.lstep': '4' } });
+    await sleep(30);
+    expect(txt('#l-body')).toMatch(/ชั้นหัว ?1 ตัว ?Linalool/);
+  });
+  it('adds from the detail sheet into the current step, and never reopens in the calc view', async () => {
+    await layerView({ storage: { 'pf.lstep': '2' } });
+    app.click('#l-body [data-open]');
+    const pid = +app.$('#sheet [data-fadd]').getAttribute('data-fadd');
+    app.click('#sheet [data-fadd]');
+    expect(JSON.parse(app.win.localStorage.getItem('pf.ly'))[pid]).toBe(1);
+    expect(txt('#toast')).toMatch(/ในชั้นกลางแล้ว$/);
+    app.click('[data-fview="calc"]');
+    app.click('[data-fview="add"]');
+    expect(app.$('#form-layer').hidden).toBe(false);   // "＋ เพิ่มวัตถุดิบ" goes back to the step-by-step view
+    app.click('[data-fview="calc"]');
+    expect(app.win.localStorage.getItem('pf.fview')).toBe('"layer"');
+  });
+  it('keeps one live region for the count line', async () => {
+    await layerView();
+    const el = app.$('#l-count');
+    app.click('[data-lstep="1"]');
+    app.click('[data-lstep="2"]');
+    expect(app.$('#l-count')).toBe(el);
+    expect(el.getAttribute('aria-live')).toBe('polite');
   });
   it('ignores a broken stored step or style', async () => {
     await layerView({ storage: { 'pf.lstep': '9', 'pf.style': '"nope"', 'pf.ly': '[1,2]' } });
