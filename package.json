@@ -9,6 +9,7 @@
     "scrape": "node tools/msr-catalog/scrape.mjs"
   },
   "devDependencies": {
+    "jsdom": "^25.0.1",
     "vitest": "^2.1.9"
   },
   "engines": {
