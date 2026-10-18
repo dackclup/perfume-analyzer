@@ -33,6 +33,8 @@ def clean(side, keys, host):
             v = v.strip()
             if k not in ('url', 'name') and BAD.search(v):
                 continue
+            if k in ('avg_use', 'tenacity', 'note', 'volatility') and len(v) > 80:
+                v = v[:80].rsplit(' ', 1)[0] + ' …'   # keep the figure, not the sentence around it
         if isinstance(v, list):
             v = [s.strip() for s in v if isinstance(s, str) and s.strip() and not BAD.search(s)]
             if not v:

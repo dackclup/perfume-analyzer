@@ -3,6 +3,7 @@
  "items": {
   "252973": "L-Ambregrisox: matched to Ambroxan from the name only; the shop gives no CAS and neither site lists this name (18 Oct 2026)",
   "2873": "Santaliff/Sandaxol/Sandalmysore: matched to Bacdanol (28219-61-6) only through a ScenTree synonym; project file 8 records Santaliff as CAS 28219-60-5, a different number (18 Oct 2026)",
-  "2876": "Sandenol 803: matched to Bacdanol only through a ScenTree synonym, and ScenTree also lists 'Sandenol extra' under Sandela (a different molecule); needs the shop's CAS (18 Oct 2026)"
+  "2876": "Sandenol 803: matched to Bacdanol only through a ScenTree synonym, and ScenTree also lists 'Sandenol extra' under Sandela (a different molecule); needs the shop's CAS (18 Oct 2026)",
+  "32771": "Vetiver Ruh Khus attar: supplier pages are plain vetiver root oils (Java/South India), a different product type; layer comes from the file-5 table (independent review, 18 Oct 2026)"
  }
 }

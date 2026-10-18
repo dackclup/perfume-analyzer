@@ -24,6 +24,10 @@ class Parsers(unittest.TestCase):
         self.assertEqual(B.parse_pct('≤0.5%'), 0.5)
         self.assertEqual(B.parse_pct('ระดับ ppm'), 0.001)
         self.assertIsNone(B.parse_pct('as needed'))
+        # forms found by the independent review (18 Oct 2026)
+        self.assertEqual(B.parse_pct('2% to 10% in a perfume compound'), 6)
+        self.assertIsNone(B.parse_pct('0.02% to 1% maximum in fine fragrance'))
+        self.assertEqual(B.parse_pct('0.15/1.0 in a perfume compound'), 0.15)
 
     def test_use_class(self):
         self.assertEqual([B.use_class(p) for p in (20, 3, 0.3, 0.01, None)], ['bulk', 'normal', 'accent', 'trace', None])
@@ -43,6 +47,8 @@ class Parsers(unittest.TestCase):
         self.assertEqual(B.primary(['top', 'base']), 'top')
         self.assertEqual(B.primary(['base', 'mid'], ['base']), 'base')         # Coumarin: file 5 base vs ScenTree heart
         self.assertEqual(B.primary(['top', 'mid'], ['top']), 'top')           # Dihydromyrcenol: file 5 top vs ScenTree heart
+        self.assertEqual(B.primary(['top', 'mid'], (), 'top'), 'top')          # Limonene: ScenTree Head/Heart, 4 h on the strip
+        self.assertEqual(B.primary(['mid', 'base'], (), 'base'), 'base')       # Olibanum: ScenTree Heart/Base, 188 h
 
 
 class Hours(unittest.TestCase):
@@ -67,6 +73,10 @@ class Rules(unittest.TestCase):
         self.assertEqual(B.rule_layer({'n': 'Bois De Rose (Rosewood) Oil Brazil', 't': 2, 'f': 'floral'}, None)[0], ['top', 'mid'])
         self.assertEqual(B.rule_layer({'n': 'Melissa (Lemon Balm) Oil (Leaf)', 't': 2, 'f': 'citrus'}, None)[0], ['top', 'mid'])
         self.assertEqual(B.rule_layer({'n': 'Tulip Absolute', 't': 2, 'f': 'floral'}, None)[0], ['mid'])
+        self.assertEqual(B.rule_layer({'n': 'Lemon Oil (Peel 5x, Italy)', 't': 2, 'f': 'citrus'}, None)[0], ['top', 'mid'])
+        self.assertEqual(B.rule_layer({'n': 'Elemi Gum', 't': 2, 'f': 'spice'}, None)[0], ['mid', 'base'])
+        why = B.rule_layer({'n': 'Sandalwood Fragrance Oil (Natural-Like)', 't': 2, 'f': 'wood'}, None)[1]
+        self.assertIn('น้ำมันผสม', why)
 
     def test_chemical_rules(self):
         # crystals with low molecular weight stay in the base (the MW-only rule got these wrong)
@@ -75,12 +85,20 @@ class Rules(unittest.TestCase):
         self.assertEqual(B.rule_layer({'n': 'Decanal, aldehyde C-10', 't': 1, 'f': 'citrus'}, 156.3)[0], ['top'])
         self.assertEqual(B.rule_layer({'n': 'Some Ester', 't': 1, 'f': 'fruit'}, 130)[0], ['top'])
         self.assertEqual(B.rule_layer({'n': 'Some Ketone', 't': 1, 'f': 'floral'}, 180)[0], ['mid'])
-        self.assertEqual(B.rule_layer({'n': 'Some Lactone', 't': 1, 'f': 'fruit'}, 240)[0], ['base'])
+        self.assertEqual(B.rule_layer({'n': 'Some Heavy Ether', 't': 1, 'f': 'fruit'}, 240)[0], ['base'])
         self.assertEqual(B.rule_layer({'n': 'Unknown Thing', 't': 1, 'f': 'floral'}, None), (None, None))
+        self.assertEqual(B.rule_layer({'n': 'Delta-dodecalactone', 't': 1, 'f': 'fruit'}, 198)[0], ['mid', 'base'])
+        self.assertEqual(B.rule_layer({'n': 'Geranyl Isobutyrate', 't': 1, 'f': 'floral'}, 224)[0], ['mid'])
+        self.assertEqual(B.rule_layer({'n': 'Alpha-methyl Cinnamaldehyde', 't': 1, 'f': 'spice'}, None)[0], ['mid', 'base'])
 
     def test_facets(self):
         self.assertEqual(B.facets_of(['dry', 'ambery', 'cedar-like', 'woody']), ['amber', 'woody'])
         self.assertIn('citrus', B.facets_of(['Floral', 'Light Flowers', 'lemon']))
+        # word boundaries: pineapple is not pine, tart is not tar, rosemary is not rose
+        self.assertNotIn('woody', B.facets_of(['pineapple']))
+        self.assertNotIn('animalic', B.facets_of(['tart', 'fruity']))
+        self.assertNotIn('floral', B.facets_of(['rosemary']))
+        self.assertIn('woody', B.facets_of(['pine', 'resinous']))
 
 
 class Built(unittest.TestCase):

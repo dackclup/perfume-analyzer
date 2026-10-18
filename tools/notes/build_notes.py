@@ -42,9 +42,10 @@ def span(layers):
     return [L[idx[0]], L[idx[-1]]]
 
 
-def primary(layers, prefer=()):
-    """Main step: the layer named most often. A tie goes to the project's own file-5 class when it is among the
-    tied layers (`prefer`), otherwise to 'mid' (the bridge layer) when tied, otherwise the first tied (top→base)."""
+def primary(layers, prefer=(), hint=None):
+    """Main step: the layer named most often. A tie goes, in order, to the project's own file-5 class when it is
+    among the tied layers (`prefer`), to the blotter-hours layer when that is among them (`hint`), to 'mid'
+    (the bridge layer), otherwise to the first tied layer (top→base)."""
     c = collections.Counter(layers)
     best = max(c.values())
     tied = [l for l in L if c[l] == best]
@@ -55,6 +56,8 @@ def primary(layers, prefer=()):
         tied = pref
         if len(tied) == 1:
             return tied[0]
+    if hint in tied:
+        return hint
     return 'mid' if 'mid' in tied else tied[0]
 
 
@@ -90,20 +93,24 @@ def parse_hours(text):
 
 
 def parse_pct(text):
-    """'3.1% in a perfume compound' / '2–10%' / 'ราว 0.2%' / '≤0.5%' -> representative %; 'ppm' -> 0.001."""
+    """Typical use as one number. '3.1% in a perfume compound' -> 3.1 · '2–10%' / '2% to 10%' -> 6 · 'ราว 0.2%' ·
+    '≤0.5%' -> 0.5 · '0.15/1.0 in a perfume compound' -> 0.15 · 'ppm' -> 0.001 · a text that only states a maximum
+    ('… maximum', not an average) -> None."""
     if not text:
         return None
-    t = text.lower()
+    t = text.lower().replace(',', '.')
     if 'ppm' in t:
         return 0.001
-    nums = [float(x) for x in re.findall(r'(\d+(?:\.\d+)?)\s*(?=%|–|-|\s*to)', t)]
-    if not nums:
-        nums = [float(x) for x in re.findall(r'(\d+(?:\.\d+)?)\s*%', t)]
-    if not nums:
+    if re.search(r'\bmax', t) and 'average' not in t and 'compound' not in t.split('max')[0]:
         return None
-    if len(nums) >= 2 and re.search(r'\d\s*(–|-|to)\s*\d', t):
-        return (nums[0] + nums[1]) / 2
-    return nums[0]
+    m = re.search(r'(\d+(?:\.\d+)?)\s*%?\s*(?:–|-|to)\s*(\d+(?:\.\d+)?)\s*%', t)
+    if m:
+        return (float(m.group(1)) + float(m.group(2))) / 2
+    m = re.search(r'(\d+(?:\.\d+)?)\s*%', t)
+    if m:
+        return float(m.group(1))
+    m = re.search(r'(\d+(?:\.\d+)?)(?:/[\d.]+)?\s*in a perfume compound', t)
+    return float(m.group(1)) if m else None
 
 
 def use_class(p):
@@ -121,6 +128,8 @@ def use_class(p):
 # ---------- level-4 rules ----------
 
 NAT_RULES = [  # (regex on the shop name, layers) — first match wins; specific names come before general ones
+    (r'\b\d+\s*(x|fold)\b', ['top', 'mid']),          # folded citrus oils last longer than the plain oil
+    (r'\belemi (gum|resin)', ['mid', 'base']),
     (r'\b(orange blossom|orange flower|ginger lily|white orchid)\b', ['mid']),
     (r'\b(neroli|petitgrain|melissa|lemon balm|rosewood|bois de rose)\b', ['top', 'mid']),
     (r'\b(bergamot|lemon|lime|orange|grapefruit|mandarin|tangerine|yuzu|citron|litsea|lemongrass|citronella)\b', ['top']),
@@ -147,9 +156,13 @@ def rule_layer(x, mw):
     """Level-4 inference. Returns (layers, why) or (None, None); the first layer listed is the main step."""
     n = x['n'].lower()
     if x['t'] == 2:
+        blend = re.search(r'fragrance oil|synthetic|natural-like', n)
         for rx, lay in NAT_RULES:
             if re.search(rx, n):
-                return lay, 'ชนิดน้ำมันธรรมชาติ (' + re.search(rx, n).group(0) + ')'
+                kw = re.search(rx, n).group(0)
+                if blend:
+                    return lay, f'ชื่อบอกว่าเป็นน้ำมันผสม/สังเคราะห์ ({blend.group(0)}) แนว {kw}'
+                return lay, 'ชนิดน้ำมันธรรมชาติ (' + kw + ')'
         return None, None
     if CRYSTAL_BASE.search(n):
         return ['base'], 'สารกลุ่มผลึก/มัสก์ (' + CRYSTAL_BASE.search(n).group(0) + ')'
@@ -157,6 +170,13 @@ def rule_layer(x, mw):
         return CHEM_FAMILY_FIXED[x['f']], 'ตระกูล ' + x['f']
     if re.search(r'aldehyde c-?(7|8|9|10|11|12)\b|\b(octanal|nonanal|decanal|undecanal|dodecanal|heptanal)\b', n):
         return ['top'], 'aldehyde C7–C12'
+    # families where the molecular-weight cut-offs misfit (independent review, 18 Oct 2026)
+    if re.search(r'lactone', n):
+        return ['mid', 'base'], 'กลุ่ม lactone (มักกลาง–ฐาน)'
+    if re.search(r'cinnam', n):
+        return ['mid', 'base'], 'กลุ่ม cinnamic (มักกลาง–ฐาน)'
+    if re.search(r'\b(geranyl|neryl|citronellyl|terpinyl)\b', n):
+        return ['mid'], 'ester ของ terpene alcohol (geranyl/neryl/citronellyl)'
     if mw is not None:
         if mw < 150:
             return ['top'], f'น้ำหนักโมเลกุล {mw:g} (<150)'
@@ -166,8 +186,8 @@ def rule_layer(x, mw):
     return None, None
 
 
-# Hours -> layer. Calibrated 18 Oct 2026: matches all 21 rows of the file-5 table and overlaps the ScenTree class
-# for 105 of 139 materials that have both (Fraterworks' own cut-offs 5 h / 50 h overlap 96 of 139).
+# Hours -> layer. Calibrated 18 Oct 2026 so that every row of the file-5 table agrees; agreement with ScenTree is
+# measured on each build in coverage.md.
 H_TOP, H_BASE = 12, 150
 
 
@@ -192,23 +212,23 @@ def arct_layer(g):
 # ---------- facets ----------
 
 FACETS = [  # (facet key, Thai label, regex on source words)
-    ('citrus', 'ส้ม', r'citrus|lemon|orange|bergamot|grapefruit|mandarin|lime|zest|peel'),
+    ('citrus', 'ส้ม', r'citrus|lemon|orange|bergamot|grapefruit|mandarin|\blime\b|zest|\bpeel'),
     ('aldehydic', 'aldehyde', r'aldehyd|soapy|waxy'),
     ('green', 'เขียว', r'green|leaf|leafy|grass|stem|cucumber|vegetal'),
     ('herbal', 'สมุนไพร', r'herb|aromatic|lavender|sage|rosemary|basil|thyme|camphor|minty|mint'),
     ('fresh', 'สดชื่น', r'fresh|clean|airy|ozon|aquatic|marine|watery|transparent'),
-    ('floral', 'ดอกไม้', r'floral|flower|jasmin|rose|muguet|lily|lilac|neroli|ylang|tuberose|white flowers'),
+    ('floral', 'ดอกไม้', r'floral|flower|jasmin|\brose\b|\brosy|\brosa\b|muguet|lily|lilac|neroli|ylang|tuberose|white flowers'),
     ('powdery', 'แป้ง', r'powder|iris|orris|violet|ionone'),
     ('fruity', 'ผลไม้', r'fruit|apple|pear|peach|berry|plum|pineapple|melon|tropical|banana|cherry|apricot'),
     ('spicy', 'เครื่องเทศ', r'spic|pepper|clove|cinnamon|nutmeg|cardamom|ginger|anis'),
     ('sweet', 'หวาน', r'sweet|honey|caramel|sugar|candy|gourmand|praline|maltol'),
-    ('vanilla', 'วานิลลา', r'vanill|tonka|coumarin|hay|almond|benzoin'),
+    ('vanilla', 'วานิลลา', r'vanill|tonka|coumarin|\bhay\b|almond|benzoin'),
     ('balsamic', 'บัลซามิก', r'balsam|resin|incense|olibanum|labdanum|myrrh|opoponax|styrax'),
     ('amber', 'อำพัน', r'ambergris|ambery|ambra|amber'),
-    ('woody', 'ไม้', r'wood|cedar|sandal|vetiver|patchouli|guaiac|oud|pine'),
+    ('woody', 'ไม้', r'wood|cedar|sandal|vetiver|patchouli|guaiac|\boud\b|\bpine\b|\bpiney'),
     ('earthy', 'ดิน', r'earth|root|mossy|moss|humus|mushroom|patchouli|vetiver'),
     ('musk', 'มัสก์', r'musk'),
-    ('animalic', 'สัตว์·หนัง', r'animal|leather|indol|fecal|civet|castoreum|smoky|tar|phenolic'),
+    ('animalic', 'สัตว์·หนัง', r'animal|leather|indol|fecal|civet|castoreum|smoky|\btar\b|\btarry|phenolic'),
     ('fatty', 'มัน·ขี้ผึ้ง', r'fatty|oily|wax|creamy|milky|lactonic|coconut'),
 ]
 
@@ -290,7 +310,8 @@ def build():
         why = None
         if ops2:
             allv = [l for lay, _ in ops2 for l in lay]
-            rec.update(l=primary(allv, f5_by[i]['layer'] if i in f5_by else ()), r=span(allv), lb='ok',
+            rec.update(l=primary(allv, f5_by[i]['layer'] if i in f5_by else (),
+                                 hours_layer(fw_h) if fw_h is not None else None), r=span(allv), lb='ok',
                        src=[t for _, t in ops2])
             if len({tuple(span(lay)) for lay, _ in ops2}) > 1:
                 rec['cf'] = ' · '.join(f'{t}:{"–".join(span(lay))}' for lay, t in ops2)
@@ -361,7 +382,10 @@ def build():
         # --- blends with (supplier pages) ---
         bw = set()
         for nm in list(st.get('blends_with') or []) + list(fw.get('blends_with') or []):
-            for c in idx.get(norm(nm), ()):
+            hits = idx.get(norm(nm), set())
+            if len(hits) > 4:   # a generic name ("Patchouli") would pull in every origin and grade
+                continue
+            for c in hits:
                 if c != i:
                     bw.add(c)
         if bw:
