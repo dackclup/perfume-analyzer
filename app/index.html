@@ -896,7 +896,7 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
   // fRemoteNew: another page or device changed the formula while this page had unsaved or unanswered changes
   var fSeq = 0, fLastN = 0, fAckedN = 0, fAckedKey = null, fChain = Promise.resolve(), fInflight = 0, fLastSnap = null, fOverwrote = false;
   var fSeenKey = null, fReplaced = [], fRemoteNew = false;
-  var fSaveErr = false, fRetryT = null, fRetryN = 0, fNoteKey = '';
+  var fWaiting = false, fSaveErr = false, fRetryT = null, fRetryN = 0, fNoteKey = '';   // fWaiting: a save is queued behind the one that is out
   var SAVE_TIMEOUT = window.__fSaveTimeout || 20000;   // a save with no answer counts as failed (it may still land)
   function fGuard() {   // the saved formula must be known before any edit, or the first save would replace it (round 38)
     if (listKnown()) return true;
@@ -938,15 +938,16 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
     fNoteKey = key;
   }
   function persistFormula() {
-    fTimer = null; clearTimeout(fRetryT); fRetryT = null;
+    clearTimeout(fTimer); fTimer = null; clearTimeout(fRetryT); fRetryT = null;
     if (store.mode !== 'db' || !store.ready) return;   // memory/readonly: kept on this page only · pending: edits wait for the saved formula (fGuard)
-    fInflight++;
-    fChain = fChain['catch'](function () {}).then(sendFormula);   // one at a time; a throw never stops later saves
+    if (fWaiting) return;   // one save already waits its turn and will send the newest content (round 42: no pile-up during an outage)
+    fWaiting = true; fInflight++;
+    fChain = fChain['catch'](function () {}).then(function () { fWaiting = false; return sendFormula(); });   // one at a time; a throw never stops later saves
   }
-  function timed(p) {
+  function timed(p, late) {   // no answer in SAVE_TIMEOUT counts as failed; an answer after that still calls late()
     return new Promise(function (res, rej) {
-      var t = setTimeout(function () { rej({ code: 'timeout' }); }, SAVE_TIMEOUT);
-      Promise.resolve(p).then(function (v) { clearTimeout(t); res(v); }, function (e) { clearTimeout(t); rej(e); });
+      var gone = false, t = setTimeout(function () { gone = true; rej({ code: 'timeout' }); }, SAVE_TIMEOUT);
+      Promise.resolve(p).then(function (v) { if (gone) { late(); return; } clearTimeout(t); res(v); }, function (e) { clearTimeout(t); rej(e); });
     });
   }
   function sendFormula() {   // one save; each attempt (also the quick retry) sends the newest content
@@ -955,7 +956,12 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
     fLastSnap = null;
     if (fReplaced.indexOf(fSeenKey) < 0) { fReplaced.push(fSeenKey); if (fReplaced.length > 30) fReplaced.shift(); }
     var n = 0, k = null, p;
-    try { p = withRetry(function () { var b = formulaBody(); n = fLastN = b.n; k = contentKey(formula); return timed(store.col.doc('fdraft').set(b)); }); }
+    try {
+      p = withRetry(function () {
+        var b = formulaBody(), bn = b.n; n = fLastN = bn; k = contentKey(formula);
+        return timed(store.col.doc('fdraft').set(b), function () { if (bn < fLastN && !fTimer) persistFormula(); });   // a timed-out save landed after newer ones: send the newest again
+      });
+    }
     catch (e) { p = Promise.reject(e); }
     return p.then(function () { formulaSaved(n, k); }, function (e) { formulaSaveFailed(e, n); });
   }
@@ -997,14 +1003,16 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
     if (!definitive && store.ready) return;   // once the server has answered, a cached view is not news
     var key = JSON.stringify(v == null ? null : v), seen = fSeenKey;
     fSeenKey = key;
-    if (fLastN && (v == null || fReplaced.indexOf(key) >= 0 || ownOlder(v))) return;   // late: the state this page's save replaced, an older save of this page, or no formula after this page saved
-    var busy = fDirty || fTimer || fInflight;
-    if (busy) {   // a local change is on its way
-      fLastSnap = { v: v };
+    if (fLastN && (v == null || fReplaced.indexOf(key) >= 0)) return;   // late: a state this page's save replaced, or no formula after this page saved
+    if (fDirty || fTimer || fInflight) {   // a local change is on its way: keep the newest view for later (a view of this page's own save
+      fLastSnap = { v: v };                // also replaces an earlier one from another device: it is newer on the server · round 42)
       if (isRemote(v) && key !== seen && contentKey(readFormula(v)) !== contentKey(formula)) fRemoteNew = true;
       if (firstDefinitive) renderForm();
       return;
     }
+    // an older save of this page with other content than its newest answered save is late, or the resend will fix the
+    // server; one with the same content is the server's current state: show it (round 42)
+    if (ownOlder(v) && contentKey(readFormula(v)) !== fAckedKey) return;
     applyFormulaDoc(v);
     renderForm();
   }
