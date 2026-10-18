@@ -1,0 +1,136 @@
+"""Extract the small subset of Leffingwell and Arctander facts that match the app catalogue.
+
+Both datasets come from pyrfume-data (https://github.com/pyrfume/pyrfume-data) and are CC BY-NC
+(Leffingwell: "freely available for research use under the CC-BY-NC license"; Arctander: CC BY-NC 4.0).
+We keep only short labels and numbers (CAS, molecular weight, Leffingwell odour labels, Arctander
+tenacity grade), never description text. The IFRA glossary and The Good Scents Company dump in the same
+repo are NOT used (copyright / no licence; see file 12 section 12).
+
+usage:
+  git clone --depth 1 --filter=blob:none --sparse https://github.com/pyrfume/pyrfume-data
+  (cd pyrfume-data && git sparse-checkout set leffingwell arctander_1960)
+  python3 -I tools/notes/extract_refs.py pyrfume-data app/index.html notes/sources/refs.json
+"""
+import csv
+import json
+import re
+import sys
+
+CASRE = re.compile(r'^\d{2,7}-\d\d-\d$')
+GREEK = [('alpha', 'a'), ('beta', 'b'), ('gamma', 'g'), ('delta', 'd'), ('α', 'a'), ('β', 'b'), ('γ', 'g'), ('δ', 'd')]
+
+
+def norm(s):
+    s = s.lower()
+    for a, b in GREEK:
+        s = s.replace(a, b)
+    return re.sub(r'[^a-z0-9]', '', s)
+
+
+def ten_grade(desc):
+    """Arctander tenacity wording -> 1 (poor) .. 5 (excellent); None when not stated."""
+    d = desc.lower()
+    g = []
+    for m in re.finditer(r'([a-z -]{0,40})(tenaci\w*)', d):
+        pre = m.group(1)
+        if re.search(r'\b(not|hardly|little)\b[a-z -]*$', pre):
+            g.append(1.5)
+        elif 'poor' in pre and 'moderate' in pre:
+            g.append(1.5)
+        elif 'poor' in pre or 'low' in pre or 'short' in pre:
+            g.append(1)
+        elif 'moderate' in pre or 'fair' in pre or 'moderately' in m.group(0):
+            g.append(2)
+        elif any(w in pre for w in ('excellent', 'great', 'remarkable', 'extreme')):
+            g.append(4.5)
+        elif 'very' in pre:
+            g.append(4)
+        elif 'considerable' in pre:
+            g.append(3.5)
+        else:  # "good tenacity" or plain "tenacious"
+            g.append(3)
+    return (min(g) if g else None), ('fixative' in d)
+
+
+def variants(x):
+    n = x['n']
+    out = {n}
+    n2 = re.sub(r'\bfema\s*-?\s*\d+\b', '', n, flags=re.I)
+    out.add(n2)
+    out.add(re.sub(r'\(.*?\)|\(.*$', '', n2))
+    for p in re.split(r'[,()/]|\s-\s', n2):
+        out.add(p)
+    if x.get('a') and x['a'].get('nm'):
+        out.add(x['a']['nm'])
+    if x.get('al'):
+        out |= set(re.split(r'[,()·]', x['al']))
+    slug = (x.get('u') or '').split('/')[-1].replace('.html', '')
+    out.add(re.sub(r'^\d+-', '', slug).replace('-', ' '))
+    return {v.strip() for v in out if v and len(norm(v)) >= 4}
+
+
+def main(P, APP, OUT):
+    html = open(APP, encoding='utf-8').read()
+    items = json.loads(re.search(r'id="catalog-data">(.*?)</script>', html, re.S).group(1))['items']
+    name2cas = {}
+
+    def add(name, cas):
+        cas = (cas or '').strip()
+        if name and CASRE.match(cas):
+            name2cas.setdefault(norm(name), set()).add(cas)
+
+    leff, leff_mw = {}, {}
+    for r in csv.DictReader(open(f'{P}/leffingwell/leffingwell_data.csv', encoding='utf-8')):
+        c = r['cas'].strip()
+        add(r['chemical_name'], c)
+        if CASRE.match(c):
+            leff.setdefault(c, json.loads(r['odor_labels_filtered'].replace("'", '"')))
+    for r in csv.DictReader(open(f'{P}/leffingwell/stimuli.csv', encoding='utf-8')):
+        c = (r.get('cas') or '').strip()
+        if CASRE.match(c) and r['MolecularWeight']:
+            leff_mw.setdefault(c, float(r['MolecularWeight']))
+    arct = {}
+    for r in csv.DictReader(open(f'{P}/arctander_1960/arctander.csv', encoding='utf-8')):
+        c = r['CAS'].strip()
+        add(r['ChemicalName'], c)
+        for o in re.split(r'[.;]', r['OtherName']):
+            add(o, c)
+        if CASRE.match(c):
+            arct.setdefault(c, r)
+
+    out = {}
+    for x in items:
+        if x['t'] not in (1, 2):
+            continue
+        cs = set()
+        if x.get('a') and CASRE.match(x['a'].get('cas') or ''):
+            cs.add(x['a']['cas'])
+        for v in variants(x):
+            cs |= name2cas.get(norm(v), set())
+        cs = sorted(cs)
+        ar = [arct[c] for c in cs if c in arct]
+        mw = [float(r['MW']) for r in ar if r['MW']] + [leff_mw[c] for c in cs if c in leff_mw]
+        grades = [ten_grade(r['Description']) for r in ar]
+        g = [a for a, _ in grades if a is not None]
+        lf = next((leff[c] for c in cs if c in leff), [])
+        rec = {}
+        if cs:
+            rec['cas'] = cs
+        if mw:
+            rec['mw'] = round(min(mw), 2)
+        if lf:
+            rec['leff'] = lf
+        if g:
+            rec['arct_g'] = min(g)
+        if any(f for _, f in grades):
+            rec['arct_fix'] = True
+        if rec:
+            out[str(x['i'])] = rec
+    json.dump({'about': 'Subset of Leffingwell (CC BY-NC) and Arctander (CC BY-NC 4.0) facts via pyrfume-data; '
+                         'labels and numbers only. Generated by tools/notes/extract_refs.py.',
+               'items': out}, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=0, sort_keys=True)
+    print(f'{len(out)} items with reference facts -> {OUT}')
+
+
+if __name__ == '__main__':
+    main(*sys.argv[1:4])

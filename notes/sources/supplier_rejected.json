@@ -1,0 +1,8 @@
+{
+ "about": "Supplier-page matches that merge_supplier.py drops after review, with the reason. A dropped code falls back to the next evidence level in build_notes.py.",
+ "items": {
+  "252973": "L-Ambregrisox: matched to Ambroxan from the name only; the shop gives no CAS and neither site lists this name (18 Oct 2026)",
+  "2873": "Santaliff/Sandaxol/Sandalmysore: matched to Bacdanol (28219-61-6) only through a ScenTree synonym; project file 8 records Santaliff as CAS 28219-60-5, a different number (18 Oct 2026)",
+  "2876": "Sandenol 803: matched to Bacdanol only through a ScenTree synonym, and ScenTree also lists 'Sandenol extra' under Sandela (a different molecule); needs the shop's CAS (18 Oct 2026)"
+ }
+}

@@ -1,0 +1,252 @@
+{
+ "about": "Blotter tenacity table from project file 5 (ส่วนที่ 3 · ความติดทนบนแถบดมกลิ่น), mapped to shop codes. 'layer' is the class written in file 5 (บน=top, กลาง=mid, ฐาน=base). Codes chosen by name match in the app catalogue; oils only for Patchouli/Vetiver (not Patchone, Vetiveryl Acetate or replacers). 'h' = lower bound of the stated hours (1 month = 720 h).",
+ "rows": [
+  {
+   "name": "Bergamot FCF",
+   "hours": "~4",
+   "layer": [
+    "top"
+   ],
+   "codes": [
+    127688
+   ],
+   "h": 4
+  },
+  {
+   "name": "Dihydromyrcenol",
+   "hours": "5–16",
+   "layer": [
+    "top"
+   ],
+   "codes": [
+    2493
+   ],
+   "h": 5
+  },
+  {
+   "name": "Linalool / Linalyl Acetate",
+   "hours": "12–16",
+   "layer": [
+    "top",
+    "mid"
+   ],
+   "codes": [
+    2685,
+    2698
+   ],
+   "h": 12
+  },
+  {
+   "name": "Lavender",
+   "hours": ">30",
+   "layer": [
+    "mid"
+   ],
+   "codes": [
+    3223,
+    6901,
+    3222,
+    33088
+   ],
+   "h": 30
+  },
+  {
+   "name": "Cashmeran",
+   "hours": "48–50",
+   "layer": [
+    "mid",
+    "base"
+   ],
+   "codes": [
+    2878
+   ],
+   "h": 48
+  },
+  {
+   "name": "Helional",
+   "hours": "60–150",
+   "layer": [
+    "mid"
+   ],
+   "codes": [
+    2634
+   ],
+   "h": 60
+  },
+  {
+   "name": "Hedione",
+   "hours": "72 ถึง 2 สัปดาห์",
+   "layer": [
+    "mid"
+   ],
+   "codes": [
+    2665,
+    2666
+   ],
+   "note": "ตัวเชื่อม",
+   "h": 72
+  },
+  {
+   "name": "Iso E Super",
+   "hours": ">172",
+   "layer": [
+    "mid",
+    "base"
+   ],
+   "codes": [
+    2845
+   ],
+   "h": 172
+  },
+  {
+   "name": "Ethylene Brassylate",
+   "hours": "200–280",
+   "layer": [
+    "base"
+   ],
+   "codes": [
+    2877
+   ],
+   "h": 200
+  },
+  {
+   "name": "Ethyl Maltol",
+   "hours": "360 ถึง >1 เดือน",
+   "layer": [
+    "base"
+   ],
+   "codes": [
+    2819
+   ],
+   "early": true,
+   "h": 360
+  },
+  {
+   "name": "Cedarwood Virginia",
+   "hours": ">380",
+   "layer": [
+    "base"
+   ],
+   "codes": [
+    3444
+   ],
+   "h": 380
+  },
+  {
+   "name": "Galaxolide",
+   "hours": ">400",
+   "layer": [
+    "base"
+   ],
+   "codes": [
+    2884
+   ],
+   "h": 400
+  },
+  {
+   "name": "Habanolide",
+   "hours": ">400",
+   "layer": [
+    "base"
+   ],
+   "codes": [
+    2894
+   ],
+   "h": 400
+  },
+  {
+   "name": "Javanol",
+   "hours": ">400",
+   "layer": [
+    "base"
+   ],
+   "codes": [
+    2864
+   ],
+   "h": 400
+  },
+  {
+   "name": "Sandalore",
+   "hours": ">400",
+   "layer": [
+    "base"
+   ],
+   "codes": [
+    2846
+   ],
+   "h": 400
+  },
+  {
+   "name": "Patchouli",
+   "hours": ">400",
+   "layer": [
+    "base"
+   ],
+   "codes": [
+    253037,
+    3241,
+    33192
+   ],
+   "h": 400
+  },
+  {
+   "name": "Vetiver",
+   "hours": ">400",
+   "layer": [
+    "base"
+   ],
+   "codes": [
+    32771,
+    33118,
+    3257,
+    33117
+   ],
+   "h": 400
+  },
+  {
+   "name": "Vanillin",
+   "hours": ">400",
+   "layer": [
+    "base"
+   ],
+   "codes": [
+    2828
+   ],
+   "h": 400
+  },
+  {
+   "name": "Calone",
+   "hours": ">600",
+   "layer": [
+    "base"
+   ],
+   "codes": [
+    2557
+   ],
+   "early": true,
+   "h": 600
+  },
+  {
+   "name": "Coumarin",
+   "hours": ">1 เดือน",
+   "layer": [
+    "base"
+   ],
+   "codes": [
+    2821
+   ],
+   "h": 720
+  },
+  {
+   "name": "Ambroxan",
+   "hours": ">1 เดือน",
+   "layer": [
+    "base"
+   ],
+   "codes": [
+    2810
+   ],
+   "h": 720
+  }
+ ]
+}
