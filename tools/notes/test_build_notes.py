@@ -158,5 +158,38 @@ class Built(unittest.TestCase):
         self.assertEqual(B.main(['--check']), 0)
 
 
+class Embedded(unittest.TestCase):
+    """The app carries a compact copy of notes.json and styles.json (tools/notes/embed_notes.py, file 12 phase 2)."""
+
+    def test_app_copy_up_to_date(self):
+        import embed_notes as E
+        self.assertEqual(E.main(['--check']), 0)
+
+    def test_style_codes_are_selectable_and_signatures_are_notes(self):
+        import embed_notes as E
+        html = open(E.APP, encoding='utf-8').read()
+        data = json.loads(E.build(html))
+        self.assertEqual(len(data['styles']), 10)
+        for s in data['styles']:
+            for c in s['notes'] + s['sets']:
+                self.assertIn(str(c), data['items'], (s['id'], c))
+            self.assertTrue(set(s['sig']) <= set(s['notes']), s['id'])
+            self.assertFalse(set(s['notes']) & set(s['sets']), s['id'])
+
+    def test_build_refuses_a_style_code_outside_the_catalog(self):
+        import embed_notes as E
+        html = open(E.APP, encoding='utf-8').read()
+        real = E.STYLES
+        tmp = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_styles_test.json')
+        try:
+            json.dump({'styles': [{'id': 'x', 'n': 'x', 'refs': [], 'prof': 'fresh', 'sig': [], 'notes': [706], 'sets': []}]}, open(tmp, 'w'))
+            E.STYLES = tmp   # 706 = perfumer's alcohol, a solvent: not a selectable material
+            with self.assertRaises(SystemExit):
+                E.build(html)
+        finally:
+            E.STYLES = real
+            os.remove(tmp)
+
+
 if __name__ == '__main__':
     unittest.main()
