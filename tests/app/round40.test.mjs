@@ -1,5 +1,6 @@
 // Round 40: fixes for the third independent review (file 8 section 11). Every test here fails on the build that
 // review checked (commit ac983f4), except those marked "guard", which close gaps its mutation run found.
+// Round 41 removed the "nothing new" skip (it lost edits), and its test with it.
 import { describe, it, expect, afterEach } from 'vitest';
 import { loadApp, sleep } from './harness.mjs';
 
@@ -70,20 +71,6 @@ describe('saving', () => {
     app.click('[data-fadd="2845"]');
     await sleep(800);
     expect(app.store.get('fdraft').items.map((i) => i.pid)).toEqual([2810, 2845]);
-  });
-  it('does not send a save that has nothing new', async () => {
-    await formTab({ hold: true });
-    app.click('[data-fadd="2810"]');
-    await sleep(700);   // save 1 out
-    app.click('[data-fadd="2845"]');
-    await sleep(700);   // save 2 queued
-    app.click('[data-fadd="2665"]');
-    await sleep(700);   // save 3 queued
-    app.land(); await sleep(0);   // save 2 goes out with all three
-    expect(fd()[1].v.items.length).toBe(3);
-    app.land(); await sleep(0);   // save 3 has nothing new
-    expect(fd().length).toBe(2);
-    expect(app.held.length).toBe(0);
   });
   it('ignores a cached view once the server has answered · guard', async () => {
     await formTab({ docs: { fdraft: doc([line(2845, 20)]) } });

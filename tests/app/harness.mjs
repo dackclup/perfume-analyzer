@@ -12,8 +12,9 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // is acknowledged · echoDelay = ms after the acknowledgement before the new view arrives (default: view first) ·
 // fail(id, v) = true makes that write reject (code 'unavailable') · hold = writes wait until the test calls
 // land() (oldest first: store it, acknowledge it) and echo() (send the current view), so the order is exact ·
-// view(docs) sends any view, e.g. a late copy of an older state, without changing the store.
-export function loadApp({ runtime = 'db', docs = {}, uid = 'u1', storage = {}, firstDelay = 0, cached = null, writeDelay = 0, echoDelay = -1, fail = null, hold = false } = {}) {
+// view(docs) sends any view, e.g. a late copy of an older state, without changing the store · land(i) / refuse(i, code)
+// answer held write i (default the oldest) · setup(win) runs before the page script (e.g. to shorten a timeout).
+export function loadApp({ runtime = 'db', docs = {}, uid = 'u1', storage = {}, firstDelay = 0, cached = null, writeDelay = 0, echoDelay = -1, fail = null, hold = false, setup = null } = {}) {
   const src = fs.readFileSync(process.env.APP_FILE || APP_PATH, 'utf8');   // APP_FILE: run the same tests on another build (mutation checks)
   const writes = [];
   const store = new Map(Object.entries(docs));
@@ -33,7 +34,7 @@ export function loadApp({ runtime = 'db', docs = {}, uid = 'u1', storage = {}, f
   const write = (rec, apply) => {
     writes.push(rec);
     if (fail && fail(rec.id, rec.v)) return new Promise((res, rej) => setTimeout(() => rej({ code: 'unavailable' }), writeDelay));
-    if (hold) return new Promise((res) => held.push(() => { apply(); res(); }));
+    if (hold) return new Promise((res, rej) => held.push({ ok: () => { apply(); res(); }, ko: (code) => rej({ code }) }));
     if (!writeDelay && echoDelay < 0) { apply(); setTimeout(fire, 0); return Promise.resolve(); }   // default: stored and acknowledged at once, view right after (as before round 38)
     return new Promise((res) => setTimeout(() => { apply(); if (echoDelay < 0) { fire(); res(); } else { res(); setTimeout(fire, echoDelay); } }, writeDelay));
   };
@@ -61,6 +62,7 @@ export function loadApp({ runtime = 'db', docs = {}, uid = 'u1', storage = {}, f
       win.scrollTo = () => {};
       win.HTMLElement.prototype.scrollIntoView = function () {};
       for (const [k, v] of Object.entries(storage)) win.localStorage.setItem(k, v);
+      if (setup) setup(win);
     },
   });
   const win = dom.window;
@@ -78,5 +80,5 @@ export function loadApp({ runtime = 'db', docs = {}, uid = 'u1', storage = {}, f
   const change = (el) => { if (typeof el === 'string') el = $(el); el.dispatchEvent(new win.Event('change', { bubbles: true })); return el; };
   const remote = (id, v) => { if (v === null) store.delete(id); else store.set(id, clone(v)); started = true; fire(); };
   const data = JSON.parse(doc.getElementById('catalog-data').textContent);
-  return { dom, win, doc, $, $$, click, type, change, writes, store, remote, data, land: () => held.shift()(), echo: () => fire(), view: (d, fromCache = false) => send(new Map(Object.entries(d)), fromCache), held, close: () => { closed = true; } };   // the app's own timers may still run: keep the window alive
+  return { dom, win, doc, $, $$, click, type, change, writes, store, remote, data, land: (i = 0) => held.splice(i, 1)[0].ok(), refuse: (i = 0, code = 'internal') => held.splice(i, 1)[0].ko(code), echo: () => fire(), view: (d, fromCache = false) => send(new Map(Object.entries(d)), fromCache), held, close: () => { closed = true; } };   // the app's own timers may still run: keep the window alive
 }

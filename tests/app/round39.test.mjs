@@ -59,10 +59,7 @@ describe('saving', () => {
     app.land(); await sleep(0);   // save 2 (Ambroxan + Iso E Super) done
     app.view({ fdraft: app.writes[0].v }); await sleep(0);   // the view of save 1 turns up late
     expect(app.$('#form-badge').textContent).toBe('2');
-    // round 40: if the server really kept the older save, the page saves the newest again (once)
-    expect(app.held.length).toBe(1);
-    expect(app.writes[2].v.items.map((i) => i.pid)).toEqual([2810, 2845]);
-    app.land(); await sleep(0);
+    expect(app.held.length).toBe(0);   // round 41: no re-save from a view (round 40 tried it; it could overwrite another device)
     app.click('[data-fadd="2821"]');
     await sleep(700);
     app.land(); await sleep(0);
@@ -90,7 +87,7 @@ describe('saving', () => {
     expect(app.$('#form-badge').textContent).toBe('1');   // still this page's formula while its save is out
     app.land(); await sleep(0);
     expect(app.$('#form-badge').textContent).toBe('3');
-    expect(txt('#toast')).toContain('แสดงสูตรล่าสุดที่บันทึกไว้');
+    expect(txt('#toast')).toContain('แสดงสูตรล่าสุดที่ได้รับ');   // round 41 wording: the newest view received, not necessarily the server's last word
   });
   it('sends one save at a time, the second with the newest content', async () => {
     app = loadApp({ hold: true });
