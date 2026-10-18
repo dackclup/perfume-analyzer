@@ -1,4 +1,4 @@
-// Round 41: fixes for the fourth independent review (file 8 section 11). Every test here fails on the build that
+// Round 41: fixes for the fourth independent review (file 8 section 12). Every test here fails on the build that
 // review checked (commit 816fd42) unless marked "guard".
 import { describe, it, expect, afterEach } from 'vitest';
 import { loadApp, sleep } from './harness.mjs';

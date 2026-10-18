@@ -1,4 +1,4 @@
-// Round 40: fixes for the third independent review (file 8 section 11). Every test here fails on the build that
+// Round 40: fixes for the third independent review (file 8 section 12). Every test here fails on the build that
 // review checked (commit ac983f4), except those marked "guard", which close gaps its mutation run found.
 // Round 41 removed the "nothing new" skip (it lost edits), and its test with it.
 import { describe, it, expect, afterEach } from 'vitest';

@@ -1,4 +1,4 @@
-// Round 38: fixes for the independent review of the formula tab (file 8 section 11).
+// Round 38: fixes for the independent review of the formula tab (file 8 section 12).
 // Every test here fails on the build reviewed in round 38 (commit 088a5fd), except "stays green for a formula of
 // plain capped and unrestricted materials", which guards against the fix turning every formula amber.
 import { describe, it, expect, afterEach } from 'vitest';

@@ -1,4 +1,4 @@
-// Round 42: fixes for the fifth independent review (file 8 section 11). Every test here fails on the build that
+// Round 42: fixes for the fifth independent review (file 8 section 12). Every test here fails on the build that
 // review checked (commit 474b0c3) unless marked "guard" (needed only once one save waits at a time: found by fuzzing
 // the fix with the reviewer's simulator).
 import { describe, it, expect, afterEach } from 'vitest';

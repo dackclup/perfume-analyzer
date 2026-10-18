@@ -1,4 +1,4 @@
-// Round 39: fixes for the second independent review (file 8 section 11). Most tests here fail on the build that
+// Round 39: fixes for the second independent review (file 8 section 12). Most tests here fail on the build that
 // review checked (commit 81fd12e); the ones marked "guard" pass on both and close gaps its mutation run found
 // (a test that would not notice the fix being removed).
 import { describe, it, expect, afterEach } from 'vitest';
