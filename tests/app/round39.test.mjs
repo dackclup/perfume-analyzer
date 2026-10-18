@@ -60,6 +60,7 @@ describe('saving', () => {
     app.view({ fdraft: app.writes[0].v }); await sleep(0);   // the view of save 1 turns up late
     expect(app.$('#form-badge').textContent).toBe('2');
     expect(app.held.length).toBe(0);   // round 41: no re-save from a view (round 40 tried it; it could overwrite another device)
+    app.click('#f-all');   // round 43: Ambroxan + Iso E Super leave nothing in the filtered list
     app.click('[data-fadd="2821"]');
     await sleep(700);
     app.land(); await sleep(0);

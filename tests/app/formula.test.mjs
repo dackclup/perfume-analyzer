@@ -1,6 +1,6 @@
 // Formula tab: compatibility filter, IFRA maths, saving.
 // Known answers come from the project docs (file 5 example 2, file 6 formula B) and from an
-// independent Python build of the same compatibility graph (17 Oct 2026 mockup analysis).
+// independent Python build of the same-accord rule (round 43, 18 Oct 2026).
 import { describe, it, expect, afterEach } from 'vitest';
 import { loadApp, sleep } from './harness.mjs';
 
@@ -27,32 +27,55 @@ const txt = (sel) => app.$(sel).textContent.replace(/\s+/g, ' ').trim();
 const sumTxt = () => app.$$('#f-sum > div').map((d) => [...d.children].map((c) => c.textContent.trim()).join(' ')).join(' | ');
 
 describe('compatibility data', () => {
-  it('accord data names only products in the catalog', () => {
+  // Round 43: only accords that someone published (files 5–6) count; the Perfume Analyzer lists and Claude's drafts are gone.
+  // Known answers: scratchpad same_accord.py, an independent Python build (union-find over the groups) of 18 Oct 2026.
+  it('accord data names only products in the catalog, published accords only', () => {
     app = loadApp();
     const acc = JSON.parse(app.doc.getElementById('accord-data').textContent);
     const codes = new Set(app.data.items.map((x) => x.i));
     for (const a of acc) for (const g of a.g) for (const c of g) expect(codes.has(c), a.l + ' ' + c).toBe(true);
-    expect(acc.filter((a) => a.k === 'pub').length).toBe(5);
+    expect(acc.length).toBe(5);
+    for (const a of acc) { expect(a.k).toBe('pub'); expect(a.l).not.toMatch(/ร่าง|ไม่ระบุที่มา/); }
   });
-  it('matches the independent Python build of the graph', () => {
+  it('matches the independent Python build', () => {
     app = loadApp();
-    const C = app.win.__compat, ids = app.data.items.map((x) => x.i);
-    const nb = (a) => ids.filter((c) => c !== a && C.lvl(a, c) > 0);
-    const and = (...s) => ids.filter((c) => !s.includes(c) && s.every((a) => C.lvl(a, c) > 0)).length;
-    expect(C.size()).toBe(253);
-    expect(nb(2810).length).toBe(49);
-    expect(and(2810, 2845)).toBe(44);
-    expect(and(2493, 2845, 2810)).toBe(36);
-    expect(and(2821, 3293)).toBe(0);
-    C.setDrafts(false);
-    expect(nb(2810).length).toBe(18);
-    expect(and(2810, 2845)).toBe(11);
-    expect(and(2493, 2845, 2810)).toBe(4);
+    const C = app.win.__compat;
+    const shape = (F) => C.same(F).map((s) => s.l.split(' (')[0] + ':' + s.rows.length).join(' | ');
+    expect(C.size()).toBe(34);
+    expect(C.mats()).toBe(23);
+    expect(shape([])).toBe('Accord 1.1 อำพัน–ไม้:2 | Accord 1.2 Fougère สด:4 | Grojsman accord:3 | Accord 1.4 ทะเล:3 | Fougère สมัยใหม่:11');
+    expect(shape([2845])).toBe('Accord 1.1 อำพัน–ไม้:1 | Grojsman accord:3 | Accord 1.4 ทะเล:3 | Fougère สมัยใหม่:14');
+    expect(shape([2845, 2665])).toBe('Grojsman accord:2 | Accord 1.4 ทะเล:3 | Fougère สมัยใหม่:14');
+    expect(shape([2845, 2810])).toBe('Accord 1.1 อำพัน–ไม้:0');
+    expect(shape([2810, 2845, 2665])).toBe('');
+    expect(shape([2493, 2845, 2810])).toBe('');
+    expect(shape([2821, 3293])).toBe('');
+    expect(shape([3222])).toBe('Accord 1.2 Fougère สด:3 | Fougère สมัยใหม่:14');   // an alternate code counts as its material
   });
-  it('links count both ways', () => {
+  it('lists every material that shares an accord with all filters, once, and nothing else', () => {
     app = loadApp();
-    const C = app.win.__compat, ids = app.data.items.map((x) => x.i);
-    for (const a of [2810, 2845, 2665, 2821, 127688]) for (const b of ids) expect(C.lvl(a, b)).toBe(C.lvl(b, a));
+    const C = app.win.__compat;
+    const acc = JSON.parse(app.doc.getElementById('accord-data').textContent);
+    const m = new Map();   // this test's own material map: code -> lowest code met in the same group
+    for (const a of acc) for (const g of a.g) { const r = m.get(g[0]) ?? g[0]; for (const c of g) if (!m.has(c)) m.set(c, r); }
+    const mats = [...new Set(m.values())];
+    const accM = acc.map((a) => new Set(a.g.map((g) => m.get(g[0]))));
+    const sets = [[]].concat(mats.map((a) => [a]), mats.flatMap((a, i) => mats.slice(i + 1).map((b) => [a, b])));
+    for (const F of sets) {
+      const rows = C.same(F).flatMap((s) => s.rows);
+      const want = new Set(accM.filter((s) => F.every((f) => s.has(f))).flatMap((s) => [...s]).filter((x) => !F.includes(x)));
+      expect(rows.length, F.join('+')).toBe(new Set(rows).size);
+      expect(new Set(rows), F.join('+')).toEqual(want);
+    }
+  });
+  it('folds the alternate codes of one material into one', () => {
+    app = loadApp();
+    const C = app.win.__compat;
+    expect(C.mat(6901)).toBe(3223);
+    expect(C.mat(2666)).toBe(2665);
+    expect(C.alts(3222)).toEqual([3223, 6901, 3222, 33088]);
+    expect(C.mat(706)).toBe(706);
+    expect(C.alts(706)).toEqual([]);
   });
 });
 
@@ -151,44 +174,90 @@ describe('calculation · file 6 formula B', () => {
 });
 
 describe('picker', () => {
-  it('filters by every material in the formula', async () => {
+  const heads = () => app.$$('#f-list .fsec h3').map((h) => h.firstElementChild.textContent.split(' (')[0]);
+  it('groups by the accords holding every filter, smallest first, and folds long ones', async () => {
     await formTab();
-    expect(txt('#f-count')).toContain('มีข้อมูลความเข้ากัน 253 จาก 1,106 ตัว');
-    app.click('[data-fadd="2810"]');
-    expect(txt('#f-count')).toBe('เข้ากับ Ambroxan · 49 ตัว');
+    expect(txt('#f-count')).toBe('สูตรที่เผยแพร่ 5 ชุด · วัตถุดิบ 23 ตัว (34 รหัสจาก 1,106) · ตัวอื่นใช้ "ทั้งคลัง"');
     app.click('[data-fadd="2845"]');
-    expect(txt('#f-count')).toBe('เข้ากับทั้ง 2 ตัวที่กรอง · 44 ตัว');
-    expect(app.$$('#f-chips .fchip.on').length).toBe(2);
-    app.click('[data-ftoggle="2810"]');
-    expect(txt('#f-count')).toMatch(/^เข้ากับ Iso E Super · \d+ ตัว$/);
-    app.click('#f-drafts');
-    app.click('[data-ftoggle="2810"]');
-    expect(txt('#f-count')).toBe('เข้ากับทั้ง 2 ตัวที่กรอง · 11 ตัว');
-    expect(app.$('#f-list .ev').textContent).toMatch(/^หลักฐาน: (เผยแพร่|PA)$/);
+    expect(txt('#f-count')).toBe('อยู่ในสูตรเดียวกับ Iso E Super · 4 สูตร · 21 ตัว');
+    expect(heads()).toEqual(['Accord 1.1 อำพัน–ไม้', 'Grojsman accord', 'Accord 1.4 ทะเล', 'Fougère สมัยใหม่']);
+    const fold = app.$('#f-list [data-fsec]');
+    expect(fold.getAttribute('aria-expanded')).toBe('false');
+    expect(fold.textContent).toContain('14 ตัว · แตะเพื่อดู');
+    app.click('[data-fadd="2665"]');
+    expect(txt('#f-count')).toBe('อยู่ในสูตรเดียวกับทั้ง 2 ตัวที่กรอง · 3 สูตร · 19 ตัว');
+    expect(app.$$('#f-list .row').length).toBe(5);
+    app.click('#f-list [data-fsec]');
+    expect(app.$$('#f-list .row').length).toBe(19);
+    expect(app.doc.activeElement.getAttribute('aria-expanded')).toBe('true');   // focus stays on the header
+    expect(app.$('#f-list .ev')).toBeNull();
+    expect(txt('#f-list')).not.toMatch(/PA|ร่าง|หลักฐาน/);
+    app.click('[data-ftoggle="2665"]');
+    expect(txt('#f-count')).toBe('อยู่ในสูตรเดียวกับ Iso E Super · 4 สูตร · 20 ตัว');   // Hedione stays in the formula, so it is not offered
+    expect(app.$('#f-list [data-fsec]').getAttribute('aria-expanded')).toBe('false');   // a new filter folds again
+    expect(app.$('#f-drafts')).toBeNull();
   });
-  it('says "no data" (not "incompatible") at zero and offers the whole catalog', async () => {
+  it('shows a material once, with its other codes on the row', async () => {
     await formTab();
-    app.click('[data-fadd="2821"]');
-    app.click('[data-fadd="3293"]');
-    expect(txt('#f-empty')).toContain('ยังไม่มีข้อมูลว่าเข้ากับทั้ง 2 ตัวที่กรอง');
-    expect(txt('#f-empty')).toContain('ไม่ได้แปลว่าไม่เข้ากัน');
+    app.click('#f-list [data-fsec]');
+    expect(app.$$('#f-list .row').length).toBe(23);
+    const lav = app.$('#f-list .row-main[data-open="3223"]').closest('.row');
+    expect([...lav.querySelectorAll('.falt [data-open]')].map((b) => b.textContent)).toEqual(['6901', '3222', '33088']);
+    app.click(lav.querySelector('.falt [data-open="3222"]'));
+    expect(txt('#sheet-body')).toContain('วัตถุดิบเดียวกัน รหัสอื่น: 3223, 6901, 33088');
+    app.click('#sheet-body [data-fadd="3222"]');
+    app.click('#sheet-close');
+    expect(txt('#f-count')).toMatch(/^อยู่ในสูตรเดียวกับ .+ · 2 สูตร · 17 ตัว$/);
+    expect(app.$('#f-list [data-open="3223"]')).toBeNull();   // the same material in another code is not offered again
+  });
+  it('says "no published accord" (not "incompatible") at zero and offers the whole catalog', async () => {
+    await formTab();
+    app.click('[data-fadd="2810"]');
+    expect(txt('#f-count')).toBe('อยู่ในสูตรเดียวกับ Ambroxan · 1 สูตร · 1 ตัว');
+    app.click('[data-fadd="2845"]');
+    expect(txt('#f-empty')).toContain('ใส่วัตถุดิบจากสูตรที่ใช้ร่วมกันครบแล้ว');
     app.click('[data-fall]');
     expect(txt('#f-count')).toBe('ค้นทั้งคลัง · 1,104 ตัว');
+    app.type('#fq', 'lavandin');
+    await sleep(200);
+    expect(txt('#f-list')).toContain('ไม่มีข้อมูลความเข้ากัน');
+    app.click('[data-fadd="3293"]');
+    app.type('#fq', '');
+    await sleep(200);
+    app.click('#f-all');
+    expect(txt('#f-empty')).toContain('ยังไม่มีสูตรที่เผยแพร่ที่ใช้ทั้ง 3 ตัวนี้ร่วมกัน');
+    expect(txt('#f-empty')).toContain('ไม่ได้แปลว่าไม่เข้ากัน');
+    expect(app.$('#f-empty [data-ftoggle="3293"]')).toBeTruthy();
+    app.click('[data-fall]');
     app.type('#fq', 'ethyl alcohol');
     await sleep(200);
     expect(app.$('#f-list .row .nm').textContent).toContain('Ethyl Alcohol');
   });
-  it('shows the sources of a pair on the detail sheet', async () => {
+  it('tags rows in the whole catalog by the filters', async () => {
     await formTab();
-    app.click('[data-fadd="2810"]');
     app.click('[data-fadd="2845"]');
-    app.click('#f-list [data-open="2665"]');
+    app.click('#f-all');
+    const tag = (pid) => app.$('#f-list .row-main[data-open="' + pid + '"] .ev')?.textContent;
+    expect(tag(2884)).toBe('อยู่ในสูตรเดียวกับตัวที่กรอง');
+    expect(app.$('#f-list .row').querySelector('.ev').textContent).toBe('อยู่ในสูตรเดียวกับตัวที่กรอง');   // shared accords first
+    app.type('#fq', 'hedione');
+    await sleep(200);
+    expect(tag(2666)).toBe('อยู่ในสูตรเดียวกับตัวที่กรอง');
+    app.click('[data-fadd="2665"]');   // adding clears the search
+    app.type('#fq', 'hedione');
+    await sleep(200);
+    expect(tag(2666)).toBe('รหัสอื่นของวัตถุดิบที่อยู่ในสูตรแล้ว');
+  });
+  it('shows the shared accords of a pair on the detail sheet', async () => {
+    await formTab();
+    app.click('[data-fadd="2845"]');
+    app.click('[data-fadd="2665"]');
+    app.click('#f-list [data-open="2884"]');
+    const sec = app.$$('#sheet-body .fsrc-h, #sheet-body .fsrc').map((p) => p.textContent.split(' (')[0]);
+    expect(sec).toEqual(['ใช้ร่วมกับ Iso E Super ใน', 'Grojsman accord', 'Fougère สมัยใหม่', 'ใช้ร่วมกับ Hedione ใน', 'Grojsman accord', 'Fougère สมัยใหม่']);
     const body = txt('#sheet-body');
-    expect(body).toContain('สำหรับสูตร');
-    expect(body).toContain('เข้ากับ Ambroxan เพราะ');
-    expect(body).toContain('เข้ากับ Iso E Super เพราะ');
-    expect(body).toContain('Grojsman accord');
-    app.click('#sheet-body [data-fadd="2665"]');
+    expect(body.slice(body.indexOf('สำหรับสูตร'), body.indexOf('ไม่ใช่ผลดมจริง'))).not.toMatch(/Perfume Analyzer|PA|ร่าง/);
+    app.click('#sheet-body [data-fadd="2884"]');
     expect(txt('#sheet-body')).toContain('อยู่ในสูตรแล้ว');
   });
   it('removes a material with ×', async () => {

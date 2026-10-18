@@ -223,11 +223,4 @@ describe('notes and small fixes (MEDIUM-6, LOW)', () => {
     await calc(doc([line(2845, 2), line(706, 98)]));
     expect(sumTxt()).toContain('ใส่หัวน้ำหอมได้สูงสุด 100% เพดานยังไม่จำกัดความเข้มข้น');
   });
-  it('counts only non-draft links when drafts are off', async () => {
-    app = loadApp();
-    await sleep(30);
-    app.click('#tab-form');
-    app.click('#f-drafts');
-    expect(txt('#f-count')).toContain('มีข้อมูลความเข้ากัน 247 จาก 1,106 ตัว');
-  });
 });
