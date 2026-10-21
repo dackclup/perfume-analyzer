@@ -11,13 +11,13 @@ case:  {"lines": [[pid, layer], ...], "prof": "fresh" | "fougere" | "sweet" | nu
 
 Rules (file 12 sections 7–9, as built in phase 3):
 - layer budgets: fresh 25/25/50 · fougère/floral 15/35/50 · sweet·amber 10/30/60 (top/mid/base), no style 1/3 each;
-  a layer with no material gets 0 and the others are scaled to add up to 100
+  a layer with no material gets 0 and its share stays empty
 - starting use of a material: file 3's range ("a–b%": middle, bounds a and b · "≤x%": x/2, bounds x/4 and x ·
   "ราว x%": x, bounds x/2 and 2x) on its own code, else on another code of the same material · else the Fraterworks
   average (bounds half and double) · else file 5's 1% list 0.1 / 0.1% list 0.01 (bounds half and double) · else 1
 - bulk = start of 5 or more: in each layer the bulk ones are multiplied by one factor so the layer adds up to its budget,
   each kept inside its bounds; the others stay at their start
-- parts become % of the total
+- parts are % of the formula: under 100 the rest stays empty; over 100 all are scaled down to add up to 100
 - trial chain: base, mid, top, each in formula order; set k pairs the first k materials with material k+1; a trial ratio
   counts when every set before it has one; each material is at 10% in the trial (file 5's 1% / 0.1% ones at that);
   the materials covered get proportions from the trial blend and keep their total share
@@ -29,6 +29,7 @@ import json
 import os
 import re
 import sys
+from itertools import combinations
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PROFILES = {'fresh': ([25, 25, 50], [(20, 30), (20, 30), (45, 55)]),
@@ -147,8 +148,6 @@ def plan(D, case):
     target = list(prof[0]) if prof else [100 / 3] * 3
     present = [any(L == k for _, L in lines) for k in range(3)]
     target = [t if present[k] else 0 for k, t in enumerate(target)]
-    total_t = sum(target)
-    target = [t * 100 / total_t if total_t else 0 for t in target]
     rows = []
     for p, L in lines:
         u, lo, hi, src = start_use(D, p)
@@ -161,8 +160,9 @@ def plan(D, case):
         for r, v in zip(bulk, fill_bulk([(r['u'], r['lo'], r['hi']) for r in bulk], R)):
             r['part'] = v
     s = sum(r['part'] for r in rows)
+    scale = 100 / s if s > 100 else 1
     for r in rows:
-        r['start'] = r['pct'] = r['part'] * 100 / s if s else 0
+        r['start'] = r['pct'] = r['part'] * scale
         r['td'] = trial_dil(D, r['pid'])
     chain = [r for L in (2, 1, 0) for r in rows if r['L'] == L]
     full = bool(case.get('full'))
@@ -195,15 +195,16 @@ def plan(D, case):
         for x in steps[1:]:   # largest first; a tie within rounding keeps the larger
             if abs(x - at) < abs(best - at) - 1e-9:
                 best = x
-        sets.append({'k': k, 'at': at, 'near': best, 'used': k <= upto, 'chosen': chosen[k - 1]})
+        sets.append({'k': k, 'at': at, 'near': best, 'used': k <= upto, 'chosen': chosen[k - 1], 'out': at > 9.5 or at < 0.5})
     batch = case.get('batch') or 10
     for r in rows:
         r['pure'] = r['pct'] * batch / 100
         r['d'] = weigh_dil(D, r['pid'], r['pure'])
         r['weigh'] = r['pure'] * 100 / r['d']
     layers = [sum(r['pct'] for r in rows if r['L'] == L) for L in range(3)]
-    return {'rows': [{k: r[k] for k in ('pid', 'L', 'src', 'start', 'pct', 'd', 'weigh')} for r in rows],
-            'sets': sets, 'upto': upto, 'layers': layers, 'weigh': sum(r['weigh'] for r in rows),
+    return {'rows': [{k: r[k] for k in ('pid', 'L', 'src', 'u', 'lo', 'hi', 'bulk', 'part', 'td', 'start', 'pct', 'd', 'weigh')} for r in rows],
+            'sets': sets, 'upto': upto, 'layers': layers, 'targets': target, 'down': s > 100,
+            'total': sum(r['pct'] for r in rows), 'weigh': sum(r['weigh'] for r in rows),
             'natural': sum(r['pct'] for r in rows if D.cat[r['pid']]['t'] == 2),
             'warn': sorted(warnings(D, rows, layers, prof))}
 
@@ -216,19 +217,19 @@ def warnings(D, rows, layers, prof):
     for L in (2, 1, 0):
         rs = [r for r in rows if r['L'] == L]
         if not rs:
-            out.append(('gap', L))
+            out.append(('gap', L, 1))
         elif layers[L] < 5:
-            out.append(('low', L))
+            out.append(('low', L, 1))
         if prof and rs and not (prof[1][L][0] - 1e-9 <= layers[L] <= prof[1][L][1] + 1e-9):
-            out.append(('range', L))
-        if sum(1 for r in rs if r['pct'] >= 5) >= 4:
-            out.append(('many', L))
+            out.append(('range', L, 1))
+        if sum(1 for r in rs if r['pct'] >= 5) > 4:   # more than 3–4 main materials
+            out.append(('many', L, 1))
         fams = {}
         for r in rs:
             fams.setdefault(D.cat[r['pid']]['f'], []).append(r)
-        for g in fams.values():
-            if len(g) >= 3 and set.intersection(*[fx(r) for r in g]):
-                out.append(('dup', L))
+        for g in fams.values():   # three of one family, every pair sharing at least three quarters of their facets
+            if any(all(jaccard(fx(x), fx(y)) >= 0.75 for x, y in combinations(trio, 2)) for trio in combinations(g, 3)):
+                out.append(('dup', L, 1))
     for a, b in ((2, 1), (1, 0)):
         A = [r for r in rows if r['L'] == a and fx(r)]
         B = [r for r in rows if r['L'] == b and fx(r)]
@@ -237,29 +238,36 @@ def warnings(D, rows, layers, prof):
         shared = any(fx(x) & fx(y) for x in A for y in B)
         blender = any('blender' in D.note(r['pid']).get('ro', []) for r in rows if r['L'] in (a, b))
         if not shared and not blender:
-            out.append(('link', b))
+            out.append(('link', b, 1))
     base = [r for r in rows if r['L'] == 2]
     if prof and base and not any(D.cat[r['pid']]['f'] in CORE for r in base):
-        out.append(('core', 2))
+        out.append(('core', 2, 1))
     for r in rows:
-        n = D.note(r['pid'])
-        if (n.get('sg') or 0) >= 4 and r['pct'] > r['hi'] + 1e-9:
-            out.append(('strong', (r['pid'],)))
+        strong = (D.note(r['pid']).get('sg') or 0) >= 4
+        if r['pct'] > r['hi'] + 1e-9:
+            if r['src'] == 'f3':   # past file 3's range: a fact; "may cover the others" is inferred
+                out.append(('over', (r['pid'],), 1 if strong else 0))
+            elif strong:   # past a guessed bound
+                out.append(('strong', (r['pid'],), 2))
     name = lambda r: D.cat[r['pid']]['n']
     ma = lambda r: re.match(r'methyl anthranilate', name(r), re.I) is not None
     ald = lambda r: ALDEHYDE.search(name(r)) is not None and not re.search('acetal', name(r), re.I)
     for i, x in enumerate(rows):
         for y in rows[i + 1:]:
             if (ma(x) and ald(y)) or (ma(y) and ald(x)):
-                out.append(('color', (x['pid'], y['pid'])))
+                out.append(('color', (x['pid'], y['pid']), 0))
     for r in rows:
         if re.match(r'vanillin\b', name(r), re.I):
-            out.append(('yellow', (r['pid'],)))
+            out.append(('yellow', (r['pid'],), 0))
         if re.match(r'indole\b', name(r), re.I):
-            out.append(('pink', (r['pid'],)))
+            out.append(('pink', (r['pid'],), 0))
         if D.note(r['pid']).get('e'):
-            out.append(('early', (r['pid'],)))
-    return [[k, list(v) if isinstance(v, tuple) else v] for k, v in out]
+            out.append(('early', (r['pid'],), 0))
+    return [[k, list(v) if isinstance(v, tuple) else v, lb] for k, v, lb in out]
+
+
+def jaccard(a, b):
+    return len(a & b) / len(a | b) if a | b else 0
 
 
 def main():

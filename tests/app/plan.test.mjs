@@ -51,20 +51,22 @@ describe('proportions and the trial plan match the Python reference', () => {
       expect(got.rows.length, tag).toBe(want.rows.length);
       got.rows.forEach((g, j) => {
         const w = want.rows[j];
-        expect([g.pid, g.L, g.use.src, g.d], tag).toEqual([w.pid, w.L, w.src, w.d]);
-        for (const k of ['start', 'pct', 'weigh']) expect(close(g[k], w[k]), tag + ' ' + g.pid + ' ' + k + ' ' + g[k] + ' vs ' + w[k]).toBe(true);
+        expect([g.pid, g.L, g.use.src, g.d, g.bulk, g.td], tag).toEqual([w.pid, w.L, w.src, w.d, w.bulk, w.td]);
+        for (const k of ['part', 'start', 'pct', 'weigh']) expect(close(g[k], w[k]), tag + ' ' + g.pid + ' ' + k + ' ' + g[k] + ' vs ' + w[k]).toBe(true);
+        for (const k of ['u', 'lo', 'hi']) expect(close(g.use[k], w[k]), tag + ' ' + g.pid + ' ' + k).toBe(true);
         rows++;
       });
       expect(got.upto, tag).toBe(want.upto);
       got.sets.forEach((s, j) => {
         const w = want.sets[j];
-        expect([s.k, s.near, s.used, s.chosen], tag).toEqual([w.k, w.near, w.used, w.chosen]);
+        expect([s.k, s.near, s.used, s.chosen, s.out], tag).toEqual([w.k, w.near, w.used, w.chosen, w.out]);
         expect(close(s.at, w.at), tag + ' set ' + s.k).toBe(true);
         sets++; if (s.used) chosen++;
       });
       expect(got.layers.map((l) => l.pct).every((v, L) => close(v, want.layers[L])), tag).toBe(true);
-      expect(close(got.weigh, want.weigh) && close(got.natural, want.natural), tag).toBe(true);
-      const gw = got.warn.map((x) => JSON.stringify([x.k, x.at])).sort(), ww = want.warn.map((x) => JSON.stringify(x)).sort();
+      expect(got.layers.map((l) => l.target).every((v, L) => close(v, want.targets[L])), tag).toBe(true);
+      expect(close(got.weigh, want.weigh) && close(got.natural, want.natural) && close(got.total, want.total) && got.down === want.down, tag).toBe(true);
+      const gw = got.warn.map((x) => JSON.stringify([x.k, x.at, x.lb])).sort(), ww = want.warn.map((x) => JSON.stringify(x)).sort();   // kind, where and label
       expect(gw, tag).toEqual(ww);
       warns += gw.length;
     });
@@ -75,13 +77,12 @@ describe('proportions and the trial plan match the Python reference', () => {
 });
 
 describe('proportions follow file 12 section 7', () => {
-  it('fill each layer from its bulk materials, keep strong ones at their start, and add up to 100', () => {
+  it('fill each layer from its bulk materials, keep strong ones at their start, and leave a shortfall empty', () => {
     app = loadApp();
     const W = app.win.__layers;
     const lines = [{ pid: 2845, L: 2 }, { pid: 2884, L: 2 }, { pid: 2810, L: 2 }, { pid: 2665, L: 1 }, { pid: 2685, L: 1 }, { pid: 127688, L: 0 }, { pid: 2557, L: 1 }];
     const p = W.plan({ lines, prof: 'fresh', batch: 10 });
     const by = Object.fromEntries(p.rows.map((r) => [r.pid, r]));
-    expect(p.rows.reduce((s, r) => s + r.pct, 0)).toBeCloseTo(100, 9);
     expect(by[2845].bulk && by[2884].bulk && by[2665].bulk && by[2685].bulk && by[127688].bulk).toBe(true);   // file 3: 10–30 · 5–20 · 5–25 · 2–8 (middle 5) · 5–20
     expect(by[2810].bulk || by[2557].bulk).toBe(false);   // 1–8 · ≤0.5
     expect(by[2810].part).toBe(4.5);   // Ambroxan stays at the middle of 1–8%: not stretched
@@ -90,16 +91,40 @@ describe('proportions follow file 12 section 7', () => {
     expect(by[2665].part + by[2685].part + by[2557].part).toBeCloseTo(25, 9);
     expect(by[2845].part / by[2884].part).toBeCloseTo(20 / 12.5, 9);   // one factor for the layer
     expect(by[127688].part).toBe(20);   // the top's 25 needs Bergamot past its file 3 maximum of 20 …
-    expect(by[127688].pct).toBeCloseTo(20 / 95 * 100, 9);   // … so the whole is 95 parts
-    expect(p.warn.some((w) => w.k === 'range' && w.at === 0)).toBe(false);   // 21.1% is still inside fresh's 20–30
+    expect(by[127688].pct).toBe(20);   // … so the top stays at 20 and 5 of the formula stay empty (round 47: nothing is stretched)
+    expect(p.total).toBeCloseTo(95, 9);
+    for (const r of p.rows) expect(r.pct).toBe(r.part);   // % of the formula = the part, strong ones at their use
+    expect(p.warn.some((w) => w.k === 'range' && w.at === 0)).toBe(false);   // 20% is still inside fresh's 20–30
   });
-  it('without a style starts from equal thirds, and an empty layer hands its share to the others', () => {
+  it('without a style starts from equal thirds, and an empty layer keeps its share empty', () => {
     app = loadApp();
     const W = app.win.__layers;
     const p = W.plan({ lines: [{ pid: 2845, L: 2 }, { pid: 2665, L: 1 }], prof: null, batch: 10 });
-    expect(p.layers.map((l) => l.target)).toEqual([0, 50, 50].map((v) => expect.closeTo(v, 9)));
+    expect(p.layers.map((l) => l.target)).toEqual([0, 100 / 3, 100 / 3].map((v) => expect.closeTo(v, 9)));
+    expect(p.layers.map((l) => l.pct)).toEqual([0, 25, 30].map((v) => expect.closeTo(v, 9)));   // Hedione and Iso E Super at their file 3 maximum
     expect(p.warn.some((w) => w.k === 'gap' && w.at === 0)).toBe(true);
     expect(p.warn.some((w) => w.k === 'range')).toBe(false);   // no style, no profile range
+  });
+  it('never stretches strong materials: a formula of strong ones only stays tiny (round 47)', () => {
+    app = loadApp();
+    const p = app.win.__layers.plan({ lines: [{ pid: 2557, L: 2 }, { pid: 2807, L: 1 }, { pid: 2864, L: 0 }], prof: 'sweet', batch: 10 });
+    expect(p.rows.map((r) => r.pct)).toEqual([0.25, 0.1, 0.2].map((v) => expect.closeTo(v, 12)));   // Calone ≤0.5 · Indole (Fraterworks 0.1) · Javanol ราว 0.2
+    expect(p.total).toBeCloseTo(0.55, 12);
+    for (const r of p.rows) expect(r.weigh).toBeLessThan(5);   // was 454.55 g of Calone 1% before round 47
+  });
+  it('scales everything down when the parts add up to more than 100', () => {
+    app = loadApp();
+    const W = app.win.__layers, C = app.win.__compat, many = [], seen = new Set();
+    let sum = 0;
+    for (const pid of W.reps().filter((q) => W.use(q).u < 5).sort((x, y) => W.use(y).u - W.use(x).u)) {   // fixed (not bulk) ones, largest first
+      if (sum > 110 || seen.has(C.mat(pid))) continue;
+      seen.add(C.mat(pid)); many.push(pid); sum += W.use(pid).u;
+    }
+    const p = W.plan({ lines: many.map((pid) => ({ pid, L: W.note(pid).l })), prof: null });
+    expect(p.rows.reduce((s, r) => s + r.part, 0)).toBeGreaterThan(100);
+    expect(p.down).toBe(true);
+    expect(p.total).toBeCloseTo(100, 9);
+    for (const r of p.rows) expect(r.pct).toBeLessThan(r.part);
   });
   it('says where each starting use comes from', () => {
     app = loadApp();
@@ -109,6 +134,36 @@ describe('proportions follow file 12 section 7', () => {
     expect(U(3223).src).toBe('fw');   // Lavender Bulgarian: the Fraterworks average
     expect(U(2807).src).toBe('fw');   // Indole: file 3 says "ระดับ ppm" (no number), Fraterworks has one
     expect(U(10498)).toMatchObject({ u: 1, src: 'none' });   // no number anywhere: 1% [guess]
+  });
+});
+
+describe('warnings (section 9)', () => {
+  it('flag three muguet aldehydes as one role, but not the published fougère heart (round 47)', () => {
+    app = loadApp();
+    const W = app.win.__layers, C = app.win.__compat;
+    const muguet = W.plan({ lines: [2636, 2706, 2707].map((pid) => ({ pid, L: 1 })), prof: null });   // Florhydral · Cyclamen Aldehyde · Hydroxycitronellal
+    expect(muguet.warn.find((w) => w.k === 'dup')).toMatchObject({ at: 1, lb: 1 });
+    for (const a of C.accords) for (const prof of [null, 'fresh', 'fougere', 'sweet']) {
+      const p = W.plan({ lines: a.m.filter((q) => W.note(q)).map((pid) => ({ pid, L: W.note(pid).l })), prof });
+      expect(p.warn.filter((w) => w.k === 'dup' || w.k === 'many' || w.k === 'over' || w.k === 'strong'), a.l + ' ' + prof).toEqual([]);   // no false alarm on what was published
+    }
+  });
+  it('warn at 5 main materials in one layer, not at 4, as an inference', () => {
+    app = loadApp();
+    const W = app.win.__layers, base = [2845, 2884, 2877, 2894, 2749];   // Iso E Super · Galaxolide · Ethylene Brassylate · Habanolide · Benzyl Salicylate
+    const five = W.plan({ lines: base.map((pid) => ({ pid, L: 2 })), prof: 'sweet' });
+    expect(five.rows.filter((r) => r.pct >= 5).length).toBe(5);
+    expect(five.warn.find((w) => w.k === 'many')).toMatchObject({ at: 2, lb: 1 });
+    const four = W.plan({ lines: base.slice(0, 4).map((pid) => ({ pid, L: 2 })), prof: 'sweet' });
+    expect(four.warn.some((w) => w.k === 'many')).toBe(false);
+  });
+  it('label a material past a guessed bound as a guess (round 47)', () => {
+    app = loadApp();
+    const W = app.win.__layers;
+    const p = W.plan({ lines: [{ pid: 2845, L: 2 }, { pid: 2580, L: 2 }], prof: null, jc: { '2845,2580': 1 } });   // Allyl Amyl Glycolate: Fraterworks average only
+    const w = p.warn.find((x) => x.at && x.at[0] === 2580);
+    expect(w).toMatchObject({ k: 'strong', lb: 2 });
+    expect(w.t).toMatch(/เกิน 2 เท่าของค่าเฉลี่ยของ Fraterworks \(0\.25%\)/);
   });
 });
 
@@ -128,7 +183,9 @@ describe('trial ratios (section 8)', () => {
     expect(b.sets[0].at).toBeCloseTo(7, 9);
     expect(b.sets[1].at).toBeCloseTo(9, 9);
     expect(b.rows[3].pct).toBeCloseTo(a.rows[3].pct, 9);   // Hedione keeps its start
-    expect(b.warn.some((w) => w.k === 'strong' && w.at[0] === 2810)).toBe(true);   // Ambroxan 11.8% > file 3's 8%
+    const over = b.warn.find((w) => w.at[0] === 2810);   // Ambroxan 10.5% > file 3's 1–8%, and strong: "may cover" is inferred
+    expect(over).toMatchObject({ k: 'over', lb: 1 });
+    expect(over.t).toMatch(/เกินช่วงใช้ 1–8% ของไฟล์ 3 และเป็นตัวแรง/);
   });
   it('count only an unbroken run from the first set', () => {
     app = loadApp();
@@ -164,7 +221,7 @@ describe('what to weigh', () => {
       expect(r.weigh * r.d / 100).toBeCloseTo(r.pure, 12);
       if (r.d > 1) expect(r.weigh).toBeGreaterThanOrEqual(0.1);
     }
-    expect(p.rows.reduce((s, r) => s + r.pure, 0)).toBeCloseTo(5, 9);
+    expect(p.rows.reduce((s, r) => s + r.pure, 0)).toBeCloseTo(p.total * 5 / 100, 9);   // grams follow % of the formula
   });
 });
 
@@ -189,18 +246,20 @@ describe('summary view', () => {
     await summary();
     const rows = rowsOf();
     expect(rows.map((r) => r.name)).toEqual(['Iso E Super', 'Ambroxan', 'Hedione', 'Bergamot FCF', 'Dihydromyrcenol']);
-    expect(rows.reduce((s, r) => s + r.pct, 0)).toBeCloseTo(100, 0);
-    expect(rows[1].text).toMatch(/ชั่ง 5\.\d\d g ของสารละลาย 10%/);   // Ambroxan at file 5's 10%
-    expect(rows[0].text).toMatch(/ระดับใช้ 10–30% \(ไฟล์ 3\).*ถึงค่าสูงสุดของช่วง/);
+    expect(rows.map((r) => r.pct)).toEqual([30, 4.5, 25, 16.9, 8.1]);   // % of the formula: Iso E Super and Hedione at their file 3 maximum, nothing stretched
+    expect(txt('#l-body .lsum')).toMatch(/^รวม 84\.5% ของสูตร · ยังว่าง 15\.5% · แอปไม่ขยายตัวอื่นมาเติม/);
+    expect(rows[1].text).toMatch(/ชั่ง 4\.50 g ของสารละลาย 10%/);   // Ambroxan at file 5's 10%
+    expect(rows[0].text).toMatch(/ระดับใช้ 10–30% \(ไฟล์ 3\).*ถึงค่าสูงสุดแล้ว/);
+    expect(rows[0].text).not.toMatch(/แท็บสูตรรองรับ/);   // the 0.1% note is for file 5's 0.1% list only
     expect(txt('#l-body')).not.toMatch(/รุ่นถัดไป/);
-    expect(sec('ชั้นฐาน').querySelector('h3').textContent).toMatch(/40\.8% · ช่วง 45–55%/);
+    expect(sec('ชั้นฐาน').querySelector('h3').textContent).toMatch(/34\.5% · ช่วง 45–55%/);
     const warn = txt('#l-body .lwarn');
-    expect(warn).toMatch(/ชั้นฐาน 40\.8% ต่ำกว่าช่วงของโปรไฟล์นี้ \(45–55%\).*อนุมาน/);
+    expect(warn).toMatch(/ชั้นฐาน 34\.5% ต่ำกว่าช่วงของโปรไฟล์นี้ \(45–55%\).*อนุมาน/);
     expect(warn).toMatch(/IFRA งบผิวแพ้แสง และสารห้าม เช็กที่ "คำนวณ"/);
     expect(txt('#form-layer')).not.toMatch(/เพดาน|ผ่าน/);   // still no IFRA verdict outside the calc view
     expect(sec('แผนทดลองแบบ Jean Carles').querySelector('h3').textContent).toMatch(/4 ชุด × 5 แถบ = 20 แถบ/);
     expect(app.$$('#l-body .jcr').map((g) => g.querySelectorAll('.near').length)).toEqual([1, 1, 1, 1]);   // one dashed strip per set
-    expect(txt('#l-body')).toMatch(/สูตรนี้มีน้ำมันธรรมชาติ 20%/);   // Bergamot FCF, held at file 3's 20%
+    expect(txt('#l-body')).toMatch(/สูตรนี้มีน้ำมันธรรมชาติ 16\.9%/);   // Bergamot FCF
   });
   it('scales the grams with the batch and remembers it on this device', async () => {
     await summary();
@@ -272,6 +331,49 @@ describe('summary view', () => {
     expect(app.$$('#l-body .jcr [aria-pressed="true"]').length).toBe(2);   // the malformed key was dropped on load
     expect(Object.keys(JSON.parse(app.win.localStorage.getItem('pf.jc'))).sort()).toEqual(['2845,2810', '2845,2810,2665']);   // and one for a line not in the formula
     app.click('#l-body [data-jcclear]');
+    expect(app.$$('#l-body .jcr [aria-pressed="true"]').length).toBe(0);
+    expect(app.win.localStorage.getItem('pf.jc')).toBe('{}');
+  });
+  it('cannot apply while the saved formula is still loading (round 38 guard · round 47 M40)', async () => {
+    const doc = { v: 1, conc: 8, certs: {}, items: [2845, 2810, 2665].map((pid) => ({ pid, g: null, dil: 100, filt: false })) };
+    app = loadApp({ docs: { fdraft: doc }, cached: { fdraft: doc }, firstDelay: 5000, storage: { 'pf.fview': '"layer"', 'pf.lstep': '4' } });
+    await sleep(30);
+    app.click('#tab-form');
+    expect(app.$$('#l-body .lp').length).toBe(3);   // the cached copy is shown …
+    app.click('#l-body [data-lapply]');
+    await sleep(800);
+    expect(app.writes.filter((w) => w.id === 'fdraft')).toHaveLength(0);   // … but nothing is written
+    expect(app.$('#form-calc').hidden).toBe(true);
+  });
+  it('drops the second-tap state when the view changes, a line goes or the formula changes elsewhere', async () => {
+    const doc = { v: 1, conc: 8, certs: {}, items: [{ pid: 2845, g: 2, dil: 100, filt: false }, { pid: 2810, g: null, dil: 100, filt: false }, { pid: 2665, g: null, dil: 100, filt: false }] };
+    await summary({ docs: { fdraft: doc } }, []);
+    const label = () => txt('#l-body [data-lapply]');
+    app.click('#l-body [data-lapply]');
+    expect(label()).toMatch(/แตะอีกครั้ง/);
+    app.win.__formulaUI.view('calc'); app.win.__formulaUI.view('layer');
+    expect(label()).not.toMatch(/แตะอีกครั้ง/);
+    app.click('#l-body [data-lapply]');
+    app.click('#tab-cat'); app.click('#tab-form');
+    expect(label()).not.toMatch(/แตะอีกครั้ง/);
+    app.click('#l-body [data-lapply]');
+    app.remote('fdraft', { ...doc, items: doc.items.map((it) => (it.pid === 2665 ? { ...it, g: 3 } : it)), at: Date.now(), sid: 'other', n: 1 });   // another device adds grams
+    await sleep(30);
+    expect(label()).not.toMatch(/แตะอีกครั้ง/);   // the user agreed to replace 1 line, not 2
+    expect(txt('#l-body')).toMatch(/สูตรมีกรัมอยู่แล้ว 2 บรรทัด/);
+    app.click('#l-body [data-lapply]');
+    app.click('#l-body .lp [data-fdel="2810"]');
+    expect(label()).not.toMatch(/แตะอีกครั้ง/);
+  });
+  it('counts only lines with grams above 0 as grams to replace (M37)', async () => {
+    const doc = { v: 1, conc: 8, certs: {}, items: [{ pid: 2845, g: 0, dil: 100, filt: false }, { pid: 2665, g: null, dil: 100, filt: false }] };
+    await summary({ docs: { fdraft: doc } }, []);
+    app.click('#l-body [data-lapply]');
+    expect(app.$('#form-calc').hidden).toBe(false);   // one tap
+  });
+  it('drops a stored trial ratio that is not one of the strips, even for lines in the formula (M38)', async () => {
+    const doc = { v: 1, conc: 8, certs: {}, items: [2845, 2810, 2665].map((pid) => ({ pid, g: null, dil: 100, filt: false })) };
+    await summary({ docs: { fdraft: doc }, storage: { 'pf.jc': JSON.stringify({ '2845,2810': 11, '2845,2810,2665': 'x' }) } }, []);
     expect(app.$$('#l-body .jcr [aria-pressed="true"]').length).toBe(0);
     expect(app.win.localStorage.getItem('pf.jc')).toBe('{}');
   });

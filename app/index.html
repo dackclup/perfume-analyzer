@@ -232,6 +232,8 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
 .lx { flex: none; width: 32px; height: 32px; margin: -6px -6px -6px 0; border: 0; background: none; color: var(--muted); font-size: 17px; line-height: 1; border-radius: 8px; }
 .lsrc { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
 .lsrc b { color: var(--accent); font-weight: 500; }
+.lsum { margin: 12px 0 0; font-size: 13.5px; font-weight: 500; }
+.lsum.short { color: var(--accent); }
 .lwarn { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .lwarn li { font-size: 13.5px; padding: 8px 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); overflow-wrap: anywhere; }
 .lwarn li .ev { display: inline-block; margin: 0 0 0 4px; }
@@ -1019,13 +1021,16 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
   /* ---- file 12 phase 3 (sections 7–9): starting proportions, the Jean Carles plan, the imbalance warnings ----
      Proportions are % of pure aroma material (the solvent of a dilution is not counted) · layers 0 top · 1 mid · 2 base.
      1. Layer budgets: the style's profile (section 7 ranges; start = the middle, rounded to add up to 100 [inferred]) or,
-        without a style, equal thirds (PerfumersWorld [3]). A layer with no line gets 0 and the rest scale back to 100.
+        without a style, equal thirds (PerfumersWorld [3]). A layer with no line keeps its budget empty (round 47).
      2. Each material's starting use: file 3's range (catalog `use`, the middle; any code of the same material) · else the
         Fraterworks average (bounds ×½ to ×2 [guess]) · else file 5's 1% / 0.1% list (0.1% / 0.01% [guess]) · else 1% [guess].
      3. Only materials used in bulk (start ≥ 5%: file 12 "ปริมาณ") stretch or shrink to fill the layer's budget, all by one
         factor, each kept inside its own bounds; the others stay at their start, so strong ones are never scaled up.
-     4. Parts → % of the whole. Trial ratios the viewer picked (section 8) replace the start among the materials they cover;
-        those materials keep their total share. tools/notes/plan_ref.py computes the same from the rules, independently. */
+     4. Parts are % of the formula. Under 100: the rest stays empty and is shown, nothing is stretched to fill it (round 47:
+        scaling up to 100 pushed strong materials past their use, e.g. Calone 45%). Over 100: all are scaled down to 100.
+     5. Trial ratios the viewer picked (section 8) replace the start among the materials they cover; those materials keep their
+        total share. tools/notes/plan_ref.py computes the same from the rules, independently. */
+  var DESIGNER = [[5, 30], [20, 40], [45, 65]];   // the three profiles together, shown when no style is chosen [inferred]
   var PROF = { fresh: { t: [25, 25, 50], r: [[20, 30], [20, 30], [45, 55]] }, fougere: { t: [15, 35, 50], r: [[10, 20], [30, 40], [45, 60]] },
     sweet: { t: [10, 30, 60], r: [[5, 15], [25, 35], [55, 65]] } };
   var DIL5 = new Map();   // material -> file 5's dilution ladder (%): 10 · 1 · 0.1
@@ -1065,8 +1070,7 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
   function layerPlan(o) {   // o: lines [{pid, L}] in formula order · prof · jc {chain key: a} · full (9 strips) · batch (g of aroma material)
     var P = o.prof ? PROF[o.prof] || null : null, lines = o.lines.filter(function (l) { return l.L >= 0; });
     var has = [0, 1, 2].map(function (L) { return lines.some(function (l) { return l.L === L; }); });
-    var tg = (P ? P.t : [100 / 3, 100 / 3, 100 / 3]).map(function (t, L) { return has[L] ? t : 0; }), ts = tg[0] + tg[1] + tg[2];
-    tg = tg.map(function (t) { return ts ? t * 100 / ts : 0; });
+    var tg = (P ? P.t : [100 / 3, 100 / 3, 100 / 3]).map(function (t, L) { return has[L] ? t : 0; });
     var rows = lines.map(function (l) { var u = useOf(l.pid); return { pid: l.pid, L: l.L, use: u, bulk: u.u >= 5, part: u.u, td: trialDil(l.pid) }; });
     [0, 1, 2].forEach(function (L) {
       var inL = rows.filter(function (r) { return r.L === L; }), bulk = inL.filter(function (r) { return r.bulk; }), R = tg[L];
@@ -1078,8 +1082,8 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
       for (i = 0; i < 200; i++) { var mid = (lo + hi) / 2; if (fill(mid) < R) lo = mid; else hi = mid; }
       bulk.forEach(function (r) { r.part = clampN(hi * r.use.u, r.use.lo, r.use.hi); });
     });
-    var sum = rows.reduce(function (s, r) { return s + r.part; }, 0);
-    rows.forEach(function (r) { r.start = sum ? r.part * 100 / sum : 0; r.pct = r.start; });
+    var sum = rows.reduce(function (s, r) { return s + r.part; }, 0), down = sum > 100 ? 100 / sum : 1;
+    rows.forEach(function (r) { r.start = r.part * down; r.pct = r.start; });
     // section 8: one chain, base → mid → top in formula order; set k = everything before it : the next material
     var chain = [2, 1, 0].reduce(function (a, L) { return a.concat(rows.filter(function (r) { return r.L === L; })); }, []);
     var steps = RATIOS[o.full ? 'full' : 'quick'], jc = o.jc || {}, sets = [], upto = 0, k, i2;
@@ -1114,12 +1118,13 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
       var inL = rows.filter(function (r) { return r.L === L; });
       return { L: L, n: inL.length, pct: inL.reduce(function (s, r) { return s + r.pct; }, 0), target: tg[L], range: P ? P.r[L] : null };
     });
-    return { rows: rows, chain: chain, sets: sets, upto: upto, steps: steps, layers: lay, batch: batch,
-      weigh: rows.reduce(function (s, r) { return s + r.weigh; }, 0),
+    return { rows: rows, chain: chain, sets: sets, upto: upto, steps: steps, layers: lay, batch: batch, down: down < 1,
+      total: rows.reduce(function (s, r) { return s + r.pct; }, 0), weigh: rows.reduce(function (s, r) { return s + r.weigh; }, 0),
       natural: rows.reduce(function (s, r) { return s + (BY.get(r.pid).t === 2 ? r.pct : 0); }, 0), warn: planWarn(rows, lay, P) };
   }
   var CORE_FAM = ['amber', 'wood', 'musk'];   // file 2 section 1: a designer base carries amber, woods or musk
-  function planWarn(rows, lay, P) {   // section 9 · [{t, lb: 0 confirmed · 1 inferred, k: kind, at: layer or codes}] base first
+  function jac(a, b) { var A = NOTE.get(a).fx, B = NOTE.get(b).fx, both = A.filter(function (x) { return B.indexOf(x) >= 0; }).length, all = A.length + B.length - both; return all ? both / all : 0; }
+  function planWarn(rows, lay, P) {   // section 9 · [{t, lb: 0 confirmed · 1 inferred · 2 guessed, k: kind, at: layer or codes}] base first
     var out = [], add = function (t, lb, k, at) { out.push({ t: t, lb: lb, k: k, at: at }); }, f1 = function (v) { return fmtPct(v); };
     if (!rows.length) return out;
     var inL = function (L) { return rows.filter(function (r) { return r.L === L; }); };
@@ -1129,14 +1134,15 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
       else if (l.pct < 5) add('ชั้น' + LY[L] + ' มีแค่ ' + f1(l.pct) + ' (ต่ำกว่า 5%)', 1, 'low', L);
       if (P && l.n && l.pct < l.range[0] - 1e-9) add('ชั้น' + LY[L] + ' ' + f1(l.pct) + ' ต่ำกว่าช่วงของโปรไฟล์นี้ (' + l.range[0] + '–' + l.range[1] + '%) · เพิ่มตัวที่ใช้ปริมาณมาก (ระดับใช้ 5% ขึ้นไป) ในชั้นนี้ หรือปรับด้วยแผนทดลอง', 1, 'range', L);
       if (P && l.n && l.pct > l.range[1] + 1e-9) add('ชั้น' + LY[L] + ' ' + f1(l.pct) + ' สูงกว่าช่วงของโปรไฟล์นี้ (' + l.range[0] + '–' + l.range[1] + '%)', 1, 'range', L);
-      var main = rs.filter(function (r) { return r.pct >= 5; }).length;
-      if (main >= 4) add('ชั้น' + LY[L] + ' มีตัวหลัก (5% ขึ้นไป) ' + main + ' ตัว · คนแยกกลิ่นในส่วนผสมได้ราว 3–4 ตัว (ไฟล์ 12 ส่วน 1)', 1, 'many', L);
+      var main = rs.filter(function (r) { return r.pct >= 5; }).length;   // "more than 3–4": 5 or more (round 47)
+      if (main > 4) add('ชั้น' + LY[L] + ' มีตัวหลัก (5% ขึ้นไป) ' + main + ' ตัว · คนแยกกลิ่นในส่วนผสมได้ราว 3–4 ตัว (ไฟล์ 12 ส่วน 1)', 1, 'many', L);
       var fam = {};
       rs.forEach(function (r) { var f = BY.get(r.pid).f; (fam[f] = fam[f] || []).push(r); });
-      Object.keys(fam).forEach(function (f) {
-        var g = fam[f]; if (g.length < 3) return;
-        var common = NOTE.get(g[0].pid).fx.filter(function (x) { return g.every(function (r) { return NOTE.get(r.pid).fx.indexOf(x) >= 0; }); });
-        if (common.length) add('ชั้น' + LY[L] + ' มี' + FAM[f] + ' ' + g.length + ' ตัวที่แง่กลิ่น' + common.slice(0, 2).map(function (x) { return FX_TH[x]; }).join(' ') + 'เหมือนกัน (บทบาทซ้ำ)', 1, 'dup', L);
+      Object.keys(fam).forEach(function (f) {   // "same family and facets": 3 of one family, every pair sharing ¾ of their facets (round 47:
+        var g = fam[f], a, b, c, hit = null;   // "any one facet in common" flagged Hedione + Linalool + Linalyl Acetate in the published fougère)
+        for (a = 0; a < g.length && !hit; a++) for (b = a + 1; b < g.length && !hit; b++) for (c = b + 1; c < g.length && !hit; c++)
+          if (jac(g[a].pid, g[b].pid) >= 0.75 && jac(g[a].pid, g[c].pid) >= 0.75 && jac(g[b].pid, g[c].pid) >= 0.75) hit = [g[a], g[b], g[c]];
+        if (hit) add('ชั้น' + LY[L] + ' มี' + FAM[f] + ' ที่แง่กลิ่นเกือบเหมือนกัน 3 ตัว (' + hit.map(function (r) { return shortName(r.pid); }).join(', ') + ') อาจซ้ำบทบาท', 1, 'dup', L);
       });
     });
     [[2, 1], [1, 0]].forEach(function (pr) {
@@ -1151,9 +1157,11 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
     if (P && inL(2).length && !inL(2).some(function (r) { return CORE_FAM.indexOf(BY.get(r.pid).f) >= 0; })) add('ฐานไม่มีอำพัน ไม้ หรือมัสก์ ซึ่งเป็นแกนของแนวดีไซน์เนอร์ (ไฟล์ 2 ส่วน 1)', 1, 'core', 2);
     rows.forEach(function (r) {
       var n = NOTE.get(r.pid);
-      if (n.sg >= 4 && r.pct > r.use.hi + 1e-9) add(shortName(r.pid) + ' ' + f1(r.pct) + ' เกินระดับใช้ (ไม่เกิน ' + fmtPct(r.use.hi) + ') และเป็นตัวแรง อาจกลบตัวอื่น', 1, 'strong', [r.pid]);
+      if (!(r.pct > r.use.hi + 1e-9)) return;
+      if (r.use.src === 'f3') add(shortName(r.pid) + ' ' + f1(r.pct) + ' เกินช่วงใช้ ' + r.use.txt + ' ของไฟล์ 3' + (n.sg >= 4 ? ' และเป็นตัวแรง อาจกลบตัวอื่น' : ''), n.sg >= 4 ? 1 : 0, 'over', [r.pid]);
+      else if (n.sg >= 4) add(shortName(r.pid) + ' ' + f1(r.pct) + ' เกิน 2 เท่าของ' + (r.use.src === 'fw' ? 'ค่าเฉลี่ยของ Fraterworks (' : 'ค่าตั้งต้น (') + fmtPct(r.use.u) + ') และเป็นตัวแรง อาจกลบตัวอื่น', 2, 'strong', [r.pid]);
     });
-    rows.forEach(function (r, i) { rows.slice(i + 1).forEach(function (b) { if (colorPair(r.pid, b.pid)) add(shortName(r.pid) + ' กับ ' + shortName(b.pid) + ' อาจเปลี่ยนสีเป็นเหลืองถึงน้ำตาล (Schiff base · ไฟล์ 5)', 0, 'color', [r.pid, b.pid]); }); });
+    rows.forEach(function (r, i) { rows.slice(i + 1).forEach(function (b) { if (colorPair(r.pid, b.pid)) add(shortName(r.pid) + ' กับ ' + shortName(b.pid) + (/^vanillin\b/i.test(BY.get(r.pid).n) || /^vanillin\b/i.test(BY.get(b.pid).n) ? ' อาจเปลี่ยนสีจนเกือบดำ' : ' อาจเปลี่ยนสีเป็นเหลืองถึงน้ำตาล') + ' (Schiff base · ไฟล์ 5)', 0, 'color', [r.pid, b.pid]); }); });
     rows.forEach(function (r) {
       var nm = BY.get(r.pid).n;
       if (/^vanillin\b/i.test(nm)) add('Vanillin ทำให้น้ำหอมเหลืองขึ้น (ไฟล์ 5)', 0, 'yellow', [r.pid]);
@@ -1170,7 +1178,8 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
   var BATCHES = [5, 10, 20, 50];   // g of aroma material in the summary (phase 3)
   fst.batch = lsGet('batch', 10); if (BATCHES.indexOf(fst.batch) < 0) fst.batch = 10;
   fst.jc = lsGet('jc', {}); if (!fst.jc || typeof fst.jc !== 'object' || Array.isArray(fst.jc)) fst.jc = {};   // trial ratios: chain key -> a (of a : 10 − a)
-  Object.keys(fst.jc).forEach(function (k) { if (!/^\d+(,\d+)+$/.test(k) || RATIOS.full.indexOf(fst.jc[k]) < 0) delete fst.jc[k]; });
+  var jcBad = Object.keys(fst.jc).filter(function (k) { return !/^\d+(,\d+)+$/.test(k) || RATIOS.full.indexOf(fst.jc[k]) < 0; });
+  if (jcBad.length) { jcBad.forEach(function (k) { delete fst.jc[k]; }); lsSet('jc', fst.jc); }
   fst.jcfull = lsGet('jcfull', false) === true; fst.lconfirm = false;
   fst.pickView = lsGet('fview', 'pick'); if (['pick', 'layer'].indexOf(fst.pickView) < 0) fst.pickView = 'pick';   // the last way of picking (calc is never reopened)
   fst.view = fst.pickView;
@@ -1605,42 +1614,47 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
       : u.src === 'fw' ? USE_TH.fw + ' ' + fmtPct(u.u)
       : u.src === 'f5' ? USE_TH.f5 + ' · ไฟล์ 5 ให้เจือ ' + DIL5.get(mat(r.pid)) + '% จึงเริ่ม ' + fmtPct(u.u) + ' [เดา]'
       : USE_TH.none + ' · เริ่ม 1% [เดา]';
-    if (r.bulk) t += ' · ใช้ปริมาณมาก ขยายหรือหดตามงบชั้น' + (Math.abs(r.part - u.hi) < 1e-9 ? ' (ถึงค่าสูงสุดของช่วง)' : Math.abs(r.part - u.lo) < 1e-9 ? ' (ถึงค่าต่ำสุดของช่วง)' : '');
+    if (r.bulk) t += ' · ใช้ปริมาณมาก ขยายหรือหดตามงบชั้น' + (u.src === 'f3' ? '' : ' ระหว่าง ' + fmtPct(u.lo) + '–' + fmtPct(u.hi) + ' (ครึ่งถึง 2 เท่า [เดา])') +
+      (Math.abs(r.pct - u.hi) < 1e-9 ? ' · ถึงค่าสูงสุดแล้ว' : Math.abs(r.pct - u.lo) < 1e-9 ? ' · ถึงค่าต่ำสุดแล้ว' : '');
     return t;
   }
   function lSummary(p, byL, other, sty) {
     var h = '<p class="lhelp">สัดส่วนเริ่มต้นของสารหอม (ไม่นับตัวทำละลาย) [อนุมาน] จากช่วงของโปรไฟล์ (ไฟล์ 12 ส่วน 7) และระดับใช้ของแต่ละตัว · เป็นจุดเริ่มทดลอง ตัดสินด้วยจมูก</p>';
-    if (!sty) h += '<p class="hint">ไม่ได้เลือกสไตล์ จึงเริ่มเท่ากันทุกชั้น · แนวดีไซน์เนอร์ส่วนใหญ่ฐานหนัก (สด 45–55% · fougère/ดอกไม้ 45–60% · หวาน·อำพัน 55–65%) เลือกสไตล์เพื่อใช้ช่วงนั้น</p>';
+    if (!sty) h += '<p class="hint">ไม่ได้เลือกสไตล์ จึงเริ่มชั้นละ 33% (PerfumersWorld) · แนวดีไซน์เนอร์ฐานหนัก ช่วงข้างชื่อชั้นรวมทั้ง 3 โปรไฟล์ของไฟล์ 12 ส่วน 7 [อนุมาน] · เลือกสไตล์เพื่อใช้ช่วงของแนวนั้น</p>';
     h += '<p class="flabel" id="l-batch-l" style="margin:12px 0 0">ทำสารหอม (ไม่นับตัวทำละลาย)</p><div class="lbatch" role="group" aria-labelledby="l-batch-l">' +
       BATCHES.map(function (b) { return '<button class="chip" type="button" data-lbatch="' + b + '" aria-pressed="' + (b === fst.batch) + '">' + b + ' g</button>'; }).join('') + '</div>';
     var inTrial = new Set(p.chain.slice(0, p.upto ? p.upto + 1 : 0).map(function (r) { return r.pid; }));
     [2, 1, 0].forEach(function (L) {
       var l = p.layers[L], rs = p.rows.filter(function (r) { return r.L === L; });
-      h += '<section class="group fsec"><h3><span>ชั้น' + LY[L] + '</span><span class="num">' + (rs.length ? fmtPct(l.pct) + (l.range ? ' · ช่วง ' + l.range[0] + '–' + l.range[1] + '%' : '') : '0 ตัว') + '</span></h3>';
+      var rg = l.range || DESIGNER[L];
+      h += '<section class="group fsec"><h3><span>ชั้น' + LY[L] + '</span><span class="num">' + (rs.length ? fmtPct(l.pct) : '0 ตัว') + ' · ' + (l.range ? 'ช่วง ' : 'ดีไซน์เนอร์ ') + rg[0] + '–' + rg[1] + '%</span></h3>';
       if (!rs.length) { h += '<p class="hint">ยังไม่ได้เลือก · <button class="btn ghost" type="button" data-lstep="' + (L === 2 ? 1 : L === 1 ? 2 : 3) + '">ไปเลือกชั้น' + LY[L] + '</button></p></section>'; return; }
       h += '<ol class="list">' + rs.map(function (r) {
         var nm = esc(fName(r.pid));
         return '<li class="frow lp"><span class="l1"><button class="nm lnm" type="button" data-open="' + r.pid + '">' + nm + '</button>' +
           '<span class="gw">' + fmtPct(r.pct) + '</span><button type="button" class="lx" data-fdel="' + r.pid + '" aria-label="เอา ' + nm + ' ออกจากสูตร">×</button></span>' +
-          '<span class="l2"><span>ชั่ง ' + fmtG(r.weigh) + (r.d < 100 ? ' ของสารละลาย ' + r.d + '%' : ' (เพียว)') + '</span></span>' +
+          '<span class="l2"><span>ชั่ง ' + fmtG(r.weigh) + (r.d < 100 ? ' ของสารละลาย ' + r.d + '%' : ' (เพียว)') + (r.td === 0.1 ? ' · ไฟล์ 5 ให้เจือ 0.1% แต่แท็บสูตรรองรับถึง 1%' : '') + '</span></span>' +
           '<span class="lsrc">' + esc(useTxt(r)) + (inTrial.has(r.pid) ? ' · <b>จากอัตราส่วนที่คุณเลือกในแผนทดลอง</b>' : '') + '</span></li>';
       }).join('') + '</ol></section>';
     });
     if (other.length) h += '<section class="group fsec"><h3><span>อื่นๆ (ไม่มีข้อมูลชั้น)</span><span class="num">' + other.length + ' ตัว</span></h3><div class="fchips">' + other.map(lChip).join('') +
       '</div><p class="hint">ไม่อยู่ในสัดส่วน · กรัมเดิมในสูตรคงไว้</p></section>';
     if (p.rows.length) {
-      var had = p.rows.filter(function (r) { var it = formula.items[fIndex(r.pid)]; return it && it.g > 0; }).length;
-      h += '<p class="hint" style="margin-top:12px">รวมสารหอม ' + fmtG(p.batch) + ' · ชั่งรวม ' + fmtG(p.weigh) + (p.weigh - p.batch > 0.0005 ? ' (ตัวทำละลายที่มากับสารละลาย ' + fmtG(p.weigh - p.batch) + ')' : '') +
-        ' · ตาชั่ง 0.01 g ถ้าทำน้อยกว่า 20 g ใช้ 0.001 g (ไฟล์ 5) · สารละลายทำในเอทานอล</p>';
+      var had = gramsHad(p), sure = had && fst.lconfirm === applySig(p), pure = p.rows.reduce(function (s, r) { return s + r.pure; }, 0);
+      h += '<p class="lsum' + (p.total < 100 - 1e-9 ? ' short' : '') + '">' + (p.down ? 'รวมเกิน 100% จึงลดทุกตัวลงตามสัดส่วนให้รวม 100%'
+        : p.total < 100 - 1e-9 ? 'รวม ' + fmtPct(p.total) + ' ของสูตร · ยังว่าง ' + fmtPct(100 - p.total) + ' · แอปไม่ขยายตัวอื่นมาเติม เพิ่มตัวที่ใช้ปริมาณมาก (ระดับใช้ 5% ขึ้นไป) ในชั้นที่ต่ำกว่างบ หรือปรับด้วยแผนทดลอง'
+        : 'รวม 100% ของสูตร') + '</p>';
+      h += '<p class="hint">สูตร ' + fmtG(p.batch) + ' · สารหอมที่ใส่ ' + fmtG(pure) + ' · ชั่งรวม ' + fmtG(p.weigh) + (p.weigh - pure > 0.0005 ? ' (ตัวทำละลายที่มากับสารละลาย ' + fmtG(p.weigh - pure) + ')' : '') +
+        ' · สารละลายทำในเอทานอล · ตาชั่ง 0.01 g ถ้าทำน้อยกว่า 20 g หรือใช้สารแรง ควรใช้ 0.001 g (ไฟล์ 5)</p>';
       h += '<div class="lnav" style="margin-top:10px"><button class="btn primary" type="button" data-lapply="1">' +
-        (had && fst.lconfirm ? 'แทนกรัมเดิม ' + had + ' บรรทัด · แตะอีกครั้งเพื่อยืนยัน' : 'ใส่กรัมนี้ในสูตร แล้วไปเช็ก IFRA →') + '</button></div>';
-      if (had && !fst.lconfirm) h += '<p class="hint">สูตรมีกรัมอยู่แล้ว ' + had + ' บรรทัด จะถูกแทน</p>';
+        (sure ? 'แทนกรัมเดิม ' + had + ' บรรทัด · แตะอีกครั้งเพื่อยืนยัน' : 'ใส่กรัมนี้ในสูตร แล้วไปเช็ก IFRA →') + '</button></div>';
+      h += '<p class="hint">' + (had && !sure ? 'สูตรมีกรัมอยู่แล้ว ' + had + ' บรรทัด จะถูกแทน · ' : '') + 'ในแท็บคำนวณ % คิดจากน้ำหนักที่ชั่งจริงทั้งหมด (รวมตัวทำละลายของสารละลาย) จึงไม่เท่ากับ % ที่นี่</p>';
     }
     // section 9
     var ws = p.warn;
     h += '<section class="group fsec"><h3><span>ข้อควรดู</span><span class="num">' + (ws.length ? ws.length + ' ข้อ' : 'ไม่มี') + '</span></h3><ul class="lwarn">' +
       (p.rows.length && !ws.length ? '<li>ไม่พบสูตรเอียงตามเกณฑ์ของไฟล์ 12 ส่วน 9</li>' : '') +
-      ws.map(function (w) { return '<li>' + esc(w.t) + ' ' + (w.lb ? evTag('ev1', 'อนุมาน') : evTag('ev3', 'ยืนยันแล้ว')) + '</li>'; }).join('') +
+      ws.map(function (w) { return '<li>' + esc(w.t) + ' ' + evTag(['ev3', 'ev1', 'ev0'][w.lb], ['ยืนยันแล้ว', 'อนุมาน', 'เดา'][w.lb]) + '</li>'; }).join('') +
       '<li class="m">IFRA งบผิวแพ้แสง และสารห้าม เช็กที่ "คำนวณ" ที่เดียว (ไฟล์ 0, 1, 4 ส่วน O)</li></ul></section>';
     // section 8
     if (p.sets.length) {
@@ -1887,17 +1901,19 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
     formulaChanged();
   }
   function fView(v) {
+    fst.lconfirm = false;   // a second tap must follow the first on the same screen
     if (v === 'add') v = fst.pickView;   // "＋ เพิ่มวัตถุดิบ" in the calc view goes back to the last way of picking
     if (v === 'pick' || v === 'layer') { fst.pickView = v; lsSet('fview', v); }
     fst.view = v; renderForm(); window.scrollTo(0, 0);
   }
-  function refocus(sel) { var el = document.querySelector('#l-body ' + sel); if (el) el.focus(); }
-  function lApply() {   // the summary's grams into the formula; lines that already have grams need a second tap
+  function refocus(sel, alt) { var el = document.querySelector('#l-body ' + sel) || (alt && document.querySelector('#l-body ' + alt)); if (el) el.focus(); }
+  function gramsHad(p) { return p.rows.filter(function (r) { var it = formula.items[fIndex(r.pid)]; return it && it.g > 0; }).length; }
+  function applySig(p) { return p.rows.map(function (r) { var it = formula.items[fIndex(r.pid)]; return r.pid + ':' + (it ? it.g : ''); }).join('|') + '/' + fst.batch; }
+  function lApply() {   // the summary's grams into the formula; lines that already have grams need a second tap on the same formula (round 47)
     if (!fGuard()) return;
     var p = curPlan();
     if (!p.rows.length) return;
-    var had = p.rows.filter(function (r) { var it = formula.items[fIndex(r.pid)]; return it && it.g > 0; }).length;
-    if (had && !fst.lconfirm) { fst.lconfirm = true; renderForm(); refocus('[data-lapply]'); return; }
+    if (gramsHad(p) && fst.lconfirm !== applySig(p)) { fst.lconfirm = applySig(p); renderForm(); refocus('[data-lapply]'); return; }
     fst.lconfirm = false;
     p.rows.forEach(function (r) { var i = fIndex(r.pid); if (i >= 0) { formula.items[i].g = gRound(r.weigh); formula.items[i].dil = r.d; } });
     toast('ใส่กรัมของ ' + p.rows.length + ' ตัวในสูตรแล้ว · เช็ก IFRA ที่หน้านี้');
@@ -2093,7 +2109,7 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
   }
   function switchTab(tab) {
     if (['cat', 'form', 'cart'].indexOf(tab) < 0) tab = 'cat';
-    st.tab = tab;
+    st.tab = tab; fst.lconfirm = false;
     ['cat', 'form', 'cart'].forEach(function (t) { $('view-' + t).hidden = t !== tab; $('tab-' + t).setAttribute('aria-selected', String(t === tab)); });
     if (tab === 'cart') renderCart();
     if (tab === 'form') renderForm();
@@ -2273,7 +2289,7 @@ textarea.copy { width: 100%; min-height: 220px; border: 1px solid var(--line); b
       var jk = el.getAttribute('data-jc'), ja = +el.getAttribute('data-ja');
       if (fst.jc[jk] === ja) delete fst.jc[jk]; else fst.jc[jk] = ja;
       fst.lconfirm = false; lsSet('jc', fst.jc); renderForm();
-      refocus('[data-jc="' + jk + '"][data-ja="' + ja + '"]');
+      refocus('[data-jc="' + jk + '"][data-ja="' + ja + '"]', '[data-jc="' + jk + '"]');   // a chip shown only while picked may be gone
       return;
     }
     if ((el = e.target.closest('[data-jcclear]'))) { fst.jc = {}; fst.lconfirm = false; lsSet('jc', fst.jc); toast('ล้างอัตราส่วนที่เลือกแล้ว'); renderForm(); $('l-count').focus(); return; }
