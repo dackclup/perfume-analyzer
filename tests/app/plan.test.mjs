@@ -126,6 +126,36 @@ describe('proportions follow file 12 section 7', () => {
     expect(p.total).toBeCloseTo(100, 9);
     for (const r of p.rows) expect(r.pct).toBeLessThan(r.part);
   });
+  it('reads a Fraterworks average of a product sold as a dilution as pure material (round 48)', () => {
+    app = loadApp();
+    const U = app.win.__layers.use;
+    expect(U(3272)).toMatchObject({ src: 'fw', upd: 5 });   // "Cocoa Absolute 5% IPM": 43% of the dilution …
+    expect(U(3272).u).toBeCloseTo(2.15, 12);   // … is 2.15% pure, not bulk
+    expect(U(2533).u).toBeCloseTo(0.0075, 12);   // "Popcorn Pyrazine 1% DPG"
+    expect(U(3263).u).toBeCloseTo(0.75, 12);   // "Benzoin … 50% TEC"
+    expect(U(3674).u).toBeCloseTo(2.04, 12);   // "Sandela® 85 IPM"
+    expect(U(2602).upd).toBe(0);   // sold pure and diluted on one page: left as it is
+  });
+  it('treats a formula that fills its budgets exactly as 100, not as over 100 (round 48)', () => {
+    app = loadApp();
+    const W = app.win.__layers, L = (L, ids) => ids.map((pid) => ({ pid, L }));
+    const p = W.plan({ lines: [...L(2, [2845, 2884, 2877]), ...L(1, [2665, 2685]), ...L(0, [127688, 2493])], prof: 'sweet' });
+    expect(p.sum).toBeGreaterThan(100);   // 100.00000000000001
+    expect(p.down).toBe(false);
+    expect(p.total).toBeCloseTo(100, 9);
+  });
+  it('scales down from just over 100 too', () => {
+    app = loadApp();
+    const W = app.win.__layers, C = app.win.__compat, lines = [], seen = new Set();
+    let sum = 0;
+    for (const pid of W.reps().filter((q) => W.use(q).u < 5).sort((x, y) => W.use(y).u - W.use(x).u)) {
+      if (sum > 100 || seen.has(C.mat(pid))) continue;
+      seen.add(C.mat(pid)); lines.push({ pid, L: W.note(pid).l }); sum += W.use(pid).u;
+    }
+    const p = W.plan({ lines, prof: null });
+    expect(p.sum).toBeGreaterThan(100); expect(p.sum).toBeLessThan(105);
+    expect(p.down).toBe(true);
+  });
   it('says where each starting use comes from', () => {
     app = loadApp();
     const U = app.win.__layers.use;
@@ -156,6 +186,14 @@ describe('warnings (section 9)', () => {
     expect(five.warn.find((w) => w.k === 'many')).toMatchObject({ at: 2, lb: 1 });
     const four = W.plan({ lines: base.slice(0, 4).map((pid) => ({ pid, L: 2 })), prof: 'sweet' });
     expect(four.warn.some((w) => w.k === 'many')).toBe(false);
+  });
+  it('judge a layer by its % as shown (round 48: "20% is below 20–30%")', () => {
+    app = loadApp();
+    const p = app.win.__layers.plan({ lines: [{ pid: 2845, L: 2 }, { pid: 2884, L: 2 }, { pid: 2665, L: 1 }, { pid: 127688, L: 0 }], prof: 'fresh', full: true,
+      jc: { '2845,2884': 1, '2845,2884,2665': 3, '2845,2884,2665,127688': 3 } });
+    expect(p.layers[1].pct).toBeCloseTo(19.95, 9);
+    expect(p.warn.some((w) => w.k === 'range' && w.at === 1)).toBe(false);
+    expect(p.warn.some((w) => w.k === 'range' && w.at === 0)).toBe(true);   // 66.5% is above
   });
   it('label a material past a guessed bound as a guess (round 47)', () => {
     app = loadApp();
@@ -261,6 +299,28 @@ describe('summary view', () => {
     expect(app.$$('#l-body .jcr').map((g) => g.querySelectorAll('.near').length)).toEqual([1, 1, 1, 1]);   // one dashed strip per set
     expect(txt('#l-body')).toMatch(/สูตรนี้มีน้ำมันธรรมชาติ 16\.9%/);   // Bergamot FCF
   });
+  it('says "รวม 100%" for a full formula, and by how much it was over when it scales down', async () => {
+    app = loadApp();
+    const sweet = app.win.__layers.styles().find((y) => y.prof === 'sweet').id, W = app.win.__layers, C = app.win.__compat, many = [], seen = new Set();
+    let sum = 0;
+    for (const pid of W.reps().filter((q) => W.use(q).u < 5).sort((x, y) => W.use(y).u - W.use(x).u)) {   // fixed materials adding up to just over 100
+      if (sum > 100 || seen.has(C.mat(pid))) continue;
+      seen.add(C.mat(pid)); many.push(pid); sum += W.use(pid).u;
+    }
+    app.close();
+    await summary({}, [[2845, 2], [2884, 2], [2877, 2], [2665, 1], [2685, 1], [127688, 0], [2493, 0]], sweet);
+    expect(txt('#l-body .lsum')).toBe('รวม 100% ของสูตร');   // 100.00000000000001 is not "over 100"
+    expect(app.$('#l-body .lsum').classList.contains('short')).toBe(false);
+    app.close();
+    const doc = { v: 1, conc: 8, certs: {}, items: many.map((pid) => ({ pid, g: null, dil: 100, filt: false })) };
+    await summary({ docs: { fdraft: doc } }, [], null);
+    expect(txt('#l-body .lsum')).toMatch(/^รวมเกิน 100% \(10[0-4](\.\d)?%\) จึงลดทุกตัวลงตามสัดส่วนให้รวม 100%$/);
+  });
+  it('says when a Fraterworks average was for a dilution (round 48)', async () => {
+    await summary({}, [[3272, 2]]);
+    expect(rowsOf()[0].text).toMatch(/ค่าเฉลี่ยของ Fraterworks 43% ของสารละลาย 5% ที่เขาขาย = เพียวราว 2\.2%/);
+    expect(rowsOf()[0].pct).toBe(2.2);   // not stretched: Cocoa Absolute is not a bulk material
+  });
   it('scales the grams with the batch and remembers it on this device', async () => {
     await summary();
     const g10 = app.$$('#l-body .lp .l2').map((e) => parseFloat(e.textContent.replace(/^ชั่ง /, '')));
@@ -279,9 +339,10 @@ describe('summary view', () => {
     const saved = app.store.get('fdraft');
     expect(saved.items.map((it) => Object.keys(it).sort().join())).toEqual(Array(5).fill('dil,filt,g,pid'));
     plan.rows.forEach((r) => {
-      const it = saved.items.find((x) => x.pid === r.pid);
-      expect([it.g, it.dil]).toEqual([app.win.__layers.gRound(r.weigh), r.d]);
+      const it = saved.items.find((x) => x.pid === r.pid), g = r.pct * 10 / 100 * 100 / r.d;   // computed here, not with the app's rounding
+      expect([it.g, it.dil]).toEqual([g >= 0.1 ? Math.round(g * 100) / 100 : Math.round(g * 1000) / 1000, r.d]);
     });
+    expect(saved.items.find((x) => x.pid === 127688).g).toBe(1.69);   // Bergamot FCF 16.892% of 10 g
     const calc = app.win.__fCalc();
     expect(calc.total).toBeGreaterThan(0);   // the calc view now has grams to check
   });
@@ -294,6 +355,9 @@ describe('summary view', () => {
     expect(app.$('#form-calc').hidden).toBe(true);   // not yet
     expect(txt('#l-body [data-lapply]')).toMatch(/แทนกรัมเดิม 1 บรรทัด · แตะอีกครั้งเพื่อยืนยัน/);
     expect(app.doc.activeElement.getAttribute('data-lapply')).toBe('1');
+    app.click('#l-body [data-lapply]');   // at once: a double tap, not a confirmation (round 48)
+    expect(app.$('#form-calc').hidden).toBe(true);
+    await sleep(750);
     app.click('#l-body [data-lapply]');
     expect(app.$('#form-calc').hidden).toBe(false);
     await sleep(800);
@@ -361,6 +425,9 @@ describe('summary view', () => {
     await sleep(30);
     expect(label()).not.toMatch(/แตะอีกครั้ง/);   // the user agreed to replace 1 line, not 2
     expect(txt('#l-body')).toMatch(/สูตรมีกรัมอยู่แล้ว 2 บรรทัด/);
+    app.click('#l-body [data-lapply]');
+    app.click('#l-body .jcr [data-ja="7"]');   // a trial ratio changes the grams: ask again
+    expect(label()).not.toMatch(/แตะอีกครั้ง/);
     app.click('#l-body [data-lapply]');
     app.click('#l-body .lp [data-fdel="2810"]');
     expect(label()).not.toMatch(/แตะอีกครั้ง/);

@@ -181,6 +181,28 @@ class Embedded(unittest.TestCase):
                 for v in per.values():
                     self.assertTrue(v is None or (isinstance(v, str) and v.strip()), s['id'])
 
+    def test_fraterworks_average_of_a_diluted_product_is_converted_to_pure(self):   # review round 48: Cocoa 5% IPM read as 43% pure
+        import build_notes as B
+        notes = json.load(open(os.path.join(B.ROOT, 'notes', 'notes.json'), encoding='utf-8'))['items']
+        seen = 0
+        for line in open(os.path.join(B.ROOT, 'notes', 'sources', 'supplier.jsonl'), encoding='utf-8'):
+            if not line.strip():
+                continue
+            r = json.loads(line)
+            fw = r.get('fraterworks') or {}
+            d, p = B.fw_dilution(fw.get('name')), B.parse_pct(fw.get('avg_use'))
+            n = notes[str(r['i'])]
+            if d and p is not None and n.get('ups') == 'fw':
+                self.assertAlmostEqual(n['up'], p * d / 100, places=12, msg=r['i'])
+                self.assertEqual(n.get('upd'), d, r['i'])
+                seen += 1
+            elif n.get('ups') == 'fw':
+                self.assertNotIn('upd', n, r['i'])
+        self.assertEqual(seen, 4)   # Cocoa 5% IPM · Popcorn Pyrazine 1% DPG · Benzoin 50% TEC · Sandela 85 IPM
+        self.assertAlmostEqual(notes['3272']['up'], 2.15, places=12)
+        self.assertEqual(B.fw_dilution('Galaxolide®'), None)
+        self.assertEqual(B.fw_dilution('Sandela® 85 IPM'), 85)
+
     def test_usage_and_dilution_for_the_summary(self):   # phase 3: Fraterworks averages only, and file 5's three dilution lists
         import embed_notes as E
         html = open(E.APP, encoding='utf-8').read()

@@ -18,6 +18,7 @@ Rules (file 12 sections 7–9, as built in phase 3):
 - bulk = start of 5 or more: in each layer the bulk ones are multiplied by one factor so the layer adds up to its budget,
   each kept inside its bounds; the others stay at their start
 - parts are % of the formula: under 100 the rest stays empty; over 100 all are scaled down to add up to 100
+- a layer is outside its profile range when its % rounded to one decimal is
 - trial chain: base, mid, top, each in formula order; set k pairs the first k materials with material k+1; a trial ratio
   counts when every set before it has one; each material is at 10% in the trial (file 5's 1% / 0.1% ones at that);
   the materials covered get proportions from the trial blend and keep their total share
@@ -26,6 +27,7 @@ Rules (file 12 sections 7–9, as built in phase 3):
 - weigh: as pure as file 5 allows (10% list: at most 10% · 1% and 0.1% lists: 1%), more dilute while under 0.1 g
 """
 import json
+import math
 import os
 import re
 import sys
@@ -160,7 +162,7 @@ def plan(D, case):
         for r, v in zip(bulk, fill_bulk([(r['u'], r['lo'], r['hi']) for r in bulk], R)):
             r['part'] = v
     s = sum(r['part'] for r in rows)
-    scale = 100 / s if s > 100 else 1
+    scale = 100 / s if s > 100 + 1e-9 else 1   # a layer filled exactly may add up to 100 plus rounding
     for r in rows:
         r['start'] = r['pct'] = r['part'] * scale
         r['td'] = trial_dil(D, r['pid'])
@@ -203,7 +205,7 @@ def plan(D, case):
         r['weigh'] = r['pure'] * 100 / r['d']
     layers = [sum(r['pct'] for r in rows if r['L'] == L) for L in range(3)]
     return {'rows': [{k: r[k] for k in ('pid', 'L', 'src', 'u', 'lo', 'hi', 'bulk', 'part', 'td', 'start', 'pct', 'd', 'weigh')} for r in rows],
-            'sets': sets, 'upto': upto, 'layers': layers, 'targets': target, 'down': s > 100,
+            'sets': sets, 'upto': upto, 'layers': layers, 'targets': target, 'down': s > 100 + 1e-9,
             'total': sum(r['pct'] for r in rows), 'weigh': sum(r['weigh'] for r in rows),
             'natural': sum(r['pct'] for r in rows if D.cat[r['pid']]['t'] == 2),
             'warn': sorted(warnings(D, rows, layers, prof))}
@@ -220,7 +222,8 @@ def warnings(D, rows, layers, prof):
             out.append(('gap', L, 1))
         elif layers[L] < 5:
             out.append(('low', L, 1))
-        if prof and rs and not (prof[1][L][0] - 1e-9 <= layers[L] <= prof[1][L][1] + 1e-9):
+        shown = math.floor(layers[L] * 10 + 0.5) / 10   # judged as shown, to one decimal
+        if prof and rs and not (prof[1][L][0] <= shown <= prof[1][L][1]):
             out.append(('range', L, 1))
         if sum(1 for r in rs if r['pct'] >= 5) > 4:   # more than 3–4 main materials
             out.append(('many', L, 1))
