@@ -4,9 +4,10 @@ as <script type="application/json" id="notes-data">, compact, for the step-by-st
 usage: python3 -I tools/notes/embed_notes.py            # write app/index.html
        python3 -I tools/notes/embed_notes.py --check    # exit 1 if the app's copy is out of date
 
-Per code (catalog types 1 and 2 only): [layer, range low, range high, label, facets, roles, strength, early, blends-with, sources]
-· layer 0 top · 1 mid · 2 base · label 0 confirmed · 1 inferred · 2 guessed · facets/roles/sources = indexes into the lists
-at the top · blends-with = shop codes from Fraterworks pages. Every style code must be a selectable catalog item.
+Per code (catalog types 1 and 2 only): [layer, range low, range high, label, facets, roles, strength, early, blends-with, sources,
+Fraterworks average use % or 0] · layer 0 top · 1 mid · 2 base · label 0 confirmed · 1 inferred · 2 guessed · facets/roles/sources
+= indexes into the lists at the top · blends-with = shop codes from Fraterworks pages. Every style code must be a selectable
+catalog item. dil = file 5's dilution ladder ({'10': codes, '1': codes, '0.1': codes}, from notes/sources/project_roles.json).
 """
 import json
 import os
@@ -17,6 +18,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 APP = os.path.join(ROOT, 'app', 'index.html')
 NOTES = os.path.join(ROOT, 'notes', 'notes.json')
 STYLES = os.path.join(ROOT, 'notes', 'sources', 'styles.json')
+ROLES = os.path.join(ROOT, 'notes', 'sources', 'project_roles.json')
 L = ['top', 'mid', 'base']
 LB = ['ok', 'inf', 'gs']
 TAG = re.compile(r'<script type="application/json" id="notes-data">.*?</script>\n', re.S)
@@ -43,7 +45,7 @@ def build(html):
         items[k] = [L.index(v['l']), L.index(v['r'][0]), L.index(v['r'][1]), LB.index(v['lb']),
                     [fx.index(f) for f in v.get('fx', [])], [ro.index(r) for r in v.get('ro', [])],
                     v.get('sg') or 0, 1 if v.get('e') else 0, [c for c in v.get('bw', []) if c in sel],
-                    [src.index(s) for s in v['src']]]
+                    [src.index(s) for s in v['src']], v['up'] if v.get('ups') == 'fw' else 0]
     missing = sel - {int(k) for k in items}
     if missing:
         raise SystemExit(f'{len(missing)} selectable items have no note data, e.g. {sorted(missing)[:5]}')
@@ -69,7 +71,12 @@ def build(html):
                 raise SystemExit(f"style {s['id']}: code {c} names a perfume that is not one of the style's references {refs}")
         if s['prof'] not in ('fresh', 'fougere', 'sweet') or not s.get('set_row'):
             raise SystemExit(f"style {s['id']}: unknown profile or no file 3 row name")
-    out = {'fx': fx, 'ro': ro, 'src': src, 'items': items,
+    roles = json.load(open(ROLES, encoding='utf-8'))
+    dil = {k: roles[r]['codes'] for k, r in (('10', 'dilute_10'), ('1', 'dilute_1'), ('0.1', 'dilute_01'))}
+    seen = [c for codes in dil.values() for c in codes]
+    if [c for c in seen if c not in sel] or len(seen) != len(set(seen)):
+        raise SystemExit('project_roles.json: a dilution code is not selectable or sits in two dilution lists')
+    out = {'fx': fx, 'ro': ro, 'src': src, 'items': items, 'dil': dil,
            'styles': [{k: s[k] for k in ('id', 'n', 'refs', 'prof', 'set_row', 'sig', 'notes', 'expected', 'sets')} for s in styles]}
     return json.dumps(out, ensure_ascii=False, separators=(',', ':'))
 

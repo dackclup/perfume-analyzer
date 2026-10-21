@@ -181,6 +181,20 @@ class Embedded(unittest.TestCase):
                 for v in per.values():
                     self.assertTrue(v is None or (isinstance(v, str) and v.strip()), s['id'])
 
+    def test_usage_and_dilution_for_the_summary(self):   # phase 3: Fraterworks averages only, and file 5's three dilution lists
+        import embed_notes as E
+        html = open(E.APP, encoding='utf-8').read()
+        data = json.loads(E.build(html))
+        notes = json.load(open(E.NOTES, encoding='utf-8'))['items']
+        for k, a in data['items'].items():
+            n = notes[k]
+            self.assertEqual(a[10], n['up'] if n.get('ups') == 'fw' else 0, k)
+        roles = json.load(open(E.ROLES, encoding='utf-8'))
+        self.assertEqual(data['dil'], {'10': roles['dilute_10']['codes'], '1': roles['dilute_1']['codes'], '0.1': roles['dilute_01']['codes']})
+        self.assertIn(2810, data['dil']['10'])   # file 5: Ambroxan 10%
+        self.assertIn(2557, data['dil']['1'])   # Calone 1%
+        self.assertIn(2807, data['dil']['0.1'])   # Indole 0.1%
+
     def test_build_refuses_a_reason_naming_another_perfume(self):
         import embed_notes as E
         html = open(E.APP, encoding='utf-8').read()

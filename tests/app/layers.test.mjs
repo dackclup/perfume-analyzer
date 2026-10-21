@@ -9,6 +9,7 @@ let app;
 afterEach(() => { if (app) app.close(); app = null; });
 const ROOT = new URL('../../', import.meta.url);
 const txt = (sel) => app.$(sel).textContent.replace(/\s+/g, ' ').trim();
+const sec = (t) => app.$$('#l-body .fsec').find((s) => s.querySelector('h3').textContent.startsWith(t));   // a summary section by its title
 async function layerView(opts) {
   app = loadApp(opts);
   await sleep(30);
@@ -197,9 +198,9 @@ describe('step-by-step view', () => {
     expect(txt('#form-layer')).not.toMatch(/เพดาน|ผ่าน/);   // no IFRA verdict in this view
     app.click('[data-lstep="4"]');
     expect(app.$$('#l-body .hint [data-lstep]').map((b) => b.getAttribute('data-lstep'))).toEqual(['3']);   // only the top layer is empty: "ไปเลือกชั้นหัว" goes to step 3
-    expect(txt('#l-body')).toMatch(/ชั้นฐาน ?1 ตัว/);
-    expect(txt('#l-body')).toMatch(/ชั้นกลาง ?1 ตัว/);
-    expect(txt('#l-body')).toMatch(/ชั้นหัว ?0 ตัว/);
+    expect(sec('ชั้นฐาน').querySelectorAll('.lp').length).toBe(1);   // phase 3: one row per line, with its %
+    expect(sec('ชั้นกลาง').querySelectorAll('.lp').length).toBe(1);
+    expect(sec('ชั้นหัว').textContent).toMatch(/0 ตัว/);
     app.click('#l-body [data-fview="calc"]');
     expect(app.$('#form-calc').hidden).toBe(false);
     expect(app.$$('#f-rows .row, #f-rows > *').length).toBeGreaterThanOrEqual(2);
@@ -255,14 +256,14 @@ describe('step-by-step view', () => {
     expect(app.win.__layers.note(2685)).toMatchObject({ l: 1, lo: 0, hi: 1 });   // Linalool: mid, can sit at the top
     app.win.__formulaUI.add(2685, { layer: 0 });
     app.click('[data-lstep="4"]');
-    expect(txt('#l-body')).toMatch(/ชั้นหัว ?1 ตัว ?Linalool/);
+    expect([...sec('ชั้นหัว').querySelectorAll('.lp .lnm')].map((b) => b.textContent)).toEqual(['Linalool']);
     const ly = app.win.localStorage.getItem('pf.ly');
     await sleep(800);
     const saved = app.store.get('fdraft');
     app.close();
     await layerView({ docs: { fdraft: saved }, storage: { 'pf.ly': ly, 'pf.lstep': '4' } });
     await sleep(30);
-    expect(txt('#l-body')).toMatch(/ชั้นหัว ?1 ตัว ?Linalool/);
+    expect([...sec('ชั้นหัว').querySelectorAll('.lp .lnm')].map((b) => b.textContent)).toEqual(['Linalool']);
   });
   it('adds from the detail sheet into the current step, and remembers the picking view, not calc', async () => {
     await layerView({ storage: { 'pf.lstep': '2' } });
