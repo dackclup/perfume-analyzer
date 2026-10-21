@@ -92,6 +92,16 @@ def parse_hours(text):
     return v * mult
 
 
+FW_DILUTED = re.compile(r'(\d+(?:\.\d+)?)\s*%?\s*(?:in\s+)?(?:IPM|DPG|TEC|DEP)\b', re.I)
+
+
+def fw_dilution(name):
+    """The % of material in a Fraterworks product sold only as a dilution, from its name ("Cocoa Absolute 5% IPM" -> 5,
+    "Sandela® 85 IPM" -> 85), else None. Its average use is then for the dilution, not the pure material (review round 48)."""
+    m = FW_DILUTED.search(name or '')
+    return float(m.group(1)) if m and 0 < float(m.group(1)) < 100 else None
+
+
 def parse_pct(text):
     """Typical use as one number. '3.1% in a perfume compound' -> 3.1 · '2–10%' / '2% to 10%' -> 6 · 'ราว 0.2%' ·
     '≤0.5%' -> 0.5 · '0.15/1.0 in a perfume compound' -> 0.15 · 'ppm' -> 0.001 · a text that only states a maximum
@@ -371,6 +381,10 @@ def build():
             rec['sg'], rec['sgs'] = 4, 'f5'
         p = parse_pct(fw.get('avg_use'))
         psrc = 'fw'
+        d = fw_dilution(fw.get('name'))
+        if p is not None and d:   # the product is a dilution: its average as pure material
+            p = p * d / 100
+            rec['upd'] = d
         if p is None:
             p, psrc = parse_pct(x.get('use')), 'app'
         if p is not None:
@@ -486,7 +500,7 @@ def main(argv):
                               'lb ok/inf/gs · src sources (f5 file 5, st ScenTree, fw Fraterworks, ar Arctander, rule, fam, review) · '
                               'why reason for inferred rows · cf level-2 conflict · hw range widened by one layer from blotter hours · '
                               'h blotter hours · e strong from the opening · '
-                              'fx facets · ro roles · sg strength 1–5 (sgs source) · up typical use % (ups source) · uc use class · '
+                              'fx facets · ro roles · sg strength 1–5 (sgs source) · up typical use % (ups source; upd = the Fraterworks product is an upd% dilution, up converted to pure) · uc use class · '
                               'bw blends-with codes from supplier pages · ref source URLs.',
                      'items': out}, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
     md = coverage(items, out, f5_by, sup, refs)

@@ -1,5 +1,6 @@
 {
-  "about": "Facts written in the project files, mapped to shop codes. dilute_1 / dilute_01 = file 5 'บันไดเจือจาง' (ใช้ 1% / 0.1%) → used as an odour-strength signal. blender = file 5 workflow step 5 'ตัวเชื่อม (Hedione, Iso E Super)'. signature = file 2 section 7 'ลายเซ็นแต่ละตัว'. Each list keeps the file reference so the app can show it.",
+  "about": "Facts written in the project files, mapped to shop codes. dilute_10 / dilute_1 / dilute_01 = file 5 'บันไดเจือจาง' (ใช้ 10% / 1% / 0.1%): 1% and 0.1% are an odour-strength signal; all three set the dilution the step-by-step summary suggests (file 12 phase 3). blender = file 5 workflow step 5 'ตัวเชื่อม (Hedione, Iso E Super)'. signature = file 2 section 7 'ลายเซ็นแต่ละตัว'. Each list keeps the file reference so the app can show it.",
+  "dilute_10": {"ref": "ไฟล์ 5 ส่วนที่ 1 · บันไดเจือจาง (10%)", "codes": [2810, 2878, 2828, 2821, 2819]},
   "dilute_1": {"ref": "ไฟล์ 5 ส่วนที่ 1 · บันไดเจือจาง (1%)", "codes": [2557, 2864, 2441, 2426, 2455, 2457, 2460, 2449, 2458, 3310, 2779, 2762]},
   "dilute_01": {"ref": "ไฟล์ 5 ส่วนที่ 1 · บันไดเจือจาง (0.1%)", "codes": [2807, 2817]},
   "blender": {"ref": "ไฟล์ 5 ส่วนที่ 1 · ขั้น 5 ตัวเชื่อม (Hedione, Iso E Super)", "codes": [2665, 2666, 2845]},
