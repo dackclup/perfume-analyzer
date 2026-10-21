@@ -1,0 +1,19 @@
+[2026-10-21T10:27:19Z] docs: 1870 lines · 267 links · file 7 rows 1533
+[2026-10-21T10:27:21Z] sitemap index: 13 English sitemaps
+[2026-10-21T10:27:23Z]   1_en_0_sitemap.xml: 25000 product URLs
+[2026-10-21T10:27:25Z]   1_en_1_sitemap.xml: 25000 product URLs
+[2026-10-21T10:27:26Z]   1_en_2_sitemap.xml: 24999 product URLs
+[2026-10-21T10:27:28Z]   1_en_3_sitemap.xml: 25000 product URLs
+[2026-10-21T10:27:30Z]   1_en_4_sitemap.xml: 25000 product URLs
+[2026-10-21T10:27:32Z]   1_en_5_sitemap.xml: 24999 product URLs
+[2026-10-21T10:27:34Z]   1_en_6_sitemap.xml: 24997 product URLs
+[2026-10-21T10:27:36Z]   1_en_7_sitemap.xml: 24998 product URLs
+[2026-10-21T10:27:38Z]   1_en_8_sitemap.xml: 24999 product URLs
+[2026-10-21T10:27:40Z]   1_en_9_sitemap.xml: 25000 product URLs
+[2026-10-21T10:27:42Z]   1_en_10_sitemap.xml: 25000 product URLs
+[2026-10-21T10:27:44Z]   1_en_11_sitemap.xml: 25000 product URLs
+[2026-10-21T10:27:45Z]   1_en_12_sitemap.xml: 1308 product URLs
+[2026-10-21T10:27:45Z] products in sitemaps: 301300
+[2026-10-21T10:32:09Z] robots.txt unreachable for https://www.nasdaq.com: The read operation timed out
+[2026-10-21T10:33:03Z] robots.txt unreachable for https://pellwall.com: <urlopen error [Errno -3] Temporary failure in name resolution>
+[2026-10-21T10:33:36Z] robots.txt unreachable for https://scentinventory.com: The read operation timed out
