@@ -120,7 +120,7 @@ describe('review round 44', () => {
     const out = [2986, 3360, 3401, 33783, 3440, 3455, 253058, 33638, 33654, 3492, 33194, 33157, 33200, 4037, 3300, 5847];   // + "Synthetic" oils and "For Flavoring" extracts (round 45)
     for (const L of [0, 1, 2]) for (const r of W.rank(L)) {
       expect(out).not.toContain(r.pid);
-      if (![32518, 33833, 33795].includes(r.pid)) expect(['solvent', 'base', 'other']).not.toContain(by.get(r.pid).f);
+      if (![32518, 33833, 33795, 33805].includes(r.pid)) expect(['solvent', 'base', 'other']).not.toContain(by.get(r.pid).f);
       expect(by.get(r.pid).n).not.toMatch(/fragrance oil/i);
     }
   });
@@ -129,12 +129,15 @@ describe('review round 44', () => {
     const W = app.win.__layers, by = new Map(app.data.items.map((x) => [x.i, x]));
     for (const style of [null, ...W.styles().map((s) => s.id)]) for (const L of [0, 1, 2]) for (const r of W.suggest(L, { style })) expect(by.get(r.pid).wo, r.pid).toBeFalsy();
     const oak = W.rank(2, { style: 'aquatic' }).find((r) => r.pid === 3260);
-    expect(oak.warn.join(' ')).toMatch(/รายการข้อควรระวังของไฟล์ 4 ส่วน O/);
+    expect(oak.warn.join(' ')).toMatch(/มีข้อควรระวังเขียนไว้ในหน้ารายละเอียด/);
+    const hc = W.rank(1, { style: 'floral-fruity' }).find((r) => r.pid === 2707);   // Hydroxycitronellal: a J'adore label note, caution not from section O
+    expect(hc.tier).toBe(0);
+    expect(hc.warn.join(' ')).not.toMatch(/ส่วน O/);
   });
-  it('keeps three real perfumery materials from the unsorted family (round 45)', () => {
+  it('keeps four real perfumery materials from the unsorted family (rounds 45–46)', () => {
     app = loadApp();
     const all = [0, 1, 2].flatMap((L) => app.win.__layers.rank(L).map((r) => r.pid));
-    for (const p of [32518, 33833, 33795]) expect(all).toContain(p);
+    for (const p of [32518, 33833, 33795, 33805]) expect(all).toContain(p);
   });
   it('says "stands in for" when a shop code only stands in for a generic note (round 45)', () => {
     app = loadApp();
@@ -148,6 +151,7 @@ describe('review round 44', () => {
     expect(cin.why[0]).toBe('ลายเซ็นของ 1 Million · โน้ตของ 1 Million ตามไฟล์ 2 · ใช้แทนโน้ต "อบเชย" ของ Sauvage Elixir [อนุมาน]');
     expect(W.rank(2, { style: 'floral-lavender' }).find((r) => r.pid === 2810).tier).toBe(1);   // Libre: "Ambergris" in the pyramid, Ambroxan only "expected"
     expect(W.rank(1, { style: 'floral-fruity' }).find((r) => r.pid === 3259).tier).toBe(1);    // J'adore: Ylang only from an unconfirmed official line
+    for (const p of [3217, 3218]) expect(W.rank(1, { style: 'floral-fruity' }).find((r) => r.pid === p).tier, p).toBe(0);   // both jasmines for "มะลิ" (round 46)
   });
   it("names the perfume when it says a material can lead the base, and only the style's own signatures (round 45)", () => {
     app = loadApp();
@@ -216,7 +220,8 @@ describe('step-by-step view', () => {
     expect(app.$$('#l-body [data-ladd]').length).toBe(total);   // 8 suggested + the rest, each once
     const groups = app.$$('#l-body .lgrp').map((g) => g.textContent);
     expect(groups.length).toBeGreaterThanOrEqual(4);
-    const order = ['มีหลักฐานว่าใช้คู่กัน', 'อนุมาน', 'เดา: แค่ชั้นตรง'];
+    const order = ['มีหลักฐาน', 'อนุมาน', 'เดา: แค่ชั้นตรง'];
+    for (const g of groups) expect(order.some((o) => g.startsWith(o)), g).toBe(true);   // round 46: a renamed label must not slip through
     const idx = groups.map((g) => order.findIndex((o) => g.startsWith(o)) * 2 + (g.includes('ยังไม่จัดระดับ') ? 1 : 0));
     for (let i = 1; i < idx.length; i++) expect(idx[i]).toBeGreaterThan(idx[i - 1]);
   });
