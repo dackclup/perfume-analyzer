@@ -1,0 +1,62 @@
+{
+  "generated": "2026-10-26T07:49:32Z",
+  "sitemap_products": 301300,
+  "cited_ids": 757,
+  "cited_missing_from_sitemap": [
+    1220,
+    2456,
+    2459,
+    2461,
+    2622,
+    2709,
+    2815,
+    2879,
+    2880,
+    2889,
+    2890,
+    2896,
+    2903,
+    3080,
+    3091,
+    3140,
+    3235,
+    3242,
+    3264,
+    3277,
+    3290,
+    3291,
+    3345,
+    3454,
+    3781,
+    7430,
+    8260,
+    8262,
+    35260
+  ],
+  "cited_url_mismatch": [],
+  "doc_check_failing": 0,
+  "doc_check_allowed": 1,
+  "doc_check_by_kind": {},
+  "snapshot_rows": 1533,
+  "snapshot_gone": 0,
+  "snapshot_renamed": 0,
+  "perfumery_added": 125,
+  "expert_checked": 34,
+  "expert_codes": {
+    "200": 34
+  },
+  "expert_stopped": "",
+  "shop_probe_codes": {
+    "200": 4
+  },
+  "shop_probe_has_price_in_html": false,
+  "shop_probe_stopped": "",
+  "links_checked": 267,
+  "link_codes": {
+    "200": 139,
+    "0": 101,
+    "202": 3,
+    "403": 9,
+    "429": 15
+  }
+}
